@@ -453,7 +453,8 @@ interface MockChecklist {
   id: string;
   type: string;
   title: string;
-  assignedTo: string;
+  // null marks a reconciled (consensus) checklist; reviewer checklists carry a userId.
+  assignedTo: string | null;
   status: string;
   createdAt: number;
   updatedAt: number;
@@ -1000,16 +1001,6 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
     const now = timestamp();
     const outcomeId = generateId('outcome');
 
-    // Reconciliation record applied to every finalized study. Both reviewer
-    // checklists are filled from the same seed so they represent an agreed
-    // result rather than an unresolved disagreement.
-    const finalized = {
-      status: 'completed',
-      completedAt: now,
-      completedBy: 'user_lead',
-      notes: 'Discrepancies resolved through discussion',
-    };
-
     return {
       version: 1,
       meta: {
@@ -1051,10 +1042,36 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
         },
       ],
       studies: [
+        // --- Not started (no reviewers assigned, no checklists) ---
+        {
+          id: generateId('study'),
+          name: 'Schulz et al. 2010',
+          description: '',
+          createdAt: now,
+          updatedAt: now,
+          originalTitle:
+            'CONSORT 2010 Statement: updated guidelines for reporting parallel group randomised trials',
+          firstAuthor: 'Schulz',
+          publicationYear: 2010,
+          authors: 'Schulz KF, Altman DG, Moher D, CONSORT Group',
+          journal: 'BMJ',
+          doi: '10.1136/bmj.c332',
+          abstract: '',
+          pdfUrl: null,
+          pdfSource: null,
+          pdfAccessible: false,
+          reviewer1: null,
+          reviewer2: null,
+          checklists: [],
+          pdfs: [],
+          reconciliation: null,
+        },
         // --- Completed (finalized + reconciled) ---
-        // Three AMSTAR2 studies with deliberately different answer profiles
-        // (all-yes / all-no / mixed) so the completed-state visualizations have
-        // variety to render.
+        // A real reconciliation produces a third "Reconciled Checklist" that is
+        // finalized and has no assignee (null = consensus); the two reviewer
+        // checklists stay locked at reviewer-completed. The visualizations read
+        // the reconciled checklist, so its answers carry the deliberately varied
+        // profiles (all-yes / all-no / mixed) for completed-state rendering.
         {
           id: generateId('study'),
           name: 'Shea et al. 2017',
@@ -1080,7 +1097,7 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
               type: 'AMSTAR2',
               title: 'Reviewer 1 Assessment',
               assignedTo: 'user_reviewer1',
-              status: CHECKLIST_STATUS.FINALIZED,
+              status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
               createdAt: now,
               updatedAt: now,
               answers: generateAMSTAR2Answers({ fill: 'all-yes', seed: 1001 }),
@@ -1090,6 +1107,16 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
               type: 'AMSTAR2',
               title: 'Reviewer 2 Assessment',
               assignedTo: 'user_reviewer2',
+              status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+              createdAt: now,
+              updatedAt: now,
+              answers: generateAMSTAR2Answers({ fill: 'all-yes', seed: 1011 }),
+            },
+            {
+              id: generateId('checklist'),
+              type: 'AMSTAR2',
+              title: 'Reconciled Checklist',
+              assignedTo: null,
               status: CHECKLIST_STATUS.FINALIZED,
               createdAt: now,
               updatedAt: now,
@@ -1097,7 +1124,7 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
             },
           ],
           pdfs: [],
-          reconciliation: finalized,
+          reconciliation: null,
         },
         {
           id: generateId('study'),
@@ -1124,7 +1151,7 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
               type: 'AMSTAR2',
               title: 'Reviewer 1 Assessment',
               assignedTo: 'user_reviewer1',
-              status: CHECKLIST_STATUS.FINALIZED,
+              status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
               createdAt: now,
               updatedAt: now,
               answers: generateAMSTAR2Answers({ fill: 'all-no', seed: 1002 }),
@@ -1134,6 +1161,16 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
               type: 'AMSTAR2',
               title: 'Reviewer 2 Assessment',
               assignedTo: 'user_reviewer2',
+              status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+              createdAt: now,
+              updatedAt: now,
+              answers: generateAMSTAR2Answers({ fill: 'all-no', seed: 1012 }),
+            },
+            {
+              id: generateId('checklist'),
+              type: 'AMSTAR2',
+              title: 'Reconciled Checklist',
+              assignedTo: null,
               status: CHECKLIST_STATUS.FINALIZED,
               createdAt: now,
               updatedAt: now,
@@ -1141,7 +1178,7 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
             },
           ],
           pdfs: [],
-          reconciliation: finalized,
+          reconciliation: null,
         },
         {
           id: generateId('study'),
@@ -1168,7 +1205,7 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
               type: 'AMSTAR2',
               title: 'Reviewer 1 Assessment',
               assignedTo: 'user_reviewer1',
-              status: CHECKLIST_STATUS.FINALIZED,
+              status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
               createdAt: now,
               updatedAt: now,
               answers: generateAMSTAR2Answers({ fill: 'mixed', seed: 1003 }),
@@ -1178,6 +1215,16 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
               type: 'AMSTAR2',
               title: 'Reviewer 2 Assessment',
               assignedTo: 'user_reviewer2',
+              status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+              createdAt: now,
+              updatedAt: now,
+              answers: generateAMSTAR2Answers({ fill: 'mixed', seed: 1013 }),
+            },
+            {
+              id: generateId('checklist'),
+              type: 'AMSTAR2',
+              title: 'Reconciled Checklist',
+              assignedTo: null,
               status: CHECKLIST_STATUS.FINALIZED,
               createdAt: now,
               updatedAt: now,
@@ -1185,7 +1232,7 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
             },
           ],
           pdfs: [],
-          reconciliation: finalized,
+          reconciliation: null,
         },
         {
           id: generateId('study'),
@@ -1212,7 +1259,7 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
               type: 'ROBINS_I',
               title: 'Reviewer 1 Assessment',
               assignedTo: 'user_reviewer1',
-              status: CHECKLIST_STATUS.FINALIZED,
+              status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
               createdAt: now,
               updatedAt: now,
               outcomeId,
@@ -1227,6 +1274,21 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
               type: 'ROBINS_I',
               title: 'Reviewer 2 Assessment',
               assignedTo: 'user_reviewer2',
+              status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+              createdAt: now,
+              updatedAt: now,
+              outcomeId,
+              answers: generateROBINSIAnswers({
+                fill: 'complete',
+                seed: 1014,
+                isPerProtocol: false,
+              }),
+            },
+            {
+              id: generateId('checklist'),
+              type: 'ROBINS_I',
+              title: 'Reconciled Checklist',
+              assignedTo: null,
               status: CHECKLIST_STATUS.FINALIZED,
               createdAt: now,
               updatedAt: now,
@@ -1239,7 +1301,7 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
             },
           ],
           pdfs: [],
-          reconciliation: finalized,
+          reconciliation: null,
         },
         {
           id: generateId('study'),
@@ -1265,7 +1327,7 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
               type: 'ROB2',
               title: 'Reviewer 1 Assessment',
               assignedTo: 'user_reviewer1',
-              status: CHECKLIST_STATUS.FINALIZED,
+              status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
               createdAt: now,
               updatedAt: now,
               outcomeId,
@@ -1276,6 +1338,17 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
               type: 'ROB2',
               title: 'Reviewer 2 Assessment',
               assignedTo: 'user_reviewer2',
+              status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+              createdAt: now,
+              updatedAt: now,
+              outcomeId,
+              answers: generateROB2Answers({ fill: 'mixed', seed: 1015, isAdhering: false }),
+            },
+            {
+              id: generateId('checklist'),
+              type: 'ROB2',
+              title: 'Reconciled Checklist',
+              assignedTo: null,
               status: CHECKLIST_STATUS.FINALIZED,
               createdAt: now,
               updatedAt: now,
@@ -1284,7 +1357,7 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
             },
           ],
           pdfs: [],
-          reconciliation: finalized,
+          reconciliation: null,
         },
         // --- In-progress reconcile (two reviewer-completed checklists) ---
         // Both reviewers use different seeds so there are genuine discrepancies
