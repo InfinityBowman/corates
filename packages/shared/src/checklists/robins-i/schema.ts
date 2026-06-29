@@ -579,13 +579,7 @@ export const ROBINS_I_CHECKLIST = {
 } as const;
 
 export type DomainKey =
-  | 'domain1a'
-  | 'domain1b'
-  | 'domain2'
-  | 'domain3'
-  | 'domain4'
-  | 'domain5'
-  | 'domain6';
+  'domain1a' | 'domain1b' | 'domain2' | 'domain3' | 'domain4' | 'domain5' | 'domain6';
 
 // Get all domain keys (for iteration)
 export function getDomainKeys(): DomainKey[] {

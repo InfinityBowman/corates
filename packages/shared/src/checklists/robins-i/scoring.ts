@@ -73,22 +73,7 @@ export function scoreRobinsDomain(
 
 interface DomainState {
   answers?: DomainAnswers;
-  judgement?: Judgement | null;
-  judgementSource?: 'auto' | 'manual';
   direction?: string | null;
-}
-
-/**
- * Get effective domain judgement (respects manual override)
- */
-export function getEffectiveDomainJudgement(
-  domainState: DomainState | undefined,
-  autoScore: ScoringResult,
-): Judgement | null {
-  if (domainState?.judgementSource === 'manual' && domainState?.judgement) {
-    return domainState.judgement;
-  }
-  return autoScore?.judgement || null;
 }
 
 interface ChecklistState {
@@ -98,9 +83,7 @@ interface ChecklistState {
 
 interface DomainScoringInfo {
   auto: ScoringResult;
-  effective: Judgement | null;
-  source: 'auto' | 'manual';
-  isOverridden: boolean;
+  judgement: Judgement | null;
 }
 
 interface AllDomainsResult {
@@ -110,7 +93,8 @@ interface AllDomainsResult {
 }
 
 /**
- * Score all active domains and return a summary
+ * Score all active domains and return a summary. Domain judgements are always
+ * derived from the signalling answers -- there is no manual override.
  */
 export function scoreAllDomains(checklistState: ChecklistState | null): AllDomainsResult {
   if (!checklistState) {
@@ -124,40 +108,33 @@ export function scoreAllDomains(checklistState: ChecklistState | null): AllDomai
     : ['domain1a', 'domain2', 'domain3', 'domain4', 'domain5', 'domain6'];
 
   const domains: Record<string, DomainScoringInfo> = {};
-  const effectiveJudgements: Judgement[] = [];
+  const judgements: Judgement[] = [];
 
   for (const domainKey of activeDomainKeys) {
     const domainState = checklistState[domainKey] as DomainState | undefined;
     const auto = scoreRobinsDomain(domainKey, domainState?.answers, { isPerProtocol });
-    const effective = getEffectiveDomainJudgement(domainState, auto);
-    const source = domainState?.judgementSource || 'auto';
 
-    domains[domainKey] = {
-      auto,
-      effective,
-      source,
-      isOverridden: source === 'manual' && effective !== auto.judgement,
-    };
+    domains[domainKey] = { auto, judgement: auto.judgement };
 
-    if (effective) {
-      effectiveJudgements.push(effective);
+    if (auto.judgement) {
+      judgements.push(auto.judgement);
     }
   }
 
   let overall: Judgement | null = null;
-  if (effectiveJudgements.length === activeDomainKeys.length) {
-    if (effectiveJudgements.includes(JUDGEMENTS.CRITICAL)) {
+  if (judgements.length === activeDomainKeys.length) {
+    if (judgements.includes(JUDGEMENTS.CRITICAL)) {
       overall = JUDGEMENTS.CRITICAL;
-    } else if (effectiveJudgements.includes(JUDGEMENTS.SERIOUS)) {
+    } else if (judgements.includes(JUDGEMENTS.SERIOUS)) {
       overall = JUDGEMENTS.SERIOUS;
-    } else if (effectiveJudgements.includes(JUDGEMENTS.MODERATE)) {
+    } else if (judgements.includes(JUDGEMENTS.MODERATE)) {
       overall = JUDGEMENTS.MODERATE;
     } else {
       overall = JUDGEMENTS.LOW;
     }
   }
 
-  return { domains, overall, isComplete: effectiveJudgements.length === activeDomainKeys.length };
+  return { domains, overall, isComplete: judgements.length === activeDomainKeys.length };
 }
 
 // Overall risk of bias display strings for UI

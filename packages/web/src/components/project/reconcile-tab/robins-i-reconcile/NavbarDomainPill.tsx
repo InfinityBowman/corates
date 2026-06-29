@@ -165,16 +165,16 @@ function QuestionPill({
         const parts = item.label.split('.');
         return parts.length > 1 ? parts[1] : item.label;
       }
-      case NAV_ITEM_TYPES.DOMAIN_JUDGEMENT:
-      case NAV_ITEM_TYPES.OVERALL_JUDGEMENT:
-        return 'J';
+      case NAV_ITEM_TYPES.DOMAIN_DIRECTION:
+      case NAV_ITEM_TYPES.OVERALL_DIRECTION:
+        return 'Dir';
     }
   })();
 
-  const isJudgement =
-    item.type === NAV_ITEM_TYPES.DOMAIN_JUDGEMENT || item.type === NAV_ITEM_TYPES.OVERALL_JUDGEMENT;
+  const isDirection =
+    item.type === NAV_ITEM_TYPES.DOMAIN_DIRECTION || item.type === NAV_ITEM_TYPES.OVERALL_DIRECTION;
 
-  const pillSizeClass = isJudgement ? 'h-6 px-2 text-2xs' : 'size-6 text-2xs';
+  const pillSizeClass = isDirection ? 'h-6 px-2 text-2xs' : 'size-6 text-2xs';
 
   let pillSpacingClass = '';
   if (isFirst) pillSpacingClass += 'ml-0.5 ';

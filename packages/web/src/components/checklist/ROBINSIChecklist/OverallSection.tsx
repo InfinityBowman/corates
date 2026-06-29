@@ -11,43 +11,18 @@ interface OverallSectionProps {
 export function OverallSection({ studyId, checklistId, disabled }: OverallSectionProps) {
   const calculatedScore = useROBINSIScore(studyId, checklistId);
   const isIncomplete = calculatedScore === 'Incomplete';
-  const calculatedDisplayJudgement =
+  const effectiveJudgement =
     isIncomplete ? null : mapOverallJudgementToDisplay(calculatedScore as any);
 
-  const judgementSource = useAnswer<string>(studyId, checklistId, 'overall.judgementSource');
-  const manualJudgement = useAnswer<string>(studyId, checklistId, 'overall.judgement');
   const direction = useAnswer<string>(studyId, checklistId, 'overall.direction');
   const answersYMap = useAnswersYMap(studyId, checklistId);
-
-  const isManualMode = judgementSource === 'manual';
-  const effectiveJudgement =
-    isManualMode && manualJudgement ? manualJudgement : calculatedDisplayJudgement;
-
-  const handleJudgementChange = (judgement: string | null) => {
-    answersYMap?.set('overall.judgement', judgement);
-    answersYMap?.set('overall.judgementSource', 'manual');
-  };
 
   const handleDirectionChange = (dir: string | null) => {
     answersYMap?.set('overall.direction', dir);
   };
 
-  const handleRevertToAuto = () => {
-    answersYMap?.set('overall.judgement', calculatedDisplayJudgement);
-    answersYMap?.set('overall.judgementSource', 'auto');
-  };
-
-  const handleSwitchToManual = () => {
-    answersYMap?.set('overall.judgement', manualJudgement || calculatedDisplayJudgement);
-    answersYMap?.set('overall.judgementSource', 'manual');
-  };
-
   const getJudgementColor = (j: string, isSelected: boolean) => {
-    if (!isSelected) {
-      return isManualMode ?
-          'border-border bg-card text-muted-foreground hover:border-border'
-        : 'border-border bg-muted text-muted-foreground hover:border-border hover:bg-card';
-    }
+    if (!isSelected) return 'border-border bg-muted text-muted-foreground/70';
     switch (j) {
       case 'Low risk of bias except for concerns about uncontrolled confounding':
         return 'bg-green-100 border-green-400 text-green-800';
@@ -90,14 +65,11 @@ export function OverallSection({ studyId, checklistId, disabled }: OverallSectio
           </div>
 
           {!isIncomplete ?
-            <div className='flex flex-col items-end gap-1'>
-              <span
-                className={`rounded-md px-3 py-1 text-sm font-semibold ${getScoreBadgeColor(calculatedScore)}`}
-              >
-                {calculatedScore}
-              </span>
-              {isManualMode && <span className='text-warning text-xs'>Manual override</span>}
-            </div>
+            <span
+              className={`rounded-md px-3 py-1 text-sm font-semibold ${getScoreBadgeColor(calculatedScore)}`}
+            >
+              {calculatedScore}
+            </span>
           : <span className='bg-muted-foreground/50 text-muted rounded-md px-3 py-1 text-sm'>
               Incomplete
             </span>
@@ -106,52 +78,23 @@ export function OverallSection({ studyId, checklistId, disabled }: OverallSectio
       </div>
 
       <div className='px-6 py-5'>
-        {/* Calculated score with mode toggle */}
-        <div className='bg-muted mb-5 flex items-center justify-between rounded-lg p-4'>
+        {/* Calculated score display */}
+        <div className='bg-muted mb-5 rounded-lg p-4'>
           <div className='flex items-center gap-3'>
             <span className='text-secondary-foreground text-sm font-medium'>
               Calculated judgement:
             </span>
-            {calculatedDisplayJudgement ?
+            {effectiveJudgement ?
               <span
                 className={`rounded-md px-2.5 py-1 text-sm font-medium ${getScoreBadgeColor(calculatedScore)}`}
               >
-                {calculatedDisplayJudgement}
+                {effectiveJudgement}
               </span>
             : <span className='text-muted-foreground/70 text-sm'>Complete all domains</span>}
           </div>
-
-          <div className='flex items-center gap-2'>
-            <div className='border-border bg-card flex rounded-md border text-xs'>
-              <button
-                type='button'
-                onClick={handleRevertToAuto}
-                disabled={disabled}
-                className={`rounded-l-md px-2.5 py-1 transition-colors ${
-                  !isManualMode ?
-                    'bg-blue-100 text-blue-800'
-                  : 'text-muted-foreground hover:bg-muted'
-                } ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
-              >
-                Auto
-              </button>
-              <button
-                type='button'
-                onClick={handleSwitchToManual}
-                disabled={disabled}
-                className={`border-border rounded-r-md border-l px-2.5 py-1 transition-colors ${
-                  isManualMode ?
-                    'bg-warning-bg text-warning-foreground'
-                  : 'text-muted-foreground hover:bg-muted'
-                } ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
-              >
-                Manual
-              </button>
-            </div>
-          </div>
         </div>
 
-        {/* Judgement buttons */}
+        {/* Overall judgement display (read-only) */}
         <div className='mb-5'>
           <div className='text-secondary-foreground mb-3 text-sm font-medium'>
             Overall risk of bias judgement
@@ -160,26 +103,18 @@ export function OverallSection({ studyId, checklistId, disabled }: OverallSectio
             {OVERALL_ROB_JUDGEMENTS.map(j => {
               const isSelected = effectiveJudgement === j;
               return (
-                <button
+                <div
                   key={j}
-                  type='button'
-                  onClick={() => {
-                    if (disabled) return;
-                    handleJudgementChange(isSelected ? null : j);
-                  }}
-                  disabled={disabled}
-                  className={`inline-flex items-center justify-center rounded-lg border-2 px-4 py-2 text-sm font-medium transition-colors ${
-                    disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
-                  } ${getJudgementColor(j, isSelected)}`}
+                  className={`inline-flex cursor-not-allowed items-center justify-center rounded-lg border-2 px-4 py-2 text-sm font-medium opacity-75 ${getJudgementColor(j, isSelected)}`}
                 >
                   {j}
-                </button>
+                </div>
               );
             })}
           </div>
         </div>
 
-        {/* Direction */}
+        {/* Direction of bias */}
         <div>
           <div className='text-secondary-foreground mb-3 text-sm font-medium'>
             Predicted direction of bias

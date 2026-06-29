@@ -16,7 +16,6 @@ const QuestionEntrySchema = z.object({
 export const RobinsIDomainUpdateSchema = z
   .object({
     judgement: z.string().nullable().optional(),
-    judgementSource: z.string().optional(),
     direction: z.string().nullable().optional(),
     answers: z.record(z.string(), QuestionEntrySchema).optional(),
   })
@@ -25,7 +24,6 @@ export const RobinsIDomainUpdateSchema = z
 export const RobinsIOverallUpdateSchema = z
   .object({
     judgement: z.string().nullable().optional(),
-    judgementSource: z.string().optional(),
     direction: z.string().nullable().optional(),
   })
   .strict();

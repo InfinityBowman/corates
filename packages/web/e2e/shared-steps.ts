@@ -57,6 +57,85 @@ export async function answerAllROB2Domains(page: Page, answer: string) {
 }
 
 /**
+ * Answer the ROBINS-I Section B screening questions (b1-b3) with a given response.
+ *
+ * Section B renders radio-style labels (hidden input + visible label, e.g. "N (No)"),
+ * NOT the toggle buttons used by domain signalling questions. Answering b2/b3 as Y/PY
+ * triggers "stop assessment" and hides all domain sections, so callers pass 'N' to
+ * proceed into domain assessment. The hidden radios carry name="sectionB-...", which
+ * uniquely scopes them to Section B.
+ */
+export async function answerROBINSISectionB(page: Page, answer: 'Y' | 'PY' | 'PN' | 'N') {
+  const labels = page.locator(`label:has(input[name^="sectionB"][value="${answer}"])`);
+  await expect(labels.first()).toBeVisible({ timeout: 5_000 });
+  const count = await labels.count();
+  for (let i = 0; i < count; i++) {
+    await labels.nth(i).click();
+    await page.waitForTimeout(50);
+  }
+}
+
+// Definite signalling answers, in preference order. Reviewer A leans Yes, reviewer B
+// leans No. Every ROBINS-I response scale contains at least one code from each list,
+// so both reviewers always land a definite answer (never "No Information"/"Not
+// Applicable", which would leave a domain unscored) and always disagree, producing
+// reconciliation conflicts on every question.
+const ROBINSI_YES_CODES = ['Y', 'SY', 'WY', 'PY'];
+const ROBINSI_NO_CODES = ['N', 'SN', 'WN', 'PN'];
+
+/**
+ * Answer every ROBINS-I domain signalling question with a definite response.
+ *
+ * Clicks each domain pill in the sticky scoring summary (expands + scrolls the domain),
+ * then answers that domain's questions scoped to its container so answers never leak
+ * between domains. Assumes the default ITT (not per-protocol) domain set: D1 = domain1a,
+ * D2-D6. Section B must be answered first so domains are visible.
+ *
+ * Each signalling question renders its option buttons in a `shrink-0 flex-wrap` group,
+ * which is unique to signalling questions (judgement/direction buttons use other layouts),
+ * so iterating those groups yields exactly one answer per question.
+ */
+export async function answerAllROBINSIDomains(page: Page, reviewer: 'A' | 'B') {
+  const preferred = reviewer === 'A' ? ROBINSI_YES_CODES : ROBINSI_NO_CODES;
+  const domains: Array<{ pill: string; key: string }> = [
+    { pill: 'D1', key: 'domain1a' },
+    { pill: 'D2', key: 'domain2' },
+    { pill: 'D3', key: 'domain3' },
+    { pill: 'D4', key: 'domain4' },
+    { pill: 'D5', key: 'domain5' },
+    { pill: 'D6', key: 'domain6' },
+  ];
+
+  for (const { pill, key } of domains) {
+    await page.getByRole('button', { name: pill, exact: true }).first().click();
+
+    const section = page.locator(`#domain-section-${key}`);
+    const optionGroups = section.locator('div.shrink-0.flex-wrap');
+    await expect(optionGroups.first()).toBeVisible({ timeout: 5_000 });
+
+    const groupCount = await optionGroups.count();
+    for (let i = 0; i < groupCount; i++) {
+      const group = optionGroups.nth(i);
+
+      let answered = false;
+      for (const code of preferred) {
+        const btn = group.getByRole('button', { name: code, exact: true });
+        if ((await btn.count()) > 0) {
+          await btn.first().click();
+          answered = true;
+          break;
+        }
+      }
+      // No preferred code in this scale: fall back to the first definite option.
+      if (!answered) {
+        await group.getByRole('button').first().click();
+      }
+      await page.waitForTimeout(30);
+    }
+  }
+}
+
+/**
  * Adds a member to the current project via the Invite UI on the Overview tab.
  * Assumes the page is already on the project page as an owner.
  */

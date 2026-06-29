@@ -85,17 +85,7 @@ export type AMSTAR2Score = 'High' | 'Moderate' | 'Low' | 'Critically Low' | 'Err
  * ROBINS-I response types
  */
 export type ROBINSIResponse =
-  | 'Y'
-  | 'PY'
-  | 'PN'
-  | 'N'
-  | 'NI'
-  | 'NA'
-  | 'WN'
-  | 'SN'
-  | 'SY'
-  | 'WY'
-  | null;
+  'Y' | 'PY' | 'PN' | 'N' | 'NI' | 'NA' | 'WN' | 'SN' | 'SY' | 'WY' | null;
 
 /**
  * ROBINS-I question answer structure
@@ -111,7 +101,6 @@ export interface ROBINSIQuestionAnswer {
 export interface ROBINSIDomainState {
   answers: Record<string, ROBINSIQuestionAnswer>;
   judgement: string | null;
-  judgementSource: 'auto' | 'manual';
   direction?: string | null;
 }
 
@@ -161,7 +150,6 @@ export interface ROBINSIChecklist extends ChecklistMetadata {
   domain6: ROBINSIDomainState;
   overall: {
     judgement: string | null;
-    judgementSource: 'auto' | 'manual';
     direction: string | null;
   };
 }

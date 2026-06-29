@@ -34,18 +34,6 @@ function getAnswerBadgeStyle(answer: string | null | undefined): string {
 }
 
 /**
- * Get badge style for judgement value
- */
-function getJudgementBadgeStyle(judgement: string | null | undefined): string {
-  if (!judgement) return 'bg-secondary text-muted-foreground';
-  if (judgement.toLowerCase().includes('low')) return 'bg-green-100 text-green-700';
-  if (judgement.toLowerCase().includes('moderate')) return 'bg-yellow-100 text-yellow-700';
-  if (judgement.toLowerCase().includes('serious')) return 'bg-orange-100 text-orange-700';
-  if (judgement.toLowerCase().includes('critical')) return 'bg-red-100 text-red-700';
-  return 'bg-secondary text-muted-foreground';
-}
-
-/**
  * Get display number for item in the summary
  */
 function getItemDisplayNumber(item: any): string {
@@ -55,10 +43,10 @@ function getItemDisplayNumber(item: any): string {
   if (item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION) {
     return item.label;
   }
-  if (item.type === NAV_ITEM_TYPES.DOMAIN_JUDGEMENT) {
-    return 'J';
+  if (item.type === NAV_ITEM_TYPES.DOMAIN_DIRECTION) {
+    return 'Dir';
   }
-  if (item.type === NAV_ITEM_TYPES.OVERALL_JUDGEMENT) {
+  if (item.type === NAV_ITEM_TYPES.OVERALL_DIRECTION) {
     return 'OA';
   }
   return '?';
@@ -74,11 +62,11 @@ function getItemLabel(item: any): string {
   if (item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION) {
     return `Question ${item.label}`;
   }
-  if (item.type === NAV_ITEM_TYPES.DOMAIN_JUDGEMENT) {
-    return 'Domain Judgement';
+  if (item.type === NAV_ITEM_TYPES.DOMAIN_DIRECTION) {
+    return 'Domain Direction';
   }
-  if (item.type === NAV_ITEM_TYPES.OVERALL_JUDGEMENT) {
-    return 'Overall Judgement';
+  if (item.type === NAV_ITEM_TYPES.OVERALL_DIRECTION) {
+    return 'Overall Direction';
   }
   return item.label;
 }
@@ -89,7 +77,7 @@ function getItemLabel(item: any): string {
 function getItemValue(
   item: any,
   finalAnswers: any,
-): { type: 'answer' | 'judgement'; value: string } | null {
+): { type: 'answer' | 'direction'; value: string } | null {
   if (item.type === NAV_ITEM_TYPES.SECTION_B) {
     const answer = finalAnswers?.sectionB?.[item.key]?.answer;
     if (!answer) return null;
@@ -102,16 +90,16 @@ function getItemValue(
     return { type: 'answer', value: answer };
   }
 
-  if (item.type === NAV_ITEM_TYPES.DOMAIN_JUDGEMENT) {
-    const judgement = finalAnswers?.[item.domainKey]?.judgement;
-    if (!judgement) return null;
-    return { type: 'judgement', value: judgement };
+  if (item.type === NAV_ITEM_TYPES.DOMAIN_DIRECTION) {
+    const direction = finalAnswers?.[item.domainKey]?.direction;
+    if (!direction) return null;
+    return { type: 'direction', value: direction };
   }
 
-  if (item.type === NAV_ITEM_TYPES.OVERALL_JUDGEMENT) {
-    const judgement = finalAnswers?.overall?.judgement;
-    if (!judgement) return null;
-    return { type: 'judgement', value: judgement };
+  if (item.type === NAV_ITEM_TYPES.OVERALL_DIRECTION) {
+    const direction = finalAnswers?.overall?.direction;
+    if (!direction) return null;
+    return { type: 'direction', value: direction };
   }
 
   return null;
@@ -223,9 +211,9 @@ export function RobinsISummaryView({
                       {value ?
                         <span
                           className={`rounded-full px-3 py-1 text-sm font-medium ${
-                            value.type === 'judgement' ?
-                              getJudgementBadgeStyle(value.value)
-                            : getAnswerBadgeStyle(value.value)
+                            value.type === 'answer' ?
+                              getAnswerBadgeStyle(value.value)
+                            : 'bg-secondary text-muted-foreground'
                           }`}
                         >
                           {value.type === 'answer' ?

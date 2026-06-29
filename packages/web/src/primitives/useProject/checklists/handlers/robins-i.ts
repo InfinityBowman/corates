@@ -8,7 +8,6 @@ import { ChecklistHandler, type TextGetterFn } from './base';
 
 interface ROBINSDomainTemplate {
   judgement?: string | null;
-  judgementSource?: string | null;
   direction?: string | null;
   answers?: Record<string, { answer: string | null }>;
 }
@@ -92,7 +91,6 @@ export class ROBINSIHandler extends ChecklistHandler {
           answersYMap.set(`${key}.direction`, domain.direction ?? null);
         }
         answersYMap.set(`${key}.judgement`, domain.judgement ?? null);
-        answersYMap.set(`${key}.judgementSource`, domain.judgementSource ?? 'auto');
         if (domain.answers) {
           Object.entries(domain.answers).forEach(([qKey, qValue]) => {
             answersYMap.set(qKey, qValue.answer ?? null);
@@ -180,9 +178,6 @@ export class ROBINSIHandler extends ChecklistHandler {
         const domainData = data as RobinsIAnswers['domain1a'];
         if (domainData.judgement !== undefined) {
           answersMap.set(`${key}.judgement`, domainData.judgement);
-        }
-        if (domainData.judgementSource !== undefined) {
-          answersMap.set(`${key}.judgementSource`, domainData.judgementSource);
         }
         if (domainData.direction !== undefined) {
           answersMap.set(`${key}.direction`, domainData.direction);

@@ -38,13 +38,8 @@ export function DomainSection({
     domainKey,
   );
 
-  const judgementSource = useAnswer<string>(studyId, checklistId, `${domainKey}.judgementSource`);
-  const manualJudgement = useAnswer<string>(studyId, checklistId, `${domainKey}.judgement`);
   const direction = useAnswer<string>(studyId, checklistId, `${domainKey}.direction`);
   const answersYMap = useAnswersYMap(studyId, checklistId);
-
-  const isManualMode = judgementSource === 'manual';
-  const effectiveJudgement = isManualMode && manualJudgement ? manualJudgement : autoJudgement;
 
   const isEarlyComplete = autoComplete && autoJudgement !== null;
   const isQuestionSkippable = (qKey: string) => isEarlyComplete && answersYMap?.get(qKey) == null;
@@ -54,23 +49,8 @@ export function DomainSection({
     total: questionKeys.length,
   };
 
-  const handleJudgementChange = (judgement: string | null) => {
-    answersYMap?.set(`${domainKey}.judgement`, judgement);
-    answersYMap?.set(`${domainKey}.judgementSource`, 'manual');
-  };
-
   const handleDirectionChange = (dir: string | null) => {
     answersYMap?.set(`${domainKey}.direction`, dir);
-  };
-
-  const handleRevertToAuto = () => {
-    answersYMap?.set(`${domainKey}.judgement`, autoJudgement);
-    answersYMap?.set(`${domainKey}.judgementSource`, 'auto');
-  };
-
-  const handleSwitchToManual = () => {
-    answersYMap?.set(`${domainKey}.judgement`, manualJudgement || autoJudgement);
-    answersYMap?.set(`${domainKey}.judgementSource`, 'manual');
   };
 
   const renderQuestions = (qs: Record<string, any>) =>
@@ -107,11 +87,8 @@ export function DomainSection({
             {completionStatus.answered}/{completionStatus.total}
           </span>
 
-          {effectiveJudgement ?
-            <div className='flex items-center gap-1.5'>
-              {isManualMode && <span className='text-warning text-xs'>Manual</span>}
-              <JudgementBadge judgement={effectiveJudgement} />
-            </div>
+          {autoJudgement ?
+            <JudgementBadge judgement={autoJudgement} />
           : !autoComplete && <span className='text-muted-foreground/70 text-xs'>Incomplete</span>}
 
           <svg
@@ -142,74 +119,36 @@ export function DomainSection({
             </>
           : <div className='flex flex-col gap-1'>{renderQuestions(questions)}</div>}
 
-          {/* Auto-first judgement section */}
+          {/* Calculated judgement (read-only) + direction */}
           <div className='bg-muted mt-4 rounded-lg p-4'>
-            <div className='mb-3 flex items-center justify-between'>
-              <div className='flex items-center gap-3'>
-                <span className='text-secondary-foreground text-sm font-medium'>
-                  Risk of bias judgement
-                </span>
-                {autoJudgement ?
-                  <div className='bg-card flex items-center gap-2 rounded-md px-2.5 py-1 text-xs shadow-sm'>
-                    <span className='text-muted-foreground'>Calculated:</span>
-                    <JudgementBadge judgement={autoJudgement} />
-                  </div>
-                : !autoComplete && (
-                    <span className='text-muted-foreground/70 text-xs'>
-                      (answer more questions)
-                    </span>
-                  )
-                }
-              </div>
-
-              {/* Mode toggle */}
-              <div className='flex items-center gap-2'>
-                <div className='border-border bg-card flex rounded-md border text-xs'>
-                  <button
-                    type='button'
-                    onClick={e => {
-                      e.stopPropagation();
-                      handleRevertToAuto();
-                    }}
-                    disabled={disabled}
-                    className={`rounded-l-md px-2.5 py-1 transition-colors ${
-                      !isManualMode ?
-                        'bg-blue-100 text-blue-800'
-                      : 'text-muted-foreground hover:bg-muted'
-                    } ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
-                  >
-                    Auto
-                  </button>
-                  <button
-                    type='button'
-                    onClick={e => {
-                      e.stopPropagation();
-                      handleSwitchToManual();
-                    }}
-                    disabled={disabled}
-                    className={`border-border rounded-r-md border-l px-2.5 py-1 transition-colors ${
-                      isManualMode ?
-                        'bg-warning-bg text-warning-foreground'
-                      : 'text-muted-foreground hover:bg-muted'
-                    } ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
-                  >
-                    Manual
-                  </button>
+            <div className='mb-3 flex items-center gap-3'>
+              <span className='text-secondary-foreground text-sm font-medium'>
+                Risk of bias judgement
+              </span>
+              {autoJudgement ?
+                <div className='bg-card flex items-center gap-2 rounded-md px-2.5 py-1 text-xs shadow-sm'>
+                  <span className='text-muted-foreground'>Calculated:</span>
+                  <JudgementBadge judgement={autoJudgement} />
                 </div>
-              </div>
+              : !autoComplete && (
+                  <span className='text-muted-foreground/70 text-xs'>(answer more questions)</span>
+                )
+              }
             </div>
 
-            <DomainJudgement
-              domainId={domainKey}
-              judgement={effectiveJudgement}
-              direction={direction}
-              onJudgementChange={handleJudgementChange}
-              onDirectionChange={handleDirectionChange}
-              showDirection={domain?.hasDirection}
-              isDomain1={domainKey === 'domain1a' || domainKey === 'domain1b'}
-              disabled={disabled}
-              isAutoMode={!isManualMode}
-            />
+            {domain?.hasDirection && (
+              <DomainJudgement
+                domainId={domainKey}
+                judgement={autoJudgement}
+                direction={direction}
+                onJudgementChange={() => {}}
+                onDirectionChange={handleDirectionChange}
+                showDirection={true}
+                isDomain1={domainKey === 'domain1a' || domainKey === 'domain1b'}
+                disabled={disabled}
+                isAutoMode={true}
+              />
+            )}
           </div>
         </div>
       )}
