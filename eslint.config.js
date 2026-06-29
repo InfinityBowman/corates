@@ -64,6 +64,7 @@ export default [
         FileReader: 'readonly',
         Headers: 'readonly',
         Request: 'readonly',
+        RequestInfo: 'readonly',
         Response: 'readonly',
         AbortController: 'readonly',
         AbortSignal: 'readonly',

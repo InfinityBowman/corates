@@ -72,13 +72,13 @@ describe('pdfium engine renders a PDF', () => {
 
   beforeAll(() => {
     // The engine fetches the wasm by URL; serve the committed file from disk instead.
-    globalThis.fetch = (async (input: RequestInfo | URL) => {
+    globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
       if (url.endsWith('pdfium.wasm')) {
         const bytes = readFileSync(SERVED_WASM);
         return { ok: true, arrayBuffer: async () => bytes.buffer.slice(0) } as Response;
       }
-      return realFetch(input as RequestInfo);
+      return realFetch(input, init);
     }) as typeof fetch;
   });
 
