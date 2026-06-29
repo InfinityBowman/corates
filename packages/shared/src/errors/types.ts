@@ -37,17 +37,11 @@ export type ErrorDetails =
 
 // Union of all domain error codes for type safety
 export type DomainErrorCode =
-  | ValidationErrorCode
-  | ProjectErrorCode
-  | FileErrorCode
-  | AuthErrorCode
-  | SystemErrorCode;
+  ValidationErrorCode | ProjectErrorCode | FileErrorCode | AuthErrorCode | SystemErrorCode;
 
 // Transport error codes (frontend only)
 export type TransportErrorCode =
-  | 'TRANSPORT_NETWORK_ERROR'
-  | 'TRANSPORT_TIMEOUT'
-  | 'TRANSPORT_CORS_ERROR';
+  'TRANSPORT_NETWORK_ERROR' | 'TRANSPORT_TIMEOUT' | 'TRANSPORT_CORS_ERROR';
 
 // Error definition type (used in domain error definitions)
 export type ErrorDefinition = {

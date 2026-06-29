@@ -345,8 +345,7 @@ function renderRob2(doc: jsPDF, cl: ChecklistEntry, studyName: string, y: number
   }
 
   const overall = answers.overall as
-    | { judgement?: string | null; direction?: string | null }
-    | undefined;
+    { judgement?: string | null; direction?: string | null } | undefined;
   y = drawSubsectionHeader(doc, 'Overall Risk of Bias', y);
   if (overall?.judgement) {
     y = drawJudgmentBadge(doc, 'Judgment:', overall.judgement, y);
@@ -527,8 +526,7 @@ function renderRobinsI(doc: jsPDF, cl: ChecklistEntry, studyName: string, y: num
 
   y = drawSubsectionHeader(doc, 'Section D: Information sources', y);
   const sectionD = answers.sectionD as
-    | { sources?: Record<string, boolean>; otherSpecify?: string }
-    | undefined;
+    { sources?: Record<string, boolean>; otherSpecify?: string } | undefined;
   if (sectionD?.sources) {
     for (const source of robinsI.INFORMATION_SOURCES) {
       const checked = sectionD.sources[source] ? '[x]' : '[ ]';
@@ -544,8 +542,7 @@ function renderRobinsI(doc: jsPDF, cl: ChecklistEntry, studyName: string, y: num
   }
 
   const overall = answers.overall as
-    | { judgement?: string | null; direction?: string | null }
-    | undefined;
+    { judgement?: string | null; direction?: string | null } | undefined;
   y = drawSubsectionHeader(doc, 'Overall Risk of Bias', y);
   if (overall?.judgement) {
     y = drawJudgmentBadge(doc, 'Judgment:', overall.judgement, y);

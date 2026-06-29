@@ -103,8 +103,7 @@ describe('UserSession Durable Object', () => {
 
       await runInDurableObject(stub, async (_instance: UserSession, state: DurableObjectState) => {
         const pending = (await state.storage.get('pendingNotifications')) as
-          | Array<Record<string, unknown>>
-          | undefined;
+          Array<Record<string, unknown>> | undefined;
         expect(pending).toBeDefined();
         expect(pending!.length).toBe(1);
         expect(pending![0].type).toBe('project_added');
