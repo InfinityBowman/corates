@@ -11,7 +11,7 @@ import {
 
 export const lookupAdminStripeCustomerAction = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .inputValidator(
+  .validator(
     z.object({
       email: z.string().optional(),
       customerId: z.string().optional(),
@@ -23,7 +23,7 @@ export const lookupAdminStripeCustomerAction = createServerFn({ method: 'GET' })
 
 export const createAdminStripePortalLinkAction = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(
+  .validator(
     z.object({
       customerId: z.string(),
       returnUrl: z.string().optional(),
@@ -33,7 +33,7 @@ export const createAdminStripePortalLinkAction = createServerFn({ method: 'POST'
 
 export const getAdminStripeCustomerInvoicesAction = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .inputValidator(
+  .validator(
     z.object({
       customerId: z.string(),
       limit: z.number().optional(),
@@ -43,14 +43,14 @@ export const getAdminStripeCustomerInvoicesAction = createServerFn({ method: 'GE
 
 export const getAdminStripeCustomerPaymentMethodsAction = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ customerId: z.string() }))
+  .validator(z.object({ customerId: z.string() }))
   .handler(async ({ data, context: { session } }) =>
     getAdminStripeCustomerPaymentMethods(session, data),
   );
 
 export const getAdminStripeCustomerSubscriptionsAction = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ customerId: z.string() }))
+  .validator(z.object({ customerId: z.string() }))
   .handler(async ({ data, context: { session } }) =>
     getAdminStripeCustomerSubscriptions(session, data),
   );

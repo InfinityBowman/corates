@@ -12,7 +12,7 @@ import {
 
 export const getAdminProjectsAction = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .inputValidator(
+  .validator(
     z.object({
       page: z.number().optional(),
       limit: z.number().optional(),
@@ -24,28 +24,28 @@ export const getAdminProjectsAction = createServerFn({ method: 'GET' })
 
 export const getAdminProjectDetailsAction = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ projectId: z.string() }))
+  .validator(z.object({ projectId: z.string() }))
   .handler(async ({ data, context: { session, db } }) =>
     getAdminProjectDetails(session, db, data.projectId),
   );
 
 export const getAdminProjectDocStatsAction = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ projectId: z.string() }))
+  .validator(z.object({ projectId: z.string() }))
   .handler(async ({ data, context: { session, db } }) =>
     getAdminProjectDocStats(session, db, data.projectId),
   );
 
 export const removeAdminProjectMemberAction = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ projectId: z.string(), memberId: z.string() }))
+  .validator(z.object({ projectId: z.string(), memberId: z.string() }))
   .handler(async ({ data, context: { session, db } }) =>
     removeAdminProjectMember(session, db, data.projectId, data.memberId),
   );
 
 export const deleteAdminProjectAction = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ projectId: z.string() }))
+  .validator(z.object({ projectId: z.string() }))
   .handler(async ({ data, context: { session, db } }) =>
     deleteAdminProject(session, db, data.projectId),
   );

@@ -10,7 +10,7 @@ import {
 
 export const initiateAccountMerge = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(
+  .validator(
     z.object({
       targetEmail: z.string().optional(),
       targetOrcidId: z.string().optional(),
@@ -22,7 +22,7 @@ export const initiateAccountMerge = createServerFn({ method: 'POST' })
 
 export const verifyAccountMergeCode = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(
+  .validator(
     z.object({
       mergeToken: z.string().min(1),
       code: z.string().min(1),
@@ -34,14 +34,14 @@ export const verifyAccountMergeCode = createServerFn({ method: 'POST' })
 
 export const completeAccountMerge = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ mergeToken: z.string().min(1) }))
+  .validator(z.object({ mergeToken: z.string().min(1) }))
   .handler(async ({ data, context: { db, session } }) =>
     completeMergeRequest(db, session, data.mergeToken),
   );
 
 export const cancelAccountMerge = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ mergeToken: z.string().min(1) }))
+  .validator(z.object({ mergeToken: z.string().min(1) }))
   .handler(async ({ data, context: { db, session } }) =>
     cancelMergeRequest(db, session, data.mergeToken),
   );

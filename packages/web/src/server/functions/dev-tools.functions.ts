@@ -13,14 +13,14 @@ import {
 
 export const getDevTemplates = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ orgId: z.string(), projectId: z.string() }))
+  .validator(z.object({ orgId: z.string(), projectId: z.string() }))
   .handler(async ({ data, context: { session, db } }) =>
     listDevTemplates(session, db, data.orgId as OrgId, data.projectId as ProjectId),
   );
 
 export const applyTemplate = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(
+  .validator(
     z.object({
       orgId: z.string(),
       projectId: z.string(),
@@ -36,7 +36,7 @@ export const applyTemplate = createServerFn({ method: 'POST' })
 
 export const importState = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(
+  .validator(
     z.object({
       orgId: z.string(),
       projectId: z.string(),
@@ -52,21 +52,21 @@ export const importState = createServerFn({ method: 'POST' })
 
 export const resetState = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ orgId: z.string(), projectId: z.string() }))
+  .validator(z.object({ orgId: z.string(), projectId: z.string() }))
   .handler(async ({ data, context: { session, db } }) =>
     devResetState(session, db, data.orgId as OrgId, data.projectId as ProjectId),
   );
 
 export const exportState = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ orgId: z.string(), projectId: z.string() }))
+  .validator(z.object({ orgId: z.string(), projectId: z.string() }))
   .handler(async ({ data, context: { session, db } }) =>
     devExportState(session, db, data.orgId as OrgId, data.projectId as ProjectId),
   );
 
 export const addStudy = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(
+  .validator(
     z.object({
       orgId: z.string(),
       projectId: z.string(),

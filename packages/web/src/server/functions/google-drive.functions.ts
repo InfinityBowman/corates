@@ -22,7 +22,7 @@ export const getDrivePickerToken = createServerFn({ method: 'GET' })
 
 export const importFromDrive = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(
+  .validator(
     z.object({
       fileId: z.string().min(1),
       projectId: z.string().min(1),

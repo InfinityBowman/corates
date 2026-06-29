@@ -5,7 +5,7 @@ import { getAdminBillingLedger, getAdminBillingStuckStates } from './admin-billi
 
 export const getAdminBillingLedgerAction = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .inputValidator(
+  .validator(
     z.object({
       limit: z.number().optional(),
       status: z.string().optional(),
@@ -16,7 +16,7 @@ export const getAdminBillingLedgerAction = createServerFn({ method: 'GET' })
 
 export const getAdminBillingStuckStatesAction = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .inputValidator(
+  .validator(
     z.object({
       incompleteThreshold: z.number().optional(),
       limit: z.number().optional(),

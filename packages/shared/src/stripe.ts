@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
 import { createDomainError, SYSTEM_ERRORS } from './errors/index.js';
 
-export const STRIPE_API_VERSION = '2026-04-22.dahlia' as const;
+export const STRIPE_API_VERSION = '2026-06-24.dahlia' as const;
 
 export function createStripeClient(secretKey: string): Stripe {
   if (!secretKey) {

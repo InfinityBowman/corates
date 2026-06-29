@@ -17,22 +17,22 @@ export const getAdminStatsAction = createServerFn({ method: 'GET' })
 
 export const getAdminSignupStatsAction = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ days: z.number().optional() }))
+  .validator(z.object({ days: z.number().optional() }))
   .handler(async ({ data, context: { session, db } }) => getAdminSignupStats(session, db, data));
 
 export const getAdminOrgStatsAction = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ days: z.number().optional() }))
+  .validator(z.object({ days: z.number().optional() }))
   .handler(async ({ data, context: { session, db } }) => getAdminOrgStats(session, db, data));
 
 export const getAdminProjectStatsAction = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ days: z.number().optional() }))
+  .validator(z.object({ days: z.number().optional() }))
   .handler(async ({ data, context: { session, db } }) => getAdminProjectStats(session, db, data));
 
 export const getAdminWebhookStatsAction = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ days: z.number().optional() }))
+  .validator(z.object({ days: z.number().optional() }))
   .handler(async ({ data, context: { session, db } }) => getAdminWebhookStats(session, db, data));
 
 export const getAdminSubscriptionStatsAction = createServerFn({ method: 'GET' })
@@ -41,5 +41,5 @@ export const getAdminSubscriptionStatsAction = createServerFn({ method: 'GET' })
 
 export const getAdminRevenueStatsAction = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ months: z.number().optional() }))
+  .validator(z.object({ months: z.number().optional() }))
   .handler(async ({ data, context: { session } }) => getAdminRevenueStats(session, data));

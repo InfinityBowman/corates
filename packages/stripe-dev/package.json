@@ -9,6 +9,6 @@
     "dev": "concurrently -k -n auth,purchases -c yellow,blue \"stripe listen --forward-to http://localhost:3010/api/auth/stripe/webhook\" \"stripe listen --forward-to http://localhost:8788/api/billing/purchases/webhook\""
   },
   "devDependencies": {
-    "concurrently": "^9.2.1"
+    "concurrently": "^10.0.3"
   }
 }

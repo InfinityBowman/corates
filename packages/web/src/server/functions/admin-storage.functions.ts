@@ -13,7 +13,7 @@ export const getAdminStorageStatsAction = createServerFn({ method: 'GET' })
 
 export const listAdminStorageDocumentsAction = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .inputValidator(
+  .validator(
     z.object({
       cursor: z.string().optional(),
       limit: z.number().optional(),
@@ -27,5 +27,5 @@ export const listAdminStorageDocumentsAction = createServerFn({ method: 'GET' })
 
 export const deleteAdminStorageDocumentsAction = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ keys: z.array(z.string()) }))
+  .validator(z.object({ keys: z.array(z.string()) }))
   .handler(async ({ data, context: { session } }) => deleteAdminStorageDocuments(session, data));

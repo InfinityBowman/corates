@@ -31,19 +31,19 @@ export const getMembers = createServerFn({ method: 'GET' })
 
 export const checkCoupon = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ code: z.string() }))
+  .validator(z.object({ code: z.string() }))
   .handler(async ({ data }) => validateCoupon(data.code.trim()));
 
 export const checkPlanChange = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ targetPlan: z.string() }))
+  .validator(z.object({ targetPlan: z.string() }))
   .handler(async ({ data, context: { db, session } }) =>
     fetchPlanValidation(db, session, data.targetPlan),
   );
 
 export const checkoutSubscription = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(
+  .validator(
     z.object({
       tier: z.string().min(1),
       interval: z.enum(['monthly', 'yearly']),

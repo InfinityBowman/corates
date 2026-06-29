@@ -30,7 +30,7 @@ async function forwardAuthResponse(authResponse: Response) {
 
 export const getAdminUsersAction = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .inputValidator(
+  .validator(
     z.object({
       page: z.number().optional(),
       limit: z.number().optional(),
@@ -41,19 +41,19 @@ export const getAdminUsersAction = createServerFn({ method: 'GET' })
 
 export const getAdminUserDetailsAction = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ userId: z.string() }))
+  .validator(z.object({ userId: z.string() }))
   .handler(async ({ data, context: { session, db } }) =>
     getAdminUserDetails(session, db, data.userId),
   );
 
 export const deleteUserAction = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ userId: z.string() }))
+  .validator(z.object({ userId: z.string() }))
   .handler(async ({ data, context: { session, db } }) => deleteAdminUser(session, db, data.userId));
 
 export const banUserAction = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(
+  .validator(
     z.object({
       userId: z.string(),
       reason: z.string().optional(),
@@ -67,26 +67,26 @@ export const banUserAction = createServerFn({ method: 'POST' })
 
 export const unbanUserAction = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ userId: z.string() }))
+  .validator(z.object({ userId: z.string() }))
   .handler(async ({ data, context: { session, db } }) => unbanAdminUser(session, db, data.userId));
 
 export const revokeAllSessionsAction = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ userId: z.string() }))
+  .validator(z.object({ userId: z.string() }))
   .handler(async ({ data, context: { session, db } }) =>
     revokeAllAdminSessions(session, db, data.userId),
   );
 
 export const revokeSessionAction = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ userId: z.string(), sessionId: z.string() }))
+  .validator(z.object({ userId: z.string(), sessionId: z.string() }))
   .handler(async ({ data, context: { session, db } }) =>
     revokeAdminSession(session, db, data.userId, data.sessionId),
   );
 
 export const impersonateUserAction = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ userId: z.string() }))
+  .validator(z.object({ userId: z.string() }))
   .handler(async ({ data, context: { session, request } }) => {
     const authResponse = await impersonateAdminUser(session, request, data.userId);
     return forwardAuthResponse(authResponse);

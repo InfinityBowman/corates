@@ -21,14 +21,14 @@ import {
 
 export const getOrgProjects = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ orgId: z.string() }))
+  .validator(z.object({ orgId: z.string() }))
   .handler(async ({ data, context: { session, db } }) =>
     listOrgProjects(session, db, data.orgId as OrgId),
   );
 
 export const createProject = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(
+  .validator(
     z.object({
       orgId: z.string(),
       name: z.string().trim().min(1).max(255),
@@ -42,14 +42,14 @@ export const createProject = createServerFn({ method: 'POST' })
 
 export const getProjectById = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ orgId: z.string(), projectId: z.string() }))
+  .validator(z.object({ orgId: z.string(), projectId: z.string() }))
   .handler(async ({ data, context: { session, db } }) =>
     getProject(session, db, data.orgId as OrgId, data.projectId as ProjectId),
   );
 
 export const updateProject = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(
+  .validator(
     z.object({
       orgId: z.string(),
       projectId: z.string(),
@@ -64,7 +64,7 @@ export const updateProject = createServerFn({ method: 'POST' })
 
 export const deleteProject = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ orgId: z.string(), projectId: z.string() }))
+  .validator(z.object({ orgId: z.string(), projectId: z.string() }))
   .handler(async ({ data, context: { session, db } }) =>
     deleteProjectById(session, db, data.orgId as OrgId, data.projectId as ProjectId),
   );
@@ -73,14 +73,14 @@ export const deleteProject = createServerFn({ method: 'POST' })
 
 export const getProjectMembers = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ orgId: z.string(), projectId: z.string() }))
+  .validator(z.object({ orgId: z.string(), projectId: z.string() }))
   .handler(async ({ data, context: { session, db } }) =>
     listProjectMembers(session, db, data.orgId as OrgId, data.projectId as ProjectId),
   );
 
 export const addMemberToProject = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(
+  .validator(
     z.object({
       orgId: z.string(),
       projectId: z.string(),
@@ -96,7 +96,7 @@ export const addMemberToProject = createServerFn({ method: 'POST' })
 
 export const updateMemberRole = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(
+  .validator(
     z.object({
       orgId: z.string(),
       projectId: z.string(),
@@ -117,7 +117,7 @@ export const updateMemberRole = createServerFn({ method: 'POST' })
 
 export const removeMember = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(
+  .validator(
     z.object({
       orgId: z.string(),
       projectId: z.string(),
@@ -138,14 +138,14 @@ export const removeMember = createServerFn({ method: 'POST' })
 
 export const getInvitations = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ orgId: z.string(), projectId: z.string() }))
+  .validator(z.object({ orgId: z.string(), projectId: z.string() }))
   .handler(async ({ data, context: { session, db } }) =>
     listProjectInvitations(session, db, data.orgId as OrgId, data.projectId as ProjectId),
   );
 
 export const createInvitation = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(
+  .validator(
     z.object({
       orgId: z.string(),
       projectId: z.string(),
@@ -160,7 +160,7 @@ export const createInvitation = createServerFn({ method: 'POST' })
 
 export const cancelInvitation = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(
+  .validator(
     z.object({
       orgId: z.string(),
       projectId: z.string(),

@@ -17,12 +17,12 @@ export const listAdminDatabaseTablesAction = createServerFn({ method: 'GET' })
 
 export const getAdminTableSchemaAction = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ tableName: z.string() }))
+  .validator(z.object({ tableName: z.string() }))
   .handler(async ({ data, context: { session } }) => getAdminTableSchema(session, data.tableName));
 
 export const getAdminTableRowsAction = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .inputValidator(
+  .validator(
     z.object({
       tableName: z.string(),
       page: z.number().optional(),
@@ -52,5 +52,5 @@ export const getAdminPdfsByUserAction = createServerFn({ method: 'GET' })
 
 export const getAdminRecentUploadsAction = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ limit: z.number().optional() }))
+  .validator(z.object({ limit: z.number().optional() }))
   .handler(async ({ data, context: { session, db } }) => getAdminRecentUploads(session, db, data));

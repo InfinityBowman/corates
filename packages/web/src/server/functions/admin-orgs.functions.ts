@@ -19,7 +19,7 @@ import {
 
 export const getAdminOrgsAction = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .inputValidator(
+  .validator(
     z.object({
       page: z.number().optional(),
       limit: z.number().optional(),
@@ -30,21 +30,21 @@ export const getAdminOrgsAction = createServerFn({ method: 'GET' })
 
 export const getAdminOrgDetailsAction = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ orgId: z.string() }))
+  .validator(z.object({ orgId: z.string() }))
   .handler(async ({ data, context: { session, db } }) =>
     getAdminOrgDetails(session, db, data.orgId as OrgId),
   );
 
 export const getAdminOrgBillingAction = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ orgId: z.string() }))
+  .validator(z.object({ orgId: z.string() }))
   .handler(async ({ data, context: { session, db } }) =>
     getAdminOrgBilling(session, db, data.orgId as OrgId),
   );
 
 export const getAdminOrgBillingReconcileAction = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .inputValidator(
+  .validator(
     z.object({
       orgId: z.string(),
       checkStripe: z.boolean().optional(),
@@ -60,7 +60,7 @@ export const getAdminOrgBillingReconcileAction = createServerFn({ method: 'GET' 
 
 export const createGrantAction = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(
+  .validator(
     z.object({
       orgId: z.string(),
       type: z.enum(['trial', 'single_project']),
@@ -76,7 +76,7 @@ export const createGrantAction = createServerFn({ method: 'POST' })
 
 export const updateGrantAction = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(
+  .validator(
     z.object({
       orgId: z.string(),
       grantId: z.string(),
@@ -91,28 +91,28 @@ export const updateGrantAction = createServerFn({ method: 'POST' })
 
 export const revokeGrantAction = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ orgId: z.string(), grantId: z.string() }))
+  .validator(z.object({ orgId: z.string(), grantId: z.string() }))
   .handler(async ({ data, context: { session, db } }) =>
     revokeAdminGrant(session, db, data.orgId as OrgId, data.grantId as OrgAccessGrantId),
   );
 
 export const grantTrialAction = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ orgId: z.string() }))
+  .validator(z.object({ orgId: z.string() }))
   .handler(async ({ data, context: { session, db } }) =>
     grantAdminTrial(session, db, data.orgId as OrgId),
   );
 
 export const grantSingleProjectAction = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ orgId: z.string() }))
+  .validator(z.object({ orgId: z.string() }))
   .handler(async ({ data, context: { session, db } }) =>
     grantAdminSingleProject(session, db, data.orgId as OrgId),
   );
 
 export const createSubscriptionAction = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(
+  .validator(
     z.object({
       orgId: z.string(),
       plan: z.enum(['starter_team', 'team', 'unlimited_team']),
@@ -131,7 +131,7 @@ export const createSubscriptionAction = createServerFn({ method: 'POST' })
 
 export const updateSubscriptionAction = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(
+  .validator(
     z.object({
       orgId: z.string(),
       subscriptionId: z.string(),
@@ -153,7 +153,7 @@ export const updateSubscriptionAction = createServerFn({ method: 'POST' })
 
 export const cancelSubscriptionAction = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ orgId: z.string(), subscriptionId: z.string() }))
+  .validator(z.object({ orgId: z.string(), subscriptionId: z.string() }))
   .handler(async ({ data, context: { session, db } }) =>
     cancelAdminSubscription(session, db, data.orgId as OrgId, data.subscriptionId),
   );

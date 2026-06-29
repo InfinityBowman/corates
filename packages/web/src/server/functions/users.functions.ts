@@ -19,14 +19,14 @@ export const getMyProjects = createServerFn({ method: 'GET' })
 
 export const getUserProjects = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ userId: z.string() }))
+  .validator(z.object({ userId: z.string() }))
   .handler(async ({ data, context: { db, session } }) =>
     fetchUserProjects(db, session, data.userId),
   );
 
 export const searchUsers = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .inputValidator(
+  .validator(
     z.object({
       q: z.string(),
       projectId: z.string().optional(),

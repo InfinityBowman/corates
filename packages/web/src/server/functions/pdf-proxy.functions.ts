@@ -14,7 +14,7 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
 
 export const proxyPdfFetch = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator(z.object({ url: z.string().url() }))
+  .validator(z.object({ url: z.string().url() }))
   .handler(async ({ data, context: { session } }) => {
     const buffer = await proxyPdfFetchImpl(session, data);
     return { data: arrayBufferToBase64(buffer), byteLength: buffer.byteLength };
