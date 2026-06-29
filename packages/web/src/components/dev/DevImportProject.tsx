@@ -46,7 +46,15 @@ const TEMPLATES = [
   { name: 'studies-only', description: 'Studies but no checklists' },
   { name: 'amstar2-complete', description: 'Completed AMSTAR2 checklist' },
   { name: 'robins-i-progress', description: 'Partially completed ROBINS-I' },
-  { name: 'reconciliation-ready', description: 'Two checklists ready for reconciliation' },
+  { name: 'reconciliation-ready', description: 'Two AMSTAR2 checklists ready for reconciliation' },
+  {
+    name: 'reconciliation-ready-rob2',
+    description: 'Two ROB2 checklists ready for reconciliation',
+  },
+  {
+    name: 'reconciliation-ready-robins-i',
+    description: 'Two ROBINS-I checklists ready for reconciliation',
+  },
   { name: 'full-workflow', description: 'Studies in various workflow states' },
 ] as const;
 
@@ -61,6 +69,14 @@ const TEMPLATE_ROLES: Record<string, TemplateRole[]> = {
   'amstar2-complete': [{ id: 'user_reviewer1', label: 'Reviewer' }],
   'robins-i-progress': [{ id: 'user_reviewer1', label: 'Reviewer' }],
   'reconciliation-ready': [
+    { id: 'user_reviewer1', label: 'Reviewer 1' },
+    { id: 'user_reviewer2', label: 'Reviewer 2' },
+  ],
+  'reconciliation-ready-rob2': [
+    { id: 'user_reviewer1', label: 'Reviewer 1' },
+    { id: 'user_reviewer2', label: 'Reviewer 2' },
+  ],
+  'reconciliation-ready-robins-i': [
     { id: 'user_reviewer1', label: 'Reviewer 1' },
     { id: 'user_reviewer2', label: 'Reviewer 2' },
   ],

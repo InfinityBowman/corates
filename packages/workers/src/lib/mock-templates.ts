@@ -457,7 +457,8 @@ interface MockChecklist {
   status: string;
   createdAt: number;
   updatedAt: number;
-  answers: AMSTAR2Answers | ROBINSIAnswers;
+  outcomeId?: string;
+  answers: AMSTAR2Answers | ROBINSIAnswers | ROB2Answers;
 }
 
 interface MockPdf {
@@ -505,6 +506,7 @@ interface MockProjectData {
     description: string;
     createdAt: number;
     updatedAt: number;
+    outcomes?: Record<string, { name: string; createdAt: number }>;
   };
   members: MockMember[];
   studies: MockStudy[];
@@ -804,6 +806,188 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
     };
   },
 
+  'reconciliation-ready-rob2': () => {
+    const now = timestamp();
+    const studyId = generateId('study');
+    const checklist1Id = generateId('checklist');
+    const checklist2Id = generateId('checklist');
+    const outcomeId = generateId('outcome');
+
+    return {
+      version: 1,
+      meta: {
+        name: 'Reconciliation Ready Project (ROB2)',
+        description: 'Project with two completed ROB2 checklists ready for reconciliation',
+        createdAt: now,
+        updatedAt: now,
+        outcomes: {
+          [outcomeId]: { name: 'All-cause mortality', createdAt: now },
+        },
+      },
+      members: [
+        {
+          userId: 'user_reviewer1',
+          role: 'reviewer',
+          joinedAt: now,
+          name: 'Reviewer One',
+          email: 'reviewer1@example.com',
+          givenName: 'Reviewer',
+          image: null,
+        },
+        {
+          userId: 'user_reviewer2',
+          role: 'reviewer',
+          joinedAt: now,
+          name: 'Reviewer Two',
+          email: 'reviewer2@example.com',
+          givenName: 'Reviewer',
+          image: null,
+        },
+      ],
+      studies: [
+        {
+          id: studyId,
+          name: 'Sterne et al. 2019',
+          description: '',
+          createdAt: now,
+          updatedAt: now,
+          originalTitle: 'RoB 2: a revised tool for assessing risk of bias in randomised trials',
+          firstAuthor: 'Sterne',
+          publicationYear: 2019,
+          authors: 'Sterne JAC, Savovic J, Page MJ, Elbers RG, Blencowe NS, Boutron I, et al.',
+          journal: 'BMJ',
+          doi: '10.1136/bmj.l4898',
+          abstract: '',
+          pdfUrl: null,
+          pdfSource: null,
+          pdfAccessible: false,
+          reviewer1: 'user_reviewer1',
+          reviewer2: 'user_reviewer2',
+          checklists: [
+            {
+              id: checklist1Id,
+              type: 'ROB2',
+              title: 'Reviewer 1 Assessment',
+              assignedTo: 'user_reviewer1',
+              status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+              createdAt: now,
+              updatedAt: now,
+              outcomeId,
+              // Both reviewers must share the same aim, else reconciliation is
+              // gated on resolving the aim mismatch before domain assessment.
+              answers: generateROB2Answers({ fill: 'mixed', seed: 11111, isAdhering: false }),
+            },
+            {
+              id: checklist2Id,
+              type: 'ROB2',
+              title: 'Reviewer 2 Assessment',
+              assignedTo: 'user_reviewer2',
+              status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+              createdAt: now,
+              updatedAt: now,
+              outcomeId,
+              answers: generateROB2Answers({ fill: 'mixed', seed: 22222, isAdhering: false }),
+            },
+          ],
+          pdfs: [],
+          reconciliation: null,
+        },
+      ],
+    };
+  },
+
+  'reconciliation-ready-robins-i': () => {
+    const now = timestamp();
+    const studyId = generateId('study');
+    const checklist1Id = generateId('checklist');
+    const checklist2Id = generateId('checklist');
+    const outcomeId = generateId('outcome');
+
+    return {
+      version: 1,
+      meta: {
+        name: 'Reconciliation Ready Project (ROBINS-I)',
+        description: 'Project with two completed ROBINS-I checklists ready for reconciliation',
+        createdAt: now,
+        updatedAt: now,
+        outcomes: {
+          [outcomeId]: { name: 'All-cause mortality', createdAt: now },
+        },
+      },
+      members: [
+        {
+          userId: 'user_reviewer1',
+          role: 'reviewer',
+          joinedAt: now,
+          name: 'Reviewer One',
+          email: 'reviewer1@example.com',
+          givenName: 'Reviewer',
+          image: null,
+        },
+        {
+          userId: 'user_reviewer2',
+          role: 'reviewer',
+          joinedAt: now,
+          name: 'Reviewer Two',
+          email: 'reviewer2@example.com',
+          givenName: 'Reviewer',
+          image: null,
+        },
+      ],
+      studies: [
+        {
+          id: studyId,
+          name: 'Sterne et al. 2016',
+          description: '',
+          createdAt: now,
+          updatedAt: now,
+          originalTitle:
+            'ROBINS-I: a tool for assessing risk of bias in non-randomised studies of interventions',
+          firstAuthor: 'Sterne',
+          publicationYear: 2016,
+          authors: 'Sterne JAC, Hernan MA, Reeves BC, Savovic J, Berkman ND, Viswanathan M, et al.',
+          journal: 'BMJ',
+          doi: '10.1136/bmj.i4919',
+          abstract: '',
+          pdfUrl: null,
+          pdfSource: null,
+          pdfAccessible: false,
+          reviewer1: 'user_reviewer1',
+          reviewer2: 'user_reviewer2',
+          checklists: [
+            {
+              id: checklist1Id,
+              type: 'ROBINS_I',
+              title: 'Reviewer 1 Assessment',
+              assignedTo: 'user_reviewer1',
+              status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+              createdAt: now,
+              updatedAt: now,
+              outcomeId,
+              // Both reviewers must share the same analysis (intention-to-treat vs
+              // per-protocol), else they fill different domains (1a vs 1b) and the
+              // comparison misaligns.
+              answers: generateROBINSIAnswers({ fill: 'complete', seed: 11111, isPerProtocol: false }),
+            },
+            {
+              id: checklist2Id,
+              type: 'ROBINS_I',
+              title: 'Reviewer 2 Assessment',
+              assignedTo: 'user_reviewer2',
+              status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+              createdAt: now,
+              updatedAt: now,
+              outcomeId,
+              answers: generateROBINSIAnswers({ fill: 'complete', seed: 22222, isPerProtocol: false }),
+            },
+          ],
+          pdfs: [],
+          reconciliation: null,
+        },
+      ],
+    };
+  },
+
   'full-workflow': () => {
     const now = timestamp();
     const study1Id = generateId('study');
@@ -984,7 +1168,9 @@ export function getTemplateDescriptions(): Record<string, string> {
     'studies-only': 'Project with studies but no checklists attached',
     'amstar2-complete': 'Single study with completed AMSTAR2 checklist',
     'robins-i-progress': 'Study with partially completed ROBINS-I checklist',
-    'reconciliation-ready': 'Two completed checklists ready for reconciliation',
+    'reconciliation-ready': 'Two completed AMSTAR2 checklists ready for reconciliation',
+    'reconciliation-ready-rob2': 'Two completed ROB2 checklists ready for reconciliation',
+    'reconciliation-ready-robins-i': 'Two completed ROBINS-I checklists ready for reconciliation',
     'full-workflow': 'Complex project with studies in various workflow states',
   };
 }
