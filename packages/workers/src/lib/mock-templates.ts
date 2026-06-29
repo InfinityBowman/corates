@@ -1,22 +1,27 @@
-import { CHECKLIST_STATUS, createAMSTAR2Checklist } from '@corates/shared';
-
-const ROBINS_I_DOMAINS: Record<string, string[]> = {
-  domain1a: ['d1a_1', 'd1a_2', 'd1a_3', 'd1a_4'],
-  domain1b: ['d1b_1', 'd1b_2', 'd1b_3', 'd1b_4', 'd1b_5'],
-  domain2: ['d2_1', 'd2_2', 'd2_3', 'd2_4', 'd2_5'],
-  domain3: ['d3_1', 'd3_2', 'd3_3', 'd3_4', 'd3_5', 'd3_6', 'd3_7'],
-  domain4: ['d4_1', 'd4_2'],
-  domain5: ['d5_1', 'd5_2', 'd5_3'],
-  domain6: ['d6_1', 'd6_2', 'd6_3'],
-};
+import { CHECKLIST_STATUS, createAMSTAR2Checklist, createROBINSIChecklist } from '@corates/shared';
 
 const ROBINS_I_RESPONSES = ['Y', 'PY', 'PN', 'N', 'NI', 'NA'];
-const ROBINS_I_JUDGEMENTS = ['Low', 'Low except confounding', 'Moderate', 'Serious', 'Critical'];
 const ROBINS_I_DIRECTIONS = [
   'Upward bias (overestimate the effect)',
   'Downward bias (underestimate the effect)',
   'Unpredictable',
 ];
+
+// Per-domain answer pools that the ROBINS-I scoring engine resolves to a
+// COMPLETE domain judgement when every question in the domain is set to one of
+// them. The figures derive each domain (and the overall) from the per-question
+// answers, so the 'complete' fill must use these to render a full risk-of-bias
+// row. Verified against scoreRobinsDomain in @corates/shared; the spread of
+// answers yields varied judgements (Critical/Serious/Moderate/Low) for figures.
+const ROBINS_I_COMPLETE_ANSWERS: Record<string, string[]> = {
+  domain1a: ['Y', 'PY'],
+  domain1b: ['Y', 'PY', 'PN', 'N'],
+  domain2: ['PN', 'N'],
+  domain3: ['Y', 'PY', 'PN', 'N', 'NI'],
+  domain4: ['Y', 'PY'],
+  domain5: ['Y', 'PY', 'PN', 'N', 'NI'],
+  domain6: ['Y', 'PY', 'PN', 'N', 'NI'],
+};
 
 type RngFunction = () => number;
 
@@ -177,11 +182,22 @@ export function generateROBINSIAnswers(options: ROBINSIOptions = {}): ROBINSIAns
       additional: [],
     },
     overall: {
-      judgement: fill === 'complete' ? pickRandom(rng, ROBINS_I_JUDGEMENTS) : null,
+      // Derived by the figures from the per-question answers (judgementSource
+      // 'auto'); the app ignores any stored judgement unless it was a manual
+      // override, so we leave it null and let the scoring engine compute it.
+      judgement: null,
       judgementSource: 'auto',
-      direction: fill === 'complete' ? pickRandom(rng, ROBINS_I_DIRECTIONS) : null,
+      direction: null,
     },
   };
+
+  // Domain question keys come from the shared skeleton so they always match the
+  // real schema (e.g. domain4's d4_1..d4_11), which the scoring engine requires
+  // to reach a complete judgement.
+  const skeleton = createROBINSIChecklist({ name: 'mock', id: 'mock' }) as unknown as Record<
+    string,
+    { answers?: Record<string, unknown> }
+  >;
 
   const domainsToFill =
     isPerProtocol ?
@@ -189,18 +205,25 @@ export function generateROBINSIAnswers(options: ROBINSIOptions = {}): ROBINSIAns
     : ['domain1a', 'domain2', 'domain3', 'domain4', 'domain5', 'domain6'];
 
   for (const domainKey of domainsToFill) {
-    const questionKeys = ROBINS_I_DOMAINS[domainKey];
-    if (!questionKeys) continue;
+    const questionKeys = Object.keys(skeleton[domainKey]?.answers ?? {});
+    if (questionKeys.length === 0) continue;
+
+    // For 'complete', fill every question in the domain with a single answer
+    // drawn from its complete-scoring pool so the domain resolves to a real
+    // judgement. Sparse fills ('partial'/'random') stay deliberately incomplete.
+    const completeAnswer = pickRandom(rng, ROBINS_I_COMPLETE_ANSWERS[domainKey] ?? ['N']);
 
     const domainAnswers: Record<string, { answer: string | null; comment: string }> = {};
     for (const qKey of questionKeys) {
-      domainAnswers[qKey] = {
-        answer:
-          fill === 'empty' || (fill === 'partial' && rng() > 0.7) ?
-            null
-          : pickRandom(rng, ROBINS_I_RESPONSES),
-        comment: '',
-      };
+      let answer: string | null = null;
+      if (fill === 'complete') {
+        answer = completeAnswer;
+      } else if (fill === 'random') {
+        answer = pickRandom(rng, ROBINS_I_RESPONSES);
+      } else if (fill === 'partial') {
+        answer = rng() > 0.7 ? null : pickRandom(rng, ROBINS_I_RESPONSES);
+      }
+      domainAnswers[qKey] = { answer, comment: '' };
     }
 
     const hasDirection =
@@ -208,7 +231,7 @@ export function generateROBINSIAnswers(options: ROBINSIOptions = {}): ROBINSIAns
 
     answers[domainKey] = {
       answers: domainAnswers,
-      judgement: fill === 'complete' ? pickRandom(rng, ROBINS_I_JUDGEMENTS) : null,
+      judgement: null,
       judgementSource: 'auto',
       ...(hasDirection ?
         { direction: fill === 'complete' ? pickRandom(rng, ROBINS_I_DIRECTIONS) : null }
@@ -267,7 +290,6 @@ const ROB2_STANDARD_RESPONSES = ['Y', 'PY', 'PN', 'N', 'NI'] as const;
 const ROB2_WITH_NA_RESPONSES = ['NA', 'Y', 'PY', 'PN', 'N', 'NI'] as const;
 const ROB2_JUDGEMENTS = ['Low', 'Some concerns', 'High'] as const;
 const ROB2_DIRECTIONS = [
-  'NA',
   'Favours experimental',
   'Favours comparator',
   'Towards null',

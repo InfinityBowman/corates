@@ -12,7 +12,7 @@ interface SocialButtonProps {
 
 export function GoogleButton({ loading, onClick, iconOnly }: SocialButtonProps) {
   const baseClass =
-    'border border-border hover:bg-muted text-secondary-foreground font-semibold rounded-lg sm:rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center';
+    'border border-border hover:bg-muted text-secondary-foreground font-semibold rounded-lg sm:rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center focus-visible:border-ring focus-visible:ring-ring/50 outline-none focus-visible:ring-3';
 
   if (iconOnly) {
     return (
@@ -57,7 +57,7 @@ export function GoogleButton({ loading, onClick, iconOnly }: SocialButtonProps) 
 
 export function OrcidButton({ loading, onClick, iconOnly }: SocialButtonProps) {
   const baseClass =
-    'border border-border hover:bg-muted text-secondary-foreground font-semibold rounded-lg sm:rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center';
+    'border border-border hover:bg-muted text-secondary-foreground font-semibold rounded-lg sm:rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center focus-visible:border-ring focus-visible:ring-ring/50 outline-none focus-visible:ring-3';
 
   if (iconOnly) {
     return (
@@ -111,7 +111,7 @@ export function SocialAuthContainer({ children, buttonCount = 1 }: SocialAuthCon
 
 export function AuthDivider() {
   return (
-    <div className='relative my-4 sm:my-5'>
+    <div className='relative my-2 sm:my-3'>
       <div className='absolute inset-0 flex items-center'>
         <div className='border-border w-full border-t' />
       </div>

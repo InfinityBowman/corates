@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { useAuthStore, selectUser, selectUserAvatarUrl } from '@/stores/authStore';
 import { showToast } from '@/components/ui/toast';
-import { SimpleEditable } from '@/components/ui/editable';
+import { InlineEdit } from '@/components/ui/inline-edit';
 import { API_BASE } from '@/config/api';
 import { compressImageFile } from '@/lib/imageUtils.js';
 import { syncProfileToProjects } from '@/lib/syncUtils';
@@ -199,12 +199,12 @@ export function ProfileInfoSection() {
               <label className='text-muted-foreground mb-1 block text-xs font-medium tracking-wide uppercase'>
                 First Name
               </label>
-              <SimpleEditable
-                activationMode='click'
+              <InlineEdit
                 value={firstName || 'Add first name'}
-                onSubmit={handleFirstNameChange}
+                onCommit={handleFirstNameChange}
                 showEditIcon
                 placeholder='First name'
+                ariaLabel='Edit first name'
                 className='text-foreground text-lg font-medium'
               />
             </div>
@@ -212,12 +212,12 @@ export function ProfileInfoSection() {
               <label className='text-muted-foreground mb-1 block text-xs font-medium tracking-wide uppercase'>
                 Last Name
               </label>
-              <SimpleEditable
-                activationMode='click'
+              <InlineEdit
                 value={lastName || 'Add last name'}
-                onSubmit={handleLastNameChange}
+                onCommit={handleLastNameChange}
                 showEditIcon
                 placeholder='Last name'
+                ariaLabel='Edit last name'
                 className='text-foreground text-lg font-medium'
               />
             </div>

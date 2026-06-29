@@ -3,6 +3,7 @@
  */
 
 import { Loader2Icon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 interface PrimaryButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -20,10 +21,10 @@ export function PrimaryButton({
   ...props
 }: PrimaryButtonProps) {
   return (
-    <button
+    <Button
       type={type}
       className={cn(
-        'bg-primary text-primary-foreground hover:bg-primary/90 flex w-full items-center justify-center rounded-lg py-2 text-sm font-bold shadow transition disabled:cursor-not-allowed disabled:opacity-50 sm:rounded-xl sm:py-3 sm:text-base',
+        'h-auto w-full rounded-lg border-0 py-2 text-sm font-bold shadow transition sm:rounded-xl sm:py-3 sm:text-base',
         className,
       )}
       disabled={disabled || loading}
@@ -36,7 +37,7 @@ export function PrimaryButton({
           <span aria-live='polite'>{loadingText || 'Loading...'}</span>
         </span>
       : children}
-    </button>
+    </Button>
   );
 }
 
@@ -51,16 +52,17 @@ export function SecondaryButton({
   ...props
 }: SecondaryButtonProps) {
   return (
-    <button
+    <Button
+      variant='outline'
       type={type}
       className={cn(
-        'border-border text-secondary-foreground hover:bg-muted w-full rounded-lg border py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 sm:rounded-xl sm:py-3 sm:text-base',
+        'h-auto w-full rounded-lg py-2 text-sm font-semibold transition sm:rounded-xl sm:py-3 sm:text-base',
         className,
       )}
       {...props}
     >
       {children}
-    </button>
+    </Button>
   );
 }
 

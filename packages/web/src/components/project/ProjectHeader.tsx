@@ -3,17 +3,9 @@
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { ArrowLeftIcon, PencilIcon } from 'lucide-react';
+import { ArrowLeftIcon } from 'lucide-react';
 import { useProjectContext } from './ProjectContext';
-import {
-  Editable,
-  EditableArea,
-  EditableInput,
-  EditableTextarea,
-  EditablePreview,
-  EditableEditTrigger,
-  EditableContext,
-} from '@/components/ui/editable';
+import { InlineEdit } from '@/components/ui/inline-edit';
 
 interface ProjectHeaderProps {
   name?: string;
@@ -47,9 +39,10 @@ export function ProjectHeader({
   }, [description]);
 
   const handleNameCommit = useCallback(
-    async (details: { value: string }) => {
-      const newName = details.value.trim();
+    async (value: string) => {
+      const newName = value.trim();
       if (newName && newName !== name) {
+        setLocalName(newName);
         try {
           await onRename?.(newName);
         } catch (error) {
@@ -65,10 +58,11 @@ export function ProjectHeader({
   );
 
   const handleDescriptionCommit = useCallback(
-    async (details: { value: string }) => {
-      const newDesc = details.value.trim();
+    async (value: string) => {
+      const newDesc = value.trim();
       const currentDesc = description || '';
       if (newDesc !== currentDesc) {
+        setLocalDescription(newDesc);
         try {
           await onUpdateDescription?.(newDesc);
         } catch (error) {
@@ -93,34 +87,15 @@ export function ProjectHeader({
         <div className='min-w-0'>
           {/* Project Name */}
           <div className='flex items-center gap-2'>
-            <Editable
+            <InlineEdit
               value={localName}
-              onValueChange={(details: any) => setLocalName(details.value)}
-              onValueCommit={handleNameCommit}
-              activationMode='click'
-              submitMode='both'
+              onCommit={handleNameCommit}
               disabled={!canEdit}
+              showEditIcon={canEdit}
               placeholder='Project name...'
-              className='group'
-            >
-              <div className='flex items-center gap-1'>
-                <EditableArea className='hover:bg-muted rounded px-1 transition-colors'>
-                  <EditableInput className='text-foreground bg-transparent text-lg font-semibold outline-none' />
-                  <EditablePreview className='text-foreground cursor-text text-lg font-semibold' />
-                </EditableArea>
-                {canEdit && (
-                  <EditableContext>
-                    {(api: any) =>
-                      !api.editing && (
-                        <EditableEditTrigger className='text-muted-foreground/60 hover:text-muted-foreground rounded p-1 opacity-0 transition-colors group-hover:opacity-100'>
-                          <PencilIcon className='size-3.5' />
-                        </EditableEditTrigger>
-                      )
-                    }
-                  </EditableContext>
-                )}
-              </div>
-            </Editable>
+              ariaLabel='Edit project name'
+              className='text-foreground text-lg font-semibold'
+            />
             {userRole && (
               <span className='border-info-border bg-info-bg text-info inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium capitalize'>
                 {userRole}
@@ -129,38 +104,18 @@ export function ProjectHeader({
           </div>
 
           {/* Project Description */}
-          <Editable
-            value={localDescription}
-            onValueChange={(details: any) => setLocalDescription(details.value)}
-            onValueCommit={handleDescriptionCommit}
-            activationMode='click'
-            submitMode='both'
-            autoResize
-            disabled={!canEdit}
-            placeholder='Add a project description...'
-            className='group mt-0.5 w-full max-w-2xl'
-          >
-            <div className='flex items-center gap-1'>
-              <EditableArea className='hover:bg-muted w-full rounded px-1 py-0.5 transition-colors'>
-                <EditableTextarea
-                  className='text-muted-foreground min-h-6 w-full text-sm'
-                  rows={1}
-                />
-                <EditablePreview className='text-muted-foreground cursor-text text-sm' />
-              </EditableArea>
-              {canEdit && (
-                <EditableContext>
-                  {(api: any) =>
-                    !api.editing && (
-                      <EditableEditTrigger className='text-muted-foreground/60 hover:text-muted-foreground self-start rounded p-1 opacity-0 transition-colors group-hover:opacity-100'>
-                        <PencilIcon className='size-3' />
-                      </EditableEditTrigger>
-                    )
-                  }
-                </EditableContext>
-              )}
-            </div>
-          </Editable>
+          <div className='mt-0.5 w-full max-w-2xl'>
+            <InlineEdit
+              value={localDescription}
+              onCommit={handleDescriptionCommit}
+              disabled={!canEdit}
+              showEditIcon={canEdit}
+              multiline
+              placeholder='Add a project description...'
+              ariaLabel='Edit project description'
+              className='text-muted-foreground text-sm'
+            />
+          </div>
         </div>
       </div>
     </div>

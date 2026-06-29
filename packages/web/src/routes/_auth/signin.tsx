@@ -5,12 +5,8 @@ import { handleError } from '@/lib/error-utils';
 import { useOAuthError } from '@/hooks/useOAuthError';
 import { useBfcacheReset } from '@/hooks/useBfcacheReset';
 import { getLastLoginMethod } from '@/lib/lastLoginMethod';
-import {
-  PasswordInput,
-  PasswordInputControl,
-  PasswordInputField,
-  PasswordInputVisibilityTrigger,
-} from '@/components/ui/password-input';
+import { PasswordInput } from '@/components/ui/password-input';
+import { Input } from '@/components/ui/input';
 import { ErrorMessage } from '@/components/auth/ErrorMessage';
 import { PrimaryButton, AuthLink } from '@/components/auth/AuthButtons';
 import {
@@ -252,14 +248,14 @@ function SignInPage() {
                       >
                         Email
                       </label>
-                      <input
+                      <Input
                         type='email'
                         autoComplete='email'
                         autoCapitalize='off'
                         spellCheck='false'
                         value={email}
                         onChange={e => setEmail(e.target.value)}
-                        className='border-border focus:ring-primary w-full rounded-lg border py-2 pr-3 pl-3 text-xs transition focus:border-transparent focus:ring-2 focus:outline-none sm:pr-4 sm:pl-4 sm:text-sm'
+                        className='h-auto py-2 text-sm'
                         required
                         id='email-input'
                         placeholder='you@example.com'
@@ -275,20 +271,18 @@ function SignInPage() {
                       >
                         Password
                       </label>
-                      <PasswordInput autoComplete='current-password' disabled={loading} required>
-                        <PasswordInputControl>
-                          <PasswordInputField
-                            id='password-input'
-                            value={password}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                              setPassword(e.target.value)
-                            }
-                            placeholder='Password'
-                            aria-describedby={displayError ? 'signin-error' : undefined}
-                          />
-                          <PasswordInputVisibilityTrigger />
-                        </PasswordInputControl>
-                      </PasswordInput>
+                      <PasswordInput
+                        id='password-input'
+                        autoComplete='current-password'
+                        disabled={loading}
+                        required
+                        value={password}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setPassword(e.target.value)
+                        }
+                        placeholder='Password'
+                        aria-describedby={displayError ? 'signin-error' : undefined}
+                      />
                     </div>
 
                     <ErrorMessage error={displayError} id='signin-error' />

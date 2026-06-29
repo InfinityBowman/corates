@@ -10,6 +10,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { handleError } from '@/lib/error-utils';
 import { ErrorMessage } from './ErrorMessage';
 import { PrimaryButton } from './AuthButtons';
+import { Input } from '@/components/ui/input';
 
 interface TwoFactorVerifyProps {
   onCancel: () => void;
@@ -76,7 +77,7 @@ export function TwoFactorVerify({ onCancel }: TwoFactorVerifyProps) {
           >
             {useBackupCode ? 'Backup Code' : 'Verification Code'}
           </label>
-          <input
+          <Input
             type='text'
             inputMode={useBackupCode ? 'text' : 'numeric'}
             pattern={useBackupCode ? undefined : '[0-9]*'}
@@ -85,7 +86,7 @@ export function TwoFactorVerify({ onCancel }: TwoFactorVerifyProps) {
             onChange={e =>
               setCode(useBackupCode ? e.target.value : e.target.value.replace(/\D/g, ''))
             }
-            className='border-border focus:ring-primary w-full rounded-lg border px-4 py-3 text-center font-mono text-xl tracking-widest focus:border-transparent focus:ring-2 focus:outline-none'
+            className='h-auto py-3 text-center font-mono text-xl tracking-widest'
             placeholder={useBackupCode ? 'XXXX-XXXX-XXXX' : '000000'}
             disabled={loading}
             id='2fa-code'

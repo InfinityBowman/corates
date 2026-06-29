@@ -12,7 +12,7 @@ import {
   FileIcon,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { SimpleEditable } from '@/components/ui/editable';
+import { InlineEdit } from '@/components/ui/inline-edit';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -69,13 +69,12 @@ export function LocalAppraisalCard({
         {/* Content */}
         <div className='min-w-0 flex-1'>
           {onRename ?
-            <SimpleEditable
-              activationMode='click'
-              variant='inline'
+            <InlineEdit
               className='text-foreground truncate text-sm font-medium'
               value={checklist.name || 'Untitled'}
               showEditIcon
-              onSubmit={newName => onRename(newName)}
+              ariaLabel='Rename checklist'
+              onCommit={newName => onRename(newName)}
             />
           : <h4 className='text-foreground truncate text-sm font-medium'>{checklist.name}</h4>}
           <div className='text-muted-foreground/70 mt-0.5 flex items-center gap-2 text-xs'>

@@ -214,7 +214,8 @@ class ProjectDocBase extends DurableObject<Env> {
     if (this.doc) this.persistence.compact(this.doc);
   }
   /**
-   * fetch() is kept only for WebSocket upgrade and the GET / project info path
+   * fetch() is kept only for the WebSocket upgrade. Project info is served by
+   * the getProjectInfo() RPC; all other HTTP methods are rejected.
    */
   async fetch(request: Request): Promise<Response> {
     const upgradeHeader = request.headers.get('Upgrade');
@@ -222,21 +223,6 @@ class ProjectDocBase extends DurableObject<Env> {
     try {
       if (upgradeHeader === 'websocket') {
         return await this.handleWebSocket(request);
-      }
-
-      // GET returns project-level info (authenticated HTTP)
-      if (request.method === 'GET') {
-        const { user } = await verifyAuth(request, this.env);
-        if (!user) {
-          return new Response(JSON.stringify({ error: 'Authentication required' }), {
-            status: 401,
-            headers: { 'Content-Type': 'application/json' },
-          });
-        }
-        const info = await this.getProjectInfo();
-        return new Response(JSON.stringify(info), {
-          headers: { 'Content-Type': 'application/json' },
-        });
       }
 
       return new Response(JSON.stringify({ error: 'Method not allowed' }), {

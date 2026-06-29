@@ -4,7 +4,7 @@
 
 import { useMemo, useCallback } from 'react';
 import { ChevronRightIcon, UsersIcon, Trash2Icon, MoreVerticalIcon } from 'lucide-react';
-import { SimpleEditable } from '@/components/ui/editable';
+import { InlineEdit } from '@/components/ui/inline-edit';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -110,12 +110,12 @@ export function StudyCardHeader({
       </div>
 
       <div className='min-w-0 flex-1'>
-        <SimpleEditable
+        <InlineEdit
           key={studyName}
-          activationMode='click'
           value={studyName}
-          onSubmit={handleNameChange}
+          onCommit={handleNameChange}
           showEditIcon
+          ariaLabel='Rename study'
           className='text-foreground -ml-2 font-medium'
         />
         {citationLine && (

@@ -5,6 +5,7 @@ import { useAuthStore, selectUser, selectIsAuthLoading } from '@/stores/authStor
 import { handleError } from '@/lib/error-utils';
 import { acceptInvitation } from '@/server/functions/invitations.functions';
 import { showToast } from '@/components/ui/toast';
+import { Input } from '@/components/ui/input';
 import {
   hasPendingPlan,
   clearPendingPlan,
@@ -321,7 +322,7 @@ function CompleteProfilePage() {
                 >
                   First Name
                 </label>
-                <input
+                <Input
                   type='text'
                   autoComplete='given-name'
                   autoCapitalize='words'
@@ -331,7 +332,7 @@ function CompleteProfilePage() {
                     setHasEditedName(true);
                     setFirstName(e.target.value);
                   }}
-                  className='border-border focus:ring-primary w-full rounded-lg border px-3 py-2 text-sm transition focus:border-transparent focus:ring-2 focus:outline-none'
+                  className='h-auto py-2 text-sm'
                   required
                   id='first-name-input'
                   placeholder='First'
@@ -345,7 +346,7 @@ function CompleteProfilePage() {
                 >
                   Last Name <span className='text-muted-foreground/70 font-normal'>(optional)</span>
                 </label>
-                <input
+                <Input
                   type='text'
                   autoComplete='family-name'
                   autoCapitalize='words'
@@ -355,7 +356,7 @@ function CompleteProfilePage() {
                     setHasEditedName(true);
                     setLastName(e.target.value);
                   }}
-                  className='border-border focus:ring-primary w-full rounded-lg border px-3 py-2 text-sm transition focus:border-transparent focus:ring-2 focus:outline-none'
+                  className='h-auto py-2 text-sm'
                   id='last-name-input'
                   placeholder='Last'
                   aria-describedby={error ? 'profile-step1-error' : undefined}
@@ -380,11 +381,11 @@ function CompleteProfilePage() {
                 </SelectContent>
               </Select>
               {isCustomTitle && (
-                <input
+                <Input
                   type='text'
                   value={customTitle}
                   onChange={e => setCustomTitle(e.target.value)}
-                  className='border-border focus:ring-primary w-full rounded-lg border px-3 py-2 text-sm transition focus:border-transparent focus:ring-2 focus:outline-none'
+                  className='h-auto py-2 text-sm'
                   placeholder='Enter your title'
                   maxLength={50}
                 />
@@ -416,13 +417,13 @@ function CompleteProfilePage() {
               >
                 University / Institution
               </label>
-              <input
+              <Input
                 type='text'
                 id='institution-input'
                 autoComplete='organization'
                 value={institution}
                 onChange={e => setInstitution(e.target.value)}
-                className='border-border focus:ring-primary w-full rounded-lg border px-3 py-2 text-sm transition focus:border-transparent focus:ring-2 focus:outline-none'
+                className='h-auto py-2 text-sm'
                 placeholder='e.g., University of Oxford'
                 maxLength={200}
               />
@@ -435,12 +436,12 @@ function CompleteProfilePage() {
               >
                 Department / Faculty
               </label>
-              <input
+              <Input
                 type='text'
                 id='department-input'
                 value={department}
                 onChange={e => setDepartment(e.target.value)}
-                className='border-border focus:ring-primary w-full rounded-lg border px-3 py-2 text-sm transition focus:border-transparent focus:ring-2 focus:outline-none'
+                className='h-auto py-2 text-sm'
                 placeholder='e.g., Department of Medicine'
                 maxLength={200}
               />
@@ -451,13 +452,13 @@ function CompleteProfilePage() {
             <div className='flex gap-3'>
               <StepsPrevTrigger
                 type='button'
-                className='border-border bg-card text-secondary-foreground hover:bg-muted focus:ring-primary flex-1 rounded-lg border px-4 py-2.5 text-sm font-semibold transition focus:ring-2 focus:outline-none'
+                className='border-border bg-card text-secondary-foreground hover:bg-muted focus-visible:border-ring focus-visible:ring-ring/50 flex-1 rounded-lg border px-4 py-2.5 text-sm font-semibold transition outline-none focus-visible:ring-3'
               >
                 Back
               </StepsPrevTrigger>
               <button
                 type='submit'
-                className='bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-primary flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition focus:ring-2 focus:outline-none'
+                className='bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:border-ring focus-visible:ring-ring/50 flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition outline-none focus-visible:ring-3'
               >
                 Next
               </button>
@@ -498,7 +499,7 @@ function CompleteProfilePage() {
             <div className='flex gap-3'>
               <StepsPrevTrigger
                 type='button'
-                className='border-border bg-card text-secondary-foreground hover:bg-muted focus:ring-primary flex-1 rounded-lg border px-4 py-2.5 text-sm font-semibold transition focus:ring-2 focus:outline-none'
+                className='border-border bg-card text-secondary-foreground hover:bg-muted focus-visible:border-ring focus-visible:ring-ring/50 flex-1 rounded-lg border px-4 py-2.5 text-sm font-semibold transition outline-none focus-visible:ring-3'
               >
                 Back
               </StepsPrevTrigger>

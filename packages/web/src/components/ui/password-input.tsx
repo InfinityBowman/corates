@@ -1,102 +1,50 @@
 /**
- * PasswordInput component with visibility toggle (@ark-ui/react)
+ * PasswordInput - text input with a show/hide visibility toggle.
+ *
+ * Built on the shadcn `Input` primitive. Accepts all native input props.
  *
  * @example
- * <PasswordInput>
- *   <PasswordInputLabel>Password</PasswordInputLabel>
- *   <PasswordInputControl>
- *     <PasswordInputField />
- *     <PasswordInputVisibilityTrigger />
- *   </PasswordInputControl>
- * </PasswordInput>
+ * <PasswordInput
+ *   autoComplete='current-password'
+ *   value={password}
+ *   onChange={(e) => setPassword(e.target.value)}
+ *   placeholder='Password'
+ * />
  */
 
 import * as React from 'react';
-import { PasswordInput as PasswordInputPrimitive } from '@ark-ui/react/password-input';
 import { EyeIcon, EyeOffIcon } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
-const PasswordInputIndicator = PasswordInputPrimitive.Indicator;
-const PasswordInputContext = PasswordInputPrimitive.Context;
+function PasswordInput({ className, disabled, ...props }: React.ComponentProps<typeof Input>) {
+  const [visible, setVisible] = React.useState(false);
 
-function PasswordInput({
-  className,
-  ...props
-}: React.ComponentProps<typeof PasswordInputPrimitive.Root>) {
-  return <PasswordInputPrimitive.Root className={cn('w-full', className)} {...props} />;
-}
-
-function PasswordInputLabel({
-  className,
-  ...props
-}: React.ComponentProps<typeof PasswordInputPrimitive.Label>) {
   return (
-    <PasswordInputPrimitive.Label
-      className={cn('text-muted-foreground mb-1 block text-sm font-medium', className)}
-      {...props}
-    />
-  );
-}
-
-function PasswordInputControl({
-  className,
-  ...props
-}: React.ComponentProps<typeof PasswordInputPrimitive.Control>) {
-  return (
-    <PasswordInputPrimitive.Control
-      className={cn('relative flex items-center', className)}
-      {...props}
-    />
-  );
-}
-
-function PasswordInputField({
-  className,
-  ...props
-}: React.ComponentProps<typeof PasswordInputPrimitive.Input>) {
-  return (
-    <PasswordInputPrimitive.Input
-      className={cn(
-        'border-border w-full rounded-lg border px-3 py-2 pr-10 text-sm transition',
-        'focus:ring-ring focus:border-transparent focus:ring-2 focus:outline-none',
-        'disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed',
-        className,
-      )}
-      {...props}
-    />
-  );
-}
-
-function PasswordInputVisibilityTrigger({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<typeof PasswordInputPrimitive.VisibilityTrigger>) {
-  return (
-    <PasswordInputPrimitive.VisibilityTrigger
-      className={cn(
-        'text-muted-foreground/70 absolute right-3 flex items-center transition-colors',
-        'hover:text-muted-foreground focus:outline-none',
-        'disabled:cursor-not-allowed disabled:opacity-50',
-        className,
-      )}
-      {...props}
-    >
-      {children ?? (
-        <PasswordInputPrimitive.Indicator fallback={<EyeOffIcon className='h-4 w-4' />}>
+    <div className='relative flex items-center'>
+      <Input
+        type={visible ? 'text' : 'password'}
+        disabled={disabled}
+        className={cn('h-auto py-2 pr-10 text-sm', className)}
+        {...props}
+      />
+      <button
+        type='button'
+        onClick={() => setVisible(v => !v)}
+        disabled={disabled}
+        tabIndex={-1}
+        aria-label={visible ? 'Hide password' : 'Show password'}
+        className={cn(
+          'text-muted-foreground/70 hover:text-muted-foreground absolute right-3 flex items-center transition-colors',
+          'focus:outline-none disabled:cursor-not-allowed disabled:opacity-50',
+        )}
+      >
+        {visible ?
           <EyeIcon className='h-4 w-4' />
-        </PasswordInputPrimitive.Indicator>
-      )}
-    </PasswordInputPrimitive.VisibilityTrigger>
+        : <EyeOffIcon className='h-4 w-4' />}
+      </button>
+    </div>
   );
 }
 
-export {
-  PasswordInput,
-  PasswordInputLabel,
-  PasswordInputControl,
-  PasswordInputField,
-  PasswordInputVisibilityTrigger,
-  PasswordInputIndicator,
-  PasswordInputContext,
-};
+export { PasswordInput };

@@ -4,12 +4,8 @@ import { z } from 'zod';
 import { useAuthStore } from '@/stores/authStore';
 import { handleError } from '@/lib/error-utils';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import {
-  PasswordInput,
-  PasswordInputControl,
-  PasswordInputField,
-  PasswordInputVisibilityTrigger,
-} from '@/components/ui/password-input';
+import { PasswordInput } from '@/components/ui/password-input';
+import { Input } from '@/components/ui/input';
 import { ErrorMessage } from '@/components/auth/ErrorMessage';
 import { PrimaryButton, AuthLink } from '@/components/auth/AuthButtons';
 import { StrengthIndicator } from '@/components/auth/StrengthIndicator';
@@ -121,14 +117,14 @@ function RequestResetForm() {
             >
               Email Address
             </label>
-            <input
+            <Input
               type='email'
               autoComplete='email'
               autoCapitalize='off'
               spellCheck='false'
               value={email}
               onChange={e => setEmail(e.target.value)}
-              className='border-border focus:ring-primary w-full rounded-lg border py-2 pr-3 pl-3 text-xs transition focus:border-transparent focus:ring-2 focus:outline-none sm:pr-4 sm:pl-4 sm:text-sm'
+              className='h-auto py-2 text-sm'
               required
               id='email-input'
               placeholder='you@example.com'
@@ -252,18 +248,16 @@ function SetNewPasswordForm({ token }: { token: string }) {
             >
               New Password
             </label>
-            <PasswordInput autoComplete='new-password' disabled={loading} required>
-              <PasswordInputControl>
-                <PasswordInputField
-                  id='new-password-input'
-                  value={password}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-                  placeholder='Enter new password'
-                  aria-describedby={displayError ? 'reset-password-error' : undefined}
-                />
-                <PasswordInputVisibilityTrigger />
-              </PasswordInputControl>
-            </PasswordInput>
+            <PasswordInput
+              id='new-password-input'
+              autoComplete='new-password'
+              disabled={loading}
+              required
+              value={password}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+              placeholder='Enter new password'
+              aria-describedby={displayError ? 'reset-password-error' : undefined}
+            />
             <StrengthIndicator password={password} onUnmet={handleUnmet} />
           </div>
 
@@ -274,20 +268,18 @@ function SetNewPasswordForm({ token }: { token: string }) {
             >
               Confirm Password
             </label>
-            <PasswordInput autoComplete='new-password' disabled={loading} required>
-              <PasswordInputControl>
-                <PasswordInputField
-                  id='confirm-password-input'
-                  value={confirmPassword}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setConfirmPassword(e.target.value)
-                  }
-                  placeholder='Confirm new password'
-                  aria-describedby={displayError ? 'reset-password-error' : undefined}
-                />
-                <PasswordInputVisibilityTrigger />
-              </PasswordInputControl>
-            </PasswordInput>
+            <PasswordInput
+              id='confirm-password-input'
+              autoComplete='new-password'
+              disabled={loading}
+              required
+              value={confirmPassword}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setConfirmPassword(e.target.value)
+              }
+              placeholder='Confirm new password'
+              aria-describedby={displayError ? 'reset-password-error' : undefined}
+            />
           </div>
 
           <ErrorMessage error={displayError} id='reset-password-error' />

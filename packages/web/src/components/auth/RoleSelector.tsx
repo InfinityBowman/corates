@@ -54,7 +54,7 @@ export function RoleSelector({ selectedRole, onSelect }: RoleSelectorProps) {
             onClick={() => onSelect(roleOption.id)}
             aria-checked={isSelected}
             className={cn(
-              'hover:border-primary/60 hover:bg-primary/5 focus:ring-primary rounded-xl border-2 p-3 text-left transition-all focus:ring-2 focus:outline-none sm:p-4',
+              'hover:border-primary/60 hover:bg-primary/5 focus-visible:ring-ring/50 rounded-xl border-2 p-3 text-left transition-all outline-none focus-visible:ring-3 sm:p-4',
               isSelected ? 'border-primary bg-primary/5' : 'border-border',
             )}
           >

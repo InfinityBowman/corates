@@ -8,6 +8,7 @@ import { MailIcon } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { handleError } from '@/lib/error-utils';
 import { Alert } from '@/components/ui/alert';
+import { Input } from '@/components/ui/input';
 import { ErrorMessage } from './ErrorMessage';
 import { PrimaryButton } from './AuthButtons';
 
@@ -159,14 +160,14 @@ export function MagicLinkForm({
             >
               Email
             </label>
-            <input
+            <Input
               type='email'
               autoComplete='email'
               autoCapitalize='off'
               spellCheck='false'
               value={email}
               onChange={e => setEmail(e.target.value)}
-              className='border-border focus:ring-primary w-full rounded-lg border py-2 pr-3 pl-3 text-xs transition focus:border-transparent focus:ring-2 focus:outline-none sm:pr-4 sm:pl-4 sm:text-sm'
+              className='h-auto py-2 text-sm'
               required
               id='magic-link-email'
               placeholder='you@example.com'
