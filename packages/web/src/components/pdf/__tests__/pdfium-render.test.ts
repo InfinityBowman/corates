@@ -1,36 +1,24 @@
 /**
  * Guards against the PDFium WASM falling out of sync with the @embedpdf engine.
  *
- * The viewer loads the PDFium runtime from a self-hosted static asset
- * (`packages/web/public/pdfium.wasm`, served at `${LANDING_URL}/pdfium.wasm` --
- * see viewer.tsx). That binary is vendored separately from the npm packages, so
- * a `@embedpdf/*` bump without re-copying the wasm leaves the JS glue calling
- * native functions the stale binary does not export. At runtime that surfaces as
- * `Aborted(Assertion failed: exported native function ... not found)` and the
- * document fails to render -- invisible until a user opens a PDF.
+ * The viewer loads the PDFium runtime from the installed @embedpdf/pdfium package
+ * via a Vite `?url` import (see lib/pdfiumWasmUrl.ts), which emits a content-hashed
+ * /assets/* asset. The package is the single source of truth, so the JS glue and
+ * the binary can never drift -- the failure that previously surfaced as
+ * `Aborted(Assertion failed: exported native function ... not found)` when a stale
+ * vendored wasm was served against newer glue.
  *
- * Two layers of protection:
- *  1. A fast byte-identity check between the served wasm and the installed
- *     @embedpdf/pdfium package (clear, actionable failure on drift).
- *  2. A real render: load the committed wasm, open a PDF, render a page. This
- *     exercises the native call path (including EPDFDoc_GetPageObjectNumberByIndex,
- *     which populates page.objectNumber on load) so any incompatibility throws.
+ * This still exercises the native call path end to end: load the package wasm,
+ * open a PDF, render a page (including EPDFDoc_GetPageObjectNumberByIndex, which
+ * populates page.objectNumber on load) so any incompatibility throws.
  */
 
 import { describe, it, expect, beforeAll, afterEach } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
-import { fileURLToPath } from 'node:url';
-import path from 'node:path';
 import { createPdfiumDirectEngine } from '@embedpdf/engines';
 
-const here = path.dirname(fileURLToPath(import.meta.url));
-// __tests__ -> pdf -> components -> src -> web (package root)
-const SERVED_WASM = path.resolve(here, '../../../../public/pdfium.wasm');
 const PACKAGE_WASM = createRequire(import.meta.url).resolve('@embedpdf/pdfium/pdfium.wasm');
-
-const sha256 = (p: string) => createHash('sha256').update(readFileSync(p)).digest('hex');
 
 // A minimal, valid single-page PDF built with correct xref offsets at runtime.
 function makeMinimalPdf(): ArrayBuffer {
@@ -59,23 +47,15 @@ function makeMinimalPdf(): ArrayBuffer {
   return enc.encode(pdf).buffer;
 }
 
-describe('pdfium wasm', () => {
-  it('served public/pdfium.wasm is in sync with the installed @embedpdf/pdfium package', () => {
-    expect(sha256(SERVED_WASM)).toBe(sha256(PACKAGE_WASM));
-    // If this fails after an @embedpdf bump, re-copy the binary:
-    //   cp node_modules/@embedpdf/pdfium/dist/pdfium.wasm packages/web/public/pdfium.wasm
-  });
-});
-
 describe('pdfium engine renders a PDF', () => {
   const realFetch = globalThis.fetch;
 
   beforeAll(() => {
-    // The engine fetches the wasm by URL; serve the committed file from disk instead.
+    // The engine fetches the wasm by URL; serve the installed package binary from disk instead.
     globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
       if (url.endsWith('pdfium.wasm')) {
-        const bytes = readFileSync(SERVED_WASM);
+        const bytes = readFileSync(PACKAGE_WASM);
         return { ok: true, arrayBuffer: async () => bytes.buffer.slice(0) } as Response;
       }
       return realFetch(input, init);

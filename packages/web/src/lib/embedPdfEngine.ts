@@ -4,6 +4,8 @@
  * Modules are loaded dynamically to reduce initial bundle size
  */
 
+import { PDFIUM_WASM_URL } from '@/lib/pdfiumWasmUrl';
+
 // EmbedPDF libraries don't ship type declarations
 
 let engineInstance: any = null;
@@ -53,8 +55,11 @@ export async function initEmbedPdfEngine(): Promise<any> {
         'EmbedPDF module loading',
       );
 
-      const wasmUrl = '/pdfium.wasm';
-      const response = await withTimeout(fetch(wasmUrl), ENGINE_INIT_TIMEOUT, 'PDFium WASM fetch');
+      const response = await withTimeout(
+        fetch(PDFIUM_WASM_URL),
+        ENGINE_INIT_TIMEOUT,
+        'PDFium WASM fetch',
+      );
 
       if (!response.ok) {
         throw new Error(`Failed to fetch PDFium WASM: ${response.status} ${response.statusText}`);

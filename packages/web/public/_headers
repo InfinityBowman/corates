@@ -14,9 +14,8 @@
 /fonts/*
   Cache-Control: public, max-age=31536000, immutable
 
-# PDFium WASM -- large, version-pinned by package.json
-/pdfium.wasm
-  Cache-Control: public, max-age=31536000, immutable
+# PDFium WASM is emitted as a content-hashed /assets/* file (see lib/pdfiumWasmUrl.ts),
+# so it is covered by the immutable rule above -- no fixed-URL entry needed.
 
 # Images
 /*.png
