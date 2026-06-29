@@ -17,6 +17,8 @@ import { cachePdf } from '@/primitives/pdfCache.js';
 import { bestEffort } from '@/lib/errorLogger.js';
 import { importFromGoogleDrive } from '@/api/google-drive';
 import { Tabs, TabsContent, TabsIndicator, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Spinner } from '@/components/ui/spinner';
 import {
   HomeIcon,
   BookOpenIcon,
@@ -51,8 +53,55 @@ export function ProjectView({ projectId }: ProjectViewProps) {
 
 function ProjectLoadingFallback() {
   return (
-    <div className='bg-background flex min-h-screen items-center justify-center'>
-      <div className='text-muted-foreground text-sm'>Loading project...</div>
+    <div className='bg-background min-h-full'>
+      {/* Header skeleton mirrors the real sticky project header */}
+      <header className='border-border bg-card sticky top-0 z-20 border-b'>
+        <div className='mx-auto max-w-7xl px-6 py-4'>
+          <div className='flex items-center gap-3'>
+            <Skeleton className='size-8 shrink-0 rounded-md' />
+            <div className='flex-1 space-y-2'>
+              <Skeleton className='h-6 w-56 max-w-full' />
+              <Skeleton className='h-4 w-80 max-w-full' />
+            </div>
+          </div>
+        </div>
+        <div className='mx-auto max-w-7xl px-6'>
+          <div className='flex gap-1 pb-px'>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className='h-9 w-28 rounded-t-lg' />
+            ))}
+          </div>
+        </div>
+      </header>
+
+      {/* Content skeleton with a quiet sync indicator */}
+      <div className='mx-auto max-w-7xl px-6 py-6'>
+        <div
+          className='text-muted-foreground mb-6 flex items-center gap-2.5 text-sm'
+          role='status'
+          aria-live='polite'
+        >
+          <Spinner size='sm' variant='default' />
+          <span>Syncing project...</span>
+        </div>
+        <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div
+              key={i}
+              className='border-border bg-card space-y-3 rounded-lg border p-4'
+              style={{ animationDelay: `${i * 80}ms` }}
+            >
+              <Skeleton className='h-5 w-3/4' />
+              <Skeleton className='h-4 w-full' />
+              <Skeleton className='h-4 w-5/6' />
+              <div className='flex gap-2 pt-1'>
+                <Skeleton className='h-6 w-16 rounded-full' />
+                <Skeleton className='h-6 w-20 rounded-full' />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
