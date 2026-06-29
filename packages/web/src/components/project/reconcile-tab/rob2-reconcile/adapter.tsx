@@ -539,11 +539,14 @@ function renderWarningBanner(
   if (finalAim) return null;
 
   return (
-    <div className='border-destructive/20 bg-destructive/10 text-destructive mb-4 flex items-center gap-2 rounded-lg border p-3 text-sm'>
-      <AlertTriangleIcon className='size-5 shrink-0' />
+    <div className='border-warning-border bg-warning-bg mb-4 flex items-start gap-3 rounded-lg border p-3 text-sm'>
+      <AlertTriangleIcon className='text-warning mt-0.5 size-5 shrink-0' />
       <div>
-        <span className='font-medium'>Aim Mismatch Detected:</span> Reviewers selected different
-        aims. You must reconcile the aim field before proceeding to domain assessment.
+        <span className='text-foreground font-medium'>Aim mismatch:</span>{' '}
+        <span className='text-muted-foreground'>
+          Reviewers selected different aims. Reconcile the aim field below before continuing to
+          domain assessment.
+        </span>
       </div>
     </div>
   );
