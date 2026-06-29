@@ -456,9 +456,7 @@ export async function beginTrial(db: Database, session: Session) {
 
 export async function syncAfterCheckout(db: Database, session: Session) {
   const stripeCustomerId = (session.user as Record<string, unknown>).stripeCustomerId as
-    | string
-    | null
-    | undefined;
+    string | null | undefined;
   if (!stripeCustomerId) {
     return { status: 'none', stripeSubscriptionId: null };
   }

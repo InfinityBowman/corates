@@ -68,8 +68,7 @@ export function isAMSTAR2Complete(checklist: AMSTAR2Checklist): boolean {
   // Check each required question has a final answer
   for (const questionKey of AMSTAR2_DATA_KEYS) {
     const question = checklist[questionKey as keyof AMSTAR2Checklist] as
-      | AMSTAR2Question
-      | undefined;
+      AMSTAR2Question | undefined;
     if (!question || !Array.isArray(question.answers)) return false;
 
     // Check if the last column has at least one option selected

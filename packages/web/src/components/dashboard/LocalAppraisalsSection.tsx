@@ -128,8 +128,7 @@ export function LocalAppraisalsSection({
       if (!studyYMap) return study;
 
       const checklistsMap = (studyYMap as Y.Map<unknown>).get('checklists') as
-        | Y.Map<unknown>
-        | undefined;
+        Y.Map<unknown> | undefined;
       if (!checklistsMap) return study;
 
       const enrichedChecklists = study.checklists.map(cl => {
