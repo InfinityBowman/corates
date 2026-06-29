@@ -3,7 +3,7 @@
  */
 
 import { useState } from 'react';
-import { XIcon } from 'lucide-react';
+import { XIcon, CopyIcon, CheckIcon } from 'lucide-react';
 
 interface LabelItem {
   id: string;
@@ -44,8 +44,20 @@ export function ChartSettingsModal({
   onTransparentExportChange,
 }: ChartSettingsModalProps) {
   const [mouseDownOnBackdrop, setMouseDownOnBackdrop] = useState(false);
+  const [copiedCitation, setCopiedCitation] = useState<string | null>(null);
 
   if (!isOpen) return null;
+
+  const currentYear = new Date().getFullYear();
+
+  const apaCitation = `Maynard, J. A., & Maynard, B. R. (${currentYear}). CoRATES (Collaborative Risk-of-Bias and Appraisal Tracking for Evidence Synthesis) [Software]. https://corates.org`;
+  const amaCitation = `Maynard JA, Maynard BR. CoRATES (Collaborative Risk-of-Bias and Appraisal Tracking for Evidence Synthesis)[software]. ${currentYear}. Accessed Month Day, Year. https://corates.org`;
+
+  const copyCitation = (id: string, text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedCitation(id);
+    setTimeout(() => setCopiedCitation(null), 2000);
+  };
 
   return (
     <>
@@ -219,19 +231,38 @@ export function ChartSettingsModal({
               </p>
               <div className='flex flex-col gap-4'>
                 <div className='bg-muted rounded-lg p-4'>
-                  <h4 className='text-foreground mb-2 text-xs font-semibold'>APA</h4>
-                  <p className='text-foreground text-sm leading-relaxed'>
-                    Maynard, J. A., & Maynard, B. R. (2025). CoRATES (Collaborative Risk-of-Bias and
-                    Appraisal Tracking for Evidence Synthesis) [Software]. https://corates.org
-                  </p>
+                  <div className='mb-2 flex items-center justify-between'>
+                    <h4 className='text-foreground text-xs font-semibold'>APA</h4>
+                    <button
+                      onClick={() => copyCitation('apa', apaCitation)}
+                      className='text-muted-foreground hover:bg-card hover:text-foreground inline-flex items-center gap-1 rounded p-1.5 transition-colors'
+                      title='Copy citation'
+                    >
+                      {copiedCitation === 'apa' ? (
+                        <CheckIcon className='text-success size-4' />
+                      ) : (
+                        <CopyIcon className='size-4' />
+                      )}
+                    </button>
+                  </div>
+                  <p className='text-foreground text-sm leading-relaxed'>{apaCitation}</p>
                 </div>
                 <div className='bg-muted rounded-lg p-4'>
-                  <h4 className='text-foreground mb-2 text-xs font-semibold'>AMA</h4>
-                  <p className='text-foreground text-sm leading-relaxed'>
-                    Maynard JA, Maynard BR. CoRATES (Collaborative Risk-of-Bias and Appraisal
-                    Tracking for Evidence Synthesis)[software]. 2025. Accessed Month Day, Year.
-                    https://corates.org
-                  </p>
+                  <div className='mb-2 flex items-center justify-between'>
+                    <h4 className='text-foreground text-xs font-semibold'>AMA</h4>
+                    <button
+                      onClick={() => copyCitation('ama', amaCitation)}
+                      className='text-muted-foreground hover:bg-card hover:text-foreground inline-flex items-center gap-1 rounded p-1.5 transition-colors'
+                      title='Copy citation'
+                    >
+                      {copiedCitation === 'ama' ? (
+                        <CheckIcon className='text-success size-4' />
+                      ) : (
+                        <CopyIcon className='size-4' />
+                      )}
+                    </button>
+                  </div>
+                  <p className='text-foreground text-sm leading-relaxed'>{amaCitation}</p>
                 </div>
               </div>
             </div>
