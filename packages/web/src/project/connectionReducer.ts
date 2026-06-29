@@ -3,13 +3,7 @@
  */
 
 export type ConnectionPhase =
-  | 'idle'
-  | 'connecting'
-  | 'connected'
-  | 'cached'
-  | 'synced'
-  | 'error'
-  | 'offline';
+  'idle' | 'connecting' | 'connected' | 'cached' | 'synced' | 'error' | 'offline';
 
 export type ConnectionEvent =
   | { type: 'CONNECT_REQUESTED' }

@@ -85,8 +85,7 @@ function AdminBillingStuckStatesPage() {
   });
 
   const data = stuckStatesQuery.data as
-    | { stuckOrgs: StuckOrg[]; checkedAt?: string | number }
-    | undefined;
+    { stuckOrgs: StuckOrg[]; checkedAt?: string | number } | undefined;
   const stuckOrgs = useMemo(() => data?.stuckOrgs || [], [data?.stuckOrgs]);
   const checkedAt = data?.checkedAt;
 

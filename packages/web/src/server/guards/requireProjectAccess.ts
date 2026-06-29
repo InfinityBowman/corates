@@ -16,8 +16,7 @@ export interface ProjectContext {
 }
 
 export type ProjectGuardResult =
-  | { ok: true; context: ProjectContext }
-  | { ok: false; response: Response };
+  { ok: true; context: ProjectContext } | { ok: false; response: Response };
 
 export async function requireProjectAccess(
   session: Session,

@@ -113,8 +113,7 @@ export function createReconciliationOperations(
     if (!studyYMap) return null;
 
     const reconciliationsMap = studyYMap.get('reconciliations') as
-      | Y.Map<Y.Map<unknown>>
-      | undefined;
+      Y.Map<Y.Map<unknown>> | undefined;
     if (reconciliationsMap) {
       const outcomeKey = getOutcomeKey(outcomeId, type);
       const outcomeProgressMap = reconciliationsMap.get(outcomeKey) as Y.Map<unknown> | undefined;
@@ -170,8 +169,7 @@ export function createReconciliationOperations(
     const results: ReconciliationProgressEntry[] = [];
 
     const reconciliationsMap = studyYMap.get('reconciliations') as
-      | Y.Map<Y.Map<unknown>>
-      | undefined;
+      Y.Map<Y.Map<unknown>> | undefined;
     if (reconciliationsMap) {
       for (const [outcomeKey, progressMap] of reconciliationsMap.entries()) {
         const checklist1Id = progressMap.get('checklist1Id') as string | undefined;
@@ -235,8 +233,7 @@ export function createReconciliationOperations(
     if (!studyYMap) return;
 
     const reconciliationsMap = studyYMap.get('reconciliations') as
-      | Y.Map<Y.Map<unknown>>
-      | undefined;
+      Y.Map<Y.Map<unknown>> | undefined;
     if (reconciliationsMap) {
       const outcomeKey = getOutcomeKey(outcomeId, type);
       reconciliationsMap.delete(outcomeKey);
