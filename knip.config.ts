@@ -18,7 +18,6 @@ const config: KnipConfig = {
         '@tanstack/react-router',
         '@tanstack/router-plugin',
         '@tanstack/eslint-config',
-        'vite-tsconfig-paths',
         '@tailwindcss/vite',
         'tailwindcss',
         'tw-animate-css',

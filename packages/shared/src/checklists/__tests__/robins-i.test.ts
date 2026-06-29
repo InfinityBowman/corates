@@ -5,7 +5,30 @@ import {
   isROBINSIComplete,
   shouldStopAssessment,
   getAnswers,
+  getActiveDomainKeys,
+  getDomainQuestions,
+  getResponseOptions,
 } from '../robins-i/index.js';
+
+/**
+ * Answer every signalling question in every active domain with a definite first
+ * option of its own response scale, which is enough to score each domain to a
+ * judgement. Judgements are auto-derived, so this is what "complete" means.
+ */
+function answerAllDomains(checklist: ReturnType<typeof createROBINSIChecklist>) {
+  const active = getActiveDomainKeys(checklist.sectionC?.isPerProtocol || false);
+  for (const domainKey of active) {
+    const questions = getDomainQuestions(domainKey);
+    const answers: Record<string, { answer: string; comment: string }> = {};
+    for (const [qKey, q] of Object.entries(questions)) {
+      const options = getResponseOptions(
+        (q as { responseType: Parameters<typeof getResponseOptions>[0] }).responseType,
+      );
+      answers[qKey] = { answer: options[0], comment: '' };
+    }
+    (checklist as Record<string, unknown>)[domainKey] = { answers, judgement: null };
+  }
+}
 
 describe('ROBINS-I', () => {
   describe('createROBINSIChecklist', () => {
@@ -155,43 +178,26 @@ describe('ROBINS-I', () => {
       expect(isROBINSIComplete(checklist)).toBe(true);
     });
 
-    it('should return false when domains have judgements but overall is not set', () => {
+    it('should return false when not all active domains are fully answered', () => {
       const checklist = createROBINSIChecklist({
         name: 'Test',
         id: 'test-123',
       });
 
-      // Set all domain judgements (ITT analysis - domain1a active)
-      checklist.domain1a = { answers: {}, judgement: 'Low', judgementSource: 'auto' };
-      checklist.domain2 = { answers: {}, judgement: 'Low', judgementSource: 'auto' };
-      checklist.domain3 = { answers: {}, judgement: 'Low', judgementSource: 'auto' };
-      checklist.domain4 = { answers: {}, judgement: 'Low', judgementSource: 'auto' };
-      checklist.domain5 = { answers: {}, judgement: 'Low', judgementSource: 'auto' };
-      checklist.domain6 = { answers: {}, judgement: 'Low', judgementSource: 'auto' };
+      answerAllDomains(checklist);
+      // Leave one domain unanswered so it cannot be scored.
+      checklist.domain6 = { answers: {}, judgement: null };
 
       expect(isROBINSIComplete(checklist)).toBe(false);
     });
 
-    it('should return true when all domains and overall have judgements', () => {
+    it('should return true when all active domains are fully answered', () => {
       const checklist = createROBINSIChecklist({
         name: 'Test',
         id: 'test-123',
       });
 
-      // Set all domain judgements (ITT analysis - domain1a active)
-      checklist.domain1a = { answers: {}, judgement: 'Low', judgementSource: 'auto' };
-      checklist.domain2 = { answers: {}, judgement: 'Low', judgementSource: 'auto' };
-      checklist.domain3 = { answers: {}, judgement: 'Low', judgementSource: 'auto' };
-      checklist.domain4 = { answers: {}, judgement: 'Low', judgementSource: 'auto' };
-      checklist.domain5 = { answers: {}, judgement: 'Low', judgementSource: 'auto' };
-      checklist.domain6 = { answers: {}, judgement: 'Low', judgementSource: 'auto' };
-
-      // Set overall judgement
-      checklist.overall = {
-        judgement: 'Low risk of bias',
-        judgementSource: 'auto',
-        direction: null,
-      };
+      answerAllDomains(checklist);
 
       expect(isROBINSIComplete(checklist)).toBe(true);
     });

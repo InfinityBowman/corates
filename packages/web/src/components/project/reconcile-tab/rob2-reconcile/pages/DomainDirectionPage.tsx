@@ -53,20 +53,17 @@ export function DomainDirectionPage({
     [domainKey, finalAnswers],
   );
 
-  const judgementMatch = reviewer1Scoring.judgement === reviewer2Scoring.judgement;
-
   return (
     <div className='bg-card rounded-xl shadow-lg'>
-      {/* Header */}
+      {/* Header reflects direction agreement only; the derived judgement is shown
+          read-only below and reconciled via the signalling questions. */}
       <div
         className={`rounded-t-xl border-b p-4 ${
-          directionMatch && judgementMatch ?
-            'border-green-200 bg-green-50'
-          : 'border-amber-200 bg-amber-50'
+          directionMatch ? 'border-green-200 bg-green-50' : 'border-amber-200 bg-amber-50'
         }`}
       >
         <div className='flex items-start gap-3'>
-          {directionMatch && judgementMatch ?
+          {directionMatch ?
             <div className='flex size-6 shrink-0 items-center justify-center rounded-full bg-green-500'>
               <CheckIcon className='size-4 text-white' />
             </div>

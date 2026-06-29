@@ -129,8 +129,6 @@ function flattenROBINSI(answersMap: Y.Map<unknown>): void {
       if (direction !== undefined) answersMap.set(`${key}.direction`, direction);
       const judgement = section.get('judgement');
       if (judgement !== undefined) answersMap.set(`${key}.judgement`, judgement);
-      const judgementSource = section.get('judgementSource');
-      if (judgementSource !== undefined) answersMap.set(`${key}.judgementSource`, judgementSource);
 
       if (key !== 'overall') {
         const answersNested = section.get('answers');

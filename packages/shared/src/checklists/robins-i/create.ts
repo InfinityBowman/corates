@@ -22,7 +22,6 @@ interface CreateChecklistOptions {
 interface DomainState {
   answers: Record<string, { answer: null; comment: string }>;
   judgement: null;
-  judgementSource: 'auto';
   direction?: null;
 }
 
@@ -116,7 +115,6 @@ export function createROBINSIChecklist({
 
     overall: {
       judgement: null,
-      judgementSource: 'auto',
       direction: null,
     },
   };
@@ -138,7 +136,6 @@ function createDomainState(domainKey: DomainKey): DomainState {
   return {
     answers,
     judgement: null,
-    judgementSource: 'auto',
     direction: domain?.hasDirection ? null : undefined,
   };
 }

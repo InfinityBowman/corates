@@ -2,8 +2,9 @@
  * ROBINS-I Reconciliation Adapter
  *
  * Implements ReconciliationAdapter for ROBINS-I checklists.
- * Handles Section B questions, domain questions, domain judgements,
- * overall judgement, and section B critical risk detection.
+ * Handles Section B questions, domain questions, domain/overall direction, and
+ * section B critical risk detection. Judgements are auto-derived from the
+ * reconciled answers (no manual override), so only direction is reconciled.
  */
 
 import { AlertTriangleIcon } from 'lucide-react';
@@ -36,8 +37,8 @@ import {
 } from './navbar-utils.js';
 import { SectionBQuestionPage } from './pages/SectionBQuestionPage';
 import { DomainQuestionPage } from './pages/DomainQuestionPage';
-import { DomainJudgementPage } from './pages/DomainJudgementPage';
-import { OverallJudgementPage } from './pages/OverallJudgementPage';
+import { DomainDirectionPage } from './pages/DomainDirectionPage';
+import { OverallDirectionPage } from './pages/OverallDirectionPage';
 import { RobinsINavbar } from './RobinsINavbar';
 import { RobinsISummaryView } from './RobinsISummaryView';
 
@@ -64,27 +65,19 @@ function updateDomainQuestionAnswer(
   });
 }
 
-function updateDomainJudgement(
+function updateDomainDirection(
   updateChecklistAnswer: (s: string, d: unknown) => void,
   domainKey: string,
-  judgement: string | null | undefined,
   direction: string | null | undefined,
 ) {
-  updateChecklistAnswer(domainKey, {
-    judgement,
-    direction: direction || null,
-  });
+  updateChecklistAnswer(domainKey, { direction: direction || null });
 }
 
-function updateOverallJudgement(
+function updateOverallDirection(
   updateChecklistAnswer: (s: string, d: unknown) => void,
-  judgement: string | null | undefined,
   direction: string | null | undefined,
 ) {
-  updateChecklistAnswer('overall', {
-    judgement,
-    direction: direction || null,
-  });
+  updateChecklistAnswer('overall', { direction: direction || null });
 }
 
 // ---------------------------------------------------------------------------
@@ -159,22 +152,18 @@ function autoFillFromReviewer1(
       );
       return;
     }
-    case NAV_ITEM_TYPES.DOMAIN_JUDGEMENT: {
+    case NAV_ITEM_TYPES.DOMAIN_DIRECTION: {
       const domain = checklist1?.[item.domainKey] as ROBINSIDomainState | undefined;
-      if (domain?.judgement) {
-        updateDomainJudgement(
-          updateChecklistAnswer,
-          item.domainKey,
-          domain.judgement,
-          domain.direction,
-        );
+      // Copy the reviewer's direction even when unset, so adopting a "Not set"
+      // reviewer clears any stale final direction instead of leaving it behind.
+      if (domain) {
+        updateDomainDirection(updateChecklistAnswer, item.domainKey, domain.direction);
       }
       return;
     }
-    case NAV_ITEM_TYPES.OVERALL_JUDGEMENT: {
-      const overall = checklist1?.overall;
-      if (overall?.judgement) {
-        updateOverallJudgement(updateChecklistAnswer, overall.judgement, overall.direction);
+    case NAV_ITEM_TYPES.OVERALL_DIRECTION: {
+      if (checklist1?.overall) {
+        updateOverallDirection(updateChecklistAnswer, checklist1.overall.direction);
       }
       return;
     }
@@ -235,18 +224,15 @@ function renderPage(
         questionKey={currentItem.key}
         reviewer1Data={
           c1SectionB?.[currentItem.key as keyof typeof c1SectionB] as
-            | ROBINSIQuestionAnswer
-            | undefined
+            ROBINSIQuestionAnswer | undefined
         }
         reviewer2Data={
           c2SectionB?.[currentItem.key as keyof typeof c2SectionB] as
-            | ROBINSIQuestionAnswer
-            | undefined
+            ROBINSIQuestionAnswer | undefined
         }
         finalData={
           faSectionB?.[currentItem.key as keyof typeof faSectionB] as
-            | ROBINSIQuestionAnswer
-            | undefined
+            ROBINSIQuestionAnswer | undefined
         }
         finalCommentYText={getTextRef({
           type: 'ROBINS_I',
@@ -262,8 +248,7 @@ function renderPage(
         }
         onUseReviewer1={() => {
           const data = c1SectionB?.[currentItem.key as keyof typeof c1SectionB] as
-            | ROBINSIQuestionAnswer
-            | undefined;
+            ROBINSIQuestionAnswer | undefined;
           if (data) {
             updateSectionBAnswer(context.updateChecklistAnswer, currentItem.key, data.answer!);
             context.setTextValue(
@@ -279,8 +264,7 @@ function renderPage(
         }}
         onUseReviewer2={() => {
           const data = c2SectionB?.[currentItem.key as keyof typeof c2SectionB] as
-            | ROBINSIQuestionAnswer
-            | undefined;
+            ROBINSIQuestionAnswer | undefined;
           if (data) {
             updateSectionBAnswer(context.updateChecklistAnswer, currentItem.key, data.answer!);
             context.setTextValue(
@@ -354,130 +338,62 @@ function renderPage(
     );
   }
 
-  if (currentItem.type === NAV_ITEM_TYPES.DOMAIN_JUDGEMENT) {
+  if (currentItem.type === NAV_ITEM_TYPES.DOMAIN_DIRECTION) {
     const { domainKey } = currentItem;
     const c1Domain = c1?.[domainKey] as ROBINSIDomainState | undefined;
     const c2Domain = c2?.[domainKey] as ROBINSIDomainState | undefined;
     const faDomain = fa[domainKey] as ROBINSIDomainState | undefined;
     const domainComp = comparison?.domains?.[domainKey];
     return (
-      <DomainJudgementPage
+      <DomainDirectionPage
         domainKey={domainKey}
-        reviewer1Data={c1Domain}
-        reviewer2Data={c2Domain}
-        finalData={faDomain}
+        reviewer1Answers={c1Domain?.answers}
+        reviewer2Answers={c2Domain?.answers}
+        finalAnswers={faDomain?.answers}
+        reviewer1Direction={c1Domain?.direction ?? null}
+        reviewer2Direction={c2Domain?.direction ?? null}
+        finalDirection={faDomain?.direction ?? null}
         reviewer1Name={context.reviewer1Name}
         reviewer2Name={context.reviewer2Name}
-        judgementMatch={domainComp?.judgementMatch}
-        directionMatch={domainComp?.directionMatch}
-        onFinalJudgementChange={judgement =>
-          updateDomainJudgement(
-            context.updateChecklistAnswer,
-            domainKey,
-            judgement,
-            faDomain?.direction,
-          )
-        }
+        directionMatch={domainComp?.directionMatch ?? false}
         onFinalDirectionChange={direction =>
-          updateDomainJudgement(
-            context.updateChecklistAnswer,
-            domainKey,
-            faDomain?.judgement,
-            direction,
-          )
+          updateDomainDirection(context.updateChecklistAnswer, domainKey, direction)
         }
-        onUseReviewer1Judgement={() => {
+        onUseReviewer1={() => {
           if (c1Domain)
-            updateDomainJudgement(
-              context.updateChecklistAnswer,
-              domainKey,
-              c1Domain.judgement,
-              faDomain?.direction,
-            );
+            updateDomainDirection(context.updateChecklistAnswer, domainKey, c1Domain.direction);
         }}
-        onUseReviewer2Judgement={() => {
+        onUseReviewer2={() => {
           if (c2Domain)
-            updateDomainJudgement(
-              context.updateChecklistAnswer,
-              domainKey,
-              c2Domain.judgement,
-              faDomain?.direction,
-            );
-        }}
-        onUseReviewer1Direction={() => {
-          if (c1Domain)
-            updateDomainJudgement(
-              context.updateChecklistAnswer,
-              domainKey,
-              faDomain?.judgement,
-              c1Domain.direction,
-            );
-        }}
-        onUseReviewer2Direction={() => {
-          if (c2Domain)
-            updateDomainJudgement(
-              context.updateChecklistAnswer,
-              domainKey,
-              faDomain?.judgement,
-              c2Domain.direction,
-            );
+            updateDomainDirection(context.updateChecklistAnswer, domainKey, c2Domain.direction);
         }}
       />
     );
   }
 
-  if (currentItem.type === NAV_ITEM_TYPES.OVERALL_JUDGEMENT) {
+  if (currentItem.type === NAV_ITEM_TYPES.OVERALL_DIRECTION) {
     const overallComp = comparison?.overall;
     return (
-      <OverallJudgementPage
-        reviewer1Data={c1?.overall}
-        reviewer2Data={c2?.overall}
-        finalData={fa.overall}
+      <OverallDirectionPage
+        checklist1={c1}
+        checklist2={c2}
+        finalChecklist={fa}
+        reviewer1Direction={c1?.overall?.direction ?? null}
+        reviewer2Direction={c2?.overall?.direction ?? null}
+        finalDirection={fa.overall?.direction ?? null}
         reviewer1Name={context.reviewer1Name}
         reviewer2Name={context.reviewer2Name}
-        judgementMatch={overallComp?.judgementMatch}
-        directionMatch={overallComp?.directionMatch}
-        onFinalJudgementChange={judgement =>
-          updateOverallJudgement(context.updateChecklistAnswer, judgement, fa.overall?.direction)
-        }
+        directionMatch={overallComp?.directionMatch ?? false}
         onFinalDirectionChange={direction =>
-          updateOverallJudgement(context.updateChecklistAnswer, fa.overall?.judgement, direction)
+          updateOverallDirection(context.updateChecklistAnswer, direction)
         }
-        onUseReviewer1Judgement={() => {
-          const data = c1?.overall;
-          if (data)
-            updateOverallJudgement(
-              context.updateChecklistAnswer,
-              data.judgement,
-              fa.overall?.direction,
-            );
+        onUseReviewer1={() => {
+          if (c1?.overall)
+            updateOverallDirection(context.updateChecklistAnswer, c1.overall.direction);
         }}
-        onUseReviewer2Judgement={() => {
-          const data = c2?.overall;
-          if (data)
-            updateOverallJudgement(
-              context.updateChecklistAnswer,
-              data.judgement,
-              fa.overall?.direction,
-            );
-        }}
-        onUseReviewer1Direction={() => {
-          const data = c1?.overall;
-          if (data)
-            updateOverallJudgement(
-              context.updateChecklistAnswer,
-              fa.overall?.judgement,
-              data.direction,
-            );
-        }}
-        onUseReviewer2Direction={() => {
-          const data = c2?.overall;
-          if (data)
-            updateOverallJudgement(
-              context.updateChecklistAnswer,
-              fa.overall?.judgement,
-              data.direction,
-            );
+        onUseReviewer2={() => {
+          if (c2?.overall)
+            updateOverallDirection(context.updateChecklistAnswer, c2.overall.direction);
         }}
       />
     );

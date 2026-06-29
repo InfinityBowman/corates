@@ -251,12 +251,8 @@ export const PLANS = {
       'collaborators.org.max': 0,
     },
   },
-  starter_team: {
-    /* ... */
-  },
-  team: {
-    /* ... */
-  },
+  starter_team: {/* ... */},
+  team: {/* ... */},
   unlimited_team: {
     name: 'Unlimited Team',
     quotas: {

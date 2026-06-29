@@ -3,7 +3,7 @@ import { CheckIcon, ChevronRightIcon } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import {
   getSectionLabel,
-  hasNavItemAnswer,
+  hasNavItemValue,
   isNavItemAgreement,
   getNavItemPillStyle,
   getNavItemTooltip,
@@ -152,10 +152,10 @@ function QuestionPill({
 }: QuestionPillProps) {
   const isCurrentPage = currentPage === globalIndex;
   const isAgreement = isNavItemAgreement(item, comparison);
-  const hasAnswer = hasNavItemAnswer(item, finalAnswers);
+  const hasValue = hasNavItemValue(item, finalAnswers);
 
-  const pillStyle = getNavItemPillStyle(isCurrentPage, hasAnswer, isAgreement);
-  const tooltip = getNavItemTooltip(item, hasAnswer, isAgreement);
+  const pillStyle = getNavItemPillStyle(isCurrentPage, hasValue, isAgreement);
+  const tooltip = getNavItemTooltip(item, hasValue, isAgreement);
 
   const displayLabel = (() => {
     switch (item.type) {
@@ -165,16 +165,16 @@ function QuestionPill({
         const parts = item.label.split('.');
         return parts.length > 1 ? parts[1] : item.label;
       }
-      case NAV_ITEM_TYPES.DOMAIN_JUDGEMENT:
-      case NAV_ITEM_TYPES.OVERALL_JUDGEMENT:
-        return 'J';
+      case NAV_ITEM_TYPES.DOMAIN_DIRECTION:
+      case NAV_ITEM_TYPES.OVERALL_DIRECTION:
+        return 'Dir';
     }
   })();
 
-  const isJudgement =
-    item.type === NAV_ITEM_TYPES.DOMAIN_JUDGEMENT || item.type === NAV_ITEM_TYPES.OVERALL_JUDGEMENT;
+  const isDirection =
+    item.type === NAV_ITEM_TYPES.DOMAIN_DIRECTION || item.type === NAV_ITEM_TYPES.OVERALL_DIRECTION;
 
-  const pillSizeClass = isJudgement ? 'h-6 px-2 text-2xs' : 'size-6 text-2xs';
+  const pillSizeClass = isDirection ? 'h-6 px-2 text-2xs' : 'size-6 text-2xs';
 
   let pillSpacingClass = '';
   if (isFirst) pillSpacingClass += 'ml-0.5 ';
@@ -194,7 +194,7 @@ function QuestionPill({
           aria-current={isCurrentPage ? 'page' : undefined}
         >
           {displayLabel}
-          {hasAnswer && (
+          {hasValue && (
             <span
               className='bg-card absolute -top-0.5 -right-0.5 flex size-2.5 items-center justify-center rounded-full border-[0.5px] shadow-sm'
               aria-hidden='true'

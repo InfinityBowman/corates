@@ -396,11 +396,12 @@ describe('migrateYDocToFlatKeys', () => {
 
       expect(answers.get('domain1a.direction')).toBe('favour_experimental');
       expect(answers.get('domain1a.judgement')).toBe('Low');
-      expect(answers.get('domain1a.judgementSource')).toBe('auto');
+      // judgementSource is no longer part of the model -- migration drops it.
+      expect(answers.get('domain1a.judgementSource') as unknown).toBeUndefined();
       expect(answers.get('d1a_1')).toBe('Y');
 
       expect(answers.get('overall.judgement')).toBe('Low');
-      expect(answers.get('overall.judgementSource')).toBe('manual');
+      expect(answers.get('overall.judgementSource') as unknown).toBeUndefined();
 
       expect(answers.get('planning') as unknown).toBeUndefined();
       expect(answers.get('sectionA') as unknown).toBeUndefined();

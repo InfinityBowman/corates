@@ -183,7 +183,8 @@ function isQuestionnaireComplete(
 }
 
 /**
- * Check if a ROBINS-I checklist is complete (all active domains have judgements and overall is set)
+ * Check if a ROBINS-I checklist is complete. Judgements are auto-derived from the
+ * signalling answers, so completeness means every active domain scores to a judgement.
  */
 export function isROBINSIComplete(checklist: ROBINSIChecklist): boolean {
   if (!checklist || typeof checklist !== 'object') return false;
@@ -193,18 +194,9 @@ export function isROBINSIComplete(checklist: ROBINSIChecklist): boolean {
     return true;
   }
 
-  const isPerProtocol = checklist.sectionC?.isPerProtocol || false;
-  const activeDomains = getActiveDomainKeys(isPerProtocol);
+  const { isComplete } = scoreAllDomains(
+    checklist as unknown as Parameters<typeof scoreAllDomains>[0],
+  );
 
-  // All active domains must have judgements
-  const domainsComplete = activeDomains.every(domainKey => {
-    const domain = checklist[domainKey];
-    return domain?.judgement !== null && domain?.judgement !== undefined;
-  });
-
-  // Overall judgement must be set (either auto-calculated or manually selected)
-  const overallComplete =
-    checklist.overall?.judgement !== null && checklist.overall?.judgement !== undefined;
-
-  return domainsComplete && overallComplete;
+  return isComplete;
 }

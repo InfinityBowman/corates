@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { CheckIcon, XIcon, InfoIcon } from 'lucide-react';
-import { scoreAllDomains } from '@corates/shared/checklists/rob2';
-import { JudgementPanel } from '../panels/JudgementPanel';
+import { scoreAllDomains } from '@/components/checklist/ROBINSIChecklist/scoring/robins-scoring.js';
+import { JudgementBadge } from '@/components/checklist/ROBINSIChecklist/DomainJudgement';
 import { DirectionPanel } from '../panels/DirectionPanel';
 
 interface OverallDirectionPageProps {
@@ -19,8 +19,21 @@ interface OverallDirectionPageProps {
   onUseReviewer2: () => void;
 }
 
+/** Read-only display of an auto-calculated overall judgement. */
+function ReadOnlyJudgement({ title, judgement }: { title: string; judgement: string | null }) {
+  return (
+    <div className='p-4'>
+      <h3 className='text-foreground mb-3 font-semibold'>{title}</h3>
+      {judgement ?
+        <JudgementBadge judgement={judgement} />
+      : <span className='text-muted-foreground text-sm italic'>Not yet calculated</span>}
+    </div>
+  );
+}
+
 /**
- * Page for reconciling overall direction and viewing auto-calculated overall judgement
+ * Page for reconciling overall direction and viewing the auto-calculated overall
+ * judgement (derived from the domain judgements; no manual override).
  */
 export function OverallDirectionPage({
   checklist1,
@@ -73,24 +86,10 @@ export function OverallDirectionPage({
       <div className='border-b p-4'>
         <div className='mb-3 flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3'>
           <InfoIcon className='size-4 shrink-0 text-blue-600' />
-          <div className='text-xs text-blue-800'>
-            <p>
-              The overall risk of bias judgement is automatically calculated from the domain
-              judgements:
-            </p>
-            <ul className='mt-1 ml-4 list-disc'>
-              <li>
-                If any domain is <strong>High</strong>, overall is High
-              </li>
-              <li>
-                Otherwise, if any domain has <strong>Some concerns</strong>, overall is Some
-                concerns
-              </li>
-              <li>
-                Otherwise, overall is <strong>Low</strong>
-              </li>
-            </ul>
-          </div>
+          <p className='text-xs text-blue-800'>
+            The overall risk of bias judgement is automatically calculated from the domain
+            judgements. To change it, reconcile the signalling questions.
+          </p>
         </div>
 
         <h3 className='text-secondary-foreground mb-3 text-sm font-semibold'>
@@ -98,24 +97,9 @@ export function OverallDirectionPage({
         </h3>
 
         <div className='grid grid-cols-3 divide-x rounded-lg border'>
-          <JudgementPanel
-            title={reviewer1Name}
-            panelType='reviewer1'
-            judgement={reviewer1Scoring.overall}
-            isComplete={reviewer1Scoring.isComplete}
-          />
-          <JudgementPanel
-            title={reviewer2Name}
-            panelType='reviewer2'
-            judgement={reviewer2Scoring.overall}
-            isComplete={reviewer2Scoring.isComplete}
-          />
-          <JudgementPanel
-            title='Final (Reconciled)'
-            panelType='final'
-            judgement={finalScoring.overall}
-            isComplete={finalScoring.isComplete}
-          />
+          <ReadOnlyJudgement title={reviewer1Name} judgement={reviewer1Scoring.overall} />
+          <ReadOnlyJudgement title={reviewer2Name} judgement={reviewer2Scoring.overall} />
+          <ReadOnlyJudgement title='Final (Reconciled)' judgement={finalScoring.overall} />
         </div>
       </div>
 

@@ -35,7 +35,6 @@ export type Judgement = (typeof JUDGEMENTS)[keyof typeof JUDGEMENTS];
 
 // Bias direction options
 export const BIAS_DIRECTIONS = [
-  'NA',
   'Favours experimental',
   'Favours comparator',
   'Towards null',

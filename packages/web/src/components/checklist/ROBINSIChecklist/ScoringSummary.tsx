@@ -110,11 +110,7 @@ function DomainChip({
   shortName: string;
   onClick: () => void;
 }) {
-  const { judgement } = useROBINSIDomainScore(studyId, checklistId, domainKey);
-  const judgementSource = useAnswer<string>(studyId, checklistId, `${domainKey}.judgementSource`);
-  const manualJudgement = useAnswer<string>(studyId, checklistId, `${domainKey}.judgement`);
-  const isManual = judgementSource === 'manual';
-  const effective = isManual && manualJudgement ? manualJudgement : judgement;
+  const { judgement: effective } = useROBINSIDomainScore(studyId, checklistId, domainKey);
 
   const chipColor = (() => {
     if (!effective) return 'bg-secondary text-muted-foreground border-border';
@@ -141,7 +137,6 @@ function DomainChip({
       className={`inline-flex items-center gap-1 rounded border px-2 py-0.5 text-xs font-medium transition-colors hover:opacity-80 ${chipColor}`}
     >
       <span>{shortName}</span>
-      {isManual && <span className='text-warning'>*</span>}
     </button>
   );
 }

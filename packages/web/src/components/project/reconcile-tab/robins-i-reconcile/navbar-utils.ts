@@ -17,8 +17,8 @@ type ROBINSQuestion = ReturnType<typeof getDomainQuestions>[string];
 export const NAV_ITEM_TYPES = {
   SECTION_B: 'sectionB',
   DOMAIN_QUESTION: 'domainQuestion',
-  DOMAIN_JUDGEMENT: 'domainJudgement',
-  OVERALL_JUDGEMENT: 'overallJudgement',
+  DOMAIN_DIRECTION: 'domainDirection',
+  OVERALL_DIRECTION: 'overallDirection',
 } as const;
 
 interface NavItemBase {
@@ -39,13 +39,13 @@ export type RobinsINavItem =
       questionDef?: ROBINSQuestion | Record<string, unknown>;
     })
   | (NavItemBase & {
-      type: typeof NAV_ITEM_TYPES.DOMAIN_JUDGEMENT;
+      type: typeof NAV_ITEM_TYPES.DOMAIN_DIRECTION;
       domainKey: string;
-      isJudgement: true;
+      isDirection: true;
     })
   | (NavItemBase & {
-      type: typeof NAV_ITEM_TYPES.OVERALL_JUDGEMENT;
-      isJudgement: true;
+      type: typeof NAV_ITEM_TYPES.OVERALL_DIRECTION;
+      isDirection: true;
     });
 
 type NavItem = RobinsINavItem;
@@ -113,8 +113,7 @@ export function buildNavigationItems(isPerProtocol: boolean): NavItem[] {
 
   activeDomains.forEach(domainKey => {
     const domain = ROBINS_I_CHECKLIST[domainKey as keyof typeof ROBINS_I_CHECKLIST] as
-      | { name: string; [key: string]: unknown }
-      | undefined;
+      { name: string; [key: string]: unknown } | undefined;
     const questions = getDomainQuestions(domainKey);
     const questionKeys = Object.keys(questions);
 
@@ -132,26 +131,28 @@ export function buildNavigationItems(isPerProtocol: boolean): NavItem[] {
       });
     });
 
-    // Add domain judgement item
-    items.push({
-      type: NAV_ITEM_TYPES.DOMAIN_JUDGEMENT,
-      key: `${domainKey}_judgement`,
-      domainKey,
-      label: `D${domainKey.replace('domain', '').replace('a', 'A').replace('b', 'B')} Judge`,
-      section: domain!.name,
-      sectionKey: domainKey,
-      isJudgement: true,
-    });
+    // Add domain direction item (judgement is auto-derived; only direction is reconciled)
+    if ((domain as { hasDirection?: boolean })?.hasDirection) {
+      items.push({
+        type: NAV_ITEM_TYPES.DOMAIN_DIRECTION,
+        key: `${domainKey}_direction`,
+        domainKey,
+        label: `D${domainKey.replace('domain', '').replace('a', 'A').replace('b', 'B')} Direction`,
+        section: domain!.name,
+        sectionKey: domainKey,
+        isDirection: true,
+      });
+    }
   });
 
-  // Overall judgement
+  // Overall direction
   items.push({
-    type: NAV_ITEM_TYPES.OVERALL_JUDGEMENT,
-    key: 'overall_judgement',
+    type: NAV_ITEM_TYPES.OVERALL_DIRECTION,
+    key: 'overall_direction',
     label: 'Overall',
     section: 'Overall',
     sectionKey: 'overall',
-    isJudgement: true,
+    isDirection: true,
   });
 
   return items;
@@ -197,23 +198,10 @@ function hasDomainQuestionAnswer(
 }
 
 /**
- * Check if a domain judgement has been set
- */
-function hasDomainJudgement(domainKey: string, finalAnswers: FinalAnswers): boolean {
-  const domain = finalAnswers?.[domainKey] as Record<string, unknown> | undefined;
-  return domain?.judgement != null;
-}
-
-/**
- * Check if overall judgement has been set
- */
-function hasOverallJudgement(finalAnswers: FinalAnswers): boolean {
-  const overall = finalAnswers?.overall as Record<string, unknown> | undefined;
-  return overall?.judgement != null;
-}
-
-/**
- * Check if a navigation item has been answered/completed
+ * Check if a navigation item has been answered/completed.
+ *
+ * Predicted direction of bias is optional (there is no "not applicable" option),
+ * so direction items never block completion -- they are reconcilable but not required.
  */
 export function hasNavItemAnswer(navItem: NavItem, finalAnswers: FinalAnswers): boolean {
   switch (navItem.type) {
@@ -221,10 +209,33 @@ export function hasNavItemAnswer(navItem: NavItem, finalAnswers: FinalAnswers): 
       return hasSectionBAnswer(navItem.key, finalAnswers);
     case NAV_ITEM_TYPES.DOMAIN_QUESTION:
       return hasDomainQuestionAnswer(navItem.domainKey, navItem.key, finalAnswers);
-    case NAV_ITEM_TYPES.DOMAIN_JUDGEMENT:
-      return hasDomainJudgement(navItem.domainKey, finalAnswers);
-    case NAV_ITEM_TYPES.OVERALL_JUDGEMENT:
-      return hasOverallJudgement(finalAnswers);
+    case NAV_ITEM_TYPES.DOMAIN_DIRECTION:
+    case NAV_ITEM_TYPES.OVERALL_DIRECTION:
+      return true;
+  }
+}
+
+/**
+ * Check if a navigation item actually has a stored value.
+ *
+ * Unlike hasNavItemAnswer (which treats optional direction as always satisfied so
+ * it never blocks completion), this reflects real value presence. Use it for the
+ * "answered" check indicators so an unset direction is not rendered as filled.
+ */
+export function hasNavItemValue(navItem: NavItem, finalAnswers: FinalAnswers): boolean {
+  switch (navItem.type) {
+    case NAV_ITEM_TYPES.SECTION_B:
+      return hasSectionBAnswer(navItem.key, finalAnswers);
+    case NAV_ITEM_TYPES.DOMAIN_QUESTION:
+      return hasDomainQuestionAnswer(navItem.domainKey, navItem.key, finalAnswers);
+    case NAV_ITEM_TYPES.DOMAIN_DIRECTION: {
+      const domain = finalAnswers?.[navItem.domainKey] as Record<string, unknown> | undefined;
+      return domain?.direction != null && domain.direction !== '';
+    }
+    case NAV_ITEM_TYPES.OVERALL_DIRECTION: {
+      const overall = finalAnswers?.overall as Record<string, unknown> | undefined;
+      return overall?.direction != null && overall.direction !== '';
+    }
   }
 }
 
@@ -245,12 +256,12 @@ export function isNavItemAgreement(navItem: NavItem, comparison: Comparison | nu
       const found = domain.questions?.agreements?.find(a => a.key === navItem.key);
       return !!found;
     }
-    case NAV_ITEM_TYPES.DOMAIN_JUDGEMENT: {
+    case NAV_ITEM_TYPES.DOMAIN_DIRECTION: {
       const domain = comparison.domains?.[navItem.domainKey];
-      return !!(domain?.judgementMatch && domain?.directionMatch);
+      return domain?.directionMatch ?? false;
     }
-    case NAV_ITEM_TYPES.OVERALL_JUDGEMENT: {
-      return !!(comparison.overall?.judgementMatch && comparison.overall?.directionMatch);
+    case NAV_ITEM_TYPES.OVERALL_DIRECTION: {
+      return comparison.overall?.directionMatch ?? false;
     }
   }
 }
@@ -283,6 +294,14 @@ export function getNavItemTooltip(
 
   if (hasAnswer) {
     return `${label} - Reconciled`;
+  }
+  if (
+    navItem.type === NAV_ITEM_TYPES.DOMAIN_DIRECTION ||
+    navItem.type === NAV_ITEM_TYPES.OVERALL_DIRECTION
+  ) {
+    // Direction is optional and never blocks save, so an unset one reads as
+    // optional rather than as outstanding reconciliation work.
+    return `${label} - Optional (not set)`;
   }
   if (isAgreement) {
     return `${label} - Reviewers agreed`;

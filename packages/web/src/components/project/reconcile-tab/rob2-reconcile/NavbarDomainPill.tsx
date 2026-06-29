@@ -3,7 +3,7 @@ import { ChevronDownIcon, ChevronRightIcon, CheckIcon } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import {
   getSectionLabel,
-  hasNavItemAnswer,
+  hasNavItemValue,
   isNavItemAgreement,
   getNavItemPillStyle,
   NAV_ITEM_TYPES,
@@ -176,33 +176,37 @@ function QuestionPill({
 }: QuestionPillProps) {
   const isCurrentPage = currentPage === globalIndex;
   const agreement = isNavItemAgreement(item, comparison);
-  const hasAnswer = hasNavItemAnswer(item, finalAnswers);
+  const hasValue = hasNavItemValue(item, finalAnswers);
+
+  const isDirection =
+    item.type === NAV_ITEM_TYPES.DOMAIN_DIRECTION || item.type === NAV_ITEM_TYPES.OVERALL_DIRECTION;
 
   const pillStyle = useMemo(() => {
     if (isSkipped && !isCurrentPage) {
       return 'bg-slate-100 text-slate-400';
     }
-    return getNavItemPillStyle(isCurrentPage, hasAnswer, agreement);
-  }, [isSkipped, isCurrentPage, hasAnswer, agreement]);
+    return getNavItemPillStyle(isCurrentPage, hasValue, agreement);
+  }, [isSkipped, isCurrentPage, hasValue, agreement]);
 
   const tooltip = useMemo(() => {
     let status = '';
     if (isSkipped) {
       status = 'Skipped (auto-set to NA)';
-    } else if (hasAnswer) {
+    } else if (hasValue) {
       status = 'Reconciled';
+    } else if (isDirection) {
+      // Direction is optional and never blocks save, so an unset one reads as
+      // optional rather than as outstanding reconciliation work.
+      status = 'Optional (not set)';
     } else if (agreement) {
       status = 'Agreement (not yet confirmed)';
     } else {
       status = 'Needs reconciliation';
     }
     return `${item.label}: ${status}`;
-  }, [isSkipped, hasAnswer, agreement, item.label]);
+  }, [isSkipped, hasValue, isDirection, agreement, item.label]);
 
   const displayLabel = getDisplayLabel(item);
-
-  const isDirection =
-    item.type === NAV_ITEM_TYPES.DOMAIN_DIRECTION || item.type === NAV_ITEM_TYPES.OVERALL_DIRECTION;
 
   const pillSizeClass = isDirection ? 'h-6 px-2 text-2xs' : 'size-6 text-2xs';
 
@@ -227,7 +231,7 @@ function QuestionPill({
           aria-current={isCurrentPage ? 'page' : undefined}
         >
           {displayLabel}
-          {hasAnswer && (
+          {hasValue && (
             <span
               className='bg-card absolute -top-0.5 -right-0.5 flex size-2.5 items-center justify-center rounded-full border-[0.5px] shadow-sm'
               aria-hidden='true'

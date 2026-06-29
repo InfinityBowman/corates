@@ -224,23 +224,10 @@ function hasDomainQuestionAnswer(
 }
 
 /**
- * Check if a domain direction has been set
- */
-function hasDomainDirection(domainKey: string, finalAnswers: FinalAnswers): boolean {
-  const domain = finalAnswers?.[domainKey] as Record<string, unknown> | undefined;
-  return domain?.direction != null;
-}
-
-/**
- * Check if overall direction has been set
- */
-function hasOverallDirection(finalAnswers: FinalAnswers): boolean {
-  const overall = finalAnswers?.overall as Record<string, unknown> | undefined;
-  return overall?.direction != null;
-}
-
-/**
- * Check if a navigation item has been answered/completed
+ * Check if a navigation item has been answered/completed.
+ *
+ * Predicted direction of bias is optional, so direction items never block
+ * completion -- they are reconcilable but not required.
  */
 export function hasNavItemAnswer(navItem: NavItem, finalAnswers: FinalAnswers): boolean {
   switch (navItem.type) {
@@ -249,9 +236,32 @@ export function hasNavItemAnswer(navItem: NavItem, finalAnswers: FinalAnswers): 
     case NAV_ITEM_TYPES.DOMAIN_QUESTION:
       return hasDomainQuestionAnswer(navItem.domainKey, navItem.key, finalAnswers);
     case NAV_ITEM_TYPES.DOMAIN_DIRECTION:
-      return hasDomainDirection(navItem.domainKey, finalAnswers);
     case NAV_ITEM_TYPES.OVERALL_DIRECTION:
-      return hasOverallDirection(finalAnswers);
+      return true;
+  }
+}
+
+/**
+ * Check if a navigation item actually has a stored value.
+ *
+ * Unlike hasNavItemAnswer (which treats optional direction as always satisfied so
+ * it never blocks completion), this reflects real value presence. Use it for the
+ * "answered" check indicators so an unset direction is not rendered as filled.
+ */
+export function hasNavItemValue(navItem: NavItem, finalAnswers: FinalAnswers): boolean {
+  switch (navItem.type) {
+    case NAV_ITEM_TYPES.PRELIMINARY:
+      return hasPreliminaryAnswer(navItem.key, finalAnswers);
+    case NAV_ITEM_TYPES.DOMAIN_QUESTION:
+      return hasDomainQuestionAnswer(navItem.domainKey, navItem.key, finalAnswers);
+    case NAV_ITEM_TYPES.DOMAIN_DIRECTION: {
+      const domain = finalAnswers?.[navItem.domainKey] as Record<string, unknown> | undefined;
+      return domain?.direction != null && domain.direction !== '';
+    }
+    case NAV_ITEM_TYPES.OVERALL_DIRECTION: {
+      const overall = finalAnswers?.overall as Record<string, unknown> | undefined;
+      return overall?.direction != null && overall.direction !== '';
+    }
   }
 }
 

@@ -12,5 +12,4 @@ export const JUDGEMENTS = robinsI.JUDGEMENTS;
 // Main scoring functions
 export const scoreRobinsDomain = robinsI.scoreRobinsDomain;
 export const scoreAllDomains = robinsI.scoreAllDomains;
-export const getEffectiveDomainJudgement = robinsI.getEffectiveDomainJudgement;
 export const mapOverallJudgementToDisplay = robinsI.mapOverallJudgementToDisplay;

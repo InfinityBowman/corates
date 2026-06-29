@@ -1,15 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import {
   scoreRobinsDomain,
-  getEffectiveDomainJudgement,
   scoreAllDomains,
   mapOverallJudgementToDisplay,
   JUDGEMENTS,
 } from '../scoring/robins-scoring.js';
-
-// Judgement is the typeof values in JUDGEMENTS (not exported from the web
-// re-export wrapper, but derivable here).
-type Judgement = (typeof JUDGEMENTS)[keyof typeof JUDGEMENTS];
 
 // Helper to create answer objects
 const ans = (answer: string | null) => ({ answer, comment: '' });
@@ -854,33 +849,6 @@ describe('scoreRobinsDomain', () => {
       expect(result.judgement).toBe(JUDGEMENTS.CRITICAL);
       expect(result.ruleId).toBe('D6.R5');
     });
-  });
-});
-
-describe('getEffectiveDomainJudgement', () => {
-  // Helper: fill in the boilerplate ScoringResult fields not exercised here.
-  const score = (judgement: Judgement) => ({ judgement, isComplete: true, ruleId: null });
-
-  it('returns auto judgement when source is auto', () => {
-    const domainState = { judgementSource: 'auto' as const, judgement: null };
-    expect(getEffectiveDomainJudgement(domainState, score(JUDGEMENTS.MODERATE))).toBe(
-      JUDGEMENTS.MODERATE,
-    );
-  });
-
-  it('returns manual judgement when source is manual and judgement exists', () => {
-    const domainState = {
-      judgementSource: 'manual' as const,
-      judgement: JUDGEMENTS.SERIOUS,
-    };
-    expect(getEffectiveDomainJudgement(domainState, score(JUDGEMENTS.LOW))).toBe(
-      JUDGEMENTS.SERIOUS,
-    );
-  });
-
-  it('falls back to auto when manual but no judgement set', () => {
-    const domainState = { judgementSource: 'manual' as const, judgement: null };
-    expect(getEffectiveDomainJudgement(domainState, score(JUDGEMENTS.LOW))).toBe(JUDGEMENTS.LOW);
   });
 });
 

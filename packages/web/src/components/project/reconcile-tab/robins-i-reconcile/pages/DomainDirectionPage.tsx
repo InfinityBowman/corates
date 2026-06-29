@@ -1,13 +1,18 @@
 import { useMemo } from 'react';
 import { CheckIcon, XIcon, InfoIcon } from 'lucide-react';
-import { scoreAllDomains } from '@corates/shared/checklists/rob2';
-import { JudgementPanel } from '../panels/JudgementPanel';
+import {
+  ROBINS_I_CHECKLIST,
+  BIAS_DIRECTIONS,
+} from '@/components/checklist/ROBINSIChecklist/checklist-map';
+import { scoreRobinsDomain } from '@/components/checklist/ROBINSIChecklist/scoring/robins-scoring.js';
+import { JudgementBadge } from '@/components/checklist/ROBINSIChecklist/DomainJudgement';
 import { DirectionPanel } from '../panels/DirectionPanel';
 
-interface OverallDirectionPageProps {
-  checklist1: any;
-  checklist2: any;
-  finalChecklist: any;
+interface DomainDirectionPageProps {
+  domainKey: string;
+  reviewer1Answers: any;
+  reviewer2Answers: any;
+  finalAnswers: any;
   reviewer1Direction: string | null;
   reviewer2Direction: string | null;
   finalDirection: string | null;
@@ -19,13 +24,28 @@ interface OverallDirectionPageProps {
   onUseReviewer2: () => void;
 }
 
+/** Read-only display of an auto-calculated domain judgement. */
+function ReadOnlyJudgement({ title, judgement }: { title: string; judgement: string | null }) {
+  return (
+    <div className='p-4'>
+      <h3 className='text-foreground mb-3 font-semibold'>{title}</h3>
+      {judgement ?
+        <JudgementBadge judgement={judgement} />
+      : <span className='text-muted-foreground text-sm italic'>Not yet calculated</span>}
+    </div>
+  );
+}
+
 /**
- * Page for reconciling overall direction and viewing auto-calculated overall judgement
+ * Page for reconciling domain direction and viewing the auto-calculated judgement.
+ * The judgement is always derived from the signalling answers (no manual override),
+ * so only the direction is reconciled here.
  */
-export function OverallDirectionPage({
-  checklist1,
-  checklist2,
-  finalChecklist,
+export function DomainDirectionPage({
+  domainKey,
+  reviewer1Answers,
+  reviewer2Answers,
+  finalAnswers,
   reviewer1Direction,
   reviewer2Direction,
   finalDirection,
@@ -35,15 +55,27 @@ export function OverallDirectionPage({
   onFinalDirectionChange,
   onUseReviewer1,
   onUseReviewer2,
-}: OverallDirectionPageProps) {
-  const reviewer1Scoring = useMemo(() => scoreAllDomains(checklist1), [checklist1]);
-  const reviewer2Scoring = useMemo(() => scoreAllDomains(checklist2), [checklist2]);
-  const finalScoring = useMemo(() => scoreAllDomains(finalChecklist), [finalChecklist]);
+}: DomainDirectionPageProps) {
+  const domain = (ROBINS_I_CHECKLIST as Record<string, any>)[domainKey];
+  const directionOptions = domain?.directionOptions || BIAS_DIRECTIONS;
+
+  const reviewer1Scoring = useMemo(
+    () => scoreRobinsDomain(domainKey, reviewer1Answers),
+    [domainKey, reviewer1Answers],
+  );
+  const reviewer2Scoring = useMemo(
+    () => scoreRobinsDomain(domainKey, reviewer2Answers),
+    [domainKey, reviewer2Answers],
+  );
+  const finalScoring = useMemo(
+    () => scoreRobinsDomain(domainKey, finalAnswers),
+    [domainKey, finalAnswers],
+  );
 
   return (
     <div className='bg-card rounded-xl shadow-lg'>
-      {/* Header reflects direction agreement only; the derived overall judgement is
-          shown read-only below and follows from the domain judgements. */}
+      {/* Header reflects direction agreement only; the derived judgement is shown
+          read-only below and reconciled via the signalling questions. */}
       <div
         className={`rounded-t-xl border-b p-4 ${
           directionMatch ? 'border-green-200 bg-green-50' : 'border-amber-200 bg-amber-50'
@@ -60,62 +92,33 @@ export function OverallDirectionPage({
           }
           <div>
             <h2 className='text-foreground font-semibold'>
-              Overall Risk of Bias - Judgement &amp; Direction
+              {domain?.name} - Judgement &amp; Direction
             </h2>
             <p className='text-muted-foreground mt-1 text-sm'>
-              Review the overall calculated judgement and select the overall bias direction
+              Review the calculated judgement and select the bias direction
             </p>
           </div>
         </div>
       </div>
 
-      {/* Auto-calculated Overall Judgement Section */}
+      {/* Auto-calculated Judgement Section */}
       <div className='border-b p-4'>
         <div className='mb-3 flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3'>
           <InfoIcon className='size-4 shrink-0 text-blue-600' />
-          <div className='text-xs text-blue-800'>
-            <p>
-              The overall risk of bias judgement is automatically calculated from the domain
-              judgements:
-            </p>
-            <ul className='mt-1 ml-4 list-disc'>
-              <li>
-                If any domain is <strong>High</strong>, overall is High
-              </li>
-              <li>
-                Otherwise, if any domain has <strong>Some concerns</strong>, overall is Some
-                concerns
-              </li>
-              <li>
-                Otherwise, overall is <strong>Low</strong>
-              </li>
-            </ul>
-          </div>
+          <p className='text-xs text-blue-800'>
+            The risk of bias judgement is automatically calculated from the signalling question
+            answers. To change it, reconcile the signalling questions above.
+          </p>
         </div>
 
         <h3 className='text-secondary-foreground mb-3 text-sm font-semibold'>
-          Auto-calculated Overall Judgement
+          Auto-calculated Judgement
         </h3>
 
         <div className='grid grid-cols-3 divide-x rounded-lg border'>
-          <JudgementPanel
-            title={reviewer1Name}
-            panelType='reviewer1'
-            judgement={reviewer1Scoring.overall}
-            isComplete={reviewer1Scoring.isComplete}
-          />
-          <JudgementPanel
-            title={reviewer2Name}
-            panelType='reviewer2'
-            judgement={reviewer2Scoring.overall}
-            isComplete={reviewer2Scoring.isComplete}
-          />
-          <JudgementPanel
-            title='Final (Reconciled)'
-            panelType='final'
-            judgement={finalScoring.overall}
-            isComplete={finalScoring.isComplete}
-          />
+          <ReadOnlyJudgement title={reviewer1Name} judgement={reviewer1Scoring.judgement} />
+          <ReadOnlyJudgement title={reviewer2Name} judgement={reviewer2Scoring.judgement} />
+          <ReadOnlyJudgement title='Final (Reconciled)' judgement={finalScoring.judgement} />
         </div>
       </div>
 
@@ -123,7 +126,7 @@ export function OverallDirectionPage({
       <div className='p-4'>
         <div className='mb-3 flex items-center gap-2'>
           <h3 className='text-secondary-foreground text-sm font-semibold'>
-            Predicted Overall Direction of Bias
+            Predicted Direction of Bias
           </h3>
           {directionMatch ?
             <span className='rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700'>
@@ -140,6 +143,7 @@ export function OverallDirectionPage({
             title={reviewer1Name}
             panelType='reviewer1'
             direction={reviewer1Direction}
+            directionOptions={directionOptions}
             readOnly={true}
             onUseThis={onUseReviewer1}
           />
@@ -147,6 +151,7 @@ export function OverallDirectionPage({
             title={reviewer2Name}
             panelType='reviewer2'
             direction={reviewer2Direction}
+            directionOptions={directionOptions}
             readOnly={true}
             onUseThis={onUseReviewer2}
           />
@@ -154,6 +159,7 @@ export function OverallDirectionPage({
             title='Final Direction'
             panelType='final'
             direction={finalDirection}
+            directionOptions={directionOptions}
             readOnly={false}
             onDirectionChange={onFinalDirectionChange}
             hideUseThis={true}
