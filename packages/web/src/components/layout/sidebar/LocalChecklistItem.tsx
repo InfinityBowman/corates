@@ -4,6 +4,7 @@
 
 import { useNavigate } from '@tanstack/react-router';
 import { FileCheck2Icon, TrashIcon } from 'lucide-react';
+import { MarqueeLabel } from './MarqueeLabel';
 
 interface LocalChecklistItemProps {
   checklist: { id: string; name?: string; updatedAt?: number; createdAt?: number };
@@ -31,9 +32,10 @@ export function LocalChecklistItem({ checklist, isSelected, onDelete }: LocalChe
       >
         <FileCheck2Icon className='text-muted-foreground size-4 shrink-0' />
         <div className='min-w-0 flex-1'>
-          <div className='truncate text-sm font-medium'>
-            {checklist.name || 'Untitled Checklist'}
-          </div>
+          <MarqueeLabel
+            text={checklist.name || 'Untitled Checklist'}
+            className='text-sm font-medium'
+          />
           <div className='text-2xs text-muted-foreground mt-0.5'>
             {formatDate(checklist.updatedAt || checklist.createdAt)}
           </div>

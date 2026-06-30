@@ -142,6 +142,39 @@
   .animate-stagger-item {
     animation: staggerFadeIn 0.25s ease-out both;
   }
+
+  /* Sidebar labels that overflow fade at the right edge, then scroll their
+     full text into view while the row is hovered/focused. The shift distance
+     and duration are supplied as inline CSS vars by MarqueeLabel. */
+  .sidebar-marquee {
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 1.25rem), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 1.25rem), transparent);
+  }
+
+  .sidebar-marquee > span {
+    /* No transition at rest, so leaving the row snaps the text back instantly
+       instead of scrolling in reverse. */
+    transition: none;
+  }
+
+  .group:hover .sidebar-marquee > span,
+  .group:focus-within .sidebar-marquee > span {
+    transform: translateX(var(--marquee-shift, 0));
+    /* Wait out incidental cursor passes so the scroll only fires on a
+       deliberate hover. */
+    transition: transform var(--marquee-duration, 2s) linear 400ms;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sidebar-marquee > span {
+      transition: none;
+    }
+
+    .group:hover .sidebar-marquee > span,
+    .group:focus-within .sidebar-marquee > span {
+      transform: none;
+    }
+  }
 }
 
 :root {

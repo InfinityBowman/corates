@@ -8,6 +8,7 @@ import { ChevronRightIcon, FolderIcon, FolderOpenIcon } from 'lucide-react';
 import { useProjectData } from '@/hooks/useProjectData';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { StudyTreeItem } from './StudyTreeItem';
+import { MarqueeLabel } from './MarqueeLabel';
 
 interface ProjectTreeItemProps {
   project: { id: string; name: string };
@@ -63,15 +64,15 @@ export function ProjectTreeItem({
             e.stopPropagation();
             navigate({ to: projectPath as string });
           }}
-          className='flex flex-1 items-center gap-2 text-left'
+          className='flex min-w-0 flex-1 items-center gap-2 text-left'
         >
           {canExpand && isExpanded ?
-            <FolderOpenIcon className='text-primary size-4' />
+            <FolderOpenIcon className='text-primary size-4 shrink-0' />
           : <FolderIcon
-              className={`size-4 ${isInProject ? 'text-primary' : 'text-muted-foreground'}`}
+              className={`size-4 shrink-0 ${isInProject ? 'text-primary' : 'text-muted-foreground'}`}
             />
           }
-          <span className='truncate text-sm font-medium'>{project.name}</span>
+          <MarqueeLabel text={project.name} className='flex-1 text-sm font-medium' />
         </button>
       </div>
       <CollapsibleContent>

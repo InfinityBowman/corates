@@ -6,6 +6,7 @@ import { useMemo } from 'react';
 import { ChevronRightIcon, BookOpenIcon } from 'lucide-react';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { ChecklistTreeItem } from './ChecklistTreeItem';
+import { MarqueeLabel } from './MarqueeLabel';
 import type { StudyInfo } from '@/stores/projectStore';
 
 interface StudyTreeItemProps {
@@ -42,9 +43,9 @@ export function StudyTreeItem({
         <ChevronRightIcon
           className={`text-muted-foreground/70 mr-1 size-2.5 shrink-0 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
         />
-        <div className='flex flex-1 items-center gap-1.5 text-left'>
-          <BookOpenIcon className='text-muted-foreground/70 size-3.5' />
-          <span className='truncate text-xs font-medium'>{study.name}</span>
+        <div className='flex min-w-0 flex-1 items-center gap-1.5 text-left'>
+          <BookOpenIcon className='text-muted-foreground/70 size-3.5 shrink-0' />
+          <MarqueeLabel text={study.name} className='flex-1 text-xs font-medium' />
         </div>
       </CollapsibleTrigger>
       <CollapsibleContent>
