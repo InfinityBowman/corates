@@ -11,7 +11,8 @@ import {
   twoFactor,
   mediaFiles,
 } from '@corates/db/schema';
-import { eq, or, like, sql, desc } from 'drizzle-orm';
+import { eq, or, desc } from 'drizzle-orm';
+import { containsInsensitive } from '@/server/lib/sqlSearch';
 import { syncMemberToDO } from '@corates/workers/project-sync';
 import { getProjectDocStub } from '@corates/workers/project-doc-id';
 import {
@@ -137,7 +138,6 @@ export async function searchUsers(
   }
 
   const limit = Math.min(params.limit && Number.isFinite(params.limit) ? params.limit : 10, 20);
-  const searchPattern = `%${params.q.toLowerCase()}%`;
 
   let results = await db
     .select({
@@ -152,11 +152,11 @@ export async function searchUsers(
     .from(user)
     .where(
       or(
-        like(sql`lower(${user.email})`, searchPattern),
-        like(sql`lower(${user.name})`, searchPattern),
-        like(sql`lower(${user.givenName})`, searchPattern),
-        like(sql`lower(${user.familyName})`, searchPattern),
-        like(sql`lower(${user.username})`, searchPattern),
+        containsInsensitive(user.email, params.q),
+        containsInsensitive(user.name, params.q),
+        containsInsensitive(user.givenName, params.q),
+        containsInsensitive(user.familyName, params.q),
+        containsInsensitive(user.username, params.q),
       ),
     )
     .limit(limit);

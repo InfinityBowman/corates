@@ -14,7 +14,7 @@ import {
   organization,
 } from '@corates/db/schema';
 import { count, desc, eq, or, sql } from 'drizzle-orm';
-import type { AnySQLiteColumn } from 'drizzle-orm/sqlite-core';
+import { containsInsensitive } from '@/server/lib/sqlSearch';
 import {
   throwDomainError,
   DomainErrorException,
@@ -50,21 +50,14 @@ export async function listAdminUsers(
   const search = params.search?.trim() || undefined;
   const offset = (page - 1) * limit;
 
-  // instr() instead of LIKE: some D1 nodes reject LIKE patterns longer than
-  // ~50 chars in this query with "LIKE or GLOB pattern too complex", which
-  // broke searches for long email addresses. instr() is a literal substring
-  // match with no pattern limits, and it also stops treating user-typed
-  // % and _ as wildcards.
-  const term = search?.toLowerCase();
-  const contains = (col: AnySQLiteColumn) => sql`instr(lower(${col}), ${term}) > 0`;
   const searchCondition =
     search ?
       or(
-        contains(user.email),
-        contains(user.name),
-        contains(user.givenName),
-        contains(user.familyName),
-        contains(user.username),
+        containsInsensitive(user.email, search),
+        containsInsensitive(user.name, search),
+        containsInsensitive(user.givenName, search),
+        containsInsensitive(user.familyName, search),
+        containsInsensitive(user.username, search),
       )
     : undefined;
 
