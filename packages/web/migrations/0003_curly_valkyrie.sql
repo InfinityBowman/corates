@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX `subscription_referenceId_incomplete_uidx` ON `subscription` (`referenceId`) WHERE "subscription"."status" = 'incomplete';

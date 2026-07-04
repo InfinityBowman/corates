@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, index } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, index, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
 import type {
   UserId,
@@ -256,7 +256,18 @@ export const subscription = sqliteTable(
     createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
     updatedAt: integer('updatedAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
   },
-  t => [index('subscription_referenceId_idx').on(t.referenceId)],
+  t => [
+    index('subscription_referenceId_idx').on(t.referenceId),
+    // At most one pending (incomplete) subscription per org. Checkout initiation
+    // creates an `incomplete` placeholder row before redirecting to Stripe; two
+    // near-simultaneous checkout requests would otherwise each create their own
+    // placeholder (the read-then-create in Better Auth's upgrade handler is not
+    // atomic), leaving the unused one orphaned forever once its Checkout Session
+    // expires. This partial unique index makes the duplicate INSERT fail instead.
+    uniqueIndex('subscription_referenceId_incomplete_uidx')
+      .on(t.referenceId)
+      .where(sql`${t.status} = 'incomplete'`),
+  ],
 );
 
 // Org access grants table (for trial and single_project grants)
