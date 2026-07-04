@@ -33,7 +33,7 @@ export function ProjectInfoSection({ project, stats }: ProjectInfoSectionProps) 
             <Link
               to={'/admin/orgs/$orgId' as string}
               params={{ orgId: project.orgId } as Record<string, string>}
-              className='text-blue-600 hover:text-blue-700'
+              className='text-primary hover:text-primary/80'
             >
               {project.orgName}
             </Link>
@@ -46,7 +46,7 @@ export function ProjectInfoSection({ project, stats }: ProjectInfoSectionProps) 
             <Link
               to={'/admin/users/$userId' as string}
               params={{ userId: project.createdBy } as Record<string, string>}
-              className='text-blue-600 hover:text-blue-700'
+              className='text-primary hover:text-primary/80'
             >
               {project.creatorDisplayName || project.creatorName || project.creatorEmail}
             </Link>

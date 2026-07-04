@@ -11,11 +11,11 @@ interface DashboardHeaderProps {
 }
 
 const ICON_COLOR_CLASSES: Record<IconColor, string> = {
-  blue: 'bg-blue-100 text-blue-600',
+  blue: 'bg-info-bg text-info',
   green: 'bg-success-bg text-success',
-  purple: 'bg-purple-100 text-purple-600',
-  orange: 'bg-orange-100 text-orange-600',
-  red: 'bg-red-100 text-red-600',
+  purple: 'bg-chart-cat-5/15 text-chart-cat-5',
+  orange: 'bg-warning-bg text-warning',
+  red: 'bg-destructive-bg text-destructive',
   gray: 'bg-secondary text-muted-foreground',
 };
 

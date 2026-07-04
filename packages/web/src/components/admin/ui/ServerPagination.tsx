@@ -1,4 +1,5 @@
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface ServerPaginationProps {
   page: number;
@@ -27,25 +28,27 @@ export function ServerPagination({
         : `No ${label} found`}
       </p>
       <div className='flex items-center gap-2'>
-        <button
+        <Button
           type='button'
+          variant='outline'
+          size='icon'
           onClick={() => onPageChange(Math.max(1, page - 1))}
           disabled={page === 1}
-          className='border-border bg-card hover:bg-muted rounded-lg border p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-50'
         >
-          <ChevronLeftIcon className='size-4' />
-        </button>
+          <ChevronLeftIcon />
+        </Button>
         <span className='text-muted-foreground text-sm'>
           Page {page} of {totalPages}
         </span>
-        <button
+        <Button
           type='button'
+          variant='outline'
+          size='icon'
           onClick={() => onPageChange(Math.min(totalPages, page + 1))}
           disabled={page >= totalPages}
-          className='border-border bg-card hover:bg-muted rounded-lg border p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-50'
         >
-          <ChevronRightIcon className='size-4' />
-        </button>
+          <ChevronRightIcon />
+        </Button>
       </div>
     </div>
   );

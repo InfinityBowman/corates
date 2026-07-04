@@ -91,7 +91,7 @@ function ProjectDetailPage() {
   if (!isAdminChecked) {
     return (
       <div className='flex min-h-100 items-center justify-center'>
-        <LoaderIcon className='size-8 animate-spin text-blue-600' />
+        <LoaderIcon className='text-primary size-8 animate-spin' />
       </div>
     );
   }
@@ -120,7 +120,7 @@ function ProjectDetailPage() {
       {/* Loading state */}
       {projectQuery.isLoading && (
         <div className='flex min-h-64 items-center justify-center'>
-          <LoaderIcon className='size-8 animate-spin text-blue-600' />
+          <LoaderIcon className='text-primary size-8 animate-spin' />
         </div>
       )}
 
@@ -145,8 +145,8 @@ function ProjectDetailPage() {
           {/* Header */}
           <div className='mb-8 flex items-start justify-between'>
             <div className='flex items-center gap-4'>
-              <div className='flex size-16 items-center justify-center rounded-lg bg-blue-100'>
-                <FolderIcon className='size-8 text-blue-600' />
+              <div className='bg-info-bg flex size-16 items-center justify-center rounded-lg'>
+                <FolderIcon className='text-info size-8' />
               </div>
               <div>
                 <h1 className='text-foreground text-2xl font-bold'>{projectData.project.name}</h1>
@@ -157,7 +157,7 @@ function ProjectDetailPage() {
                   <Link
                     to={'/admin/orgs/$orgId' as string}
                     params={{ orgId: projectData.project.orgId } as Record<string, string>}
-                    className='flex items-center hover:text-blue-600'
+                    className='hover:text-primary flex items-center'
                   >
                     <HomeIcon className='mr-1 size-4' />
                     {projectData.project.orgName}

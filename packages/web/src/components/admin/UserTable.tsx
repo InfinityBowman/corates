@@ -55,7 +55,7 @@ export function UserTable({ users, loading }: UserTableProps) {
                 <Link
                   to={'/admin/users/$userId' as string}
                   params={{ userId: user.id } as Record<string, string>}
-                  className='font-medium text-blue-600 hover:text-blue-700 hover:underline'
+                  className='text-primary font-medium hover:underline'
                   onClick={(e: React.MouseEvent) => e.stopPropagation()}
                 >
                   {user.name || 'Unknown'}

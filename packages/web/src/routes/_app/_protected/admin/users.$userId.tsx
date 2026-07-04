@@ -65,7 +65,7 @@ function UserDetailPage() {
   if (!isAdminChecked) {
     return (
       <div className='flex min-h-100 items-center justify-center'>
-        <LoaderIcon className='size-8 animate-spin text-blue-600' />
+        <LoaderIcon className='text-primary size-8 animate-spin' />
       </div>
     );
   }
@@ -84,7 +84,7 @@ function UserDetailPage() {
     <Suspense
       fallback={
         <div className='flex min-h-64 items-center justify-center'>
-          <LoaderIcon className='size-8 animate-spin text-blue-600' />
+          <LoaderIcon className='text-primary size-8 animate-spin' />
         </div>
       }
     >

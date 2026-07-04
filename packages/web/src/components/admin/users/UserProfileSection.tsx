@@ -50,7 +50,7 @@ export function UserProfileSection({ user }: { user: UserData['user'] }) {
                 href={getStripeCustomerUrl(user.stripeCustomerId) ?? '#'}
                 target='_blank'
                 rel='noopener noreferrer'
-                className='inline-flex items-center text-blue-600 hover:text-blue-700'
+                className='text-primary hover:text-primary/80 inline-flex items-center'
               >
                 <span className='font-mono'>{user.stripeCustomerId}</span>
                 <ExternalLinkIcon className='ml-1 size-3' />

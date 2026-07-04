@@ -63,7 +63,7 @@ export function ProjectFilesSection({ files }: { files?: ProjectFile[] }) {
                     <Link
                       to={'/admin/users/$userId' as string}
                       params={{ userId: file.uploadedBy } as Record<string, string>}
-                      className='text-blue-600 hover:text-blue-700'
+                      className='text-primary hover:text-primary/80'
                     >
                       {file.uploaderDisplayName || file.uploaderName}
                     </Link>

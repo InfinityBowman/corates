@@ -129,7 +129,9 @@ export function SubscriptionList({
                               <code className='text-foreground font-mono text-xs'>
                                 {subscription.stripeCustomerId.slice(0, 12)}...
                               </code>
-                              <button
+                              <Button
+                                variant='ghost'
+                                size='icon-xs'
                                 onClick={() =>
                                   handleCopyId(subscription.stripeCustomerId!, 'customer')
                                 }
@@ -139,7 +141,7 @@ export function SubscriptionList({
                                 {copiedId === `customer-${subscription.stripeCustomerId}` ?
                                   <CheckIcon className='text-success size-3' />
                                 : <CopyIcon className='size-3' />}
-                              </button>
+                              </Button>
                             </div>
                           )}
                           {subscription.stripeSubscriptionId && (
@@ -150,7 +152,9 @@ export function SubscriptionList({
                               <code className='text-foreground font-mono text-xs'>
                                 {subscription.stripeSubscriptionId.slice(0, 12)}...
                               </code>
-                              <button
+                              <Button
+                                variant='ghost'
+                                size='icon-xs'
                                 onClick={() =>
                                   handleCopyId(subscription.stripeSubscriptionId!, 'subscription')
                                 }
@@ -160,7 +164,7 @@ export function SubscriptionList({
                                 {copiedId === `subscription-${subscription.stripeSubscriptionId}` ?
                                   <CheckIcon className='text-success size-3' />
                                 : <CopyIcon className='size-3' />}
-                              </button>
+                              </Button>
                             </div>
                           )}
                         </div>

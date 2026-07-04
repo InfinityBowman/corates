@@ -86,7 +86,7 @@ export function ProjectInvitationsSection({ invitations }: { invitations?: Proje
                   <Link
                     to={'/admin/users/$userId' as string}
                     params={{ userId: invitation.invitedBy } as Record<string, string>}
-                    className='text-blue-600 hover:text-blue-700'
+                    className='text-primary hover:text-primary/80'
                   >
                     {invitation.inviterDisplayName || invitation.inviterName}
                   </Link>

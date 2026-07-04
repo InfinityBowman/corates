@@ -61,8 +61,8 @@ function AdminOrgList() {
           const org = info.row.original;
           return (
             <div className='flex items-center gap-3'>
-              <div className='flex size-10 items-center justify-center rounded-lg bg-blue-100'>
-                <HomeIcon className='size-5 text-blue-600' />
+              <div className='bg-info-bg flex size-10 items-center justify-center rounded-lg'>
+                <HomeIcon className='text-info size-5' />
               </div>
               <div>
                 <p className='text-foreground font-medium'>{org.name}</p>
@@ -124,7 +124,7 @@ function AdminOrgList() {
             <Link
               to={'/admin/orgs/$orgId' as string}
               params={{ orgId: org.id } as Record<string, string>}
-              className='inline-flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:ring-[3px] focus:ring-blue-100 focus:outline-none'
+              className='bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-ring/50 inline-flex items-center rounded-lg px-3 py-2 text-sm font-medium focus:ring-[3px] focus:outline-none'
               onClick={(e: React.MouseEvent) => e.stopPropagation()}
             >
               Details

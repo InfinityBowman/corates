@@ -216,6 +216,18 @@
   --chart-3: oklch(0.546 0.245 262.881);
   --chart-4: oklch(0.488 0.243 264.376);
   --chart-5: oklch(0.424 0.199 265.638);
+  /* Categorical series palette for multi-series charts (the --chart-N ramp
+     above is monochrome/sequential). Distinct hues in a CVD-safe fixed order;
+     kept separate from the status tokens so charts don't read as state.
+     Validated for the light card surface (worst adjacent CVD deltaE 24.2). */
+  --chart-cat-1: #2a78d6;
+  --chart-cat-2: #1baf7a;
+  --chart-cat-3: #eda100;
+  --chart-cat-4: #008300;
+  --chart-cat-5: #4a3aa7;
+  --chart-cat-6: #e34948;
+  --chart-cat-7: #e87ba4;
+  --chart-cat-8: #eb6834;
   --radius: 0.625rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
@@ -266,6 +278,16 @@
   --chart-3: oklch(0.546 0.245 262.881);
   --chart-4: oklch(0.488 0.243 264.376);
   --chart-5: oklch(0.424 0.199 265.638);
+  /* Same eight hues stepped for the dark card surface (>= 3:1 contrast),
+     not an automatic flip. Validated as a set for dark. */
+  --chart-cat-1: #3987e5;
+  --chart-cat-2: #199e70;
+  --chart-cat-3: #c98500;
+  --chart-cat-4: #008300;
+  --chart-cat-5: #9085e9;
+  --chart-cat-6: #e66767;
+  --chart-cat-7: #d55181;
+  --chart-cat-8: #d95926;
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
@@ -291,6 +313,14 @@
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
+  --color-chart-cat-1: var(--chart-cat-1);
+  --color-chart-cat-2: var(--chart-cat-2);
+  --color-chart-cat-3: var(--chart-cat-3);
+  --color-chart-cat-4: var(--chart-cat-4);
+  --color-chart-cat-5: var(--chart-cat-5);
+  --color-chart-cat-6: var(--chart-cat-6);
+  --color-chart-cat-7: var(--chart-cat-7);
+  --color-chart-cat-8: var(--chart-cat-8);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);

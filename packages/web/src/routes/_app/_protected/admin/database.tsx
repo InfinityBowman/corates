@@ -19,6 +19,14 @@ import {
   useAdminTableSchema,
 } from '@/hooks/useAdminQueries';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Table,
   TableHeader,
@@ -172,31 +180,33 @@ function DatabaseViewerPage() {
           <AdminBox className='p-0'>
             <div className='border-border flex items-center justify-between border-b px-4 py-3'>
               <h2 className='text-foreground font-semibold'>Tables</h2>
-              <button
+              <Button
                 type='button'
+                variant='ghost'
+                size='icon'
                 onClick={() => tablesQuery.refetch()}
-                className='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground rounded p-1'
                 disabled={tablesQuery.isFetching}
                 title='Refresh tables'
               >
                 <RefreshCwIcon
                   className={`size-4 ${tablesQuery.isFetching ? 'animate-spin' : ''}`}
                 />
-              </button>
+              </Button>
             </div>
             {tablesQuery.isLoading ?
               <div className='flex justify-center p-4'>
-                <LoaderIcon className='size-6 animate-spin text-blue-600' />
+                <LoaderIcon className='text-primary size-6 animate-spin' />
               </div>
             : <div className='max-h-150 overflow-y-auto'>
                 {tables.map(tbl => (
-                  <button
+                  <Button
                     key={tbl.name}
                     type='button'
+                    variant='ghost'
                     onClick={() => handleTableSelect(tbl.name)}
-                    className={`hover:bg-muted flex w-full items-center justify-between px-4 py-2 text-left text-sm ${
+                    className={`h-auto w-full justify-between rounded-none px-4 py-2 text-left text-sm ${
                       selectedTable === tbl.name ?
-                        'bg-purple-50 text-purple-700'
+                        'bg-chart-cat-5/15 text-chart-cat-5 hover:bg-chart-cat-5/15 hover:text-chart-cat-5'
                       : 'text-secondary-foreground'
                     }`}
                   >
@@ -205,7 +215,7 @@ function DatabaseViewerPage() {
                       {tbl.name}
                     </span>
                     <span className='text-muted-foreground/70 text-xs'>{tbl.rowCount}</span>
-                  </button>
+                  </Button>
                 ))}
               </div>
             }
@@ -221,53 +231,59 @@ function DatabaseViewerPage() {
                 <div className='flex items-center gap-3'>
                   <h2 className='text-foreground font-semibold'>{selectedTable}</h2>
                   {filterColumn && (
-                    <span className='flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700'>
+                    <span className='bg-info-bg text-info flex items-center gap-1 rounded-full px-2 py-0.5 text-xs'>
                       <LinkIcon className='size-3' />
                       {filterColumn} = {filterValue}
-                      <button
+                      <Button
                         type='button'
+                        variant='ghost'
+                        size='icon-xs'
                         onClick={clearFilter}
-                        className='ml-1 rounded-full p-0.5 hover:bg-blue-200'
+                        className='hover:bg-info-border ml-1'
                         title='Clear filter'
                       >
                         <XIcon className='size-3' />
-                      </button>
+                      </Button>
                     </span>
                   )}
                 </div>
                 <div className='flex items-center gap-4'>
-                  <select
-                    value={limit}
-                    onChange={e => {
-                      setLimit(parseInt(e.target.value, 10));
+                  <Select
+                    value={String(limit)}
+                    onValueChange={v => {
+                      setLimit(Number(v));
                       setPage(1);
                     }}
-                    className='border-input focus-visible:border-ring focus-visible:ring-ring/50 h-8 rounded-lg border bg-transparent px-2.5 text-sm transition-colors outline-none focus-visible:ring-3'
                   >
-                    {LIMIT_OPTIONS.map(opt => (
-                      <option key={opt} value={opt}>
-                        {opt} rows
-                      </option>
-                    ))}
-                  </select>
-                  <button
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {LIMIT_OPTIONS.map(opt => (
+                        <SelectItem key={opt} value={String(opt)}>
+                          {opt} rows
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
                     type='button'
+                    variant='secondary'
                     onClick={() => rowsQuery.refetch()}
-                    className='bg-secondary hover:bg-secondary/80 flex items-center gap-1 rounded px-3 py-1 text-sm disabled:opacity-50'
                     disabled={rowsQuery.isFetching}
                   >
                     <RefreshCwIcon
                       className={`size-3 ${rowsQuery.isFetching ? 'animate-spin' : ''}`}
                     />
                     Refresh
-                  </button>
+                  </Button>
                 </div>
               </div>
 
               {/* Table Data */}
               {rowsQuery.isLoading ?
                 <div className='flex justify-center p-8'>
-                  <LoaderIcon className='size-6 animate-spin text-blue-600' />
+                  <LoaderIcon className='text-primary size-6 animate-spin' />
                 </div>
               : rows.length > 0 ?
                 <>
@@ -287,7 +303,7 @@ function DatabaseViewerPage() {
                                   <Tooltip>
                                     <TooltipTrigger asChild>
                                       <span className='inline-flex'>
-                                        <KeyRoundIcon className='size-3 text-amber-500' />
+                                        <KeyRoundIcon className='text-warning size-3' />
                                       </span>
                                     </TooltipTrigger>
                                     <TooltipContent>Primary Key</TooltipContent>
@@ -297,7 +313,7 @@ function DatabaseViewerPage() {
                                   <Tooltip>
                                     <TooltipTrigger asChild>
                                       <span className='inline-flex'>
-                                        <LinkIcon className='size-3 text-blue-500' />
+                                        <LinkIcon className='text-info size-3' />
                                       </span>
                                     </TooltipTrigger>
                                     <TooltipContent>
@@ -335,16 +351,17 @@ function DatabaseViewerPage() {
                                 className='text-secondary-foreground max-w-xs truncate px-4 py-2 text-sm'
                               >
                                 {fk && cellValue != null ?
-                                  <button
+                                  <Button
                                     type='button'
+                                    variant='link'
                                     onClick={() =>
                                       navigateToForeignKey(fk.table, fk.column, cellValue)
                                     }
-                                    className='text-blue-600 underline decoration-dotted hover:text-blue-800'
+                                    className='hover:text-primary/80 h-auto p-0 underline decoration-dotted'
                                     title={`View in ${fk.table}`}
                                   >
                                     {formatCellValue(cellValue)}
-                                  </button>
+                                  </Button>
                                 : formatCellValue(cellValue)}
                               </TableCell>
                             );
@@ -362,25 +379,27 @@ function DatabaseViewerPage() {
                       {pagination.totalRows} rows
                     </span>
                     <div className='flex gap-2'>
-                      <button
+                      <Button
                         type='button'
+                        variant='outline'
+                        size='icon'
                         onClick={() => setPage(p => Math.max(1, p - 1))}
                         disabled={page <= 1}
-                        className='border-border bg-card hover:bg-muted rounded-lg border p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-50'
                       >
                         <ChevronLeftIcon className='size-5' />
-                      </button>
+                      </Button>
                       <span className='flex items-center px-2 text-sm'>
                         Page {pagination.page} of {pagination.totalPages}
                       </span>
-                      <button
+                      <Button
                         type='button'
+                        variant='outline'
+                        size='icon'
                         onClick={() => setPage(p => p + 1)}
                         disabled={page >= pagination.totalPages}
-                        className='border-border bg-card hover:bg-muted rounded-lg border p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-50'
                       >
                         <ChevronRightIcon className='size-5' />
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </>

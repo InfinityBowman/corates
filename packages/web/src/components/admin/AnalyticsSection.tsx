@@ -19,6 +19,14 @@ import {
 } from '@/server/functions/admin-stats.functions';
 import { LineChart, BarChart, DoughnutChart } from '@/components/admin/charts';
 import { AdminBox } from '@/components/admin/ui';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const PERIOD_OPTIONS = [
   { value: 7, label: '7 days' },
@@ -142,33 +150,35 @@ export function AnalyticsSection() {
         <AdminBox>
           <div className='mb-4 flex items-center justify-between'>
             <div className='flex items-center gap-2'>
-              <UsersIcon className='size-5 text-blue-500' />
+              <UsersIcon className='text-info size-5' />
               <h3 className='text-foreground font-medium'>User Signups</h3>
             </div>
             <div className='flex items-center gap-2'>
-              <select
-                value={signupDays}
-                onChange={e => setSignupDays(parseInt(e.target.value, 10))}
-                className='border-input focus-visible:border-ring focus-visible:ring-ring/50 h-8 rounded-lg border bg-transparent px-2.5 text-sm transition-colors outline-none focus-visible:ring-3'
-              >
-                {PERIOD_OPTIONS.map(opt => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-              <button
+              <Select value={String(signupDays)} onValueChange={v => setSignupDays(Number(v))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PERIOD_OPTIONS.map(opt => (
+                    <SelectItem key={opt.value} value={String(opt.value)}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
                 type='button'
+                variant='ghost'
+                size='icon'
                 onClick={() => signupQuery.refetch()}
-                className='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground rounded-lg p-1'
               >
                 <RefreshCwIcon className='size-4' />
-              </button>
+              </Button>
             </div>
           </div>
           {signupQuery.isLoading ?
             <div className='flex h-64 items-center justify-center'>
-              <LoaderIcon className='size-6 animate-spin text-blue-500' />
+              <LoaderIcon className='text-info size-6 animate-spin' />
             </div>
           : signupData?.data ?
             <>
@@ -180,7 +190,7 @@ export function AnalyticsSection() {
                 labels={signupData.data.map(d => formatDate(d.date))}
                 data={signupData.data.map(d => d.count)}
                 label='Signups'
-                color='rgb(59, 130, 246)'
+                color='var(--chart-cat-1)'
                 fill
               />
             </>
@@ -206,11 +216,11 @@ export function AnalyticsSection() {
             <>
               <div className='mb-2 flex gap-4'>
                 <div>
-                  <span className='text-success text-2xl font-bold'>{orgData.total ?? 0}</span>
+                  <span className='text-chart-cat-1 text-2xl font-bold'>{orgData.total ?? 0}</span>
                   <span className='text-muted-foreground ml-1 text-sm'>orgs</span>
                 </div>
                 <div>
-                  <span className='text-2xl font-bold text-purple-600'>
+                  <span className='text-chart-cat-2 text-2xl font-bold'>
                     {projectData.total ?? 0}
                   </span>
                   <span className='text-muted-foreground ml-1 text-sm'>projects</span>
@@ -222,12 +232,12 @@ export function AnalyticsSection() {
                   {
                     label: 'Organizations',
                     data: orgData.data.map(d => d.count),
-                    color: 'rgb(16, 185, 129)',
+                    color: 'var(--chart-cat-1)',
                   },
                   {
                     label: 'Projects',
                     data: projectData.data.map(d => d.count),
-                    color: 'rgb(139, 92, 246)',
+                    color: 'var(--chart-cat-2)',
                   },
                 ]}
                 showLegend
@@ -246,17 +256,18 @@ export function AnalyticsSection() {
         <AdminBox>
           <div className='mb-4 flex items-center justify-between'>
             <h3 className='text-foreground font-medium'>Subscriptions</h3>
-            <button
+            <Button
               type='button'
+              variant='ghost'
+              size='icon'
               onClick={() => subscriptionQuery.refetch()}
-              className='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground rounded p-1'
             >
               <RefreshCwIcon className='size-4' />
-            </button>
+            </Button>
           </div>
           {subscriptionQuery.isLoading ?
             <div className='flex h-48 items-center justify-center'>
-              <LoaderIcon className='size-6 animate-spin text-blue-500' />
+              <LoaderIcon className='text-info size-6 animate-spin' />
             </div>
           : subscriptionData ?
             <>
@@ -270,10 +281,10 @@ export function AnalyticsSection() {
                   subscriptionData.canceled ?? 0,
                 ]}
                 colors={[
-                  'rgba(16, 185, 129, 0.8)',
-                  'rgba(59, 130, 246, 0.8)',
-                  'rgba(245, 158, 11, 0.8)',
-                  'rgba(107, 114, 128, 0.8)',
+                  'var(--chart-cat-1)',
+                  'var(--chart-cat-2)',
+                  'var(--chart-cat-3)',
+                  'var(--muted-foreground)',
                 ]}
                 legendPosition='bottom'
               />
@@ -291,13 +302,14 @@ export function AnalyticsSection() {
               <DollarSignIcon className='text-success size-5' />
               <h3 className='text-foreground font-medium'>Revenue (6 months)</h3>
             </div>
-            <button
+            <Button
               type='button'
+              variant='ghost'
+              size='icon'
               onClick={() => revenueQuery.refetch()}
-              className='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground rounded p-1'
             >
               <RefreshCwIcon className='size-4' />
-            </button>
+            </Button>
           </div>
           {revenueQuery.isLoading ?
             <div className='flex h-48 items-center justify-center'>
@@ -314,7 +326,7 @@ export function AnalyticsSection() {
                 labels={revenueData.data.map(d => d.label)}
                 data={revenueData.data.map(d => d.revenue / 100)}
                 label='Revenue ($)'
-                colors={revenueData.data.map(() => 'rgba(16, 185, 129, 0.8)')}
+                colors={revenueData.data.map(() => 'var(--chart-cat-2)')}
               />
             </>
           : <div className='text-muted-foreground/70 flex h-48 items-center justify-center'>
@@ -328,31 +340,33 @@ export function AnalyticsSection() {
       <AdminBox>
         <div className='mb-4 flex items-center justify-between'>
           <div className='flex items-center gap-2'>
-            <AlertTriangleIcon className='size-5 text-orange-500' />
+            <AlertTriangleIcon className='text-warning size-5' />
             <h3 className='text-foreground font-medium'>Webhook Health</h3>
           </div>
           <div className='flex items-center gap-2'>
-            <select
-              value={webhookDays}
-              onChange={e => setWebhookDays(parseInt(e.target.value, 10))}
-              className='border-input focus-visible:border-ring focus-visible:ring-ring/50 h-8 rounded-lg border bg-transparent px-2.5 text-sm transition-colors outline-none focus-visible:ring-3'
-            >
-              <option value={7}>7 days</option>
-              <option value={14}>14 days</option>
-              <option value={30}>30 days</option>
-            </select>
-            <button
+            <Select value={String(webhookDays)} onValueChange={v => setWebhookDays(Number(v))}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='7'>7 days</SelectItem>
+                <SelectItem value='14'>14 days</SelectItem>
+                <SelectItem value='30'>30 days</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
               type='button'
+              variant='ghost'
+              size='icon'
               onClick={() => webhookQuery.refetch()}
-              className='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground rounded p-1'
             >
               <RefreshCwIcon className='size-4' />
-            </button>
+            </Button>
           </div>
         </div>
         {webhookQuery.isLoading ?
           <div className='flex h-48 items-center justify-center'>
-            <LoaderIcon className='size-6 animate-spin text-orange-500' />
+            <LoaderIcon className='text-warning size-6 animate-spin' />
           </div>
         : webhookData?.data ?
           <>
@@ -370,7 +384,7 @@ export function AnalyticsSection() {
                 <span className='text-muted-foreground ml-1 text-sm'>failed</span>
               </div>
               <div>
-                <span className='text-2xl font-bold text-yellow-600'>
+                <span className='text-warning text-2xl font-bold'>
                   {webhookData.totals?.pending ?? 0}
                 </span>
                 <span className='text-muted-foreground ml-1 text-sm'>pending</span>
@@ -383,17 +397,17 @@ export function AnalyticsSection() {
                 {
                   label: 'Success',
                   data: webhookData.data.map(d => d.success),
-                  color: 'rgb(16, 185, 129)',
+                  color: 'var(--success)',
                 },
                 {
                   label: 'Failed',
                   data: webhookData.data.map(d => d.failed),
-                  color: 'rgb(239, 68, 68)',
+                  color: 'var(--destructive)',
                 },
                 {
                   label: 'Pending',
                   data: webhookData.data.map(d => d.pending),
-                  color: 'rgb(245, 158, 11)',
+                  color: 'var(--warning)',
                 },
               ]}
               showLegend

@@ -48,7 +48,7 @@ export function UserOrganizations({ orgs }: { orgs?: UserOrg[] }) {
                   <Link
                     to={'/admin/orgs/$orgId' as string}
                     params={{ orgId: org.orgId } as Record<string, string>}
-                    className='font-medium text-blue-600 hover:text-blue-700'
+                    className='text-primary hover:text-primary/80 font-medium'
                   >
                     {org.orgName}
                   </Link>

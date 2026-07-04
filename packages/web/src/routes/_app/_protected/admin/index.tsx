@@ -112,7 +112,7 @@ function AdminDashboard() {
       >
         {usersDataQuery.isLoading ?
           <div className='flex items-center justify-center py-12'>
-            <LoaderIcon className='size-8 animate-spin text-blue-600' />
+            <LoaderIcon className='text-primary size-8 animate-spin' />
           </div>
         : <UserTable users={usersData?.users || []} />}
 

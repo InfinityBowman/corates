@@ -3,9 +3,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 const colorMap = {
   blue: {
-    bg: 'bg-blue-50',
-    icon: 'bg-blue-100 text-blue-600',
-    text: 'text-blue-600',
+    bg: 'bg-info-bg',
+    icon: 'bg-info-bg text-info',
+    text: 'text-info',
   },
   green: {
     bg: 'bg-success-bg',
@@ -13,14 +13,14 @@ const colorMap = {
     text: 'text-success',
   },
   purple: {
-    bg: 'bg-purple-50',
-    icon: 'bg-purple-100 text-purple-600',
-    text: 'text-purple-600',
+    bg: 'bg-chart-cat-5/15',
+    icon: 'bg-chart-cat-5/15 text-chart-cat-5',
+    text: 'text-chart-cat-5',
   },
   orange: {
-    bg: 'bg-orange-50',
-    icon: 'bg-orange-100 text-orange-600',
-    text: 'text-orange-600',
+    bg: 'bg-warning-bg',
+    icon: 'bg-warning-bg text-warning',
+    text: 'text-warning',
   },
 } as const;
 

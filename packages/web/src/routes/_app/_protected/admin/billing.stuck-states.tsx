@@ -8,6 +8,7 @@ import {
   RefreshCwIcon,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { useAdminBillingStuckStates } from '@/hooks/useAdminQueries';
 import { DashboardHeader, AdminBox } from '@/components/admin/ui';
 import { Input } from '@/components/ui/input';
@@ -120,10 +121,10 @@ function AdminBillingStuckStatesPage() {
                 className='w-20'
               />
             </div>
-            <button
+            <Button
               type='button'
+              variant='outline'
               onClick={() => stuckStatesQuery.refetch()}
-              className='border-border bg-card text-secondary-foreground hover:bg-muted inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium shadow-xs focus:ring-[3px] focus:ring-blue-100 focus:outline-none'
               disabled={stuckStatesQuery.isFetching}
             >
               {stuckStatesQuery.isFetching ?
@@ -132,7 +133,7 @@ function AdminBillingStuckStatesPage() {
                   <RefreshCwIcon className='size-4' /> Refresh
                 </>
               }
-            </button>
+            </Button>
           </div>
         }
       />
@@ -158,7 +159,7 @@ function AdminBillingStuckStatesPage() {
       {/* Stuck Orgs by Type */}
       {stuckStatesQuery.isLoading ?
         <div className='flex items-center justify-center py-12'>
-          <LoaderIcon className='size-8 animate-spin text-blue-600' />
+          <LoaderIcon className='text-primary size-8 animate-spin' />
         </div>
       : stuckOrgs.length === 0 ?
         <AdminBox className='p-12 text-center'>
@@ -176,7 +177,7 @@ function AdminBillingStuckStatesPage() {
               <AdminBox key={type} className='overflow-hidden p-0'>
                 <div className='border-border border-b px-6 py-4'>
                   <div className='flex items-center gap-3'>
-                    <Icon className='size-5 text-orange-600' />
+                    <Icon className='text-warning size-5' />
                     <h2 className='text-foreground text-lg font-semibold'>
                       {getStuckStateTypeLabel(type)}
                     </h2>
@@ -193,7 +194,7 @@ function AdminBillingStuckStatesPage() {
                               <Link
                                 to={'/admin/orgs/$orgId' as string}
                                 params={{ orgId: org.orgId } as Record<string, string>}
-                                className='font-medium text-blue-600 hover:text-blue-800'
+                                className='text-primary hover:text-primary/80 font-medium'
                               >
                                 Org: {org.orgId.slice(0, 8)}...
                               </Link>

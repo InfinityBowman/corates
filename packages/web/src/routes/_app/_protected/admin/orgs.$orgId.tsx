@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { handleError } from '@/lib/error-utils';
 import { AdminBox } from '@/components/admin/ui';
+import { Button } from '@/components/ui/button';
 import { formatDateInput } from '@/lib/formatDate';
 import { OrgBillingSummary } from '@/components/admin/OrgBillingSummary';
 import { OrgQuickActions } from '@/components/admin/OrgQuickActions';
@@ -338,7 +339,7 @@ function OrgDetailPage() {
   if (!isAdminChecked) {
     return (
       <div className='flex min-h-[400px] items-center justify-center'>
-        <LoaderIcon className='size-8 animate-spin text-blue-600' />
+        <LoaderIcon className='text-primary size-8 animate-spin' />
       </div>
     );
   }
@@ -367,7 +368,7 @@ function OrgDetailPage() {
       {/* Loading state */}
       {orgDetailsQuery.isLoading && (
         <div className='flex min-h-64 items-center justify-center'>
-          <LoaderIcon className='size-8 animate-spin text-blue-600' />
+          <LoaderIcon className='text-primary size-8 animate-spin' />
         </div>
       )}
 
@@ -379,13 +380,14 @@ function OrgDetailPage() {
           <p className='text-muted-foreground mt-1 text-sm'>
             This organization may have been deleted.
           </p>
-          <button
+          <Button
             type='button'
+            variant='ghost'
             onClick={() => orgDetailsQuery.refetch()}
-            className='text-destructive hover:text-destructive/80 mt-2 text-sm'
+            className='text-destructive hover:text-destructive/80 mt-2'
           >
             Try again
-          </button>
+          </Button>
         </div>
       )}
 
@@ -394,8 +396,8 @@ function OrgDetailPage() {
         <>
           <div className='mb-6'>
             <div className='flex items-center gap-3'>
-              <div className='flex size-12 items-center justify-center rounded-lg bg-blue-100'>
-                <HomeIcon className='size-6 text-blue-600' />
+              <div className='bg-info-bg flex size-12 items-center justify-center rounded-lg'>
+                <HomeIcon className='text-info size-6' />
               </div>
               <div>
                 <h1 className='text-foreground text-2xl font-bold'>

@@ -6,6 +6,14 @@ import { useAdminBillingLedger } from '@/hooks/useAdminQueries';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { DashboardHeader, AdminBox, AdminDataTable, CopyButton } from '@/components/admin/ui';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { formatDateTime } from '@/lib/formatDate';
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -39,6 +47,10 @@ const STATUS_OPTIONS = [
 ];
 
 const LIMIT_OPTIONS = [25, 50, 100, 200];
+
+// Radix Select forbids empty-string item values; this sentinel maps to the
+// "All Statuses" option while statusFilter state stays '' for the query.
+const ALL_STATUSES_VALUE = 'all';
 
 const getStatusVariant = (
   status: string,
@@ -172,7 +184,7 @@ function AdminBillingLedgerPage() {
               <Link
                 to={'/admin/orgs/$orgId' as string}
                 params={{ orgId: entry.orgId } as Record<string, string>}
-                className='text-blue-600 hover:text-blue-800'
+                className='text-primary hover:text-primary/80'
               >
                 <code className='font-mono text-xs'>{entry.orgId.slice(0, 8)}...</code>
               </Link>
@@ -284,16 +296,16 @@ function AdminBillingLedgerPage() {
         title='Billing Ledger'
         description='Stripe event ledger entries with filtering and search'
         actions={
-          <button
+          <Button
             type='button'
+            variant='outline'
             onClick={() => ledgerQuery.refetch()}
-            className='border-border bg-card text-secondary-foreground hover:bg-muted inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium shadow-xs focus:ring-[3px] focus:ring-blue-100 focus:outline-none'
             disabled={ledgerQuery.isFetching}
           >
             {ledgerQuery.isFetching ?
               <LoaderIcon className='size-4 animate-spin' />
             : 'Refresh'}
-          </button>
+          </Button>
         }
       />
 
@@ -320,17 +332,24 @@ function AdminBillingLedgerPage() {
         <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
           <div>
             <label className='text-secondary-foreground block text-sm font-medium'>Status</label>
-            <select
-              value={statusFilter}
-              onChange={e => setStatusFilter(e.target.value)}
-              className='border-input focus-visible:border-ring focus-visible:ring-ring/50 mt-1 block h-8 w-full rounded-lg border bg-transparent px-2.5 text-sm transition-colors outline-none focus-visible:ring-3'
+            <Select
+              value={statusFilter === '' ? ALL_STATUSES_VALUE : statusFilter}
+              onValueChange={v => setStatusFilter(v === ALL_STATUSES_VALUE ? '' : v)}
             >
-              {STATUS_OPTIONS.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className='mt-1 w-full'>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUS_OPTIONS.map(option => (
+                  <SelectItem
+                    key={option.value}
+                    value={option.value === '' ? ALL_STATUSES_VALUE : option.value}
+                  >
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <label className='text-secondary-foreground block text-sm font-medium'>
@@ -346,17 +365,18 @@ function AdminBillingLedgerPage() {
           </div>
           <div>
             <label className='text-secondary-foreground block text-sm font-medium'>Limit</label>
-            <select
-              value={limit}
-              onChange={e => setLimit(parseInt(e.target.value, 10))}
-              className='border-input focus-visible:border-ring focus-visible:ring-ring/50 mt-1 block h-8 w-full rounded-lg border bg-transparent px-2.5 text-sm transition-colors outline-none focus-visible:ring-3'
-            >
-              {LIMIT_OPTIONS.map(opt => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
+            <Select value={String(limit)} onValueChange={v => setLimit(Number(v))}>
+              <SelectTrigger className='mt-1 w-full'>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {LIMIT_OPTIONS.map(opt => (
+                  <SelectItem key={opt} value={String(opt)}>
+                    {opt}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </AdminBox>

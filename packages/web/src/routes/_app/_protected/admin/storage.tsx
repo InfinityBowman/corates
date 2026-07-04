@@ -26,6 +26,7 @@ import {
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
 import { DashboardHeader, AdminSection, AdminBox } from '@/components/admin/ui';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { formatDateTime } from '@/lib/formatDate';
 import {
@@ -213,8 +214,8 @@ function StorageManagementPage() {
       />
 
       {/* Info Banner */}
-      <div className='rounded-lg border border-blue-200 bg-blue-50 p-4'>
-        <p className='text-sm text-blue-800'>
+      <div className='border-info-border bg-info-bg rounded-lg border p-4'>
+        <p className='text-info text-sm'>
           <strong>Note:</strong> This dashboard shows all PDFs in R2 storage. PDFs marked as
           &quot;Orphaned&quot; are files in R2 that are not tracked in the mediaFiles database table
           (e.g., from failed cleanup). You can safely delete orphaned PDFs to free up storage space.
@@ -246,25 +247,17 @@ function StorageManagementPage() {
 
       {/* Bulk Actions Bar */}
       {selectedKeys.size > 0 && (
-        <div className='flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 p-4'>
-          <span className='text-sm font-medium text-blue-900'>
+        <div className='border-info-border bg-info-bg flex items-center justify-between rounded-lg border p-4'>
+          <span className='text-info text-sm font-medium'>
             {selectedKeys.size} document{selectedKeys.size === 1 ? '' : 's'} selected
           </span>
           <div className='flex items-center gap-3'>
-            <button
-              type='button'
-              onClick={() => setSelectedKeys(new Set())}
-              className='text-secondary-foreground hover:bg-muted bg-card rounded-lg px-4 py-2 text-sm font-medium'
-            >
+            <Button type='button' variant='outline' onClick={() => setSelectedKeys(new Set())}>
               Clear Selection
-            </button>
-            <button
-              type='button'
-              onClick={handleBulkDelete}
-              className='rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:ring-2 focus:ring-blue-500 focus:outline-none'
-            >
+            </Button>
+            <Button type='button' variant='destructive' onClick={handleBulkDelete}>
               Delete Selected
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -276,16 +269,18 @@ function StorageManagementPage() {
             <TableHeader className='border-border bg-muted border-b'>
               <TableRow className='border-border border-b'>
                 <TableHead className='px-6 py-3'>
-                  <button
+                  <Button
                     type='button'
+                    variant='ghost'
+                    size='icon'
                     onClick={toggleSelectAll}
-                    className='text-muted-foreground/70 hover:text-muted-foreground flex items-center'
+                    className='text-muted-foreground/70 hover:text-muted-foreground'
                     title='Select all'
                   >
                     {allCurrentPageSelected ?
-                      <CheckSquareIcon className='size-4 text-blue-600' />
+                      <CheckSquareIcon className='text-info size-4' />
                     : <SquareIcon className='size-4' />}
-                  </button>
+                  </Button>
                 </TableHead>
                 <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
                   File Name
@@ -312,7 +307,7 @@ function StorageManagementPage() {
                 <TableRow>
                   <TableCell colSpan={7} className='px-6 py-12 text-center'>
                     <div className='flex items-center justify-center'>
-                      <LoaderIcon className='size-8 animate-spin text-blue-600' />
+                      <LoaderIcon className='text-primary size-8 animate-spin' />
                     </div>
                   </TableCell>
                 </TableRow>
@@ -320,12 +315,14 @@ function StorageManagementPage() {
                 (documentsData?.documents ?? []).map(doc => (
                   <TableRow
                     key={doc.key}
-                    className={doc.orphaned ? 'bg-orange-50' : ''}
+                    className={doc.orphaned ? 'bg-warning-bg' : ''}
                     onClick={e => handleRowClick(e, doc.key)}
                   >
                     <TableCell className='text-foreground px-6 py-4 text-sm'>
-                      <button
+                      <Button
                         type='button'
+                        variant='ghost'
+                        size='icon'
                         onClick={e => {
                           e.stopPropagation();
                           toggleSelect(doc.key);
@@ -333,9 +330,9 @@ function StorageManagementPage() {
                         className='text-muted-foreground/70 hover:text-muted-foreground'
                       >
                         {selectedKeys.has(doc.key) ?
-                          <CheckSquareIcon className='size-4 text-blue-600' />
+                          <CheckSquareIcon className='text-info size-4' />
                         : <SquareIcon className='size-4' />}
-                      </button>
+                      </Button>
                     </TableCell>
                     <TableCell className='text-foreground px-6 py-4 text-sm'>
                       <div className='flex items-center gap-2'>
@@ -365,17 +362,19 @@ function StorageManagementPage() {
                       {formatDateTime(doc.uploaded)}
                     </TableCell>
                     <TableCell className='text-foreground px-6 py-4 text-right text-sm'>
-                      <button
+                      <Button
                         type='button'
+                        variant='ghost'
+                        size='icon'
                         onClick={e => {
                           e.stopPropagation();
                           handleSingleDelete(doc.key);
                         }}
-                        className='text-destructive hover:bg-destructive/10 rounded-lg p-2'
+                        className='text-destructive hover:bg-destructive/10'
                         title='Delete'
                       >
                         <Trash2Icon className='size-4' />
-                      </button>
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))
@@ -397,32 +396,34 @@ function StorageManagementPage() {
                   {documentsData.documents?.length === 1 ? '' : 's'}
                 </p>
                 {documentsData.truncated && (
-                  <p className='text-xs text-orange-600'>
+                  <p className='text-warning text-xs'>
                     Results truncated after processing 10,000 objects. Use pagination to continue.
                   </p>
                 )}
               </div>
               <div className='flex items-center gap-2'>
-                <button
+                <Button
                   type='button'
+                  variant='outline'
+                  size='icon'
                   onClick={handlePrevPage}
                   disabled={cursorHistory.length === 0}
-                  className='border-border bg-card hover:bg-muted rounded-lg border p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-50'
                 >
                   <ChevronLeftIcon className='size-4' />
-                </button>
+                </Button>
                 <span className='text-muted-foreground text-sm'>
                   {cursorHistory.length + 1}
                   {documentsData.nextCursor ? ' ->' : ''}
                 </span>
-                <button
+                <Button
                   type='button'
+                  variant='outline'
+                  size='icon'
                   onClick={handleNextPage}
                   disabled={!documentsData.nextCursor}
-                  className='border-border bg-card hover:bg-muted rounded-lg border p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-50'
                 >
                   <ChevronRightIcon className='size-4' />
-                </button>
+                </Button>
               </div>
             </div>
           )}

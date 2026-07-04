@@ -10,6 +10,13 @@ import {
   Legend,
 } from 'recharts';
 
+/**
+ * Translucent area fill from any CSS color (hex, rgb, or var(--x)); a plain
+ * `${color}1A` hex-append produces invalid colors for rgb()/var() inputs.
+ */
+const fillFromColor = (color: string, percent = 12): string =>
+  `color-mix(in oklab, ${color} ${percent}%, transparent)`;
+
 interface Dataset {
   label: string;
   data: number[];
@@ -34,7 +41,7 @@ export function LineChart({
   data: singleData,
   datasets,
   label = 'Data',
-  color = '#3b82f6',
+  color = 'var(--chart-cat-1)',
   fill = false,
   showLegend = false,
   className = 'h-64',
@@ -55,25 +62,28 @@ export function LineChart({
 
   const lines = useMemo(() => {
     if (datasets) {
-      return datasets.map(ds => (
-        <Line
-          key={ds.label}
-          type='monotone'
-          dataKey={ds.label}
-          stroke={ds.color || color}
-          fill={ds.fill ? `${ds.color || color}1A` : 'transparent'}
-          strokeWidth={2}
-          dot={{ r: 3 }}
-          activeDot={{ r: 5 }}
-        />
-      ));
+      return datasets.map(ds => {
+        const strokeColor = ds.color || 'var(--chart-cat-1)';
+        return (
+          <Line
+            key={ds.label}
+            type='monotone'
+            dataKey={ds.label}
+            stroke={strokeColor}
+            fill={ds.fill ? fillFromColor(strokeColor) : 'transparent'}
+            strokeWidth={2}
+            dot={{ r: 3 }}
+            activeDot={{ r: 5 }}
+          />
+        );
+      });
     }
     return (
       <Line
         type='monotone'
         dataKey={label}
         stroke={color}
-        fill={fill ? `${color}1A` : 'transparent'}
+        fill={fill ? fillFromColor(color) : 'transparent'}
         strokeWidth={2}
         dot={{ r: 3 }}
         activeDot={{ r: 5 }}

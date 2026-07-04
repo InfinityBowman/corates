@@ -21,6 +21,13 @@ import {
 } from '@/components/admin/ui';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { wakeAllProjectDOsAction } from '@/server/functions/admin-projects.functions';
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -131,7 +138,7 @@ function AdminProjectList() {
                 <FolderIcon className='text-success size-5' />
               </div>
               <div>
-                <p className='font-medium text-blue-600 hover:text-blue-700'>{project.name}</p>
+                <p className='text-primary hover:text-primary/80 font-medium'>{project.name}</p>
                 {project.description && (
                   <p className='text-muted-foreground max-w-xs truncate text-sm'>
                     {project.description}
@@ -152,7 +159,7 @@ function AdminProjectList() {
               <Link
                 to={'/admin/orgs/$orgId' as string}
                 params={{ orgId: project.orgId } as Record<string, string>}
-                className='text-secondary-foreground flex items-center gap-2 hover:text-blue-600'
+                className='text-secondary-foreground hover:text-primary flex items-center gap-2'
                 onClick={(e: React.MouseEvent) => e.stopPropagation()}
               >
                 <HomeIcon className='size-4' />
@@ -249,18 +256,22 @@ function AdminProjectList() {
 
         {/* Org Filter */}
         <div className='w-full sm:w-64'>
-          <select
-            value={selectedOrgId}
-            onChange={e => handleOrgFilter(e.target.value)}
-            className='border-input focus-visible:border-ring focus-visible:ring-ring/50 h-8 w-full rounded-lg border bg-transparent px-2.5 text-sm transition-colors outline-none focus-visible:ring-3'
+          <Select
+            value={selectedOrgId || 'all'}
+            onValueChange={v => handleOrgFilter(v === 'all' ? '' : v)}
           >
-            <option value=''>All Organizations</option>
-            {orgs.map(org => (
-              <option key={org.id} value={org.id}>
-                {org.name}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className='w-full'>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='all'>All Organizations</SelectItem>
+              {orgs.map(org => (
+                <SelectItem key={org.id} value={org.id}>
+                  {org.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -269,13 +280,14 @@ function AdminProjectList() {
         <div className='border-destructive/20 bg-destructive/10 rounded-lg border p-6 text-center'>
           <AlertCircleIcon className='text-destructive mx-auto mb-2 size-8' />
           <p className='text-destructive'>Failed to load projects</p>
-          <button
+          <Button
             type='button'
+            variant='link'
             onClick={() => projectsQuery.refetch()}
-            className='text-destructive hover:text-destructive/80 mt-2 text-sm'
+            className='text-destructive hover:text-destructive/80 mt-2'
           >
             Try again
-          </button>
+          </Button>
         </div>
       )}
 
@@ -291,16 +303,17 @@ function AdminProjectList() {
                 <FolderIcon className='text-muted-foreground/50 size-8' />
                 <span className='text-muted-foreground'>No projects found</span>
                 {(search || selectedOrgId) && (
-                  <button
+                  <Button
                     type='button'
+                    variant='link'
                     onClick={() => {
                       setSearch('');
                       setSelectedOrgId('');
                     }}
-                    className='text-sm text-blue-600 hover:text-blue-700'
+                    className='text-primary hover:text-primary/80'
                   >
                     Clear filters
-                  </button>
+                  </Button>
                 )}
               </div>
             }

@@ -68,7 +68,7 @@ function AdminLayout() {
   if (!isAdminChecked) {
     return (
       <div className='flex min-h-100 items-center justify-center'>
-        <LoaderIcon className='size-8 animate-spin text-blue-600' />
+        <LoaderIcon className='text-primary size-8 animate-spin' />
       </div>
     );
   }
@@ -101,7 +101,7 @@ function AdminLayout() {
                 to={item.path as string}
                 className={`flex items-center gap-2 rounded-t-lg border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
                   active ?
-                    'border-blue-600 bg-blue-50 text-blue-700'
+                    'border-primary bg-info-bg text-primary'
                   : 'text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground border-transparent'
                 }`}
               >

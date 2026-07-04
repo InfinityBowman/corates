@@ -60,7 +60,7 @@ export function ProjectMembersSection({ members, loading, onRemove }: ProjectMem
                       <Link
                         to={'/admin/users/$userId' as string}
                         params={{ userId: member.userId } as Record<string, string>}
-                        className='font-medium text-blue-600 hover:text-blue-700'
+                        className='text-primary hover:text-primary/80 font-medium'
                       >
                         {member.userDisplayName || member.userName}
                       </Link>

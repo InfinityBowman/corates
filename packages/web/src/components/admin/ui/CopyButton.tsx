@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { CopyIcon, CheckIcon } from 'lucide-react';
 import { showToast } from '@/components/ui/toast';
+import { Button } from '@/components/ui/button';
 
 interface CopyButtonProps {
   text: string;
@@ -29,10 +30,17 @@ export function CopyButton({
   };
 
   return (
-    <button type='button' onClick={handleCopy} className={className} title={`Copy ${label}`}>
+    <Button
+      type='button'
+      variant='ghost'
+      size='icon-xs'
+      onClick={handleCopy}
+      className={className}
+      title={`Copy ${label}`}
+    >
       {copied ?
         <CheckIcon className={`text-success ${iconSize}`} />
       : <CopyIcon className={iconSize} />}
-    </button>
+    </Button>
   );
 }

@@ -11,20 +11,11 @@ import {
   Cell,
 } from 'recharts';
 
-const DEFAULT_COLORS = [
-  'rgba(59, 130, 246, 0.8)',
-  'rgba(16, 185, 129, 0.8)',
-  'rgba(245, 158, 11, 0.8)',
-  'rgba(239, 68, 68, 0.8)',
-  'rgba(139, 92, 246, 0.8)',
-  'rgba(236, 72, 153, 0.8)',
-];
-
 interface BarChartProps {
   labels: string[];
   data: number[];
   label?: string;
-  colors?: string[];
+  colors: string[];
   showLegend?: boolean;
   className?: string;
 }
@@ -33,7 +24,7 @@ export function BarChart({
   labels,
   data,
   label = 'Data',
-  colors = DEFAULT_COLORS,
+  colors,
   showLegend = false,
   className = 'h-64',
 }: BarChartProps) {

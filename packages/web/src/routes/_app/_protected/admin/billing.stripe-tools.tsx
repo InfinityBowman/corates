@@ -29,6 +29,14 @@ import {
 import { showToast } from '@/components/ui/toast';
 import { DashboardHeader, AdminBox, CopyButton } from '@/components/admin/ui';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { formatDateTime } from '@/lib/formatDate';
 
 interface StripeCustomer {
@@ -243,14 +251,18 @@ function StripeToolsPage() {
       <AdminBox>
         <h2 className='text-foreground mb-4 text-lg font-semibold'>Customer Lookup</h2>
         <form onSubmit={handleSearch} className='flex flex-col gap-4 sm:flex-row'>
-          <select
+          <Select
             value={searchType}
-            onChange={e => setSearchType(e.target.value as 'email' | 'customerId')}
-            className='border-input focus-visible:border-ring focus-visible:ring-ring/50 h-8 rounded-lg border bg-transparent px-2.5 text-sm transition-colors outline-none focus-visible:ring-3'
+            onValueChange={v => setSearchType(v as 'email' | 'customerId')}
           >
-            <option value='email'>Search by Email</option>
-            <option value='customerId'>Search by Customer ID</option>
-          </select>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='email'>Search by Email</SelectItem>
+              <SelectItem value='customerId'>Search by Customer ID</SelectItem>
+            </SelectContent>
+          </Select>
           <div className='relative flex-1'>
             <SearchIcon className='text-muted-foreground/70 pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2' />
             <Input
@@ -261,16 +273,12 @@ function StripeToolsPage() {
               className='w-full pl-10'
             />
           </div>
-          <button
-            type='submit'
-            disabled={searching || !searchInput.trim()}
-            className='inline-flex items-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-xs hover:bg-blue-700 focus:ring-[3px] focus:ring-blue-100 focus:outline-none disabled:opacity-50'
-          >
+          <Button type='submit' disabled={searching || !searchInput.trim()}>
             {searching ?
               <LoaderIcon className='mr-2 size-4 animate-spin' />
             : <SearchIcon className='mr-2 size-4' />}
             Search
-          </button>
+          </Button>
         </form>
 
         {/* Search Error */}
@@ -292,7 +300,7 @@ function StripeToolsPage() {
                 href={customerData.stripeDashboardUrl}
                 target='_blank'
                 rel='noopener noreferrer'
-                className='inline-flex items-center text-sm text-blue-600 hover:text-blue-700'
+                className='text-primary hover:text-primary/80 inline-flex items-center text-sm'
               >
                 View in Stripe
                 <ExternalLinkIcon className='ml-1 size-4' />
@@ -362,7 +370,7 @@ function StripeToolsPage() {
                   <Link
                     to={'/admin/users/$userId' as string}
                     params={{ userId: customerData.linkedUser.id } as Record<string, string>}
-                    className='inline-flex items-center text-sm text-blue-600 hover:text-blue-700'
+                    className='text-primary hover:text-primary/80 inline-flex items-center text-sm'
                   >
                     <UserIcon className='mr-1 size-4' />
                     {customerData.linkedUser.name || customerData.linkedUser.email}
@@ -376,7 +384,7 @@ function StripeToolsPage() {
                   <Link
                     to={'/admin/orgs/$orgId' as string}
                     params={{ orgId: customerData.linkedOrg.id } as Record<string, string>}
-                    className='inline-flex items-center text-sm text-blue-600 hover:text-blue-700'
+                    className='text-primary hover:text-primary/80 inline-flex items-center text-sm'
                   >
                     <HomeIcon className='mr-1 size-4' />
                     {customerData.linkedOrg.name}
@@ -394,50 +402,50 @@ function StripeToolsPage() {
           <AdminBox>
             <h2 className='text-foreground mb-4 text-lg font-semibold'>Quick Actions</h2>
             <div className='flex flex-wrap gap-3'>
-              <button
+              <Button
                 type='button'
+                variant='outline'
                 onClick={generatePortalLink}
                 disabled={generatingPortal}
-                className='border-border bg-card text-secondary-foreground hover:bg-muted inline-flex items-center rounded-lg border px-4 py-2 text-sm font-medium disabled:opacity-50'
               >
                 {generatingPortal ?
                   <LoaderIcon className='mr-2 size-4 animate-spin' />
                 : <ExternalLinkIcon className='mr-2 size-4' />}
                 Generate Portal Link
-              </button>
-              <button
+              </Button>
+              <Button
                 type='button'
+                variant='outline'
                 onClick={loadInvoices}
                 disabled={loadingInvoices}
-                className='border-border bg-card text-secondary-foreground hover:bg-muted inline-flex items-center rounded-lg border px-4 py-2 text-sm font-medium disabled:opacity-50'
               >
                 {loadingInvoices ?
                   <LoaderIcon className='mr-2 size-4 animate-spin' />
                 : <FileTextIcon className='mr-2 size-4' />}
                 Load Invoices
-              </button>
-              <button
+              </Button>
+              <Button
                 type='button'
+                variant='outline'
                 onClick={loadPaymentMethods}
                 disabled={loadingPaymentMethods}
-                className='border-border bg-card text-secondary-foreground hover:bg-muted inline-flex items-center rounded-lg border px-4 py-2 text-sm font-medium disabled:opacity-50'
               >
                 {loadingPaymentMethods ?
                   <LoaderIcon className='mr-2 size-4 animate-spin' />
                 : <CreditCardIcon className='mr-2 size-4' />}
                 Load Payment Methods
-              </button>
-              <button
+              </Button>
+              <Button
                 type='button'
+                variant='outline'
                 onClick={loadSubscriptions}
                 disabled={loadingSubscriptions}
-                className='border-border bg-card text-secondary-foreground hover:bg-muted inline-flex items-center rounded-lg border px-4 py-2 text-sm font-medium disabled:opacity-50'
               >
                 {loadingSubscriptions ?
                   <LoaderIcon className='mr-2 size-4 animate-spin' />
                 : <DollarSignIcon className='mr-2 size-4' />}
                 Load Subscriptions
-              </button>
+              </Button>
             </div>
 
             {/* Portal Link Result */}
@@ -445,19 +453,19 @@ function StripeToolsPage() {
               <div className='border-success-border bg-success-bg mt-4 rounded-lg border p-4'>
                 <p className='text-success mb-2 text-sm font-medium'>Portal Link Generated</p>
                 <div className='flex items-center gap-2'>
-                  <input
+                  <Input
                     type='text'
                     value={portalUrl}
                     readOnly
-                    className='bg-card border-success-border flex-1 rounded border px-3 py-1 text-sm'
+                    className='border-success-border flex-1'
                   />
-                  <button
+                  <Button
                     type='button'
+                    variant='success'
                     onClick={() => navigator.clipboard.writeText(portalUrl)}
-                    className='bg-success hover:bg-success/80 rounded px-3 py-1 text-sm text-white'
                   >
                     Copy
-                  </button>
+                  </Button>
                   <a
                     href={portalUrl}
                     target='_blank'
@@ -498,7 +506,7 @@ function StripeToolsPage() {
                           href={`https://dashboard.stripe.com/subscriptions/${sub.id}`}
                           target='_blank'
                           rel='noopener noreferrer'
-                          className='text-blue-600 hover:text-blue-700'
+                          className='text-primary hover:text-primary/80'
                         >
                           <ExternalLinkIcon className='size-4' />
                         </a>
@@ -586,7 +594,7 @@ function StripeToolsPage() {
                                 href={invoice.hostedInvoiceUrl}
                                 target='_blank'
                                 rel='noopener noreferrer'
-                                className='text-blue-600 hover:text-blue-700'
+                                className='text-primary hover:text-primary/80'
                                 title='View Invoice'
                               >
                                 <ExternalLinkIcon className='size-4' />
