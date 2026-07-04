@@ -1,7 +1,12 @@
 import type { Database } from '@corates/db/client';
 import { resolveOrgAccess } from '@corates/workers/billing-resolver';
 import { isUnlimitedQuota } from '@corates/shared/plans';
-import { createDomainError, DomainErrorException, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
+import {
+  createDomainError,
+  DomainErrorException,
+  AUTH_ERRORS,
+  SYSTEM_ERRORS,
+} from '@corates/shared';
 import type { OrgId } from '@corates/shared/ids';
 
 export type QuotaGuardResult =

@@ -22,8 +22,7 @@ export interface ProjectContext {
 }
 
 export type ProjectGuardResult =
-  | { ok: true; context: ProjectContext }
-  | { ok: false; error: DomainErrorException };
+  { ok: true; context: ProjectContext } | { ok: false; error: DomainErrorException };
 
 export async function requireProjectAccess(
   session: Session,
@@ -75,9 +74,7 @@ export async function requireProjectAccess(
   if (!projectData) {
     return {
       ok: false,
-      error: new DomainErrorException(
-        createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId }),
-      ),
+      error: new DomainErrorException(createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId })),
     };
   }
 

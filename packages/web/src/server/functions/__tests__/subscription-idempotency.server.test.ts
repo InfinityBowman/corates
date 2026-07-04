@@ -44,7 +44,9 @@ describe('subscription incomplete-uniqueness constraint', () => {
     // the index only constrains rows in `incomplete` status.
     await insertSub(db, 'sub-active', 'org-1', 'active');
     await expect(insertSub(db, 'sub-pending', 'org-1', 'incomplete')).resolves.not.toThrow();
-    await expect(insertSub(db, 'sub-expired', 'org-1', 'incomplete_expired')).resolves.not.toThrow();
+    await expect(
+      insertSub(db, 'sub-expired', 'org-1', 'incomplete_expired'),
+    ).resolves.not.toThrow();
   });
 
   it('allows incomplete subscriptions for different orgs', async () => {

@@ -49,7 +49,11 @@ export function MarqueeLabel({ text, className }: MarqueeLabelProps) {
   return (
     <span
       ref={containerRef}
-      className={cn('block min-w-0 overflow-hidden whitespace-nowrap', isOverflowing && 'sidebar-marquee', className)}
+      className={cn(
+        'block min-w-0 overflow-hidden whitespace-nowrap',
+        isOverflowing && 'sidebar-marquee',
+        className,
+      )}
       style={
         isOverflowing ?
           ({

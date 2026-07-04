@@ -16,8 +16,7 @@ export interface OrgContext {
 }
 
 export type OrgGuardResult =
-  | { ok: true; context: OrgContext }
-  | { ok: false; error: DomainErrorException };
+  { ok: true; context: OrgContext } | { ok: false; error: DomainErrorException };
 
 export async function requireOrgMembership(
   session: Session,
