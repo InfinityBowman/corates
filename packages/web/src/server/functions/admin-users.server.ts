@@ -1,4 +1,4 @@
-import { captureError, info } from '@corates/workers/logger';
+import { captureError, info, warn } from '@corates/workers/logger';
 import { env } from 'cloudflare:workers';
 import type { Database } from '@corates/db/client';
 import {
@@ -68,10 +68,14 @@ export async function listAdminUsers(
     [totalResult] = await db.select({ count: count() }).from(user).where(searchCondition);
   } catch (err) {
     // Drizzle's "Failed query" error reaches the client without its cause,
-    // which made a staging-only D1 failure here undiagnosable. Surface the
-    // underlying D1 error in Workers Logs / Sentry before rethrowing.
+    // which made a staging-only D1 failure here undiagnosable. Put the cause
+    // chain in the log message itself: console output is all Workers Logs
+    // stores (Sentry extras are dropped on envs without a DSN).
+    const cause = (err as Error)?.cause;
+    const nested = (cause as Error)?.cause;
+    warn(`[admin] listAdminUsers count failed. cause: ${String(cause)}; nested: ${String(nested)}`);
     captureError(err, {
-      extra: { fn: 'listAdminUsers.count', cause: String((err as Error)?.cause) },
+      extra: { fn: 'listAdminUsers.count', cause: String(cause) },
     });
     throw err;
   }
