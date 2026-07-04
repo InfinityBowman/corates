@@ -13,7 +13,8 @@ import {
   member,
   organization,
 } from '@corates/db/schema';
-import { count, desc, eq, like, or, sql } from 'drizzle-orm';
+import { count, desc, eq, or, sql } from 'drizzle-orm';
+import type { AnySQLiteColumn } from 'drizzle-orm/sqlite-core';
 import {
   throwDomainError,
   DomainErrorException,
@@ -49,17 +50,21 @@ export async function listAdminUsers(
   const search = params.search?.trim() || undefined;
   const offset = (page - 1) * limit;
 
-  // Plain LIKE: SQLite's LIKE is already case-insensitive for ASCII, and
-  // SQLite's lower() only folds ASCII anyway, so wrapping both sides in
-  // lower() added no matching power -- just a different statement text.
+  // instr() instead of LIKE: some D1 nodes reject LIKE patterns longer than
+  // ~50 chars in this query with "LIKE or GLOB pattern too complex", which
+  // broke searches for long email addresses. instr() is a literal substring
+  // match with no pattern limits, and it also stops treating user-typed
+  // % and _ as wildcards.
+  const term = search?.toLowerCase();
+  const contains = (col: AnySQLiteColumn) => sql`instr(lower(${col}), ${term}) > 0`;
   const searchCondition =
     search ?
       or(
-        like(user.email, `%${search}%`),
-        like(user.name, `%${search}%`),
-        like(user.givenName, `%${search}%`),
-        like(user.familyName, `%${search}%`),
-        like(user.username, `%${search}%`),
+        contains(user.email),
+        contains(user.name),
+        contains(user.givenName),
+        contains(user.familyName),
+        contains(user.username),
       )
     : undefined;
 
