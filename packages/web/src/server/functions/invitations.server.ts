@@ -1,7 +1,13 @@
 import { captureError } from '@corates/workers/logger';
 import { env } from 'cloudflare:workers';
 import { acceptInvitation } from '@corates/workers/commands/invitations';
-import { createDomainError, isDomainError, SYSTEM_ERRORS, type DomainError } from '@corates/shared';
+import {
+  createDomainError,
+  isDomainError,
+  DomainErrorException,
+  SYSTEM_ERRORS,
+  type DomainError,
+} from '@corates/shared';
 import type { Session } from '@/server/middleware/auth';
 
 export interface AcceptResult {
@@ -32,13 +38,13 @@ export async function handleAcceptInvitation(
   } catch (err) {
     if (isDomainError(err)) {
       const de = err as DomainError;
-      throw Response.json(de, { status: de.statusCode });
+      throw new DomainErrorException(de);
     }
     captureError(err, { tags: { component: 'invitations', action: 'accept' } });
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'accept_invitation',
       originalError: (err as Error).message,
     });
-    throw Response.json(dbError, { status: 500 });
+    throw new DomainErrorException(dbError);
   }
 }

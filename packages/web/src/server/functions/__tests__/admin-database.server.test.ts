@@ -6,6 +6,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { env } from 'cloudflare:test';
 import { createDb } from '@corates/db/client';
+import { DomainErrorException } from '@corates/shared';
 import { resetTestDatabase, seedMediaFile } from '@/__tests__/server/helpers';
 import {
   buildAdminUser,
@@ -54,7 +55,7 @@ describe('getAdminTableSchema', () => {
       getAdminTableSchema(mockAdminSession(), 'sqlite_master');
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect((err as Response).status).toBe(400);
+      expect((err as DomainErrorException).statusCode).toBe(403);
     }
   });
 
@@ -80,7 +81,7 @@ describe('getAdminTableRows', () => {
       await getAdminTableRows(mockAdminSession(), createDb(env.DB), 'sqlite_master', {});
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect((err as Response).status).toBe(400);
+      expect((err as DomainErrorException).statusCode).toBe(403);
     }
   });
 

@@ -4,10 +4,11 @@ import type { Database } from '@corates/db/client';
 import { projects, projectMembers, projectInvitations, user } from '@corates/db/schema';
 import { eq, and, count, desc, isNull } from 'drizzle-orm';
 import {
-  createDomainError,
+  DomainErrorException,
   isDomainError,
   PROJECT_ERRORS,
   SYSTEM_ERRORS,
+  throwDomainError,
   USER_ERRORS,
   VALIDATION_ERRORS,
   type DomainError,
@@ -36,7 +37,7 @@ import type { Session } from '@/server/middleware/auth';
 
 export async function listOrgProjects(session: Session, db: Database, orgId: OrgId) {
   const membership = await requireOrgMembership(session, db, orgId);
-  if (!membership.ok) throw membership.response;
+  if (!membership.ok) throw membership.error;
 
   try {
     const results = await db
@@ -59,13 +60,10 @@ export async function listOrgProjects(session: Session, db: Database, orgId: Org
   } catch (err) {
     const error = err as Error;
     captureError(error, { tags: { component: 'org-projects', action: 'list' } });
-    throw Response.json(
-      createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-        operation: 'list_org_projects',
-        originalError: error.message,
-      }),
-      { status: 500 },
-    );
+    throwDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'list_org_projects',
+      originalError: error.message,
+    });
   }
 }
 
@@ -76,13 +74,13 @@ export async function createOrgProject(
   data: { name: string; description?: string },
 ) {
   const membership = await requireOrgMembership(session, db, orgId);
-  if (!membership.ok) throw membership.response;
+  if (!membership.ok) throw membership.error;
 
   const writeAccess = await requireOrgWriteAccess('POST', db, orgId);
-  if (!writeAccess.ok) throw writeAccess.response;
+  if (!writeAccess.ok) throw writeAccess.error;
 
   const entitlement = await requireEntitlement(db, orgId, 'project.create');
-  if (!entitlement.ok) throw entitlement.response;
+  if (!entitlement.ok) throw entitlement.error;
 
   const getProjectCount = async () => {
     const result = await db
@@ -94,7 +92,7 @@ export async function createOrgProject(
   };
 
   const quota = await requireQuota(db, orgId, 'projects.max', getProjectCount, 1);
-  if (!quota.ok) throw quota.response;
+  if (!quota.ok) throw quota.error;
 
   try {
     const { project } = await createProject(
@@ -110,17 +108,14 @@ export async function createOrgProject(
     return project;
   } catch (err) {
     if (isDomainError(err)) {
-      throw Response.json(err, { status: err.statusCode });
+      throw new DomainErrorException(err);
     }
     const error = err as Error;
     captureError(error, { tags: { component: 'org-projects', action: 'create' } });
-    throw Response.json(
-      createDomainError(SYSTEM_ERRORS.DB_TRANSACTION_FAILED, {
-        operation: 'create_project',
-        originalError: error.message,
-      }),
-      { status: 500 },
-    );
+    throwDomainError(SYSTEM_ERRORS.DB_TRANSACTION_FAILED, {
+      operation: 'create_project',
+      originalError: error.message,
+    });
   }
 }
 
@@ -131,10 +126,10 @@ export async function getProject(
   projectId: ProjectId,
 ) {
   const orgMembership = await requireOrgMembership(session, db, orgId);
-  if (!orgMembership.ok) throw orgMembership.response;
+  if (!orgMembership.ok) throw orgMembership.error;
 
   const access = await requireProjectAccess(session, db, orgId, projectId);
-  if (!access.ok) throw access.response;
+  if (!access.ok) throw access.error;
 
   try {
     const result = await db
@@ -152,23 +147,18 @@ export async function getProject(
       .get();
 
     if (!result) {
-      throw Response.json(createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId }), {
-        status: 404,
-      });
+      throwDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId });
     }
 
     return { ...result, role: access.context.projectRole };
   } catch (err) {
-    if (err instanceof Response) throw err;
+    if (err instanceof DomainErrorException) throw err;
     const error = err as Error;
     captureError(error, { tags: { component: 'org-projects', action: 'get' } });
-    throw Response.json(
-      createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-        operation: 'fetch_project',
-        originalError: error.message,
-      }),
-      { status: 500 },
-    );
+    throwDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'fetch_project',
+      originalError: error.message,
+    });
   }
 }
 
@@ -180,13 +170,13 @@ export async function updateProjectById(
   data: { name?: string; description?: string },
 ) {
   const orgMembership = await requireOrgMembership(session, db, orgId);
-  if (!orgMembership.ok) throw orgMembership.response;
+  if (!orgMembership.ok) throw orgMembership.error;
 
   const writeAccess = await requireOrgWriteAccess('PUT', db, orgId);
-  if (!writeAccess.ok) throw writeAccess.response;
+  if (!writeAccess.ok) throw writeAccess.error;
 
   const access = await requireProjectAccess(session, db, orgId, projectId, 'member');
-  if (!access.ok) throw access.response;
+  if (!access.ok) throw access.error;
 
   try {
     const result = await updateProjectCmd(
@@ -197,17 +187,14 @@ export async function updateProjectById(
     return { success: true as const, projectId: result.projectId };
   } catch (err) {
     if (isDomainError(err)) {
-      throw Response.json(err, { status: err.statusCode });
+      throw new DomainErrorException(err);
     }
     const error = err as Error;
     captureError(error, { tags: { component: 'org-projects', action: 'update' } });
-    throw Response.json(
-      createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-        operation: 'update_project',
-        originalError: error.message,
-      }),
-      { status: 500 },
-    );
+    throwDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'update_project',
+      originalError: error.message,
+    });
   }
 }
 
@@ -218,13 +205,13 @@ export async function deleteProjectById(
   projectId: ProjectId,
 ) {
   const orgMembership = await requireOrgMembership(session, db, orgId);
-  if (!orgMembership.ok) throw orgMembership.response;
+  if (!orgMembership.ok) throw orgMembership.error;
 
   const writeAccess = await requireOrgWriteAccess('DELETE', db, orgId);
-  if (!writeAccess.ok) throw writeAccess.response;
+  if (!writeAccess.ok) throw writeAccess.error;
 
   const access = await requireProjectAccess(session, db, orgId, projectId, 'owner');
-  if (!access.ok) throw access.response;
+  if (!access.ok) throw access.error;
 
   try {
     const result = await deleteProjectCmd(
@@ -235,17 +222,14 @@ export async function deleteProjectById(
     return { success: true as const, deleted: result.deleted };
   } catch (err) {
     if (isDomainError(err)) {
-      throw Response.json(err, { status: err.statusCode });
+      throw new DomainErrorException(err);
     }
     const error = err as Error;
     captureError(error, { tags: { component: 'org-projects', action: 'delete' } });
-    throw Response.json(
-      createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-        operation: 'delete_project',
-        originalError: error.message,
-      }),
-      { status: 500 },
-    );
+    throwDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'delete_project',
+      originalError: error.message,
+    });
   }
 }
 
@@ -258,10 +242,10 @@ export async function listProjectMembers(
   projectId: ProjectId,
 ) {
   const orgMembership = await requireOrgMembership(session, db, orgId);
-  if (!orgMembership.ok) throw orgMembership.response;
+  if (!orgMembership.ok) throw orgMembership.error;
 
   const access = await requireProjectAccess(session, db, orgId, projectId);
-  if (!access.ok) throw access.response;
+  if (!access.ok) throw access.error;
 
   try {
     const results = await db
@@ -285,13 +269,10 @@ export async function listProjectMembers(
   } catch (err) {
     const error = err as Error;
     captureError(error, { tags: { component: 'org-projects', action: 'list-members' } });
-    throw Response.json(
-      createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-        operation: 'list_project_members',
-        originalError: error.message,
-      }),
-      { status: 500 },
-    );
+    throwDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'list_project_members',
+      originalError: error.message,
+    });
   }
 }
 
@@ -303,24 +284,21 @@ export async function addProjectMember(
   data: { userId?: string; email?: string; role?: 'owner' | 'member' },
 ) {
   const orgMembership = await requireOrgMembership(session, db, orgId);
-  if (!orgMembership.ok) throw orgMembership.response;
+  if (!orgMembership.ok) throw orgMembership.error;
 
   const writeAccess = await requireOrgWriteAccess('POST', db, orgId);
-  if (!writeAccess.ok) throw writeAccess.response;
+  if (!writeAccess.ok) throw writeAccess.error;
 
   const access = await requireProjectAccess(session, db, orgId, projectId, 'owner');
-  if (!access.ok) throw access.response;
+  if (!access.ok) throw access.error;
 
   const role = data.role ?? 'member';
 
   if (!data.userId && !data.email) {
-    throw Response.json(
-      createDomainError(VALIDATION_ERRORS.FIELD_REQUIRED, {
-        field: 'userId/email',
-        detail: 'userId_or_email_required',
-      }),
-      { status: 400 },
-    );
+    throwDomainError(VALIDATION_ERRORS.FIELD_REQUIRED, {
+      field: 'userId/email',
+      detail: 'userId_or_email_required',
+    });
   }
 
   try {
@@ -373,17 +351,14 @@ export async function addProjectMember(
         };
       } catch (err) {
         if (isDomainError(err)) {
-          throw Response.json(err, { status: err.statusCode });
+          throw new DomainErrorException(err);
         }
         throw err;
       }
     }
 
     if (!userToAdd) {
-      throw Response.json(
-        createDomainError(USER_ERRORS.NOT_FOUND, { userId: data.userId, email: data.email }),
-        { status: 404 },
-      );
+      throwDomainError(USER_ERRORS.NOT_FOUND, { userId: data.userId, email: data.email });
     }
 
     const { member: addedMember } = await addMember(
@@ -394,19 +369,16 @@ export async function addProjectMember(
 
     return addedMember;
   } catch (err) {
-    if (err instanceof Response) throw err;
+    if (err instanceof DomainErrorException) throw err;
     if (isDomainError(err)) {
-      throw Response.json(err, { status: (err as DomainError).statusCode });
+      throw new DomainErrorException(err as DomainError);
     }
     const error = err as Error;
     captureError(error, { tags: { component: 'org-projects', action: 'add-member' } });
-    throw Response.json(
-      createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-        operation: 'add_project_member',
-        originalError: error.message,
-      }),
-      { status: 500 },
-    );
+    throwDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'add_project_member',
+      originalError: error.message,
+    });
   }
 }
 
@@ -419,13 +391,13 @@ export async function updateProjectMemberRole(
   data: { role: 'owner' | 'member' },
 ) {
   const orgMembership = await requireOrgMembership(session, db, orgId);
-  if (!orgMembership.ok) throw orgMembership.response;
+  if (!orgMembership.ok) throw orgMembership.error;
 
   const writeAccess = await requireOrgWriteAccess('PUT', db, orgId);
-  if (!writeAccess.ok) throw writeAccess.response;
+  if (!writeAccess.ok) throw writeAccess.error;
 
   const access = await requireProjectAccess(session, db, orgId, projectId, 'owner');
-  if (!access.ok) throw access.response;
+  if (!access.ok) throw access.error;
 
   try {
     const result = await updateMemberRoleCmd(
@@ -441,17 +413,14 @@ export async function updateProjectMemberRole(
     return { success: true as const, userId: result.userId, role: result.role };
   } catch (err) {
     if (isDomainError(err)) {
-      throw Response.json(err, { status: err.statusCode });
+      throw new DomainErrorException(err);
     }
     const error = err as Error;
     captureError(error, { tags: { component: 'org-projects', action: 'update-member-role' } });
-    throw Response.json(
-      createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-        operation: 'update_project_member_role',
-        originalError: error.message,
-      }),
-      { status: 500 },
-    );
+    throwDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'update_project_member_role',
+      originalError: error.message,
+    });
   }
 }
 
@@ -463,13 +432,13 @@ export async function removeProjectMember(
   targetUserId: UserId,
 ) {
   const orgMembership = await requireOrgMembership(session, db, orgId);
-  if (!orgMembership.ok) throw orgMembership.response;
+  if (!orgMembership.ok) throw orgMembership.error;
 
   const writeAccess = await requireOrgWriteAccess('DELETE', db, orgId);
-  if (!writeAccess.ok) throw writeAccess.response;
+  if (!writeAccess.ok) throw writeAccess.error;
 
   const access = await requireProjectAccess(session, db, orgId, projectId);
-  if (!access.ok) throw access.response;
+  if (!access.ok) throw access.error;
 
   const isSelf = targetUserId === access.context.userId;
 
@@ -477,7 +446,7 @@ export async function removeProjectMember(
     await requireMemberRemoval(db, access.context.userId, projectId, targetUserId);
   } catch (err) {
     if (isDomainError(err)) {
-      throw Response.json(err, { status: (err as DomainError).statusCode });
+      throw new DomainErrorException(err as DomainError);
     }
     throw err;
   }
@@ -496,17 +465,14 @@ export async function removeProjectMember(
     return { success: true as const, removed: result.removed };
   } catch (err) {
     if (isDomainError(err)) {
-      throw Response.json(err, { status: (err as DomainError).statusCode });
+      throw new DomainErrorException(err as DomainError);
     }
     const error = err as Error;
     captureError(error, { tags: { component: 'org-projects', action: 'remove-member' } });
-    throw Response.json(
-      createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-        operation: 'remove_project_member',
-        originalError: error.message,
-      }),
-      { status: 500 },
-    );
+    throwDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'remove_project_member',
+      originalError: error.message,
+    });
   }
 }
 
@@ -519,10 +485,10 @@ export async function listProjectInvitations(
   projectId: ProjectId,
 ) {
   const orgMembership = await requireOrgMembership(session, db, orgId);
-  if (!orgMembership.ok) throw orgMembership.response;
+  if (!orgMembership.ok) throw orgMembership.error;
 
   const access = await requireProjectAccess(session, db, orgId, projectId);
-  if (!access.ok) throw access.response;
+  if (!access.ok) throw access.error;
 
   try {
     const invitations = await db
@@ -546,13 +512,10 @@ export async function listProjectInvitations(
   } catch (err) {
     const error = err as Error;
     captureError(error, { tags: { component: 'org-projects', action: 'list-invitations' } });
-    throw Response.json(
-      createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-        operation: 'list_invitations',
-        originalError: error.message,
-      }),
-      { status: 500 },
-    );
+    throwDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'list_invitations',
+      originalError: error.message,
+    });
   }
 }
 
@@ -564,13 +527,13 @@ export async function createProjectInvitation(
   data: { email: string; role: 'owner' | 'member' },
 ) {
   const orgMembership = await requireOrgMembership(session, db, orgId);
-  if (!orgMembership.ok) throw orgMembership.response;
+  if (!orgMembership.ok) throw orgMembership.error;
 
   const writeAccess = await requireOrgWriteAccess('POST', db, orgId);
-  if (!writeAccess.ok) throw writeAccess.response;
+  if (!writeAccess.ok) throw writeAccess.error;
 
   const access = await requireProjectAccess(session, db, orgId, projectId, 'owner');
-  if (!access.ok) throw access.response;
+  if (!access.ok) throw access.error;
 
   try {
     const result = await createInvitation(
@@ -590,17 +553,14 @@ export async function createProjectInvitation(
     };
   } catch (err) {
     if (isDomainError(err)) {
-      throw Response.json(err, { status: (err as DomainError).statusCode });
+      throw new DomainErrorException(err as DomainError);
     }
     const error = err as Error;
     captureError(error, { tags: { component: 'org-projects', action: 'create-invitation' } });
-    throw Response.json(
-      createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-        operation: 'create_invitation',
-        originalError: error.message,
-      }),
-      { status: 500 },
-    );
+    throwDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'create_invitation',
+      originalError: error.message,
+    });
   }
 }
 
@@ -612,13 +572,13 @@ export async function cancelProjectInvitation(
   invitationId: ProjectInvitationId,
 ) {
   const orgMembership = await requireOrgMembership(session, db, orgId);
-  if (!orgMembership.ok) throw orgMembership.response;
+  if (!orgMembership.ok) throw orgMembership.error;
 
   const writeAccess = await requireOrgWriteAccess('DELETE', db, orgId);
-  if (!writeAccess.ok) throw writeAccess.response;
+  if (!writeAccess.ok) throw writeAccess.error;
 
   const access = await requireProjectAccess(session, db, orgId, projectId, 'owner');
-  if (!access.ok) throw access.response;
+  if (!access.ok) throw access.error;
 
   try {
     const invitation = await db
@@ -630,37 +590,28 @@ export async function cancelProjectInvitation(
       .get();
 
     if (!invitation) {
-      throw Response.json(
-        createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
-          field: 'invitationId',
-          value: invitationId,
-        }),
-        { status: 400 },
-      );
+      throwDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
+        field: 'invitationId',
+        value: invitationId,
+      });
     }
 
     if (invitation.acceptedAt) {
-      throw Response.json(
-        createDomainError(PROJECT_ERRORS.INVITATION_ALREADY_ACCEPTED, {
-          invitationId,
-        }),
-        { status: PROJECT_ERRORS.INVITATION_ALREADY_ACCEPTED.statusCode },
-      );
+      throwDomainError(PROJECT_ERRORS.INVITATION_ALREADY_ACCEPTED, {
+        invitationId,
+      });
     }
 
     await db.delete(projectInvitations).where(eq(projectInvitations.id, invitationId));
 
     return { success: true as const, cancelled: invitationId };
   } catch (err) {
-    if (err instanceof Response) throw err;
+    if (err instanceof DomainErrorException) throw err;
     const error = err as Error;
     captureError(error, { tags: { component: 'org-projects', action: 'cancel-invitation' } });
-    throw Response.json(
-      createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-        operation: 'cancel_invitation',
-        originalError: error.message,
-      }),
-      { status: 500 },
-    );
+    throwDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'cancel_invitation',
+      originalError: error.message,
+    });
   }
 }

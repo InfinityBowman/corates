@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { proxyPdfFetch } from '@/server/functions/pdf-proxy.server';
 import type { Session } from '@/server/middleware/auth';
+import { DomainErrorException } from '@corates/shared';
 
 const originalFetch = globalThis.fetch;
 
@@ -22,8 +23,8 @@ describe('proxyPdfFetch', () => {
       await proxyPdfFetch(mockSession(), { url: '' });
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect((err as Response).status).toBe(400);
-      const body = (await (err as Response).json()) as { code: string };
+      expect((err as DomainErrorException).statusCode).toBe(400);
+      const body = (err as DomainErrorException).toDomainError() as { code: string };
       expect(body.code).toBe('VALIDATION_FIELD_REQUIRED');
     }
   });
@@ -42,8 +43,8 @@ describe('proxyPdfFetch', () => {
         await proxyPdfFetch(mockSession(), { url });
         expect.unreachable('should have thrown for ' + url);
       } catch (err) {
-        expect((err as Response).status).toBe(400);
-        const body = (await (err as Response).json()) as { code: string };
+        expect((err as DomainErrorException).statusCode).toBe(400);
+        const body = (err as DomainErrorException).toDomainError() as { code: string };
         expect(body.code).toBe('VALIDATION_INVALID_INPUT');
       }
     }
@@ -79,9 +80,9 @@ describe('proxyPdfFetch', () => {
       await proxyPdfFetch(mockSession(), { url: 'https://arxiv.org/pdf/1234.5678.pdf' });
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect((err as Response).status).toBe(403);
-      const body = (await (err as Response).json()) as { code: string };
-      expect(body.code).toBe('AUTH_REQUIRED');
+      expect((err as DomainErrorException).statusCode).toBe(403);
+      const body = (err as DomainErrorException).toDomainError() as { code: string };
+      expect(body.code).toBe('FILE_ACCESS_RESTRICTED');
     }
   });
 
@@ -98,8 +99,8 @@ describe('proxyPdfFetch', () => {
       await proxyPdfFetch(mockSession(), { url: 'https://arxiv.org/pdf/1234.5678.pdf' });
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect((err as Response).status).toBe(400);
-      const body = (await (err as Response).json()) as { code: string };
+      expect((err as DomainErrorException).statusCode).toBe(400);
+      const body = (err as DomainErrorException).toDomainError() as { code: string };
       expect(body.code).toBe('FILE_INVALID_TYPE');
     }
   });
@@ -117,9 +118,9 @@ describe('proxyPdfFetch', () => {
       await proxyPdfFetch(mockSession(), { url: 'https://arxiv.org/pdf/1234.5678.pdf' });
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect((err as Response).status).toBe(403);
-      const body = (await (err as Response).json()) as { code: string };
-      expect(body.code).toBe('AUTH_REQUIRED');
+      expect((err as DomainErrorException).statusCode).toBe(403);
+      const body = (err as DomainErrorException).toDomainError() as { code: string };
+      expect(body.code).toBe('FILE_ACCESS_RESTRICTED');
     }
   });
 });

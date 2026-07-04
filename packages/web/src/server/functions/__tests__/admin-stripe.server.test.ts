@@ -6,6 +6,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { env } from 'cloudflare:test';
 import { createDb } from '@corates/db/client';
+import { DomainErrorException } from '@corates/shared';
 import { resetTestDatabase, seedSubscription } from '@/__tests__/server/helpers';
 import { buildOrg, resetCounter } from '@/__tests__/server/factories';
 import type { Session } from '@/server/middleware/auth';
@@ -58,7 +59,7 @@ describe('lookupAdminStripeCustomer', () => {
       await lookupAdminStripeCustomer(mockAdminSession(), createDb(env.DB), {});
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect((err as Response).status).toBe(400);
+      expect((err as DomainErrorException).statusCode).toBe(403);
     }
   });
 

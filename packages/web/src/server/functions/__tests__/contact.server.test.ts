@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { env } from 'cloudflare:test';
+import { DomainErrorException } from '@corates/shared';
 import { sendContactEmail } from '@/server/functions/contact.server';
 
 const dummyRequest = new Request('http://localhost/api/contact', { method: 'POST' });
@@ -57,9 +58,9 @@ describe('sendContactEmail', () => {
       });
       expect.unreachable('should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(503);
-      const body = (await res.json()) as { code: string };
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(500);
+      const body = res.toDomainError() as { code: string };
       expect(body.code).toMatch(/SYSTEM_EMAIL_SEND_FAILED/);
     }
   });

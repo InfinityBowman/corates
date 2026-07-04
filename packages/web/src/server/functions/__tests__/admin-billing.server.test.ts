@@ -3,6 +3,7 @@ import { env } from 'cloudflare:test';
 import { resetTestDatabase } from '@/__tests__/server/helpers';
 import { buildOrg, resetCounter } from '@/__tests__/server/factories';
 import { createDb } from '@corates/db/client';
+import { DomainErrorException } from '@corates/shared';
 import { orgAccessGrants as grantsTable, subscription } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import type { OrgId, OrgAccessGrantId } from '@corates/shared/ids';
@@ -50,7 +51,7 @@ describe('GET /api/admin/orgs/:orgId/billing', () => {
       await getAdminOrgBilling(mockAdminSession(), createDb(env.DB), 'missing' as OrgId);
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect((err as Response).status).toBe(400);
+      expect((err as DomainErrorException).statusCode).toBe(400);
     }
   });
 
@@ -99,7 +100,7 @@ describe('POST /api/admin/orgs/:orgId/subscriptions', () => {
       });
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect((err as Response).status).toBe(400);
+      expect((err as DomainErrorException).statusCode).toBe(400);
     }
   });
 
@@ -138,7 +139,7 @@ describe('PUT /api/admin/orgs/:orgId/subscriptions/:subscriptionId', () => {
       });
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect((err as Response).status).toBe(400);
+      expect((err as DomainErrorException).statusCode).toBe(400);
     }
   });
 
@@ -179,7 +180,7 @@ describe('DELETE /api/admin/orgs/:orgId/subscriptions/:subscriptionId', () => {
       await cancelAdminSubscription(mockAdminSession(), createDb(env.DB), org.id as OrgId, 'nope');
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect((err as Response).status).toBe(400);
+      expect((err as DomainErrorException).statusCode).toBe(400);
     }
   });
 
@@ -222,7 +223,7 @@ describe('POST /api/admin/orgs/:orgId/grants', () => {
       });
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect((err as Response).status).toBe(400);
+      expect((err as DomainErrorException).statusCode).toBe(400);
     }
   });
 
@@ -245,7 +246,7 @@ describe('POST /api/admin/orgs/:orgId/grants', () => {
       });
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect((err as Response).status).toBe(400);
+      expect((err as DomainErrorException).statusCode).toBe(400);
     }
   });
 
@@ -260,7 +261,7 @@ describe('POST /api/admin/orgs/:orgId/grants', () => {
       });
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect((err as Response).status).toBe(400);
+      expect((err as DomainErrorException).statusCode).toBe(400);
     }
   });
 
@@ -304,7 +305,7 @@ describe('PUT /api/admin/orgs/:orgId/grants/:grantId', () => {
       );
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect((err as Response).status).toBe(400);
+      expect((err as DomainErrorException).statusCode).toBe(400);
     }
   });
 
@@ -394,7 +395,7 @@ describe('DELETE /api/admin/orgs/:orgId/grants/:grantId', () => {
       );
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect((err as Response).status).toBe(400);
+      expect((err as DomainErrorException).statusCode).toBe(400);
     }
   });
 
@@ -434,7 +435,7 @@ describe('POST /api/admin/orgs/:orgId/grant-trial', () => {
       await grantAdminTrial(mockAdminSession(), createDb(env.DB), 'missing' as OrgId);
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect((err as Response).status).toBe(400);
+      expect((err as DomainErrorException).statusCode).toBe(400);
     }
   });
 
@@ -454,7 +455,7 @@ describe('POST /api/admin/orgs/:orgId/grant-trial', () => {
       await grantAdminTrial(mockAdminSession(), createDb(env.DB), org.id as OrgId);
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect((err as Response).status).toBe(400);
+      expect((err as DomainErrorException).statusCode).toBe(400);
     }
   });
 });
@@ -465,7 +466,7 @@ describe('POST /api/admin/orgs/:orgId/grant-single-project', () => {
       await grantAdminSingleProject(mockAdminSession(), createDb(env.DB), 'missing' as OrgId);
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect((err as Response).status).toBe(400);
+      expect((err as DomainErrorException).statusCode).toBe(400);
     }
   });
 

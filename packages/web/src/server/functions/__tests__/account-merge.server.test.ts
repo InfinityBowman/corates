@@ -17,6 +17,7 @@ import {
   cancelMergeRequest,
 } from '@/server/functions/account-merge.server';
 import type { Session } from '@/server/middleware/auth';
+import { DomainErrorException } from '@corates/shared';
 
 let currentUser = { id: 'user-1', email: 'user1@example.com' };
 
@@ -114,9 +115,9 @@ describe('initiateMergeRequest', () => {
       });
       expect.unreachable('should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(400);
-      const body = (await res.json()) as { code: string };
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(400);
+      const body = res.toDomainError() as { code: string };
       expect(body.code).toBe('VALIDATION_INVALID_INPUT');
     }
   });
@@ -131,9 +132,9 @@ describe('initiateMergeRequest', () => {
       });
       expect.unreachable('should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(404);
-      const body = (await res.json()) as { code: string };
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(404);
+      const body = res.toDomainError() as { code: string };
       expect(body.code).toBe('USER_NOT_FOUND');
     }
   });
@@ -143,9 +144,9 @@ describe('initiateMergeRequest', () => {
       await initiateMergeRequest(createDb(env.DB), mockSession(), dummyRequest, {});
       expect.unreachable('should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(400);
-      const body = (await res.json()) as { code: string };
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(400);
+      const body = res.toDomainError() as { code: string };
       expect(body.code).toBe('VALIDATION_FIELD_REQUIRED');
     }
   });
@@ -188,9 +189,9 @@ describe('verifyMerge', () => {
       });
       expect.unreachable('should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(400);
-      const body = (await res.json()) as { code: string };
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(400);
+      const body = res.toDomainError() as { code: string };
       expect(body.code).toBe('VALIDATION_INVALID_INPUT');
     }
   });
@@ -215,9 +216,9 @@ describe('verifyMerge', () => {
       });
       expect.unreachable('should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(400);
-      const body = (await res.json()) as { code: string };
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(400);
+      const body = res.toDomainError() as { code: string };
       expect(body.code).toBe('VALIDATION_INVALID_INPUT');
     }
   });
@@ -233,9 +234,9 @@ describe('verifyMerge', () => {
       });
       expect.unreachable('should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(404);
-      const body = (await res.json()) as { code: string };
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(404);
+      const body = res.toDomainError() as { code: string };
       expect(body.code).toBe('USER_NOT_FOUND');
     }
   });
@@ -296,9 +297,9 @@ describe('completeMergeRequest', () => {
       await completeMergeRequest(createDb(env.DB), mockSession(), mergeToken);
       expect.unreachable('should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(400);
-      const body = (await res.json()) as { code: string };
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(400);
+      const body = res.toDomainError() as { code: string };
       expect(body.code).toBe('VALIDATION_INVALID_INPUT');
     }
   });
@@ -349,9 +350,9 @@ describe('cancelMergeRequest', () => {
       await cancelMergeRequest(createDb(env.DB), mockSession(), 'wrong-token');
       expect.unreachable('should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(400);
-      const body = (await res.json()) as { code: string };
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(400);
+      const body = res.toDomainError() as { code: string };
       expect(body.code).toBe('VALIDATION_INVALID_INPUT');
     }
   });

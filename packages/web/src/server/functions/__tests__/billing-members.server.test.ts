@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { env } from 'cloudflare:test';
 import { createDb } from '@corates/db/client';
+import { DomainErrorException } from '@corates/shared';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import { buildOrg, resetCounter } from '@/__tests__/server/factories';
 import { fetchMembers } from '@/server/functions/billing.server';
@@ -52,7 +53,7 @@ describe('fetchMembers', () => {
       await fetchMembers(createDb(env.DB), session, mockHeaders());
       expect.fail('should have thrown');
     } catch (res) {
-      expect((res as Response).status).toBe(403);
+      expect((res as DomainErrorException).statusCode).toBe(403);
     }
     expect(listMembersMock).not.toHaveBeenCalled();
   });

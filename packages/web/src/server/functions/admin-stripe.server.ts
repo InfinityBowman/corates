@@ -2,7 +2,7 @@ import { env } from 'cloudflare:workers';
 import type { Database } from '@corates/db/client';
 import { organization, subscription, user } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
-import { createDomainError, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
+import { throwDomainError, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 import { isAdminUser } from '@corates/workers/auth-admin';
 import { createStripeClient } from '@corates/shared/stripe';
 import type Stripe from 'stripe';
@@ -10,18 +10,13 @@ import type { Session } from '@/server/middleware/auth';
 
 function assertAdmin(session: Session) {
   if (!isAdminUser(session.user as { role?: string | null })) {
-    throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'admin_required' }), {
-      status: 403,
-    });
+    throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'admin_required' });
   }
 }
 
 function requireStripe() {
   if (!env.STRIPE_SECRET_KEY) {
-    throw Response.json(
-      createDomainError(SYSTEM_ERRORS.SERVICE_UNAVAILABLE, { message: 'Stripe is not configured' }),
-      { status: 500 },
-    );
+    throwDomainError(SYSTEM_ERRORS.SERVICE_UNAVAILABLE, { message: 'Stripe is not configured' });
   }
   return createStripeClient(env.STRIPE_SECRET_KEY);
 }
@@ -37,10 +32,7 @@ export async function lookupAdminStripeCustomer(
   const { email, customerId } = params;
 
   if (!email && !customerId) {
-    throw Response.json(
-      createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'email_or_customer_id_required' }),
-      { status: 400 },
-    );
+    throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'email_or_customer_id_required' });
   }
 
   let customer: Stripe.Customer | null = null;

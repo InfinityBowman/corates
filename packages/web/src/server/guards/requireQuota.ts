@@ -1,12 +1,12 @@
 import type { Database } from '@corates/db/client';
 import { resolveOrgAccess } from '@corates/workers/billing-resolver';
 import { isUnlimitedQuota } from '@corates/shared/plans';
-import { createDomainError, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
+import { createDomainError, DomainErrorException, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 import type { OrgId } from '@corates/shared/ids';
 
 export type QuotaGuardResult =
   | { ok: true; orgBilling: Awaited<ReturnType<typeof resolveOrgAccess>> }
-  | { ok: false; response: Response };
+  | { ok: false; error: DomainErrorException };
 
 export async function requireQuota(
   db: Database,
@@ -18,9 +18,8 @@ export async function requireQuota(
   if (!orgId) {
     return {
       ok: false,
-      response: Response.json(
+      error: new DomainErrorException(
         createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'org_context_required' }),
-        { status: 403 },
       ),
     };
   }
@@ -31,12 +30,11 @@ export async function requireQuota(
   } catch (err) {
     return {
       ok: false,
-      response: Response.json(
+      error: new DomainErrorException(
         createDomainError(SYSTEM_ERRORS.DB_ERROR, {
           operation: 'resolve_org_access',
           originalError: err instanceof Error ? err.message : String(err),
         }),
-        { status: 500 },
       ),
     };
   }
@@ -46,7 +44,7 @@ export async function requireQuota(
   if (!isUnlimitedQuota(limit) && used + requested > limit) {
     return {
       ok: false,
-      response: Response.json(
+      error: new DomainErrorException(
         createDomainError(
           AUTH_ERRORS.FORBIDDEN,
           { reason: 'quota_exceeded', quotaKey, used, limit, requested },
@@ -54,7 +52,6 @@ export async function requireQuota(
             isUnlimitedQuota(limit) ? 'unlimited' : limit
           }, Requested: ${requested}`,
         ),
-        { status: 403 },
       ),
     };
   }

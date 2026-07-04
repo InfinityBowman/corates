@@ -11,7 +11,8 @@ import {
 } from '@corates/db/schema';
 import { eq, sql, like, and } from 'drizzle-orm';
 import {
-  createDomainError,
+  throwDomainError,
+  DomainErrorException,
   createValidationError,
   VALIDATION_ERRORS,
   USER_ERRORS,
@@ -66,26 +67,24 @@ export async function initiateMergeRequest(
   const hasOrcidId = !!(targetOrcidId && targetOrcidId.trim());
 
   if (!hasEmail && !hasOrcidId) {
-    throw Response.json(
+    throw new DomainErrorException(
       createValidationError(
         'targetEmail/targetOrcidId',
         VALIDATION_ERRORS.FIELD_REQUIRED.code,
         null,
         'required',
       ),
-      { status: 400 },
     );
   }
 
   if (hasEmail && hasOrcidId) {
-    throw Response.json(
+    throw new DomainErrorException(
       createValidationError(
         'targetEmail/targetOrcidId',
         VALIDATION_ERRORS.INVALID_INPUT.code,
         null,
         'cannot_provide_both',
       ),
-      { status: 400 },
     );
   }
 
@@ -97,14 +96,13 @@ export async function initiateMergeRequest(
     const normalizedEmail = targetEmail!.trim().toLowerCase();
 
     if (normalizedEmail === currentUser.email.toLowerCase()) {
-      throw Response.json(
+      throw new DomainErrorException(
         createValidationError(
           'targetEmail',
           VALIDATION_ERRORS.INVALID_INPUT.code,
           normalizedEmail,
           'cannot_merge_self',
         ),
-        { status: 400 },
       );
     }
 
@@ -119,14 +117,13 @@ export async function initiateMergeRequest(
     const normalizedOrcid = normalizeOrcidId(targetOrcidId);
 
     if (!normalizedOrcid || normalizedOrcid.length !== 16) {
-      throw Response.json(
+      throw new DomainErrorException(
         createValidationError(
           'targetOrcidId',
           VALIDATION_ERRORS.INVALID_INPUT.code,
           targetOrcidId ?? null,
           'invalid_orcid_format',
         ),
-        { status: 400 },
       );
     }
 
@@ -157,24 +154,20 @@ export async function initiateMergeRequest(
   }
 
   if (!targetUser) {
-    throw Response.json(
-      createDomainError(USER_ERRORS.NOT_FOUND, {
-        email: hasEmail ? targetEmail : undefined,
-        orcidId: hasOrcidId ? targetOrcidId : undefined,
-      }),
-      { status: 404 },
-    );
+    throwDomainError(USER_ERRORS.NOT_FOUND, {
+      email: hasEmail ? targetEmail : undefined,
+      orcidId: hasOrcidId ? targetOrcidId : undefined,
+    });
   }
 
   if (targetUser.id === currentUser.id) {
-    throw Response.json(
+    throw new DomainErrorException(
       createValidationError(
         hasEmail ? 'targetEmail' : 'targetOrcidId',
         VALIDATION_ERRORS.INVALID_INPUT.code,
         hasEmail ? targetEmail! : targetOrcidId!,
         'cannot_merge_self',
       ),
-      { status: 400 },
     );
   }
 
@@ -226,13 +219,10 @@ export async function initiateMergeRequest(
       .delete(verification)
       .where(eq(verification.identifier, `merge:${currentUser.id}:${targetUser.id}`));
 
-    throw Response.json(
-      createDomainError(SYSTEM_ERRORS.EMAIL_SEND_FAILED, {
-        operation: 'send_merge_verification',
-        originalError: String(err instanceof Error ? err.message : 'Unknown email error'),
-      }),
-      { status: 400 },
-    );
+    throwDomainError(SYSTEM_ERRORS.EMAIL_SEND_FAILED, {
+      operation: 'send_merge_verification',
+      originalError: String(err instanceof Error ? err.message : 'Unknown email error'),
+    });
   }
 
   if (env.ENVIRONMENT !== 'production') {
@@ -288,13 +278,10 @@ export async function verifyMerge(
     .where(like(verification.identifier, `merge:${currentUser.id}:%`));
 
   if (mergeRequests.length === 0) {
-    throw Response.json(
-      createDomainError(USER_ERRORS.NOT_FOUND, {
-        context: 'merge_request',
-        userId: currentUser.id,
-      }),
-      { status: 404 },
-    );
+    throwDomainError(USER_ERRORS.NOT_FOUND, {
+      context: 'merge_request',
+      userId: currentUser.id,
+    });
   }
 
   const mergeRequest = mergeRequests[0];
@@ -306,29 +293,26 @@ export async function verifyMerge(
   };
 
   if (mergeData.token !== mergeToken) {
-    throw Response.json(
+    throw new DomainErrorException(
       createValidationError(
         'mergeToken',
         VALIDATION_ERRORS.INVALID_INPUT.code,
         mergeToken,
         'invalid_token',
       ),
-      { status: 400 },
     );
   }
 
   if (mergeRequest.expiresAt < new Date()) {
     await db.delete(verification).where(eq(verification.id, mergeRequest.id));
-    throw Response.json(
+    throw new DomainErrorException(
       createValidationError('code', VALIDATION_ERRORS.INVALID_INPUT.code, null, 'expired'),
-      { status: 400 },
     );
   }
 
   if (mergeData.code !== trimmedCode) {
-    throw Response.json(
+    throw new DomainErrorException(
       createValidationError('code', VALIDATION_ERRORS.INVALID_INPUT.code, null, 'invalid_code'),
-      { status: 400 },
     );
   }
 
@@ -386,13 +370,10 @@ export async function completeMergeRequest(
     .where(like(verification.identifier, `merge:${currentUser.id}:%`));
 
   if (mergeRequests.length === 0) {
-    throw Response.json(
-      createDomainError(USER_ERRORS.NOT_FOUND, {
-        context: 'merge_request',
-        userId: currentUser.id,
-      }),
-      { status: 404 },
-    );
+    throwDomainError(USER_ERRORS.NOT_FOUND, {
+      context: 'merge_request',
+      userId: currentUser.id,
+    });
   }
 
   const mergeRequest = mergeRequests[0];
@@ -403,34 +384,31 @@ export async function completeMergeRequest(
   };
 
   if (mergeData.token !== mergeToken) {
-    throw Response.json(
+    throw new DomainErrorException(
       createValidationError(
         'mergeToken',
         VALIDATION_ERRORS.INVALID_INPUT.code,
         mergeToken,
         'invalid_token',
       ),
-      { status: 400 },
     );
   }
 
   if (!mergeData.verified) {
-    throw Response.json(
+    throw new DomainErrorException(
       createValidationError(
         'code',
         VALIDATION_ERRORS.INVALID_INPUT.code,
         null,
         'code_not_verified',
       ),
-      { status: 400 },
     );
   }
 
   if (mergeRequest.expiresAt < new Date()) {
     await db.delete(verification).where(eq(verification.id, mergeRequest.id));
-    throw Response.json(
+    throw new DomainErrorException(
       createValidationError('mergeRequest', VALIDATION_ERRORS.INVALID_INPUT.code, null, 'expired'),
-      { status: 400 },
     );
   }
 
@@ -518,15 +496,12 @@ export async function completeMergeRequest(
       mergedProviders,
     };
   } catch (err) {
-    if (err instanceof Response) throw err;
+    if (err instanceof DomainErrorException) throw err;
     captureError(err, { tags: { component: 'account-merge', action: 'complete-merge' } });
-    throw Response.json(
-      createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-        operation: 'merge_accounts',
-        originalError: err instanceof Error ? err.message : String(err),
-      }),
-      { status: 500 },
-    );
+    throwDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'merge_accounts',
+      originalError: err instanceof Error ? err.message : String(err),
+    });
   }
 }
 
@@ -546,14 +521,13 @@ export async function cancelMergeRequest(db: Database, session: Session, mergeTo
   const mergeData = JSON.parse(mergeRequest.value) as { token: string };
 
   if (mergeData.token !== mergeToken) {
-    throw Response.json(
+    throw new DomainErrorException(
       createValidationError(
         'mergeToken',
         VALIDATION_ERRORS.INVALID_INPUT.code,
         mergeToken,
         'invalid_token',
       ),
-      { status: 400 },
     );
   }
 

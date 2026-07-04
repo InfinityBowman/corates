@@ -2,7 +2,7 @@ import type { Database } from '@corates/db/client';
 import { member, organization } from '@corates/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { hasOrgRole } from '@corates/workers/policies';
-import { createDomainError, AUTH_ERRORS } from '@corates/shared';
+import { createDomainError, DomainErrorException, AUTH_ERRORS } from '@corates/shared';
 import type { OrgId, UserId } from '@corates/shared/ids';
 import type { Session } from '@/server/middleware/auth';
 
@@ -15,7 +15,9 @@ export interface OrgContext {
   orgSlug: string | null;
 }
 
-export type OrgGuardResult = { ok: true; context: OrgContext } | { ok: false; response: Response };
+export type OrgGuardResult =
+  | { ok: true; context: OrgContext }
+  | { ok: false; error: DomainErrorException };
 
 export async function requireOrgMembership(
   session: Session,
@@ -26,9 +28,8 @@ export async function requireOrgMembership(
   if (!orgId) {
     return {
       ok: false,
-      response: Response.json(
+      error: new DomainErrorException(
         createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'org_id_required' }),
-        { status: 403 },
       ),
     };
   }
@@ -48,9 +49,8 @@ export async function requireOrgMembership(
   if (!membership) {
     return {
       ok: false,
-      response: Response.json(
+      error: new DomainErrorException(
         createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'not_org_member', orgId }),
-        { status: 403 },
       ),
     };
   }
@@ -58,13 +58,12 @@ export async function requireOrgMembership(
   if (minRole && !hasOrgRole(membership.role, minRole)) {
     return {
       ok: false,
-      response: Response.json(
+      error: new DomainErrorException(
         createDomainError(
           AUTH_ERRORS.FORBIDDEN,
           { reason: 'insufficient_org_role', required: minRole, actual: membership.role },
           `This action requires ${minRole} role or higher`,
         ),
-        { status: 403 },
       ),
     };
   }

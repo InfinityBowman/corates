@@ -5,6 +5,7 @@ import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import { buildOrg, buildOrgMember, resetCounter } from '@/__tests__/server/factories';
 import { createSPCheckout } from '@/server/functions/billing.server';
 import type { Session } from '@/server/middleware/auth';
+import { DomainErrorException } from '@corates/shared';
 
 function mockSession(overrides: {
   userId: string;
@@ -53,8 +54,8 @@ describe('createSPCheckout', () => {
       await createSPCheckout(createDb(env.DB), session, dummyRequest);
       expect.unreachable('should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(403);
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(403);
     }
     expect(createSingleProjectCheckoutMock).not.toHaveBeenCalled();
   });

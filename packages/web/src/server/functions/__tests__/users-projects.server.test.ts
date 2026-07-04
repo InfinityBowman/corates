@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { env } from 'cloudflare:test';
+import { DomainErrorException } from '@corates/shared';
 import { createDb } from '@corates/db/client';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import { buildUser, buildProject, resetCounter } from '@/__tests__/server/factories';
@@ -43,9 +44,9 @@ describe('GET /api/users/:userId/projects', () => {
       await fetchUserProjects(createDb(env.DB), mockSession(), other.id);
       expect.fail('Should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(403);
-      const body = (await res.json()) as any;
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(403);
+      const body = res.toDomainError() as any;
       expect(body.code).toMatch(/AUTH_FORBIDDEN/);
     }
   });

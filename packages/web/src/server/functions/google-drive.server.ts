@@ -5,6 +5,8 @@ import { account, projects, mediaFiles } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
 import {
   createDomainError,
+  throwDomainError,
+  DomainErrorException,
   isDomainError,
   isValidPdfFilename,
   isPdfSignature,
@@ -46,13 +48,10 @@ export async function getPickerToken(db: Database, session: Session) {
   const tokens = await getGoogleTokens(db, session.user.id);
 
   if (!tokens?.accessToken) {
-    throw Response.json(
-      createDomainError(AUTH_ERRORS.INVALID, {
-        context: 'google_not_connected',
-        code: 'GOOGLE_NOT_CONNECTED',
-      }),
-      { status: 401 },
-    );
+    throwDomainError(AUTH_ERRORS.PROVIDER_NOT_CONNECTED, {
+      context: 'google_not_connected',
+      code: 'GOOGLE_NOT_CONNECTED',
+    });
   }
 
   try {
@@ -65,7 +64,7 @@ export async function getPickerToken(db: Database, session: Session) {
       expiresAt: expiresAt instanceof Date ? expiresAt.toISOString() : expiresAt || null,
     };
   } catch (error) {
-    if (error instanceof Response) throw error;
+    if (error instanceof DomainErrorException) throw error;
     captureError(error, { tags: { component: 'google-drive', action: 'picker-token' } });
     const err = error as { message?: string; code?: string };
     if (
@@ -74,18 +73,18 @@ export async function getPickerToken(db: Database, session: Session) {
     ) {
       const authError =
         isDomainError(error) ? error : (
-          createDomainError(AUTH_ERRORS.INVALID, {
+          createDomainError(AUTH_ERRORS.PROVIDER_NOT_CONNECTED, {
             context: 'google_token_expired',
             originalError: typeof err?.message === 'string' ? err.message : String(error),
           })
         );
-      throw Response.json(authError, { status: 401 });
+      throw new DomainErrorException(authError);
     }
     const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
       operation: 'get_google_picker_token',
       originalError: typeof err?.message === 'string' ? err.message : String(error),
     });
-    throw Response.json(systemError, { status: 500 });
+    throw new DomainErrorException(systemError);
   }
 }
 
@@ -112,20 +111,17 @@ export async function importFromDrive(
     await requireProjectEdit(db, session.user.id, projectId);
   } catch (err) {
     if (isDomainError(err)) {
-      throw Response.json(err, { status: err.statusCode });
+      throw new DomainErrorException(err);
     }
     throw err;
   }
 
   const tokens = await getGoogleTokens(db, session.user.id);
   if (!tokens?.accessToken) {
-    throw Response.json(
-      createDomainError(AUTH_ERRORS.INVALID, {
-        context: 'google_not_connected',
-        code: 'GOOGLE_NOT_CONNECTED',
-      }),
-      { status: 401 },
-    );
+    throwDomainError(AUTH_ERRORS.PROVIDER_NOT_CONNECTED, {
+      context: 'google_not_connected',
+      code: 'GOOGLE_NOT_CONNECTED',
+    });
   }
 
   try {
@@ -138,21 +134,15 @@ export async function importFromDrive(
 
     if (!metaResponse.ok) {
       if (metaResponse.status === 404) {
-        throw Response.json(
-          createDomainError(FILE_ERRORS.NOT_FOUND, {
-            fileName: fileId,
-            source: 'google-drive',
-          }),
-          { status: 404 },
-        );
+        throwDomainError(FILE_ERRORS.NOT_FOUND, {
+          fileName: fileId,
+          source: 'google-drive',
+        });
       }
-      throw Response.json(
-        createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
-          operation: 'fetch_google_drive_file',
-          originalError: `HTTP ${metaResponse.status}`,
-        }),
-        { status: 500 },
-      );
+      throwDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+        operation: 'fetch_google_drive_file',
+        originalError: `HTTP ${metaResponse.status}`,
+      });
     }
 
     const fileMeta = (await metaResponse.json()) as {
@@ -163,24 +153,18 @@ export async function importFromDrive(
     };
 
     if (fileMeta.mimeType !== 'application/pdf') {
-      throw Response.json(
-        createDomainError(FILE_ERRORS.INVALID_TYPE, {
-          expectedType: 'application/pdf',
-          receivedType: fileMeta.mimeType,
-        }),
-        { status: 400 },
-      );
+      throwDomainError(FILE_ERRORS.INVALID_TYPE, {
+        expectedType: 'application/pdf',
+        receivedType: fileMeta.mimeType,
+      });
     }
 
     const maxSize = 50 * 1024 * 1024;
     if (fileMeta.size && parseInt(fileMeta.size, 10) > maxSize) {
-      throw Response.json(
-        createDomainError(FILE_ERRORS.TOO_LARGE, {
-          maxSize: maxSize,
-          fileSize: parseInt(fileMeta.size, 10),
-        }),
-        { status: 413 },
-      );
+      throwDomainError(FILE_ERRORS.TOO_LARGE, {
+        maxSize: maxSize,
+        fileSize: parseInt(fileMeta.size, 10),
+      });
     }
 
     const downloadResponse = await fetch(
@@ -189,27 +173,21 @@ export async function importFromDrive(
     );
 
     if (!downloadResponse.ok) {
-      throw Response.json(
-        createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
-          operation: 'download_google_drive_file',
-          originalError: `HTTP ${downloadResponse.status}`,
-        }),
-        { status: 500 },
-      );
+      throwDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+        operation: 'download_google_drive_file',
+        originalError: `HTTP ${downloadResponse.status}`,
+      });
     }
 
     const fileContent = await downloadResponse.arrayBuffer();
 
     const header = new Uint8Array(fileContent.slice(0, PDF_MAGIC_BYTES.length));
     if (!isPdfSignature(header)) {
-      throw Response.json(
-        createDomainError(FILE_ERRORS.INVALID_TYPE, {
-          expectedType: 'application/pdf',
-          receivedType: 'unknown (invalid PDF signature)',
-          source: 'google-drive',
-        }),
-        { status: 400 },
-      );
+      throwDomainError(FILE_ERRORS.INVALID_TYPE, {
+        expectedType: 'application/pdf',
+        receivedType: 'unknown (invalid PDF signature)',
+        source: 'google-drive',
+      });
     }
 
     const project = await db
@@ -219,27 +197,21 @@ export async function importFromDrive(
       .get();
 
     if (!project) {
-      throw Response.json(
-        createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-          operation: 'fetch_project_for_import',
-          projectId,
-          message: 'Project not found',
-        }),
-        { status: 404 },
-      );
+      throwDomainError(SYSTEM_ERRORS.DB_ERROR, {
+        operation: 'fetch_project_for_import',
+        projectId,
+        message: 'Project not found',
+      });
     }
 
     const originalFileName = fileMeta.name;
 
     if (!isValidPdfFilename(originalFileName)) {
-      throw Response.json(
-        createDomainError(FILE_ERRORS.INVALID_TYPE, {
-          fileName: originalFileName,
-          source: 'google-drive',
-          reason: 'File name must end with .pdf and contain no special characters',
-        }),
-        { status: 400 },
-      );
+      throwDomainError(FILE_ERRORS.INVALID_TYPE, {
+        fileName: originalFileName,
+        source: 'google-drive',
+        reason: 'File name must end with .pdf and contain no special characters',
+      });
     }
 
     const uniqueFileName = await generateUniqueFileName(originalFileName, projectId, studyId, db);
@@ -288,18 +260,15 @@ export async function importFromDrive(
       },
     };
   } catch (error) {
-    if (error instanceof Response) throw error;
+    if (error instanceof DomainErrorException) throw error;
     captureError(error, { tags: { component: 'google-drive', action: 'import' } });
     if (isDomainError(error)) {
-      throw Response.json(error, { status: 400 });
+      throw new DomainErrorException(error);
     }
     const err = error as Error;
-    throw Response.json(
-      createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
-        operation: 'import_google_drive_file',
-        originalError: typeof err?.message === 'string' ? err.message : String(error),
-      }),
-      { status: 500 },
-    );
+    throwDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+      operation: 'import_google_drive_file',
+      originalError: typeof err?.message === 'string' ? err.message : String(error),
+    });
   }
 }

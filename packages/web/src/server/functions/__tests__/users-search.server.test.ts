@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { env } from 'cloudflare:test';
+import { DomainErrorException } from '@corates/shared';
 import { createDb } from '@corates/db/client';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import {
@@ -72,9 +73,9 @@ describe('GET /api/users/search', () => {
       await searchUsers(createDb(env.DB), mockSession(), dummyRequest, { q: 'a' });
       expect.fail('Should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(400);
-      const body = (await res.json()) as any;
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(400);
+      const body = res.toDomainError() as any;
       expect(body.code).toMatch(/VALIDATION/);
       expect(body.message).toMatch(/2 characters|too short/i);
     }

@@ -5,7 +5,13 @@ import type { Database } from '@corates/db/client';
 import { projects } from '@corates/db/schema';
 import { count, eq } from 'drizzle-orm';
 import { requireOrgMemberRemoval } from '@corates/workers/policies';
-import { createDomainError, isDomainError, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
+import {
+  throwDomainError,
+  DomainErrorException,
+  isDomainError,
+  AUTH_ERRORS,
+  SYSTEM_ERRORS,
+} from '@corates/shared';
 import type { OrgId, UserId } from '@corates/shared/ids';
 import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 import { requireOrgWriteAccess } from '@/server/guards/requireOrgWriteAccess';
@@ -66,13 +72,10 @@ export async function listOrganizations(request: Request): Promise<object> {
   } catch (err) {
     const error = err as Error;
     captureError(err, { tags: { component: 'orgs', action: 'list' } });
-    throw Response.json(
-      createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-        operation: 'list_organizations',
-        originalError: error.message,
-      }),
-      { status: 500 },
-    );
+    throwDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'list_organizations',
+      originalError: error.message,
+    });
   }
 }
 
@@ -100,17 +103,12 @@ export async function createOrganization(
     const error = err as Error;
     captureError(err, { tags: { component: 'orgs', action: 'create' } });
     if (error.message?.includes('slug')) {
-      throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'slug_taken' }), {
-        status: 403,
-      });
+      throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'slug_taken' });
     }
-    throw Response.json(
-      createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-        operation: 'create_organization',
-        originalError: error.message,
-      }),
-      { status: 500 },
-    );
+    throwDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'create_organization',
+      originalError: error.message,
+    });
   }
 }
 
@@ -121,7 +119,7 @@ export async function getOrganization(
   orgId: OrgId,
 ) {
   const guard = await requireOrgMembership(session, db, orgId);
-  if (!guard.ok) throw guard.response;
+  if (!guard.ok) throw guard.error;
 
   try {
     const orgApi = getOrgApi();
@@ -131,13 +129,10 @@ export async function getOrganization(
     });
 
     if (!result) {
-      throw Response.json(
-        createDomainError(AUTH_ERRORS.FORBIDDEN, {
-          reason: 'org_not_found',
-          orgId,
-        }),
-        { status: 403 },
-      );
+      throwDomainError(AUTH_ERRORS.FORBIDDEN, {
+        reason: 'org_not_found',
+        orgId,
+      });
     }
 
     const [projectCount] = await db
@@ -147,16 +142,13 @@ export async function getOrganization(
 
     return { ...result, projectCount: projectCount?.count || 0 };
   } catch (err) {
-    if (err instanceof Response) throw err;
+    if (err instanceof DomainErrorException) throw err;
     const error = err as Error;
     captureError(err, { tags: { component: 'orgs', action: 'fetch' } });
-    throw Response.json(
-      createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-        operation: 'fetch_organization',
-        originalError: error.message,
-      }),
-      { status: 500 },
-    );
+    throwDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'fetch_organization',
+      originalError: error.message,
+    });
   }
 }
 
@@ -173,10 +165,10 @@ export async function updateOrganization(
   },
 ) {
   const membership = await requireOrgMembership(session, db, orgId, 'admin');
-  if (!membership.ok) throw membership.response;
+  if (!membership.ok) throw membership.error;
 
   const writeAccess = await requireOrgWriteAccess('PUT', db, orgId);
-  if (!writeAccess.ok) throw writeAccess.response;
+  if (!writeAccess.ok) throw writeAccess.error;
 
   try {
     const orgApi = getOrgApi();
@@ -195,21 +187,16 @@ export async function updateOrganization(
 
     return { success: true as const, orgId, ...result };
   } catch (err) {
-    if (err instanceof Response) throw err;
+    if (err instanceof DomainErrorException) throw err;
     const error = err as Error;
     captureError(err, { tags: { component: 'orgs', action: 'update' } });
     if (error.message?.includes('slug')) {
-      throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'slug_taken' }), {
-        status: 403,
-      });
+      throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'slug_taken' });
     }
-    throw Response.json(
-      createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-        operation: 'update_organization',
-        originalError: error.message,
-      }),
-      { status: 500 },
-    );
+    throwDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'update_organization',
+      originalError: error.message,
+    });
   }
 }
 
@@ -220,10 +207,10 @@ export async function deleteOrganization(
   orgId: OrgId,
 ) {
   const membership = await requireOrgMembership(session, db, orgId, 'owner');
-  if (!membership.ok) throw membership.response;
+  if (!membership.ok) throw membership.error;
 
   const writeAccess = await requireOrgWriteAccess('DELETE', db, orgId);
-  if (!writeAccess.ok) throw writeAccess.response;
+  if (!writeAccess.ok) throw writeAccess.error;
 
   try {
     const orgApi = getOrgApi();
@@ -234,16 +221,13 @@ export async function deleteOrganization(
 
     return { success: true as const, deleted: orgId };
   } catch (err) {
-    if (err instanceof Response) throw err;
+    if (err instanceof DomainErrorException) throw err;
     const error = err as Error;
     captureError(err, { tags: { component: 'orgs', action: 'delete' } });
-    throw Response.json(
-      createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-        operation: 'delete_organization',
-        originalError: error.message,
-      }),
-      { status: 500 },
-    );
+    throwDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'delete_organization',
+      originalError: error.message,
+    });
   }
 }
 
@@ -254,7 +238,7 @@ export async function listOrgMembers(
   orgId: OrgId,
 ): Promise<object> {
   const membership = await requireOrgMembership(session, db, orgId);
-  if (!membership.ok) throw membership.response;
+  if (!membership.ok) throw membership.error;
 
   try {
     const orgApi = getOrgApi();
@@ -265,13 +249,10 @@ export async function listOrgMembers(
   } catch (err) {
     const error = err as Error;
     captureError(err, { tags: { component: 'orgs', action: 'list-members' } });
-    throw Response.json(
-      createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-        operation: 'list_org_members',
-        originalError: error.message,
-      }),
-      { status: 500 },
-    );
+    throwDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'list_org_members',
+      originalError: error.message,
+    });
   }
 }
 
@@ -283,10 +264,10 @@ export async function addOrgMember(
   data: { userId: string; role?: 'member' | 'admin' | 'owner' },
 ) {
   const membership = await requireOrgMembership(session, db, orgId, 'admin');
-  if (!membership.ok) throw membership.response;
+  if (!membership.ok) throw membership.error;
 
   const writeAccess = await requireOrgWriteAccess('POST', db, orgId);
-  if (!writeAccess.ok) throw writeAccess.response;
+  if (!writeAccess.ok) throw writeAccess.error;
 
   try {
     const orgApi = getOrgApi();
@@ -301,21 +282,16 @@ export async function addOrgMember(
 
     return { success: true as const, ...result };
   } catch (err) {
-    if (err instanceof Response) throw err;
+    if (err instanceof DomainErrorException) throw err;
     const error = err as Error;
     captureError(err, { tags: { component: 'orgs', action: 'add-member' } });
     if (error.message?.includes('already') || error.message?.includes('member')) {
-      throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'already_member' }), {
-        status: 403,
-      });
+      throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'already_member' });
     }
-    throw Response.json(
-      createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-        operation: 'add_org_member',
-        originalError: error.message,
-      }),
-      { status: 500 },
-    );
+    throwDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'add_org_member',
+      originalError: error.message,
+    });
   }
 }
 
@@ -328,10 +304,10 @@ export async function updateMemberRole(
   data: { role: 'member' | 'admin' | 'owner' },
 ) {
   const membership = await requireOrgMembership(session, db, orgId, 'admin');
-  if (!membership.ok) throw membership.response;
+  if (!membership.ok) throw membership.error;
 
   const writeAccess = await requireOrgWriteAccess('PUT', db, orgId);
-  if (!writeAccess.ok) throw writeAccess.response;
+  if (!writeAccess.ok) throw writeAccess.error;
 
   try {
     const orgApi = getOrgApi();
@@ -346,24 +322,18 @@ export async function updateMemberRole(
 
     return { success: true as const, memberId, role: data.role };
   } catch (err) {
-    if (err instanceof Response) throw err;
+    if (err instanceof DomainErrorException) throw err;
     const error = err as Error;
     captureError(err, { tags: { component: 'orgs', action: 'update-member' } });
     if (error.message?.includes('owner') || error.message?.includes('permission')) {
-      throw Response.json(
-        createDomainError(AUTH_ERRORS.FORBIDDEN, {
-          reason: 'owner_role_change_requires_owner',
-        }),
-        { status: 403 },
-      );
+      throwDomainError(AUTH_ERRORS.FORBIDDEN, {
+        reason: 'owner_role_change_requires_owner',
+      });
     }
-    throw Response.json(
-      createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-        operation: 'update_org_member',
-        originalError: error.message,
-      }),
-      { status: 500 },
-    );
+    throwDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'update_org_member',
+      originalError: error.message,
+    });
   }
 }
 
@@ -375,10 +345,10 @@ export async function removeMember(
   memberId: UserId,
 ) {
   const membership = await requireOrgMembership(session, db, orgId);
-  if (!membership.ok) throw membership.response;
+  if (!membership.ok) throw membership.error;
 
   const writeAccess = await requireOrgWriteAccess('DELETE', db, orgId);
-  if (!writeAccess.ok) throw writeAccess.response;
+  if (!writeAccess.ok) throw writeAccess.error;
 
   const isSelf = memberId === membership.context.userId;
 
@@ -386,7 +356,7 @@ export async function removeMember(
     await requireOrgMemberRemoval(db, membership.context.userId, orgId, memberId);
   } catch (err) {
     if (isDomainError(err)) {
-      throw Response.json(err, { status: err.statusCode });
+      throw new DomainErrorException(err);
     }
     throw err;
   }
@@ -410,28 +380,22 @@ export async function removeMember(
 
     return { success: true as const, removed: memberId, isSelf };
   } catch (err) {
-    if (err instanceof Response) throw err;
+    if (err instanceof DomainErrorException) throw err;
     const error = err as Error;
     captureError(err, { tags: { component: 'orgs', action: 'remove-member' } });
     if (error.message?.includes('owner') || error.message?.includes('last')) {
-      throw Response.json(
-        createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'cannot_remove_last_owner' }),
-        { status: 403 },
-      );
+      throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'cannot_remove_last_owner' });
     }
-    throw Response.json(
-      createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-        operation: 'remove_org_member',
-        originalError: error.message,
-      }),
-      { status: 500 },
-    );
+    throwDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'remove_org_member',
+      originalError: error.message,
+    });
   }
 }
 
 export async function setActiveOrg(session: Session, db: Database, request: Request, orgId: OrgId) {
   const guard = await requireOrgMembership(session, db, orgId);
-  if (!guard.ok) throw guard.response;
+  if (!guard.ok) throw guard.error;
 
   try {
     const orgApi = getOrgApi();
@@ -444,12 +408,9 @@ export async function setActiveOrg(session: Session, db: Database, request: Requ
   } catch (err) {
     const error = err as Error;
     captureError(err, { tags: { component: 'orgs', action: 'set-active' } });
-    throw Response.json(
-      createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-        operation: 'set_active_organization',
-        originalError: error.message,
-      }),
-      { status: 500 },
-    );
+    throwDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'set_active_organization',
+      originalError: error.message,
+    });
   }
 }

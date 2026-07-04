@@ -13,6 +13,7 @@ import {
 } from '@/__tests__/server/helpers';
 import { resetCounter, asOrgId } from '@/__tests__/server/factories';
 import { createDb } from '@corates/db/client';
+import { DomainErrorException } from '@corates/shared';
 import { env } from 'cloudflare:test';
 import type { OrgId } from '@corates/shared/ids';
 import type { Session } from '@/server/middleware/auth';
@@ -48,7 +49,7 @@ describe('reconcileAdminOrgBilling', () => {
       await reconcileAdminOrgBilling(mockAdminSession(), createDb(env.DB), 'nope' as OrgId, {});
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect((err as Response).status).toBe(400);
+      expect((err as DomainErrorException).statusCode).toBe(400);
     }
   });
 

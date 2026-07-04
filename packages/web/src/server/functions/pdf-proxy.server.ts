@@ -1,7 +1,6 @@
 import { validatePdfProxyUrl } from '@corates/workers/ssrf-protection';
 import {
-  createDomainError,
-  AUTH_ERRORS,
+  throwDomainError,
   FILE_ERRORS,
   SYSTEM_ERRORS,
   VALIDATION_ERRORS,
@@ -15,20 +14,15 @@ export async function proxyPdfFetch(
   const { url } = params;
 
   if (!url) {
-    throw Response.json(createDomainError(VALIDATION_ERRORS.FIELD_REQUIRED, { field: 'url' }), {
-      status: 400,
-    });
+    throwDomainError(VALIDATION_ERRORS.FIELD_REQUIRED, { field: 'url' });
   }
 
   const validation = validatePdfProxyUrl(url);
   if (!validation.valid) {
-    throw Response.json(
-      createDomainError(VALIDATION_ERRORS.INVALID_INPUT, {
-        field: 'url',
-        reason: validation.error,
-      }),
-      { status: 400 },
-    );
+    throwDomainError(VALIDATION_ERRORS.INVALID_INPUT, {
+      field: 'url',
+      reason: validation.error,
+    });
   }
 
   let response: Response | undefined;
@@ -51,12 +45,9 @@ export async function proxyPdfFetch(
 
     const location = response.headers.get('location');
     if (!location) {
-      throw Response.json(
-        createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
-          reason: 'Redirect without location header',
-        }),
-        { status: 502 },
-      );
+      throwDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+        reason: 'Redirect without location header',
+      });
     }
 
     if (
@@ -67,25 +58,19 @@ export async function proxyPdfFetch(
       location.includes('idp.') ||
       location.includes('/sso/')
     ) {
-      throw Response.json(
-        createDomainError(AUTH_ERRORS.REQUIRED, {
-          reason: 'PDF requires authentication - this article may not be truly open access',
-        }),
-        { status: 403 },
-      );
+      throwDomainError(FILE_ERRORS.ACCESS_RESTRICTED, {
+        reason: 'PDF requires authentication - this article may not be truly open access',
+      });
     }
 
     const redirectUrl = new URL(location, currentUrl);
 
     const redirectValidation = validatePdfProxyUrl(redirectUrl.href);
     if (!redirectValidation.valid) {
-      throw Response.json(
-        createDomainError(VALIDATION_ERRORS.INVALID_INPUT, {
-          field: 'redirect_url',
-          reason: redirectValidation.error,
-        }),
-        { status: 400 },
-      );
+      throwDomainError(VALIDATION_ERRORS.INVALID_INPUT, {
+        field: 'redirect_url',
+        reason: redirectValidation.error,
+      });
     }
 
     currentUrl = redirectUrl.href;
@@ -93,40 +78,28 @@ export async function proxyPdfFetch(
   }
 
   if (redirectCount >= maxRedirects) {
-    throw Response.json(
-      createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
-        reason: 'Too many redirects - PDF may require authentication',
-      }),
-      { status: 502 },
-    );
+    throwDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+      reason: 'Too many redirects - PDF may require authentication',
+    });
   }
 
   if (!response || !response.ok) {
-    throw Response.json(
-      createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
-        reason: `Failed to fetch PDF: ${response?.status} ${response?.statusText}`,
-      }),
-      { status: response?.status || 500 },
-    );
+    throwDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+      reason: `Failed to fetch PDF: ${response?.status} ${response?.statusText}`,
+    });
   }
 
   const contentType = response.headers.get('content-type') || '';
   if (!contentType.includes('pdf') && !contentType.includes('octet-stream')) {
     if (contentType.includes('html')) {
-      throw Response.json(
-        createDomainError(AUTH_ERRORS.REQUIRED, {
-          reason: 'PDF requires authentication - received login page instead',
-        }),
-        { status: 403 },
-      );
+      throwDomainError(FILE_ERRORS.ACCESS_RESTRICTED, {
+        reason: 'PDF requires authentication - received login page instead',
+      });
     }
-    throw Response.json(
-      createDomainError(FILE_ERRORS.INVALID_TYPE, {
-        expected: 'application/pdf',
-        received: contentType,
-      }),
-      { status: 400 },
-    );
+    throwDomainError(FILE_ERRORS.INVALID_TYPE, {
+      expected: 'application/pdf',
+      received: contentType,
+    });
   }
 
   return response.arrayBuffer();

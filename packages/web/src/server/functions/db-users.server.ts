@@ -1,7 +1,7 @@
 import type { Database } from '@corates/db/client';
 import { user } from '@corates/db/schema';
 import { desc } from 'drizzle-orm';
-import { createValidationError, VALIDATION_ERRORS } from '@corates/shared';
+import { createValidationError, DomainErrorException, VALIDATION_ERRORS } from '@corates/shared';
 
 export async function listUsers(db: Database) {
   const results = await db
@@ -27,5 +27,5 @@ export function usersPostDeprecated(): never {
     null,
     'use_auth_register',
   );
-  throw Response.json(error, { status: 400 });
+  throw new DomainErrorException(error);
 }

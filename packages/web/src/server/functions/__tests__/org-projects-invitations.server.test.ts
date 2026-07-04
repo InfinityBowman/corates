@@ -11,6 +11,7 @@ import {
   asProjectInvitationId,
 } from '@/__tests__/server/factories';
 import type { Session } from '@/server/middleware/auth';
+import { DomainErrorException } from '@corates/shared';
 import {
   listProjectInvitations,
   createProjectInvitation,
@@ -164,10 +165,10 @@ describe('createProjectInvitation', () => {
       });
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect(err).toBeInstanceOf(Response);
-      const res = err as Response;
-      expect(res.status).toBe(400);
-      const body = (await res.json()) as { code: string };
+      expect(err).toBeInstanceOf(DomainErrorException);
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(400);
+      const body = res.toDomainError() as { code: string };
       expect(body.code).toMatch(/INVITATION_ALREADY_ACCEPTED/);
     }
   });
@@ -221,10 +222,10 @@ describe('cancelProjectInvitation', () => {
       );
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect(err).toBeInstanceOf(Response);
-      const res = err as Response;
-      expect(res.status).toBe(400);
-      const body = (await res.json()) as { code: string };
+      expect(err).toBeInstanceOf(DomainErrorException);
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(400);
+      const body = res.toDomainError() as { code: string };
       expect(body.code).toMatch(/FIELD_INVALID_FORMAT/);
     }
   });
@@ -252,10 +253,10 @@ describe('cancelProjectInvitation', () => {
       );
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect(err).toBeInstanceOf(Response);
-      const res = err as Response;
-      expect(res.status).toBe(400);
-      const body = (await res.json()) as { code: string };
+      expect(err).toBeInstanceOf(DomainErrorException);
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(400);
+      const body = res.toDomainError() as { code: string };
       expect(body.code).toMatch(/INVITATION_ALREADY_ACCEPTED/);
     }
   });

@@ -5,6 +5,7 @@ import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import { buildOrg, resetCounter } from '@/__tests__/server/factories';
 import { fetchInvoices } from '@/server/functions/billing.server';
 import type { Session } from '@/server/middleware/auth';
+import { DomainErrorException } from '@corates/shared';
 
 function mockSession(overrides?: {
   userId?: string;
@@ -71,9 +72,9 @@ describe('fetchInvoices', () => {
       await fetchInvoices(createDb(env.DB), session);
       expect.unreachable('should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(403);
-      const body = (await res.json()) as { code: string; details?: { reason?: string } };
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(403);
+      const body = res.toDomainError() as { code: string; details?: { reason?: string } };
       expect(body.code).toBe('AUTH_FORBIDDEN');
       expect(body.details?.reason).toBe('no_org_found');
     }

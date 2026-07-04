@@ -13,6 +13,7 @@ import {
   asUserId,
 } from '@/__tests__/server/factories';
 import type { Session } from '@/server/middleware/auth';
+import { DomainErrorException } from '@corates/shared';
 import {
   listProjectMembers,
   addProjectMember,
@@ -96,10 +97,10 @@ describe('listProjectMembers', () => {
       await listProjectMembers(mockSession(), createDb(env.DB), org.id, project.id);
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect(err).toBeInstanceOf(Response);
-      const res = err as Response;
-      expect(res.status).toBe(403);
-      const body = (await res.json()) as { code: string };
+      expect(err).toBeInstanceOf(DomainErrorException);
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(403);
+      const body = res.toDomainError() as { code: string };
       expect(body.code).toBe('PROJECT_ACCESS_DENIED');
     }
   });
@@ -168,10 +169,10 @@ describe('addProjectMember', () => {
       });
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect(err).toBeInstanceOf(Response);
-      const res = err as Response;
-      expect(res.status).toBe(409);
-      const body = (await res.json()) as { code: string };
+      expect(err).toBeInstanceOf(DomainErrorException);
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(409);
+      const body = res.toDomainError() as { code: string };
       expect(body.code).toMatch(/MEMBER_ALREADY_EXISTS/);
     }
   });
@@ -189,10 +190,10 @@ describe('addProjectMember', () => {
       });
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect(err).toBeInstanceOf(Response);
-      const res = err as Response;
-      expect(res.status).toBe(403);
-      const body = (await res.json()) as { code: string };
+      expect(err).toBeInstanceOf(DomainErrorException);
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(403);
+      const body = res.toDomainError() as { code: string };
       expect(body.code).toMatch(/FORBIDDEN/);
     }
   });
@@ -237,10 +238,10 @@ describe('updateProjectMemberRole', () => {
       });
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect(err).toBeInstanceOf(Response);
-      const res = err as Response;
-      expect(res.status).toBe(400);
-      const body = (await res.json()) as { code: string };
+      expect(err).toBeInstanceOf(DomainErrorException);
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(400);
+      const body = res.toDomainError() as { code: string };
       expect(body.code).toMatch(/LAST_OWNER/);
     }
   });
@@ -300,10 +301,10 @@ describe('removeProjectMember', () => {
       await removeProjectMember(mockSession(), createDb(env.DB), org.id, project.id, owner.id);
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect(err).toBeInstanceOf(Response);
-      const res = err as Response;
-      expect(res.status).toBe(400);
-      const body = (await res.json()) as { code: string };
+      expect(err).toBeInstanceOf(DomainErrorException);
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(400);
+      const body = res.toDomainError() as { code: string };
       expect(body.code).toMatch(/LAST_OWNER/);
     }
   });
@@ -322,8 +323,8 @@ describe('removeProjectMember', () => {
       );
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect(err).toBeInstanceOf(Response);
-      expect((err as Response).status).toBe(404);
+      expect(err).toBeInstanceOf(DomainErrorException);
+      expect((err as DomainErrorException).statusCode).toBe(404);
     }
   });
 });
@@ -357,10 +358,10 @@ describe('Collaborator Quota Enforcement', () => {
       });
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect(err).toBeInstanceOf(Response);
-      const res = err as Response;
-      expect(res.status).toBe(403);
-      const body = (await res.json()) as {
+      expect(err).toBeInstanceOf(DomainErrorException);
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(403);
+      const body = res.toDomainError() as {
         code: string;
         details?: { reason?: string; quotaKey?: string };
       };

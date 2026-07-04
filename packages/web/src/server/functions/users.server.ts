@@ -15,7 +15,8 @@ import { eq, or, like, sql, desc } from 'drizzle-orm';
 import { syncMemberToDO } from '@corates/workers/project-sync';
 import { getProjectDocStub } from '@corates/workers/project-doc-id';
 import {
-  createDomainError,
+  throwDomainError,
+  DomainErrorException,
   createValidationError,
   AUTH_ERRORS,
   USER_ERRORS,
@@ -102,10 +103,7 @@ export async function fetchMyProjects(db: Database, session: Session) {
 
 export async function fetchUserProjects(db: Database, session: Session, userId: string) {
   if (session.user.id !== userId) {
-    throw Response.json(
-      createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'view_other_user_projects' }),
-      { status: 403 },
-    );
+    throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'view_other_user_projects' });
   }
 
   const results = await db
@@ -135,7 +133,7 @@ export async function searchUsers(
   if (!params.q || params.q.length < 2) {
     const error = createValidationError('q', VALIDATION_ERRORS.FIELD_TOO_SHORT.code, params.q);
     error.message = 'Search query must be at least 2 characters';
-    throw Response.json(error, { status: 400 });
+    throw new DomainErrorException(error);
   }
 
   const limit = Math.min(params.limit && Number.isFinite(params.limit) ? params.limit : 10, 20);
@@ -200,9 +198,7 @@ export async function syncProfile(db: Database, session: Session) {
     .limit(1);
 
   if (!userData) {
-    throw Response.json(createDomainError(USER_ERRORS.NOT_FOUND, { userId: session.user.id }), {
-      status: 404,
-    });
+    throwDomainError(USER_ERRORS.NOT_FOUND, { userId: session.user.id });
   }
 
   const userProjects = await db

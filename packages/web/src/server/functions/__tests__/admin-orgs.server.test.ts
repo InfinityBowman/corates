@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import { buildOrg, buildOrgMember, resetCounter } from '@/__tests__/server/factories';
 import { createDb } from '@corates/db/client';
+import { DomainErrorException } from '@corates/shared';
 import { env } from 'cloudflare:test';
 import { projects } from '@corates/db/schema';
 import type { OrgId } from '@corates/shared/ids';
@@ -85,9 +86,9 @@ describe('GET /api/admin/orgs/:orgId', () => {
       await getAdminOrgDetails(mockAdminSession(), createDb(env.DB), 'does-not-exist' as OrgId);
       expect.unreachable('should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(403);
-      const body = (await res.json()) as { details?: { reason?: string } };
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(403);
+      const body = res.toDomainError() as { details?: { reason?: string } };
       expect(body.details?.reason).toBe('org_not_found');
     }
   });

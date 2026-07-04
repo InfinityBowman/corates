@@ -1,16 +1,14 @@
 import type { Database } from '@corates/db/client';
 import { dbSchema, mediaFiles, organization, projects, user } from '@corates/db/schema';
 import { and, asc, count, desc, eq, sum } from 'drizzle-orm';
-import { createDomainError, AUTH_ERRORS } from '@corates/shared';
+import { throwDomainError, AUTH_ERRORS } from '@corates/shared';
 import { isAdminUser } from '@corates/workers/auth-admin';
 import { ALLOWED_TABLES, isAllowedTable, type AllowedTableName } from '@/server/lib/dbTables';
 import type { Session } from '@/server/middleware/auth';
 
 function assertAdmin(session: Session) {
   if (!isAdminUser(session.user as { role?: string | null })) {
-    throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'admin_required' }), {
-      status: 403,
-    });
+    throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'admin_required' });
   }
 }
 
@@ -47,16 +45,12 @@ export function getAdminTableSchema(session: Session, tableName: string) {
   assertAdmin(session);
 
   if (!isAllowedTable(tableName)) {
-    throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'table_not_allowed' }), {
-      status: 400,
-    });
+    throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'table_not_allowed' });
   }
 
   const table = dbSchema[tableName as AllowedTableName];
   if (!table) {
-    throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'table_not_found' }), {
-      status: 400,
-    });
+    throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'table_not_found' });
   }
 
   const columns = Object.entries(table as unknown as Record<string, DrizzleColumn>).map(
@@ -240,16 +234,12 @@ export async function getAdminTableRows(
   const filterValue = params.filterValue?.trim() || undefined;
 
   if (!isAllowedTable(tableName)) {
-    throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'table_not_allowed' }), {
-      status: 400,
-    });
+    throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'table_not_allowed' });
   }
 
   const table = dbSchema[tableName as AllowedTableName];
   if (!table) {
-    throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'table_not_found' }), {
-      status: 400,
-    });
+    throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'table_not_found' });
   }
 
   if (tableName === 'mediaFiles') {

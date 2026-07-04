@@ -10,6 +10,7 @@ import {
   importFromDrive,
 } from '@/server/functions/google-drive.server';
 import type { Session } from '@/server/middleware/auth';
+import { DomainErrorException } from '@corates/shared';
 
 let currentUser: { id: string; email: string } = { id: 'user-1', email: 'user1@example.com' };
 
@@ -114,10 +115,10 @@ describe('getPickerToken', () => {
       await getPickerToken(createDb(env.DB), mockSession());
       expect.unreachable('should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(401);
-      const body = (await res.json()) as { code: string };
-      expect(body.code).toBe('AUTH_INVALID');
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(401);
+      const body = res.toDomainError() as { code: string };
+      expect(body.code).toBe('AUTH_PROVIDER_NOT_CONNECTED');
     }
   });
 
@@ -233,9 +234,9 @@ describe('importFromDrive', () => {
       });
       expect.unreachable('should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(400);
-      const body = (await res.json()) as { code: string };
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(400);
+      const body = res.toDomainError() as { code: string };
       expect(body.code).toBe('FILE_INVALID_TYPE');
     }
   });
@@ -263,9 +264,9 @@ describe('importFromDrive', () => {
       });
       expect.unreachable('should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(413);
-      const body = (await res.json()) as { code: string };
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(413);
+      const body = res.toDomainError() as { code: string };
       expect(body.code).toBe('FILE_TOO_LARGE');
     }
   });
@@ -282,10 +283,10 @@ describe('importFromDrive', () => {
       });
       expect.unreachable('should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(401);
-      const body = (await res.json()) as { code: string };
-      expect(body.code).toBe('AUTH_INVALID');
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(401);
+      const body = res.toDomainError() as { code: string };
+      expect(body.code).toBe('AUTH_PROVIDER_NOT_CONNECTED');
     }
   });
 });

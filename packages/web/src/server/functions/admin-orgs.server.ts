@@ -4,7 +4,8 @@ import type { Database } from '@corates/db/client';
 import { organization, member, projects, subscription, orgAccessGrants } from '@corates/db/schema';
 import { and, count, desc, eq, like, or, sql } from 'drizzle-orm';
 import {
-  createDomainError,
+  throwDomainError,
+  DomainErrorException,
   createValidationError,
   AUTH_ERRORS,
   VALIDATION_ERRORS,
@@ -30,9 +31,7 @@ import type { Session } from '@/server/middleware/auth';
 
 function assertAdmin(session: Session) {
   if (!isAdminUser(session.user as { role?: string | null })) {
-    throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'admin_required' }), {
-      status: 403,
-    });
+    throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'admin_required' });
   }
 }
 
@@ -180,10 +179,7 @@ export async function getAdminOrgDetails(session: Session, db: Database, orgId: 
 
   const org = await db.select().from(organization).where(eq(organization.id, orgId)).get();
   if (!org) {
-    throw Response.json(
-      createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'org_not_found', orgId }),
-      { status: 403 },
-    );
+    throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'org_not_found', orgId });
   }
 
   const [memberCountResult] = await db
@@ -229,13 +225,10 @@ export async function getAdminOrgBilling(session: Session, db: Database, orgId: 
 
   const org = await db.select().from(organization).where(eq(organization.id, orgId)).get();
   if (!org) {
-    throw Response.json(
-      createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
-        field: 'orgId',
-        value: orgId,
-      }),
-      { status: 400 },
-    );
+    throwDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
+      field: 'orgId',
+      value: orgId,
+    });
   }
 
   const orgBilling = await resolveOrgAccess(db, orgId);
@@ -295,9 +288,8 @@ export async function reconcileAdminOrgBilling(
 
   const org = await db.select().from(organization).where(eq(organization.id, orgId)).get();
   if (!org) {
-    throw Response.json(
+    throw new DomainErrorException(
       createValidationError('orgId', VALIDATION_ERRORS.FIELD_INVALID_FORMAT.code, orgId),
-      { status: 400 },
     );
   }
 
@@ -515,37 +507,28 @@ export async function createAdminGrant(
 
   const org = await db.select().from(organization).where(eq(organization.id, orgId)).get();
   if (!org) {
-    throw Response.json(
-      createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
-        field: 'orgId',
-        value: orgId,
-      }),
-      { status: 400 },
-    );
+    throwDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
+      field: 'orgId',
+      value: orgId,
+    });
   }
 
   if (data.type === 'trial') {
     const existingTrial = await getGrantByOrgIdAndType(db, orgId, 'trial');
     if (existingTrial) {
-      throw Response.json(
-        createDomainError(
-          VALIDATION_ERRORS.INVALID_INPUT,
-          { field: 'type', value: 'trial' },
-          'Trial grant already exists for this organization. Each organization can only have one trial grant.',
-        ),
-        { status: 400 },
+      throwDomainError(
+        VALIDATION_ERRORS.INVALID_INPUT,
+        { field: 'type', value: 'trial' },
+        'Trial grant already exists for this organization. Each organization can only have one trial grant.',
       );
     }
   }
 
   if (data.expiresAt <= data.startsAt) {
-    throw Response.json(
-      createDomainError(VALIDATION_ERRORS.INVALID_INPUT, {
-        field: 'expiresAt',
-        value: 'expiresAt must be after startsAt',
-      }),
-      { status: 400 },
-    );
+    throwDomainError(VALIDATION_ERRORS.INVALID_INPUT, {
+      field: 'expiresAt',
+      value: 'expiresAt must be after startsAt',
+    });
   }
 
   const grantId = crypto.randomUUID() as OrgAccessGrantId;
@@ -572,13 +555,10 @@ export async function updateAdminGrant(
 
   const existing = await getGrantById(db, grantId);
   if (!existing || existing.orgId !== orgId) {
-    throw Response.json(
-      createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
-        field: 'grantId',
-        value: grantId,
-      }),
-      { status: 400 },
-    );
+    throwDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
+      field: 'grantId',
+      value: grantId,
+    });
   }
 
   if (data.expiresAt !== undefined) {
@@ -600,13 +580,10 @@ export async function updateAdminGrant(
     return { success: true, grant: revoked };
   }
 
-  throw Response.json(
-    createDomainError(VALIDATION_ERRORS.INVALID_INPUT, {
-      field: 'body',
-      value: 'At least one field (expiresAt or revokedAt) must be provided',
-    }),
-    { status: 400 },
-  );
+  throwDomainError(VALIDATION_ERRORS.INVALID_INPUT, {
+    field: 'body',
+    value: 'At least one field (expiresAt or revokedAt) must be provided',
+  });
 }
 
 export async function revokeAdminGrant(
@@ -619,13 +596,10 @@ export async function revokeAdminGrant(
 
   const existing = await getGrantById(db, grantId);
   if (!existing || existing.orgId !== orgId) {
-    throw Response.json(
-      createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
-        field: 'grantId',
-        value: grantId,
-      }),
-      { status: 400 },
-    );
+    throwDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
+      field: 'grantId',
+      value: grantId,
+    });
   }
 
   await revokeGrant(db, grantId);
@@ -637,24 +611,18 @@ export async function grantAdminTrial(session: Session, db: Database, orgId: Org
 
   const org = await db.select().from(organization).where(eq(organization.id, orgId)).get();
   if (!org) {
-    throw Response.json(
-      createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
-        field: 'orgId',
-        value: orgId,
-      }),
-      { status: 400 },
-    );
+    throwDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
+      field: 'orgId',
+      value: orgId,
+    });
   }
 
   const existingTrial = await getGrantByOrgIdAndType(db, orgId, 'trial');
   if (existingTrial) {
-    throw Response.json(
-      createDomainError(
-        VALIDATION_ERRORS.INVALID_INPUT,
-        { field: 'trial', value: 'already_exists' },
-        'Trial grant already exists for this organization.',
-      ),
-      { status: 400 },
+    throwDomainError(
+      VALIDATION_ERRORS.INVALID_INPUT,
+      { field: 'trial', value: 'already_exists' },
+      'Trial grant already exists for this organization.',
     );
   }
 
@@ -680,13 +648,10 @@ export async function grantAdminSingleProject(session: Session, db: Database, or
 
   const org = await db.select().from(organization).where(eq(organization.id, orgId)).get();
   if (!org) {
-    throw Response.json(
-      createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
-        field: 'orgId',
-        value: orgId,
-      }),
-      { status: 400 },
-    );
+    throwDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
+      field: 'orgId',
+      value: orgId,
+    });
   }
 
   const existing = await getGrantByOrgIdAndType(db, orgId, 'single_project');
@@ -740,13 +705,10 @@ export async function createAdminSubscription(
 
   const org = await db.select().from(organization).where(eq(organization.id, orgId)).get();
   if (!org) {
-    throw Response.json(
-      createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
-        field: 'orgId',
-        value: orgId,
-      }),
-      { status: 400 },
-    );
+    throwDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
+      field: 'orgId',
+      value: orgId,
+    });
   }
 
   const subscriptionId = crypto.randomUUID();
@@ -803,13 +765,10 @@ export async function updateAdminSubscription(
     .where(and(eq(subscription.id, subscriptionId), eq(subscription.referenceId, orgId)))
     .get();
   if (!existing) {
-    throw Response.json(
-      createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
-        field: 'subscriptionId',
-        value: subscriptionId,
-      }),
-      { status: 400 },
-    );
+    throwDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
+      field: 'subscriptionId',
+      value: subscriptionId,
+    });
   }
 
   const updateData: Record<string, unknown> = { updatedAt: new Date() };
@@ -853,13 +812,10 @@ export async function cancelAdminSubscription(
     .where(and(eq(subscription.id, subscriptionId), eq(subscription.referenceId, orgId)))
     .get();
   if (!existing) {
-    throw Response.json(
-      createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
-        field: 'subscriptionId',
-        value: subscriptionId,
-      }),
-      { status: 400 },
-    );
+    throwDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
+      field: 'subscriptionId',
+      value: subscriptionId,
+    });
   }
 
   const now = new Date();

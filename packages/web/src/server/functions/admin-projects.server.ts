@@ -9,16 +9,14 @@ import {
   user,
 } from '@corates/db/schema';
 import { and, count, desc, eq, like, sql } from 'drizzle-orm';
-import { createDomainError, AUTH_ERRORS, PROJECT_ERRORS } from '@corates/shared';
+import { throwDomainError, AUTH_ERRORS, PROJECT_ERRORS } from '@corates/shared';
 import { isAdminUser } from '@corates/workers/auth-admin';
 import { getProjectDocStub } from '@corates/workers/project-doc-id';
 import type { Session } from '@/server/middleware/auth';
 
 function assertAdmin(session: Session) {
   if (!isAdminUser(session.user as { role?: string | null })) {
-    throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'admin_required' }), {
-      status: 403,
-    });
+    throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'admin_required' });
   }
 }
 
@@ -149,9 +147,7 @@ export async function getAdminProjectDetails(session: Session, db: Database, pro
     .limit(1);
 
   if (!project) {
-    throw Response.json(createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId }), {
-      status: 404,
-    });
+    throwDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId });
   }
 
   const members = await db
@@ -235,9 +231,7 @@ export async function getAdminProjectDocStats(session: Session, db: Database, pr
     .limit(1);
 
   if (!project) {
-    throw Response.json(createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId }), {
-      status: 404,
-    });
+    throwDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId });
   }
 
   const projectDoc = getProjectDocStub(env, projectId);
@@ -259,9 +253,7 @@ export async function removeAdminProjectMember(
     .limit(1);
 
   if (!existingMember) {
-    throw Response.json(createDomainError(PROJECT_ERRORS.NOT_FOUND, { memberId }), {
-      status: 404,
-    });
+    throwDomainError(PROJECT_ERRORS.NOT_FOUND, { memberId });
   }
 
   await db.delete(projectMembers).where(eq(projectMembers.id, memberId));
@@ -278,9 +270,7 @@ export async function deleteAdminProject(session: Session, db: Database, project
     .limit(1);
 
   if (!existingProject) {
-    throw Response.json(createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId }), {
-      status: 404,
-    });
+    throwDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId });
   }
 
   await db.delete(projects).where(eq(projects.id, projectId));

@@ -1,6 +1,12 @@
 import type { Database } from '@corates/db/client';
 import { resolveOrgAccess } from '@corates/workers/billing-resolver';
-import { createDomainError, isDomainError, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
+import {
+  createDomainError,
+  DomainErrorException,
+  isDomainError,
+  AUTH_ERRORS,
+  SYSTEM_ERRORS,
+} from '@corates/shared';
 import type { OrgId } from '@corates/shared/ids';
 
 export interface WriteAccessResult {
@@ -8,7 +14,9 @@ export interface WriteAccessResult {
   orgBilling: Awaited<ReturnType<typeof resolveOrgAccess>>;
 }
 
-export type OrgWriteAccessGuardResult = WriteAccessResult | { ok: false; response: Response };
+export type OrgWriteAccessGuardResult =
+  | WriteAccessResult
+  | { ok: false; error: DomainErrorException };
 
 export async function requireOrgWriteAccess(
   method: string,
@@ -23,9 +31,8 @@ export async function requireOrgWriteAccess(
   if (!orgId) {
     return {
       ok: false,
-      response: Response.json(
+      error: new DomainErrorException(
         createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'org_context_required' }),
-        { status: 403 },
       ),
     };
   }
@@ -35,16 +42,15 @@ export async function requireOrgWriteAccess(
     orgBilling = await resolveOrgAccess(db, orgId);
   } catch (err) {
     if (isDomainError(err)) {
-      return { ok: false, response: Response.json(err, { status: err.statusCode }) };
+      return { ok: false, error: new DomainErrorException(err) };
     }
     return {
       ok: false,
-      response: Response.json(
+      error: new DomainErrorException(
         createDomainError(SYSTEM_ERRORS.DB_ERROR, {
           operation: 'resolve_org_access',
           originalError: err instanceof Error ? err.message : String(err),
         }),
-        { status: 500 },
       ),
     };
   }
@@ -52,13 +58,12 @@ export async function requireOrgWriteAccess(
   if (orgBilling.accessMode === 'readOnly') {
     return {
       ok: false,
-      response: Response.json(
+      error: new DomainErrorException(
         createDomainError(
           AUTH_ERRORS.FORBIDDEN,
           { reason: 'read_only_access', source: orgBilling.source },
           'This organization has read-only access. Please renew your subscription or purchase a plan to make changes.',
         ),
-        { status: 403 },
       ),
     };
   }

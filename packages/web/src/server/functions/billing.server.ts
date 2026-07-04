@@ -19,7 +19,7 @@ import { GRANT_CONFIG } from '@corates/workers/constants';
 import { projects, subscription, user as userTable } from '@corates/db/schema';
 import { and, count, desc, eq, or } from 'drizzle-orm';
 import { getPlan, getGrantPlan, DEFAULT_PLAN, type GrantType } from '@corates/shared/plans';
-import { createDomainError, AUTH_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
+import { throwDomainError, AUTH_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import { resolveOrgId, resolveOrgIdWithRole } from '@/server/billing-context';
 
 import type { Session } from '@/server/middleware/auth';
@@ -32,9 +32,7 @@ export async function fetchUsage(db: Database, session: Session) {
   });
 
   if (!orgId) {
-    throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'no_org_found' }), {
-      status: 403,
-    });
+    throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'no_org_found' });
   }
 
   const usage = await getOrgResourceUsage(db, orgId);
@@ -49,9 +47,7 @@ export async function fetchSubscription(db: Database, session: Session) {
   });
 
   if (!orgId) {
-    throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'no_org_found' }), {
-      status: 403,
-    });
+    throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'no_org_found' });
   }
 
   const orgBilling = await resolveOrgAccess(db, orgId);
@@ -112,9 +108,7 @@ export async function fetchMembers(db: Database, session: Session, headers: Head
   });
 
   if (!orgId) {
-    throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'no_org_found' }), {
-      status: 403,
-    });
+    throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'no_org_found' });
   }
 
   const auth = createAuth(env);
@@ -183,9 +177,7 @@ export async function fetchPlanValidation(db: Database, session: Session, target
   });
 
   if (!orgId) {
-    throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'no_org_found' }), {
-      status: 403,
-    });
+    throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'no_org_found' });
   }
 
   return validatePlanChange(db, orgId, targetPlan);
@@ -195,15 +187,10 @@ export async function fetchPlanValidation(db: Database, session: Session, target
 
 function requireOwnerOrg(orgId: OrgId | null, role: string | null): asserts orgId is OrgId {
   if (!orgId) {
-    throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'no_org_found' }), {
-      status: 403,
-    });
+    throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'no_org_found' });
   }
   if (role !== 'owner') {
-    throw Response.json(
-      createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'org_owner_required' }),
-      { status: 403 },
-    );
+    throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'org_owner_required' });
   }
 }
 
@@ -231,38 +218,29 @@ export async function createCheckout(
   requireOwnerOrg(orgId, role);
 
   if (tier === DEFAULT_PLAN) {
-    throw Response.json(
-      createDomainError(VALIDATION_ERRORS.INVALID_INPUT, { field: 'tier', value: tier }),
-      { status: 400 },
-    );
+    throwDomainError(VALIDATION_ERRORS.INVALID_INPUT, { field: 'tier', value: tier });
   }
 
   const currentBilling = await resolveOrgAccess(db, orgId);
   if (currentBilling.source === 'subscription' && currentBilling.effectivePlanId === tier) {
-    throw Response.json(
-      createDomainError(
-        VALIDATION_ERRORS.INVALID_INPUT,
-        { reason: 'already_on_plan', currentPlan: tier },
-        `You are already subscribed to the ${tier} plan. To change your billing interval, use the billing portal.`,
-      ),
-      { status: 400 },
+    throwDomainError(
+      VALIDATION_ERRORS.INVALID_INPUT,
+      { reason: 'already_on_plan', currentPlan: tier },
+      `You are already subscribed to the ${tier} plan. To change your billing interval, use the billing portal.`,
     );
   }
 
   const validationResult = await validatePlanChange(db, orgId, tier);
   if (!validationResult.valid) {
-    throw Response.json(
-      createDomainError(
-        VALIDATION_ERRORS.INVALID_INPUT,
-        {
-          reason: 'downgrade_exceeds_quotas',
-          violations: validationResult.violations,
-          usage: validationResult.usage,
-          targetPlan: validationResult.targetPlan,
-        },
-        validationResult.violations.map((v: { message: string }) => v.message).join(' '),
-      ),
-      { status: 400 },
+    throwDomainError(
+      VALIDATION_ERRORS.INVALID_INPUT,
+      {
+        reason: 'downgrade_exceeds_quotas',
+        violations: validationResult.violations,
+        usage: validationResult.usage,
+        targetPlan: validationResult.targetPlan,
+      },
+      validationResult.violations.map((v: { message: string }) => v.message).join(' '),
     );
   }
 
@@ -308,9 +286,7 @@ export async function fetchInvoices(db: Database, session: Session): Promise<Inv
   });
 
   if (!orgId) {
-    throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'no_org_found' }), {
-      status: 403,
-    });
+    throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'no_org_found' });
   }
 
   const [orgSubscription] = await db
@@ -422,13 +398,10 @@ export async function beginTrial(db: Database, session: Session) {
 
   const existingTrial = await getGrantByOrgIdAndType(db, orgId as OrgId, 'trial');
   if (existingTrial) {
-    throw Response.json(
-      createDomainError(
-        VALIDATION_ERRORS.INVALID_INPUT,
-        { field: 'trial', value: 'already_exists' },
-        'Trial grant already exists for this organization. Each organization can only have one trial grant.',
-      ),
-      { status: 400 },
+    throwDomainError(
+      VALIDATION_ERRORS.INVALID_INPUT,
+      { field: 'trial', value: 'already_exists' },
+      'Trial grant already exists for this organization. Each organization can only have one trial grant.',
     );
   }
 

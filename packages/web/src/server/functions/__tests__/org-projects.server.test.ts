@@ -18,6 +18,7 @@ import { eq } from 'drizzle-orm';
 import { createGrant } from '@corates/db/org-access-grants';
 import { session } from '@corates/db/schema';
 import type { Session } from '@/server/middleware/auth';
+import { DomainErrorException } from '@corates/shared';
 import {
   listOrgProjects,
   createOrgProject,
@@ -69,10 +70,10 @@ describe('getProject', () => {
       await getProject(mockSession(), createDb(env.DB), org.id, asProjectId('nonexistent'));
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect(err).toBeInstanceOf(Response);
-      const res = err as Response;
-      expect(res.status).toBe(404);
-      const body = (await res.json()) as { code: string };
+      expect(err).toBeInstanceOf(DomainErrorException);
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(404);
+      const body = res.toDomainError() as { code: string };
       expect(body.code).toMatch(/NOT_FOUND/);
     }
   });
@@ -86,10 +87,10 @@ describe('getProject', () => {
       await getProject(mockSession(), createDb(env.DB), org.id, project.id);
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect(err).toBeInstanceOf(Response);
-      const res = err as Response;
-      expect(res.status).toBe(403);
-      const body = (await res.json()) as { code: string };
+      expect(err).toBeInstanceOf(DomainErrorException);
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(403);
+      const body = res.toDomainError() as { code: string };
       expect(body.code).toBe('PROJECT_ACCESS_DENIED');
     }
   });
@@ -103,8 +104,8 @@ describe('getProject', () => {
       await getProject(mockSession(), createDb(env.DB), org.id, project.id);
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect(err).toBeInstanceOf(Response);
-      expect((err as Response).status).toBe(403);
+      expect(err).toBeInstanceOf(DomainErrorException);
+      expect((err as DomainErrorException).statusCode).toBe(403);
     }
   });
 });
@@ -218,10 +219,10 @@ describe('updateProjectById', () => {
       });
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect(err).toBeInstanceOf(Response);
-      const res = err as Response;
-      expect(res.status).toBe(403);
-      const body = (await res.json()) as { code: string };
+      expect(err).toBeInstanceOf(DomainErrorException);
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(403);
+      const body = res.toDomainError() as { code: string };
       expect(body.code).toBe('PROJECT_ACCESS_DENIED');
     }
   });
@@ -257,10 +258,10 @@ describe('deleteProjectById', () => {
       await deleteProjectById(mockSession(), createDb(env.DB), org.id, project.id);
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect(err).toBeInstanceOf(Response);
-      const res = err as Response;
-      expect(res.status).toBe(403);
-      const body = (await res.json()) as { code: string };
+      expect(err).toBeInstanceOf(DomainErrorException);
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(403);
+      const body = res.toDomainError() as { code: string };
       expect(body.code).toMatch(/FORBIDDEN/);
     }
   });
@@ -284,10 +285,10 @@ describe('Org authorization edge cases', () => {
       await getProject(mockSession(), createDb(env.DB), org.id, project.id);
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect(err).toBeInstanceOf(Response);
-      const res = err as Response;
-      expect(res.status).toBe(403);
-      const body = (await res.json()) as { code: string; details?: { reason?: string } };
+      expect(err).toBeInstanceOf(DomainErrorException);
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(403);
+      const body = res.toDomainError() as { code: string; details?: { reason?: string } };
       expect(body.code).toBe('AUTH_FORBIDDEN');
       expect(body.details?.reason).toBe('not_org_member');
     }
@@ -304,10 +305,10 @@ describe('Org authorization edge cases', () => {
       await getProject(mockSession(), createDb(env.DB), orgB.id, projectInOrgA.id);
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect(err).toBeInstanceOf(Response);
-      const res = err as Response;
-      expect(res.status).toBe(403);
-      const body = (await res.json()) as {
+      expect(err).toBeInstanceOf(DomainErrorException);
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(403);
+      const body = res.toDomainError() as {
         code: string;
         details?: { projectId?: string; requestedOrgId?: string; actualOrgId?: string };
       };
@@ -326,10 +327,10 @@ describe('Org authorization edge cases', () => {
       await getProject(mockSession(), createDb(env.DB), org.id, asProjectId('nonexistent-project'));
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect(err).toBeInstanceOf(Response);
-      const res = err as Response;
-      expect(res.status).toBe(404);
-      const body = (await res.json()) as { code: string };
+      expect(err).toBeInstanceOf(DomainErrorException);
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(404);
+      const body = res.toDomainError() as { code: string };
       expect(body.code).toBe('PROJECT_NOT_FOUND');
     }
   });
@@ -375,10 +376,10 @@ describe('Read-only access enforcement', () => {
       });
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect(err).toBeInstanceOf(Response);
-      const res = err as Response;
-      expect(res.status).toBe(403);
-      const body = (await res.json()) as { code: string; details?: { reason?: string } };
+      expect(err).toBeInstanceOf(DomainErrorException);
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(403);
+      const body = res.toDomainError() as { code: string; details?: { reason?: string } };
       expect(body.code).toMatch(/AUTH_FORBIDDEN/);
       expect(body.details?.reason).toBe('read_only_access');
     }
@@ -411,8 +412,8 @@ describe('listOrgProjects', () => {
       await listOrgProjects(mockSession(), createDb(env.DB), org.id);
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect(err).toBeInstanceOf(Response);
-      expect((err as Response).status).toBe(403);
+      expect(err).toBeInstanceOf(DomainErrorException);
+      expect((err as DomainErrorException).statusCode).toBe(403);
     }
   });
 });

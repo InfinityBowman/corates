@@ -5,6 +5,7 @@ import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import { buildOrg, buildOrgMember, resetCounter } from '@/__tests__/server/factories';
 import { createCheckout } from '@/server/functions/billing.server';
 import type { Session } from '@/server/middleware/auth';
+import { DomainErrorException } from '@corates/shared';
 
 const upgradeSubscriptionMock = vi.fn();
 
@@ -52,9 +53,9 @@ describe('createCheckout', () => {
       await createCheckout(createDb(env.DB), session, dummyRequest, 'free', 'monthly');
       expect.unreachable('should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(400);
-      const body = (await res.json()) as { code: string };
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(400);
+      const body = res.toDomainError() as { code: string };
       expect(body.code).toMatch(/VALIDATION/);
     }
     expect(upgradeSubscriptionMock).not.toHaveBeenCalled();
@@ -73,8 +74,8 @@ describe('createCheckout', () => {
       await createCheckout(createDb(env.DB), session, dummyRequest, 'team', 'monthly');
       expect.unreachable('should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(403);
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(403);
     }
     expect(upgradeSubscriptionMock).not.toHaveBeenCalled();
   });
@@ -105,9 +106,9 @@ describe('createCheckout', () => {
       await createCheckout(createDb(env.DB), session, dummyRequest, 'starter_team', 'monthly');
       expect.unreachable('should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(400);
-      const body = (await res.json()) as { code: string; details?: { reason?: string } };
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(400);
+      const body = res.toDomainError() as { code: string; details?: { reason?: string } };
       expect(body.details?.reason).toBe('downgrade_exceeds_quotas');
     }
     expect(upgradeSubscriptionMock).not.toHaveBeenCalled();

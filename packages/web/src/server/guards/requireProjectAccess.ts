@@ -2,7 +2,13 @@ import type { Database } from '@corates/db/client';
 import { projects, projectMembers } from '@corates/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { hasProjectRole } from '@corates/workers/policies';
-import { createDomainError, AUTH_ERRORS, PROJECT_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
+import {
+  createDomainError,
+  DomainErrorException,
+  AUTH_ERRORS,
+  PROJECT_ERRORS,
+  SYSTEM_ERRORS,
+} from '@corates/shared';
 import type { OrgId, ProjectId, UserId } from '@corates/shared/ids';
 import type { Session } from '@/server/middleware/auth';
 
@@ -16,7 +22,8 @@ export interface ProjectContext {
 }
 
 export type ProjectGuardResult =
-  { ok: true; context: ProjectContext } | { ok: false; response: Response };
+  | { ok: true; context: ProjectContext }
+  | { ok: false; error: DomainErrorException };
 
 export async function requireProjectAccess(
   session: Session,
@@ -28,9 +35,8 @@ export async function requireProjectAccess(
   if (!orgId) {
     return {
       ok: false,
-      response: Response.json(
+      error: new DomainErrorException(
         createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'org_context_required' }),
-        { status: 403 },
       ),
     };
   }
@@ -38,9 +44,8 @@ export async function requireProjectAccess(
   if (!projectId) {
     return {
       ok: false,
-      response: Response.json(
+      error: new DomainErrorException(
         createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'project_id_required' }),
-        { status: 403 },
       ),
     };
   }
@@ -55,7 +60,7 @@ export async function requireProjectAccess(
   } catch (err) {
     return {
       ok: false,
-      response: Response.json(
+      error: new DomainErrorException(
         createDomainError(SYSTEM_ERRORS.DB_ERROR, {
           operation: 'fetch_project_for_access_check',
           projectId,
@@ -63,7 +68,6 @@ export async function requireProjectAccess(
           userId: session.user.id as UserId,
           originalError: err instanceof Error ? err.message : String(err),
         }),
-        { status: 500 },
       ),
     };
   }
@@ -71,22 +75,21 @@ export async function requireProjectAccess(
   if (!projectData) {
     return {
       ok: false,
-      response: Response.json(createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId }), {
-        status: 404,
-      }),
+      error: new DomainErrorException(
+        createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId }),
+      ),
     };
   }
 
   if (projectData.orgId !== orgId) {
     return {
       ok: false,
-      response: Response.json(
+      error: new DomainErrorException(
         createDomainError(PROJECT_ERRORS.NOT_IN_ORG, {
           projectId,
           requestedOrgId: orgId,
           actualOrgId: projectData.orgId,
         }),
-        { status: 403 },
       ),
     };
   }
@@ -106,7 +109,7 @@ export async function requireProjectAccess(
   } catch (err) {
     return {
       ok: false,
-      response: Response.json(
+      error: new DomainErrorException(
         createDomainError(SYSTEM_ERRORS.DB_ERROR, {
           operation: 'check_project_membership',
           projectId,
@@ -114,7 +117,6 @@ export async function requireProjectAccess(
           userId: session.user.id as UserId,
           originalError: err instanceof Error ? err.message : String(err),
         }),
-        { status: 500 },
       ),
     };
   }
@@ -122,9 +124,8 @@ export async function requireProjectAccess(
   if (!projectMembership) {
     return {
       ok: false,
-      response: Response.json(
+      error: new DomainErrorException(
         createDomainError(PROJECT_ERRORS.ACCESS_DENIED, { projectId, orgId }),
-        { status: 403 },
       ),
     };
   }
@@ -134,13 +135,12 @@ export async function requireProjectAccess(
   if (minRole && !hasProjectRole(projectRole, minRole)) {
     return {
       ok: false,
-      response: Response.json(
+      error: new DomainErrorException(
         createDomainError(
           AUTH_ERRORS.FORBIDDEN,
           { reason: 'insufficient_project_role', required: minRole, actual: projectRole },
           `This action requires ${minRole} role or higher`,
         ),
-        { status: 403 },
       ),
     };
   }

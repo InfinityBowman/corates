@@ -1,16 +1,14 @@
 import type { Database } from '@corates/db/client';
 import { stripeEventLedger, subscription } from '@corates/db/schema';
 import { and, desc, eq } from 'drizzle-orm';
-import { createDomainError, AUTH_ERRORS } from '@corates/shared';
+import { throwDomainError, AUTH_ERRORS } from '@corates/shared';
 import { isAdminUser } from '@corates/workers/auth-admin';
 import { LedgerStatus } from '@corates/db/stripe-event-ledger';
 import type { Session } from '@/server/middleware/auth';
 
 function assertAdmin(session: Session) {
   if (!isAdminUser(session.user as { role?: string | null })) {
-    throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'admin_required' }), {
-      status: 403,
-    });
+    throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'admin_required' });
   }
 }
 

@@ -52,6 +52,9 @@ export {
   getErrorMessage,
 } from './helpers.js';
 
+// Throwable exception wrapper
+export { DomainErrorException, throwDomainError } from './exception.js';
+
 // Normalization
 export { normalizeError, isDomainError, isTransportError } from './normalize.js';
 

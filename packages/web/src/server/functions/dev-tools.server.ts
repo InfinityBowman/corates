@@ -1,4 +1,5 @@
 import { env } from 'cloudflare:workers';
+import { throwDomainError, AUTH_ERRORS } from '@corates/shared';
 import type { Database } from '@corates/db/client';
 import type { OrgId, ProjectId } from '@corates/shared/ids';
 import { getProjectDocStub } from '@corates/workers/project-doc-id';
@@ -8,7 +9,7 @@ import type { Session } from '@/server/middleware/auth';
 
 function assertDevMode() {
   if (!env.DEV_MODE) {
-    throw Response.json({ error: 'Dev endpoints disabled' }, { status: 403 });
+    throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'dev_endpoints_disabled' });
   }
 }
 
@@ -21,10 +22,10 @@ export async function listDevTemplates(
   assertDevMode();
 
   const membership = await requireOrgMembership(session, db, orgId);
-  if (!membership.ok) throw membership.response;
+  if (!membership.ok) throw membership.error;
 
   const access = await requireProjectAccess(session, db, orgId, projectId);
-  if (!access.ok) throw access.response;
+  if (!access.ok) throw access.error;
 
   const projectDoc = getProjectDocStub(env, projectId);
   return projectDoc.devTemplates();
@@ -40,10 +41,10 @@ export async function applyDevTemplate(
   assertDevMode();
 
   const membership = await requireOrgMembership(session, db, orgId);
-  if (!membership.ok) throw membership.response;
+  if (!membership.ok) throw membership.error;
 
   const access = await requireProjectAccess(session, db, orgId, projectId);
-  if (!access.ok) throw access.response;
+  if (!access.ok) throw access.error;
 
   const projectDoc = getProjectDocStub(env, projectId);
   return projectDoc.devApplyTemplate(data.template, data.mode, data.userMapping, orgId);
@@ -59,10 +60,10 @@ export async function devImportState(
   assertDevMode();
 
   const membership = await requireOrgMembership(session, db, orgId);
-  if (!membership.ok) throw membership.response;
+  if (!membership.ok) throw membership.error;
 
   const access = await requireProjectAccess(session, db, orgId, projectId);
-  if (!access.ok) throw access.response;
+  if (!access.ok) throw access.error;
 
   const projectDoc = getProjectDocStub(env, projectId);
   return projectDoc.devImport({
@@ -86,10 +87,10 @@ export async function devResetState(
   assertDevMode();
 
   const membership = await requireOrgMembership(session, db, orgId);
-  if (!membership.ok) throw membership.response;
+  if (!membership.ok) throw membership.error;
 
   const access = await requireProjectAccess(session, db, orgId, projectId);
-  if (!access.ok) throw access.response;
+  if (!access.ok) throw access.error;
 
   const projectDoc = getProjectDocStub(env, projectId);
   return projectDoc.devReset();
@@ -104,10 +105,10 @@ export async function devExportState(
   assertDevMode();
 
   const membership = await requireOrgMembership(session, db, orgId);
-  if (!membership.ok) throw membership.response;
+  if (!membership.ok) throw membership.error;
 
   const access = await requireProjectAccess(session, db, orgId, projectId);
-  if (!access.ok) throw access.response;
+  if (!access.ok) throw access.error;
 
   const projectDoc = getProjectDocStub(env, projectId);
   return projectDoc.devExport();
@@ -123,10 +124,10 @@ export async function devAddStudy(
   assertDevMode();
 
   const membership = await requireOrgMembership(session, db, orgId);
-  if (!membership.ok) throw membership.response;
+  if (!membership.ok) throw membership.error;
 
   const access = await requireProjectAccess(session, db, orgId, projectId);
-  if (!access.ok) throw access.response;
+  if (!access.ok) throw access.error;
 
   const projectDoc = getProjectDocStub(env, projectId);
   return projectDoc.devAddStudy(body);

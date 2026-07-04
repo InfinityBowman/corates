@@ -25,6 +25,14 @@ export const AUTH_ERRORS = {
     defaultMessage: 'Access denied',
     statusCode: 403,
   },
+  // A linked third-party provider (e.g. Google) is missing or needs
+  // reconnecting. Unlike REQUIRED/EXPIRED, the CoRATES session itself is fine,
+  // so the client must not redirect to sign-in.
+  PROVIDER_NOT_CONNECTED: {
+    code: 'AUTH_PROVIDER_NOT_CONNECTED',
+    defaultMessage: 'Account provider not connected',
+    statusCode: 401,
+  },
 } as const;
 
 export type AuthErrorCode = (typeof AUTH_ERRORS)[keyof typeof AUTH_ERRORS]['code'];
@@ -138,6 +146,14 @@ export const FILE_ERRORS = {
     code: 'FILE_ALREADY_EXISTS',
     defaultMessage: 'File already exists',
     statusCode: 409,
+  },
+  // External file sits behind a paywall/login at its source. Distinct from
+  // AUTH_REQUIRED, which means the CoRATES session is missing and triggers a
+  // sign-in redirect on the client.
+  ACCESS_RESTRICTED: {
+    code: 'FILE_ACCESS_RESTRICTED',
+    defaultMessage: 'File is not openly accessible',
+    statusCode: 403,
   },
 } as const;
 

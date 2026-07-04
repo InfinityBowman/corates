@@ -10,6 +10,7 @@ import {
   asUserId,
 } from '@/__tests__/server/factories';
 import type { Session } from '@/server/middleware/auth';
+import { DomainErrorException } from '@corates/shared';
 import {
   listOrganizations,
   createOrganization,
@@ -113,9 +114,9 @@ describe('createOrganization', () => {
       await createOrganization(dummyRequest, { name: 'Test Org', slug: 'taken-slug' });
       expect.unreachable('should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(403);
-      const body = (await res.json()) as { code: string; details?: { reason?: string } };
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(403);
+      const body = res.toDomainError() as { code: string; details?: { reason?: string } };
       expect(body.code).toBe('AUTH_FORBIDDEN');
       expect(body.details?.reason).toBe('slug_taken');
     }
@@ -134,8 +135,8 @@ describe('updateOrganization', () => {
       });
       expect.unreachable('should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(403);
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(403);
       expect(mockUpdateOrganization).not.toHaveBeenCalled();
     }
   });
@@ -151,9 +152,9 @@ describe('updateOrganization', () => {
       });
       expect.unreachable('should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(403);
-      const body = (await res.json()) as { details?: { reason?: string } };
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(403);
+      const body = res.toDomainError() as { details?: { reason?: string } };
       expect(body.details?.reason).toBe('insufficient_org_role');
       expect(mockUpdateOrganization).not.toHaveBeenCalled();
     }
@@ -197,9 +198,9 @@ describe('updateOrganization', () => {
       });
       expect.unreachable('should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(403);
-      const body = (await res.json()) as { code: string; details?: { reason?: string } };
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(403);
+      const body = res.toDomainError() as { code: string; details?: { reason?: string } };
       expect(body.code).toBe('AUTH_FORBIDDEN');
       expect(body.details?.reason).toBe('slug_taken');
     }
@@ -216,8 +217,8 @@ describe('deleteOrganization', () => {
       await deleteOrganization(mockSession(), createDb(env.DB), dummyRequest, org.id);
       expect.unreachable('should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(403);
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(403);
       expect(mockDeleteOrganization).not.toHaveBeenCalled();
     }
   });
@@ -249,8 +250,8 @@ describe('listOrgMembers', () => {
       await listOrgMembers(mockSession(), createDb(env.DB), dummyRequest, org.id);
       expect.unreachable('should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(403);
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(403);
       expect(mockListMembers).not.toHaveBeenCalled();
     }
   });
@@ -292,8 +293,8 @@ describe('addOrgMember', () => {
       });
       expect.unreachable('should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(403);
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(403);
       expect(mockAddMember).not.toHaveBeenCalled();
     }
   });
@@ -334,9 +335,9 @@ describe('addOrgMember', () => {
       });
       expect.unreachable('should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(403);
-      const body = (await res.json()) as { code: string; details?: { reason?: string } };
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(403);
+      const body = res.toDomainError() as { code: string; details?: { reason?: string } };
       expect(body.code).toBe('AUTH_FORBIDDEN');
       expect(body.details?.reason).toBe('already_member');
     }
@@ -360,8 +361,8 @@ describe('updateMemberRole', () => {
       );
       expect.unreachable('should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(403);
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(403);
       expect(mockUpdateMemberRole).not.toHaveBeenCalled();
     }
   });
@@ -408,9 +409,9 @@ describe('updateMemberRole', () => {
       );
       expect.unreachable('should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(403);
-      const body = (await res.json()) as { code: string; details?: { reason?: string } };
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(403);
+      const body = res.toDomainError() as { code: string; details?: { reason?: string } };
       expect(body.code).toBe('AUTH_FORBIDDEN');
       expect(body.details?.reason).toBe('owner_role_change_requires_owner');
     }
@@ -433,9 +434,9 @@ describe('removeMember', () => {
       );
       expect.unreachable('should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(403);
-      const body = (await res.json()) as { code: string; details?: { reason?: string } };
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(403);
+      const body = res.toDomainError() as { code: string; details?: { reason?: string } };
       expect(body.code).toBe('AUTH_FORBIDDEN');
       expect(body.details?.reason).toBe('cannot_remove_member');
       expect(mockRemoveMember).not.toHaveBeenCalled();
@@ -503,9 +504,9 @@ describe('removeMember', () => {
       await removeMember(mockSession(), createDb(env.DB), dummyRequest, org.id, owner.id);
       expect.unreachable('should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(403);
-      const body = (await res.json()) as { code: string; details?: { reason?: string } };
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(403);
+      const body = res.toDomainError() as { code: string; details?: { reason?: string } };
       expect(body.code).toBe('AUTH_FORBIDDEN');
       expect(body.details?.reason).toBe('cannot_remove_last_owner');
     }
@@ -522,8 +523,8 @@ describe('setActiveOrg', () => {
       await setActiveOrg(mockSession(), createDb(env.DB), dummyRequest, org.id);
       expect.unreachable('should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(403);
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(403);
       expect(mockSetActiveOrganization).not.toHaveBeenCalled();
     }
   });

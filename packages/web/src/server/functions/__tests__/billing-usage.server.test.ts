@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { env } from 'cloudflare:test';
 import { createDb } from '@corates/db/client';
+import { DomainErrorException } from '@corates/shared';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import { buildOrg, buildOrgMember, resetCounter } from '@/__tests__/server/factories';
 import { fetchUsage } from '@/server/functions/billing.server';
@@ -39,8 +40,8 @@ describe('fetchUsage', () => {
       await fetchUsage(createDb(env.DB), session);
       expect.fail('should have thrown');
     } catch (res) {
-      expect((res as Response).status).toBe(403);
-      const body = (await (res as Response).json()) as { details?: { reason?: string } };
+      expect((res as DomainErrorException).statusCode).toBe(403);
+      const body = (res as DomainErrorException).toDomainError() as { details?: { reason?: string } };
       expect(body.details?.reason).toBe('no_org_found');
     }
   });

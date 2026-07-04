@@ -25,6 +25,8 @@ const USER_FRIENDLY_MESSAGES: Record<string, string> = {
   AUTH_INVALID: 'Invalid email or password',
   AUTH_EXPIRED: 'Your session has expired. Please sign in again.',
   AUTH_FORBIDDEN: "You don't have permission to do that",
+  AUTH_PROVIDER_NOT_CONNECTED:
+    'Your Google account is not connected. Connect it in Settings and try again.',
 
   // Validation errors
   VALIDATION_FIELD_REQUIRED: 'Please fill in all required fields',
@@ -50,6 +52,8 @@ const USER_FRIENDLY_MESSAGES: Record<string, string> = {
   FILE_NOT_FOUND: 'The file could not be found',
   FILE_UPLOAD_FAILED: 'Upload failed. Please try again.',
   FILE_ALREADY_EXISTS: 'A file with this name already exists',
+  FILE_ACCESS_RESTRICTED:
+    'This PDF is behind a paywall or login and could not be fetched automatically',
 
   // User errors
   USER_NOT_FOUND: 'User not found',

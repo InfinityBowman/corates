@@ -19,10 +19,10 @@ export const handlePost = async ({ request, params, context: { db, session } }: 
   }
 
   const orgMembership = await requireOrgMembership(session, db, params.orgId);
-  if (!orgMembership.ok) return orgMembership.response;
+  if (!orgMembership.ok) return orgMembership.error.toResponse();
 
   const access = await requireProjectAccess(session, db, params.orgId, params.projectId);
-  if (!access.ok) return access.response;
+  if (!access.ok) return access.error.toResponse();
 
   try {
     const body = await request.json();

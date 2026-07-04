@@ -1,7 +1,7 @@
 import { createMiddleware } from '@tanstack/react-start';
 import { env } from 'cloudflare:workers';
 import { getSession } from '@corates/workers/auth';
-import { createDomainError, AUTH_ERRORS } from '@corates/shared';
+import { throwDomainError, AUTH_ERRORS } from '@corates/shared';
 import { dbMiddleware } from './db';
 
 export type { AuthUser, AuthSession } from '@corates/workers/auth';
@@ -12,7 +12,7 @@ export const authMiddleware = createMiddleware()
   .server(async ({ next, request }) => {
     const session = await getSession(request, env);
     if (!session) {
-      throw Response.json(createDomainError(AUTH_ERRORS.REQUIRED), { status: 401 });
+      throwDomainError(AUTH_ERRORS.REQUIRED);
     }
     return next({ context: { session, request } });
   });

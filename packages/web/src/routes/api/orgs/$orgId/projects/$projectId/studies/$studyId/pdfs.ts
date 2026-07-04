@@ -29,10 +29,10 @@ type HandlerArgs = {
 
 export const handleGet = async ({ params, context: { db, session } }: HandlerArgs) => {
   const orgMembership = await requireOrgMembership(session, db, params.orgId);
-  if (!orgMembership.ok) return orgMembership.response;
+  if (!orgMembership.ok) return orgMembership.error.toResponse();
 
   const access = await requireProjectAccess(session, db, params.orgId, params.projectId);
-  if (!access.ok) return access.response;
+  if (!access.ok) return access.error.toResponse();
 
   try {
     const results = await db
@@ -91,13 +91,13 @@ export const handleGet = async ({ params, context: { db, session } }: HandlerArg
 
 export const handlePost = async ({ request, params, context: { db, session } }: HandlerArgs) => {
   const orgMembership = await requireOrgMembership(session, db, params.orgId);
-  if (!orgMembership.ok) return orgMembership.response;
+  if (!orgMembership.ok) return orgMembership.error.toResponse();
 
   const writeAccess = await requireOrgWriteAccess(request.method, db, params.orgId);
-  if (!writeAccess.ok) return writeAccess.response;
+  if (!writeAccess.ok) return writeAccess.error.toResponse();
 
   const access = await requireProjectAccess(session, db, params.orgId, params.projectId);
-  if (!access.ok) return access.response;
+  if (!access.ok) return access.error.toResponse();
 
   const contentLength = parseInt(request.headers.get('Content-Length') || '0', 10);
   if (contentLength > PDF_LIMITS.MAX_SIZE) {

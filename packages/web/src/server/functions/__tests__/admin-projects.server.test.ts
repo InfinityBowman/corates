@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { env } from 'cloudflare:test';
 import { createDb } from '@corates/db/client';
+import { DomainErrorException } from '@corates/shared';
 import { resetTestDatabase, clearProjectDOs, seedMediaFile } from '@/__tests__/server/helpers';
 import {
   buildAdminUser,
@@ -43,7 +44,7 @@ describe('assertAdmin', () => {
       await listAdminProjects(nonAdmin, createDb(env.DB), {});
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect((err as Response).status).toBe(403);
+      expect((err as DomainErrorException).statusCode).toBe(403);
     }
   });
 });
@@ -122,7 +123,7 @@ describe('getAdminProjectDetails', () => {
       await getAdminProjectDetails(mockAdminSession(), createDb(env.DB), 'nope');
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect((err as Response).status).toBe(404);
+      expect((err as DomainErrorException).statusCode).toBe(404);
     }
   });
 
@@ -157,7 +158,7 @@ describe('getAdminProjectDocStats', () => {
       await getAdminProjectDocStats(mockAdminSession(), createDb(env.DB), 'no-such');
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect((err as Response).status).toBe(404);
+      expect((err as DomainErrorException).statusCode).toBe(404);
     }
   });
 
@@ -192,7 +193,7 @@ describe('removeAdminProjectMember', () => {
       await removeAdminProjectMember(mockAdminSession(), createDb(env.DB), 'p1', 'm1');
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect((err as Response).status).toBe(404);
+      expect((err as DomainErrorException).statusCode).toBe(404);
     }
   });
 
@@ -232,7 +233,7 @@ describe('deleteAdminProject', () => {
       await deleteAdminProject(mockAdminSession(), createDb(env.DB), 'nope');
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect((err as Response).status).toBe(404);
+      expect((err as DomainErrorException).statusCode).toBe(404);
     }
   });
 

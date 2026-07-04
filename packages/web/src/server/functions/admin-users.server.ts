@@ -15,7 +15,8 @@ import {
 } from '@corates/db/schema';
 import { count, desc, eq, like, or, sql } from 'drizzle-orm';
 import {
-  createDomainError,
+  throwDomainError,
+  DomainErrorException,
   createValidationError,
   AUTH_ERRORS,
   USER_ERRORS,
@@ -32,9 +33,7 @@ import type { Session } from '@/server/middleware/auth';
 
 function assertAdmin(session: Session) {
   if (!isAdminUser(session.user as { role?: string | null })) {
-    throw Response.json(createDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'admin_required' }), {
-      status: 403,
-    });
+    throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'admin_required' });
   }
 }
 
@@ -143,7 +142,7 @@ export async function getAdminUserDetails(session: Session, db: Database, userId
 
   const [userData] = await db.select().from(user).where(eq(user.id, userId)).limit(1);
   if (!userData) {
-    throw Response.json(createDomainError(USER_ERRORS.NOT_FOUND, { userId }), { status: 404 });
+    throwDomainError(USER_ERRORS.NOT_FOUND, { userId });
   }
 
   const userProjects = await db
@@ -230,14 +229,13 @@ export async function deleteAdminUser(session: Session, db: Database, userId: st
   assertAdmin(session);
 
   if (session.user.id === userId) {
-    throw Response.json(
+    throw new DomainErrorException(
       createValidationError(
         'userId',
         VALIDATION_ERRORS.INVALID_INPUT.code,
         userId,
         'cannot_delete_self',
       ),
-      { status: 400 },
     );
   }
 
@@ -246,7 +244,7 @@ export async function deleteAdminUser(session: Session, db: Database, userId: st
     .from(user)
     .where(eq(user.id, userId));
   if (!userToDelete) {
-    throw Response.json(createDomainError(USER_ERRORS.NOT_FOUND, { userId }), { status: 404 });
+    throwDomainError(USER_ERRORS.NOT_FOUND, { userId });
   }
 
   const userProjects = await db
@@ -282,14 +280,13 @@ export async function banAdminUser(
   assertAdmin(session);
 
   if (session.user.id === userId) {
-    throw Response.json(
+    throw new DomainErrorException(
       createValidationError(
         'userId',
         VALIDATION_ERRORS.INVALID_INPUT.code,
         userId,
         'cannot_ban_self',
       ),
-      { status: 400 },
     );
   }
 
@@ -350,7 +347,7 @@ export async function revokeAdminSession(
     .limit(1);
 
   if (!existing || existing.userId !== userId) {
-    throw Response.json(createDomainError(USER_ERRORS.NOT_FOUND, { sessionId }), { status: 404 });
+    throwDomainError(USER_ERRORS.NOT_FOUND, { sessionId });
   }
 
   await db.delete(sessionTable).where(eq(sessionTable.id, sessionId));
@@ -365,14 +362,13 @@ export async function impersonateAdminUser(
   assertAdmin(session);
 
   if (session.user.id === userId) {
-    throw Response.json(
+    throw new DomainErrorException(
       createValidationError(
         'userId',
         VALIDATION_ERRORS.INVALID_INPUT.code,
         userId,
         'cannot_impersonate_self',
       ),
-      { status: 400 },
     );
   }
 

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { env } from 'cloudflare:test';
+import { DomainErrorException } from '@corates/shared';
 import { createDb } from '@corates/db/client';
 import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import { buildUser, resetCounter } from '@/__tests__/server/factories';
@@ -28,9 +29,9 @@ describe('usersPostDeprecated', () => {
       usersPostDeprecated();
       expect.unreachable('should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(400);
-      const body = (await res.json()) as { code: string };
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(400);
+      const body = res.toDomainError() as { code: string };
       expect(body.code).toBe('VALIDATION_INVALID_INPUT');
     }
   });

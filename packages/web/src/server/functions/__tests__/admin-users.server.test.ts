@@ -16,6 +16,7 @@ import {
   resetCounter,
 } from '@/__tests__/server/factories';
 import { createDb } from '@corates/db/client';
+import { DomainErrorException } from '@corates/shared';
 import { account, session, user } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import type { Session } from '@/server/middleware/auth';
@@ -160,7 +161,7 @@ describe('GET /api/admin/users/:userId', () => {
       );
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect((err as Response).status).toBe(404);
+      expect((err as DomainErrorException).statusCode).toBe(404);
     }
   });
 
@@ -193,9 +194,9 @@ describe('POST /api/admin/users/:userId/ban', () => {
       await banAdminUser(mockAdminSession({ userId: admin.id }), createDb(env.DB), admin.id, {});
       expect.unreachable('should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(400);
-      const body = (await res.json()) as { details?: { constraint?: string } };
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(400);
+      const body = res.toDomainError() as { details?: { constraint?: string } };
       expect(body.details?.constraint).toBe('cannot_ban_self');
     }
   });
@@ -273,9 +274,9 @@ describe('POST /api/admin/users/:userId/impersonate', () => {
       await impersonateAdminUser(mockAdminSession({ userId: admin.id }), request, admin.id);
       expect.unreachable('should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(400);
-      const body = (await res.json()) as { details?: { constraint?: string } };
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(400);
+      const body = res.toDomainError() as { details?: { constraint?: string } };
       expect(body.details?.constraint).toBe('cannot_impersonate_self');
     }
   });
@@ -340,7 +341,7 @@ describe('DELETE /api/admin/users/:userId/sessions/:sessionId', () => {
       await revokeAdminSession(mockAdminSession(), createDb(env.DB), target.id, 'missing');
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect((err as Response).status).toBe(404);
+      expect((err as DomainErrorException).statusCode).toBe(404);
     }
   });
 
@@ -353,7 +354,7 @@ describe('DELETE /api/admin/users/:userId/sessions/:sessionId', () => {
       await revokeAdminSession(mockAdminSession(), createDb(env.DB), target.id, 's-other');
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect((err as Response).status).toBe(404);
+      expect((err as DomainErrorException).statusCode).toBe(404);
     }
   });
 
@@ -377,9 +378,9 @@ describe('DELETE /api/admin/users/:userId', () => {
       await deleteAdminUser(mockAdminSession({ userId: admin.id }), createDb(env.DB), admin.id);
       expect.unreachable('should have thrown');
     } catch (err) {
-      const res = err as Response;
-      expect(res.status).toBe(400);
-      const body = (await res.json()) as { details?: { constraint?: string } };
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(400);
+      const body = res.toDomainError() as { details?: { constraint?: string } };
       expect(body.details?.constraint).toBe('cannot_delete_self');
     }
   });
@@ -390,7 +391,7 @@ describe('DELETE /api/admin/users/:userId', () => {
       await deleteAdminUser(mockAdminSession({ userId: admin.id }), createDb(env.DB), 'missing');
       expect.unreachable('should have thrown');
     } catch (err) {
-      expect((err as Response).status).toBe(404);
+      expect((err as DomainErrorException).statusCode).toBe(404);
     }
   });
 

@@ -1,5 +1,5 @@
 import { env } from 'cloudflare:workers';
-import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
+import { createDomainError, DomainErrorException, SYSTEM_ERRORS } from '@corates/shared';
 import { escapeHtml } from '@corates/shared/html';
 import { captureError } from '@corates/workers/logger';
 
@@ -57,6 +57,6 @@ export async function sendContactEmail(
       service: 'email',
       originalError: (err as Error).message,
     });
-    throw Response.json(domainError, { status: 503 });
+    throw new DomainErrorException(domainError);
   }
 }
