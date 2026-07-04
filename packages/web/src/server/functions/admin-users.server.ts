@@ -1,4 +1,4 @@
-import { info } from '@corates/workers/logger';
+import { captureError, info } from '@corates/workers/logger';
 import { env } from 'cloudflare:workers';
 import type { Database } from '@corates/db/client';
 import {
@@ -49,18 +49,32 @@ export async function listAdminUsers(
   const search = params.search?.trim() || undefined;
   const offset = (page - 1) * limit;
 
+  // Plain LIKE: SQLite's LIKE is already case-insensitive for ASCII, and
+  // SQLite's lower() only folds ASCII anyway, so wrapping both sides in
+  // lower() added no matching power -- just a different statement text.
   const searchCondition =
     search ?
       or(
-        like(sql`lower(${user.email})`, `%${search.toLowerCase()}%`),
-        like(sql`lower(${user.name})`, `%${search.toLowerCase()}%`),
-        like(sql`lower(${user.givenName})`, `%${search.toLowerCase()}%`),
-        like(sql`lower(${user.familyName})`, `%${search.toLowerCase()}%`),
-        like(sql`lower(${user.username})`, `%${search.toLowerCase()}%`),
+        like(user.email, `%${search}%`),
+        like(user.name, `%${search}%`),
+        like(user.givenName, `%${search}%`),
+        like(user.familyName, `%${search}%`),
+        like(user.username, `%${search}%`),
       )
     : undefined;
 
-  const [totalResult] = await db.select({ count: count() }).from(user).where(searchCondition);
+  let totalResult: { count: number } | undefined;
+  try {
+    [totalResult] = await db.select({ count: count() }).from(user).where(searchCondition);
+  } catch (err) {
+    // Drizzle's "Failed query" error reaches the client without its cause,
+    // which made a staging-only D1 failure here undiagnosable. Surface the
+    // underlying D1 error in Workers Logs / Sentry before rethrowing.
+    captureError(err, {
+      extra: { fn: 'listAdminUsers.count', cause: String((err as Error)?.cause) },
+    });
+    throw err;
+  }
 
   const selectFields = {
     id: user.id,
