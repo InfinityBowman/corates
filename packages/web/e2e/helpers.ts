@@ -33,12 +33,21 @@ export interface DualReviewerScenario {
   cookiesB: SessionCookie[];
 }
 
-const TEST_PREFIX = 'e2e-' + Date.now();
+/**
+ * Unique ID prefix for seeded data. Generated per call (not per module load)
+ * with a random suffix so scenarios never collide -- parallel workers can
+ * start within the same millisecond, and a single worker seeds multiple
+ * scenarios across spec files.
+ */
+export function uniquePrefix(base: string): string {
+  return `${base}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
 
 export async function seedDualReviewerScenario(): Promise<DualReviewerScenario> {
-  const userAId = `${TEST_PREFIX}-user-a`;
-  const userBId = `${TEST_PREFIX}-user-b`;
-  const orgId = `${TEST_PREFIX}-org`;
+  const prefix = uniquePrefix('e2e');
+  const userAId = `${prefix}-user-a`;
+  const userBId = `${prefix}-user-b`;
+  const orgId = `${prefix}-org`;
 
   const seedRes = await fetch(`${API_BASE}/api/test/seed`, {
     method: 'POST',
@@ -48,19 +57,19 @@ export async function seedDualReviewerScenario(): Promise<DualReviewerScenario> 
         {
           id: userAId,
           name: 'Alice Reviewer',
-          email: `alice-${TEST_PREFIX}@test.corates.org`,
+          email: `alice-${prefix}@test.corates.org`,
           givenName: 'Alice',
           familyName: 'Reviewer',
         },
         {
           id: userBId,
           name: 'Bob Reviewer',
-          email: `bob-${TEST_PREFIX}@test.corates.org`,
+          email: `bob-${prefix}@test.corates.org`,
           givenName: 'Bob',
           familyName: 'Reviewer',
         },
       ],
-      org: { id: orgId, name: 'E2E Test Org', slug: `e2e-org-${TEST_PREFIX}` },
+      org: { id: orgId, name: 'E2E Test Org', slug: `e2e-org-${prefix}` },
       orgMembers: [
         { userId: userAId, role: 'owner' },
         { userId: userBId, role: 'member' },
@@ -166,7 +175,7 @@ export async function seedStudies(
   const fillMode = opts.fillMode ?? 'random';
   const reconcile = opts.reconcile ?? false;
 
-  for (let i = 0; i < count; i++) {
+  const addStudy = async (i: number) => {
     const res = await fetch(`${API_BASE}/api/orgs/${orgId}/projects/${projectId}/dev/add-study`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Cookie: cookieHeader },
@@ -181,6 +190,16 @@ export async function seedStudies(
     if (!res.ok) {
       throw new Error(`seedStudies failed on study ${i + 1}: ${res.status} ${await res.text()}`);
     }
+  };
+
+  // The project's Durable Object serializes writes, so concurrent requests are
+  // safe. Batch them to avoid opening `count` sockets at once.
+  const CONCURRENCY = 10;
+  for (let start = 0; start < count; start += CONCURRENCY) {
+    const batch = Array.from({ length: Math.min(CONCURRENCY, count - start) }, (_, j) =>
+      addStudy(start + j),
+    );
+    await Promise.all(batch);
   }
 }
 
@@ -206,7 +225,7 @@ export interface AdminScenario {
 }
 
 export async function seedAdminScenario(): Promise<AdminScenario> {
-  const prefix = `e2e-admin-${Date.now()}`;
+  const prefix = uniquePrefix('e2e-admin');
   const adminId = `${prefix}-admin`;
   const regularId = `${prefix}-user`;
   const orgId = `${prefix}-org`;
@@ -294,7 +313,7 @@ export interface SubscriptionOptions {
 export async function seedBillingScenario(
   subscriptionOpts?: SubscriptionOptions,
 ): Promise<BillingScenario> {
-  const prefix = `e2e-billing-${Date.now()}`;
+  const prefix = uniquePrefix('e2e-billing');
   const userId = `${prefix}-user`;
   const orgId = `${prefix}-org`;
 
@@ -370,7 +389,7 @@ export async function getAuthUrl(
   email: string,
   type: 'magic-link' | 'verification' | 'reset-password',
 ): Promise<string> {
-  for (let attempt = 0; attempt < 10; attempt++) {
+  for (let attempt = 0; attempt < 25; attempt++) {
     const res = await fetch(
       `${API_BASE}/api/test/auth-url?email=${encodeURIComponent(email)}&type=${type}`,
     );
@@ -379,7 +398,7 @@ export async function getAuthUrl(
       return data.url;
     }
     // URL may not be stored yet, wait and retry
-    await new Promise(r => setTimeout(r, 500));
+    await new Promise(r => setTimeout(r, 200));
   }
   throw new Error(`No ${type} URL found for ${email} after retries`);
 }

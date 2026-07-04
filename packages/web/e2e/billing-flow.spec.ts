@@ -12,8 +12,7 @@
  *   - Stripe test mode keys configured in .env (run pnpm stripe:setup)
  */
 
-import { type Page } from '@playwright/test';
-import { test, expect } from './base';
+import { test, expect, type Page } from '@playwright/test';
 import { getAuthUrl } from './helpers';
 import { BASE_URL } from './constants';
 

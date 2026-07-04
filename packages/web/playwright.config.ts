@@ -8,7 +8,11 @@ export default defineConfig({
   testMatch: '**/*.spec.ts',
   timeout: 180_000,
   retries: isRemote ? 1 : 0,
-  workers: 1,
+  // Test data is namespace-isolated per scenario (unique seed prefixes), so
+  // spec files can run in parallel workers against the shared dev server.
+  // The database is reset once per run in global-setup.ts, not per test.
+  workers: isRemote ? 1 : 6,
+  globalSetup: './e2e/global-setup.ts',
   use: {
     baseURL: BASE_URL,
     headless: true,

@@ -301,8 +301,11 @@ test.describe('Auth flows', () => {
       // Open user dropdown (button in nav with user name) and click sign out
       await page.locator('nav button', { hasText: scenario.userA.name.split(' ')[0] }).click();
       await page.getByRole('menuitem', { name: /Sign Out/i }).click();
-      // Sign-out API call has no DOM signal; wait for it to invalidate the session
-      await page.waitForTimeout(2000);
+      // Sign-out keeps the user on /dashboard in signed-out state; the nav
+      // swaps the user dropdown for a Sign In link once the session clears
+      await expect(page.getByRole('navigation').getByRole('link', { name: 'Sign In' })).toBeVisible(
+        { timeout: 10_000 },
+      );
 
       // Verify session is gone -- protected route should redirect to signin
       await page.goto('/settings/profile');

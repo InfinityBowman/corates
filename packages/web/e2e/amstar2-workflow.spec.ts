@@ -112,10 +112,12 @@ test('Dual-Reviewer AMSTAR2 Workflow', async ({ context, page }) => {
   for (let q = 1; q <= 16; q++) {
     await expect(page.getByText(`Question ${q} of 16`)).toBeVisible({ timeout: 5_000 });
     await page.getByRole('button', { name: 'Use This' }).first().click();
-    await page.waitForTimeout(300);
+    // The button label flips to "Selected" once the choice registers
+    await expect(page.getByRole('button', { name: 'Selected' }).first()).toBeVisible({
+      timeout: 5_000,
+    });
     if (q < 16) {
       await page.getByRole('button', { name: /Next/i }).click();
-      await page.waitForTimeout(300);
     }
   }
 

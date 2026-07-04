@@ -198,8 +198,6 @@ test('Presence avatars, cursor sync, and text editing sync during reconciliation
     // Wait for reconciliation UI and Yjs WebSocket connections
     await expect(pageA.getByText(/Question 1 of/i)).toBeVisible({ timeout: 30_000 });
     await expect(pageB.getByText(/Question 1 of/i)).toBeVisible({ timeout: 30_000 });
-    // Awareness protocol needs both WebSocket connections fully established
-    await Promise.all([pageA.waitForTimeout(3000), pageB.waitForTimeout(3000)]);
 
     // ================================================================
     // TEST 1: Presence avatars

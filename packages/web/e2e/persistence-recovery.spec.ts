@@ -100,7 +100,7 @@ test('Project state survives page refresh', async ({ context, page }) => {
   const round1Count = Math.min(5, totalRadios);
   for (let i = 0; i < round1Count; i++) {
     await yesRadios.nth(i).click();
-    await page.waitForTimeout(100);
+    await expect(yesRadios.nth(i)).toBeChecked({ timeout: 5_000 });
   }
   // Give the WebSocket time to flush updates to the server
   await page.waitForTimeout(1000);
@@ -155,7 +155,7 @@ test('Project state survives page refresh', async ({ context, page }) => {
   const round2Limit = Math.min(round1Count + 3, await yesRadiosRound2.count());
   for (let i = round1Count; i < round2Limit; i++) {
     await yesRadiosRound2.nth(i).click();
-    await page.waitForTimeout(100);
+    await expect(yesRadiosRound2.nth(i)).toBeChecked({ timeout: 5_000 });
   }
   await page.waitForTimeout(1000);
 
