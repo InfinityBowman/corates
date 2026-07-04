@@ -65,17 +65,20 @@ function SignInPage() {
   // Reset social loading states when page is restored from bfcache
   useBfcacheReset(resetSocialLoading);
 
-  // Measure form height synchronously before paint to prevent flicker
-  const updateFormHeight = useCallback(() => {
-    const activeRef = useMagicLink ? magicLinkFormRef.current : passwordFormRef.current;
-    if (activeRef) {
-      setFormHeight(`${activeRef.offsetHeight}px`);
-    }
-  }, [useMagicLink]);
-
+  // Measure the active panel synchronously before paint to prevent flicker, and
+  // track content-driven height changes (e.g. the magic-link form swapping to its
+  // taller "check your email" state) so the overflow-hidden container never clips.
   useLayoutEffect(() => {
-    updateFormHeight();
-  }, [updateFormHeight, displayError]);
+    const activeEl = useMagicLink ? magicLinkFormRef.current : passwordFormRef.current;
+    if (!activeEl) return;
+
+    const measure = () => setFormHeight(`${activeEl.offsetHeight}px`);
+    measure();
+
+    const observer = new ResizeObserver(measure);
+    observer.observe(activeEl);
+    return () => observer.disconnect();
+  }, [useMagicLink, displayError]);
 
   async function handleGoogleSignIn() {
     setGoogleLoading(true);

@@ -145,6 +145,12 @@ async function performSignoutCleanup() {
   state.setCachedUser(null);
   state.setCachedAvatarUrl(null);
 
+  // Flip auth state to logged-out synchronously (before the async session
+  // refetch below) so route guards redirect and auth-gated queries disable
+  // immediately. Otherwise sessionUser lingers, a protected route's beforeLoad
+  // still sees "logged in", and dependent queries refetch into 401s.
+  state.setSessionData(null, false, state.sessionRefetch);
+
   await clearAllData();
   queryClient.clear();
 
