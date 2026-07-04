@@ -290,10 +290,10 @@ export function getProjectInvitationEmailHtml({
           <strong>${escapeHtml(inviterName)}</strong> has invited you to collaborate on the project <strong>"${escapeHtml(projectName)}"</strong> as a <strong>${escapeHtml(roleText)}</strong>.
         </p>
         <p style="color: #4b5563; margin-bottom: 32px;">
-          To accept this invitation and join the project, please click the button below to create your account:
+          To accept this invitation and join the project, click the button below. You can sign in with an existing account or create a new one:
         </p>
         <div style="text-align: center; margin: 32px 0;">
-          <a href="${invitationUrl}" style="background: #2563eb; color: white; padding: 16px 32px; text-decoration: none; border-radius: 12px; font-weight: 600; display: inline-block; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">Accept Invitation & Sign Up</a>
+          <a href="${invitationUrl}" style="background: #2563eb; color: white; padding: 16px 32px; text-decoration: none; border-radius: 12px; font-weight: 600; display: inline-block; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">Accept Invitation</a>
         </div>
         <p style="color: #4b5563;">If the button doesn't work, you can copy and paste this link into your browser:</p>
         <p style="word-break: break-all; color: #6b7280; background: #f3f4f6; padding: 12px; border-radius: 8px; font-size: 14px;">${invitationUrl}</p>
@@ -322,7 +322,7 @@ export function getProjectInvitationEmailText({
 
     ${inviterName} has invited you to collaborate on the project "${projectName}" as a ${roleText}.
 
-    To accept this invitation and join the project, please visit this link to create your account:
+    To accept this invitation and join the project, visit this link. You can sign in with an existing account or create a new one:
 
     ${invitationUrl}
 

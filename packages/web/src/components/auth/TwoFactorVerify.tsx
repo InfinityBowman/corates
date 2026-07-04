@@ -47,6 +47,14 @@ export function TwoFactorVerify({ onCancel }: TwoFactorVerifyProps) {
     try {
       await verifyTwoFactor(codeValue);
       await new Promise(resolve => setTimeout(resolve, 200));
+
+      // Resume a pending project invitation instead of landing on the dashboard
+      const pendingInvitation = localStorage.getItem('pendingInvitationToken');
+      if (pendingInvitation) {
+        navigate({ to: '/invite/$token', params: { token: pendingInvitation }, replace: true });
+        return;
+      }
+
       navigate({ to: '/dashboard', replace: true });
     } catch (err) {
       await handleError(err, { setError, showToast: false });

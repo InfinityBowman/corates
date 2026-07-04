@@ -127,7 +127,7 @@ export async function createInvitation(
     emailQueued = result.emailQueued;
   } catch (err) {
     captureError(err, {
-      tags: { component: 'invitation', action: 'magic-link-generation' },
+      tags: { component: 'invitation', action: 'send-email' },
       extra: { projectId },
     });
   }

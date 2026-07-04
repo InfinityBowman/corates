@@ -1,13 +1,13 @@
 /**
- * Shared helper for sending project invitation emails with magic links.
+ * Shared helper for sending project invitation emails.
  *
- * Extracts the duplicated ~80-line magic-link generation + email queueing
- * pattern that was repeated across members.ts, orgs/invitations.ts,
- * and orgs/members.ts.
+ * Emails a stable invitation link (/invite/<token>) that stays valid for the
+ * full invitation lifetime (7 days). The /invite/$token route handles every
+ * auth state (new user, existing user, already signed in), so no short-lived
+ * magic link is embedded in the email.
  */
 
 import { captureError } from './logger';
-import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import type { Env } from '../types';
 import { queueEmail } from '@corates/shared/email';
 
@@ -25,10 +25,9 @@ interface SendInvitationEmailResult {
 }
 
 /**
- * Generates a magic link and queues an invitation email.
+ * Builds the invitation URL and queues an invitation email.
  *
- * Throws on critical errors (missing AUTH_SECRET, failed magic link generation).
- * Returns { emailQueued: false } if only the queue send fails, since the
+ * Returns { emailQueued: false } if the queue send fails, since the
  * invitation record already exists in the database and can be resent.
  */
 export async function sendInvitationEmail(
@@ -41,75 +40,27 @@ export async function sendInvitationEmail(
   const basepath = envRecord.BASEPATH || '';
   const basepathNormalized = basepath ? basepath.replace(/\/$/, '') : '';
 
-  const callbackPath = `${basepathNormalized}/complete-profile?invitation=${token}`;
-  const callbackURL = `${appUrl}${callbackPath}`;
-
-  const authBaseUrl = env.AUTH_BASE_URL || env.APP_URL || 'https://corates.org';
-  let capturedMagicLinkUrl: string | null = null;
-
-  const { betterAuth } = await import('better-auth');
-  const { magicLink } = await import('better-auth/plugins');
-  const { drizzleAdapter } = await import('better-auth/adapters/drizzle');
-  const { drizzle } = await import('drizzle-orm/d1');
-  const schema = await import('@corates/db/schema');
-  const { MAGIC_LINK_EXPIRY_MINUTES } = await import('../auth/emailTemplates.js');
-
-  const authSecret = env.AUTH_SECRET || (envRecord.SECRET as string | undefined);
-  if (!authSecret) {
-    throw createDomainError(
-      SYSTEM_ERRORS.INTERNAL_ERROR,
-      { key: 'AUTH_SECRET' },
-      'AUTH_SECRET must be configured',
-    );
-  }
-
-  const tempDb = drizzle(env.DB, { schema });
-  const tempAuth = betterAuth({
-    database: drizzleAdapter(tempDb, {
-      provider: 'sqlite',
-      schema: {
-        user: schema.user,
-        session: schema.session,
-        account: schema.account,
-        verification: schema.verification,
-        twoFactor: schema.twoFactor,
-      },
-    }),
-    baseURL: authBaseUrl,
-    secret: authSecret,
-    plugins: [
-      magicLink({
-        sendMagicLink: async ({ url }: { url: string }) => {
-          capturedMagicLinkUrl = url;
-        },
-        expiresIn: 60 * MAGIC_LINK_EXPIRY_MINUTES,
-      }),
-    ],
-  });
-
-  await tempAuth.api.signInMagicLink({
-    body: {
-      email: email.toLowerCase(),
-      callbackURL: callbackURL,
-      newUserCallbackURL: callbackURL,
-    },
-    headers: new Headers(),
-  });
-
-  if (!capturedMagicLinkUrl) {
-    throw createDomainError(
-      SYSTEM_ERRORS.INTERNAL_ERROR,
-      { service: 'magic-link' },
-      'Failed to generate magic link URL',
-    );
-  }
-
-  // TS doesn't track that the callback in signInMagicLink assigned this
-  const magicLinkUrl: string = capturedMagicLinkUrl;
+  const invitationUrl = `${appUrl}${basepathNormalized}/invite/${token}`;
 
   if (env.ENVIRONMENT !== 'production') {
-    const redacted = magicLinkUrl.replace(/token=[^&]+/, 'token=REDACTED');
-    console.log('[Email] Project invitation magic link URL:', redacted);
+    console.log('[Email] Project invitation URL:', invitationUrl);
+  }
+
+  // Store full URL for e2e test retrieval (same pattern as magic links in auth/config.ts)
+  if (env.DEV_MODE) {
+    const now = Math.floor(Date.now() / 1000);
+    await env.DB.prepare(
+      'INSERT INTO verification (id, identifier, value, expiresAt, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?)',
+    )
+      .bind(
+        `test-${crypto.randomUUID()}`,
+        `test-url:invitation:${email.toLowerCase()}`,
+        invitationUrl,
+        now + 600,
+        now,
+        now,
+      )
+      .run();
   }
 
   const { getProjectInvitationEmailHtml, getProjectInvitationEmailText } =
@@ -119,13 +70,13 @@ export async function sendInvitationEmail(
   const emailHtml = getProjectInvitationEmailHtml({
     projectName,
     inviterName,
-    invitationUrl: magicLinkUrl,
+    invitationUrl,
     role,
   });
   const emailText = getProjectInvitationEmailText({
     projectName,
     inviterName,
-    invitationUrl: magicLinkUrl,
+    invitationUrl,
     role,
   });
 
