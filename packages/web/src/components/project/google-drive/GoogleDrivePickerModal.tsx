@@ -4,6 +4,7 @@
 
 import { useState } from 'react';
 import { showToast } from '@/components/ui/toast';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -71,13 +72,9 @@ export function GoogleDrivePickerModal({
           />
 
           <div className='flex justify-end'>
-            <button
-              type='button'
-              onClick={onClose}
-              className='border-border bg-card text-secondary-foreground hover:bg-muted rounded-lg border px-4 py-2 text-sm font-medium transition-colors'
-            >
+            <Button variant='outline' onClick={onClose}>
               Cancel
-            </button>
+            </Button>
           </div>
         </div>
       </DialogContent>

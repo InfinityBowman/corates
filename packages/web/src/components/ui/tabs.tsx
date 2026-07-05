@@ -24,7 +24,7 @@ function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPr
       className={cn(
         'inline-flex items-center px-4 py-3 text-sm font-medium whitespace-nowrap',
         'transition-colors',
-        'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
+        'focus-visible:ring-ring/50 focus-visible:ring-3 focus-visible:outline-none',
         'disabled:pointer-events-none disabled:opacity-50',
         className,
       )}
@@ -77,8 +77,7 @@ function TabsContent({ className, ...props }: React.ComponentProps<typeof TabsPr
     <TabsPrimitive.Content
       data-slot='tabs-content'
       className={cn(
-        'mt-2',
-        'focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none',
+        'focus-visible:ring-ring/50 focus-visible:ring-3 focus-visible:outline-none',
         className,
       )}
       {...props}

@@ -6,6 +6,7 @@
 import { useState, useMemo, useRef, useCallback } from 'react';
 import { PlusIcon } from 'lucide-react';
 import { showToast } from '@/components/ui/toast';
+import { Button } from '@/components/ui/button';
 import { PdfListItem } from '@/components/pdf/PdfListItem';
 import { EditPdfMetadataModal } from '../EditPdfMetadataModal';
 import { project } from '@/project';
@@ -81,22 +82,26 @@ export function StudyPdfSection({ study, onOpenGoogleDrive, readOnly }: StudyPdf
           <h4 className='text-secondary-foreground text-sm font-medium'>PDFs ({pdfs.length})</h4>
           {!readOnly && (
             <div className='mt-1 flex items-center gap-2'>
-              <button
-                type='button'
+              <Button
+                variant='ghost'
+                size='sm'
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
-                className='text-primary inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-1.5 text-sm font-medium transition-colors hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50'
+                className='text-primary hover:text-primary'
+                title='Upload PDF'
+                aria-label='Upload PDF'
               >
                 {uploading ? 'Uploading...' : <PlusIcon className='size-4' />}
-              </button>
-              <button
-                type='button'
+              </Button>
+              <Button
+                variant='ghost'
+                size='icon-sm'
                 onClick={() => onOpenGoogleDrive?.(study.id)}
-                className='text-muted-foreground hover:text-primary rounded-md px-2 py-1.5 text-sm font-medium transition-colors hover:bg-blue-50'
                 title='Import from Google Drive'
+                aria-label='Import from Google Drive'
               >
-                <img src='/logos/drive.svg' alt='Google Drive' className='size-4' />
-              </button>
+                <img src='/logos/drive.svg' alt='' className='size-4' />
+              </Button>
             </div>
           )}
         </div>
@@ -125,22 +130,22 @@ export function StudyPdfSection({ study, onOpenGoogleDrive, readOnly }: StudyPdf
             <p className='text-muted-foreground text-sm'>No PDFs uploaded yet</p>
             {!readOnly && (
               <div className='mt-2 flex items-center justify-center gap-2'>
-                <button
-                  type='button'
+                <Button
+                  variant='link'
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploading}
-                  className='text-primary hover:text-primary/80 text-sm'
+                  className='h-auto p-0 text-sm font-normal'
                 >
                   Upload a PDF
-                </button>
+                </Button>
                 <span className='text-muted-foreground/70'>or</span>
-                <button
-                  type='button'
+                <Button
+                  variant='link'
                   onClick={() => onOpenGoogleDrive?.(study.id)}
-                  className='text-primary hover:text-primary/80 text-sm'
+                  className='h-auto p-0 text-sm font-normal'
                 >
                   Import from Google Drive
-                </button>
+                </Button>
               </div>
             )}
           </div>

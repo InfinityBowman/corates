@@ -11,6 +11,7 @@ import {
   connectGoogleAccount,
 } from '@/api/google-drive';
 import { Alert } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { GOOGLE_PICKER_API_KEY, GOOGLE_PICKER_APP_ID } from '@/config/google';
 import { pickGooglePdfFiles } from '@/lib/googlePicker.js';
 import { buildRestoreCallbackUrl } from '@/lib/formStatePersistence.js';
@@ -177,30 +178,26 @@ export function GoogleDrivePickerLauncher({
           <p className='text-muted-foreground mb-4 text-xs'>
             Connect your Google account to select PDFs.
           </p>
-          <button
-            type='button'
-            onClick={handleConnectGoogle}
-            className='bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-colors'
-          >
+          <Button onClick={handleConnectGoogle}>
             <img src='/logos/drive.svg' alt='' className='size-4' />
             Connect Google Account
-          </button>
+          </Button>
         </div>
       )}
 
       {connected && (
-        <button
-          type='button'
+        <Button
+          size='lg'
           onClick={handleOpenPicker}
           disabled={loading || disabled || busy || !pickerConfigured}
-          className='bg-primary hover:bg-primary/90 mx-auto flex w-full max-w-xl items-center justify-center gap-2 rounded-lg px-4 py-3 text-white transition-colors disabled:opacity-50'
+          className='mx-auto w-full max-w-xl'
         >
           {(loading || busy) && (
             <div className='size-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
           )}
           <img src='/logos/drive.svg' alt='' className='size-6 rounded-sm bg-white p-0.5' />
-          <span className='text-sm font-medium'>Select from Google Drive</span>
-        </button>
+          Select from Google Drive
+        </Button>
       )}
     </div>
   );

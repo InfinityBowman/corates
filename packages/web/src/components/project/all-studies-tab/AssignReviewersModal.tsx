@@ -6,6 +6,7 @@ import { useState, useEffect, useEffectEvent, useMemo, useCallback } from 'react
 import { UserIcon } from 'lucide-react';
 import type { StudyInfo } from '@/stores/projectStore';
 import { useProjectMembersById } from '@/primitives/useProject/reactor';
+import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   Select,
@@ -157,22 +158,12 @@ export function AssignReviewersModal({
           </div>
 
           <div className='border-border flex justify-end gap-3 border-t pt-4'>
-            <button
-              type='button'
-              onClick={() => onOpenChange(false)}
-              disabled={saving}
-              className='border-border bg-card text-secondary-foreground hover:bg-muted rounded-md border px-4 py-2 text-sm font-medium disabled:opacity-50'
-            >
+            <Button variant='outline' onClick={() => onOpenChange(false)} disabled={saving}>
               Cancel
-            </button>
-            <button
-              type='button'
-              onClick={handleSave}
-              disabled={saving}
-              className='bg-primary hover:bg-primary/90 rounded-md px-4 py-2 text-sm font-medium text-white disabled:opacity-50'
-            >
+            </Button>
+            <Button onClick={handleSave} disabled={saving}>
               {saving ? 'Saving...' : 'Save'}
-            </button>
+            </Button>
           </div>
         </div>
       </DialogContent>

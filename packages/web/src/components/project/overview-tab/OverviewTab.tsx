@@ -18,6 +18,8 @@ import { useAuthStore, selectUser } from '@/stores/authStore';
 import { useProjectContext, type ProjectMember } from '../ProjectContext';
 import { showToast } from '@/components/ui/toast';
 import { Avatar, AvatarImage, AvatarFallback, getInitials } from '@/components/ui/avatar';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import {
@@ -267,16 +269,18 @@ export function OverviewTab() {
           </h3>
           {isOwner &&
             (canAddMember ?
-              <button
-                onClick={() => setShowAddMemberModal(true)}
-                className='bg-primary hover:bg-primary/90 focus:ring-primary inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-colors focus:ring-2 focus:outline-none'
-              >
+              <Button onClick={() => setShowAddMemberModal(true)}>
                 <PlusIcon className='size-4' />
                 Invite
-              </button>
+              </Button>
             : <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className='bg-secondary text-muted-foreground/70 inline-flex cursor-not-allowed items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium'>
+                  <span
+                    className={cn(
+                      buttonVariants({ variant: 'secondary' }),
+                      'text-muted-foreground/70 hover:bg-secondary cursor-not-allowed opacity-50',
+                    )}
+                  >
                     <PlusIcon className='size-4' />
                     Invite
                   </span>
@@ -334,18 +338,21 @@ export function OverviewTab() {
                       {member.role}
                     </span>
                     {canRemove && !isLastOwner && (
-                      <button
+                      <Button
+                        variant='ghost'
+                        size='icon-sm'
                         onClick={() =>
                           handleRemoveMember(
                             member.userId,
                             member.name || member.email || 'Unknown',
                           )
                         }
-                        className='text-muted-foreground/70 focus:ring-primary rounded p-1.5 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:outline-none'
+                        className='text-muted-foreground hover:text-red-600'
                         title={isSelf ? 'Leave project' : 'Remove member'}
+                        aria-label={isSelf ? 'Leave project' : 'Remove member'}
                       >
                         <Trash2Icon className='size-4' />
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>
@@ -359,7 +366,7 @@ export function OverviewTab() {
       <div className='flex flex-col gap-4'>
         <div className='border-border bg-card overflow-hidden rounded-xl border'>
           <Collapsible open={chartsExpanded} onOpenChange={setChartsExpanded}>
-            <CollapsibleTrigger className='hover:bg-muted focus-visible:ring-primary flex w-full cursor-pointer items-center justify-between rounded-t-xl px-5 py-4 transition-colors select-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:outline-none data-[state=closed]:rounded-b-xl'>
+            <CollapsibleTrigger className='hover:bg-muted focus-visible:ring-primary flex w-full cursor-pointer items-center justify-between rounded-t-xl px-5 py-4 transition-colors select-none focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset data-[state=closed]:rounded-b-xl'>
               <h2 className='text-foreground text-base font-semibold'>Figures</h2>
               <div className='text-muted-foreground flex items-center gap-2 text-sm'>
                 {chartsExpanded ? 'Click to collapse' : 'Click to expand'}
@@ -377,7 +384,7 @@ export function OverviewTab() {
         </div>
         <div className='border-border bg-card overflow-hidden rounded-xl border'>
           <Collapsible open={tablesExpanded} onOpenChange={setTablesExpanded}>
-            <CollapsibleTrigger className='hover:bg-muted focus-visible:ring-primary flex w-full cursor-pointer items-center justify-between rounded-t-xl px-5 py-4 transition-colors select-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:outline-none data-[state=closed]:rounded-b-xl'>
+            <CollapsibleTrigger className='hover:bg-muted focus-visible:ring-primary flex w-full cursor-pointer items-center justify-between rounded-t-xl px-5 py-4 transition-colors select-none focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset data-[state=closed]:rounded-b-xl'>
               <h2 className='text-foreground text-base font-semibold'>Tables</h2>
               <div className='text-muted-foreground flex items-center gap-2 text-sm'>
                 {tablesExpanded ? 'Click to collapse' : 'Click to expand'}

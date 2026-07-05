@@ -206,16 +206,16 @@ export function AddStudiesForm({
         </TabsList>
 
         <div className='mt-4'>
-          <TabsContent value='pdfs' className='mt-0'>
+          <TabsContent value='pdfs'>
             <PdfUploadSection studies={studies} />
           </TabsContent>
-          <TabsContent value='references' className='mt-0'>
+          <TabsContent value='references'>
             <ReferenceImportSection studies={studies} />
           </TabsContent>
-          <TabsContent value='lookup' className='mt-0'>
+          <TabsContent value='lookup'>
             <DoiLookupSection studies={studies} />
           </TabsContent>
-          <TabsContent value='drive' className='mt-0'>
+          <TabsContent value='drive'>
             <GoogleDriveSection
               studies={studies}
               formType={formType}

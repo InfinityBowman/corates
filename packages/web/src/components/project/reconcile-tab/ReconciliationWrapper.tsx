@@ -19,6 +19,7 @@ import {
 } from '@corates/shared/checklists';
 import { downloadPdf, getPdfUrl } from '@/api/pdf-api';
 import { getCachedPdf, cachePdf } from '@/primitives/pdfCache.js';
+import { Button } from '@/components/ui/button';
 import { showToast } from '@/components/ui/toast';
 import { usePdfPreviewStore } from '@/stores/pdfPreviewStore';
 import { ReconciliationEngine, registerReconciliationAdapter } from './engine';
@@ -454,12 +455,9 @@ export function ReconciliationWrapper({
         <div className='bg-card max-w-md rounded-lg p-8 shadow-lg'>
           <h2 className='text-destructive mb-2 text-xl font-bold'>Error</h2>
           <p className='text-secondary-foreground'>{error}</p>
-          <button
-            onClick={handleCancel}
-            className='bg-primary hover:bg-primary/90 focus:ring-primary mt-4 rounded-lg px-4 py-2 text-white focus:ring-2 focus:outline-none'
-          >
+          <Button onClick={handleCancel} className='mt-4'>
             Go Back
-          </button>
+          </Button>
         </div>
       </div>
     );

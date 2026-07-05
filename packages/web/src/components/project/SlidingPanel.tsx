@@ -4,6 +4,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { XIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const SIZE_CLASSES: Record<string, string> = {
   sm: 'w-80',
@@ -99,14 +100,15 @@ export function SlidingPanel({
       {/* Header */}
       <div className='border-border flex shrink-0 items-center justify-between border-b px-4 py-3'>
         {title && <h2 className='text-foreground truncate pr-4 text-lg font-semibold'>{title}</h2>}
-        <button
-          type='button'
+        <Button
+          variant='ghost'
+          size='icon'
           onClick={onClose}
-          className='text-muted-foreground/70 hover:bg-secondary hover:text-secondary-foreground ml-auto rounded-md p-1.5 transition-colors'
+          className='text-muted-foreground ml-auto'
           aria-label='Close panel'
         >
           <XIcon className='size-5' />
-        </button>
+        </Button>
       </div>
 
       {/* Content */}

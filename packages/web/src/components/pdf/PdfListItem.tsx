@@ -4,6 +4,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { Trash2Icon, EyeIcon, DownloadIcon, PencilIcon, FileTextIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -99,34 +100,40 @@ export function PdfListItem({
         </div>
 
         <div className='flex items-center gap-1'>
-          <button
-            type='button'
+          <Button
+            variant='ghost'
+            size='icon-sm'
             onClick={() => onView?.(pdf)}
-            className='text-muted-foreground hover:bg-primary/5 hover:text-primary rounded-md p-2 transition-colors'
+            className='text-muted-foreground hover:text-primary'
             title='View PDF'
+            aria-label='View PDF'
           >
             <EyeIcon className='size-4' />
-          </button>
+          </Button>
 
-          <button
-            type='button'
+          <Button
+            variant='ghost'
+            size='icon-sm'
             onClick={() => onDownload?.(pdf)}
-            className='text-muted-foreground hover:bg-primary/5 hover:text-primary rounded-md p-2 transition-colors'
+            className='text-muted-foreground hover:text-primary'
             title='Download PDF'
+            aria-label='Download PDF'
           >
             <DownloadIcon className='size-4' />
-          </button>
+          </Button>
 
           {!readOnly && (
             <>
-              <button
-                type='button'
+              <Button
+                variant='ghost'
+                size='icon-sm'
                 onClick={() => onEditMetadata?.(pdf)}
-                className='text-muted-foreground hover:bg-primary/5 hover:text-primary rounded-md p-2 transition-colors'
+                className='text-muted-foreground hover:text-primary'
                 title='Edit Metadata'
+                aria-label='Edit Metadata'
               >
                 <PencilIcon className='size-4' />
-              </button>
+              </Button>
 
               {tagMenuItems.length > 0 && (
                 <DropdownMenu>
@@ -146,14 +153,16 @@ export function PdfListItem({
                 </DropdownMenu>
               )}
 
-              <button
-                type='button'
+              <Button
+                variant='ghost'
+                size='icon-sm'
                 onClick={() => setShowDeleteConfirm(true)}
-                className='text-muted-foreground hover:bg-destructive/5 hover:text-destructive rounded-md p-2 transition-colors'
+                className='text-muted-foreground hover:text-red-600'
                 title='Delete PDF'
+                aria-label='Delete PDF'
               >
                 <Trash2Icon className='size-4' />
-              </button>
+              </Button>
             </>
           )}
         </div>

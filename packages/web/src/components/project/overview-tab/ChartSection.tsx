@@ -5,6 +5,7 @@
 
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { SettingsIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { AMSTARRobvis } from '@/components/charts/AMSTARRobvis';
 import { AMSTARDistribution } from '@/components/charts/AMSTARDistribution';
 import { ChartSettingsModal } from '@/components/charts/ChartSettingsModal';
@@ -197,14 +198,15 @@ export function ChartSection({ studies }: ChartSectionProps) {
             checklists. Use the settings to customize chart appearance, labels, and export options.
           </p>
         </div>
-        <button
+        <Button
+          variant='ghost'
           onClick={() => setShowSettingsModal(true)}
-          className='text-secondary-foreground hover:bg-secondary hover:text-foreground inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors'
+          className='shrink-0'
           title='Chart Settings'
         >
           <SettingsIcon className='size-4' />
           Settings
-        </button>
+        </Button>
       </div>
 
       <AMSTARRobvis

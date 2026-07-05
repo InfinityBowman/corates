@@ -362,27 +362,27 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
 
             {/* Main content */}
             <div className='mx-auto max-w-7xl px-6 py-6'>
-              <TabsContent value='overview' className='mt-0'>
+              <TabsContent value='overview'>
                 <SectionErrorBoundary name='Overview'>
                   <OverviewTab />
                 </SectionErrorBoundary>
               </TabsContent>
-              <TabsContent value='all-studies' className='mt-0'>
+              <TabsContent value='all-studies'>
                 <SectionErrorBoundary name='All Studies'>
                   <AllStudiesTab />
                 </SectionErrorBoundary>
               </TabsContent>
-              <TabsContent value='todo' className='mt-0'>
+              <TabsContent value='todo'>
                 <SectionErrorBoundary name='To-Do'>
                   <ToDoTab />
                 </SectionErrorBoundary>
               </TabsContent>
-              <TabsContent value='reconcile' className='mt-0'>
+              <TabsContent value='reconcile'>
                 <SectionErrorBoundary name='Reconcile'>
                   <ReconcileTab />
                 </SectionErrorBoundary>
               </TabsContent>
-              <TabsContent value='completed' className='mt-0'>
+              <TabsContent value='completed'>
                 <SectionErrorBoundary name='Completed'>
                   <CompletedTab />
                 </SectionErrorBoundary>

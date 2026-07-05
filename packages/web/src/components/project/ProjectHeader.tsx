@@ -5,6 +5,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { ArrowLeftIcon } from 'lucide-react';
 import { useProjectContext } from './ProjectContext';
+import { Button } from '@/components/ui/button';
 import { InlineEdit } from '@/components/ui/inline-edit';
 
 interface ProjectHeaderProps {
@@ -78,12 +79,15 @@ export function ProjectHeader({
   return (
     <div className='flex items-center justify-between py-4'>
       <div className='flex items-center gap-4'>
-        <button
+        <Button
+          variant='outline'
+          size='icon-lg'
           onClick={onBack}
-          className='border-border text-muted-foreground hover:text-secondary-foreground flex size-9 items-center justify-center rounded-lg border transition-colors'
+          className='text-muted-foreground'
+          aria-label='Back to dashboard'
         >
           <ArrowLeftIcon className='size-4' />
-        </button>
+        </Button>
         <div className='min-w-0'>
           {/* Project Name */}
           <div className='flex items-center gap-2'>

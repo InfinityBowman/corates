@@ -4,6 +4,7 @@
  */
 
 import { FileTextIcon, Trash2Icon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface StagedStudiesSectionProps {
   studies: any;
@@ -55,14 +56,16 @@ export function StagedStudiesSection({ studies }: StagedStudiesSectionProps) {
               </div>
             </div>
 
-            <button
-              type='button'
+            <Button
+              variant='ghost'
+              size='icon-sm'
               onClick={() => studies.removeStagedStudy(study)}
-              className='text-muted-foreground/70 focus:ring-primary shrink-0 rounded p-1.5 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:outline-none'
+              className='text-muted-foreground shrink-0 hover:text-red-600'
               title='Remove study'
+              aria-label='Remove study'
             >
               <Trash2Icon className='size-4' />
-            </button>
+            </Button>
           </div>
         ))}
       </div>

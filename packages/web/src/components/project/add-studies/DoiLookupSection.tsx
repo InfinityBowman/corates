@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { showToast } from '@/components/ui/toast';
 import { Alert, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
 import { getRefDisplayName } from '@/lib/referenceParser.js';
@@ -56,11 +57,10 @@ export function DoiLookupSection({ studies }: DoiLookupSectionProps) {
           rows={4}
           className='border-border text-foreground placeholder-muted-foreground/70 focus:ring-primary w-full rounded-lg border px-3 py-2 font-mono text-sm transition focus:border-transparent focus:ring-2 focus:outline-none'
         />
-        <button
-          type='button'
+        <Button
           onClick={() => studies.handleLookup()}
           disabled={studies.lookingUp || !studies.identifierInput.trim()}
-          className='bg-primary hover:bg-primary/90 focus:ring-primary inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-white transition-colors focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
+          className='self-start'
         >
           {studies.lookingUp ?
             <>
@@ -72,7 +72,7 @@ export function DoiLookupSection({ studies }: DoiLookupSectionProps) {
               Look Up References
             </>
           }
-        </button>
+        </Button>
       </div>
 
       {/* Lookup errors */}
@@ -281,16 +281,18 @@ function LookupRefWithPdf({
         {ref_.doi && <p className='mt-0.5 font-mono text-xs text-blue-500'>{ref_.doi}</p>}
       </div>
 
-      <button
-        type='button'
+      <Button
+        variant='ghost'
+        size='icon-sm'
         onClick={e => {
           e.stopPropagation();
           onRemove();
         }}
-        className='text-muted-foreground/70 focus:ring-primary rounded p-1 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:outline-none'
+        className='text-muted-foreground hover:text-red-600'
+        aria-label='Remove reference'
       >
         <Trash2Icon className='size-4' />
-      </button>
+      </Button>
     </div>
   );
 }
@@ -411,16 +413,18 @@ function LookupRefWithoutPdf({ ref_, onRemove }: { ref_: any; onRemove: () => vo
           </div>
         )}
       </div>
-      <button
-        type='button'
+      <Button
+        variant='ghost'
+        size='icon-sm'
         onClick={e => {
           e.stopPropagation();
           onRemove();
         }}
-        className='text-muted-foreground/70 focus:ring-primary rounded p-1 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:outline-none'
+        className='text-muted-foreground hover:text-red-600'
+        aria-label='Remove reference'
       >
         <Trash2Icon className='size-4' />
-      </button>
+      </Button>
     </div>
   );
 }
