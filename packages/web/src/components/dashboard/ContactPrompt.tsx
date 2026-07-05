@@ -2,13 +2,13 @@
  * ContactPrompt - Prompts users to contact for early access when they cannot create projects
  */
 
-interface ContactPromptProps {
+interface RestrictionCopyArgs {
   restrictionType: 'entitlement' | 'quota' | null;
   projectCount: number;
   quotaLimit?: number | null;
 }
 
-export function ContactPrompt({ restrictionType, projectCount, quotaLimit }: ContactPromptProps) {
+export function getRestrictionCopy({ restrictionType, projectCount, quotaLimit }: RestrictionCopyArgs) {
   const title =
     restrictionType === 'entitlement' ? 'Ready to Collaborate?' : 'Project Limit Reached';
 
@@ -16,6 +16,12 @@ export function ContactPrompt({ restrictionType, projectCount, quotaLimit }: Con
     restrictionType === 'entitlement' ?
       'Projects let your team appraise studies independently and resolve disagreements together. Start a 14-day free trial to create your first project, no credit card required.'
     : `You've reached your project limit (${projectCount}/${quotaLimit === null || quotaLimit === -1 ? 'unlimited' : quotaLimit}). Upgrade your plan to create more projects.`;
+
+  return { title, message };
+}
+
+export function ContactPrompt({ restrictionType, projectCount, quotaLimit }: RestrictionCopyArgs) {
+  const { title, message } = getRestrictionCopy({ restrictionType, projectCount, quotaLimit });
 
   return (
     <div className='bg-info-bg border-info-border flex items-center justify-between rounded-lg border p-4'>

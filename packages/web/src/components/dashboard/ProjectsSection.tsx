@@ -12,6 +12,7 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { showToast } from '@/components/ui/toast';
 import { CreateProjectModal } from '@/components/project/CreateProjectModal';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { queryKeys } from '@/lib/queryKeys';
 import {
   AlertDialog,
@@ -26,7 +27,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useAnimation } from './useInitialAnimation';
 import { ProjectCard } from './ProjectCard';
-import { ContactPrompt } from './ContactPrompt';
+import { ContactPrompt, getRestrictionCopy } from './ContactPrompt';
 
 interface ProjectsSectionProps {
   showHeader?: boolean;
@@ -122,8 +123,8 @@ export function ProjectsSection({
 
   return (
     <section style={animation.fadeUp(200)}>
-      {/* Contact prompt for users who can't create projects */}
-      {!subscriptionLoading && !canCreateProject && (
+      {/* Trial pitch stays prominent; the quota limit is surfaced just-in-time on the button */}
+      {restrictionType === 'entitlement' && (
         <div className='mb-4'>
           <ContactPrompt
             restrictionType={restrictionType}
@@ -139,12 +140,27 @@ export function ProjectsSection({
           <h2 className='text-muted-foreground text-sm font-semibold tracking-wide uppercase'>
             Your Projects
           </h2>
-          {canCreateProject && (
+          {canCreateProject ?
             <Button onClick={handleCreateClick} disabled={!isOnline}>
               <PlusIcon data-icon='inline-start' />
               New Project
             </Button>
-          )}
+          : <Popover>
+              <PopoverTrigger asChild>
+                <Button disabled={!isOnline}>
+                  <PlusIcon data-icon='inline-start' />
+                  New Project
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align='end'>
+                <RestrictionNudge
+                  restrictionType={restrictionType}
+                  projectCount={projectCount}
+                  quotaLimit={quotas?.['projects.max']}
+                />
+              </PopoverContent>
+            </Popover>
+          }
         </div>
       )}
 
@@ -204,5 +220,29 @@ export function ProjectsSection({
 
       <CreateProjectModal open={createModalOpen} onOpenChange={setCreateModalOpen} />
     </section>
+  );
+}
+
+function RestrictionNudge({
+  restrictionType,
+  projectCount,
+  quotaLimit,
+}: {
+  restrictionType: 'entitlement' | 'quota' | null;
+  projectCount: number;
+  quotaLimit?: number | null;
+}) {
+  const { title, message } = getRestrictionCopy({ restrictionType, projectCount, quotaLimit });
+
+  return (
+    <div className='flex flex-col gap-3'>
+      <div>
+        <p className='text-popover-foreground font-medium'>{title}</p>
+        <p className='text-muted-foreground mt-1 text-sm'>{message}</p>
+      </div>
+      <Button asChild className='w-full'>
+        <a href='/pricing'>View Plans</a>
+      </Button>
+    </div>
   );
 }
