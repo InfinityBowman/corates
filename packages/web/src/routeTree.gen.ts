@@ -24,6 +24,7 @@ import { Route as ResourcesIndexRouteImport } from './routes/resources/index'
 import { Route as ResourcesRobinsIRouteImport } from './routes/resources/robins-i'
 import { Route as ResourcesRob2RouteImport } from './routes/resources/rob2'
 import { Route as ResourcesAmstar2RouteImport } from './routes/resources/amstar2'
+import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
 import { Route as AuthSignupRouteImport } from './routes/_auth/signup'
 import { Route as AuthSigninRouteImport } from './routes/_auth/signin'
@@ -150,6 +151,11 @@ const ResourcesRob2Route = ResourcesRob2RouteImport.update({
 const ResourcesAmstar2Route = ResourcesAmstar2RouteImport.update({
   id: '/resources/amstar2',
   path: '/resources/amstar2',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InviteTokenRoute = InviteTokenRouteImport.update({
+  id: '/invite/$token',
+  path: '/invite/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiSplatRoute = ApiSplatRouteImport.update({
@@ -469,6 +475,7 @@ export interface FileRoutesByFullPath {
   '/signin': typeof AuthSigninRoute
   '/signup': typeof AuthSignupRoute
   '/api/$': typeof ApiSplatRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/resources/amstar2': typeof ResourcesAmstar2Route
   '/resources/rob2': typeof ResourcesRob2Route
   '/resources/robins-i': typeof ResourcesRobinsIRoute
@@ -536,6 +543,7 @@ export interface FileRoutesByTo {
   '/signin': typeof AuthSigninRoute
   '/signup': typeof AuthSignupRoute
   '/api/$': typeof ApiSplatRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/resources/amstar2': typeof ResourcesAmstar2Route
   '/resources/rob2': typeof ResourcesRob2Route
   '/resources/robins-i': typeof ResourcesRobinsIRoute
@@ -606,6 +614,7 @@ export interface FileRoutesById {
   '/_auth/signin': typeof AuthSigninRoute
   '/_auth/signup': typeof AuthSignupRoute
   '/api/$': typeof ApiSplatRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/resources/amstar2': typeof ResourcesAmstar2Route
   '/resources/rob2': typeof ResourcesRob2Route
   '/resources/robins-i': typeof ResourcesRobinsIRoute
@@ -676,6 +685,7 @@ export interface FileRouteTypes {
     | '/signin'
     | '/signup'
     | '/api/$'
+    | '/invite/$token'
     | '/resources/amstar2'
     | '/resources/rob2'
     | '/resources/robins-i'
@@ -743,6 +753,7 @@ export interface FileRouteTypes {
     | '/signin'
     | '/signup'
     | '/api/$'
+    | '/invite/$token'
     | '/resources/amstar2'
     | '/resources/rob2'
     | '/resources/robins-i'
@@ -812,6 +823,7 @@ export interface FileRouteTypes {
     | '/_auth/signin'
     | '/_auth/signup'
     | '/api/$'
+    | '/invite/$token'
     | '/resources/amstar2'
     | '/resources/rob2'
     | '/resources/robins-i'
@@ -876,6 +888,7 @@ export interface RootRouteChildren {
   SecurityRoute: typeof SecurityRoute
   TermsRoute: typeof TermsRoute
   ApiSplatRoute: typeof ApiSplatRoute
+  InviteTokenRoute: typeof InviteTokenRoute
   ResourcesAmstar2Route: typeof ResourcesAmstar2Route
   ResourcesRob2Route: typeof ResourcesRob2Route
   ResourcesRobinsIRoute: typeof ResourcesRobinsIRoute
@@ -1004,6 +1017,13 @@ declare module '@tanstack/react-router' {
       path: '/resources/amstar2'
       fullPath: '/resources/amstar2'
       preLoaderRoute: typeof ResourcesAmstar2RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invite/$token': {
+      id: '/invite/$token'
+      path: '/invite/$token'
+      fullPath: '/invite/$token'
+      preLoaderRoute: typeof InviteTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/$': {
@@ -1568,6 +1588,7 @@ const rootRouteChildren: RootRouteChildren = {
   SecurityRoute: SecurityRoute,
   TermsRoute: TermsRoute,
   ApiSplatRoute: ApiSplatRoute,
+  InviteTokenRoute: InviteTokenRoute,
   ResourcesAmstar2Route: ResourcesAmstar2Route,
   ResourcesRob2Route: ResourcesRob2Route,
   ResourcesRobinsIRoute: ResourcesRobinsIRoute,

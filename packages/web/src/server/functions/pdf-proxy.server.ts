@@ -1,10 +1,5 @@
 import { validatePdfProxyUrl } from '@corates/workers/ssrf-protection';
-import {
-  throwDomainError,
-  FILE_ERRORS,
-  SYSTEM_ERRORS,
-  VALIDATION_ERRORS,
-} from '@corates/shared';
+import { throwDomainError, FILE_ERRORS, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import type { Session } from '@/server/middleware/auth';
 
 export async function proxyPdfFetch(

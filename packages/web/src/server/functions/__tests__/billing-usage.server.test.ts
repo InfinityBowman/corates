@@ -41,7 +41,9 @@ describe('fetchUsage', () => {
       expect.fail('should have thrown');
     } catch (res) {
       expect((res as DomainErrorException).statusCode).toBe(403);
-      const body = (res as DomainErrorException).toDomainError() as { details?: { reason?: string } };
+      const body = (res as DomainErrorException).toDomainError() as {
+        details?: { reason?: string };
+      };
       expect(body.details?.reason).toBe('no_org_found');
     }
   });

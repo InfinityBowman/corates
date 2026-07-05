@@ -24,7 +24,9 @@ describe('DomainErrorException', () => {
   it('exposes code/statusCode/details/timestamp as own enumerable props (seroval round-trips these)', () => {
     const ex = new DomainErrorException(createDomainError(AUTH_ERRORS.REQUIRED, { reason: 'y' }));
     const ownProps = Object.getOwnPropertyNames(ex);
-    expect(ownProps).toEqual(expect.arrayContaining(['code', 'statusCode', 'details', 'timestamp']));
+    expect(ownProps).toEqual(
+      expect.arrayContaining(['code', 'statusCode', 'details', 'timestamp']),
+    );
     expect(ex.details).toEqual({ reason: 'y' });
   });
 

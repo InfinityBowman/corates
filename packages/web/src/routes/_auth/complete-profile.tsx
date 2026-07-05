@@ -40,9 +40,22 @@ const STEPS_CONFIG = [
   { title: 'Role', description: 'Your background' },
 ];
 
+// Users with a completed profile don't need onboarding; if they arrived here
+// holding an invitation (magic link callback or a stashed token), acceptance
+// happens on the invite landing page instead.
+function getPendingInvitationToken(search: Record<string, unknown>): string | null {
+  if (typeof search.invitation === 'string' && search.invitation) {
+    return search.invitation;
+  }
+  if (typeof localStorage !== 'undefined') {
+    return localStorage.getItem('pendingInvitationToken');
+  }
+  return null;
+}
+
 export const Route = createFileRoute('/_auth/complete-profile')({
   ssr: false,
-  beforeLoad: () => {
+  beforeLoad: ({ location }) => {
     const state = useAuthStore.getState();
     const user = selectUser(state);
 
@@ -50,6 +63,10 @@ export const Route = createFileRoute('/_auth/complete-profile')({
     // immediately without mounting the component. This covers the common case
     // of an existing user signing in (cached or session user is available).
     if (user?.profileCompletedAt) {
+      const invitationToken = getPendingInvitationToken(location.search as Record<string, unknown>);
+      if (invitationToken) {
+        throw redirect({ to: '/invite/$token', params: { token: invitationToken } });
+      }
       throw redirect({
         to: hasPendingPlan() ? '/settings/plans' : '/dashboard',
       });
@@ -83,6 +100,13 @@ function CompleteProfilePage() {
     if (isAuthLoading) return;
 
     if (user?.profileCompletedAt) {
+      const invitationToken = getPendingInvitationToken(
+        Object.fromEntries(new URLSearchParams(window.location.search)),
+      );
+      if (invitationToken) {
+        navigate({ to: '/invite/$token', params: { token: invitationToken }, replace: true });
+        return;
+      }
       navigate({
         to: hasPendingPlan() ? '/settings/plans' : '/dashboard',
         replace: true,
@@ -234,7 +258,12 @@ function CompleteProfilePage() {
           }
         } catch (inviteErr) {
           console.error('Failed to accept invitation:', inviteErr);
+          // The emailed /invite link is stable, so the user can retry from it
           localStorage.removeItem('pendingInvitationToken');
+          showToast.error(
+            'Invitation Not Accepted',
+            'Your account was created, but the project invitation could not be accepted. Open the invitation link from your email to try again.',
+          );
         }
       }
 

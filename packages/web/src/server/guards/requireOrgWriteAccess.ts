@@ -15,8 +15,7 @@ export interface WriteAccessResult {
 }
 
 export type OrgWriteAccessGuardResult =
-  | WriteAccessResult
-  | { ok: false; error: DomainErrorException };
+  WriteAccessResult | { ok: false; error: DomainErrorException };
 
 export async function requireOrgWriteAccess(
   method: string,

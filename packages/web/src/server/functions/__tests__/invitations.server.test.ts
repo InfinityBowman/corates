@@ -11,7 +11,7 @@ import {
 import { createDb } from '@corates/db/client';
 import { projectInvitations, projectMembers, member } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { handleAcceptInvitation } from '@/server/functions/invitations.server';
+import { handleAcceptInvitation, handleGetInvitation } from '@/server/functions/invitations.server';
 import type { Session } from '@/server/middleware/auth';
 import { DomainErrorException } from '@corates/shared';
 
@@ -58,6 +58,81 @@ beforeEach(async () => {
   });
 
   mockSyncMemberToDO.mockResolvedValue(undefined);
+});
+
+describe('handleGetInvitation', () => {
+  it('returns pending invitation summary with project and inviter context', async () => {
+    const { project, org, owner } = await buildProject();
+    const token = 'lookup-token';
+
+    await buildProjectInvitation({
+      orgId: org.id,
+      projectId: project.id,
+      email: 'invitee@example.com',
+      token,
+      invitedBy: owner.id,
+      status: 'pending',
+    });
+
+    const result = await handleGetInvitation({ token });
+
+    expect(result.status).toBe('pending');
+    expect(result.projectName).toBe(project.name);
+    expect(result.email).toBe('invitee@example.com');
+    expect(result.role).toBe('member');
+    expect(result.inviterName).toBeTruthy();
+  });
+
+  it('returns expired status for expired invitation', async () => {
+    const { project, org, owner } = await buildProject();
+    const token = 'expired-lookup-token';
+
+    await buildProjectInvitation({
+      orgId: org.id,
+      projectId: project.id,
+      email: 'invitee@example.com',
+      token,
+      invitedBy: owner.id,
+      status: 'expired',
+    });
+
+    const result = await handleGetInvitation({ token });
+
+    expect(result.status).toBe('expired');
+    expect(result.projectName).toBe(project.name);
+  });
+
+  it('returns accepted status for used invitation', async () => {
+    const { project, org, owner } = await buildProject();
+    const token = 'accepted-lookup-token';
+
+    await buildProjectInvitation({
+      orgId: org.id,
+      projectId: project.id,
+      email: 'invitee@example.com',
+      token,
+      invitedBy: owner.id,
+      status: 'accepted',
+    });
+
+    const result = await handleGetInvitation({ token });
+
+    expect(result.status).toBe('accepted');
+  });
+
+  it('throws for unknown token', async () => {
+    await buildProject();
+
+    try {
+      await handleGetInvitation({ token: 'no-such-token' });
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(400);
+      const body = res.toDomainError() as { code: string };
+      expect(body.code).toMatch(/FIELD_INVALID_FORMAT/);
+    }
+  });
 });
 
 describe('handleAcceptInvitation', () => {

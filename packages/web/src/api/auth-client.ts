@@ -6,12 +6,7 @@ import {
   adminClient,
   organizationClient,
 } from 'better-auth/client/plugins';
-import {
-  AUTH_ERRORS,
-  USER_ERRORS,
-  createDomainError,
-  type ErrorDefinition,
-} from '@corates/shared';
+import { AUTH_ERRORS, USER_ERRORS, createDomainError, type ErrorDefinition } from '@corates/shared';
 import { API_BASE } from '@/config/api';
 import { parseError } from '@/lib/error-utils';
 

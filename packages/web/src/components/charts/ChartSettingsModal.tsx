@@ -238,11 +238,9 @@ export function ChartSettingsModal({
                       className='text-muted-foreground hover:bg-card hover:text-foreground inline-flex items-center gap-1 rounded p-1.5 transition-colors'
                       title='Copy citation'
                     >
-                      {copiedCitation === 'apa' ? (
+                      {copiedCitation === 'apa' ?
                         <CheckIcon className='text-success size-4' />
-                      ) : (
-                        <CopyIcon className='size-4' />
-                      )}
+                      : <CopyIcon className='size-4' />}
                     </button>
                   </div>
                   <p className='text-foreground text-sm leading-relaxed'>{apaCitation}</p>
@@ -255,11 +253,9 @@ export function ChartSettingsModal({
                       className='text-muted-foreground hover:bg-card hover:text-foreground inline-flex items-center gap-1 rounded p-1.5 transition-colors'
                       title='Copy citation'
                     >
-                      {copiedCitation === 'ama' ? (
+                      {copiedCitation === 'ama' ?
                         <CheckIcon className='text-success size-4' />
-                      ) : (
-                        <CopyIcon className='size-4' />
-                      )}
+                      : <CopyIcon className='size-4' />}
                     </button>
                   </div>
                   <p className='text-foreground text-sm leading-relaxed'>{amaCitation}</p>

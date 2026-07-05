@@ -1,6 +1,10 @@
 import { captureError } from '@corates/workers/logger';
 import { env } from 'cloudflare:workers';
-import { acceptInvitation } from '@corates/workers/commands/invitations';
+import {
+  acceptInvitation,
+  getInvitationByToken,
+  type InvitationSummary,
+} from '@corates/workers/commands/invitations';
 import {
   createDomainError,
   isDomainError,
@@ -43,6 +47,22 @@ export async function handleAcceptInvitation(
     captureError(err, { tags: { component: 'invitations', action: 'accept' } });
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'accept_invitation',
+      originalError: (err as Error).message,
+    });
+    throw new DomainErrorException(dbError);
+  }
+}
+
+export async function handleGetInvitation(data: { token: string }): Promise<InvitationSummary> {
+  try {
+    return await getInvitationByToken(env, { token: data.token });
+  } catch (err) {
+    if (isDomainError(err)) {
+      throw new DomainErrorException(err as DomainError);
+    }
+    captureError(err, { tags: { component: 'invitations', action: 'get' } });
+    const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'get_invitation',
       originalError: (err as Error).message,
     });
     throw new DomainErrorException(dbError);

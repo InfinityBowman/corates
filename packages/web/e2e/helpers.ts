@@ -382,12 +382,13 @@ export async function cleanupBillingScenario(scenario: BillingScenario) {
 
 /**
  * Fetches a stored auth URL from the backend test endpoint.
- * URLs are captured by DEV_MODE callbacks in auth/config.ts.
- * Retries a few times since the URL may not be stored instantly.
+ * URLs are captured by DEV_MODE callbacks in auth/config.ts and
+ * send-invitation-email.ts. Retries a few times since the URL may
+ * not be stored instantly.
  */
 export async function getAuthUrl(
   email: string,
-  type: 'magic-link' | 'verification' | 'reset-password',
+  type: 'magic-link' | 'verification' | 'reset-password' | 'invitation',
 ): Promise<string> {
   for (let attempt = 0; attempt < 25; attempt++) {
     const res = await fetch(
