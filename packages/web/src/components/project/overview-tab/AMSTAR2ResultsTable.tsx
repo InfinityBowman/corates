@@ -113,7 +113,7 @@ export function AMSTAR2ResultsTable({ studies }: AMSTAR2ResultsTableProps) {
       )}
 
       {/* Table */}
-      <div className='overflow-x-auto'>
+      <div className='border-border overflow-x-auto rounded-lg border'>
         <table className='divide-border min-w-full divide-y'>
           <thead className='bg-muted'>
             <tr>

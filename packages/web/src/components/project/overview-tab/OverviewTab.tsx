@@ -359,7 +359,7 @@ export function OverviewTab() {
       <div className='flex flex-col gap-4'>
         <div className='border-border bg-card overflow-hidden rounded-xl border'>
           <Collapsible open={chartsExpanded} onOpenChange={setChartsExpanded}>
-            <CollapsibleTrigger className='hover:bg-muted flex w-full cursor-pointer items-center justify-between px-5 py-4 transition-colors select-none'>
+            <CollapsibleTrigger className='hover:bg-muted focus-visible:ring-primary flex w-full cursor-pointer items-center justify-between rounded-t-xl px-5 py-4 transition-colors select-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:outline-none data-[state=closed]:rounded-b-xl'>
               <h2 className='text-foreground text-base font-semibold'>Figures</h2>
               <div className='text-muted-foreground flex items-center gap-2 text-sm'>
                 {chartsExpanded ? 'Click to collapse' : 'Click to expand'}
@@ -377,7 +377,7 @@ export function OverviewTab() {
         </div>
         <div className='border-border bg-card overflow-hidden rounded-xl border'>
           <Collapsible open={tablesExpanded} onOpenChange={setTablesExpanded}>
-            <CollapsibleTrigger className='hover:bg-muted flex w-full cursor-pointer items-center justify-between px-5 py-4 transition-colors select-none'>
+            <CollapsibleTrigger className='hover:bg-muted focus-visible:ring-primary flex w-full cursor-pointer items-center justify-between rounded-t-xl px-5 py-4 transition-colors select-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:outline-none data-[state=closed]:rounded-b-xl'>
               <h2 className='text-foreground text-base font-semibold'>Tables</h2>
               <div className='text-muted-foreground flex items-center gap-2 text-sm'>
                 {tablesExpanded ? 'Click to collapse' : 'Click to expand'}
