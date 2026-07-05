@@ -22,7 +22,6 @@ interface AMSTARRobvisProps {
   ref?: React.Ref<SVGSVGElement>;
   data: RobvisDataItem[];
   width?: number;
-  height?: number;
   title?: string;
   greyscale?: boolean;
 }
@@ -43,17 +42,20 @@ const COLOR_MAP_GREYSCALE: Record<string, string> = {
 
 const N_QUESTIONS = 16;
 
+// Cap cell size so the heatmap stays compact on wide screens; width-driven
+// sizing alone made cells balloon to ~70px when only a few reviews existed.
+const MAX_CELL_SIZE = 32;
+
 export function AMSTARRobvis({
   data = [],
   width: widthProp,
-  height: heightProp,
   title = 'AMSTAR 2 Item-Level Judgments by Review',
   greyscale = false,
   ref,
 }: AMSTARRobvisProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [containerSize, setContainerSize] = useState({ width: 800, height: 500 });
+  const [containerWidth, setContainerWidth] = useState(800);
   const [dynamicMarginLeft, setDynamicMarginLeft] = useState(200);
 
   // Expose SVG ref to parent for export
@@ -67,11 +69,8 @@ export function AMSTARRobvis({
 
     const updateSize = () => {
       const rect = el.getBoundingClientRect();
-      if (rect.width > 0 && rect.height > 0) {
-        setContainerSize({
-          width: Math.max(rect.width, 600),
-          height: Math.max(rect.height, 400),
-        });
+      if (rect.width > 0) {
+        setContainerWidth(Math.max(rect.width, 600));
       }
     };
 
@@ -88,8 +87,7 @@ export function AMSTARRobvis({
   }, []);
 
   const colors = greyscale ? COLOR_MAP_GREYSCALE : COLOR_MAP_DEFAULT;
-  const width = widthProp ?? containerSize.width;
-  const height = heightProp ?? containerSize.height;
+  const width = widthProp ?? containerWidth;
 
   const margin = useMemo(
     () => ({
@@ -102,8 +100,7 @@ export function AMSTARRobvis({
   );
 
   const cellSizeX = Math.max(0, (width - margin.left - margin.right) / N_QUESTIONS);
-  const cellSizeY = Math.max(0, (height - margin.top - margin.bottom) / Math.max(data.length, 1));
-  const cellSize = Math.max(0, Math.min(cellSizeX, cellSizeY));
+  const cellSize = Math.min(cellSizeX, MAX_CELL_SIZE);
   const chartWidth = Math.max(0, cellSize * N_QUESTIONS);
   const chartHeight = Math.max(0, cellSize * Math.max(data.length, 1));
   const svgWidth = Math.max(0, margin.left + chartWidth + margin.right);
@@ -160,7 +157,7 @@ export function AMSTARRobvis({
       .attr('x', (_d: number, i: number) => m.left + i * cellSize + cellSize / 2)
       .attr('y', m.top + chartHeight + 20)
       .attr('text-anchor', 'middle')
-      .attr('font-size', Math.max(10, cellSize * 0.4))
+      .attr('font-size', '12px')
       .attr('font-weight', '600')
       .attr('fill', '#374151')
       .text((d: number) => `Q${d}`);
@@ -244,7 +241,7 @@ export function AMSTARRobvis({
       .attr('x', svgWidth / 2)
       .attr('y', 40)
       .attr('text-anchor', 'middle')
-      .attr('font-size', '18px')
+      .attr('font-size', '16px')
       .attr('font-weight', '600')
       .attr('fill', '#111827')
       .text(title);
@@ -262,12 +259,14 @@ export function AMSTARRobvis({
         borderRadius: '8px',
         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
         padding: '16px',
-        margin: '16px 0',
+        margin: '16px auto',
+        maxWidth: '880px',
+        width: '100%',
       }}
     >
       <svg
         ref={svgRef}
-        style={{ width: '100%', maxWidth: '100%', display: 'block', height: `${svgHeight}px` }}
+        style={{ display: 'block', margin: '0 auto', maxWidth: '100%', height: `${svgHeight}px` }}
       />
     </div>
   );

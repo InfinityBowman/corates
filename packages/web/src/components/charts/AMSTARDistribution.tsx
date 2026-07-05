@@ -28,7 +28,6 @@ interface AMSTARDistributionProps {
   ref?: React.Ref<SVGSVGElement>;
   data: DistributionDataItem[];
   width?: number;
-  height?: number;
   title?: string;
   greyscale?: boolean;
 }
@@ -49,17 +48,20 @@ const COLOR_MAP_GREYSCALE: Record<string, string> = {
 
 const MARGIN = { top: 50, right: 150, bottom: 60, left: 80 };
 
+// Fixed vertical space per question row; chart height grows with content
+// instead of tracking an aspect ratio of the container width.
+const ROW_HEIGHT = 28;
+
 export function AMSTARDistribution({
   data = [],
   width: widthProp,
-  height: heightProp,
   title = 'Level Judgments Across Included Reviews',
   greyscale = false,
   ref,
 }: AMSTARDistributionProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [containerSize, setContainerSize] = useState({ width: 900, height: 600 });
+  const [containerWidth, setContainerWidth] = useState(900);
 
   useImperativeHandle(ref, () => svgRef.current as SVGSVGElement, []);
 
@@ -70,11 +72,8 @@ export function AMSTARDistribution({
 
     const resize = () => {
       const rect = el.getBoundingClientRect();
-      if (rect.width > 0 && rect.height > 0) {
-        setContainerSize({
-          width: Math.max(rect.width, 400),
-          height: Math.max(rect.height, 400),
-        });
+      if (rect.width > 0) {
+        setContainerWidth(Math.max(rect.width, 400));
       }
     };
 
@@ -91,11 +90,11 @@ export function AMSTARDistribution({
   }, []);
 
   const colors = greyscale ? COLOR_MAP_GREYSCALE : COLOR_MAP_DEFAULT;
-  const width = widthProp ?? containerSize.width;
-  const height = heightProp ?? containerSize.width / 1.5;
+  const width = widthProp ?? containerWidth;
+  const nQuestions = data.length ? Math.max(...data.map(d => d.questions?.length || 0)) : 0;
   const chartWidth = Math.max(0, width - MARGIN.left - MARGIN.right);
-  const chartHeight = Math.max(0, height - MARGIN.top - MARGIN.bottom);
-  const titleFont = Math.max(Math.round(width / 50), 12) + 1;
+  const chartHeight = nQuestions * ROW_HEIGHT;
+  const height = MARGIN.top + chartHeight + MARGIN.bottom;
 
   // D3 imperative draw
   useEffect(() => {
@@ -111,7 +110,6 @@ export function AMSTARDistribution({
     svg.selectAll('*').remove();
 
     // Process data to calculate percentages
-    const nQuestions = Math.max(...data.map(d => d.questions?.length || 0));
     const totalStudies = data.length;
     const processedData: ProcessedQuestion[] = [];
 
@@ -149,7 +147,7 @@ export function AMSTARDistribution({
       .attr('x', width / 2)
       .attr('y', 30)
       .attr('text-anchor', 'middle')
-      .attr('font-size', titleFont + 'px')
+      .attr('font-size', '16px')
       .attr('font-weight', '600')
       .attr('fill', '#111827')
       .text(title);
@@ -282,7 +280,7 @@ export function AMSTARDistribution({
     return () => {
       svg.selectAll('*').remove();
     };
-  }, [data, colors, width, height, chartWidth, chartHeight, title, titleFont, greyscale]);
+  }, [data, colors, width, height, chartWidth, chartHeight, nQuestions, title, greyscale]);
 
   return (
     <div
@@ -292,7 +290,9 @@ export function AMSTARDistribution({
         borderRadius: '8px',
         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
         padding: '16px',
-        margin: '16px 0',
+        margin: '16px auto',
+        maxWidth: '880px',
+        width: '100%',
       }}
     >
       <svg
