@@ -3,9 +3,15 @@
  */
 
 import { useState, useMemo } from 'react';
+import { Button } from '@/components/ui/button';
 import { getChecklistMetadata } from '@/checklist-registry';
-import { getStatusLabel, getStatusStyle } from '@corates/shared/checklists';
+import {
+  getReopenableReconciledChecklist,
+  getStatusLabel,
+  getStatusStyle,
+} from '@corates/shared/checklists';
 import { PreviousReviewersView } from './PreviousReviewersView';
+import { ReopenReconciliationButton } from './ReopenReconciliationButton';
 import type { StudyInfo } from '@/stores/projectStore';
 import type { ChecklistGroup } from '@corates/shared/checklists';
 import type { ReconciliationProgressEntry } from '@/primitives/useProject/reconciliation';
@@ -14,6 +20,7 @@ interface CompletedOutcomeRowProps {
   study: StudyInfo;
   outcomeGroup: ChecklistGroup;
   onOpenChecklist: (checklistId: string) => void;
+  onReopenReconciliation: (checklistId: string) => void;
   getAssigneeName: (userId: string) => string;
   getOutcomeName: (outcomeId: string) => string | null;
   getReconciliationProgress: (
@@ -26,6 +33,7 @@ export function CompletedOutcomeRow({
   study,
   outcomeGroup,
   onOpenChecklist,
+  onReopenReconciliation,
   getAssigneeName,
   getOutcomeName,
   getReconciliationProgress,
@@ -43,6 +51,11 @@ export function CompletedOutcomeRow({
 
   const hasPreviousReviewers = !!(
     reconciliationProgress?.checklist1Id && reconciliationProgress?.checklist2Id
+  );
+
+  const reopenableChecklist = useMemo(
+    () => getReopenableReconciledChecklist(study, outcomeGroup.outcomeId, outcomeGroup.type),
+    [study, outcomeGroup.outcomeId, outcomeGroup.type],
   );
 
   return (
@@ -66,19 +79,16 @@ export function CompletedOutcomeRow({
 
         <div className='flex items-center gap-2'>
           {hasPreviousReviewers && (
-            <button
-              onClick={() => setShowPreviousReviewers(true)}
-              className='bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors'
-            >
+            <Button variant='secondary' onClick={() => setShowPreviousReviewers(true)}>
               View Previous
-            </button>
+            </Button>
           )}
-          <button
-            onClick={() => onOpenChecklist(finalizedChecklist?.id)}
-            className='bg-primary hover:bg-primary/90 rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-colors'
-          >
-            Open
-          </button>
+          {reopenableChecklist && (
+            <ReopenReconciliationButton
+              onReopen={() => onReopenReconciliation(reopenableChecklist.id)}
+            />
+          )}
+          <Button onClick={() => onOpenChecklist(finalizedChecklist?.id)}>Open</Button>
         </div>
       </div>
 

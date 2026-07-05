@@ -8,7 +8,13 @@ import { CheckCircleIcon } from 'lucide-react';
 import { useProjectContext } from '../ProjectContext';
 import { useAllStudiesById, useProjectMetaById } from '@/primitives/useProject/reactor';
 import { connectionPool } from '@/project/ConnectionPool';
-import { getStudiesForTab, isDualReviewerStudy, getOutcomeKey } from '@corates/shared/checklists';
+import {
+  getStudiesForTab,
+  isDualReviewerStudy,
+  getOutcomeKey,
+  CHECKLIST_STATUS,
+} from '@corates/shared/checklists';
+import { showToast } from '@/components/ui/toast';
 import { CompletedStudyRow } from './CompletedStudyRow';
 import { project } from '@/project';
 import type { ReconciliationProgressEntry } from '@/primitives/useProject/reconciliation';
@@ -39,6 +45,11 @@ export function CompletedTab() {
     [navigate, getChecklistPath],
   );
 
+  const reopenReconciliation = useCallback((studyId: string, checklistId: string) => {
+    project.checklist.update(studyId, checklistId, { status: CHECKLIST_STATUS.RECONCILING });
+    showToast.success('Reconciliation Reopened', 'The study has moved to the Reconcile tab.');
+  }, []);
+
   const getReconciliationProgress = useCallback(
     (
       studyId: string,
@@ -64,6 +75,7 @@ export function CompletedTab() {
             key={study.id}
             study={study}
             onOpenChecklist={checklistId => openChecklist(study.id, checklistId)}
+            onReopenReconciliation={checklistId => reopenReconciliation(study.id, checklistId)}
             onViewPdf={pdf => project.pdf.view(study.id, pdf)}
             onDownloadPdf={pdf => project.pdf.download(study.id, pdf)}
             getReconciliationProgress={(outcomeId, type) =>

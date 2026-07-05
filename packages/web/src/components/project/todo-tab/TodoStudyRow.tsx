@@ -6,6 +6,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { ChevronRightIcon, PlusIcon, Trash2Icon, XIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { sortStudyPdfs, getCitationLine } from '../study-utils';
 import {
@@ -115,23 +116,20 @@ export function TodoStudyRow({
 
   const addCancelButton =
     (hasChecklists && canAddMore) || showChecklistForm ?
-      <button
+      <Button
+        variant={showChecklistForm ? 'ghost' : 'default'}
         onClick={e => {
           e.stopPropagation();
           onToggleChecklistForm();
         }}
-        className={`flex shrink-0 items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-          showChecklistForm ?
-            'text-red-500 hover:bg-red-50 hover:text-red-600'
-          : 'bg-primary hover:bg-primary/90 text-white'
-        }`}
+        className={showChecklistForm ? 'text-red-500 hover:bg-red-50 hover:text-red-600' : ''}
         title={showChecklistForm ? 'Cancel' : 'Add another checklist'}
       >
         {showChecklistForm ?
           <XIcon className='size-4' />
         : <PlusIcon className='size-4' />}
         {showChecklistForm ? 'Cancel' : 'Add'}
-      </button>
+      </Button>
     : null;
 
   return (
@@ -196,41 +194,41 @@ export function TodoStudyRow({
                   >
                     {getStatusLabel(checklist.status)}
                   </span>
-                  <button
+                  <Button
                     onClick={e => {
                       e.stopPropagation();
                       onOpenChecklist(checklist.id);
                     }}
-                    className='bg-primary hover:bg-primary/90 shrink-0 rounded-lg px-4 py-1.5 text-sm font-medium text-white transition-colors'
                   >
                     Open
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant='ghost'
+                    size='icon-sm'
                     onClick={e => {
                       e.stopPropagation();
                       setDeleteChecklistId(checklist.id);
                     }}
-                    className='text-muted-foreground shrink-0 p-1.5 transition-colors hover:text-red-600'
+                    className='text-muted-foreground hover:text-red-600'
                     title='Delete checklist'
                     aria-label='Delete checklist'
                   >
                     <Trash2Icon className='size-4' />
-                  </button>
+                  </Button>
                 </>
               );
             })()}
 
           {/* No checklists */}
           {!hasChecklists && (
-            <button
+            <Button
               onClick={e => {
                 e.stopPropagation();
                 onToggleChecklistForm();
               }}
-              className='bg-primary hover:bg-primary/90 shrink-0 rounded-lg px-4 py-1.5 text-sm font-medium text-white transition-colors'
             >
               Select Checklist
-            </button>
+            </Button>
           )}
 
           {addCancelButton}
@@ -256,20 +254,17 @@ export function TodoStudyRow({
                     {getStatusLabel(checklist.status)}
                   </span>
                 </div>
-                <button
-                  onClick={() => onOpenChecklist(checklist.id)}
-                  className='bg-primary hover:bg-primary/90 shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-colors'
-                >
-                  Open
-                </button>
-                <button
+                <Button onClick={() => onOpenChecklist(checklist.id)}>Open</Button>
+                <Button
+                  variant='ghost'
+                  size='icon-sm'
                   onClick={() => setDeleteChecklistId(checklist.id)}
-                  className='text-muted-foreground shrink-0 p-1.5 transition-colors hover:text-red-600'
+                  className='text-muted-foreground hover:text-red-600'
                   title='Delete checklist'
                   aria-label='Delete checklist'
                 >
                   <Trash2Icon className='size-4' />
-                </button>
+                </Button>
               </div>
             ))}
           </div>

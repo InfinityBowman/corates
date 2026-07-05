@@ -20,6 +20,7 @@ import {
   isDualReviewerStudy,
   getReconciliationChecklistsByOutcome,
   getReadyReconciliationPairs,
+  getReopenableReconciledChecklist,
   CHECKLIST_STATUS,
 } from '@corates/shared/checklists';
 
@@ -674,6 +675,110 @@ describe('checklist-domain', () => {
       const groups = getReconciliationChecklistsByOutcome(study);
       expect(groups).toHaveLength(1);
       expect(groups[0].checklists).toHaveLength(1);
+    });
+  });
+
+  describe('getReopenableReconciledChecklist', () => {
+    const reopenableChecklists = ({
+      reconciledStatus = CHECKLIST_STATUS.FINALIZED,
+    }: { reconciledStatus?: string } = {}) => [
+      createChecklist({
+        id: 'cl-1',
+        assignedTo: 'user-1',
+        status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+      }),
+      createChecklist({
+        id: 'cl-2',
+        assignedTo: 'user-2',
+        status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+      }),
+      createChecklist({
+        id: 'cl-reconciled',
+        assignedTo: null,
+        status: reconciledStatus,
+      }),
+    ];
+
+    const createReopenableStudy = (overrides = {}) =>
+      createStudy({
+        reviewer1: 'user-1',
+        reviewer2: 'user-2',
+        checklists: reopenableChecklists(),
+        ...overrides,
+      });
+
+    it('returns the finalized reconciled checklist when the reviewer pair still exists', () => {
+      const study = createReopenableStudy();
+      const result = getReopenableReconciledChecklist(study, null, 'AMSTAR2');
+      expect(result?.id).toBe('cl-reconciled');
+    });
+
+    it('returns null for single-reviewer studies', () => {
+      const study = createReopenableStudy({ reviewer2: null });
+      expect(getReopenableReconciledChecklist(study, null, 'AMSTAR2')).toBe(null);
+    });
+
+    it('returns null when no finalized reconciled checklist exists', () => {
+      const study = createReopenableStudy({
+        checklists: reopenableChecklists().filter(c => c.id !== 'cl-reconciled'),
+      });
+      expect(getReopenableReconciledChecklist(study, null, 'AMSTAR2')).toBe(null);
+    });
+
+    it('returns null when the reconciled checklist is not finalized', () => {
+      const study = createReopenableStudy({
+        checklists: reopenableChecklists({ reconciledStatus: CHECKLIST_STATUS.RECONCILING }),
+      });
+      expect(getReopenableReconciledChecklist(study, null, 'AMSTAR2')).toBe(null);
+    });
+
+    it('returns null when a reviewer checklist is missing', () => {
+      const study = createReopenableStudy({
+        checklists: reopenableChecklists().filter(c => c.id !== 'cl-2'),
+      });
+      expect(getReopenableReconciledChecklist(study, null, 'AMSTAR2')).toBe(null);
+    });
+
+    it('scopes to the requested outcome for outcome-based types', () => {
+      const study = createStudy({
+        reviewer1: 'user-1',
+        reviewer2: 'user-2',
+        checklists: [
+          createChecklist({
+            id: 'cl-1',
+            type: 'ROB2',
+            outcomeId: 'outcome-1',
+            assignedTo: 'user-1',
+            status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+          }),
+          createChecklist({
+            id: 'cl-2',
+            type: 'ROB2',
+            outcomeId: 'outcome-1',
+            assignedTo: 'user-2',
+            status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+          }),
+          createChecklist({
+            id: 'cl-reconciled-1',
+            type: 'ROB2',
+            outcomeId: 'outcome-1',
+            assignedTo: null,
+            status: CHECKLIST_STATUS.FINALIZED,
+          }),
+          createChecklist({
+            id: 'cl-reconciled-2',
+            type: 'ROB2',
+            outcomeId: 'outcome-2',
+            assignedTo: null,
+            status: CHECKLIST_STATUS.FINALIZED,
+          }),
+        ],
+      });
+
+      const result = getReopenableReconciledChecklist(study, 'outcome-1', 'ROB2');
+      expect(result?.id).toBe('cl-reconciled-1');
+      // outcome-2 has a finalized reconciled checklist but no reviewer pair
+      expect(getReopenableReconciledChecklist(study, 'outcome-2', 'ROB2')).toBe(null);
     });
   });
 });

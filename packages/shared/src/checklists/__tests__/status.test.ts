@@ -59,7 +59,11 @@ describe('Checklist Status', () => {
       expect(canTransitionTo('reconciling', 'finalized')).toBe(true);
     });
 
-    it('should not allow finalized to transition anywhere', () => {
+    it('should allow finalized to transition back to reconciling', () => {
+      expect(canTransitionTo('finalized', 'reconciling')).toBe(true);
+    });
+
+    it('should not allow finalized to transition anywhere else', () => {
       expect(canTransitionTo('finalized', 'pending')).toBe(false);
       expect(canTransitionTo('finalized', 'in-progress')).toBe(false);
     });

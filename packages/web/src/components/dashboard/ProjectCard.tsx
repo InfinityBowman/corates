@@ -27,7 +27,7 @@ export function ProjectCard({ project, onOpen, onDelete, style }: ProjectCardPro
       className='group border-border/60 hover:border-border relative rounded-2xl p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:shadow-stone-200/50'
       style={style}
     >
-      <CardContent className='p-0'>
+      <CardContent className='flex flex-1 flex-col p-0'>
         {/* Header */}
         <div className='relative mb-4 flex items-start justify-between'>
           <div className='min-w-0 flex-1 pr-4'>
@@ -65,7 +65,7 @@ export function ProjectCard({ project, onOpen, onDelete, style }: ProjectCardPro
         </p>
 
         {/* Footer */}
-        <div className='flex items-center justify-between'>
+        <div className='mt-auto flex items-center justify-between'>
           <div className='text-muted-foreground flex items-center gap-1.5 text-xs'>
             <UsersIcon className='size-3.5' />
             <span>

@@ -5,23 +5,27 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { ChevronRightIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { sortStudyPdfs, getCitationLine } from '../study-utils';
 import { getChecklistMetadata } from '@/checklist-registry';
 import { PdfListItem } from '@/components/pdf/PdfListItem';
 import {
   getCompletedChecklistsByOutcome,
+  getReopenableReconciledChecklist,
   getStatusLabel,
   getStatusStyle,
 } from '@corates/shared/checklists';
 import { PreviousReviewersView } from './PreviousReviewersView';
 import { CompletedOutcomeRow } from './CompletedOutcomeRow';
+import { ReopenReconciliationButton } from './ReopenReconciliationButton';
 import type { StudyInfo, PdfEntry } from '@/stores/projectStore';
 import type { ReconciliationProgressEntry } from '@/primitives/useProject/reconciliation';
 
 interface CompletedStudyRowProps {
   study: StudyInfo;
   onOpenChecklist: (checklistId: string) => void;
+  onReopenReconciliation: (checklistId: string) => void;
   onViewPdf: (pdf: PdfEntry) => void;
   onDownloadPdf: (pdf: PdfEntry) => void;
   getReconciliationProgress: (
@@ -35,6 +39,7 @@ interface CompletedStudyRowProps {
 export function CompletedStudyRow({
   study,
   onOpenChecklist,
+  onReopenReconciliation,
   onViewPdf,
   onDownloadPdf,
   getReconciliationProgress,
@@ -57,6 +62,11 @@ export function CompletedStudyRow({
     const progress = getReconciliationProgress?.(firstGroup.outcomeId, firstGroup.type);
     return !!(progress?.checklist1Id && progress?.checklist2Id);
   }, [firstGroup, getReconciliationProgress]);
+
+  const reopenableChecklist = useMemo(() => {
+    if (!firstGroup) return null;
+    return getReopenableReconciledChecklist(study, firstGroup.outcomeId, firstGroup.type);
+  }, [study, firstGroup]);
 
   const handleRowClick = useCallback(
     (e: React.MouseEvent) => {
@@ -126,25 +136,29 @@ export function CompletedStudyRow({
                   {getStatusLabel(firstGroup.checklists[0]?.status ?? '')}
                 </span>
                 {hasPreviousReviewers && (
-                  <button
+                  <Button
+                    variant='secondary'
                     onClick={e => {
                       e.stopPropagation();
                       setShowPreviousReviewers(true);
                     }}
-                    className='bg-secondary text-secondary-foreground hover:bg-secondary/80 shrink-0 rounded-lg px-4 py-1.5 text-sm font-medium transition-colors'
                   >
                     View Previous
-                  </button>
+                  </Button>
                 )}
-                <button
+                {reopenableChecklist && (
+                  <ReopenReconciliationButton
+                    onReopen={() => onReopenReconciliation(reopenableChecklist.id)}
+                  />
+                )}
+                <Button
                   onClick={e => {
                     e.stopPropagation();
                     onOpenChecklist(firstGroup.checklists[0].id);
                   }}
-                  className='bg-primary hover:bg-primary/90 shrink-0 rounded-lg px-4 py-1.5 text-sm font-medium text-white transition-colors'
                 >
                   Open
-                </button>
+                </Button>
               </>
             )}
           </div>
@@ -158,6 +172,7 @@ export function CompletedStudyRow({
                   study={study}
                   outcomeGroup={outcomeGroup}
                   onOpenChecklist={onOpenChecklist}
+                  onReopenReconciliation={onReopenReconciliation}
                   getAssigneeName={getAssigneeName}
                   getOutcomeName={getOutcomeName}
                   getReconciliationProgress={getReconciliationProgress}

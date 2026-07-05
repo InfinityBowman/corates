@@ -80,7 +80,12 @@ export function canTransitionTo(
     return true;
   }
 
-  // Cannot transition from finalized or reviewer-completed to anything else (locked)
+  // Can reopen a finalized reconciled checklist back into reconciliation
+  if (currentStatus === CHECKLIST_STATUS.FINALIZED && newStatus === CHECKLIST_STATUS.RECONCILING) {
+    return true;
+  }
+
+  // Cannot otherwise transition from finalized or reviewer-completed (locked)
   if (
     currentStatus === CHECKLIST_STATUS.FINALIZED ||
     currentStatus === CHECKLIST_STATUS.REVIEWER_COMPLETED

@@ -391,6 +391,49 @@ export function getOutcomeKey(outcomeId: string | null | undefined, type: string
 }
 
 /**
+ * Checks whether a finalized reconciliation can be reopened for an outcome.
+ *
+ * Reopening only applies to dual-reviewer studies and requires the original
+ * reviewer-completed pair to still exist; otherwise un-finalizing the
+ * reconciled checklist would leave the study visible in neither the
+ * reconcile tab nor the completed tab.
+ *
+ * @param study - The study object
+ * @param outcomeId - The outcome ID (null for AMSTAR2)
+ * @param type - The checklist type
+ * @returns The finalized reconciled checklist to reopen, or null if not allowed
+ */
+export function getReopenableReconciledChecklist(
+  study: Study | null | undefined,
+  outcomeId: string | null,
+  type: string,
+): StudyChecklist | null {
+  if (!study || !study.reviewer1 || !study.reviewer2) return null;
+
+  const checklists = study.checklists || [];
+
+  const finalizedReconciled = checklists.find(
+    c =>
+      isReconciledChecklist(c) &&
+      c.status === CHECKLIST_STATUS.FINALIZED &&
+      c.type === type &&
+      (c.outcomeId ?? null) === outcomeId,
+  );
+  if (!finalizedReconciled) return null;
+
+  const reviewerPair = checklists.filter(
+    c =>
+      !isReconciledChecklist(c) &&
+      c.status === CHECKLIST_STATUS.REVIEWER_COMPLETED &&
+      c.type === type &&
+      (c.outcomeId ?? null) === outcomeId,
+  );
+  if (reviewerPair.length !== 2) return null;
+
+  return finalizedReconciled;
+}
+
+/**
  * Groups completed checklists by outcome
  */
 export function getCompletedChecklistsByOutcome(study: Study | null | undefined): ChecklistGroup[] {

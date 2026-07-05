@@ -5,6 +5,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { ChevronRightIcon, GitCompareArrowsIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { sortStudyPdfs, getCitationLine } from '../study-utils';
 import {
@@ -146,21 +147,16 @@ export function ReconcileStudyRow({
                 </div>
               )}
 
-              <button
+              <Button
                 onClick={e => {
                   e.stopPropagation();
                   if (firstReadyGroup) startReconciliation(firstReadyGroup);
                 }}
                 disabled={!hasReadyPair}
-                className={`flex shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                  hasReadyPair ?
-                    'bg-primary hover:bg-primary/90 text-white'
-                  : 'bg-secondary text-muted-foreground cursor-not-allowed'
-                }`}
               >
                 <GitCompareArrowsIcon className='size-4' />
                 Reconcile
-              </button>
+              </Button>
             </>
           )}
 
@@ -212,13 +208,10 @@ export function ReconcileStudyRow({
                           {getReviewerName(group.checklists[1])}
                         </span>
                       </div>
-                      <button
-                        onClick={() => startReconciliation(group)}
-                        className='bg-primary hover:bg-primary/90 flex shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-colors'
-                      >
+                      <Button onClick={() => startReconciliation(group)}>
                         <GitCompareArrowsIcon className='size-4' />
                         Reconcile
-                      </button>
+                      </Button>
                     </div>
                   ))}
                 </div>
