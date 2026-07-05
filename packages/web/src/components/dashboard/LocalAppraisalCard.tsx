@@ -99,7 +99,7 @@ export function LocalAppraisalCard({
                   <DownloadIcon className='size-4' />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align='end' className='w-auto'>
+              <DropdownMenuContent align='end'>
                 {onExportCsv && (
                   <DropdownMenuItem onClick={() => onExportCsv(checklist.id)}>
                     <FileSpreadsheetIcon />

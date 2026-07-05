@@ -10,6 +10,7 @@ import {
   DEFAULT_CHECKLIST_TYPE,
   CHECKLIST_TYPES,
 } from '@/checklist-registry';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -91,7 +92,7 @@ export function ChecklistForm({
   return (
     <div className='px-4 py-3'>
       <div className='flex flex-wrap items-end gap-2'>
-        <div className='min-w-[180px] flex-1'>
+        <div className='min-w-45 flex-1'>
           <Select value={type} onValueChange={handleTypeChange}>
             <SelectTrigger>
               <SelectValue placeholder='Checklist type...' />
@@ -107,7 +108,7 @@ export function ChecklistForm({
         </div>
 
         {requiresOutcome && !hasOutcomeIssue && (
-          <div className='min-w-[180px] flex-1'>
+          <div className='min-w-45 flex-1'>
             <Select value={outcomeId || ''} onValueChange={v => setSelectedOutcomeId(v || null)}>
               <SelectTrigger>
                 <SelectValue placeholder='Select outcome...' />
@@ -123,13 +124,9 @@ export function ChecklistForm({
           </div>
         )}
 
-        <button
-          onClick={handleSubmit}
-          disabled={loading || !canSubmit}
-          className='bg-primary hover:bg-primary/90 shrink-0 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50'
-        >
+        <Button onClick={handleSubmit} disabled={loading || !canSubmit}>
           {loading ? 'Adding...' : 'Add Checklist'}
-        </button>
+        </Button>
       </div>
 
       {requiresOutcome && hasOutcomeIssue && outcomes.length === 0 && (

@@ -4,6 +4,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { ChevronRightIcon, PlusIcon, PencilIcon, Trash2Icon, CheckIcon, XIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import {
   AlertDialog,
@@ -143,18 +144,20 @@ export function OutcomeManager() {
           </div>
 
           {isOwner && (
-            <button
+            <Button
+              variant='ghost'
+              size='sm'
               onClick={e => {
                 e.stopPropagation();
                 setIsAdding(true);
                 setExpanded(true);
                 setNewName('');
               }}
-              className='text-muted-foreground hover:text-primary flex items-center gap-1 text-sm transition-colors'
+              className='text-muted-foreground'
             >
               <PlusIcon className='size-4' />
               Add
-            </button>
+            </Button>
           )}
         </div>
 
@@ -181,26 +184,30 @@ export function OutcomeManager() {
                   className='border-border focus:border-primary flex-1 rounded border px-3 py-1.5 text-sm focus:ring-1 focus:ring-blue-200 focus:outline-none'
                   autoFocus
                 />
-                <button
+                <Button
+                  variant='ghost'
+                  size='icon-sm'
                   onClick={handleAdd}
                   disabled={!newName.trim() || isSaving}
-                  className='text-primary hover:text-primary/80 p-1.5 transition-colors disabled:opacity-50'
+                  className='text-primary hover:text-primary'
                   title='Add'
                   aria-label='Add'
                 >
                   <CheckIcon className='size-4' />
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant='ghost'
+                  size='icon-sm'
                   onClick={() => {
                     setIsAdding(false);
                     setNewName('');
                   }}
-                  className='text-muted-foreground hover:text-foreground p-1.5 transition-colors'
+                  className='text-muted-foreground'
                   title='Cancel'
                   aria-label='Cancel'
                 >
                   <XIcon className='size-4' />
-                </button>
+                </Button>
               </div>
             )}
 
@@ -237,26 +244,30 @@ export function OutcomeManager() {
                     className='border-border focus:border-primary flex-1 rounded border px-3 py-1.5 text-sm focus:ring-1 focus:ring-blue-200 focus:outline-none'
                     autoFocus
                   />
-                  <button
+                  <Button
+                    variant='ghost'
+                    size='icon-sm'
                     onClick={() => handleUpdate(outcome.id)}
                     disabled={!newName.trim() || isSaving}
-                    className='text-primary hover:text-primary/80 p-1.5 transition-colors disabled:opacity-50'
+                    className='text-primary hover:text-primary'
                     title='Save'
                     aria-label='Save'
                   >
                     <CheckIcon className='size-4' />
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant='ghost'
+                    size='icon-sm'
                     onClick={() => {
                       setEditingId(null);
                       setNewName('');
                     }}
-                    className='text-muted-foreground hover:text-foreground p-1.5 transition-colors'
+                    className='text-muted-foreground'
                     title='Cancel'
                     aria-label='Cancel'
                   >
                     <XIcon className='size-4' />
-                  </button>
+                  </Button>
                 </div>
               : <div key={outcome.id} className='flex items-center gap-2'>
                   <span className='text-foreground min-w-0 flex-1 truncate text-sm'>
@@ -264,25 +275,29 @@ export function OutcomeManager() {
                   </span>
                   {isOwner && (
                     <>
-                      <button
+                      <Button
+                        variant='ghost'
+                        size='icon-sm'
                         onClick={() => {
                           setEditingId(outcome.id);
                           setNewName(outcome.name);
                         }}
-                        className='text-muted-foreground hover:text-foreground p-1 transition-colors'
+                        className='text-muted-foreground'
                         title='Edit'
                         aria-label='Edit'
                       >
                         <PencilIcon className='size-3.5' />
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant='ghost'
+                        size='icon-sm'
                         onClick={() => setDeleteTarget(outcome.id)}
-                        className='text-muted-foreground p-1 transition-colors hover:text-red-600'
+                        className='text-muted-foreground hover:text-red-600'
                         title='Delete'
                         aria-label='Delete'
                       >
                         <Trash2Icon className='size-3.5' />
-                      </button>
+                      </Button>
                     </>
                   )}
                 </div>,

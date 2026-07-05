@@ -4,6 +4,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { showToast } from '@/components/ui/toast';
+import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import {
   ShuffleIcon,
@@ -343,17 +344,12 @@ export function ReviewerAssignment({
             </p>
           </div>
         </div>
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-            isOpen ? 'bg-primary text-white' : 'bg-primary/10 text-primary hover:bg-primary/20'
-          }`}
-        >
+        <Button variant={isOpen ? 'secondary' : 'default'} onClick={() => setIsOpen(!isOpen)}>
           <ChevronRightIcon
             className={`size-4 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`}
           />
           {isOpen ? 'Hide' : 'Show'}
-        </button>
+        </Button>
       </div>
 
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -467,10 +463,11 @@ export function ReviewerAssignment({
                 </Collapsible>
 
                 {/* Generate button */}
-                <button
+                <Button
+                  size='lg'
                   onClick={handleGenerate}
                   disabled={showCustomize && !isCustomValid}
-                  className='bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50'
+                  className='self-start'
                 >
                   <ShuffleIcon className='size-4' />
                   {showPreview ?
@@ -478,7 +475,7 @@ export function ReviewerAssignment({
                   : showCustomize ?
                     'Generate with Custom Split'
                   : 'Assign Randomly (Even Split)'}
-                </button>
+                </Button>
 
                 {/* Preview */}
                 {showPreview && (
@@ -549,23 +546,19 @@ export function ReviewerAssignment({
                     </div>
 
                     <div className='border-border bg-muted flex gap-2 border-t px-4 py-3'>
-                      <button
-                        onClick={handleApply}
-                        disabled={hasConflicts}
-                        className='bg-success hover:bg-success/80 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50'
-                      >
+                      <Button variant='success' onClick={handleApply} disabled={hasConflicts}>
                         <CheckIcon className='size-4' />
                         Apply Assignments
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant='outline'
                         onClick={() => {
                           setShowPreview(false);
                           setPreviewAssignments([]);
                         }}
-                        className='border-border bg-card text-secondary-foreground hover:bg-secondary rounded-lg border px-4 py-2 text-sm font-medium transition-colors'
                       >
                         Cancel
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 )}

@@ -205,7 +205,7 @@ export function LocalAppraisalsSection({
                     Export All
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align='end' className='w-auto'>
+                <DropdownMenuContent align='end'>
                   <DropdownMenuItem onClick={handleExportAllCsv}>
                     <FileSpreadsheetIcon />
                     Export as CSV

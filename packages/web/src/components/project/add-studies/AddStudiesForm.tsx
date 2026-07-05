@@ -11,6 +11,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { PlusIcon, XIcon, UploadIcon, FileTextIcon, LinkIcon, FolderIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { Tabs, TabsList, TabsTrigger, TabsIndicator, TabsContent } from '@/components/ui/tabs';
 import { showToast } from '@/components/ui/toast';
@@ -230,20 +231,11 @@ export function AddStudiesForm({
       {studies.totalStudyCount > 0 && !collectMode && (
         <div className='border-border mt-4 flex items-center justify-end gap-2 border-t pt-4'>
           {!alwaysExpanded && (
-            <button
-              type='button'
-              onClick={handleCancel}
-              className='text-secondary-foreground hover:bg-secondary hover:text-foreground rounded-lg px-3 py-1.5 text-sm transition-colors'
-            >
+            <Button variant='ghost' onClick={handleCancel}>
               Cancel
-            </button>
+            </Button>
           )}
-          <button
-            type='button'
-            onClick={handleSubmit}
-            disabled={isSubmitting || studies.totalStudyCount === 0}
-            className='bg-primary hover:bg-primary/90 focus:ring-primary inline-flex items-center gap-2 rounded-lg px-4 py-1.5 text-sm font-medium text-white transition-colors focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
-          >
+          <Button onClick={handleSubmit} disabled={isSubmitting || studies.totalStudyCount === 0}>
             {isSubmitting ?
               <>
                 <div className='size-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
@@ -253,7 +245,7 @@ export function AddStudiesForm({
                 Add {studies.totalStudyCount} {studies.totalStudyCount === 1 ? 'Study' : 'Studies'}
               </>
             }
-          </button>
+          </Button>
         </div>
       )}
     </>
@@ -287,20 +279,15 @@ export function AddStudiesForm({
                 </p>
               </div>
             </div>
-            <button
-              type='button'
+            <Button
+              variant={isExpanded ? 'secondary' : 'default'}
               onClick={() => setExpanded(!expanded)}
-              className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                isExpanded ? 'bg-primary text-white' : (
-                  'bg-primary/10 text-primary hover:bg-primary/20'
-                )
-              }`}
             >
               {isExpanded ?
                 <XIcon className='size-4' />
               : <PlusIcon className='size-4' />}
               {isExpanded ? 'Close' : 'Add'}
-            </button>
+            </Button>
           </div>
 
           <Collapsible open={isExpanded} onOpenChange={setExpanded}>
