@@ -2,7 +2,7 @@
  * Social authentication buttons (Google, ORCID)
  */
 
-import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 interface SocialButtonProps {
   loading?: boolean;
@@ -11,16 +11,15 @@ interface SocialButtonProps {
 }
 
 export function GoogleButton({ loading, onClick, iconOnly }: SocialButtonProps) {
-  const baseClass =
-    'border border-border hover:bg-muted text-secondary-foreground font-semibold rounded-lg sm:rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center focus-visible:border-ring focus-visible:ring-ring/50 outline-none focus-visible:ring-3';
-
   if (iconOnly) {
     return (
-      <button
+      <Button
         type='button'
+        variant='outline'
+        size='icon'
         onClick={onClick}
         disabled={loading}
-        className={cn(baseClass, 'p-3 sm:p-3.5')}
+        className='size-auto rounded-lg p-3 sm:rounded-xl sm:p-3.5'
         title='Continue with Google'
         aria-label='Continue with Google'
       >
@@ -32,16 +31,17 @@ export function GoogleButton({ loading, onClick, iconOnly }: SocialButtonProps) 
           />
         : <img src='/logos/google.svg' alt='' className='size-5 sm:h-6 sm:w-6' aria-hidden='true' />
         }
-      </button>
+      </Button>
     );
   }
 
   return (
-    <button
+    <Button
       type='button'
+      variant='outline'
       onClick={onClick}
       disabled={loading}
-      className={cn(baseClass, 'w-full gap-3 py-2.5 text-sm sm:py-3 sm:text-base')}
+      className='h-auto w-full gap-3 rounded-lg py-2.5 text-sm font-semibold sm:rounded-xl sm:py-3 sm:text-base'
     >
       {loading ?
         <div
@@ -51,21 +51,20 @@ export function GoogleButton({ loading, onClick, iconOnly }: SocialButtonProps) 
         />
       : <img src='/logos/google.svg' alt='' className='size-5' aria-hidden='true' />}
       Continue with Google
-    </button>
+    </Button>
   );
 }
 
 export function OrcidButton({ loading, onClick, iconOnly }: SocialButtonProps) {
-  const baseClass =
-    'border border-border hover:bg-muted text-secondary-foreground font-semibold rounded-lg sm:rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center focus-visible:border-ring focus-visible:ring-ring/50 outline-none focus-visible:ring-3';
-
   if (iconOnly) {
     return (
-      <button
+      <Button
         type='button'
+        variant='outline'
+        size='icon'
         onClick={onClick}
         disabled={loading}
-        className={cn(baseClass, 'p-3 sm:p-3.5')}
+        className='size-auto rounded-lg p-3 sm:rounded-xl sm:p-3.5'
         title='Continue with ORCID'
         aria-label='Continue with ORCID'
       >
@@ -76,16 +75,17 @@ export function OrcidButton({ loading, onClick, iconOnly }: SocialButtonProps) {
             className='border-border border-t-secondary-foreground size-5 animate-spin rounded-full border-2 sm:h-6 sm:w-6'
           />
         : <img src='/logos/orcid.svg' alt='' className='size-5 sm:h-6 sm:w-6' aria-hidden='true' />}
-      </button>
+      </Button>
     );
   }
 
   return (
-    <button
+    <Button
       type='button'
+      variant='outline'
       onClick={onClick}
       disabled={loading}
-      className={cn(baseClass, 'w-full gap-3 py-2.5 text-sm sm:py-3 sm:text-base')}
+      className='h-auto w-full gap-3 rounded-lg py-2.5 text-sm font-semibold sm:rounded-xl sm:py-3 sm:text-base'
     >
       {loading ?
         <div
@@ -95,7 +95,7 @@ export function OrcidButton({ loading, onClick, iconOnly }: SocialButtonProps) {
         />
       : <img src='/logos/orcid.svg' alt='' className='size-5' aria-hidden='true' />}
       Continue with ORCID
-    </button>
+    </Button>
   );
 }
 

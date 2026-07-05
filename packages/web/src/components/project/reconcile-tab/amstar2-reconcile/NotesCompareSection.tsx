@@ -8,6 +8,7 @@
 import { useState } from 'react';
 import type * as Y from 'yjs';
 import { ChevronRightIcon, BookOpenIcon, ClipboardIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
 import { useYText, applyYTextDiff } from '@/hooks/useYText';
@@ -89,14 +90,15 @@ export function NotesCompareSection({
                     {reviewer1Name}
                   </h4>
                   {hasReviewer1Note && (
-                    <button
+                    <Button
+                      variant='link'
+                      size='xs'
                       onClick={() => copyToFinal(reviewer1Note)}
-                      className='flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800'
                       title='Copy to final note'
                     >
                       <ClipboardIcon className='size-3' />
                       Use
-                    </button>
+                    </Button>
                   )}
                 </div>
                 {hasReviewer1Note ?
@@ -113,14 +115,15 @@ export function NotesCompareSection({
                     {reviewer2Name}
                   </h4>
                   {hasReviewer2Note && (
-                    <button
+                    <Button
+                      variant='link'
+                      size='xs'
                       onClick={() => copyToFinal(reviewer2Note)}
-                      className='flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800'
                       title='Copy to final note'
                     >
                       <ClipboardIcon className='size-3' />
                       Use
-                    </button>
+                    </Button>
                   )}
                 </div>
                 {hasReviewer2Note ?
@@ -135,13 +138,15 @@ export function NotesCompareSection({
                 <div className='mb-2 flex items-center justify-between'>
                   <h4 className='text-secondary-foreground text-xs font-semibold'>Final Note</h4>
                   {hasReviewer1Note && hasReviewer2Note && (
-                    <button
+                    <Button
+                      variant='link'
+                      size='xs'
                       onClick={mergeToFinal}
-                      className='text-xs text-green-600 hover:text-green-800'
+                      className='text-green-600 hover:text-green-800'
                       title='Merge both notes'
                     >
                       Merge Both
-                    </button>
+                    </Button>
                   )}
                 </div>
                 {finalNoteYText ?

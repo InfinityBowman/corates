@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { CheckIcon, XIcon, ChevronRightIcon, ArrowLeftIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   hasNavItemValue,
   isNavItemAgreement,
@@ -226,33 +227,25 @@ export function ROB2SummaryView({
 
       {/* Action Buttons */}
       <div className='flex items-center justify-between border-t p-6'>
-        <button
-          type='button'
-          onClick={() => onBack?.()}
-          className='bg-secondary text-secondary-foreground hover:bg-border flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors'
-        >
+        <Button variant='secondary' onClick={() => onBack?.()}>
           <ArrowLeftIcon className='size-4' />
           Back to Questions
-        </button>
+        </Button>
 
         <div className='flex items-center gap-4'>
           <div className='text-muted-foreground text-sm'>
             {summary?.answered || 0} of {summary?.total || 0} items reconciled
           </div>
 
-          <button
-            type='button'
+          <Button
+            variant='success'
+            size='lg'
             onClick={() => onSave?.()}
             disabled={!allAnswered || saving}
-            className={`flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition-colors ${
-              allAnswered && !saving ?
-                'bg-green-600 text-white shadow hover:bg-green-700'
-              : 'bg-border text-muted-foreground/70 cursor-not-allowed'
-            }`}
           >
             <CheckIcon className='size-4' />
             {saving ? 'Saving...' : 'Save Reconciled Checklist'}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

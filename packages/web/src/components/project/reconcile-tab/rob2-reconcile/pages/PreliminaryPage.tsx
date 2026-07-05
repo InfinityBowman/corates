@@ -9,6 +9,7 @@ import {
   DEVIATION_OPTIONS,
   INFORMATION_SOURCES,
 } from '@corates/shared/checklists/rob2';
+import { Button } from '@/components/ui/button';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
 import type { TextRef } from '@/primitives/useProject/checklists';
 
@@ -431,12 +432,9 @@ export function PreliminaryPage({
         <div className={`p-4 ${getPanelBackground('reviewer1')}`}>
           <div className='mb-4 flex items-center justify-between'>
             <h3 className='text-foreground font-semibold'>{reviewer1Name}</h3>
-            <button
-              onClick={() => onUseReviewer1?.()}
-              className='bg-secondary text-secondary-foreground rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:bg-blue-100 hover:text-blue-700'
-            >
+            <Button variant='secondary' size='sm' onClick={() => onUseReviewer1?.()}>
               Use This
-            </button>
+            </Button>
           </div>
           {renderReadOnlyField(reviewer1Value)}
         </div>
@@ -445,12 +443,9 @@ export function PreliminaryPage({
         <div className={`p-4 ${getPanelBackground('reviewer2')}`}>
           <div className='mb-4 flex items-center justify-between'>
             <h3 className='text-foreground font-semibold'>{reviewer2Name}</h3>
-            <button
-              onClick={() => onUseReviewer2?.()}
-              className='bg-secondary text-secondary-foreground rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:bg-blue-100 hover:text-blue-700'
-            >
+            <Button variant='secondary' size='sm' onClick={() => onUseReviewer2?.()}>
               Use This
-            </button>
+            </Button>
           </div>
           {renderReadOnlyField(reviewer2Value)}
         </div>

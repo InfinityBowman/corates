@@ -4,6 +4,7 @@
 
 import { useMemo } from 'react';
 import { UsersIcon, ChevronRightIcon, Trash2Icon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { type Project } from '@/hooks/useMyProjectsList';
 import { formatRelativeTime, getAccentColors } from './utils';
@@ -45,17 +46,19 @@ export function ProjectCard({ project, onOpen, onDelete, style }: ProjectCardPro
           </div>
 
           {isOwner && onDelete && (
-            <button
-              type='button'
+            <Button
+              variant='ghost'
+              size='icon-sm'
               onClick={e => {
                 e.stopPropagation();
                 onDelete(project.id);
               }}
-              className='text-muted-foreground/50 z-10 shrink-0 rounded-lg p-2 opacity-0 transition-all group-hover:opacity-100 hover:bg-red-50 hover:text-red-500'
+              className='text-muted-foreground/50 z-10 opacity-0 group-hover:opacity-100 hover:text-red-600'
               title='Delete Project'
+              aria-label='Delete Project'
             >
               <Trash2Icon className='size-4' />
-            </button>
+            </Button>
           )}
         </div>
 
@@ -72,14 +75,14 @@ export function ProjectCard({ project, onOpen, onDelete, style }: ProjectCardPro
               {memberCount} member{memberCount !== 1 ? 's' : ''}
             </span>
           </div>
-          <button
-            type='button'
+          <Button
+            variant='ghost'
             onClick={() => onOpen(project.id)}
-            className='text-primary hover:bg-primary/5 hover:text-primary/80 flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-all'
+            className='text-primary hover:bg-primary/5 hover:text-primary/80'
           >
             Open
             <ChevronRightIcon className='size-4 transition-transform group-hover:translate-x-0.5' />
-          </button>
+          </Button>
         </div>
       </CardContent>
     </Card>

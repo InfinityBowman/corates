@@ -154,13 +154,15 @@ export function ReconciliationEngine({
   const headerContent = (
     <>
       {/* Back button */}
-      <button
+      <Button
+        variant='ghost'
+        size='icon-lg'
         onClick={onCancel}
-        className='hover:bg-secondary shrink-0 rounded-lg p-2 transition-colors'
         title='Go back'
+        aria-label='Go back'
       >
         <ArrowLeftIcon className='text-muted-foreground size-5' />
-      </button>
+      </Button>
 
       {/* Title */}
       <div className='shrink-0'>
@@ -276,33 +278,27 @@ export function ReconciliationEngine({
 
                     {/* Navigation buttons */}
                     <div className='mt-4 flex items-center justify-between'>
-                      <button
+                      <Button
+                        variant='outline'
+                        size='lg'
                         onClick={engine.goToPrevious}
                         disabled={engine.currentPage === 0}
-                        className={`flex items-center gap-2 rounded-lg px-4 py-2 font-medium transition-colors ${
-                          engine.currentPage === 0 ?
-                            'bg-secondary text-muted-foreground/70 cursor-not-allowed'
-                          : 'bg-card text-secondary-foreground hover:bg-secondary shadow'
-                        }`}
                       >
                         <ArrowLeftIcon className='size-4' />
                         Previous
-                      </button>
+                      </Button>
 
                       <div className='text-muted-foreground text-sm'>
                         {adapter.pageCounterLabel} {engine.currentPage + 1} of{' '}
                         {engine.navItems.length}
                       </div>
 
-                      <button
-                        onClick={engine.goToNext}
-                        className='flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white shadow transition-colors hover:bg-blue-700'
-                      >
+                      <Button size='lg' onClick={engine.goToNext}>
                         {engine.currentPage === engine.navItems.length - 1 ?
                           'Review Summary'
                         : 'Next'}
                         <ArrowRightIcon className='size-4' />
-                      </button>
+                      </Button>
                     </div>
                   </>
                 : <div className='py-12 text-center'>Loading...</div>}

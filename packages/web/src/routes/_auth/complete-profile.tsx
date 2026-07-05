@@ -5,6 +5,7 @@ import { useAuthStore, selectUser, selectIsAuthLoading } from '@/stores/authStor
 import { handleError } from '@/lib/error-utils';
 import { acceptInvitation } from '@/server/functions/invitations.functions';
 import { showToast } from '@/components/ui/toast';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   hasPendingPlan,
@@ -479,27 +480,31 @@ function CompleteProfilePage() {
             <ErrorMessage error={error} id='profile-step2-error' />
 
             <div className='flex gap-3'>
-              <StepsPrevTrigger
-                type='button'
-                className='border-border bg-card text-secondary-foreground hover:bg-muted focus-visible:border-ring focus-visible:ring-ring/50 flex-1 rounded-lg border px-4 py-2.5 text-sm font-semibold transition outline-none focus-visible:ring-3'
-              >
-                Back
+              <StepsPrevTrigger asChild>
+                <Button
+                  type='button'
+                  variant='outline'
+                  className='h-auto flex-1 rounded-lg py-2 font-semibold sm:rounded-xl sm:py-3 sm:text-base'
+                >
+                  Back
+                </Button>
               </StepsPrevTrigger>
-              <button
+              <Button
                 type='submit'
-                className='bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:border-ring focus-visible:ring-ring/50 flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition outline-none focus-visible:ring-3'
+                className='h-auto flex-1 rounded-lg py-2 font-semibold sm:rounded-xl sm:py-3 sm:text-base'
               >
                 Next
-              </button>
+              </Button>
             </div>
 
-            <button
+            <Button
               type='button'
+              variant='link'
               onClick={() => setCurrentStep(2)}
-              className='text-muted-foreground hover:text-secondary-foreground mx-auto block py-2 text-sm underline-offset-4 transition hover:underline'
+              className='text-muted-foreground hover:text-secondary-foreground mx-auto'
             >
               Skip for now
-            </button>
+            </Button>
           </form>
         </StepsContent>
 
@@ -526,25 +531,29 @@ function CompleteProfilePage() {
             <ErrorMessage error={error} id='profile-step3-error' />
 
             <div className='flex gap-3'>
-              <StepsPrevTrigger
-                type='button'
-                className='border-border bg-card text-secondary-foreground hover:bg-muted focus-visible:border-ring focus-visible:ring-ring/50 flex-1 rounded-lg border px-4 py-2.5 text-sm font-semibold transition outline-none focus-visible:ring-3'
-              >
-                Back
+              <StepsPrevTrigger asChild>
+                <Button
+                  type='button'
+                  variant='outline'
+                  className='h-auto flex-1 rounded-lg py-2 font-semibold sm:rounded-xl sm:py-3 sm:text-base'
+                >
+                  Back
+                </Button>
               </StepsPrevTrigger>
               <PrimaryButton loading={loading} loadingText='Finishing...' disabled={!persona}>
                 Finish Setup
               </PrimaryButton>
             </div>
 
-            <button
+            <Button
               type='button'
+              variant='link'
               onClick={() => handleSubmit('other')}
               disabled={loading}
-              className='text-muted-foreground hover:text-secondary-foreground mx-auto block py-2 text-sm underline-offset-4 transition hover:underline disabled:opacity-50'
+              className='text-muted-foreground hover:text-secondary-foreground mx-auto'
             >
               Skip for now
-            </button>
+            </Button>
           </form>
         </StepsContent>
 

@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { CheckIcon, ArrowLeftIcon, ArrowRightIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { RESPONSE_LABELS } from '@/components/checklist/ROBINSIChecklist/checklist-map';
 import {
   hasNavItemValue,
@@ -238,23 +239,12 @@ export function RobinsISummaryView({
 
       {/* Footer Actions */}
       <div className='border-border bg-muted flex items-center justify-between border-t p-6'>
-        <button
-          onClick={onBack}
-          className='bg-card text-secondary-foreground hover:bg-secondary flex items-center gap-2 rounded-lg px-4 py-2 font-medium shadow transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none'
-        >
+        <Button variant='outline' size='lg' onClick={onBack}>
           <ArrowLeftIcon className='size-4' />
           Back to Questions
-        </button>
+        </Button>
 
-        <button
-          onClick={onSave}
-          disabled={!allAnswered || saving}
-          className={`flex items-center gap-2 rounded-lg px-6 py-2 font-medium transition-colors focus:outline-none ${
-            allAnswered && !saving ?
-              'bg-blue-600 text-white shadow hover:bg-blue-700 focus:ring-2 focus:ring-blue-500'
-            : 'bg-border text-muted-foreground cursor-not-allowed'
-          }`}
-        >
+        <Button size='lg' onClick={onSave} disabled={!allAnswered || saving}>
           {saving ?
             'Saving...'
           : <>
@@ -262,7 +252,7 @@ export function RobinsISummaryView({
               Save Reconciled Checklist
             </>
           }
-        </button>
+        </Button>
       </div>
     </div>
   );

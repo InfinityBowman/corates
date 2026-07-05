@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { MenuIcon, WifiOffIcon, XIcon, ChevronDownIcon } from 'lucide-react';
 import { useAuthStore, selectUser, selectIsAuthLoading } from '@/stores/authStore';
+import { Button } from '@/components/ui/button';
 import { useAdminStore } from '@/stores/adminStore';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -73,15 +74,17 @@ export function AppNavbar({ mobileSidebarOpen, toggleMobileSidebar }: AppNavbarP
       <div className='flex items-center gap-3'>
         {/* Mobile sidebar toggle */}
         {toggleMobileSidebar && (
-          <button
-            className='-ml-1.5 rounded-full border border-blue-200 bg-white/80 p-1.5 text-blue-700 shadow transition-all duration-200 hover:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none md:hidden'
+          <Button
+            variant='outline'
+            size='icon-sm'
+            className='-ml-1.5 rounded-full border-blue-200 bg-white/80 text-blue-700 shadow hover:bg-white hover:text-blue-700 md:hidden dark:border-blue-200 dark:bg-white/80 dark:hover:bg-white'
             onClick={toggleMobileSidebar}
             aria-label={mobileSidebarOpen ? 'Close sidebar' : 'Open sidebar'}
           >
             {mobileSidebarOpen ?
               <XIcon className='size-4' />
             : <MenuIcon className='size-4' />}
-          </button>
+          </Button>
         )}
 
         {/* Logo */}

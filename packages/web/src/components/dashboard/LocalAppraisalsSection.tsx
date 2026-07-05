@@ -239,13 +239,7 @@ export function LocalAppraisalsSection({
               </p>
             </div>
           </div>
-          <button
-            type='button'
-            onClick={() => navigate({ to: '/signin' })}
-            className='bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium transition-colors'
-          >
-            Sign In
-          </button>
+          <Button onClick={() => navigate({ to: '/signin' })}>Sign In</Button>
         </div>
       )}
 
@@ -263,14 +257,10 @@ export function LocalAppraisalsSection({
               Use AMSTAR 2, ROBINS-I, or RoB 2 to appraise studies on this device with optional PDF
               annotation
             </p>
-            <button
-              type='button'
-              onClick={handleCreate}
-              className='bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition-colors'
-            >
-              <PlusIcon className='size-4' />
+            <Button onClick={handleCreate}>
+              <PlusIcon data-icon='inline-start' />
               Create Appraisal
-            </button>
+            </Button>
           </div>
         )}
 

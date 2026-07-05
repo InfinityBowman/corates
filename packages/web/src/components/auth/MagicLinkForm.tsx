@@ -8,6 +8,7 @@ import { MailIcon } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { handleError } from '@/lib/error-utils';
 import { Alert } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ErrorMessage } from './ErrorMessage';
 import { PrimaryButton } from './AuthButtons';
@@ -120,29 +121,20 @@ export function MagicLinkForm({
           )}
 
           <div className='flex flex-col gap-2'>
-            <button
-              type='button'
-              onClick={handleResend}
-              disabled={!canResend || resending}
-              className={`text-sm font-medium transition ${
-                canResend && !resending ?
-                  'text-primary hover:text-primary/80 cursor-pointer'
-                : 'text-muted-foreground/70 cursor-not-allowed'
-              }`}
-            >
+            <Button variant='link' onClick={handleResend} disabled={!canResend || resending}>
               {resending ?
                 'Sending...'
               : canResend ?
                 "Didn't receive it? Try again"
               : 'Try again in 30s'}
-            </button>
-            <button
-              type='button'
+            </Button>
+            <Button
+              variant='link'
+              className='text-muted-foreground hover:text-secondary-foreground'
               onClick={handleReset}
-              className='text-muted-foreground hover:text-secondary-foreground text-sm font-medium'
             >
               Use a different email
-            </button>
+            </Button>
           </div>
         </div>
       </div>

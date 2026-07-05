@@ -3,6 +3,7 @@
  */
 
 import { CheckIcon, ArrowLeftIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface FooterProps {
   onBack: () => void;
@@ -14,23 +15,12 @@ interface FooterProps {
 export function Footer({ onBack, onSave, allAnswered, saving }: FooterProps) {
   return (
     <div className='border-border bg-muted flex items-center justify-between border-t p-6'>
-      <button
-        onClick={onBack}
-        className='bg-card text-secondary-foreground hover:bg-secondary focus:ring-primary flex items-center gap-2 rounded-lg px-4 py-2 font-medium shadow transition-colors focus:ring-2 focus:outline-none'
-      >
+      <Button variant='outline' size='lg' onClick={onBack}>
         <ArrowLeftIcon className='size-4' />
         Back to Questions
-      </button>
+      </Button>
 
-      <button
-        onClick={onSave}
-        disabled={!allAnswered || saving}
-        className={`flex items-center gap-2 rounded-lg px-6 py-2 font-medium transition-colors focus:outline-none ${
-          allAnswered && !saving ?
-            'focus:ring-primary bg-blue-600 text-white shadow hover:bg-blue-700 focus:ring-2'
-          : 'bg-border text-muted-foreground cursor-not-allowed'
-        }`}
-      >
+      <Button size='lg' onClick={onSave} disabled={!allAnswered || saving}>
         {saving ?
           'Saving...'
         : <>
@@ -38,7 +28,7 @@ export function Footer({ onBack, onSave, allAnswered, saving }: FooterProps) {
             Save Reconciled Checklist
           </>
         }
-      </button>
+      </Button>
     </div>
   );
 }

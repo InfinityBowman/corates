@@ -10,6 +10,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { handleError } from '@/lib/error-utils';
 import { ErrorMessage } from './ErrorMessage';
 import { PrimaryButton } from './AuthButtons';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
 interface TwoFactorVerifyProps {
@@ -110,26 +111,27 @@ export function TwoFactorVerify({ onCancel }: TwoFactorVerifyProps) {
         </PrimaryButton>
 
         <div className='flex flex-col gap-2 text-center'>
-          <button
+          <Button
             type='button'
+            variant='link'
             onClick={() => {
               setUseBackupCode(!useBackupCode);
               setCode('');
               setError('');
             }}
-            className='text-primary hover:text-primary/80 text-sm font-medium'
           >
             {useBackupCode ? 'Use authenticator app instead' : 'Use a backup code'}
-          </button>
+          </Button>
 
           <div>
-            <button
+            <Button
               type='button'
+              variant='link'
+              className='text-muted-foreground hover:text-secondary-foreground'
               onClick={onCancel}
-              className='text-muted-foreground hover:text-secondary-foreground text-sm'
             >
               Cancel and try different sign-in method
-            </button>
+            </Button>
           </div>
         </div>
       </form>

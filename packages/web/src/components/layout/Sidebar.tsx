@@ -26,6 +26,7 @@ import { LOCAL_PROJECT_ID } from '@/project/localProject';
 import { db } from '@/primitives/db';
 import { useMyProjectsList } from '@/hooks/useMyProjectsList';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -234,12 +235,14 @@ export function Sidebar({
                     <FolderIcon className='text-muted-foreground/70 size-4' />
                   </div>
                   <p className='text-muted-foreground text-xs font-medium'>No projects yet</p>
-                  <button
+                  <Button
+                    variant='link'
+                    size='xs'
                     onClick={() => navigate({ to: '/dashboard' })}
-                    className='text-primary hover:text-primary/80 mt-1 text-xs'
+                    className='mt-1'
                   >
                     Create a project
-                  </button>
+                  </Button>
                 </div>
               : null}
             </div>
@@ -268,12 +271,14 @@ export function Sidebar({
                 <FileCheck2Icon className='text-muted-foreground/70 size-4' />
               </div>
               <p className='text-muted-foreground text-xs font-medium'>No appraisals</p>
-              <button
+              <Button
+                variant='link'
+                size='xs'
                 onClick={() => navigate({ to: '/checklist' as string })}
-                className='text-primary hover:text-primary/80 mt-1 text-xs'
+                className='mt-1'
               >
                 Create one
-              </button>
+              </Button>
             </div>
           }
         </div>
@@ -307,13 +312,15 @@ export function Sidebar({
             >
               <Tooltip delayDuration={500}>
                 <TooltipTrigger asChild>
-                  <button
+                  <Button
+                    variant='ghost'
+                    size='icon'
                     onClick={onToggleDesktop}
-                    className='text-muted-foreground hover:bg-secondary hover:text-secondary-foreground hidden size-8 items-center justify-center rounded-md transition-colors md:flex'
+                    className='text-muted-foreground hidden md:flex'
                     aria-label='Expand sidebar'
                   >
                     <ChevronsRightIcon className='size-4' />
-                  </button>
+                  </Button>
                 </TooltipTrigger>
                 <TooltipContent side='right'>Expand sidebar</TooltipContent>
               </Tooltip>
@@ -331,13 +338,15 @@ export function Sidebar({
               </span>
               <Tooltip delayDuration={500}>
                 <TooltipTrigger asChild>
-                  <button
+                  <Button
+                    variant='ghost'
+                    size='icon'
                     onClick={onToggleDesktop}
-                    className='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground hidden size-8 items-center justify-center rounded-md transition-colors md:flex'
+                    className='text-muted-foreground/70 hover:text-muted-foreground hidden md:flex'
                     aria-label='Collapse sidebar'
                   >
                     <ChevronsLeftIcon className='size-4' />
-                  </button>
+                  </Button>
                 </TooltipTrigger>
                 <TooltipContent side='right'>Collapse sidebar</TooltipContent>
               </Tooltip>
@@ -470,13 +479,15 @@ export function Sidebar({
                 <span className='text-secondary-foreground flex-1 truncate px-2 text-sm font-semibold'>
                   CoRATES
                 </span>
-                <button
+                <Button
+                  variant='ghost'
+                  size='icon-sm'
                   onClick={onCloseMobile}
-                  className='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground flex size-7 items-center justify-center rounded-md transition-colors'
+                  className='text-muted-foreground/70 hover:text-muted-foreground'
                   aria-label='Close sidebar'
                 >
                   <XIcon className='size-4' />
-                </button>
+                </Button>
               </div>
               {renderSidebarContent()}
             </div>

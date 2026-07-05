@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { Button } from '@/components/ui/button';
 
 const SETTINGS_NAV_ITEMS: Array<{ id: string; label: string; icon: LucideIcon; path: string }> = [
   { id: 'profile', label: 'Profile', icon: UserIcon, path: '/settings/profile' },
@@ -155,13 +156,15 @@ export function SettingsSidebar({
             >
               <Tooltip delayDuration={500}>
                 <TooltipTrigger asChild>
-                  <button
+                  <Button
+                    variant='ghost'
+                    size='icon'
                     onClick={onToggleDesktop}
-                    className='text-muted-foreground hover:bg-secondary hover:text-secondary-foreground hidden size-8 items-center justify-center rounded-md transition-colors md:flex'
+                    className='text-muted-foreground hidden md:flex'
                     aria-label='Expand sidebar'
                   >
                     <ChevronsRightIcon className='size-4' />
-                  </button>
+                  </Button>
                 </TooltipTrigger>
                 <TooltipContent side='right'>Expand sidebar</TooltipContent>
               </Tooltip>
@@ -175,13 +178,15 @@ export function SettingsSidebar({
               </span>
               <Tooltip delayDuration={500}>
                 <TooltipTrigger asChild>
-                  <button
+                  <Button
+                    variant='ghost'
+                    size='icon'
                     onClick={onToggleDesktop}
-                    className='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground hidden size-8 items-center justify-center rounded-md transition-colors md:flex'
+                    className='text-muted-foreground/70 hover:text-muted-foreground hidden md:flex'
                     aria-label='Collapse sidebar'
                   >
                     <ChevronsLeftIcon className='size-4' />
-                  </button>
+                  </Button>
                 </TooltipTrigger>
                 <TooltipContent side='right'>Collapse sidebar</TooltipContent>
               </Tooltip>
@@ -270,13 +275,15 @@ export function SettingsSidebar({
                 <span className='text-secondary-foreground flex-1 truncate px-2 text-sm font-semibold'>
                   Settings
                 </span>
-                <button
+                <Button
+                  variant='ghost'
+                  size='icon-sm'
                   onClick={onCloseMobile}
-                  className='text-muted-foreground/70 hover:bg-secondary hover:text-muted-foreground flex size-7 items-center justify-center rounded-md transition-colors'
+                  className='text-muted-foreground/70 hover:text-muted-foreground'
                   aria-label='Close sidebar'
                 >
                   <XIcon className='size-4' />
-                </button>
+                </Button>
               </div>
               {renderNavContent()}
             </div>

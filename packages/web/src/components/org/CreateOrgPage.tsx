@@ -9,6 +9,7 @@ import { authClient, authFetch } from '@/api/auth-client';
 import { queryKeys } from '@/lib/queryKeys';
 import { showToast } from '@/components/ui/toast';
 import { Alert } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 
 const LAST_ORG_KEY = 'corates-last-org-slug';
 
@@ -129,13 +130,14 @@ export function CreateOrgPage() {
               </p>
             </div>
 
-            <button
+            <Button
               type='submit'
+              size='lg'
               disabled={isSubmitting || !name.trim() || !slug.trim()}
-              className='bg-primary text-primary-foreground hover:bg-primary/90 w-full rounded-lg px-4 py-2 font-medium transition focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
+              className='w-full'
             >
               {isSubmitting ? 'Creating...' : 'Create Organization'}
-            </button>
+            </Button>
           </form>
         </div>
       </div>

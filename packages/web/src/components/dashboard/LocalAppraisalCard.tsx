@@ -11,6 +11,7 @@ import {
   FileSpreadsheetIcon,
   FileIcon,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { InlineEdit } from '@/components/ui/inline-edit';
 import {
@@ -90,14 +91,16 @@ export function LocalAppraisalCard({
           {(onExportCsv || onExportPdf) && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button
-                  type='button'
+                <Button
+                  variant='ghost'
+                  size='icon-sm'
                   onClick={e => e.stopPropagation()}
-                  className='text-muted-foreground hover:text-foreground rounded-lg p-2 transition-colors hover:bg-gray-50'
+                  className='text-muted-foreground'
                   title='Export'
+                  aria-label='Export'
                 >
                   <DownloadIcon className='size-4' />
-                </button>
+                </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align='end'>
                 {onExportCsv && (
@@ -116,27 +119,29 @@ export function LocalAppraisalCard({
             </DropdownMenu>
           )}
           {onDelete && (
-            <button
-              type='button'
+            <Button
+              variant='ghost'
+              size='icon-sm'
               onClick={e => {
                 e.stopPropagation();
                 onDelete(checklist.id);
               }}
-              className='text-muted-foreground hover:text-destructive rounded-lg p-2 transition-colors hover:bg-red-50'
+              className='text-muted-foreground hover:text-destructive'
               title='Delete appraisal'
+              aria-label='Delete appraisal'
             >
               <Trash2Icon className='size-4' />
-            </button>
+            </Button>
           )}
-          <button
-            type='button'
+          <Button
+            variant='ghost'
             onClick={() => onOpen(checklist.id)}
-            className='text-primary hover:bg-primary/5 hover:text-primary/80 flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-all'
+            className='text-primary hover:bg-primary/5 hover:text-primary/80'
             title='Open appraisal'
           >
             Open
             <ChevronRightIcon className='size-4 transition-transform group-hover:translate-x-0.5' />
-          </button>
+          </Button>
         </div>
       </CardContent>
     </Card>

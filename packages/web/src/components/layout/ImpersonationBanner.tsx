@@ -4,6 +4,7 @@
 
 import { useEffect } from 'react';
 import { useAdminStore } from '@/stores/adminStore';
+import { Button } from '@/components/ui/button';
 
 export function ImpersonationBanner() {
   const isImpersonating = useAdminStore(s => s.isImpersonating);
@@ -23,12 +24,13 @@ export function ImpersonationBanner() {
         You are impersonating a user
         {impersonatedBy && <span className='ml-1 opacity-75'>(by {impersonatedBy})</span>}
       </span>
-      <button
+      <Button
+        size='xs'
         onClick={stopImpersonation}
-        className='rounded bg-white/20 px-3 py-1 text-xs font-semibold transition hover:bg-white/30'
+        className='bg-white/20 px-3 font-semibold text-white hover:bg-white/30'
       >
         Stop Impersonating
-      </button>
+      </Button>
     </div>
   );
 }

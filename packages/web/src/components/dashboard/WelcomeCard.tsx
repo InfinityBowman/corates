@@ -7,6 +7,7 @@
 
 import { Link } from '@tanstack/react-router';
 import { XIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import type { AuthUser } from '@/stores/authStore';
 import { useAnimation } from './useInitialAnimation';
 import { QuickActions } from './QuickActions';
@@ -23,14 +24,15 @@ export function WelcomeCard({ user, onDismiss }: WelcomeCardProps) {
   return (
     <section className='mb-8' style={animation.fadeUp(0)}>
       <div className='border-border bg-card relative rounded-2xl border p-6 sm:p-8'>
-        <button
-          type='button'
+        <Button
+          variant='ghost'
+          size='icon-sm'
           onClick={onDismiss}
-          className='text-muted-foreground hover:text-foreground absolute top-4 right-4 rounded-lg p-1 transition-colors'
+          className='text-muted-foreground absolute top-4 right-4'
           aria-label='Dismiss welcome card'
         >
           <XIcon className='size-5' />
-        </button>
+        </Button>
 
         <div className='mb-6 pr-8'>
           <h1 className='text-foreground text-2xl font-semibold tracking-tight sm:text-3xl'>

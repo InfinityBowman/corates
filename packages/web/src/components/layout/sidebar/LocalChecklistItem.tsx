@@ -4,6 +4,7 @@
 
 import { useNavigate } from '@tanstack/react-router';
 import { FileCheck2Icon, TrashIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { MarqueeLabel } from './MarqueeLabel';
 
 interface LocalChecklistItemProps {
@@ -41,13 +42,15 @@ export function LocalChecklistItem({ checklist, isSelected, onDelete }: LocalChe
           </div>
         </div>
       </button>
-      <button
+      <Button
+        variant='ghost'
+        size='icon-sm'
         onClick={e => onDelete(e, checklist.id)}
-        className='text-muted-foreground/70 focus:ring-primary mr-1 rounded p-1.5 opacity-0 transition-colors group-hover:opacity-100 hover:bg-red-50 hover:text-red-600 focus:opacity-100 focus:ring-2 focus:outline-none'
+        className='text-muted-foreground/70 mr-1 opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-600 focus:opacity-100 dark:hover:bg-red-50'
         aria-label='Delete checklist'
       >
         <TrashIcon className='size-4' />
-      </button>
+      </Button>
     </div>
   );
 }
