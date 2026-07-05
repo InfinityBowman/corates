@@ -6,6 +6,7 @@ import { useState, useCallback } from 'react';
 import { ShieldIcon, KeyIcon, EyeIcon, EyeOffIcon, MailIcon, MonitorIcon } from 'lucide-react';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { Alert } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { StrengthIndicator } from '@/components/auth/StrengthIndicator';
 import { TwoFactorSetup } from './TwoFactorSetup';
 import { LinkedAccountsSection } from './LinkedAccountsSection';
@@ -116,13 +117,14 @@ export function SecuritySettings() {
                     We sent a link to <strong className='text-foreground'>{user?.email}</strong> to
                     set your password.
                   </p>
-                  <button
-                    type='button'
+                  <Button
+                    variant='link'
+                    size='sm'
                     onClick={() => setAddPasswordSent(false)}
-                    className='text-primary hover:text-primary/80 mt-2 text-sm font-medium transition-colors'
+                    className='mt-2 h-auto p-0'
                   >
                     Dismiss
-                  </button>
+                  </Button>
                 </div>
               </Alert>
             : <div className='flex items-center justify-between'>
@@ -135,14 +137,10 @@ export function SecuritySettings() {
                     A password is required for Two-Factor Authentication.
                   </p>
                 </div>
-                <button
-                  onClick={handleSendPasswordSetup}
-                  disabled={addPasswordLoading}
-                  className='bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-ring/20 flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium shadow-sm transition-all hover:shadow focus:ring-2 focus:outline-none disabled:opacity-50'
-                >
+                <Button onClick={handleSendPasswordSetup} disabled={addPasswordLoading}>
                   <MailIcon className='size-4' />
                   <span>{addPasswordLoading ? 'Sending...' : 'Send Setup Email'}</span>
-                </button>
+                </Button>
               </div>
             }
 
@@ -212,15 +210,12 @@ export function SecuritySettings() {
                   />
                 </div>
                 <div className='flex gap-2'>
-                  <button
-                    type='submit'
-                    disabled={changingPassword}
-                    className='bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-ring/20 rounded-lg px-4 py-2 text-sm font-medium shadow-sm transition-all hover:shadow focus:ring-2 focus:outline-none disabled:opacity-50'
-                  >
+                  <Button type='submit' disabled={changingPassword}>
                     {changingPassword ? 'Changing...' : 'Update Password'}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type='button'
+                    variant='secondary'
                     onClick={() => {
                       setShowPasswordForm(false);
                       setPasswordError('');
@@ -228,10 +223,9 @@ export function SecuritySettings() {
                       setNewPassword('');
                       setConfirmPassword('');
                     }}
-                    className='bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-lg px-4 py-2 text-sm font-medium transition-colors'
                   >
                     Cancel
-                  </button>
+                  </Button>
                 </div>
               </form>
             : <div className='flex items-center justify-between'>
@@ -239,13 +233,10 @@ export function SecuritySettings() {
                   <p className='text-foreground font-medium'>Change Password</p>
                   <p className='text-muted-foreground text-sm'>Update your existing password.</p>
                 </div>
-                <button
-                  onClick={() => setShowPasswordForm(true)}
-                  className='bg-secondary text-secondary-foreground hover:bg-secondary/80 flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors'
-                >
+                <Button variant='secondary' onClick={() => setShowPasswordForm(true)}>
                   <KeyIcon className='size-4' />
                   <span>Change Password</span>
-                </button>
+                </Button>
               </div>
             }
 

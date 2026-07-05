@@ -11,6 +11,7 @@ import { useLinkedAccounts } from '@/hooks/useLinkedAccounts';
 import type { LinkedAccount } from '@/hooks/useLinkedAccounts';
 import { showToast } from '@/components/ui/toast';
 import { Alert } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -218,18 +219,18 @@ export function LinkedAccountsSection() {
             </p>
             <div className='flex flex-wrap gap-2'>
               {availableProviders.map(provider => (
-                <button
+                <Button
                   key={provider.id}
+                  variant='secondary'
                   onClick={() => handleLinkProvider(provider.id)}
                   disabled={linkingProvider === provider.id}
-                  className='bg-secondary text-secondary-foreground hover:bg-secondary/80 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50'
                   aria-label={`Link ${provider.name} account`}
                 >
                   {provider.icon ?
                     <img src={provider.icon} alt='' className='size-4' />
                   : <MailIcon className='size-4' />}
                   {linkingProvider === provider.id ? 'Linking...' : `+ ${provider.name}`}
-                </button>
+                </Button>
               ))}
             </div>
           </div>

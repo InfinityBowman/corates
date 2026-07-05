@@ -5,6 +5,7 @@
 import { useState, useCallback } from 'react';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { showToast } from '@/components/ui/toast';
+import { Button } from '@/components/ui/button';
 
 export function DeleteAccountSection() {
   const user = useAuthStore(selectUser);
@@ -65,23 +66,22 @@ export function DeleteAccountSection() {
           </div>
 
           <div className='flex gap-2'>
-            <button
+            <Button
+              variant='destructive'
               onClick={handleDelete}
               disabled={deleting || confirmText !== 'DELETE'}
-              className='rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-red-700 hover:shadow disabled:cursor-not-allowed disabled:opacity-50'
             >
               {deleting ? 'Deleting...' : 'Permanently Delete Account'}
-            </button>
-            <button
-              type='button'
+            </Button>
+            <Button
+              variant='secondary'
               onClick={() => {
                 setShowConfirm(false);
                 setConfirmText('');
               }}
-              className='bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-lg px-4 py-2 text-sm font-medium transition-colors'
             >
               Cancel
-            </button>
+            </Button>
           </div>
         </div>
       : <div className='flex items-center justify-between'>
@@ -91,12 +91,13 @@ export function DeleteAccountSection() {
               Permanently delete your account and all associated data
             </p>
           </div>
-          <button
+          <Button
+            variant='outline'
             onClick={() => setShowConfirm(true)}
-            className='border-destructive/20 bg-card text-destructive hover:bg-destructive/10 rounded-lg border px-4 py-2 text-sm font-medium shadow-sm transition-all hover:shadow'
+            className='border-destructive/20 text-destructive hover:bg-destructive/10 hover:text-destructive'
           >
             Delete Account
-          </button>
+          </Button>
         </div>
       }
     </div>

@@ -16,6 +16,7 @@ import { useAuthStore, selectUser, selectTwoFactorEnabled } from '@/stores/authS
 import { showToast } from '@/components/ui/toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { QRCode, QRCodeFrame, QRCodePattern } from '@/components/ui/qr-code';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Spinner } from '@/components/ui/spinner';
@@ -225,19 +226,10 @@ export function TwoFactorSetup() {
               </p>
             </div>
             {isEnabled ?
-              <button
-                onClick={handleStartDisable}
-                className='bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md px-4 py-2 text-sm font-medium transition'
-              >
+              <Button variant='secondary' onClick={handleStartDisable}>
                 Disable 2FA
-              </button>
-            : <button
-                onClick={handleStartSetup}
-                className='bg-primary hover:bg-primary/90 rounded-md px-4 py-2 text-sm font-medium text-white transition'
-              >
-                Enable 2FA
-              </button>
-            }
+              </Button>
+            : <Button onClick={handleStartSetup}>Enable 2FA</Button>}
           </div>
         </>
       )}
@@ -259,12 +251,15 @@ export function TwoFactorSetup() {
                 </TooltipContent>
               </Tooltip>
             </div>
-            <button
+            <Button
+              variant='ghost'
+              size='icon-sm'
               onClick={handleCancel}
-              className='text-muted-foreground hover:text-secondary-foreground'
+              className='text-muted-foreground'
+              aria-label='Cancel setup'
             >
               <XIcon className='size-5' />
-            </button>
+            </Button>
           </div>
 
           {/* Step 0: Password */}
@@ -299,20 +294,12 @@ export function TwoFactorSetup() {
                 />
               </div>
               <div className='flex gap-3'>
-                <button
-                  type='button'
-                  onClick={handleCancel}
-                  className='bg-secondary text-secondary-foreground hover:bg-secondary/80 flex-1 rounded-md px-4 py-2 text-sm font-medium transition'
-                >
+                <Button type='button' variant='secondary' onClick={handleCancel} className='flex-1'>
                   Cancel
-                </button>
-                <button
-                  type='submit'
-                  disabled={loading || !password}
-                  className='bg-primary hover:bg-primary/90 flex-1 rounded-md px-4 py-2 text-sm font-medium text-white transition disabled:opacity-50'
-                >
+                </Button>
+                <Button type='submit' disabled={loading || !password} className='flex-1'>
                   {loading ? 'Verifying...' : 'Continue'}
-                </button>
+                </Button>
               </div>
             </form>
           )}
@@ -345,22 +332,22 @@ export function TwoFactorSetup() {
                   <code className='bg-muted text-foreground rounded px-3 py-1.5 font-mono text-sm'>
                     {secret}
                   </code>
-                  <button
+                  <Button
+                    variant='ghost'
+                    size='icon-sm'
                     onClick={copySecret}
-                    className='text-muted-foreground hover:bg-muted hover:text-secondary-foreground rounded p-1.5'
+                    className='text-muted-foreground'
                     title='Copy to clipboard'
+                    aria-label='Copy to clipboard'
                   >
                     <CopyIcon className='size-4' />
-                  </button>
+                  </Button>
                 </div>
                 {copied && <p className='text-success mt-1 text-xs'>Copied!</p>}
               </div>
-              <button
-                onClick={() => setSetupStep(2)}
-                className='bg-primary hover:bg-primary/90 w-full rounded-md px-4 py-2 text-sm font-medium text-white transition'
-              >
+              <Button onClick={() => setSetupStep(2)} className='w-full'>
                 Continue
-              </button>
+              </Button>
             </div>
           )}
 
@@ -393,20 +380,21 @@ export function TwoFactorSetup() {
                 />
               </div>
               <div className='flex gap-3'>
-                <button
+                <Button
                   type='button'
+                  variant='secondary'
                   onClick={() => setSetupStep(1)}
-                  className='bg-secondary text-secondary-foreground hover:bg-secondary/80 flex-1 rounded-md px-4 py-2 text-sm font-medium transition'
+                  className='flex-1'
                 >
                   Back
-                </button>
-                <button
+                </Button>
+                <Button
                   type='submit'
                   disabled={loading || verificationCode.length !== 6}
-                  className='bg-primary hover:bg-primary/90 flex-1 rounded-md px-4 py-2 text-sm font-medium text-white transition disabled:opacity-50'
+                  className='flex-1'
                 >
                   {loading ? 'Verifying...' : 'Verify'}
-                </button>
+                </Button>
               </div>
             </form>
           )}
@@ -435,20 +423,14 @@ export function TwoFactorSetup() {
                     </code>
                   ))}
                 </div>
-                <button
-                  onClick={copyBackupCodes}
-                  className='text-secondary-foreground hover:bg-secondary mt-3 flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm transition'
-                >
+                <Button variant='ghost' onClick={copyBackupCodes} className='mt-3 w-full'>
                   <CopyIcon className='size-4' />
                   <span>{copied ? 'Copied!' : 'Copy all codes'}</span>
-                </button>
+                </Button>
               </div>
-              <button
-                onClick={handleCompleteSetup}
-                className='bg-success hover:bg-success/80 w-full rounded-md px-4 py-2 text-sm font-medium text-white transition'
-              >
+              <Button variant='success' onClick={handleCompleteSetup} className='w-full'>
                 I&apos;ve Saved My Backup Codes
-              </button>
+              </Button>
             </div>
           )}
         </div>
@@ -459,12 +441,15 @@ export function TwoFactorSetup() {
         <div className='border-border flex flex-col gap-4 rounded-lg border p-4'>
           <div className='flex items-center justify-between'>
             <h3 className='text-foreground font-medium'>Disable Two-Factor Authentication</h3>
-            <button
+            <Button
+              variant='ghost'
+              size='icon-sm'
               onClick={handleCancel}
-              className='text-muted-foreground hover:text-secondary-foreground'
+              className='text-muted-foreground'
+              aria-label='Cancel'
             >
               <XIcon className='size-5' />
-            </button>
+            </Button>
           </div>
           <Alert variant='warning'>
             <ShieldIcon />
@@ -490,20 +475,17 @@ export function TwoFactorSetup() {
               />
             </div>
             <div className='flex gap-3'>
-              <button
-                type='button'
-                onClick={handleCancel}
-                className='bg-secondary text-secondary-foreground hover:bg-secondary/80 flex-1 rounded-md px-4 py-2 text-sm font-medium transition'
-              >
+              <Button type='button' variant='secondary' onClick={handleCancel} className='flex-1'>
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type='submit'
+                variant='destructive'
                 disabled={loading || !password}
-                className='bg-destructive hover:bg-destructive/90 focus:ring-ring flex-1 rounded-md px-4 py-2 text-sm font-medium text-white transition focus:ring-2 focus:outline-none disabled:opacity-50'
+                className='flex-1'
               >
                 {loading ? 'Disabling...' : 'Disable 2FA'}
-              </button>
+              </Button>
             </div>
           </form>
         </div>

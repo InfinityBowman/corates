@@ -5,6 +5,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { XIcon } from 'lucide-react';
 import { showToast } from '@/components/ui/toast';
+import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -105,24 +106,19 @@ export function GoogleDriveSettings() {
 
         {!loading &&
           (connected ?
-            <button
-              type='button'
+            <Button
+              variant='ghost'
               onClick={() => setConfirmOpen(true)}
               disabled={disconnecting}
-              className='text-destructive hover:bg-destructive/10 bg-destructive/10 inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50'
+              className='bg-destructive/10 text-destructive hover:bg-destructive/10 hover:text-destructive'
             >
               <XIcon className='size-4' />
               {disconnecting ? 'Disconnecting...' : 'Disconnect'}
-            </button>
-          : <button
-              type='button'
-              onClick={handleConnect}
-              disabled={connecting}
-              className='bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50'
-            >
+            </Button>
+          : <Button onClick={handleConnect} disabled={connecting}>
               <img src='/logos/drive.svg' alt='Google Drive' className='size-4' />
               {connecting ? 'Connecting...' : 'Connect'}
-            </button>)}
+            </Button>)}
       </div>
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>

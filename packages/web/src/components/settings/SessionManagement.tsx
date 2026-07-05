@@ -16,6 +16,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { showToast } from '@/components/ui/toast';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import {
   AlertDialog,
@@ -130,16 +131,18 @@ function SessionCard({ session, isCurrent, revoking, onRevoke }: SessionCardProp
           </div>
         </div>
         {!isCurrent && (
-          <button
+          <Button
+            variant='ghost'
+            size='sm'
             onClick={() => onRevoke(session.token)}
             disabled={revoking}
-            className='text-destructive hover:bg-destructive/5 flex items-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium transition disabled:opacity-50'
+            className='text-destructive hover:text-destructive hover:bg-destructive/5'
           >
             {revoking ?
               <LoaderIcon className='size-4 animate-spin' />
             : <Trash2Icon className='size-4' />}
             <span>Revoke</span>
-          </button>
+          </Button>
         )}
       </div>
     </div>
@@ -299,23 +302,20 @@ export function SessionManagement() {
             <>
               <Separator className='mt-4' />
               <div className='mt-4 flex flex-wrap gap-3'>
-                <button
-                  onClick={handleRevokeOther}
-                  disabled={revokingAll}
-                  className='bg-secondary text-secondary-foreground hover:bg-secondary/80 flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition disabled:opacity-50'
-                >
+                <Button variant='secondary' onClick={handleRevokeOther} disabled={revokingAll}>
                   <LogOutIcon className='size-4' />
                   <span>{revokingAll ? 'Revoking...' : 'Sign out other sessions'}</span>
-                </button>
+                </Button>
 
-                <button
+                <Button
+                  variant='ghost'
                   onClick={() => setShowRevokeAllDialog(true)}
                   disabled={revokingAll}
-                  className='text-destructive hover:bg-destructive/10 bg-destructive/10 flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition disabled:opacity-50'
+                  className='bg-destructive/10 text-destructive hover:bg-destructive/10 hover:text-destructive'
                 >
                   <Trash2Icon className='size-4' />
                   <span>Sign out everywhere</span>
-                </button>
+                </Button>
               </div>
             </>
           )}

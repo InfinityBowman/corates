@@ -6,6 +6,7 @@ import { useMemo } from 'react';
 import { MailIcon, Trash2Icon, CheckIcon, ExternalLinkIcon } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 function formatOrcidId(id: string) {
   if (!id) return '';
@@ -101,15 +102,16 @@ export function AccountProviderCard({
 
       {!isCredential &&
         (canUnlink ?
-          <button
+          <Button
+            variant='ghost'
             onClick={onUnlink}
             disabled={unlinking}
-            className='text-destructive hover:bg-destructive/10 bg-destructive/10 inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50'
+            className='bg-destructive/10 text-destructive hover:bg-destructive/10 hover:text-destructive'
             aria-label={`Unlink ${provider?.name} account`}
           >
             <Trash2Icon className='size-4' />
             {unlinking ? 'Unlinking...' : 'Unlink'}
-          </button>
+          </Button>
         : <Tooltip>
             <TooltipTrigger>
               <span className='text-muted-foreground/70 cursor-help text-xs'>

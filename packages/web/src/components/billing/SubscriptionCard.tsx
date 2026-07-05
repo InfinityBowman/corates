@@ -14,6 +14,7 @@ import {
   LoaderIcon,
 } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useMembers } from '@/hooks/useMembers';
 
@@ -180,9 +181,9 @@ export function SubscriptionCard({ subscription, onManage, manageLoading }: Subs
               Upgrade Now
             </Link>
           : <>
-              <button
-                type='button'
-                className='border-border bg-card text-foreground hover:bg-muted inline-flex flex-1 items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors'
+              <Button
+                variant='outline'
+                className='flex-1'
                 onClick={onManage}
                 disabled={manageLoading}
               >
@@ -196,7 +197,7 @@ export function SubscriptionCard({ subscription, onManage, manageLoading }: Subs
                     Manage Billing
                   </>
                 }
-              </button>
+              </Button>
               <Link
                 to='/settings/plans'
                 className='text-primary hover:bg-primary/5 inline-flex items-center gap-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors'

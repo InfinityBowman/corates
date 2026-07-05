@@ -21,6 +21,7 @@ import {
 import { showToast } from '@/components/ui/toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import FlipNumber from '@/components/FlipNumber';
 import {
   Dialog,
@@ -227,9 +228,9 @@ export function PricingTable({
             >
               Start Free Trial
             </Link>
-          : <button
-              type='button'
-              className='bg-primary hover:bg-primary/90 shrink-0 rounded-xl px-6 py-3 text-sm font-semibold text-white transition-all disabled:cursor-not-allowed disabled:opacity-50'
+          : <Button
+              size='lg'
+              className='shrink-0'
               onClick={handleStartTrial}
               disabled={loadingTier !== null}
             >
@@ -239,7 +240,7 @@ export function PricingTable({
                   Starting...
                 </span>
               : 'Start Free Trial'}
-            </button>
+            </Button>
           }
         </div>
       </div>
@@ -377,12 +378,13 @@ export function PricingTable({
             >
               {getButtonText(plan)}
             </Link>
-          : <button
-              type='button'
-              className={`mb-6 w-full rounded-xl px-4 py-3 text-sm font-semibold transition-all focus:ring-2 focus:ring-offset-2 focus:outline-none ${
-                isCurrent ? 'bg-muted text-muted-foreground cursor-not-allowed'
-                : isPopular ? 'bg-primary hover:bg-primary/90 focus:ring-primary text-white'
-                : 'bg-foreground text-background hover:bg-foreground/90 focus:ring-foreground'
+          : <Button
+              size='lg'
+              variant={isCurrent ? 'secondary' : 'default'}
+              className={`mb-6 w-full ${
+                !isCurrent && !isPopular ?
+                  'bg-foreground text-background hover:bg-foreground/90'
+                : ''
               }`}
               onClick={() => handleAction(plan)}
               disabled={isButtonDisabled(plan)}
@@ -393,7 +395,7 @@ export function PricingTable({
                   Processing...
                 </span>
               : getButtonText(plan)}
-            </button>)}
+            </Button>)}
 
         <div className='flex-1'>
           <p className='text-muted-foreground mb-3 text-xs font-semibold tracking-wide uppercase'>
@@ -451,9 +453,9 @@ export function PricingTable({
               >
                 Buy Now
               </Link>
-            : <button
-                type='button'
-                className='bg-foreground text-background hover:bg-foreground/90 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-50'
+            : <Button
+                size='lg'
+                className='bg-foreground text-background hover:bg-foreground/90'
                 onClick={handleBuySingleProject}
                 disabled={loadingTier !== null || currentTier === 'single_project'}
               >
@@ -465,7 +467,7 @@ export function PricingTable({
                 : currentTier === 'single_project' ?
                   'Current Plan'
                 : 'Buy Now'}
-              </button>
+              </Button>
             }
           </div>
         </div>
@@ -532,13 +534,9 @@ export function PricingTable({
                   ))}
                 </div>
               )}
-              <button
-                type='button'
-                onClick={() => setValidationError(null)}
-                className='bg-muted text-foreground hover:bg-muted/80 rounded-lg px-4 py-2 text-sm font-medium transition-colors'
-              >
+              <Button variant='secondary' onClick={() => setValidationError(null)}>
                 Got it
-              </button>
+              </Button>
             </DialogContent>
           </Dialog>
 
@@ -576,16 +574,11 @@ export function PricingTable({
                 </Alert>
               )}
               <div className='flex justify-end gap-3'>
-                <button
-                  type='button'
-                  onClick={() => setPendingDowngrade(null)}
-                  className='bg-muted text-foreground hover:bg-muted/80 rounded-lg px-4 py-2 text-sm font-medium transition-colors'
-                >
+                <Button variant='secondary' onClick={() => setPendingDowngrade(null)}>
                   Cancel
-                </button>
-                <button
-                  type='button'
-                  className='rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-700'
+                </Button>
+                <Button
+                  className='bg-amber-600 text-white hover:bg-amber-700'
                   onClick={async () => {
                     const plan = pendingDowngrade;
                     setPendingDowngrade(null);
@@ -593,7 +586,7 @@ export function PricingTable({
                   }}
                 >
                   Confirm Downgrade
-                </button>
+                </Button>
               </div>
             </DialogContent>
           </Dialog>

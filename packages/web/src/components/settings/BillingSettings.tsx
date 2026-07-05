@@ -7,6 +7,7 @@ import { Link } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { CheckCircleIcon, ArrowRightIcon, XCircleIcon } from 'lucide-react';
 import { Alert, AlertAction, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useMembers } from '@/hooks/useMembers';
 import { redirectToPortal } from '@/api/billing';
@@ -145,14 +146,15 @@ export function BillingSettings() {
               <AlertDescription>Your subscription has been activated.</AlertDescription>
             </div>
             <AlertAction>
-              <button
-                type='button'
+              <Button
+                variant='ghost'
+                size='icon-sm'
                 onClick={() => setCheckoutOutcome(null)}
                 className='text-success hover:text-success/80'
                 aria-label='Dismiss'
               >
                 <XCircleIcon className='size-5' />
-              </button>
+              </Button>
             </AlertAction>
           </Alert>
         )}
@@ -165,14 +167,15 @@ export function BillingSettings() {
               <AlertDescription>No changes were made to your subscription.</AlertDescription>
             </div>
             <AlertAction>
-              <button
-                type='button'
+              <Button
+                variant='ghost'
+                size='icon-sm'
                 onClick={() => setCheckoutOutcome(null)}
                 className='text-warning hover:text-warning-foreground'
                 aria-label='Dismiss'
               >
                 <XCircleIcon className='size-5' />
-              </button>
+              </Button>
             </AlertAction>
           </Alert>
         )}

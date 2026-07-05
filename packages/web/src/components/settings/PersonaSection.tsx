@@ -7,6 +7,7 @@ import { useAuthStore, selectUser } from '@/stores/authStore';
 import { showToast } from '@/components/ui/toast';
 import { ROLES, getRoleLabel } from '@/components/auth/RoleSelector';
 import { syncProfileToProjects } from '@/lib/syncUtils';
+import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import {
   Select,
@@ -72,20 +73,12 @@ export function PersonaSection() {
                 </SelectContent>
               </Select>
               <div className='flex gap-2 pt-1'>
-                <button
-                  onClick={saveRole}
-                  disabled={saving}
-                  className='bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:shadow disabled:opacity-50'
-                >
+                <Button onClick={saveRole} disabled={saving}>
                   Save
-                </button>
-                <button
-                  onClick={cancelEditing}
-                  disabled={saving}
-                  className='bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50'
-                >
+                </Button>
+                <Button variant='secondary' onClick={cancelEditing} disabled={saving}>
                   Cancel
-                </button>
+                </Button>
               </div>
             </div>
           : <div className='mt-1'>
@@ -98,12 +91,9 @@ export function PersonaSection() {
           }
         </div>
         {!isEditing && (
-          <button
-            onClick={startEditing}
-            className='text-primary hover:text-primary/80 text-sm font-medium transition-colors'
-          >
+          <Button variant='link' onClick={startEditing}>
             Edit
-          </button>
+          </Button>
         )}
       </div>
     </>

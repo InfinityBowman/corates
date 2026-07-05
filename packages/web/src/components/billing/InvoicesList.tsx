@@ -5,6 +5,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { DownloadIcon, FileTextIcon, ExternalLinkIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { queryKeys } from '@/lib/queryKeys';
@@ -115,14 +116,16 @@ export function InvoicesList() {
                     {STATUS_LABELS[invoice.status ?? ''] || 'Paid'}
                   </Badge>
                   {invoice.pdfUrl && (
-                    <button
-                      type='button'
-                      className='text-muted-foreground hover:bg-muted hover:text-foreground rounded-lg p-2 transition-colors'
+                    <Button
+                      variant='ghost'
+                      size='icon-sm'
+                      className='text-muted-foreground'
                       onClick={() => window.open(invoice.pdfUrl!, '_blank')}
                       title='Download invoice'
+                      aria-label='Download invoice'
                     >
                       <DownloadIcon className='size-4' />
-                    </button>
+                    </Button>
                   )}
                   {invoice.hostedUrl && (
                     <a

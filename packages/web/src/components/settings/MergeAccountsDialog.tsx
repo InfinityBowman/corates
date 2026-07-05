@@ -8,6 +8,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { TriangleAlertIcon, CheckIcon, LoaderIcon, UserPlusIcon, MailIcon } from 'lucide-react';
 import { showToast } from '@/components/ui/toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { initiateMerge, verifyMergeCode, completeMerge, cancelMerge } from '@/api/account-merge';
@@ -242,19 +243,13 @@ export function MergeAccountsDialog({
                 The other account will be deleted.
               </p>
               <div className='flex justify-end gap-3 pt-2'>
-                <button
-                  onClick={() => onOpenChange(false)}
-                  className='bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-lg px-4 py-2 text-sm font-medium transition-colors'
-                >
+                <Button variant='secondary' onClick={() => onOpenChange(false)}>
                   Cancel
-                </button>
-                <button
-                  onClick={() => setStep(STEPS.ENTER_EMAIL)}
-                  className='bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors'
-                >
+                </Button>
+                <Button onClick={() => setStep(STEPS.ENTER_EMAIL)}>
                   <UserPlusIcon className='size-4' />
                   Merge Accounts
-                </button>
+                </Button>
               </div>
             </>
           )}
@@ -283,23 +278,19 @@ export function MergeAccountsDialog({
               />
               {error && <p className='text-destructive text-sm'>{error}</p>}
               <div className='flex justify-end gap-3 pt-2'>
-                <button
+                <Button
+                  variant='secondary'
                   onClick={() => setStep(STEPS.PROMPT)}
-                  className='bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-lg px-4 py-2 text-sm font-medium transition-colors'
                   disabled={loading}
                 >
                   Back
-                </button>
-                <button
-                  onClick={handleSendCode}
-                  disabled={loading || !targetEmail.trim()}
-                  className='bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50'
-                >
+                </Button>
+                <Button onClick={handleSendCode} disabled={loading || !targetEmail.trim()}>
                   {loading ?
                     <LoaderIcon className='size-4 animate-spin' />
                   : <MailIcon className='size-4' />}
                   Send Code
-                </button>
+                </Button>
               </div>
             </>
           )}
@@ -341,26 +332,21 @@ export function MergeAccountsDialog({
               {error && <p className='text-destructive text-sm'>{error}</p>}
               <p className='text-muted-foreground text-xs'>
                 Didn&apos;t receive the code?{' '}
-                <button onClick={handleResendCode} className='text-primary hover:underline'>
+                <Button variant='link' onClick={handleResendCode} className='h-auto p-0 text-xs'>
                   Send again
-                </button>
+                </Button>
               </p>
               <div className='flex justify-end gap-3 pt-2'>
-                <button
-                  onClick={handleCancel}
-                  className='bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-lg px-4 py-2 text-sm font-medium transition-colors'
-                  disabled={loading}
-                >
+                <Button variant='secondary' onClick={handleCancel} disabled={loading}>
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={() => handleVerifyCode()}
                   disabled={loading || verificationCode.length !== 6}
-                  className='bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50'
                 >
                   {loading && <LoaderIcon className='size-4 animate-spin' />}
                   Verify Code
-                </button>
+                </Button>
               </div>
             </>
           )}
@@ -407,21 +393,13 @@ export function MergeAccountsDialog({
               </Alert>
               {error && <p className='text-destructive text-sm'>{error}</p>}
               <div className='flex justify-end gap-3 pt-2'>
-                <button
-                  onClick={handleCancel}
-                  className='bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-lg px-4 py-2 text-sm font-medium transition-colors'
-                  disabled={loading}
-                >
+                <Button variant='secondary' onClick={handleCancel} disabled={loading}>
                   Cancel
-                </button>
-                <button
-                  onClick={handleCompleteMerge}
-                  disabled={loading}
-                  className='focus:ring-ring inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 focus:ring-2 focus:outline-none disabled:opacity-50'
-                >
+                </Button>
+                <Button variant='destructive' onClick={handleCompleteMerge} disabled={loading}>
                   {loading && <LoaderIcon className='size-4 animate-spin' />}
                   Merge Accounts
-                </button>
+                </Button>
               </div>
             </>
           )}
@@ -448,12 +426,7 @@ export function MergeAccountsDialog({
                 </p>
               </div>
               <div className='flex justify-center pt-2'>
-                <button
-                  onClick={() => onOpenChange(false)}
-                  className='bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors'
-                >
-                  Done
-                </button>
+                <Button onClick={() => onOpenChange(false)}>Done</Button>
               </div>
             </>
           )}

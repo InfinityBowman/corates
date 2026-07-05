@@ -5,6 +5,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { LoaderIcon, AlertCircleIcon, RefreshCwIcon } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
+import { Button } from '@/components/ui/button';
 import { useSubscription } from '@/hooks/useSubscription';
 import { PricingTable } from '@/components/billing/PricingTable';
 import { PlanFAQ } from '@/components/billing/PlanFAQ';
@@ -51,24 +52,19 @@ export function PlansSettings() {
           {BILLING_MESSAGES.CHECKOUT_ERROR.message}
         </p>
         <div className='mt-6 flex gap-3'>
-          <button
-            type='button'
-            onClick={processPendingPlan}
-            className='bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition'
-          >
+          <Button onClick={processPendingPlan}>
             <RefreshCwIcon className='size-4' />
             Try Again
-          </button>
-          <button
-            type='button'
+          </Button>
+          <Button
+            variant='outline'
             onClick={() => {
               clearPendingPlan();
               setPageState('ready');
             }}
-            className='border-border bg-card text-foreground hover:bg-muted rounded-lg border px-4 py-2.5 text-sm font-semibold transition'
           >
             Choose a Plan
-          </button>
+          </Button>
         </div>
       </div>
     );
