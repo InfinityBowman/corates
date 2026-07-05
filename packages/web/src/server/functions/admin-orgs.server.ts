@@ -2,7 +2,8 @@ import { captureError, info } from '@corates/workers/logger';
 import { env } from 'cloudflare:workers';
 import type { Database } from '@corates/db/client';
 import { organization, member, projects, subscription, orgAccessGrants } from '@corates/db/schema';
-import { and, count, desc, eq, like, or, sql } from 'drizzle-orm';
+import { and, count, desc, eq, or, sql } from 'drizzle-orm';
+import { containsInsensitive } from '@/server/lib/sqlSearch';
 import {
   throwDomainError,
   DomainErrorException,
@@ -103,8 +104,8 @@ export async function listAdminOrgs(
   const searchCondition =
     search ?
       or(
-        like(sql`LOWER(${organization.name})`, `%${search.toLowerCase()}%`),
-        like(sql`LOWER(${organization.slug})`, `%${search.toLowerCase()}%`),
+        containsInsensitive(organization.name, search),
+        containsInsensitive(organization.slug, search),
       )
     : undefined;
 

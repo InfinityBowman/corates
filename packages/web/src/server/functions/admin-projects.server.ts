@@ -8,7 +8,8 @@ import {
   organization,
   user,
 } from '@corates/db/schema';
-import { and, count, desc, eq, like, sql } from 'drizzle-orm';
+import { and, count, desc, eq, sql } from 'drizzle-orm';
+import { containsInsensitive } from '@/server/lib/sqlSearch';
 import { throwDomainError, AUTH_ERRORS, PROJECT_ERRORS } from '@corates/shared';
 import { isAdminUser } from '@corates/workers/auth-admin';
 import { getProjectDocStub } from '@corates/workers/project-doc-id';
@@ -33,7 +34,7 @@ export async function listAdminProjects(
 
   const conditions = [];
   if (params.search) {
-    conditions.push(like(sql`LOWER(${projects.name})`, `%${params.search.toLowerCase()}%`));
+    conditions.push(containsInsensitive(projects.name, params.search));
   }
   if (params.orgId) conditions.push(eq(projects.orgId, params.orgId));
 
