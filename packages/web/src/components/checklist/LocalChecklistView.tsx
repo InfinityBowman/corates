@@ -21,6 +21,7 @@ import { useChecklistScore } from '@/primitives/useProject/reactor/hooks';
 import { ProjectReactorContext } from '@/primitives/useProject/reactor/context';
 import { db } from '@/primitives/db';
 import { ScoreTag } from '@/components/checklist/ScoreTag';
+import { track } from '@/lib/analytics';
 
 interface LocalChecklistViewProps {
   checklistId?: string;
@@ -102,7 +103,7 @@ function LocalChecklistEditor({ checklistId }: { checklistId: string }) {
   const handlePdfChange = useCallback(
     async (data: ArrayBuffer, fileName: string) => {
       setPdfState({ loading: false, data, fileName, forChecklistId: checklistId });
-      window.plausible?.('LocalAppraisal:PDF', { props: { type: checklistType || 'unknown' } });
+      track('LocalAppraisal:PDF', { type: checklistType || 'unknown' });
       try {
         await db.localChecklistPdfs.put({
           checklistId,

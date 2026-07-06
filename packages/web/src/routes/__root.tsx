@@ -6,6 +6,7 @@ import { AuthProvider } from '@/components/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { FeedbackDialog } from '@/components/feedback/FeedbackDialog';
 import appCss from '../styles.css?url';
 import type { ErrorComponentProps } from '@tanstack/react-router';
 import { captureException } from '@/config/sentry';
@@ -223,6 +224,7 @@ function RootLayout() {
         <TooltipProvider>
           <Outlet />
           <Toaster />
+          <FeedbackDialog />
           {LazyDevPanel && (
             <ClientOnly>
               <Suspense>

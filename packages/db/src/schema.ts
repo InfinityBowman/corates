@@ -12,6 +12,7 @@ import type {
   OrgInvitationId,
   SubscriptionId,
   OrgAccessGrantId,
+  FeedbackId,
 } from '@corates/shared/ids';
 
 // Users table
@@ -365,6 +366,25 @@ export const projectInvitations = sqliteTable(
   t => [index('project_invitations_projectId_idx').on(t.projectId)],
 );
 
+// In-app user feedback (bug reports, ideas). Status is unused until an admin
+// triage view exists; having it now avoids a migration later.
+export const feedback = sqliteTable(
+  'feedback',
+  {
+    id: text('id').primaryKey().$type<FeedbackId>(),
+    userId: text('userId')
+      .notNull()
+      .$type<UserId>()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    category: text('category').notNull(), // bug, idea, other
+    message: text('message').notNull(),
+    context: text('context'), // JSON: { route, userAgent, viewport, replayId }
+    status: text('status').notNull().default('new'), // new, reviewed
+    createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
+  },
+  t => [index('feedback_userId_createdAt_idx').on(t.userId, t.createdAt)],
+);
+
 // Idempotency table for email queue deduplication (Cloudflare Queues is at-least-once)
 export const processedEmails = sqliteTable('processed_emails', {
   queueMessageId: text('queueMessageId').primaryKey(),
@@ -389,6 +409,7 @@ export const dbSchema = {
   stripeEventLedger,
   projectInvitations,
   processedEmails,
+  feedback,
 };
 
 // Inferred row + insert types per table. Prefer these over hand-written
@@ -440,3 +461,6 @@ export type NewProjectInvitation = typeof projectInvitations.$inferInsert;
 
 export type ProcessedEmail = typeof processedEmails.$inferSelect;
 export type NewProcessedEmail = typeof processedEmails.$inferInsert;
+
+export type Feedback = typeof feedback.$inferSelect;
+export type NewFeedback = typeof feedback.$inferInsert;

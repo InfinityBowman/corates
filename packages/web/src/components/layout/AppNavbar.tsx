@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { MenuIcon, WifiOffIcon, XIcon, ChevronDownIcon } from 'lucide-react';
 import { useAuthStore, selectUser, selectIsAuthLoading } from '@/stores/authStore';
+import { useFeedbackStore } from '@/stores/feedbackStore';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useAdminStore } from '@/stores/adminStore';
@@ -31,6 +32,7 @@ export function AppNavbar({ mobileSidebarOpen, toggleMobileSidebar }: AppNavbarP
   const user = useAuthStore(selectUser);
   const isAuthLoading = useAuthStore(selectIsAuthLoading);
   const signout = useAuthStore(s => s.signout);
+  const openFeedback = useFeedbackStore(s => s.open);
   const isOnline = useOnlineStatus();
   const navigate = useNavigate();
 
@@ -71,7 +73,7 @@ export function AppNavbar({ mobileSidebarOpen, toggleMobileSidebar }: AppNavbarP
   const displayName = user?.name || storedName || 'Loading...';
 
   return (
-    <nav className='sticky top-0 z-50 flex items-center justify-between bg-gradient-to-r from-blue-700 to-blue-500 px-4 py-2 text-white shadow-lg'>
+    <nav className='sticky top-0 z-50 flex items-center justify-between bg-linear-to-r from-blue-700 to-blue-500 px-4 py-2 text-white shadow-lg'>
       <div className='flex items-center gap-3'>
         {/* Mobile sidebar toggle */}
         {toggleMobileSidebar && (
@@ -160,6 +162,7 @@ export function AppNavbar({ mobileSidebarOpen, toggleMobileSidebar }: AppNavbarP
               <DropdownMenuItem asChild>
                 <Link to='/settings'>Settings</Link>
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={openFeedback}>Give feedback</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className='text-destructive' onClick={handleSignOut}>
                 Sign Out

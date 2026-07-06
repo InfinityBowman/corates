@@ -34,6 +34,7 @@ import { handleError, isErrorCode, getDomainError } from '@/lib/error-utils';
 import { AUTH_ERRORS } from '@corates/shared';
 import { isUnlimitedQuota } from '@corates/shared/plans';
 import { createProject } from '@/server/functions/org-projects.functions';
+import { track } from '@/lib/analytics';
 
 interface CreateProjectModalProps {
   open: boolean;
@@ -97,6 +98,7 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
           },
         })) as { id: string };
 
+        track('Project:Created');
         queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
         onOpenChange(false);
 

@@ -8,7 +8,11 @@ interface RestrictionCopyArgs {
   quotaLimit?: number | null;
 }
 
-export function getRestrictionCopy({ restrictionType, projectCount, quotaLimit }: RestrictionCopyArgs) {
+export function getRestrictionCopy({
+  restrictionType,
+  projectCount,
+  quotaLimit,
+}: RestrictionCopyArgs) {
   const title =
     restrictionType === 'entitlement' ? 'Ready to Collaborate?' : 'Project Limit Reached';
 

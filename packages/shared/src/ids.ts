@@ -61,3 +61,6 @@ export type SubscriptionId = z.infer<typeof SubscriptionId>;
 
 export const OrgAccessGrantId = z.string().brand<'OrgAccessGrantId'>();
 export type OrgAccessGrantId = z.infer<typeof OrgAccessGrantId>;
+
+export const FeedbackId = z.string().brand<'FeedbackId'>();
+export type FeedbackId = z.infer<typeof FeedbackId>;
