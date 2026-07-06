@@ -416,6 +416,10 @@ const TOOL_CONTENT: Record<string, ToolContent> = {
         href: 'https://www.bmj.com/content/355/bmj.i4919',
         text: 'Sterne et al. (2016): Original ROBINS-I publication, BMJ',
       },
+      {
+        href: 'https://training.cochrane.org/handbook/current/chapter-25',
+        text: 'Cochrane Handbook Chapter 25: Assessing risk of bias in non-randomized studies',
+      },
     ],
     citations: [
       {
@@ -585,6 +589,10 @@ const TOOL_CONTENT: Record<string, ToolContent> = {
       {
         href: 'https://www.bmj.com/content/366/bmj.l4898',
         text: 'Sterne et al. (2019): RoB 2 publication, BMJ',
+      },
+      {
+        href: 'https://training.cochrane.org/handbook/current/chapter-08',
+        text: 'Cochrane Handbook Chapter 8: Assessing risk of bias in included studies',
       },
     ],
     citations: [

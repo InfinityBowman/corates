@@ -8,6 +8,7 @@ import EarlyAccessBanner from './EarlyAccessBanner';
 
 const navLinks = [
   { href: '/about', label: 'About' },
+  { href: '/resources', label: 'Resources' },
   { href: '/pricing', label: 'Pricing' },
   { href: '/contact', label: 'Contact' },
 ];
@@ -85,7 +86,9 @@ export default function Navbar() {
         className='sticky top-0 z-50 border-b border-gray-100 bg-white/80 backdrop-blur-sm'
         aria-label='Primary'
       >
-        <div className='mx-auto flex w-full items-center justify-between px-6 py-2'>
+        {/* Fixed h-16 so the mobile menu panel (fixed top-16) aligns flush with
+            the navbar bottom instead of leaving a gap showing the banner behind */}
+        <div className='mx-auto flex h-16 w-full items-center justify-between px-6'>
           <div className='flex items-center gap-8'>
             <Link
               to='/'
