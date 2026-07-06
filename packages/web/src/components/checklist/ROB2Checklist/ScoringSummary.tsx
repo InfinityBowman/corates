@@ -1,7 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { InfoIcon } from 'lucide-react';
 import { ROB2_CHECKLIST, getActiveDomainKeys } from './checklist-map';
-import { ResourcesDialog } from '../ResourcesDialog';
+import { ResourcesPopover } from '../ResourcesPopover';
 import { ROB2_RESOURCES } from './resources';
 import { useAnswer, useROB2Score, useROB2DomainScore } from '@/primitives/useProject/reactor/hooks';
 
@@ -12,8 +12,6 @@ interface ScoringSummaryProps {
 }
 
 export function ScoringSummary({ studyId, checklistId, onDomainClick }: ScoringSummaryProps) {
-  const [resourcesOpen, setResourcesOpen] = useState(false);
-
   const overallScore = useROB2Score(studyId, checklistId);
   const aim = useAnswer<string>(studyId, checklistId, 'preliminary.aim');
   const isAdhering = aim === 'ADHERING';
@@ -71,22 +69,17 @@ export function ScoringSummary({ studyId, checklistId, onDomainClick }: ScoringS
             />
           ))}
 
-          <button
-            type='button'
-            onClick={() => setResourcesOpen(true)}
-            className='border-info-border bg-info-bg text-info hover:bg-info-bg/80 ml-2 inline-flex items-center gap-1 rounded border px-2 py-0.5 text-xs font-medium transition-colors'
-          >
-            <InfoIcon className='size-3' />
-            Resources
-          </button>
+          <ResourcesPopover resources={ROB2_RESOURCES}>
+            <button
+              type='button'
+              className='border-info-border bg-info-bg text-info hover:bg-info-bg/80 ml-2 inline-flex items-center gap-1 rounded border px-2 py-0.5 text-xs font-medium transition-colors'
+            >
+              <InfoIcon className='size-3' />
+              Resources
+            </button>
+          </ResourcesPopover>
         </div>
       </div>
-
-      <ResourcesDialog
-        open={resourcesOpen}
-        onClose={() => setResourcesOpen(false)}
-        resources={ROB2_RESOURCES}
-      />
     </div>
   );
 }

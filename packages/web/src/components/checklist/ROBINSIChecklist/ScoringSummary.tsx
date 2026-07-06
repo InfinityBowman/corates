@@ -1,7 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { InfoIcon } from 'lucide-react';
 import { ROBINS_I_CHECKLIST, getActiveDomainKeys } from './checklist-map';
-import { ResourcesDialog } from '../ResourcesDialog';
+import { ResourcesPopover } from '../ResourcesPopover';
 import { ROBINSI_RESOURCES } from './resources';
 import {
   useAnswer,
@@ -16,8 +16,6 @@ interface ScoringSummaryProps {
 }
 
 export function ScoringSummary({ studyId, checklistId, onDomainClick }: ScoringSummaryProps) {
-  const [resourcesOpen, setResourcesOpen] = useState(false);
-
   const overallScore = useROBINSIScore(studyId, checklistId);
   const isPerProtocol = useAnswer<boolean>(studyId, checklistId, 'sectionC.isPerProtocol') === true;
   const activeDomains = useMemo(() => getActiveDomainKeys(isPerProtocol), [isPerProtocol]);
@@ -76,22 +74,17 @@ export function ScoringSummary({ studyId, checklistId, onDomainClick }: ScoringS
             />
           ))}
 
-          <button
-            type='button'
-            onClick={() => setResourcesOpen(true)}
-            className='border-info-border bg-info-bg text-info hover:bg-info-bg/80 ml-2 inline-flex items-center gap-1 rounded border px-2 py-0.5 text-xs font-medium transition-colors'
-          >
-            <InfoIcon className='size-3' />
-            Resources
-          </button>
+          <ResourcesPopover resources={ROBINSI_RESOURCES}>
+            <button
+              type='button'
+              className='border-info-border bg-info-bg text-info hover:bg-info-bg/80 ml-2 inline-flex items-center gap-1 rounded border px-2 py-0.5 text-xs font-medium transition-colors'
+            >
+              <InfoIcon className='size-3' />
+              Resources
+            </button>
+          </ResourcesPopover>
         </div>
       </div>
-
-      <ResourcesDialog
-        open={resourcesOpen}
-        onClose={() => setResourcesOpen(false)}
-        resources={ROBINSI_RESOURCES}
-      />
     </div>
   );
 }

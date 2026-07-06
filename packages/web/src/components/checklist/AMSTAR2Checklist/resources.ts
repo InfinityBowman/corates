@@ -1,4 +1,4 @@
-import type { ChecklistResources } from '../ResourcesDialog';
+import type { ChecklistResources } from '../ResourcesPopover';
 
 export const AMSTAR2_RESOURCES: ChecklistResources = {
   title: 'AMSTAR 2 Resources',

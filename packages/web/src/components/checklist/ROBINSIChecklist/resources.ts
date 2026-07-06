@@ -1,4 +1,4 @@
-import type { ChecklistResources } from '../ResourcesDialog';
+import type { ChecklistResources } from '../ResourcesPopover';
 
 export const ROBINSI_RESOURCES: ChecklistResources = {
   title: 'ROBINS-I V2 Resources',

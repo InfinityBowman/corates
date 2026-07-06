@@ -1,4 +1,4 @@
-import type { ChecklistResources } from '../ResourcesDialog';
+import type { ChecklistResources } from '../ResourcesPopover';
 
 export const ROB2_RESOURCES: ChecklistResources = {
   title: 'ROB-2 Resources',

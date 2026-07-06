@@ -20,7 +20,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { SplitScreenLayout } from '@/components/checklist/SplitScreenLayout';
-import { ResourcesDialog } from '@/components/checklist/ResourcesDialog';
+import { ResourcesPopover } from '@/components/checklist/ResourcesPopover';
 import { useReconciliationPresence } from '@/hooks/useReconciliationPresence';
 import { PresenceAvatars } from '../PresenceAvatars';
 import { RemoteCursors } from '../RemoteCursors';
@@ -154,8 +154,6 @@ export function ReconciliationEngine({
 
   const NavbarComponent = adapter.NavbarComponent;
 
-  const [resourcesOpen, setResourcesOpen] = useState(false);
-
   const headerContent = (
     <>
       {/* Back button */}
@@ -192,15 +190,12 @@ export function ReconciliationEngine({
 
       {/* Guidance resources */}
       {adapter.resources && (
-        <Button
-          variant='outline'
-          size='sm'
-          className='shrink-0'
-          onClick={() => setResourcesOpen(true)}
-        >
-          <InfoIcon className='size-4' />
-          Resources
-        </Button>
+        <ResourcesPopover resources={adapter.resources}>
+          <Button variant='outline' size='sm' className='shrink-0'>
+            <InfoIcon className='size-4' />
+            Resources
+          </Button>
+        </ResourcesPopover>
       )}
 
       {/* Presence avatars */}
@@ -259,15 +254,6 @@ export function ReconciliationEngine({
 
   return (
     <div className='bg-secondary flex h-full flex-col'>
-      {/* Guidance resources dialog */}
-      {adapter.resources && (
-        <ResourcesDialog
-          open={resourcesOpen}
-          onClose={() => setResourcesOpen(false)}
-          resources={adapter.resources}
-        />
-      )}
-
       {/* Save confirmation dialog */}
       <AlertDialog open={engine.finishDialogOpen} onOpenChange={engine.setFinishDialogOpen}>
         <AlertDialogContent>

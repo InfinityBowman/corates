@@ -3,7 +3,7 @@ import type * as Y from 'yjs';
 import type { getUserColor } from '@/lib/userColors.js';
 import type { TextRef } from '@/primitives/useProject/checklists';
 import type { PdfEntry } from '@/stores/projectStore';
-import type { ChecklistResources } from '@/components/checklist/ResourcesDialog';
+import type { ChecklistResources } from '@/components/checklist/ResourcesPopover';
 
 // ---------------------------------------------------------------------------
 // Presence types (mirrored from useReconciliationPresence to avoid
