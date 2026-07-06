@@ -5,6 +5,7 @@
 
 import { useState, useMemo, useRef, useCallback } from 'react';
 import { CameraIcon, CheckIcon } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { useAuthStore, selectUser, selectUserAvatarUrl } from '@/stores/authStore';
@@ -162,17 +163,16 @@ export function ProfileInfoSection() {
       <div className='flex items-center gap-6'>
         {/* Avatar */}
         <div className='group relative shrink-0'>
-          {avatarUrl ?
-            <img
-              src={avatarUrl}
+          <Avatar className='ring-background size-20 shadow-md ring-2'>
+            <AvatarImage
+              src={avatarUrl || undefined}
               alt={user?.name || 'Profile'}
-              className='ring-background size-20 rounded-full object-cover shadow-md ring-2'
               referrerPolicy='no-referrer'
             />
-          : <div className='from-primary to-primary/80 text-primary-foreground flex size-20 items-center justify-center rounded-full bg-gradient-to-br text-xl font-semibold shadow-md'>
+            <AvatarFallback className='from-primary to-primary/80 text-primary-foreground bg-gradient-to-br text-xl font-semibold'>
               {userInitials}
-            </div>
-          }
+            </AvatarFallback>
+          </Avatar>
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={uploadingImage}

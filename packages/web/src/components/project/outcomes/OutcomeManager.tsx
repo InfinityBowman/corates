@@ -5,6 +5,8 @@
 import { useState, useMemo, useCallback } from 'react';
 import { ChevronRightIcon, PlusIcon, PencilIcon, Trash2Icon, CheckIcon, XIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import {
   AlertDialog,
@@ -166,10 +168,10 @@ export function OutcomeManager() {
             {/* Add form */}
             {isAdding && (
               <div className='flex items-center gap-2'>
-                <label htmlFor='outcome-new-name' className='sr-only'>
+                <Label htmlFor='outcome-new-name' className='sr-only'>
                   Outcome name
-                </label>
-                <input
+                </Label>
+                <Input
                   id='outcome-new-name'
                   type='text'
                   value={newName}
@@ -181,7 +183,7 @@ export function OutcomeManager() {
                     })
                   }
                   placeholder='Outcome name (e.g., Overall mortality)'
-                  className='border-border focus:border-primary flex-1 rounded border px-3 py-1.5 text-sm focus:ring-1 focus:ring-blue-200 focus:outline-none'
+                  className='flex-1'
                   autoFocus
                 />
                 <Button
@@ -222,10 +224,10 @@ export function OutcomeManager() {
             {outcomes.map((outcome: any) =>
               editingId === outcome.id ?
                 <div key={outcome.id} className='flex items-center gap-2'>
-                  <label htmlFor={`outcome-edit-${outcome.id}`} className='sr-only'>
+                  <Label htmlFor={`outcome-edit-${outcome.id}`} className='sr-only'>
                     Outcome name
-                  </label>
-                  <input
+                  </Label>
+                  <Input
                     id={`outcome-edit-${outcome.id}`}
                     type='text'
                     value={newName}
@@ -241,7 +243,7 @@ export function OutcomeManager() {
                       )
                     }
                     placeholder='Outcome name'
-                    className='border-border focus:border-primary flex-1 rounded border px-3 py-1.5 text-sm focus:ring-1 focus:ring-blue-200 focus:outline-none'
+                    className='flex-1'
                     autoFocus
                   />
                   <Button

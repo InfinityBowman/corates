@@ -5,6 +5,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { showToast } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import {
   ShuffleIcon,
@@ -54,7 +55,7 @@ function MemberPercentRow({
         ))}
 
         {showCustom || !isPreset ?
-          <input
+          <Input
             type='number'
             min={0}
             max={100}
@@ -63,7 +64,8 @@ function MemberPercentRow({
             onBlur={() => {
               if (isPreset) setShowCustom(false);
             }}
-            className='border-border focus:ring-primary w-14 rounded border px-1.5 py-1 text-center text-xs focus:border-transparent focus:ring-2 focus:outline-none'
+            className='h-auto w-14 rounded px-1.5 py-1 text-center text-xs md:text-xs'
+            aria-label={`Percentage for ${member.name || member.email || 'member'}`}
             autoFocus={showCustom}
           />
         : <button

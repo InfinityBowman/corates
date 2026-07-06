@@ -17,6 +17,8 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import {
   Select,
@@ -175,10 +177,11 @@ export function AddMemberModal({
           )}
 
           <div className='relative'>
-            <label className='text-secondary-foreground mb-1 block text-sm font-medium'>
+            <Label htmlFor='member-search' className='mb-1'>
               Search by name or email
-            </label>
-            <input
+            </Label>
+            <Input
+              id='member-search'
               ref={inputRef}
               type='text'
               autoComplete='off'
@@ -188,7 +191,6 @@ export function AddMemberModal({
                 setError(null);
               }}
               placeholder='Type at least 2 characters...'
-              className='border-border text-foreground placeholder-muted-foreground/70 focus:ring-primary w-full rounded-lg border px-3 py-2 focus:border-transparent focus:ring-2 focus:outline-none'
               disabled={!!isAtQuotaLimit}
             />
 

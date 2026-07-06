@@ -1,4 +1,5 @@
 import { JUDGEMENTS } from '@corates/shared/checklists/rob2';
+import { Skeleton } from '@/components/ui/skeleton';
 
 /**
  * Get badge color for ROB-2 judgement
@@ -55,7 +56,7 @@ export function JudgementPanel({
             {judgement}
           </span>
         : <div className='flex items-center gap-2'>
-            <div className='bg-border size-4 animate-pulse rounded-full' />
+            <Skeleton className='size-4 rounded-full' />
             <span className='text-muted-foreground text-sm italic'>
               {isComplete === false ? 'Not yet calculated' : 'Not available'}
             </span>
