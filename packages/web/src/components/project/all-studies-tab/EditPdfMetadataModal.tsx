@@ -7,6 +7,9 @@ import { showToast } from '@/components/ui/toast';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import type { PdfEntry } from '@/stores/projectStore';
 
 interface EditPdfMetadataModalProps {
@@ -111,17 +114,13 @@ export function EditPdfMetadataModal({
           </div>
 
           <div>
-            <label
-              htmlFor='edit-pdf-title'
-              className='text-secondary-foreground mb-1 block text-sm font-medium'
-            >
+            <Label htmlFor='edit-pdf-title' className='mb-1'>
               Article Title
-            </label>
-            <textarea
+            </Label>
+            <Textarea
               id='edit-pdf-title'
               value={title}
               onChange={e => setTitle(e.target.value)}
-              className='border-border focus:border-primary focus:ring-primary w-full rounded-md border px-3 py-2 shadow-sm'
               placeholder='Full article title'
               rows={2}
             />
@@ -129,34 +128,26 @@ export function EditPdfMetadataModal({
 
           <div className='grid grid-cols-2 gap-4'>
             <div>
-              <label
-                htmlFor='edit-pdf-first-author'
-                className='text-secondary-foreground mb-1 block text-sm font-medium'
-              >
+              <Label htmlFor='edit-pdf-first-author' className='mb-1'>
                 First Author
-              </label>
-              <input
+              </Label>
+              <Input
                 id='edit-pdf-first-author'
                 type='text'
                 value={firstAuthor}
                 onChange={e => setFirstAuthor(e.target.value)}
-                className='border-border focus:border-primary focus:ring-primary w-full rounded-md border px-3 py-2 shadow-sm'
                 placeholder='e.g., Smith'
               />
             </div>
             <div>
-              <label
-                htmlFor='edit-pdf-pub-year'
-                className='text-secondary-foreground mb-1 block text-sm font-medium'
-              >
+              <Label htmlFor='edit-pdf-pub-year' className='mb-1'>
                 Publication Year
-              </label>
-              <input
+              </Label>
+              <Input
                 id='edit-pdf-pub-year'
                 type='number'
                 value={publicationYear}
                 onChange={e => setPublicationYear(e.target.value)}
-                className='border-border focus:border-primary focus:ring-primary w-full rounded-md border px-3 py-2 shadow-sm'
                 placeholder='e.g., 2024'
                 min={1900}
                 max={2100}
@@ -166,35 +157,27 @@ export function EditPdfMetadataModal({
           </div>
 
           <div>
-            <label
-              htmlFor='edit-pdf-journal'
-              className='text-secondary-foreground mb-1 block text-sm font-medium'
-            >
+            <Label htmlFor='edit-pdf-journal' className='mb-1'>
               Journal
-            </label>
-            <input
+            </Label>
+            <Input
               id='edit-pdf-journal'
               type='text'
               value={journal}
               onChange={e => setJournal(e.target.value)}
-              className='border-border focus:border-primary focus:ring-primary w-full rounded-md border px-3 py-2 shadow-sm'
               placeholder='e.g., Journal of Clinical Research'
             />
           </div>
 
           <div>
-            <label
-              htmlFor='edit-pdf-doi'
-              className='text-secondary-foreground mb-1 block text-sm font-medium'
-            >
+            <Label htmlFor='edit-pdf-doi' className='mb-1'>
               DOI
-            </label>
-            <input
+            </Label>
+            <Input
               id='edit-pdf-doi'
               type='text'
               value={doi}
               onChange={e => setDoi(e.target.value)}
-              className='border-border focus:border-primary focus:ring-primary w-full rounded-md border px-3 py-2 shadow-sm'
               placeholder='e.g., 10.1000/xyz123'
             />
           </div>

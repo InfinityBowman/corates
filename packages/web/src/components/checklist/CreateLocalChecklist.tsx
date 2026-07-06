@@ -24,6 +24,8 @@ import { LOCAL_PROJECT_ID, createLocalAppraisal } from '@/project/localProject';
 import { db } from '@/primitives/db';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { FileUpload, FileUploadDropzone, FileUploadHiddenInput } from '@/components/ui/file-upload';
 import { LANDING_URL } from '@/config/api.js';
 import { getChecklistTypeOptions, DEFAULT_CHECKLIST_TYPE } from '@/checklist-registry/index';
@@ -126,12 +128,9 @@ export function CreateLocalChecklist({ type: typeParam }: { type?: string }) {
           <form onSubmit={handleSubmit} className='flex flex-col gap-6'>
             {/* Checklist Type */}
             <div>
-              <label
-                htmlFor='checklist-type'
-                className='text-secondary-foreground mb-2 block text-sm font-medium'
-              >
+              <Label htmlFor='checklist-type' className='mb-2'>
                 Assessment Type
-              </label>
+              </Label>
               <Select value={checklistType} onValueChange={setChecklistType}>
                 <SelectTrigger id='checklist-type' className='w-full'>
                   <SelectValue />
@@ -148,27 +147,23 @@ export function CreateLocalChecklist({ type: typeParam }: { type?: string }) {
 
             {/* Checklist Name */}
             <div>
-              <label
-                htmlFor='checklist-name'
-                className='text-secondary-foreground mb-2 block text-sm font-medium'
-              >
+              <Label htmlFor='checklist-name' className='mb-2'>
                 Study Name
-              </label>
-              <input
+              </Label>
+              <Input
                 id='checklist-name'
                 type='text'
                 value={name}
                 onChange={e => setName(e.target.value)}
                 placeholder='e.g., Study by Smith et al. 2024'
-                className='border-border focus:border-primary focus:ring-primary w-full rounded-lg border px-4 py-3 transition-colors outline-none focus:ring-2'
               />
             </div>
 
             {/* PDF Upload */}
             <div>
-              <label className='text-secondary-foreground mb-2 block text-sm font-medium'>
+              <span className='text-secondary-foreground mb-2 block text-sm font-medium'>
                 PDF Document <span className='text-muted-foreground/70'>(optional)</span>
-              </label>
+              </span>
 
               {pdfFile ?
                 <div className='border-info-border bg-info-bg flex items-center gap-3 rounded-lg border p-4'>

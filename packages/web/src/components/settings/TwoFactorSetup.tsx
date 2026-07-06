@@ -2,7 +2,7 @@
  * TwoFactorSetup - Full 4-step 2FA enrollment/disable flow
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useId } from 'react';
 import {
   ShieldIcon,
   XIcon,
@@ -17,6 +17,9 @@ import { showToast } from '@/components/ui/toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { PasswordInput } from '@/components/ui/password-input';
 import { QRCode, QRCodeFrame, QRCodePattern } from '@/components/ui/qr-code';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Spinner } from '@/components/ui/spinner';
@@ -28,6 +31,7 @@ export function TwoFactorSetup() {
   const verifyTwoFactorSetup = useAuthStore(s => s.verifyTwoFactorSetup);
   const disableTwoFactor = useAuthStore(s => s.disableTwoFactor);
 
+  const fieldId = useId();
   const isEnabled = !!twoFactorEnabled;
   const [loading, setLoading] = useState(false);
   const [setupMode, setSetupMode] = useState(false);
@@ -282,15 +286,14 @@ export function TwoFactorSetup() {
                 aria-hidden='true'
               />
               <div>
-                <label className='text-secondary-foreground mb-1 block text-sm font-medium'>
+                <Label htmlFor={`${fieldId}-setup-password`} className='mb-1'>
                   Password
-                </label>
-                <input
-                  type='password'
+                </Label>
+                <PasswordInput
+                  id={`${fieldId}-setup-password`}
                   autoComplete='current-password'
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  className='border-border bg-card focus:border-primary focus:ring-ring/20 block w-full rounded-lg border px-3 py-2 text-sm shadow-sm transition-colors focus:ring-2 focus:outline-none'
                 />
               </div>
               <div className='flex gap-3'>
@@ -364,17 +367,18 @@ export function TwoFactorSetup() {
                 </div>
               </div>
               <div>
-                <label className='text-secondary-foreground mb-1 block text-sm font-medium'>
+                <Label htmlFor={`${fieldId}-verification-code`} className='mb-1'>
                   Verification Code
-                </label>
-                <input
+                </Label>
+                <Input
+                  id={`${fieldId}-verification-code`}
                   type='text'
                   inputMode='numeric'
                   pattern='[0-9]*'
                   maxLength={6}
                   value={verificationCode}
                   onChange={e => setVerificationCode(e.target.value.replace(/\D/g, ''))}
-                  className='border-border focus:border-primary focus:ring-ring w-full rounded-md border px-3 py-2 text-center font-mono text-lg tracking-widest shadow-sm focus:outline-none'
+                  className='h-auto py-2 text-center font-mono text-lg tracking-widest md:text-lg'
                   placeholder='000000'
                   disabled={loading}
                 />
@@ -462,14 +466,14 @@ export function TwoFactorSetup() {
           </Alert>
           <form onSubmit={handleDisable} className='flex flex-col gap-4'>
             <div>
-              <label className='text-secondary-foreground mb-1 block text-sm font-medium'>
+              <Label htmlFor={`${fieldId}-disable-password`} className='mb-1'>
                 Password
-              </label>
-              <input
-                type='password'
+              </Label>
+              <PasswordInput
+                id={`${fieldId}-disable-password`}
+                autoComplete='current-password'
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                className='border-border focus:border-primary focus:ring-ring w-full rounded-md border px-3 py-2 shadow-sm focus:outline-none'
                 placeholder='Enter your password'
                 disabled={loading}
               />

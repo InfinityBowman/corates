@@ -7,6 +7,7 @@ import { acceptInvitation } from '@/server/functions/invitations.functions';
 import { showToast } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   hasPendingPlan,
   clearPendingPlan,
@@ -346,12 +347,9 @@ function CompleteProfilePage() {
           <form onSubmit={handleStep1Next} className='flex flex-col gap-4' autoComplete='off'>
             <div className='grid grid-cols-2 gap-3'>
               <div>
-                <label
-                  className='text-secondary-foreground mb-1 block text-xs font-semibold sm:text-sm'
-                  htmlFor='first-name-input'
-                >
+                <Label className='mb-1' htmlFor='first-name-input'>
                   First Name
-                </label>
+                </Label>
                 <Input
                   type='text'
                   autoComplete='given-name'
@@ -370,12 +368,9 @@ function CompleteProfilePage() {
                 />
               </div>
               <div>
-                <label
-                  className='text-secondary-foreground mb-1 block text-xs font-semibold sm:text-sm'
-                  htmlFor='last-name-input'
-                >
+                <Label className='mb-1' htmlFor='last-name-input'>
                   Last Name <span className='text-muted-foreground/70 font-normal'>(optional)</span>
-                </label>
+                </Label>
                 <Input
                   type='text'
                   autoComplete='family-name'
@@ -395,11 +390,11 @@ function CompleteProfilePage() {
             </div>
 
             <div className='flex flex-col gap-2'>
-              <label className='text-secondary-foreground mb-1 block text-xs font-semibold sm:text-sm'>
+              <Label htmlFor='title-select' className='mb-1'>
                 Title
-              </label>
+              </Label>
               <Select value={titleSelection} onValueChange={v => setTitleSelection(v)}>
-                <SelectTrigger className='w-full'>
+                <SelectTrigger id='title-select' className='w-full'>
                   <SelectValue placeholder='Select a title (optional)' />
                 </SelectTrigger>
                 <SelectContent>
@@ -441,12 +436,9 @@ function CompleteProfilePage() {
 
           <form onSubmit={handleStep2Next} className='flex flex-col gap-4' autoComplete='off'>
             <div>
-              <label
-                className='text-secondary-foreground mb-1 block text-xs font-semibold sm:text-sm'
-                htmlFor='institution-input'
-              >
+              <Label className='mb-1' htmlFor='institution-input'>
                 University / Institution
-              </label>
+              </Label>
               <Input
                 type='text'
                 id='institution-input'
@@ -460,12 +452,9 @@ function CompleteProfilePage() {
             </div>
 
             <div>
-              <label
-                className='text-secondary-foreground mb-1 block text-xs font-semibold sm:text-sm'
-                htmlFor='department-input'
-              >
+              <Label className='mb-1' htmlFor='department-input'>
                 Department / Faculty
-              </label>
+              </Label>
               <Input
                 type='text'
                 id='department-input'

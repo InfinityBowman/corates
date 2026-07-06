@@ -55,9 +55,9 @@ export function PersonaSection() {
       <Separator />
       <div className='my-4 flex items-start justify-between'>
         <div className='flex-1'>
-          <label className='text-muted-foreground mb-1 block text-xs font-medium tracking-wide uppercase'>
+          <span className='text-muted-foreground mb-1 block text-xs font-medium tracking-wide uppercase'>
             Persona
-          </label>
+          </span>
           {isEditing ?
             <div className='mt-3 flex flex-col gap-4'>
               <Select value={editSelection} onValueChange={setEditSelection}>

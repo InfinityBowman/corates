@@ -6,7 +6,10 @@ import Footer from '../components/Footer';
 import { config } from '../lib/config';
 import { submitContactForm } from '@/server/functions/contact.functions';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { Textarea } from '@/components/ui/textarea';
 
 const pageUrl = `${config.appUrl}/contact`;
 const title = 'Contact Us - CoRATES';
@@ -126,62 +129,62 @@ function ContactPage() {
               <h2 className='mb-6 text-xl font-semibold text-gray-900'>Send us a message</h2>
               <form onSubmit={handleSubmit} className='flex flex-col gap-6'>
                 <div>
-                  <label htmlFor='name' className='mb-2 block text-sm font-medium text-gray-700'>
+                  <Label htmlFor='name' className='mb-2'>
                     Your Name
-                  </label>
+                  </Label>
                   <div className='relative'>
                     <UserIcon className='absolute top-1/2 left-3 size-5 -translate-y-1/2 text-gray-400' />
-                    <input
+                    <Input
                       type='text'
                       id='name'
                       name='name'
                       required
-                      className='w-full rounded-lg border border-gray-200 py-3 pr-4 pl-10 transition-shadow focus:border-transparent focus:ring-2 focus:ring-blue-600 focus:outline-none'
+                      className='h-auto py-3 pr-4 pl-10 md:text-base'
                       placeholder='John Doe'
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label htmlFor='email' className='mb-2 block text-sm font-medium text-gray-700'>
+                  <Label htmlFor='email' className='mb-2'>
                     Email Address
-                  </label>
+                  </Label>
                   <div className='relative'>
                     <MailIcon className='absolute top-1/2 left-3 size-5 -translate-y-1/2 text-gray-400' />
-                    <input
+                    <Input
                       type='email'
                       id='email'
                       name='email'
                       required
-                      className='w-full rounded-lg border border-gray-200 py-3 pr-4 pl-10 transition-shadow focus:border-transparent focus:ring-2 focus:ring-blue-600 focus:outline-none'
+                      className='h-auto py-3 pr-4 pl-10 md:text-base'
                       placeholder='you@example.com'
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label htmlFor='subject' className='mb-2 block text-sm font-medium text-gray-700'>
+                  <Label htmlFor='subject' className='mb-2'>
                     Subject
-                  </label>
-                  <input
+                  </Label>
+                  <Input
                     type='text'
                     id='subject'
                     name='subject'
-                    className='w-full rounded-lg border border-gray-200 px-4 py-3 transition-shadow focus:border-transparent focus:ring-2 focus:ring-blue-600 focus:outline-none'
+                    className='h-auto px-4 py-3 md:text-base'
                     placeholder='What is this about?'
                   />
                 </div>
 
                 <div>
-                  <label htmlFor='message' className='mb-2 block text-sm font-medium text-gray-700'>
+                  <Label htmlFor='message' className='mb-2'>
                     Message
-                  </label>
-                  <textarea
+                  </Label>
+                  <Textarea
                     id='message'
                     name='message'
                     required
                     rows={5}
-                    className='w-full resize-none rounded-lg border border-gray-200 px-4 py-3 transition-shadow focus:border-transparent focus:ring-2 focus:ring-blue-600 focus:outline-none'
+                    className='resize-none px-4 py-3 md:text-base'
                     placeholder='Tell us how we can help...'
                   />
                 </div>

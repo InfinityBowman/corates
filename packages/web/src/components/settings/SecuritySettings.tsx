@@ -2,11 +2,13 @@
  * SecuritySettings - Password, 2FA, linked accounts, session management
  */
 
-import { useState, useCallback } from 'react';
-import { ShieldIcon, KeyIcon, EyeIcon, EyeOffIcon, MailIcon, MonitorIcon } from 'lucide-react';
+import { useState, useCallback, useId } from 'react';
+import { ShieldIcon, KeyIcon, MailIcon, MonitorIcon } from 'lucide-react';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { PasswordInput } from '@/components/ui/password-input';
 import { StrengthIndicator } from '@/components/auth/StrengthIndicator';
 import { TwoFactorSetup } from './TwoFactorSetup';
 import { LinkedAccountsSection } from './LinkedAccountsSection';
@@ -17,12 +19,11 @@ export function SecuritySettings() {
   const changePassword = useAuthStore(s => s.changePassword);
   const resetPassword = useAuthStore(s => s.resetPassword);
 
+  const fieldId = useId();
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
   const [changingPassword, setChangingPassword] = useState(false);
@@ -151,67 +152,39 @@ export function SecuritySettings() {
               <form onSubmit={handlePasswordChange} className='flex flex-col gap-4'>
                 {passwordError && <Alert variant='destructive'>{passwordError}</Alert>}
                 <div>
-                  <label className='text-secondary-foreground mb-1.5 block text-sm font-medium'>
+                  <Label htmlFor={`${fieldId}-current-password`} className='mb-1.5'>
                     Current Password
-                  </label>
-                  <div className='relative'>
-                    <input
-                      type={showCurrentPassword ? 'text' : 'password'}
-                      value={currentPassword}
-                      onChange={e => setCurrentPassword(e.target.value)}
-                      className='border-border bg-card focus:border-primary focus:ring-ring/20 block w-full rounded-lg border px-3 py-2 pr-10 text-sm shadow-sm transition-colors focus:ring-2 focus:outline-none'
-                      required
-                    />
-                    <Button
-                      type='button'
-                      variant='ghost'
-                      size='icon-sm'
-                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                      className='text-muted-foreground hover:text-secondary-foreground absolute top-1/2 right-1 -translate-y-1/2 hover:bg-transparent'
-                      aria-label={showCurrentPassword ? 'Hide password' : 'Show password'}
-                    >
-                      {showCurrentPassword ?
-                        <EyeOffIcon />
-                      : <EyeIcon />}
-                    </Button>
-                  </div>
+                  </Label>
+                  <PasswordInput
+                    id={`${fieldId}-current-password`}
+                    autoComplete='current-password'
+                    value={currentPassword}
+                    onChange={e => setCurrentPassword(e.target.value)}
+                    required
+                  />
                 </div>
                 <div>
-                  <label className='text-secondary-foreground mb-1.5 block text-sm font-medium'>
+                  <Label htmlFor={`${fieldId}-new-password`} className='mb-1.5'>
                     New Password
-                  </label>
-                  <div className='relative'>
-                    <input
-                      type={showNewPassword ? 'text' : 'password'}
-                      value={newPassword}
-                      onChange={e => setNewPassword(e.target.value)}
-                      className='border-border bg-card focus:border-primary focus:ring-ring/20 block w-full rounded-lg border px-3 py-2 pr-10 text-sm shadow-sm transition-colors focus:ring-2 focus:outline-none'
-                      required
-                    />
-                    <Button
-                      type='button'
-                      variant='ghost'
-                      size='icon-sm'
-                      onClick={() => setShowNewPassword(!showNewPassword)}
-                      className='text-muted-foreground hover:text-secondary-foreground absolute top-1/2 right-1 -translate-y-1/2 hover:bg-transparent'
-                      aria-label={showNewPassword ? 'Hide password' : 'Show password'}
-                    >
-                      {showNewPassword ?
-                        <EyeOffIcon />
-                      : <EyeIcon />}
-                    </Button>
-                  </div>
+                  </Label>
+                  <PasswordInput
+                    id={`${fieldId}-new-password`}
+                    autoComplete='new-password'
+                    value={newPassword}
+                    onChange={e => setNewPassword(e.target.value)}
+                    required
+                  />
                   <StrengthIndicator password={newPassword} onUnmet={setUnmetRequirements} />
                 </div>
                 <div>
-                  <label className='text-secondary-foreground mb-1.5 block text-sm font-medium'>
+                  <Label htmlFor={`${fieldId}-confirm-password`} className='mb-1.5'>
                     Confirm New Password
-                  </label>
-                  <input
-                    type='password'
+                  </Label>
+                  <PasswordInput
+                    id={`${fieldId}-confirm-password`}
+                    autoComplete='new-password'
                     value={confirmPassword}
                     onChange={e => setConfirmPassword(e.target.value)}
-                    className='border-border bg-card focus:border-primary focus:ring-ring/20 block w-full rounded-lg border px-3 py-2 text-sm shadow-sm transition-colors focus:ring-2 focus:outline-none'
                     required
                   />
                 </div>

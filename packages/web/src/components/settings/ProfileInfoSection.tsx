@@ -196,9 +196,9 @@ export function ProfileInfoSection() {
         <div className='min-w-0 flex-1'>
           <div className='grid grid-cols-2 gap-4'>
             <div>
-              <label className='text-muted-foreground mb-1 block text-xs font-medium tracking-wide uppercase'>
+              <span className='text-muted-foreground mb-1 block text-xs font-medium tracking-wide uppercase'>
                 First Name
-              </label>
+              </span>
               <InlineEdit
                 value={firstName || 'Add first name'}
                 onCommit={handleFirstNameChange}
@@ -209,9 +209,9 @@ export function ProfileInfoSection() {
               />
             </div>
             <div>
-              <label className='text-muted-foreground mb-1 block text-xs font-medium tracking-wide uppercase'>
+              <span className='text-muted-foreground mb-1 block text-xs font-medium tracking-wide uppercase'>
                 Last Name
-              </label>
+              </span>
               <InlineEdit
                 value={lastName || 'Add last name'}
                 onCommit={handleLastNameChange}
@@ -237,9 +237,9 @@ export function ProfileInfoSection() {
       {/* Member Since */}
       <Separator />
       <div>
-        <label className='text-muted-foreground mb-1 block text-xs font-medium tracking-wide uppercase'>
+        <span className='text-muted-foreground mb-1 block text-xs font-medium tracking-wide uppercase'>
           Member Since
-        </label>
+        </span>
         <p className='text-foreground'>{formatDate(user?.createdAt as string | undefined)}</p>
       </div>
     </div>

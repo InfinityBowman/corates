@@ -4,12 +4,14 @@
  * 6-step wizard: PROMPT -> ENTER_EMAIL -> ENTER_CODE -> CONFIRM -> MERGING -> SUCCESS
  */
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useId } from 'react';
 import { TriangleAlertIcon, CheckIcon, UserPlusIcon, MailIcon } from 'lucide-react';
 import { showToast } from '@/components/ui/toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
+import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/spinner';
 import { initiateMerge, verifyMergeCode, completeMerge, cancelMerge } from '@/api/account-merge';
@@ -56,6 +58,7 @@ export function MergeAccountsDialog({
   conflictProvider,
   onSuccess,
 }: MergeAccountsDialogProps) {
+  const fieldId = useId();
   const [step, setStep] = useState<Step>(STEPS.PROMPT);
   const [targetEmail, setTargetEmail] = useState('');
   const [targetOrcidId, setTargetOrcidId] = useState<string | null>(null);
@@ -264,7 +267,7 @@ export function MergeAccountsDialog({
                 : "Enter the email address of the other CoRATES account. We'll send a verification code to prove you own it."
                 }
               </p>
-              <input
+              <Input
                 type='text'
                 value={targetEmail}
                 onChange={e => setTargetEmail(e.target.value)}
@@ -274,7 +277,7 @@ export function MergeAccountsDialog({
                     'Email or ORCID ID (e.g., 0000-0001-2345-6789)'
                   : 'other@example.com'
                 }
-                className='border-border focus:border-primary focus:ring-ring w-full rounded-lg border px-3 py-2 focus:ring-2'
+                aria-label='Other account email or ORCID ID'
                 disabled={loading}
               />
               {error && <p className='text-destructive text-sm'>{error}</p>}
@@ -309,11 +312,12 @@ export function MergeAccountsDialog({
                 </div>
               </Alert>
               <div>
-                <label className='text-secondary-foreground mb-1 block text-center text-sm font-medium'>
+                <Label htmlFor={`${fieldId}-verification-code`} className='mb-1 justify-center'>
                   Verification Code
-                </label>
+                </Label>
                 <div className='flex justify-center'>
                   <InputOTP
+                    id={`${fieldId}-verification-code`}
                     maxLength={6}
                     value={verificationCode}
                     onChange={setVerificationCode}

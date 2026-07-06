@@ -17,6 +17,9 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -147,31 +150,27 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
           <div className='flex flex-col gap-4 py-2'>
             {/* Project Name */}
             <div>
-              <label
-                htmlFor='project-name'
-                className='text-secondary-foreground mb-1.5 block text-sm font-medium'
-              >
+              <Label htmlFor='project-name' className='mb-1.5'>
                 What should we call this project?
-              </label>
-              <input
+              </Label>
+              <Input
                 id='project-name'
                 type='text'
                 placeholder='My Systematic Review'
                 value={projectName}
                 onChange={e => setProjectName(e.target.value)}
                 autoFocus
-                className='border-border bg-card text-foreground placeholder-muted-foreground/70 focus:border-primary focus:ring-primary/20 w-full rounded-lg border px-3.5 py-2.5 text-sm shadow-sm transition-all duration-150 focus:ring-2 focus:outline-none'
               />
             </div>
 
             {/* Organization - only show if multiple */}
             {!orgsLoading && orgs.length > 1 && (
               <div>
-                <label className='text-secondary-foreground mb-1.5 block text-sm font-medium'>
+                <Label htmlFor='project-org' className='mb-1.5'>
                   Which team is this for?
-                </label>
+                </Label>
                 <Select value={selectedOrgId || ''} onValueChange={setSelectedOrgId}>
-                  <SelectTrigger>
+                  <SelectTrigger id='project-org'>
                     <SelectValue placeholder='Select a team' />
                   </SelectTrigger>
                   <SelectContent>
@@ -187,20 +186,17 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
 
             {/* Description */}
             <div>
-              <label
-                htmlFor='project-description'
-                className='text-secondary-foreground mb-1.5 block text-sm font-medium'
-              >
+              <Label htmlFor='project-description' className='mb-1.5 block'>
                 Add a description{' '}
                 <span className='text-muted-foreground/70 font-normal'>(optional)</span>
-              </label>
-              <textarea
+              </Label>
+              <Textarea
                 id='project-description'
                 placeholder='What is this review about?'
                 value={projectDescription}
                 onChange={e => setProjectDescription(e.target.value)}
                 rows={2}
-                className='border-border bg-card text-foreground placeholder-muted-foreground/70 focus:border-primary focus:ring-primary/20 w-full resize-none rounded-lg border px-3.5 py-2.5 text-sm shadow-sm transition-all duration-150 focus:ring-2 focus:outline-none'
+                className='resize-none'
               />
             </div>
           </div>

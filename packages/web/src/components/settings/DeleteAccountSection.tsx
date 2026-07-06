@@ -2,14 +2,17 @@
  * DeleteAccountSection - Danger zone with account deletion confirmation
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useId } from 'react';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { showToast } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 export function DeleteAccountSection() {
   const user = useAuthStore(selectUser);
   const deleteAccount = useAuthStore(s => s.deleteAccount);
+  const confirmId = useId();
 
   const [showConfirm, setShowConfirm] = useState(false);
   const [confirmText, setConfirmText] = useState('');
@@ -52,15 +55,16 @@ export function DeleteAccountSection() {
           </div>
 
           <div>
-            <label className='text-secondary-foreground mb-1.5 block text-sm font-medium'>
+            <Label htmlFor={confirmId} className='mb-1.5 block'>
               Type <span className='text-destructive font-mono font-semibold'>DELETE</span> to
               confirm
-            </label>
-            <input
+            </Label>
+            <Input
+              id={confirmId}
               type='text'
               value={confirmText}
               onChange={e => setConfirmText(e.target.value)}
-              className='border-border bg-card block w-full max-w-xs rounded-lg border px-3 py-2 text-sm shadow-sm transition-colors focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none'
+              className='focus-visible:border-destructive focus-visible:ring-destructive/20 max-w-xs'
               placeholder='DELETE'
             />
           </div>

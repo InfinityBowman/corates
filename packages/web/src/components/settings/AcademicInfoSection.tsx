@@ -2,12 +2,14 @@
  * AcademicInfoSection - Title, institution, and department fields
  */
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useId } from 'react';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { showToast } from '@/components/ui/toast';
 import { TITLE_OPTIONS } from '@/components/auth/RoleSelector';
 import { syncProfileToProjects } from '@/lib/syncUtils';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import {
   Select,
@@ -20,6 +22,7 @@ import {
 export function AcademicInfoSection() {
   const user = useAuthStore(selectUser);
   const updateProfile = useAuthStore(s => s.updateProfile);
+  const fieldId = useId();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editTitleSelection, setEditTitleSelection] = useState('');
@@ -85,17 +88,17 @@ export function AcademicInfoSection() {
       <Separator />
       <div className='mt-4 flex items-start justify-between'>
         <div className='flex-1'>
-          <label className='text-muted-foreground mb-1 block text-xs font-medium tracking-wide uppercase'>
+          <span className='text-muted-foreground mb-1 block text-xs font-medium tracking-wide uppercase'>
             Academic Information
-          </label>
+          </span>
           {isEditing ?
             <div className='mt-3 flex flex-col gap-4'>
               <div>
-                <label className='text-muted-foreground mb-1.5 block text-xs font-medium tracking-wide uppercase'>
+                <Label htmlFor={`${fieldId}-title`} className='mb-1.5'>
                   Title
-                </label>
+                </Label>
                 <Select value={editTitleSelection} onValueChange={setEditTitleSelection}>
-                  <SelectTrigger className='max-w-xs'>
+                  <SelectTrigger id={`${fieldId}-title`} className='max-w-xs'>
                     <SelectValue placeholder='Select a title (optional)' />
                   </SelectTrigger>
                   <SelectContent>
@@ -107,38 +110,41 @@ export function AcademicInfoSection() {
                   </SelectContent>
                 </Select>
                 {isEditingCustomTitle && (
-                  <input
+                  <Input
                     type='text'
                     value={editCustomTitle}
                     onChange={e => setEditCustomTitle(e.target.value)}
-                    className='border-border bg-card focus:border-primary focus:ring-ring/20 mt-2 block w-full max-w-xs rounded-lg border px-3 py-2 text-sm shadow-sm transition-colors focus:ring-2 focus:outline-none'
+                    className='mt-2 max-w-xs'
                     placeholder='Enter your title'
                     maxLength={50}
+                    aria-label='Custom title'
                   />
                 )}
               </div>
               <div>
-                <label className='text-muted-foreground mb-1.5 block text-xs font-medium tracking-wide uppercase'>
+                <Label htmlFor={`${fieldId}-institution`} className='mb-1.5'>
                   Institution
-                </label>
-                <input
+                </Label>
+                <Input
+                  id={`${fieldId}-institution`}
                   type='text'
                   value={editInstitution}
                   onChange={e => setEditInstitution(e.target.value)}
-                  className='border-border bg-card focus:border-primary focus:ring-ring/20 block w-full max-w-md rounded-lg border px-3 py-2 text-sm shadow-sm transition-colors focus:ring-2 focus:outline-none'
+                  className='max-w-md'
                   placeholder='University or organization'
                   maxLength={200}
                 />
               </div>
               <div>
-                <label className='text-muted-foreground mb-1.5 block text-xs font-medium tracking-wide uppercase'>
+                <Label htmlFor={`${fieldId}-department`} className='mb-1.5'>
                   Department
-                </label>
-                <input
+                </Label>
+                <Input
+                  id={`${fieldId}-department`}
                   type='text'
                   value={editDepartment}
                   onChange={e => setEditDepartment(e.target.value)}
-                  className='border-border bg-card focus:border-primary focus:ring-ring/20 block w-full max-w-md rounded-lg border px-3 py-2 text-sm shadow-sm transition-colors focus:ring-2 focus:outline-none'
+                  className='max-w-md'
                   placeholder='Department or faculty'
                   maxLength={200}
                 />

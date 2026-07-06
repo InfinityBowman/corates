@@ -10,6 +10,8 @@ import { queryKeys } from '@/lib/queryKeys';
 import { showToast } from '@/components/ui/toast';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 const LAST_ORG_KEY = 'corates-last-org-slug';
 
@@ -93,24 +95,20 @@ export function CreateOrgPage() {
             {error && <Alert variant='destructive'>{error}</Alert>}
 
             <div>
-              <label htmlFor='org-name' className='text-foreground block text-sm font-medium'>
-                Organization Name
-              </label>
-              <input
+              <Label htmlFor='org-name'>Organization Name</Label>
+              <Input
                 id='org-name'
                 type='text'
                 value={name}
                 onChange={handleNameChange}
                 placeholder='My Research Lab'
-                className='border-border bg-card focus:border-primary focus:ring-primary mt-1 block w-full rounded-lg border px-3 py-2 shadow-sm focus:ring-1 focus:outline-none'
+                className='mt-1'
                 disabled={isSubmitting}
               />
             </div>
 
             <div>
-              <label htmlFor='org-slug' className='text-foreground block text-sm font-medium'>
-                URL Slug
-              </label>
+              <Label htmlFor='org-slug'>URL Slug</Label>
               <div className='border-border focus-within:border-primary focus-within:ring-primary mt-1 flex rounded-lg border shadow-sm focus-within:ring-1'>
                 <span className='border-border bg-muted text-muted-foreground inline-flex items-center rounded-l-lg border-r px-3 text-sm'>
                   /orgs/
