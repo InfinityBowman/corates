@@ -3,6 +3,7 @@
  */
 
 import { ArrowRightIcon } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import type { AMSTAR2QuestionAnswer } from '@corates/shared/checklists';
 import {
   isMultiPartQuestion,
@@ -141,11 +142,7 @@ export function SummaryView({
                 >
                   {answerText}
                 </span>
-                {isCritical && (
-                  <span className='rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700'>
-                    Critical
-                  </span>
-                )}
+                {isCritical && <Badge variant='destructive'>Critical</Badge>}
                 <ArrowRightIcon className='text-muted-foreground/70 size-4' />
               </div>
             </div>

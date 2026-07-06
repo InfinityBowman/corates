@@ -17,6 +17,7 @@ import { cachePdf } from '@/primitives/pdfCache.js';
 import { bestEffort } from '@/lib/errorLogger.js';
 import { importFromGoogleDrive } from '@/api/google-drive';
 import { Tabs, TabsContent, TabsIndicator, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import {
@@ -348,9 +349,12 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
                         <Icon className='size-4 opacity-60 transition-opacity group-data-[state=active]:opacity-100' />
                         <span className='font-medium'>{tab.label}</span>
                         {tab.getCount && (
-                          <span className='bg-secondary text-secondary-foreground min-w-6 rounded-full px-1.5 py-0.5 text-center text-xs font-medium tabular-nums transition-colors group-data-[state=active]:bg-blue-100 group-data-[state=active]:text-blue-700'>
+                          <Badge
+                            variant='secondary'
+                            className='min-w-6 px-1.5 tabular-nums group-data-[state=active]:bg-blue-100 group-data-[state=active]:text-blue-700'
+                          >
                             {tab.getCount()}
-                          </span>
+                          </Badge>
                         )}
                       </TabsTrigger>
                     );

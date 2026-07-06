@@ -9,6 +9,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { ChevronLeftIcon } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ChecklistWithPdf } from '@/components/checklist/ChecklistWithPdf';
 import { CreateLocalChecklist } from '@/components/checklist/CreateLocalChecklist';
@@ -136,9 +137,7 @@ function LocalChecklistEditor({ checklistId }: { checklistId: string }) {
         Back
       </Button>
       <div className='bg-border h-4 w-px' />
-      <span className='bg-secondary text-muted-foreground inline-flex items-center rounded px-2 py-0.5 text-xs font-medium'>
-        Local Only
-      </span>
+      <Badge variant='secondary'>Local Only</Badge>
       <ScoreTag currentScore={currentScore} checklistType={checklistType || undefined} />
     </>
   );

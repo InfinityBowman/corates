@@ -5,6 +5,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { ChevronRightIcon, GitCompareArrowsIcon } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { sortStudyPdfs, getCitationLine } from '../study-utils';
@@ -131,12 +132,9 @@ export function ReconcileStudyRow({
               <ReconcileStatusTag study={study} getAssigneeName={getAssigneeName} />
 
               {firstReadyGroup?.outcomeId && (
-                <span
-                  className='bg-secondary text-secondary-foreground inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-medium'
-                  data-selectable
-                >
+                <Badge variant='secondary' data-selectable>
                   {getGroupOutcomeName(firstReadyGroup)}
-                </span>
+                </Badge>
               )}
 
               {hasReadyPair && firstReadyGroup && (
@@ -164,14 +162,10 @@ export function ReconcileStudyRow({
           {hasMultipleOutcomes && (
             <div className='flex items-center gap-1.5'>
               {readyGroups.length > 0 && (
-                <span className='rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800'>
-                  {readyGroups.length} ready
-                </span>
+                <Badge variant='success'>{readyGroups.length} ready</Badge>
               )}
               {waitingGroups.length > 0 && (
-                <span className='rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800'>
-                  {waitingGroups.length} waiting
-                </span>
+                <Badge variant='warning'>{waitingGroups.length} waiting</Badge>
               )}
             </div>
           )}
@@ -194,13 +188,9 @@ export function ReconcileStudyRow({
                       className='flex items-center justify-between rounded-lg border border-green-200 bg-green-50/50 p-3'
                     >
                       <div className='flex flex-wrap items-center gap-2'>
-                        <span className='bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-xs font-medium'>
-                          {getChecklistMetadata(group.type).name}
-                        </span>
+                        <Badge variant='secondary'>{getChecklistMetadata(group.type).name}</Badge>
                         {group.outcomeId && (
-                          <span className='bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-xs font-medium'>
-                            {getGroupOutcomeName(group)}
-                          </span>
+                          <Badge variant='secondary'>{getGroupOutcomeName(group)}</Badge>
                         )}
                         <span className='text-secondary-foreground text-sm'>
                           {getReviewerName(group.checklists[0])}{' '}
@@ -236,13 +226,9 @@ export function ReconcileStudyRow({
                       className='flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50/30 p-3'
                     >
                       <div className='flex flex-wrap items-center gap-2'>
-                        <span className='bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-xs font-medium'>
-                          {getChecklistMetadata(group.type).name}
-                        </span>
+                        <Badge variant='secondary'>{getChecklistMetadata(group.type).name}</Badge>
                         {group.outcomeId && (
-                          <span className='bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-xs font-medium'>
-                            {getGroupOutcomeName(group)}
-                          </span>
+                          <Badge variant='secondary'>{getGroupOutcomeName(group)}</Badge>
                         )}
                         <span className='text-muted-foreground text-sm'>
                           {getReviewerName(group.checklists[0])} -- waiting for second reviewer

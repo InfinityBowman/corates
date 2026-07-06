@@ -6,6 +6,7 @@
 
 import { CloudUploadIcon, FileTextIcon, Link2Icon } from 'lucide-react';
 import { FileUpload, FileUploadDropzone, FileUploadHiddenInput } from '@/components/ui/file-upload';
+import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   getRefDisplayName,
@@ -51,30 +52,30 @@ export function ReferenceImportSection({ studies }: ReferenceImportSectionProps)
           studies.foundPdfCount > 0) && (
           <div className='flex flex-wrap items-center gap-3 text-xs'>
             {studies.lookingUpRefPdfs && (
-              <span className='bg-info-bg text-info inline-flex items-center gap-1 rounded-full px-2 py-1'>
+              <Badge variant='info'>
                 <div className='border-info size-3 animate-spin rounded-full border-2 border-t-transparent' />
                 Looking up PDFs...
-              </span>
+              </Badge>
             )}
             {studies.matchedRefPdfCount > 0 && (
-              <span className='bg-success-bg text-success inline-flex items-center gap-1 rounded-full px-2 py-1'>
+              <Badge variant='success'>
                 <Link2Icon className='size-3' />
                 {studies.matchedRefPdfCount} PDF
                 {studies.matchedRefPdfCount > 1 ? 's' : ''} matched
-              </span>
+              </Badge>
             )}
             {studies.foundPdfCount > 0 && (
-              <span className='bg-success-bg text-success inline-flex items-center gap-1 rounded-full px-2 py-1'>
+              <Badge variant='success'>
                 <FileTextIcon className='size-3' />
                 {studies.foundPdfCount} open access
-              </span>
+              </Badge>
             )}
             {studies.unmatchedRefPdfCount > 0 && (
-              <span className='inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-1 text-amber-700'>
+              <Badge variant='warning'>
                 <FileTextIcon className='size-3' />
                 {studies.unmatchedRefPdfCount} PDF
                 {studies.unmatchedRefPdfCount > 1 ? 's' : ''} unmatched
-              </span>
+              </Badge>
             )}
           </div>
         )}

@@ -6,6 +6,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { ChevronRightIcon, PlusIcon, Trash2Icon, XIcon } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { sortStudyPdfs, getCitationLine } from '../study-utils';
@@ -174,26 +175,21 @@ export function TodoStudyRow({
               const checklist = checklists[0];
               return (
                 <>
-                  <span
-                    className='bg-secondary text-secondary-foreground inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-medium'
-                    data-selectable
-                  >
+                  <Badge variant='secondary' data-selectable>
                     {getChecklistMetadata(checklist.type).name}
-                  </span>
+                  </Badge>
                   {checklist.outcomeId && (
-                    <span
-                      className='bg-secondary text-secondary-foreground inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-medium'
-                      data-selectable
-                    >
+                    <Badge variant='secondary' data-selectable>
                       {getOutcomeName(checklist.outcomeId)}
-                    </span>
+                    </Badge>
                   )}
-                  <span
-                    className={`inline-flex shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${getStatusStyle(checklist.status)}`}
+                  <Badge
+                    variant='secondary'
+                    className={getStatusStyle(checklist.status)}
                     data-selectable
                   >
                     {getStatusLabel(checklist.status)}
-                  </span>
+                  </Badge>
                   <Button
                     onClick={e => {
                       e.stopPropagation();
@@ -240,19 +236,13 @@ export function TodoStudyRow({
             {checklists.map(checklist => (
               <div key={checklist.id} className='flex items-center gap-3 px-4 py-2.5'>
                 <div className='flex flex-1 flex-wrap items-center gap-1.5'>
-                  <span className='bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-xs font-medium'>
-                    {getChecklistMetadata(checklist.type).name}
-                  </span>
+                  <Badge variant='secondary'>{getChecklistMetadata(checklist.type).name}</Badge>
                   {checklist.outcomeId && (
-                    <span className='bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-xs font-medium'>
-                      {getOutcomeName(checklist.outcomeId)}
-                    </span>
+                    <Badge variant='secondary'>{getOutcomeName(checklist.outcomeId)}</Badge>
                   )}
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${getStatusStyle(checklist.status)}`}
-                  >
+                  <Badge variant='secondary' className={getStatusStyle(checklist.status)}>
                     {getStatusLabel(checklist.status)}
-                  </span>
+                  </Badge>
                 </div>
                 <Button onClick={() => onOpenChecklist(checklist.id)}>Open</Button>
                 <Button

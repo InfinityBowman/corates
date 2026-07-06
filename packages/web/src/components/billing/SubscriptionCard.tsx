@@ -2,7 +2,7 @@
  * SubscriptionCard - Subscription status with trial/alerts
  */
 
-import { useMemo } from 'react';
+import { useMemo, type ComponentProps } from 'react';
 import { Link } from '@tanstack/react-router';
 import {
   CreditCardIcon,
@@ -14,6 +14,7 @@ import {
   LoaderIcon,
 } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useMembers } from '@/hooks/useMembers';
@@ -34,13 +35,13 @@ function formatDate(timestamp: number | undefined) {
   });
 }
 
-const STATUS_STYLES: Record<string, string> = {
-  active: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  trialing: 'bg-info-bg text-info border-info-border',
-  past_due: 'bg-destructive-bg text-destructive border-destructive-border',
-  canceled: 'bg-muted text-foreground border-border',
-  incomplete: 'bg-warning-bg text-warning-foreground border-warning-border',
-  unpaid: 'bg-destructive-bg text-destructive border-destructive-border',
+const STATUS_VARIANTS: Record<string, ComponentProps<typeof Badge>['variant']> = {
+  active: 'success',
+  trialing: 'info',
+  past_due: 'warning',
+  canceled: 'secondary',
+  incomplete: 'warning',
+  unpaid: 'warning',
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -81,11 +82,9 @@ export function SubscriptionCard({ subscription, onManage, manageLoading }: Subs
         <div className='flex items-start justify-between'>
           <div className='flex items-center gap-3'>
             <h2 className='text-xl font-bold text-white'>{tierInfo.name}</h2>
-            <span
-              className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${STATUS_STYLES[status] || STATUS_STYLES.active}`}
-            >
+            <Badge variant={STATUS_VARIANTS[status] || STATUS_VARIANTS.active}>
               {STATUS_LABELS[status] || 'Active'}
-            </span>
+            </Badge>
           </div>
         </div>
         {isTrial && daysRemaining !== null && (

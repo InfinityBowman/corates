@@ -222,11 +222,7 @@ export function PricingTable({
             </p>
           </div>
           {isMarketing ?
-            <Button
-              asChild
-              size='lg'
-              className='h-auto shrink-0 rounded-xl py-2.5 font-semibold'
-            >
+            <Button asChild size='lg' className='h-auto shrink-0 rounded-xl py-2.5 font-semibold'>
               <Link to={buildSignUpUrl(trialPlan)}>Start Free Trial</Link>
             </Button>
           : <Button
@@ -250,10 +246,10 @@ export function PricingTable({
 
   const renderBillingToggle = () => (
     <div className='mb-10 flex flex-col items-center gap-4'>
-      <div className='bg-success-bg text-success flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium'>
-        <StarIcon className='size-4' />
+      <Badge variant='success' className='h-auto gap-2 px-4 py-2 text-sm [&>svg]:size-4!'>
+        <StarIcon />
         Save 2 months with annual billing
-      </div>
+      </Badge>
       <div className='bg-muted relative inline-flex rounded-xl p-1.5'>
         <div
           className='bg-card absolute top-1.5 h-[calc(100%-12px)] w-[calc(50%-6px)] rounded-lg shadow-sm transition-transform duration-200 ease-out'

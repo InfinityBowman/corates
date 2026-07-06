@@ -5,6 +5,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { ChevronRightIcon } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { sortStudyPdfs, getCitationLine } from '../study-utils';
@@ -116,25 +117,20 @@ export function CompletedStudyRow({
             {!hasMultipleOutcomes && firstGroup && (
               <>
                 {firstGroup.outcomeId && (
-                  <span
-                    className='bg-secondary text-secondary-foreground inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-medium'
-                    data-selectable
-                  >
+                  <Badge variant='secondary' data-selectable>
                     {getOutcomeName(firstGroup.outcomeId) || 'Unknown Outcome'}
-                  </span>
+                  </Badge>
                 )}
-                <span
-                  className='bg-secondary text-secondary-foreground inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-medium'
-                  data-selectable
-                >
+                <Badge variant='secondary' data-selectable>
                   {getChecklistMetadata(firstGroup.type).name}
-                </span>
-                <span
-                  className={`inline-flex shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${getStatusStyle(firstGroup.checklists[0]?.status ?? '')}`}
+                </Badge>
+                <Badge
+                  variant='secondary'
+                  className={getStatusStyle(firstGroup.checklists[0]?.status ?? '')}
                   data-selectable
                 >
                   {getStatusLabel(firstGroup.checklists[0]?.status ?? '')}
-                </span>
+                </Badge>
                 {hasPreviousReviewers && (
                   <Button
                     variant='secondary'

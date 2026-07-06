@@ -3,6 +3,7 @@
  */
 
 import { useState, useMemo } from 'react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { getChecklistMetadata } from '@/checklist-registry';
 import {
@@ -62,19 +63,11 @@ export function CompletedOutcomeRow({
     <>
       <div className='bg-muted/50 flex items-center justify-between rounded-lg p-3'>
         <div className='flex items-center gap-3'>
-          {outcomeName && (
-            <span className='bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-xs font-medium'>
-              {outcomeName}
-            </span>
-          )}
-          <span className='bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-xs font-medium'>
-            {getChecklistMetadata(outcomeGroup.type).name}
-          </span>
-          <span
-            className={`rounded-full px-2 py-0.5 text-xs font-medium ${getStatusStyle(finalizedChecklist?.status)}`}
-          >
+          {outcomeName && <Badge variant='secondary'>{outcomeName}</Badge>}
+          <Badge variant='secondary'>{getChecklistMetadata(outcomeGroup.type).name}</Badge>
+          <Badge variant='secondary' className={getStatusStyle(finalizedChecklist?.status)}>
             {getStatusLabel(finalizedChecklist?.status)}
-          </span>
+          </Badge>
         </div>
 
         <div className='flex items-center gap-2'>

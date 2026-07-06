@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router';
+import { Badge } from '@/components/ui/badge';
 import { getAllTools } from '@/lib/tool-content';
 
 export default function SupportedTools() {
@@ -39,13 +40,9 @@ export default function SupportedTools() {
                 {tool.name}
               </p>
               <p className='mb-2 text-xs text-gray-500'>{tool.description}</p>
-              <span
-                className={`inline-block rounded-full px-2 py-0.5 text-xs ${
-                  isAvailable ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
-                }`}
-              >
+              <Badge variant={isAvailable ? 'default' : 'secondary'}>
                 {isAvailable ? 'Available' : 'Coming Soon'}
-              </span>
+              </Badge>
             </>
           );
 

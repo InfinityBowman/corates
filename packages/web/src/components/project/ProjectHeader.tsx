@@ -5,6 +5,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { ArrowLeftIcon } from 'lucide-react';
 import { useProjectContext } from './ProjectContext';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { InlineEdit } from '@/components/ui/inline-edit';
 
@@ -101,9 +102,9 @@ export function ProjectHeader({
               className='text-foreground text-lg font-semibold'
             />
             {userRole && (
-              <span className='border-info-border bg-info-bg text-info inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium capitalize'>
+              <Badge variant='info' className='capitalize'>
                 {userRole}
-              </span>
+              </Badge>
             )}
           </div>
 

@@ -18,6 +18,7 @@ import { useAuthStore, selectUser } from '@/stores/authStore';
 import { useProjectContext, type ProjectMember } from '../ProjectContext';
 import { showToast } from '@/components/ui/toast';
 import { Avatar, AvatarImage, AvatarFallback, getInitials } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
@@ -334,9 +335,9 @@ export function OverviewTab() {
                     </div>
                   </div>
                   <div className='flex items-center gap-2'>
-                    <span className='border-info-border bg-info-bg text-info inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium capitalize'>
+                    <Badge variant='info' className='capitalize'>
                       {member.role}
-                    </span>
+                    </Badge>
                     {canRemove && !isLastOwner && (
                       <Button
                         variant='ghost'

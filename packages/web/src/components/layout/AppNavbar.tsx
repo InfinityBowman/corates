@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { MenuIcon, WifiOffIcon, XIcon, ChevronDownIcon } from 'lucide-react';
 import { useAuthStore, selectUser, selectIsAuthLoading } from '@/stores/authStore';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useAdminStore } from '@/stores/adminStore';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
@@ -107,10 +108,10 @@ export function AppNavbar({ mobileSidebarOpen, toggleMobileSidebar }: AppNavbarP
 
         {/* Offline indicator */}
         {!isOnline && (
-          <div className='flex items-center gap-1 rounded-full bg-amber-500/90 px-2 py-1 text-xs text-white'>
-            <WifiOffIcon className='size-3' />
+          <Badge variant='warning'>
+            <WifiOffIcon />
             <span className='hidden sm:inline'>Offline</span>
-          </div>
+          </Badge>
         )}
       </div>
 

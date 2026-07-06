@@ -19,6 +19,7 @@ import {
   useAdminTableSchema,
 } from '@/hooks/useAdminQueries';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -231,20 +232,20 @@ function DatabaseViewerPage() {
                 <div className='flex items-center gap-3'>
                   <h2 className='text-foreground font-semibold'>{selectedTable}</h2>
                   {filterColumn && (
-                    <span className='bg-info-bg text-info flex items-center gap-1 rounded-full px-2 py-0.5 text-xs'>
-                      <LinkIcon className='size-3' />
+                    <Badge variant='info'>
+                      <LinkIcon />
                       {filterColumn} = {filterValue}
                       <Button
                         type='button'
                         variant='ghost'
                         size='icon-xs'
                         onClick={clearFilter}
-                        className='hover:bg-info-border ml-1'
+                        className='hover:bg-info-border ml-1 size-4'
                         title='Clear filter'
                       >
                         <XIcon className='size-3' />
                       </Button>
-                    </span>
+                    </Badge>
                   )}
                 </div>
                 <div className='flex items-center gap-4'>

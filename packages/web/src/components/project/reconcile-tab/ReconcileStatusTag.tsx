@@ -3,6 +3,7 @@
  */
 
 import { useMemo } from 'react';
+import { Badge } from '@/components/ui/badge';
 import { CHECKLIST_STATUS, isReconciledChecklist } from '@corates/shared/checklists';
 import type { StudyInfo } from '@/stores/projectStore';
 
@@ -32,16 +33,8 @@ export function ReconcileStatusTag({ study, getAssigneeName }: ReconcileStatusTa
   }, [isReady, awaitingChecklists, study.reviewer1, study.reviewer2, getAssigneeName]);
 
   if (isReady) {
-    return (
-      <span className='inline-flex items-center rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-800'>
-        Ready
-      </span>
-    );
+    return <Badge variant='success'>Ready</Badge>;
   }
 
-  return (
-    <span className='inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-1 text-xs font-medium text-yellow-800'>
-      Waiting for {waitingForName}
-    </span>
-  );
+  return <Badge variant='warning'>Waiting for {waitingForName}</Badge>;
 }

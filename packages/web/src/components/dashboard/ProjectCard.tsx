@@ -4,6 +4,7 @@
 
 import { useMemo } from 'react';
 import { UsersIcon, ChevronRightIcon, Trash2Icon } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { type Project } from '@/hooks/useMyProjectsList';
@@ -33,11 +34,12 @@ export function ProjectCard({ project, onOpen, onDelete, style }: ProjectCardPro
         <div className='relative mb-4 flex items-start justify-between'>
           <div className='min-w-0 flex-1 pr-4'>
             <div className='mb-2 flex items-center gap-2'>
-              <span
-                className={`text-2xs inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium tracking-wide uppercase ${colors.bg} ${colors.text}`}
+              <Badge
+                variant='secondary'
+                className={`text-2xs tracking-wide uppercase ${colors.bg} ${colors.text}`}
               >
                 {isOwner ? 'Lead' : 'Reviewer'}
-              </span>
+              </Badge>
               <span className='text-muted-foreground/70 text-xs'>{relativeTime}</span>
             </div>
             <h3 className='text-foreground group-hover:text-primary line-clamp-2 text-lg leading-snug font-semibold transition-colors'>

@@ -19,6 +19,7 @@ import {
   AdminDataTable,
   ServerPagination,
 } from '@/components/admin/ui';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -174,20 +175,20 @@ function AdminProjectList() {
         accessorKey: 'memberCount',
         header: 'Members',
         cell: info => (
-          <span className='bg-secondary text-secondary-foreground inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-medium'>
-            <UsersIcon className='mr-1 size-3' />
+          <Badge variant='secondary'>
+            <UsersIcon />
             {info.getValue() as number}
-          </span>
+          </Badge>
         ),
       },
       {
         accessorKey: 'fileCount',
         header: 'Files',
         cell: info => (
-          <span className='bg-secondary text-secondary-foreground inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-medium'>
-            <FileTextIcon className='mr-1 size-3' />
+          <Badge variant='secondary'>
+            <FileTextIcon />
             {info.getValue() as number}
-          </span>
+          </Badge>
         ),
       },
       {
