@@ -2,8 +2,8 @@
  * Shared button components for auth pages
  */
 
-import { Loader2Icon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 
 interface PrimaryButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -33,7 +33,7 @@ export function PrimaryButton({
     >
       {loading ?
         <span className='flex items-center'>
-          <Loader2Icon className='mr-2 size-5 animate-spin' />
+          <Spinner size='sm' variant='current' className='mr-2 size-5' />
           <span aria-live='polite'>{loadingText || 'Loading...'}</span>
         </span>
       : children}

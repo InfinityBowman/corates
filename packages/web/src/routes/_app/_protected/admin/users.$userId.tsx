@@ -4,7 +4,6 @@ import type { ErrorComponentProps } from '@tanstack/react-router';
 import {
   ArrowLeftIcon,
   ShieldIcon,
-  LoaderIcon,
   UserXIcon,
   CheckCircleIcon,
   AlertCircleIcon,
@@ -24,6 +23,7 @@ import { showToast } from '@/components/ui/toast';
 import { UserAvatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import { handleError } from '@/lib/error-utils';
 import { queryKeys } from '@/lib/queryKeys';
 import type { UserData } from '@/components/admin/users/types';
@@ -65,7 +65,7 @@ function UserDetailPage() {
   if (!isAdminChecked) {
     return (
       <div className='flex min-h-100 items-center justify-center'>
-        <LoaderIcon className='text-primary size-8 animate-spin' />
+        <Spinner size='lg' />
       </div>
     );
   }
@@ -84,7 +84,7 @@ function UserDetailPage() {
     <Suspense
       fallback={
         <div className='flex min-h-64 items-center justify-center'>
-          <LoaderIcon className='text-primary size-8 animate-spin' />
+          <Spinner size='lg' />
         </div>
       }
     >

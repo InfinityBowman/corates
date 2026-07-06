@@ -17,6 +17,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import {
   Select,
   SelectContent,
@@ -222,7 +223,7 @@ export function AddMemberModal({
 
             {searching && (
               <div className='absolute top-8 right-3'>
-                <div className='border-primary size-5 animate-spin rounded-full border-2 border-t-transparent' />
+                <Spinner size='sm' className='size-5' />
               </div>
             )}
           </div>

@@ -3,9 +3,10 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { LoaderIcon, AlertCircleIcon, RefreshCwIcon } from 'lucide-react';
+import { AlertCircleIcon, RefreshCwIcon } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import { useSubscription } from '@/hooks/useSubscription';
 import { PricingTable } from '@/components/billing/PricingTable';
 import { PlanFAQ } from '@/components/billing/PlanFAQ';
@@ -73,7 +74,7 @@ export function PlansSettings() {
   if (pageState !== 'ready') {
     return (
       <div className='flex min-h-[60vh] flex-col items-center justify-center'>
-        <LoaderIcon className='text-primary size-8 animate-spin' />
+        <Spinner size='lg' />
         <p className='text-foreground mt-4 text-lg font-medium'>Redirecting to checkout...</p>
         <p className='text-muted-foreground mt-1 text-sm'>
           Please wait while we prepare your order.

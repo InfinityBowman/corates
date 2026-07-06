@@ -3,6 +3,7 @@ import { CloudUploadIcon } from 'lucide-react';
 import { GenericChecklist } from '@/components/checklist/GenericChecklist';
 import { SplitScreenLayout } from '@/components/checklist/SplitScreenLayout';
 import { FileUpload, FileUploadDropzone, FileUploadHiddenInput } from '@/components/ui/file-upload';
+import { Spinner } from '@/components/ui/spinner';
 import { validatePdfFile } from '@/lib/pdfValidation';
 
 const EmbedPdfViewer = lazy(() => import('@/components/pdf/EmbedPdfViewer'));
@@ -71,7 +72,7 @@ export function ChecklistWithPdf({
           <Suspense
             fallback={
               <div className='flex h-full items-center justify-center'>
-                <div className='size-6 animate-spin rounded-full border-b-2 border-blue-600' />
+                <Spinner size='md' />
               </div>
             }
           >

@@ -6,6 +6,7 @@
 import { lazy, Suspense, useMemo } from 'react';
 import { SlidingPanel } from './SlidingPanel';
 import { usePdfPreviewStore } from '@/stores/pdfPreviewStore';
+import { Spinner } from '@/components/ui/spinner';
 
 const EmbedPdfViewer = lazy(() => import('@/components/pdf/EmbedPdfViewer'));
 
@@ -33,7 +34,7 @@ export function PdfPreviewPanel() {
           <div className='bg-secondary flex h-full flex-1 flex-col'>
             <div className='flex flex-1 items-center justify-center'>
               <div className='text-muted-foreground flex items-center gap-3'>
-                <div className='border-primary size-6 animate-spin rounded-full border-b-2' />
+                <Spinner size='md' />
                 Loading PDF...
               </div>
             </div>
@@ -55,7 +56,7 @@ export function PdfPreviewPanel() {
           <Suspense
             fallback={
               <div className='flex h-full flex-1 items-center justify-center'>
-                <div className='border-primary size-6 animate-spin rounded-full border-b-2' />
+                <Spinner size='md' />
               </div>
             }
           >

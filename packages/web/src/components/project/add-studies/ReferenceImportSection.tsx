@@ -9,6 +9,7 @@ import { FileUpload, FileUploadDropzone, FileUploadHiddenInput } from '@/compone
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Spinner } from '@/components/ui/spinner';
 import {
   getRefDisplayName,
   SUPPORTED_FORMATS,
@@ -55,7 +56,7 @@ export function ReferenceImportSection({ studies }: ReferenceImportSectionProps)
           <div className='flex flex-wrap items-center gap-3 text-xs'>
             {studies.lookingUpRefPdfs && (
               <Badge variant='info'>
-                <div className='border-info size-3 animate-spin rounded-full border-2 border-t-transparent' />
+                <Spinner size='sm' variant='current' className='size-3' />
                 Looking up PDFs...
               </Badge>
             )}
@@ -212,7 +213,7 @@ export function ReferenceImportSection({ studies }: ReferenceImportSectionProps)
 
       {studies.parsingRefs && (
         <div className='text-muted-foreground flex items-center justify-center gap-2 py-4'>
-          <div className='size-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent' />
+          <Spinner size='sm' />
           <span>Parsing references...</span>
         </div>
       )}

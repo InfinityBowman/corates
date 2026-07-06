@@ -1,17 +1,12 @@
 import { useState, useMemo } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import {
-  LoaderIcon,
-  AlertCircleIcon,
-  AlertTriangleIcon,
-  CheckCircleIcon,
-  RefreshCwIcon,
-} from 'lucide-react';
+import { AlertCircleIcon, AlertTriangleIcon, CheckCircleIcon, RefreshCwIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useAdminBillingStuckStates } from '@/hooks/useAdminQueries';
 import { DashboardHeader, AdminBox } from '@/components/admin/ui';
 import { Input } from '@/components/ui/input';
+import { Spinner } from '@/components/ui/spinner';
 import { formatDateTime } from '@/lib/formatDate';
 
 interface StuckOrg {
@@ -128,7 +123,7 @@ function AdminBillingStuckStatesPage() {
               disabled={stuckStatesQuery.isFetching}
             >
               {stuckStatesQuery.isFetching ?
-                <LoaderIcon className='size-4 animate-spin' />
+                <Spinner size='sm' variant='current' />
               : <>
                   <RefreshCwIcon className='size-4' /> Refresh
                 </>
@@ -159,7 +154,7 @@ function AdminBillingStuckStatesPage() {
       {/* Stuck Orgs by Type */}
       {stuckStatesQuery.isLoading ?
         <div className='flex items-center justify-center py-12'>
-          <LoaderIcon className='text-primary size-8 animate-spin' />
+          <Spinner size='lg' />
         </div>
       : stuckOrgs.length === 0 ?
         <AdminBox className='p-12 text-center'>

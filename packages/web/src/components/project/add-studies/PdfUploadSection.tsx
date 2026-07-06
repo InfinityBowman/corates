@@ -7,6 +7,7 @@ import { useMemo } from 'react';
 import { CloudUploadIcon, FileTextIcon, AlertTriangleIcon, RefreshCwIcon } from 'lucide-react';
 import { FileUpload, FileUploadDropzone, FileUploadHiddenInput } from '@/components/ui/file-upload';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 
 interface PdfUploadSectionProps {
   studies: any;
@@ -73,7 +74,7 @@ export function PdfUploadSection({ studies }: PdfUploadSectionProps) {
                   </>
                 : <>
                     <div className='flex items-center gap-2'>
-                      <div className='size-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent' />
+                      <Spinner size='sm' />
                       <span className='text-muted-foreground text-sm'>Extracting metadata...</span>
                     </div>
                     <p className='text-muted-foreground/70 mt-1 truncate text-xs'>

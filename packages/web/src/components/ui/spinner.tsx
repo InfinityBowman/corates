@@ -14,6 +14,8 @@ const spinnerVariants = cva('inline-block animate-spin rounded-full border-trans
       default: 'border-t-primary border-r-primary',
       white: 'border-t-white border-r-white',
       gray: 'border-t-muted-foreground border-r-muted-foreground',
+      // Inherits the surrounding text color, e.g. inside Button variants
+      current: 'border-t-current border-r-current',
     },
   },
   defaultVariants: {

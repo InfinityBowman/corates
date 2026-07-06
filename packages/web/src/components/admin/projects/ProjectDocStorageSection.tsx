@@ -1,6 +1,7 @@
-import { DatabaseIcon, RefreshCwIcon, LoaderIcon, AlertCircleIcon } from 'lucide-react';
+import { DatabaseIcon, RefreshCwIcon, AlertCircleIcon } from 'lucide-react';
 import { AdminBox } from '@/components/admin/ui';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import { formatFileSize } from '@corates/shared';
 import { formatDateTime } from '@/lib/formatDate';
 import type { ProjectDocStats } from './types';
@@ -41,7 +42,7 @@ export function ProjectDocStorageSection({
 
       {isLoading ?
         <div className='text-muted-foreground flex items-center text-sm'>
-          <LoaderIcon className='mr-2 size-4 animate-spin' />
+          <Spinner size='sm' variant='current' className='mr-2' />
           Loading storage stats...
         </div>
       : isError ?

@@ -21,6 +21,7 @@ import { Alert, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Spinner } from '@/components/ui/spinner';
 import { getRefDisplayName } from '@/lib/referenceParser.js';
 import { validatePdfFile } from '@/lib/pdfValidation.js';
 
@@ -64,7 +65,7 @@ export function DoiLookupSection({ studies }: DoiLookupSectionProps) {
         >
           {studies.lookingUp ?
             <>
-              <div className='size-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
+              <Spinner size='sm' variant='current' />
               Looking up...
             </>
           : <>

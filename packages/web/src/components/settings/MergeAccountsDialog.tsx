@@ -5,12 +5,13 @@
  */
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { TriangleAlertIcon, CheckIcon, LoaderIcon, UserPlusIcon, MailIcon } from 'lucide-react';
+import { TriangleAlertIcon, CheckIcon, UserPlusIcon, MailIcon } from 'lucide-react';
 import { showToast } from '@/components/ui/toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Spinner } from '@/components/ui/spinner';
 import { initiateMerge, verifyMergeCode, completeMerge, cancelMerge } from '@/api/account-merge';
 
 const STEPS = {
@@ -287,7 +288,7 @@ export function MergeAccountsDialog({
                 </Button>
                 <Button onClick={handleSendCode} disabled={loading || !targetEmail.trim()}>
                   {loading ?
-                    <LoaderIcon className='size-4 animate-spin' />
+                    <Spinner size='sm' variant='current' />
                   : <MailIcon className='size-4' />}
                   Send Code
                 </Button>
@@ -344,7 +345,7 @@ export function MergeAccountsDialog({
                   onClick={() => handleVerifyCode()}
                   disabled={loading || verificationCode.length !== 6}
                 >
-                  {loading && <LoaderIcon className='size-4 animate-spin' />}
+                  {loading && <Spinner size='sm' variant='current' />}
                   Verify Code
                 </Button>
               </div>
@@ -397,7 +398,7 @@ export function MergeAccountsDialog({
                   Cancel
                 </Button>
                 <Button variant='destructive' onClick={handleCompleteMerge} disabled={loading}>
-                  {loading && <LoaderIcon className='size-4 animate-spin' />}
+                  {loading && <Spinner size='sm' variant='current' />}
                   Merge Accounts
                 </Button>
               </div>
@@ -407,7 +408,7 @@ export function MergeAccountsDialog({
           {/* MERGING */}
           {step === STEPS.MERGING && (
             <div className='flex flex-col items-center py-6'>
-              <LoaderIcon className='text-primary size-8 animate-spin' />
+              <Spinner size='lg' />
               <p className='text-secondary-foreground mt-3'>Merging accounts...</p>
               <p className='text-muted-foreground mt-1 text-sm'>This may take a moment.</p>
             </div>

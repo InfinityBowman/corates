@@ -9,7 +9,6 @@ import {
   RefreshCwIcon,
   KeyRoundIcon,
   LinkIcon,
-  LoaderIcon,
   TableIcon,
   XIcon,
 } from 'lucide-react';
@@ -21,6 +20,7 @@ import {
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import {
   Select,
   SelectContent,
@@ -196,7 +196,7 @@ function DatabaseViewerPage() {
             </div>
             {tablesQuery.isLoading ?
               <div className='flex justify-center p-4'>
-                <LoaderIcon className='text-primary size-6 animate-spin' />
+                <Spinner size='md' />
               </div>
             : <div className='max-h-150 overflow-y-auto'>
                 {tables.map(tbl => (
@@ -284,7 +284,7 @@ function DatabaseViewerPage() {
               {/* Table Data */}
               {rowsQuery.isLoading ?
                 <div className='flex justify-center p-8'>
-                  <LoaderIcon className='text-primary size-6 animate-spin' />
+                  <Spinner size='md' />
                 </div>
               : rows.length > 0 ?
                 <>

@@ -3,6 +3,7 @@
  */
 
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 
 interface SocialButtonProps {
   loading?: boolean;
@@ -24,10 +25,11 @@ export function GoogleButton({ loading, onClick, iconOnly }: SocialButtonProps) 
         aria-label='Continue with Google'
       >
         {loading ?
-          <div
-            role='status'
-            aria-label='Signing in with Google'
-            className='border-border border-t-secondary-foreground size-5 animate-spin rounded-full border-2 sm:h-6 sm:w-6'
+          <Spinner
+            size='sm'
+            variant='current'
+            label='Signing in with Google'
+            className='size-5 sm:size-6'
           />
         : <img src='/logos/google.svg' alt='' className='size-5 sm:h-6 sm:w-6' aria-hidden='true' />
         }
@@ -44,11 +46,7 @@ export function GoogleButton({ loading, onClick, iconOnly }: SocialButtonProps) 
       className='h-auto w-full gap-3 rounded-lg py-2.5 text-sm font-semibold sm:rounded-xl sm:py-3 sm:text-base'
     >
       {loading ?
-        <div
-          role='status'
-          aria-label='Signing in with Google'
-          className='border-border border-t-secondary-foreground size-5 animate-spin rounded-full border-2'
-        />
+        <Spinner size='sm' variant='current' label='Signing in with Google' className='size-5' />
       : <img src='/logos/google.svg' alt='' className='size-5' aria-hidden='true' />}
       Continue with Google
     </Button>
@@ -69,10 +67,11 @@ export function OrcidButton({ loading, onClick, iconOnly }: SocialButtonProps) {
         aria-label='Continue with ORCID'
       >
         {loading ?
-          <div
-            role='status'
-            aria-label='Signing in with ORCID'
-            className='border-border border-t-secondary-foreground size-5 animate-spin rounded-full border-2 sm:h-6 sm:w-6'
+          <Spinner
+            size='sm'
+            variant='current'
+            label='Signing in with ORCID'
+            className='size-5 sm:size-6'
           />
         : <img src='/logos/orcid.svg' alt='' className='size-5 sm:h-6 sm:w-6' aria-hidden='true' />}
       </Button>
@@ -88,11 +87,7 @@ export function OrcidButton({ loading, onClick, iconOnly }: SocialButtonProps) {
       className='h-auto w-full gap-3 rounded-lg py-2.5 text-sm font-semibold sm:rounded-xl sm:py-3 sm:text-base'
     >
       {loading ?
-        <div
-          role='status'
-          aria-label='Signing in with ORCID'
-          className='border-border border-t-secondary-foreground size-5 animate-spin rounded-full border-2'
-        />
+        <Spinner size='sm' variant='current' label='Signing in with ORCID' className='size-5' />
       : <img src='/logos/orcid.svg' alt='' className='size-5' aria-hidden='true' />}
       Continue with ORCID
     </Button>

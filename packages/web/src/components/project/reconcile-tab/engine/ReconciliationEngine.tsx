@@ -18,6 +18,7 @@ import {
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import { SplitScreenLayout } from '@/components/checklist/SplitScreenLayout';
 import { useReconciliationPresence } from '@/hooks/useReconciliationPresence';
 import { PresenceAvatars } from '../PresenceAvatars';
@@ -330,14 +331,14 @@ export function ReconciliationEngine({
             {pdfLoading ?
               <div className='bg-secondary flex h-full items-center justify-center'>
                 <div className='text-muted-foreground flex items-center gap-3'>
-                  <div className='size-6 animate-spin rounded-full border-b-2 border-blue-600' />
+                  <Spinner size='md' />
                   Loading PDF...
                 </div>
               </div>
             : <Suspense
                 fallback={
                   <div className='bg-secondary flex h-full items-center justify-center'>
-                    <div className='size-6 animate-spin rounded-full border-b-2 border-blue-600' />
+                    <Spinner size='md' />
                   </div>
                 }
               >

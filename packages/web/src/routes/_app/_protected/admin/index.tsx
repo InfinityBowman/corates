@@ -7,7 +7,6 @@ import {
   UserPlusIcon,
   SearchIcon,
   ShieldIcon,
-  LoaderIcon,
 } from 'lucide-react';
 import { useAdminStats, useAdminUsers } from '@/hooks/useAdminQueries';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
@@ -16,6 +15,7 @@ import { UserTable } from '@/components/admin/UserTable';
 import { AnalyticsSection } from '@/components/admin/AnalyticsSection';
 import { AdminSection, DashboardHeader, ServerPagination } from '@/components/admin/ui';
 import { Input } from '@/components/ui/input';
+import { Spinner } from '@/components/ui/spinner';
 
 export const Route = createFileRoute('/_app/_protected/admin/')({
   component: AdminDashboard,
@@ -112,7 +112,7 @@ function AdminDashboard() {
       >
         {usersDataQuery.isLoading ?
           <div className='flex items-center justify-center py-12'>
-            <LoaderIcon className='text-primary size-8 animate-spin' />
+            <Spinner size='lg' />
           </div>
         : <UserTable users={usersData?.users || []} />}
 

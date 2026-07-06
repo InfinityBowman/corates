@@ -1,18 +1,12 @@
 import { useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
-import {
-  MailIcon,
-  SendIcon,
-  UserIcon,
-  MessageSquareIcon,
-  LoaderIcon,
-  AlertCircleIcon,
-} from 'lucide-react';
+import { MailIcon, SendIcon, UserIcon, MessageSquareIcon, AlertCircleIcon } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { config } from '../lib/config';
 import { submitContactForm } from '@/server/functions/contact.functions';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 
 const pageUrl = `${config.appUrl}/contact`;
 const title = 'Contact Us - CoRATES';
@@ -200,7 +194,7 @@ function ContactPage() {
                 >
                   {formState === 'sending' ?
                     <>
-                      <LoaderIcon className='size-5 animate-spin' />
+                      <Spinner size='sm' variant='current' className='size-5' />
                       Sending...
                     </>
                   : <>

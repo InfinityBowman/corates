@@ -4,20 +4,14 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import {
-  MonitorIcon,
-  SmartphoneIcon,
-  GlobeIcon,
-  Trash2Icon,
-  LogOutIcon,
-  LoaderIcon,
-} from 'lucide-react';
+import { MonitorIcon, SmartphoneIcon, GlobeIcon, Trash2Icon, LogOutIcon } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { showToast } from '@/components/ui/toast';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { Spinner } from '@/components/ui/spinner';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -139,7 +133,7 @@ function SessionCard({ session, isCurrent, revoking, onRevoke }: SessionCardProp
             className='text-destructive hover:text-destructive hover:bg-destructive/5'
           >
             {revoking ?
-              <LoaderIcon className='size-4 animate-spin' />
+              <Spinner size='sm' variant='current' />
             : <Trash2Icon className='size-4' />}
             <span>Revoke</span>
           </Button>
@@ -275,7 +269,7 @@ export function SessionManagement() {
 
       {isLoading && (
         <div className='text-muted-foreground flex items-center justify-center py-8'>
-          <LoaderIcon className='mr-2 size-5 animate-spin' />
+          <Spinner size='sm' variant='current' className='mr-2 size-5' />
           <span>Loading sessions...</span>
         </div>
       )}

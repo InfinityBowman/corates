@@ -7,7 +7,6 @@ import {
   FileTextIcon,
   AlertCircleIcon,
   HomeIcon,
-  LoaderIcon,
   ZapIcon,
 } from 'lucide-react';
 import { useAdminProjects, useAdminOrgs } from '@/hooks/useAdminQueries';
@@ -22,6 +21,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import {
   Select,
   SelectContent,
@@ -218,7 +218,7 @@ function AdminProjectList() {
         <div className='flex items-center gap-4'>
           <Button variant='outline' size='sm' onClick={handleWakeAllDOs} disabled={waking}>
             {waking ?
-              <LoaderIcon className='mr-2 size-4 animate-spin' />
+              <Spinner size='sm' variant='current' className='mr-2' />
             : <ZapIcon className='mr-2 size-4' />}
             {waking ? 'Waking DOs...' : 'Wake All DOs'}
           </Button>

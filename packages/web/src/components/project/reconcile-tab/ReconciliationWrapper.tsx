@@ -21,6 +21,7 @@ import { downloadPdf, getPdfUrl } from '@/api/pdf-api';
 import { getCachedPdf, cachePdf } from '@/primitives/pdfCache.js';
 import { Button } from '@/components/ui/button';
 import { showToast } from '@/components/ui/toast';
+import { Spinner } from '@/components/ui/spinner';
 import { usePdfPreviewStore } from '@/stores/pdfPreviewStore';
 import { ReconciliationEngine, registerReconciliationAdapter } from './engine';
 import { amstar2Adapter } from './amstar2-reconcile/adapter';
@@ -468,7 +469,7 @@ export function ReconciliationWrapper({
     return (
       <div className='flex min-h-screen items-center justify-center bg-blue-50'>
         <div className='text-center'>
-          <div className='mx-auto mb-4 size-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent' />
+          <Spinner size='lg' className='mx-auto mb-4' />
           <p className='text-secondary-foreground'>
             {reconciledChecklistLoading ? 'Setting up reconciliation...' : 'Loading checklists...'}
           </p>

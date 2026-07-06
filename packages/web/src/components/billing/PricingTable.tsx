@@ -10,18 +10,12 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { Link } from '@tanstack/react-router';
-import {
-  CheckIcon,
-  StarIcon,
-  ZapIcon,
-  AlertCircleIcon,
-  ArrowDownIcon,
-  LoaderIcon,
-} from 'lucide-react';
+import { CheckIcon, StarIcon, ZapIcon, AlertCircleIcon, ArrowDownIcon } from 'lucide-react';
 import { showToast } from '@/components/ui/toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import FlipNumber from '@/components/FlipNumber';
 import {
   Dialog,
@@ -233,7 +227,7 @@ export function PricingTable({
             >
               {loadingTier === 'trial' ?
                 <span className='flex items-center gap-2'>
-                  <LoaderIcon className='size-4 animate-spin' />
+                  <Spinner size='sm' variant='current' />
                   Starting...
                 </span>
               : 'Start Free Trial'}
@@ -387,7 +381,7 @@ export function PricingTable({
             >
               {loadingTier === plan.tier ?
                 <span className='flex items-center justify-center gap-2'>
-                  <LoaderIcon className='size-4 animate-spin' />
+                  <Spinner size='sm' variant='current' />
                   Processing...
                 </span>
               : getButtonText(plan)}
@@ -458,7 +452,7 @@ export function PricingTable({
               >
                 {loadingTier === 'single_project' ?
                   <span className='flex items-center gap-2'>
-                    <LoaderIcon className='size-4 animate-spin' />
+                    <Spinner size='sm' variant='current' />
                     Processing...
                   </span>
                 : currentTier === 'single_project' ?

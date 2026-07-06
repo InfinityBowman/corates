@@ -9,7 +9,6 @@ import {
 } from '@/server/functions/admin-stripe.functions';
 import {
   SearchIcon,
-  LoaderIcon,
   ExternalLinkIcon,
   UserIcon,
   HomeIcon,
@@ -30,6 +29,7 @@ import { showToast } from '@/components/ui/toast';
 import { DashboardHeader, AdminBox, CopyButton } from '@/components/admin/ui';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import {
   Select,
   SelectContent,
@@ -275,7 +275,7 @@ function StripeToolsPage() {
           </div>
           <Button type='submit' disabled={searching || !searchInput.trim()}>
             {searching ?
-              <LoaderIcon className='mr-2 size-4 animate-spin' />
+              <Spinner size='sm' variant='current' className='mr-2' />
             : <SearchIcon className='mr-2 size-4' />}
             Search
           </Button>
@@ -409,7 +409,7 @@ function StripeToolsPage() {
                 disabled={generatingPortal}
               >
                 {generatingPortal ?
-                  <LoaderIcon className='mr-2 size-4 animate-spin' />
+                  <Spinner size='sm' variant='current' className='mr-2' />
                 : <ExternalLinkIcon className='mr-2 size-4' />}
                 Generate Portal Link
               </Button>
@@ -420,7 +420,7 @@ function StripeToolsPage() {
                 disabled={loadingInvoices}
               >
                 {loadingInvoices ?
-                  <LoaderIcon className='mr-2 size-4 animate-spin' />
+                  <Spinner size='sm' variant='current' className='mr-2' />
                 : <FileTextIcon className='mr-2 size-4' />}
                 Load Invoices
               </Button>
@@ -431,7 +431,7 @@ function StripeToolsPage() {
                 disabled={loadingPaymentMethods}
               >
                 {loadingPaymentMethods ?
-                  <LoaderIcon className='mr-2 size-4 animate-spin' />
+                  <Spinner size='sm' variant='current' className='mr-2' />
                 : <CreditCardIcon className='mr-2 size-4' />}
                 Load Payment Methods
               </Button>
@@ -442,7 +442,7 @@ function StripeToolsPage() {
                 disabled={loadingSubscriptions}
               >
                 {loadingSubscriptions ?
-                  <LoaderIcon className='mr-2 size-4 animate-spin' />
+                  <Spinner size='sm' variant='current' className='mr-2' />
                 : <DollarSignIcon className='mr-2 size-4' />}
                 Load Subscriptions
               </Button>

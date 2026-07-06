@@ -8,7 +8,6 @@ import {
   DatabaseIcon,
   CheckSquareIcon,
   SquareIcon,
-  LoaderIcon,
 } from 'lucide-react';
 import { useStorageDocuments } from '@/hooks/useAdminQueries';
 import { deleteStorageDocuments } from '@/stores/adminStore';
@@ -28,6 +27,7 @@ import {
 import { DashboardHeader, AdminSection, AdminBox } from '@/components/admin/ui';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Spinner } from '@/components/ui/spinner';
 import { formatDateTime } from '@/lib/formatDate';
 import {
   Table,
@@ -307,7 +307,7 @@ function StorageManagementPage() {
                 <TableRow>
                   <TableCell colSpan={7} className='px-6 py-12 text-center'>
                     <div className='flex items-center justify-center'>
-                      <LoaderIcon className='text-primary size-8 animate-spin' />
+                      <Spinner size='lg' />
                     </div>
                   </TableCell>
                 </TableRow>

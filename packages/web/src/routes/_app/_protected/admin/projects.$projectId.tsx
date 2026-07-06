@@ -6,7 +6,6 @@ import {
   UsersIcon,
   FileTextIcon,
   Trash2Icon,
-  LoaderIcon,
   AlertCircleIcon,
   HomeIcon,
 } from 'lucide-react';
@@ -15,6 +14,7 @@ import { useAdminProjectDetails, useAdminProjectDocStats } from '@/hooks/useAdmi
 import { useAdminStore, removeProjectMember, deleteProject } from '@/stores/adminStore';
 import { showToast } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import { handleError } from '@/lib/error-utils';
 import { queryKeys } from '@/lib/queryKeys';
 import type {
@@ -91,7 +91,7 @@ function ProjectDetailPage() {
   if (!isAdminChecked) {
     return (
       <div className='flex min-h-100 items-center justify-center'>
-        <LoaderIcon className='text-primary size-8 animate-spin' />
+        <Spinner size='lg' />
       </div>
     );
   }
@@ -120,7 +120,7 @@ function ProjectDetailPage() {
       {/* Loading state */}
       {projectQuery.isLoading && (
         <div className='flex min-h-64 items-center justify-center'>
-          <LoaderIcon className='text-primary size-8 animate-spin' />
+          <Spinner size='lg' />
         </div>
       )}
 

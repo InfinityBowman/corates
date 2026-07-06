@@ -11,12 +11,12 @@ import {
   ClockIcon,
   ArrowRightIcon,
   ZapIcon,
-  LoaderIcon,
 } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Spinner } from '@/components/ui/spinner';
 import { useMembers } from '@/hooks/useMembers';
 
 function getDaysRemaining(endTimestamp: number | undefined) {
@@ -188,7 +188,7 @@ export function SubscriptionCard({ subscription, onManage, manageLoading }: Subs
               >
                 {manageLoading ?
                   <>
-                    <LoaderIcon className='size-4 animate-spin' />
+                    <Spinner size='sm' variant='current' />
                     Loading...
                   </>
                 : <>

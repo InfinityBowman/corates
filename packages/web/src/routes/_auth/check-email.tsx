@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router';
 import { z } from 'zod';
-import { Loader2Icon, MailIcon } from 'lucide-react';
+import { MailIcon } from 'lucide-react';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { Alert } from '@/components/ui/alert';
+import { Spinner } from '@/components/ui/spinner';
 import { ErrorMessage } from '@/components/auth/ErrorMessage';
 import { PrimaryButton, SecondaryButton } from '@/components/auth/AuthButtons';
 
@@ -126,7 +127,7 @@ function CheckEmailPage() {
       {verified ?
         <>
           <div className='flex justify-center'>
-            <Loader2Icon className='text-primary size-12 animate-spin' />
+            <Spinner size='xl' />
           </div>
           <h2 className='text-foreground text-xl font-bold sm:text-2xl'>Email Verified!</h2>
           <p className='text-muted-foreground text-sm sm:text-base'>

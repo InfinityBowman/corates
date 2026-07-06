@@ -12,6 +12,7 @@ import {
 } from '@/api/google-drive';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import { GOOGLE_PICKER_API_KEY, GOOGLE_PICKER_APP_ID } from '@/config/google';
 import { pickGooglePdfFiles } from '@/lib/googlePicker.js';
 import { buildRestoreCallbackUrl } from '@/lib/formStatePersistence.js';
@@ -192,9 +193,7 @@ export function GoogleDrivePickerLauncher({
           disabled={loading || disabled || busy || !pickerConfigured}
           className='mx-auto w-full max-w-xl'
         >
-          {(loading || busy) && (
-            <div className='size-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
-          )}
+          {(loading || busy) && <Spinner size='sm' variant='current' />}
           <img src='/logos/drive.svg' alt='' className='size-6 rounded-sm bg-white p-0.5' />
           Select from Google Drive
         </Button>

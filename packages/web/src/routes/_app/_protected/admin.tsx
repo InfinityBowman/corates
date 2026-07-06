@@ -12,7 +12,6 @@ import {
   DatabaseIcon,
   FilterIcon,
   AlertTriangleIcon,
-  LoaderIcon,
   AlertCircleIcon,
   ServerIcon,
   FolderIcon,
@@ -21,6 +20,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { useAdminStore } from '@/stores/adminStore';
 import { SectionErrorBoundary } from '@/components/project/SectionErrorBoundary';
+import { Spinner } from '@/components/ui/spinner';
 
 interface NavItem {
   path: string;
@@ -68,7 +68,7 @@ function AdminLayout() {
   if (!isAdminChecked) {
     return (
       <div className='flex min-h-100 items-center justify-center'>
-        <LoaderIcon className='text-primary size-8 animate-spin' />
+        <Spinner size='lg' />
       </div>
     );
   }

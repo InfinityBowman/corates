@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
-  LoaderIcon,
   RefreshCwIcon,
   AlertTriangleIcon,
   UsersIcon,
@@ -20,6 +19,7 @@ import {
 import { LineChart, BarChart, DoughnutChart } from '@/components/admin/charts';
 import { AdminBox } from '@/components/admin/ui';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import {
   Select,
   SelectContent,
@@ -178,7 +178,7 @@ export function AnalyticsSection() {
           </div>
           {signupQuery.isLoading ?
             <div className='flex h-64 items-center justify-center'>
-              <LoaderIcon className='text-info size-6 animate-spin' />
+              <Spinner size='md' variant='current' className='text-info' />
             </div>
           : signupData?.data ?
             <>
@@ -210,7 +210,7 @@ export function AnalyticsSection() {
           </div>
           {orgQuery.isLoading || projectQuery.isLoading ?
             <div className='flex h-64 items-center justify-center'>
-              <LoaderIcon className='text-success size-6 animate-spin' />
+              <Spinner size='md' variant='current' className='text-success' />
             </div>
           : orgData && projectData ?
             <>
@@ -267,7 +267,7 @@ export function AnalyticsSection() {
           </div>
           {subscriptionQuery.isLoading ?
             <div className='flex h-48 items-center justify-center'>
-              <LoaderIcon className='text-info size-6 animate-spin' />
+              <Spinner size='md' variant='current' className='text-info' />
             </div>
           : subscriptionData ?
             <>
@@ -313,7 +313,7 @@ export function AnalyticsSection() {
           </div>
           {revenueQuery.isLoading ?
             <div className='flex h-48 items-center justify-center'>
-              <LoaderIcon className='text-success size-6 animate-spin' />
+              <Spinner size='md' variant='current' className='text-success' />
             </div>
           : revenueData?.data && revenueData.data.length > 0 ?
             <>
@@ -366,7 +366,7 @@ export function AnalyticsSection() {
         </div>
         {webhookQuery.isLoading ?
           <div className='flex h-48 items-center justify-center'>
-            <LoaderIcon className='text-warning size-6 animate-spin' />
+            <Spinner size='md' variant='current' className='text-warning' />
           </div>
         : webhookData?.data ?
           <>

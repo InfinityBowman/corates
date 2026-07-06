@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { Tabs, TabsList, TabsTrigger, TabsIndicator, TabsContent } from '@/components/ui/tabs';
 import { showToast } from '@/components/ui/toast';
+import { Spinner } from '@/components/ui/spinner';
 import { useSortedStudyIdsById } from '@/primitives/useProject/reactor';
 import { useAddStudies } from '@/hooks/useAddStudies';
 import type { CollectedStudies } from '@/hooks/useAddStudies';
@@ -238,7 +239,7 @@ export function AddStudiesForm({
           <Button onClick={handleSubmit} disabled={isSubmitting || studies.totalStudyCount === 0}>
             {isSubmitting ?
               <>
-                <div className='size-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
+                <Spinner size='sm' variant='current' />
                 Adding...
               </>
             : <>

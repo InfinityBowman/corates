@@ -5,7 +5,6 @@ import {
   HomeIcon,
   UsersIcon,
   FolderIcon,
-  LoaderIcon,
   ShieldIcon,
   AlertCircleIcon,
 } from 'lucide-react';
@@ -35,6 +34,7 @@ import {
 import { handleError } from '@/lib/error-utils';
 import { AdminBox } from '@/components/admin/ui';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import { formatDateInput } from '@/lib/formatDate';
 import { OrgBillingSummary } from '@/components/admin/OrgBillingSummary';
 import { OrgQuickActions } from '@/components/admin/OrgQuickActions';
@@ -339,7 +339,7 @@ function OrgDetailPage() {
   if (!isAdminChecked) {
     return (
       <div className='flex min-h-[400px] items-center justify-center'>
-        <LoaderIcon className='text-primary size-8 animate-spin' />
+        <Spinner size='lg' />
       </div>
     );
   }
@@ -368,7 +368,7 @@ function OrgDetailPage() {
       {/* Loading state */}
       {orgDetailsQuery.isLoading && (
         <div className='flex min-h-64 items-center justify-center'>
-          <LoaderIcon className='text-primary size-8 animate-spin' />
+          <Spinner size='lg' />
         </div>
       )}
 

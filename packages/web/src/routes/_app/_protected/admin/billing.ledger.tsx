@@ -1,12 +1,13 @@
 import { useState, useMemo } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { LoaderIcon, ExternalLinkIcon, FilterIcon } from 'lucide-react';
+import { ExternalLinkIcon, FilterIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useAdminBillingLedger } from '@/hooks/useAdminQueries';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { DashboardHeader, AdminBox, AdminDataTable, CopyButton } from '@/components/admin/ui';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import {
   Select,
   SelectContent,
@@ -303,7 +304,7 @@ function AdminBillingLedgerPage() {
             disabled={ledgerQuery.isFetching}
           >
             {ledgerQuery.isFetching ?
-              <LoaderIcon className='size-4 animate-spin' />
+              <Spinner size='sm' variant='current' />
             : 'Refresh'}
           </Button>
         }
