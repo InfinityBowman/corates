@@ -6,7 +6,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useId } from 'react';
 import { TriangleAlertIcon, CheckIcon, UserPlusIcon, MailIcon } from 'lucide-react';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

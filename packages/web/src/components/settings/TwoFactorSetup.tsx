@@ -13,7 +13,7 @@ import {
   CircleHelpIcon,
 } from 'lucide-react';
 import { useAuthStore, selectUser, selectTwoFactorEnabled } from '@/stores/authStore';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

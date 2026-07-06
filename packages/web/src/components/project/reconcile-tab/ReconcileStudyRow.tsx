@@ -177,15 +177,15 @@ export function ReconcileStudyRow({
             {readyGroups.length > 0 && (
               <>
                 <div className='mb-2 flex items-center gap-2'>
-                  <span className='text-xs font-semibold tracking-wide text-green-700'>READY</span>
-                  <span className='text-xs text-green-600'>({readyGroups.length})</span>
-                  <div className='h-px flex-1 bg-green-200' />
+                  <span className='text-success text-xs font-semibold tracking-wide'>READY</span>
+                  <span className='text-success text-xs'>({readyGroups.length})</span>
+                  <div className='bg-success-border h-px flex-1' />
                 </div>
                 <div className='flex flex-col gap-1'>
                   {readyGroups.map((group, i) => (
                     <div
                       key={group.outcomeId || i}
-                      className='flex items-center justify-between rounded-lg border border-green-200 bg-green-50/50 p-3'
+                      className='border-success-border bg-success-bg/50 flex items-center justify-between rounded-lg border p-3'
                     >
                       <div className='flex flex-wrap items-center gap-2'>
                         <Badge variant='secondary'>{getChecklistMetadata(group.type).name}</Badge>
@@ -213,17 +213,15 @@ export function ReconcileStudyRow({
                 <div
                   className={`mb-1 flex items-center gap-2 ${readyGroups.length > 0 ? 'mt-3' : ''}`}
                 >
-                  <span className='text-xs font-semibold tracking-wide text-yellow-700'>
-                    WAITING
-                  </span>
-                  <span className='text-xs text-yellow-600'>({waitingGroups.length})</span>
-                  <div className='h-px flex-1 bg-yellow-200' />
+                  <span className='text-warning text-xs font-semibold tracking-wide'>WAITING</span>
+                  <span className='text-warning text-xs'>({waitingGroups.length})</span>
+                  <div className='bg-warning-border h-px flex-1' />
                 </div>
                 <div className='flex flex-col gap-1'>
                   {waitingGroups.map((group, i) => (
                     <div
                       key={group.outcomeId || i}
-                      className='flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50/30 p-3'
+                      className='border-warning-border bg-warning-bg/30 flex items-center justify-between rounded-lg border p-3'
                     >
                       <div className='flex flex-wrap items-center gap-2'>
                         <Badge variant='secondary'>{getChecklistMetadata(group.type).name}</Badge>

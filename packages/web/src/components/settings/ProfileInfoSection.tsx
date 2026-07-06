@@ -9,7 +9,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { useAuthStore, selectUser, selectUserAvatarUrl } from '@/stores/authStore';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 import { InlineEdit } from '@/components/ui/inline-edit';
 import { API_BASE } from '@/config/api';
 import { compressImageFile } from '@/lib/imageUtils.js';

@@ -16,7 +16,7 @@ import { useAllStudiesById, useProjectMembersById } from '@/primitives/useProjec
 import { project } from '@/project';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { useProjectContext, type ProjectMember } from '../ProjectContext';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 import { Avatar, AvatarImage, AvatarFallback, getInitials } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';

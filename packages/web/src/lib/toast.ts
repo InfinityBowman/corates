@@ -1,10 +1,10 @@
 /**
  * Toast notification adapter over Sonner
  *
- * Provides the showToast API used by lib/error-utils.js and other utility
+ * Provides the showToast API used by lib/error-utils.ts and other utility
  * modules. Backed by Sonner (installed via shadcn).
  *
- * Mount <Toaster /> once in the app root (from ./sonner.tsx).
+ * Mount <Toaster /> once in the app root (from @/components/ui/sonner).
  * Call showToast.success/error/warning/info/loading/dismiss from anywhere.
  */
 
@@ -76,15 +76,25 @@ export const showToast = {
       type?: 'success' | 'error' | 'warning' | 'info';
     },
   ) => {
+    // Sonner merges options when updating an existing toast, so an explicit
+    // duration is required or a loading toast's Infinity duration would
+    // persist and the updated toast would never auto-dismiss.
+    const title = options.title ?? '';
+    const opts = {
+      id,
+      description: options.description,
+      duration: options.type === 'error' ? 5000 : 3000,
+    };
     if (options.type === 'success') {
-      toast.success(options.title ?? '', { id, description: options.description });
+      toast.success(title, opts);
     } else if (options.type === 'error') {
-      toast.error(options.title ?? '', { id, description: options.description });
+      toast.error(title, opts);
+    } else if (options.type === 'warning') {
+      toast.warning(title, opts);
+    } else if (options.type === 'info') {
+      toast.info(title, opts);
     } else {
-      toast(options.title ?? '', { id, description: options.description });
+      toast(title, opts);
     }
   },
 };
-
-// Re-export Toaster from sonner component for mounting in app root
-export { Toaster } from './sonner';

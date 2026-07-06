@@ -214,7 +214,7 @@ Import from the colocated shadcn/ui primitives under `@/components/ui/`:
 ```tsx
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 ```
 
 There is no external `@corates/ui` package -- these components live in the repo so they can be modified directly. Under the hood they wrap Radix (most) and `@ark-ui/react` (editable, steps, qr-code, password-input, file-upload).

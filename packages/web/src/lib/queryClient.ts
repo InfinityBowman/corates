@@ -4,7 +4,7 @@
  */
 
 import { QueryClient } from '@tanstack/react-query';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 import { getDomainError, getUserFriendlyMessage } from '@/lib/error-utils';
 
 function getFriendlyMessage(error: unknown): string {

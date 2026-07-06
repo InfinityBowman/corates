@@ -3,7 +3,7 @@
  */
 
 import { useState, useCallback } from 'react';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 import { fetchReferenceByIdentifier, parseIdentifiers } from '@/lib/referenceLookup.js';
 import { cloneArrayBuffer } from './serialization';
 import type { LookupRef } from './deduplication';

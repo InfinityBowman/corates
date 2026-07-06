@@ -46,7 +46,7 @@ export function LocalChecklistItem({ checklist, isSelected, onDelete }: LocalChe
         variant='ghost'
         size='icon-sm'
         onClick={e => onDelete(e, checklist.id)}
-        className='text-muted-foreground/70 mr-1 opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-600 focus:opacity-100 dark:hover:bg-red-50'
+        className='text-muted-foreground/70 hover:bg-destructive/5 hover:text-destructive mr-1 opacity-0 group-hover:opacity-100 focus:opacity-100'
         aria-label='Delete checklist'
       >
         <TrashIcon className='size-4' />

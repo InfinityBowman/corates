@@ -2,7 +2,7 @@
  * Project-level actions -- rename, delete, update description
  */
 
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 import { queryClient } from '@/lib/queryClient';
 import { queryKeys } from '@/lib/queryKeys';
 import { deleteProject } from '@/server/functions/org-projects.functions';

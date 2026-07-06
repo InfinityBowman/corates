@@ -6,7 +6,7 @@
  */
 
 import { useMemo, useEffect, useCallback, useRef } from 'react';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 
 import { usePdfOperations } from './pdfs';
 import { useReferenceOperations } from './references';

@@ -12,7 +12,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { useAdminProjectDetails, useAdminProjectDocStats } from '@/hooks/useAdminQueries';
 import { useAdminStore, removeProjectMember, deleteProject } from '@/stores/adminStore';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { handleError } from '@/lib/error-utils';

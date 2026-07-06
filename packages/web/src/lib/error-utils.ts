@@ -14,7 +14,7 @@ import {
   type DomainError,
   type TransportError,
 } from '@corates/shared';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 
 /**
  * User-friendly error messages for common error codes

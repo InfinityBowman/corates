@@ -227,7 +227,7 @@ export function ReconciliationEngine({
   // -----------------------------------------------------------------------
 
   return (
-    <div className='flex h-full flex-col bg-blue-50'>
+    <div className='bg-secondary flex h-full flex-col'>
       {/* Save confirmation dialog */}
       <AlertDialog open={engine.finishDialogOpen} onOpenChange={engine.setFinishDialogOpen}>
         <AlertDialogContent>

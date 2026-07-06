@@ -19,7 +19,7 @@ import { downloadPdf, uploadPdf, deletePdf, getPdfUrl } from '@/api/pdf-api';
 import type { PdfUploadResponse } from '@/api/pdf-api';
 import { getCachedPdf, cachePdf } from '@/primitives/pdfCache.js';
 import type { AnnotationData } from '@/primitives/useProject/annotations';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -327,7 +327,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
 
   if (!checklistType) {
     return (
-      <div className='flex min-h-screen items-center justify-center bg-blue-50'>
+      <div className='bg-secondary flex min-h-screen items-center justify-center'>
         <div className='text-muted-foreground'>
           {connectionState.phase === 'connecting' || pdfLoading ?
             'Loading...'

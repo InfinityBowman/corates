@@ -19,7 +19,7 @@ import {
   revokeUserSession,
   deleteUser,
 } from '@/stores/adminStore';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 import { UserAvatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

@@ -3,7 +3,7 @@
  */
 
 import { useState } from 'react';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,

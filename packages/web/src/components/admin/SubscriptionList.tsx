@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Trash2Icon, PencilIcon, CopyIcon, CheckIcon } from 'lucide-react';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';

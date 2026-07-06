@@ -21,7 +21,7 @@ import {
 import { project } from '@/project';
 import { useProjectContext } from '../ProjectContext';
 import { useProjectMetaById } from '@/primitives/useProject/reactor';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 
 export function OutcomeManager() {
   const { projectId, isOwner } = useProjectContext();

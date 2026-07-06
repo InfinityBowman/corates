@@ -25,7 +25,7 @@ import {
   TableHead,
   TableCell,
 } from '@/components/ui/table';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 import { DashboardHeader, AdminBox, CopyButton } from '@/components/admin/ui';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';

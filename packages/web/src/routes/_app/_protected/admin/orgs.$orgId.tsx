@@ -20,7 +20,7 @@ import {
   grantOrgTrial,
   grantOrgSingleProject,
 } from '@/stores/adminStore';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 import {
   AlertDialog,
   AlertDialogContent,

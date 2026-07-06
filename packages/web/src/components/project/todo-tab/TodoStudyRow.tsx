@@ -123,7 +123,9 @@ export function TodoStudyRow({
           e.stopPropagation();
           onToggleChecklistForm();
         }}
-        className={showChecklistForm ? 'text-red-500 hover:bg-red-50 hover:text-red-600' : ''}
+        className={
+          showChecklistForm ? 'text-destructive hover:bg-destructive/5 hover:text-destructive' : ''
+        }
         title={showChecklistForm ? 'Cancel' : 'Add another checklist'}
       >
         {showChecklistForm ?

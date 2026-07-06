@@ -17,6 +17,8 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 interface BanUserDialogProps {
   open: boolean;
@@ -39,14 +41,14 @@ export function BanUserDialog({ open, onOpenChange, onConfirm, loading }: BanUse
             This will ban the user and revoke all their sessions.
           </p>
           <div>
-            <label className='text-secondary-foreground mb-1 block text-sm font-medium'>
+            <Label htmlFor='ban-reason' className='mb-1'>
               Ban Reason
-            </label>
-            <textarea
+            </Label>
+            <Textarea
+              id='ban-reason'
               value={banReason}
               onChange={e => setBanReason(e.target.value)}
               placeholder='Enter reason for ban...'
-              className='border-border focus:ring-ring w-full rounded-lg border px-3 py-2 text-sm focus:ring-2 focus:outline-none'
               rows={3}
             />
           </div>

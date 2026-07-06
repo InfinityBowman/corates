@@ -12,7 +12,7 @@ import {
 import { fetchFromDOI } from '@/lib/referenceLookup.js';
 import { cloneArrayBuffer } from './serialization';
 import { validatePdfFile } from '@/lib/pdfValidation.js';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 import type { UploadedPdf, StudyMetadata } from './deduplication';
 
 const DOI_FETCH_TIMEOUT = 10000;

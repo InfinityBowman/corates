@@ -27,7 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 import { useOrgs } from '@/hooks/useOrgs';
 import { queryKeys } from '@/lib/queryKeys';
 import { handleError, isErrorCode, getDomainError } from '@/lib/error-utils';
@@ -134,8 +134,8 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
       <DialogContent className='sm:max-w-lg'>
         <DialogHeader>
           <div className='flex items-center gap-3'>
-            <div className='flex size-10 items-center justify-center rounded-xl bg-blue-50'>
-              <FolderIcon className='size-5 text-blue-600' />
+            <div className='bg-primary/15 flex size-10 items-center justify-center rounded-xl'>
+              <FolderIcon className='text-primary size-5' />
             </div>
             <div>
               <DialogTitle>Create a new project</DialogTitle>

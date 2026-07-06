@@ -130,9 +130,9 @@ export function ChecklistForm({
       </div>
 
       {requiresOutcome && hasOutcomeIssue && outcomes.length === 0 && (
-        <div className='mt-2 rounded-lg border border-amber-300 bg-amber-50 p-3'>
-          <p className='text-sm font-medium text-amber-800'>No outcomes defined</p>
-          <p className='mt-1 text-xs text-amber-700'>
+        <div className='border-warning-border bg-warning-bg mt-2 rounded-lg border p-3'>
+          <p className='text-warning-foreground text-sm font-medium'>No outcomes defined</p>
+          <p className='text-warning mt-1 text-xs'>
             {(getChecklistMetadata(type) as any)?.name || type} requires an outcome. Add outcomes in
             the All Studies tab first.
           </p>

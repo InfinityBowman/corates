@@ -3,7 +3,7 @@
  */
 
 import { useState, useCallback } from 'react';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 import { extractPdfTitle, extractPdfDoi, readFileAsArrayBuffer } from '@/lib/pdfUtils.js';
 import { parseReferenceFile, separateFileTypes } from '@/lib/referenceParser.js';
 import { checkPdfAvailability } from '@/lib/referenceLookup.js';

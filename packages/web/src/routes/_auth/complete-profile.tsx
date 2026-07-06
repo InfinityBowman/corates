@@ -4,7 +4,7 @@ import { CheckIcon } from 'lucide-react';
 import { useAuthStore, selectUser, selectIsAuthLoading } from '@/stores/authStore';
 import { handleError } from '@/lib/error-utils';
 import { acceptInvitation } from '@/server/functions/invitations.functions';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

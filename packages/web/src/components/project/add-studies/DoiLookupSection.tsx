@@ -16,9 +16,10 @@ import {
   CheckIcon,
   DownloadIcon,
 } from 'lucide-react';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 import { Alert, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Spinner } from '@/components/ui/spinner';
@@ -51,12 +52,13 @@ export function DoiLookupSection({ studies }: DoiLookupSectionProps) {
       </p>
 
       <div className='flex flex-col gap-2'>
-        <textarea
+        <Textarea
           placeholder={'10.1000/xyz123\n32615397\n10.1016/j.example.2023.01.001'}
           value={studies.identifierInput}
           onChange={e => studies.setIdentifierInput(e.target.value)}
           rows={4}
-          className='border-border text-foreground placeholder-muted-foreground/70 focus:ring-primary w-full rounded-lg border px-3 py-2 font-mono text-sm transition focus:border-transparent focus:ring-2 focus:outline-none'
+          className='font-mono'
+          aria-label='DOIs or PubMed IDs'
         />
         <Button
           onClick={() => studies.handleLookup()}
@@ -103,7 +105,7 @@ export function DoiLookupSection({ studies }: DoiLookupSectionProps) {
               {refsWithoutPdf.length > 0 && (
                 <>
                   <span className='text-muted-foreground/70 mx-1'>|</span>
-                  <span className='text-amber-600'>{refsWithoutPdf.length} without PDF</span>
+                  <span className='text-warning'>{refsWithoutPdf.length} without PDF</span>
                 </>
               )}
             </span>
@@ -151,7 +153,7 @@ export function DoiLookupSection({ studies }: DoiLookupSectionProps) {
             {/* References without PDF */}
             {refsWithoutPdf.length > 0 && (
               <div className='border-border mt-2 border-t pt-2'>
-                <p className='mb-2 flex items-center gap-1 text-xs font-medium text-amber-600'>
+                <p className='text-warning mb-2 flex items-center gap-1 text-xs font-medium'>
                   <AlertCircleIcon className='size-3.5' />
                   No open-access PDF available:
                 </p>
@@ -352,7 +354,7 @@ function PdfStatusBadge({
             variant='secondary'
             size='xs'
             onClick={onUploadClick}
-            className='bg-amber-100 text-amber-700 hover:bg-amber-200'
+            className='bg-warning-bg text-warning hover:bg-warning-bg/80'
           >
             <UploadIcon />
             Upload PDF
@@ -387,9 +389,9 @@ function PdfStatusBadge({
  */
 function LookupRefWithoutPdf({ ref_, onRemove }: { ref_: any; onRemove: () => void }) {
   return (
-    <div className='flex items-start gap-3 rounded-lg border border-amber-100 bg-amber-50/50 p-2 opacity-75'>
+    <div className='border-warning-border bg-warning-bg/50 flex items-start gap-3 rounded-lg border p-2 opacity-75'>
       <div className='mt-0.5 flex size-5 items-center justify-center'>
-        <FileTextIcon className='size-4 text-amber-400' />
+        <FileTextIcon className='text-warning size-4' />
       </div>
       <div className='min-w-0 flex-1'>
         <p className='text-secondary-foreground line-clamp-2 text-sm font-medium'>{ref_.title}</p>

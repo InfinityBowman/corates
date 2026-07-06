@@ -12,6 +12,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
   return (
     <Sonner
       theme='light'
+      richColors
+      closeButton
       className='toaster group'
       icons={{
         success: <CircleCheckIcon className='size-4' />,
@@ -26,6 +28,22 @@ const Toaster = ({ ...props }: ToasterProps) => {
           '--normal-text': 'var(--popover-foreground)',
           '--normal-border': 'var(--border)',
           '--border-radius': 'var(--radius)',
+          // Point Sonner's rich-colors palette at our status tokens. Sonner's
+          // variable names collide with the app tokens (--success-bg etc.), so
+          // reference the Tailwind @theme --color-* aliases to avoid
+          // self-referential cycles.
+          '--success-bg': 'var(--color-success-bg)',
+          '--success-border': 'var(--color-success-border)',
+          '--success-text': 'var(--color-success)',
+          '--error-bg': 'var(--color-destructive-bg)',
+          '--error-border': 'var(--color-destructive-border)',
+          '--error-text': 'var(--color-destructive)',
+          '--warning-bg': 'var(--color-warning-bg)',
+          '--warning-border': 'var(--color-warning-border)',
+          '--warning-text': 'var(--color-warning-foreground)',
+          '--info-bg': 'var(--color-info-bg)',
+          '--info-border': 'var(--color-info-border)',
+          '--info-text': 'var(--color-info)',
         } as CSSProperties
       }
       toastOptions={{

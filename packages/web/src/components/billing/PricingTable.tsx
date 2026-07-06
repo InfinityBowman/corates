@@ -11,7 +11,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { Link } from '@tanstack/react-router';
 import { CheckIcon, StarIcon, ZapIcon, AlertCircleIcon, ArrowDownIcon } from 'lucide-react';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -539,8 +539,8 @@ export function PricingTable({
             <DialogContent className='max-w-md'>
               <DialogHeader>
                 <div className='flex items-start gap-3'>
-                  <div className='flex size-10 shrink-0 items-center justify-center rounded-full bg-amber-100'>
-                    <ArrowDownIcon className='size-5 text-amber-600' />
+                  <div className='bg-warning-bg flex size-10 shrink-0 items-center justify-center rounded-full'>
+                    <ArrowDownIcon className='text-warning size-5' />
                   </div>
                   <div>
                     <DialogTitle>Confirm Downgrade</DialogTitle>

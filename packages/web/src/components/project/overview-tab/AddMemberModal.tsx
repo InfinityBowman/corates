@@ -5,7 +5,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from '@tanstack/react-router';
 import { TriangleAlertIcon } from 'lucide-react';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { getInitials } from '@/components/ui/avatar';
@@ -201,7 +201,7 @@ export function AddMemberModal({
                     key={user.id}
                     type='button'
                     onClick={() => handleSelectUser(user)}
-                    className='flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-blue-50'
+                    className='hover:bg-muted flex w-full items-center gap-3 px-4 py-3 text-left transition-colors'
                   >
                     <Avatar className='size-8 shrink-0'>
                       <AvatarImage

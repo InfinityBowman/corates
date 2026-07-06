@@ -14,7 +14,7 @@ import { PlusIcon, XIcon, UploadIcon, FileTextIcon, LinkIcon, FolderIcon } from 
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { Tabs, TabsList, TabsTrigger, TabsIndicator, TabsContent } from '@/components/ui/tabs';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 import { Spinner } from '@/components/ui/spinner';
 import { useSortedStudyIdsById } from '@/primitives/useProject/reactor';
 import { useAddStudies } from '@/hooks/useAddStudies';

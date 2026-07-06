@@ -12,7 +12,7 @@ import {
 import { useStorageDocuments } from '@/hooks/useAdminQueries';
 import { deleteStorageDocuments } from '@/stores/adminStore';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 import { Badge } from '@/components/ui/badge';
 import {
   AlertDialog,

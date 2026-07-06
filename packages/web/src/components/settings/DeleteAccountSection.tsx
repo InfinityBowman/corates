@@ -4,7 +4,7 @@
 
 import { useState, useCallback, useId } from 'react';
 import { useAuthStore, selectUser } from '@/stores/authStore';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

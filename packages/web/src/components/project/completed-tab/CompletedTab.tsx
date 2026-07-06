@@ -14,7 +14,7 @@ import {
   getOutcomeKey,
   CHECKLIST_STATUS,
 } from '@corates/shared/checklists';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 import { CompletedStudyRow } from './CompletedStudyRow';
 import { project } from '@/project';
 import type { ReconciliationProgressEntry } from '@/primitives/useProject/reconciliation';

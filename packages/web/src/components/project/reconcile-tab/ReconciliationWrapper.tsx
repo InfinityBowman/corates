@@ -20,7 +20,7 @@ import {
 import { downloadPdf, getPdfUrl } from '@/api/pdf-api';
 import { getCachedPdf, cachePdf } from '@/primitives/pdfCache.js';
 import { Button } from '@/components/ui/button';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 import { Spinner } from '@/components/ui/spinner';
 import { usePdfPreviewStore } from '@/stores/pdfPreviewStore';
 import { ReconciliationEngine, registerReconciliationAdapter } from './engine';
@@ -452,7 +452,7 @@ export function ReconciliationWrapper({
   // Error state
   if (error) {
     return (
-      <div className='flex min-h-screen items-center justify-center bg-blue-50'>
+      <div className='bg-secondary flex min-h-screen items-center justify-center'>
         <div className='bg-card max-w-md rounded-lg p-8 shadow-lg'>
           <h2 className='text-destructive mb-2 text-xl font-bold'>Error</h2>
           <p className='text-secondary-foreground'>{error}</p>
@@ -467,7 +467,7 @@ export function ReconciliationWrapper({
   // Loading state
   if (!checklist1Data || !checklist2Data || reconciledChecklistLoading || !reconciledChecklistId) {
     return (
-      <div className='flex min-h-screen items-center justify-center bg-blue-50'>
+      <div className='bg-secondary flex min-h-screen items-center justify-center'>
         <div className='text-center'>
           <Spinner size='lg' className='mx-auto mb-4' />
           <p className='text-secondary-foreground'>

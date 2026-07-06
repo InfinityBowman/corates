@@ -72,7 +72,7 @@ export function AssignReviewersModal({
   const handleSave = useCallback(async () => {
     if (!study) return;
     if (reviewer1 !== '_unassigned' && reviewer1 === reviewer2) {
-      const { showToast } = await import('@/components/ui/toast');
+      const { showToast } = await import('@/lib/toast');
       showToast.error('Invalid Assignment', 'Reviewer 1 and Reviewer 2 must be different.');
       return;
     }

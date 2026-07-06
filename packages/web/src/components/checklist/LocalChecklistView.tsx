@@ -36,7 +36,7 @@ export function LocalChecklistView({ checklistId, searchType }: LocalChecklistVi
 
   if (phase.phase !== 'synced') {
     return (
-      <div className='flex min-h-screen items-center justify-center bg-blue-50'>
+      <div className='bg-secondary flex min-h-screen items-center justify-center'>
         <div className='text-muted-foreground'>Loading checklist...</div>
       </div>
     );
@@ -144,7 +144,7 @@ function LocalChecklistEditor({ checklistId }: { checklistId: string }) {
 
   if (pdfLoading) {
     return (
-      <div className='flex min-h-screen items-center justify-center bg-blue-50'>
+      <div className='bg-secondary flex min-h-screen items-center justify-center'>
         <div className='text-muted-foreground'>Loading checklist...</div>
       </div>
     );
@@ -152,7 +152,7 @@ function LocalChecklistEditor({ checklistId }: { checklistId: string }) {
 
   if (!currentChecklist || !checklistType) {
     return (
-      <div className='flex min-h-screen flex-col items-center justify-center gap-4 bg-blue-50'>
+      <div className='bg-secondary flex min-h-screen flex-col items-center justify-center gap-4'>
         <div className='text-destructive'>Checklist not found</div>
         <Button onClick={handleBack}>Go Back</Button>
       </div>

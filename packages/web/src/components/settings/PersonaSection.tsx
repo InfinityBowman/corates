@@ -4,7 +4,7 @@
 
 import { useState, useCallback } from 'react';
 import { useAuthStore, selectUser } from '@/stores/authStore';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 import { ROLES, getRoleLabel } from '@/components/auth/RoleSelector';
 import { syncProfileToProjects } from '@/lib/syncUtils';
 import { Button } from '@/components/ui/button';

@@ -6,7 +6,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { MonitorIcon, SmartphoneIcon, GlobeIcon, Trash2Icon, LogOutIcon } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

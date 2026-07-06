@@ -15,7 +15,7 @@ import { MailIcon, CheckIcon, AlertTriangleIcon, ClockIcon } from 'lucide-react'
 import { useAuthStore, selectUser, selectIsAuthLoading } from '@/stores/authStore';
 import { getInvitation, acceptInvitation } from '@/server/functions/invitations.functions';
 import { getDomainError, getUserFriendlyMessage, parseError } from '@/lib/error-utils';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 import { Button } from '@/components/ui/button';
 import { PrimaryButton } from '@/components/auth/AuthButtons';
 import { RouteError } from '@/components/RouteError';

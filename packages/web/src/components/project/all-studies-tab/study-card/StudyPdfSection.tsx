@@ -5,7 +5,7 @@
 
 import { useState, useMemo, useRef, useCallback } from 'react';
 import { PlusIcon } from 'lucide-react';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 import { Button } from '@/components/ui/button';
 import { PdfListItem } from '@/components/pdf/PdfListItem';
 import { EditPdfMetadataModal } from '../EditPdfMetadataModal';

@@ -128,7 +128,7 @@ export function ReferenceImportSection({ studies }: ReferenceImportSectionProps)
                       className={`inline-flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-xs ${
                         ref.pdfAccessible ?
                           'bg-success-bg text-success'
-                        : 'bg-amber-100 text-amber-700'
+                        : 'bg-warning-bg text-warning'
                       }`}
                       title={
                         ref.pdfAccessible ?

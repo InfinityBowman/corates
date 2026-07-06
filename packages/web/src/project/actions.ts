@@ -3,7 +3,7 @@
  * Components use `project.study.create(...)` for write operations.
  */
 
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { connectionPool } from './ConnectionPool';
 import { studyActions } from './actions/studies';

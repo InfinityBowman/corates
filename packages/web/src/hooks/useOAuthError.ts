@@ -8,7 +8,7 @@
 import { useEffect } from 'react';
 import { useLocation } from '@tanstack/react-router';
 import { parseOAuthError } from '@/lib/account-linking-errors.js';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 
 export function useOAuthError() {
   const location = useLocation();

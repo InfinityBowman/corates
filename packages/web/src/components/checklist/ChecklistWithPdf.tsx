@@ -52,7 +52,7 @@ export function ChecklistWithPdf({
   const showUploadPanel = !pdfData && !!onPdfChange;
 
   return (
-    <div className='flex h-full min-h-0 flex-col bg-blue-50'>
+    <div className='bg-secondary flex h-full min-h-0 flex-col'>
       <SplitScreenLayout
         defaultLayout='vertical'
         defaultRatio={50}

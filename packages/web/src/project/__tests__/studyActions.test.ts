@@ -67,7 +67,7 @@ vi.mock('@/lib/errorLogger.js', () => ({
   bestEffort: (p: Promise<any>) => p?.catch?.(() => {}),
 }));
 
-vi.mock('@/components/ui/toast', () => ({
+vi.mock('@/lib/toast', () => ({
   showToast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));
 

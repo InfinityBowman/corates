@@ -8,7 +8,7 @@
  */
 
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 import type { ErasedAdapter, ReconciliationNavItem, ReconciliationSummaryStats } from './types';
 import type { TextRef } from '@/primitives/useProject/checklists';
 

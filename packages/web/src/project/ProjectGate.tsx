@@ -12,7 +12,7 @@ import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import { useProjectOrgId } from '@/hooks/useProjectOrgId';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 import { connectionPool } from './ConnectionPool';
 
 import { ProjectProvider } from '@/components/project/ProjectContext';

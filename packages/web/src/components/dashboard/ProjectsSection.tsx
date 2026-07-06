@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { useMyProjectsList } from '@/hooks/useMyProjectsList';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 import { CreateProjectModal } from '@/components/project/CreateProjectModal';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { queryKeys } from '@/lib/queryKeys';

@@ -144,7 +144,7 @@ Use the components under `@/components/ui/`. They are first-party -- copy-pasted
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { showToast } from '@/components/ui/toast';
+import { showToast } from '@/lib/toast';
 ```
 
 Always import from `@/components/ui/*`, not from `@radix-ui/*` or `@ark-ui/react` directly -- the wrappers apply project-specific styling and defaults. If you need a primitive that doesn't exist yet, add a new file under `@/components/ui/` rather than importing the primitive at the call site.
