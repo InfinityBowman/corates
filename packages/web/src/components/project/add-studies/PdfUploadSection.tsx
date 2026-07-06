@@ -6,6 +6,7 @@
 import { useMemo } from 'react';
 import { CloudUploadIcon, FileTextIcon, AlertTriangleIcon, RefreshCwIcon } from 'lucide-react';
 import { FileUpload, FileUploadDropzone, FileUploadHiddenInput } from '@/components/ui/file-upload';
+import { Button } from '@/components/ui/button';
 
 interface PdfUploadSectionProps {
   studies: any;
@@ -57,14 +58,16 @@ export function PdfUploadSection({ studies }: PdfUploadSectionProps) {
                     <div className='flex items-center gap-2'>
                       <AlertTriangleIcon className='text-destructive size-4 shrink-0' />
                       <span className='text-destructive text-sm font-medium'>{pdf.error}</span>
-                      <button
+                      <Button
                         type='button'
+                        variant='ghost'
+                        size='xs'
                         onClick={() => studies.retryPdfExtraction?.(pdf.id)}
-                        className='inline-flex items-center gap-1 rounded bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 transition-colors hover:bg-red-200'
+                        className='bg-destructive/10 text-destructive hover:bg-destructive/20 hover:text-destructive'
                       >
-                        <RefreshCwIcon className='size-3' />
+                        <RefreshCwIcon />
                         Retry
-                      </button>
+                      </Button>
                     </div>
                     <p className='text-destructive mt-1 truncate text-xs'>{pdf.file.name}</p>
                   </>

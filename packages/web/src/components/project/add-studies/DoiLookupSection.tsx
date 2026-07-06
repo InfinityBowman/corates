@@ -106,13 +106,14 @@ export function DoiLookupSection({ studies }: DoiLookupSectionProps) {
                 </>
               )}
             </span>
-            <button
+            <Button
               type='button'
+              variant='link'
               onClick={() => studies.clearLookupRefs()}
-              className='text-destructive hover:text-destructive/80 text-xs hover:underline'
+              className='text-destructive hover:text-destructive/80 h-auto p-0 text-xs'
             >
               Clear all
-            </button>
+            </Button>
           </div>
 
           {/* Select all with PDF */}
@@ -345,14 +346,16 @@ function PdfStatusBadge({
     <>
       <Tooltip>
         <TooltipTrigger asChild>
-          <button
+          <Button
             type='button'
+            variant='secondary'
+            size='xs'
             onClick={onUploadClick}
-            className='inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-200'
+            className='bg-amber-100 text-amber-700 hover:bg-amber-200'
           >
-            <UploadIcon className='size-3' />
+            <UploadIcon />
             Upload PDF
-          </button>
+          </Button>
         </TooltipTrigger>
         <TooltipContent>
           Click to manually upload PDF after downloading from publisher

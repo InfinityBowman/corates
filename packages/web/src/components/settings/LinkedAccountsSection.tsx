@@ -176,9 +176,13 @@ export function LinkedAccountsSection() {
             <div>
               <p className='font-medium'>Failed to load linked accounts</p>
               <p className='mt-1 text-sm'>{(error as Error)?.message}</p>
-              <button onClick={() => refetch()} className='mt-2 text-sm font-medium underline'>
+              <Button
+                variant='link'
+                onClick={() => refetch()}
+                className='mt-2 h-auto p-0 text-current underline'
+              >
                 Try again
-              </button>
+              </Button>
             </div>
           </Alert>
         )}

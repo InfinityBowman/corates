@@ -7,6 +7,7 @@
 import { CloudUploadIcon, FileTextIcon, Link2Icon } from 'lucide-react';
 import { FileUpload, FileUploadDropzone, FileUploadHiddenInput } from '@/components/ui/file-upload';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   getRefDisplayName,
@@ -36,13 +37,14 @@ export function ReferenceImportSection({ studies }: ReferenceImportSectionProps)
               ({studies.importedRefs.length} references)
             </span>
           </div>
-          <button
+          <Button
             type='button'
+            variant='link'
             onClick={studies.clearImportedRefs}
-            className='text-primary hover:text-primary/80 text-xs font-medium'
+            className='h-auto p-0 text-xs'
           >
             Change file
-          </button>
+          </Button>
         </div>
 
         {/* PDF matching status badges */}

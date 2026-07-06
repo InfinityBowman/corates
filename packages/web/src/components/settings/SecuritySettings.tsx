@@ -162,15 +162,18 @@ export function SecuritySettings() {
                       className='border-border bg-card focus:border-primary focus:ring-ring/20 block w-full rounded-lg border px-3 py-2 pr-10 text-sm shadow-sm transition-colors focus:ring-2 focus:outline-none'
                       required
                     />
-                    <button
+                    <Button
                       type='button'
+                      variant='ghost'
+                      size='icon-sm'
                       onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                      className='text-muted-foreground hover:text-secondary-foreground absolute inset-y-0 right-0 flex items-center px-3 transition-colors'
+                      className='text-muted-foreground hover:text-secondary-foreground absolute top-1/2 right-1 -translate-y-1/2 hover:bg-transparent'
+                      aria-label={showCurrentPassword ? 'Hide password' : 'Show password'}
                     >
                       {showCurrentPassword ?
-                        <EyeOffIcon className='size-4' />
-                      : <EyeIcon className='size-4' />}
-                    </button>
+                        <EyeOffIcon />
+                      : <EyeIcon />}
+                    </Button>
                   </div>
                 </div>
                 <div>
@@ -185,15 +188,18 @@ export function SecuritySettings() {
                       className='border-border bg-card focus:border-primary focus:ring-ring/20 block w-full rounded-lg border px-3 py-2 pr-10 text-sm shadow-sm transition-colors focus:ring-2 focus:outline-none'
                       required
                     />
-                    <button
+                    <Button
                       type='button'
+                      variant='ghost'
+                      size='icon-sm'
                       onClick={() => setShowNewPassword(!showNewPassword)}
-                      className='text-muted-foreground hover:text-secondary-foreground absolute inset-y-0 right-0 flex items-center px-3 transition-colors'
+                      className='text-muted-foreground hover:text-secondary-foreground absolute top-1/2 right-1 -translate-y-1/2 hover:bg-transparent'
+                      aria-label={showNewPassword ? 'Hide password' : 'Show password'}
                     >
                       {showNewPassword ?
-                        <EyeOffIcon className='size-4' />
-                      : <EyeIcon className='size-4' />}
-                    </button>
+                        <EyeOffIcon />
+                      : <EyeIcon />}
+                    </Button>
                   </div>
                   <StrengthIndicator password={newPassword} onUnmet={setUnmetRequirements} />
                 </div>

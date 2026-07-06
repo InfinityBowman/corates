@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { InfoIcon } from 'lucide-react';
 import { AMSTAR_CHECKLIST } from './checklist-map';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { Button } from '@/components/ui/button';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
 import {
   useAnswer,
@@ -17,12 +18,15 @@ function QuestionInfo({ question }: { question: AMSTAR2QuestionSchema }) {
     <div className='absolute top-1.5 right-1.5'>
       <Tooltip>
         <TooltipTrigger asChild>
-          <button
+          <Button
             type='button'
-            className='focus:ring-primary inline-flex items-center justify-center rounded-full p-1.5 opacity-70 hover:opacity-100 focus:opacity-100 focus:ring-2 focus:outline-none'
+            variant='ghost'
+            size='icon-xs'
+            className='rounded-full opacity-70 hover:opacity-100 focus-visible:opacity-100'
+            aria-label='Question information'
           >
-            <InfoIcon className='size-3' />
-          </button>
+            <InfoIcon />
+          </Button>
         </TooltipTrigger>
         <TooltipContent className='max-w-xs'>{question.info}</TooltipContent>
       </Tooltip>
