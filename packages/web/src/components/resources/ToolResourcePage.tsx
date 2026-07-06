@@ -308,7 +308,9 @@ function ToolContentView({ tool }: { tool: ToolContent }) {
                 <ul className='flex flex-col gap-3 text-gray-600'>
                   {tool.commonPitfalls.map(pitfall => (
                     <li key={pitfall} className='flex gap-3'>
-                      <AlertCircleIcon className='size-5 shrink-0 text-orange-500' />
+                      {/* mt-1 optically centers the 20px icon on the 26px first
+                          text line (leading-relaxed) instead of top-aligning */}
+                      <AlertCircleIcon className='mt-1 size-5 shrink-0 text-orange-500' />
                       <span>{pitfall}</span>
                     </li>
                   ))}
