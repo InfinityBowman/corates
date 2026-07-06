@@ -2,9 +2,11 @@
  * ChartSettingsModal - Modal for editing chart settings, labels, titles, and export options.
  */
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { XIcon, CopyIcon, CheckIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { CHART_PALETTES } from './chartConfigs';
+import type { ChartPalette } from './chartConfigs';
 
 interface LabelItem {
   id: string;
@@ -16,8 +18,8 @@ interface ChartSettingsModalProps {
   onClose: () => void;
   labels: LabelItem[];
   onLabelChange: (_index: number, _newValue: string) => void;
-  greyscale: boolean;
-  onGreyscaleChange: (_value: boolean) => void;
+  palette: ChartPalette;
+  onPaletteChange: (_value: ChartPalette) => void;
   robvisTitle: string;
   onRobvisTitleChange: (_value: string) => void;
   distributionTitle: string;
@@ -33,8 +35,8 @@ export function ChartSettingsModal({
   onClose,
   labels,
   onLabelChange,
-  greyscale,
-  onGreyscaleChange,
+  palette,
+  onPaletteChange,
   robvisTitle,
   onRobvisTitleChange,
   distributionTitle,
@@ -46,6 +48,7 @@ export function ChartSettingsModal({
 }: ChartSettingsModalProps) {
   const [mouseDownOnBackdrop, setMouseDownOnBackdrop] = useState(false);
   const [copiedCitation, setCopiedCitation] = useState<string | null>(null);
+  const paletteGroupName = useId();
 
   if (!isOpen) return null;
 
@@ -126,7 +129,7 @@ export function ChartSettingsModal({
               <div className='flex flex-col gap-3'>
                 <div>
                   <label className='text-muted-foreground mb-1 block text-xs'>
-                    Quality Assessment Chart
+                    Traffic Light Chart
                   </label>
                   <input
                     type='text'
@@ -151,21 +154,27 @@ export function ChartSettingsModal({
 
             {/* Display Options */}
             <div className='border-border mt-6 border-t pt-6'>
-              <h3 className='text-foreground mb-3 text-sm font-medium'>Display Options</h3>
-              <label className='bg-muted hover:bg-muted/80 flex cursor-pointer items-center gap-3 rounded-lg p-3 transition-colors'>
-                <input
-                  type='checkbox'
-                  checked={greyscale}
-                  onChange={e => onGreyscaleChange(e.target.checked)}
-                  className='border-border bg-muted size-4 rounded text-blue-600 focus:ring-2 focus:ring-blue-500'
-                />
-                <div>
-                  <span className='text-foreground text-sm font-medium'>Greyscale Mode</span>
-                  <p className='text-muted-foreground text-xs'>
-                    Use greyscale colors for print-friendly charts
-                  </p>
-                </div>
-              </label>
+              <h3 className='text-foreground mb-3 text-sm font-medium'>Color Palette</h3>
+              <div className='flex flex-col gap-2'>
+                {CHART_PALETTES.map(option => (
+                  <label
+                    key={option.value}
+                    className='bg-muted hover:bg-muted/80 flex cursor-pointer items-center gap-3 rounded-lg p-3 transition-colors'
+                  >
+                    <input
+                      type='radio'
+                      name={paletteGroupName}
+                      checked={palette === option.value}
+                      onChange={() => onPaletteChange(option.value)}
+                      className='border-border bg-muted size-4 text-blue-600 focus:ring-2 focus:ring-blue-500'
+                    />
+                    <div>
+                      <span className='text-foreground text-sm font-medium'>{option.label}</span>
+                      <p className='text-muted-foreground text-xs'>{option.description}</p>
+                    </div>
+                  </label>
+                ))}
+              </div>
             </div>
 
             {/* Export Section */}
@@ -188,9 +197,7 @@ export function ChartSettingsModal({
 
               <div className='flex flex-col gap-3'>
                 <div className='bg-muted rounded-lg p-3'>
-                  <p className='text-foreground mb-2 text-sm font-medium'>
-                    Quality Assessment Chart
-                  </p>
+                  <p className='text-foreground mb-2 text-sm font-medium'>Traffic Light Chart</p>
                   <div className='flex gap-2'>
                     <Button variant='outline' size='sm' onClick={() => onExportRobvis('svg')}>
                       Export SVG

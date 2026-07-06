@@ -1,64 +1,71 @@
 /**
- * AMSTARDistribution - D3.js horizontal stacked bar chart showing the percentage distribution
- * of AMSTAR-2 ratings across reviews for each of the 16 questions.
+ * DistributionChart - D3.js horizontal stacked bar chart showing the percentage
+ * distribution of judgments across reviews/studies for each item in the chart
+ * config (AMSTAR-2 questions, RoB 2 domains, ...).
  */
 
 import { useState, useEffect, useRef, useImperativeHandle } from 'react';
 // @ts-expect-error -- d3 has no type declarations in this project
 import * as d3 from 'd3';
+import { contrastColor, legendMarginRight } from './chartConfigs';
+import type { ChartCategory, ChartPalette, ChecklistChartConfig } from './chartConfigs';
 
 interface DistributionDataItem {
   label: string;
-  questions: string[];
+  values: string[];
 }
 
-interface ProcessedQuestion {
-  question: number;
+interface ProcessedRow {
   label: string;
+  key: string;
   counts: Record<string, number>;
   percentages: Record<string, number>;
 }
 
-interface LegendItem {
-  key: string;
-  label: string;
-}
-
-interface AMSTARDistributionProps {
+interface DistributionChartProps {
   ref?: React.Ref<SVGSVGElement>;
   data: DistributionDataItem[];
+  config: ChecklistChartConfig;
   width?: number;
   title?: string;
-  greyscale?: boolean;
+  palette?: ChartPalette;
 }
 
-const COLOR_MAP_DEFAULT: Record<string, string> = {
-  yes: '#10b981',
-  'partial yes': '#facc15',
-  no: '#ef4444',
-  'no ma': '#9ca3af',
-};
+const MARGIN = { top: 50, bottom: 60 };
 
-const COLOR_MAP_GREYSCALE: Record<string, string> = {
-  yes: '#1b1b1b',
-  'partial yes': '#484848',
-  no: '#727272',
-  'no ma': '#a2a2a2',
-};
-
-const MARGIN = { top: 50, right: 150, bottom: 60, left: 80 };
-
-// Fixed vertical space per question row; chart height grows with content
+// Fixed vertical space per row; chart height grows with content
 // instead of tracking an aspect ratio of the container width.
-const ROW_HEIGHT = 28;
+const DEFAULT_ROW_HEIGHT = 28;
 
-export function AMSTARDistribution({
+const LABEL_LINE_HEIGHT = 13;
+
+/** Greedy word wrap sized to the configured left margin at ~6px per character */
+function wrapLabel(label: string, marginLeft: number): string[] {
+  const maxChars = Math.max(10, Math.floor((marginLeft - 20) / 6));
+  const words = label.split(' ');
+  const lines: string[] = [];
+  let current = '';
+  for (const word of words) {
+    const candidate = current ? `${current} ${word}` : word;
+    if (candidate.length > maxChars && current) {
+      lines.push(current);
+      current = word;
+    } else {
+      current = candidate;
+    }
+  }
+  if (current) lines.push(current);
+  return lines;
+}
+
+export function DistributionChart({
   data = [],
+  config,
   width: widthProp,
-  title = 'Level Judgments Across Included Reviews',
-  greyscale = false,
+  title = '',
+  palette = 'default',
   ref,
-}: AMSTARDistributionProps) {
+}: DistributionChartProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(900);
@@ -89,16 +96,21 @@ export function AMSTARDistribution({
     return () => resizeObserver.disconnect();
   }, []);
 
-  const colors = greyscale ? COLOR_MAP_GREYSCALE : COLOR_MAP_DEFAULT;
   const width = widthProp ?? containerWidth;
-  const nQuestions = data.length ? Math.max(...data.map(d => d.questions?.length || 0)) : 0;
-  const chartWidth = Math.max(0, width - MARGIN.left - MARGIN.right);
-  const chartHeight = nQuestions * ROW_HEIGHT;
+  const marginLeft = config.distributionMarginLeft ?? 80;
+  const marginRight = legendMarginRight(config);
+  const rowHeight = config.distributionRowHeight ?? DEFAULT_ROW_HEIGHT;
+  const nRows = config.columns.length;
+  const chartWidth = Math.max(0, width - marginLeft - marginRight);
+  const chartHeight = nRows * rowHeight;
   const height = MARGIN.top + chartHeight + MARGIN.bottom;
 
   // D3 imperative draw
   useEffect(() => {
     if (!svgRef.current || !data.length || chartWidth <= 0 || chartHeight <= 0) return;
+
+    const categoryMap = new Map<string, ChartCategory>(config.categories.map(c => [c.key, c]));
+    const fillFor = (c: ChartCategory) => c.colors[palette];
 
     const svg = d3
       .select(svgRef.current)
@@ -111,35 +123,32 @@ export function AMSTARDistribution({
 
     // Process data to calculate percentages
     const totalStudies = data.length;
-    const processedData: ProcessedQuestion[] = [];
-
-    for (let q = 0; q < nQuestions; q++) {
-      const qData: ProcessedQuestion = {
-        question: q + 1,
-        label: `Q${q + 1}`,
-        counts: { yes: 0, 'partial yes': 0, no: 0, 'no ma': 0 },
+    const processedData: ProcessedRow[] = config.columns.map((column, colIdx) => {
+      const row: ProcessedRow = {
+        key: column.id,
+        label: column.distributionLabel ?? column.label,
+        counts: Object.fromEntries(config.categories.map(c => [c.key, 0])),
         percentages: {},
       };
       data.forEach(study => {
-        const response = study.questions[q]?.toLowerCase?.() ?? 'no ma';
-        if (Object.hasOwn(qData.counts, response)) qData.counts[response]++;
+        const value = study.values[colIdx]?.toLowerCase?.() ?? '';
+        const key = categoryMap.has(value) ? value : config.fallbackCategory;
+        if (Object.hasOwn(row.counts, key)) row.counts[key]++;
       });
-      Object.keys(qData.counts).forEach(key => {
-        qData.percentages[key] = (qData.counts[key] / totalStudies) * 100;
+      Object.keys(row.counts).forEach(key => {
+        row.percentages[key] = (row.counts[key] / totalStudies) * 100;
       });
-      processedData.push(qData);
-    }
+      return row;
+    });
 
     const yScale = d3
       .scaleBand()
-      .domain(processedData.map(d => d.label))
+      .domain(processedData.map(d => d.key))
       .range([0, chartHeight])
       .padding(0.1);
     const xScale = d3.scaleLinear().domain([0, 100]).range([0, chartWidth]);
 
-    const chartGroup = svg
-      .append('g')
-      .attr('transform', `translate(${MARGIN.left}, ${MARGIN.top})`);
+    const chartGroup = svg.append('g').attr('transform', `translate(${marginLeft}, ${MARGIN.top})`);
 
     // Title
     svg
@@ -156,26 +165,27 @@ export function AMSTARDistribution({
     processedData.forEach(d => {
       let cumPercent = 0;
       const barHeight = Math.max(0, yScale.bandwidth());
-      const y = yScale(d.label);
+      const y = yScale(d.key);
 
-      ['yes', 'partial yes', 'no ma', 'no'].forEach(category => {
-        const percent = d.percentages[category];
+      config.stackOrder.forEach(categoryKey => {
+        const category = categoryMap.get(categoryKey);
+        if (!category) return;
+        const percent = d.percentages[categoryKey] ?? 0;
         const segWidth = Math.max(0, xScale(percent));
 
         if (percent > 0 && segWidth > 0 && barHeight > 0) {
+          const fill = fillFor(category);
           chartGroup
             .append('rect')
             .attr('x', xScale(cumPercent))
             .attr('y', y)
             .attr('width', segWidth)
             .attr('height', barHeight)
-            .attr('fill', colors[category])
+            .attr('fill', fill)
             .attr('stroke', '#ffffff')
             .attr('stroke-width', 1);
 
           if (percent >= 5) {
-            const isLightBg =
-              greyscale ? category === 'no' || category === 'no ma' : category === 'partial yes';
             chartGroup
               .append('text')
               .attr('x', xScale(cumPercent) + segWidth / 2)
@@ -184,7 +194,7 @@ export function AMSTARDistribution({
               .attr('dominant-baseline', 'middle')
               .attr('font-size', '12px')
               .attr('font-weight', '600')
-              .attr('fill', isLightBg ? '#000000' : '#ffffff')
+              .attr('fill', contrastColor(fill))
               .text(`${percent.toFixed(1)}`);
           }
         }
@@ -192,20 +202,24 @@ export function AMSTARDistribution({
       });
     });
 
-    // Y-axis labels
-    chartGroup
-      .selectAll('.y-label')
-      .data(processedData)
-      .enter()
-      .append('text')
-      .attr('x', -10)
-      .attr('y', (d: ProcessedQuestion) => (yScale(d.label) ?? 0) + yScale.bandwidth() / 2)
-      .attr('text-anchor', 'end')
-      .attr('dominant-baseline', 'middle')
-      .attr('font-size', '13px')
-      .attr('font-weight', '500')
-      .attr('fill', '#374151')
-      .text((d: ProcessedQuestion) => d.label);
+    // Y-axis labels (wrapped to fit the configured margin)
+    processedData.forEach(d => {
+      const lines = wrapLabel(d.label, marginLeft);
+      const yCenter = (yScale(d.key) ?? 0) + yScale.bandwidth() / 2;
+      const yStart = yCenter - ((lines.length - 1) * LABEL_LINE_HEIGHT) / 2;
+      lines.forEach((line, i) => {
+        chartGroup
+          .append('text')
+          .attr('x', -10)
+          .attr('y', yStart + i * LABEL_LINE_HEIGHT)
+          .attr('text-anchor', 'end')
+          .attr('dominant-baseline', 'middle')
+          .attr('font-size', lines.length > 1 ? '11px' : '13px')
+          .attr('font-weight', '500')
+          .attr('fill', '#374151')
+          .text(line);
+      });
+    });
 
     // X-axis
     const xAxis = d3
@@ -229,43 +243,46 @@ export function AMSTARDistribution({
       .attr('font-size', '14px')
       .attr('font-weight', '500')
       .attr('fill', '#374151')
-      .text(`Percentage of SRs (%), N=${totalStudies}`);
+      .text(config.distributionXAxisLabel(totalStudies));
 
     // Y-axis label
-    svg
-      .append('text')
-      .attr('transform', 'rotate(-90)')
-      .attr('x', -height / 2)
-      .attr('y', 20)
-      .attr('text-anchor', 'middle')
-      .attr('font-size', '14px')
-      .attr('font-weight', '500')
-      .attr('fill', '#374151')
-      .text('Items of AMSTAR-2');
+    if (config.distributionYAxisLabel) {
+      svg
+        .append('text')
+        .attr('transform', 'rotate(-90)')
+        .attr('x', -height / 2)
+        .attr('y', 20)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', '14px')
+        .attr('font-weight', '500')
+        .attr('fill', '#374151')
+        .text(config.distributionYAxisLabel);
+    }
 
-    // Legend
-    const legendData = [
-      { key: 'yes', label: 'Yes' },
-      { key: 'partial yes', label: 'Partial Yes' },
-      { key: 'no', label: 'No' },
-      { key: 'no ma', label: 'No MA' },
-    ];
+    // Legend - only categories present in the data (robvis drop=TRUE behavior)
+    const presentKeys = new Set<string>();
+    processedData.forEach(d => {
+      Object.keys(d.counts).forEach(key => {
+        if (d.counts[key] > 0) presentKeys.add(key);
+      });
+    });
+    const legendData = config.categories.filter(c => presentKeys.has(c.key));
     const legend = svg
       .append('g')
-      .attr('transform', `translate(${width - MARGIN.right + 20}, ${MARGIN.top + 20})`);
+      .attr('transform', `translate(${width - marginRight + 20}, ${MARGIN.top + 20})`);
     const items = legend
       .selectAll('.legend-item')
       .data(legendData)
       .enter()
       .append('g')
-      .attr('transform', (_d: LegendItem, i: number) => `translate(0, ${i * 25})`);
+      .attr('transform', (_d: ChartCategory, i: number) => `translate(0, ${i * 25})`);
     items
       .append('rect')
       .attr('y', -8)
       .attr('width', 16)
       .attr('height', 16)
       .attr('rx', 2)
-      .attr('fill', (d: LegendItem) => colors[d.key])
+      .attr('fill', (d: ChartCategory) => fillFor(d))
       .attr('stroke', '#ffffff')
       .attr('stroke-width', 1);
     items
@@ -275,12 +292,23 @@ export function AMSTARDistribution({
       .attr('font-size', '13px')
       .attr('font-weight', '500')
       .attr('fill', '#374151')
-      .text((d: LegendItem) => d.label);
+      .text((d: ChartCategory) => d.label);
 
     return () => {
       svg.selectAll('*').remove();
     };
-  }, [data, colors, width, height, chartWidth, chartHeight, nQuestions, title, greyscale]);
+  }, [
+    data,
+    config,
+    palette,
+    width,
+    height,
+    chartWidth,
+    chartHeight,
+    marginLeft,
+    marginRight,
+    title,
+  ]);
 
   return (
     <div

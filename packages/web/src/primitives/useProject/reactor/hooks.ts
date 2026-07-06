@@ -306,14 +306,14 @@ export function useChecklistScore(
   );
 }
 
-function computeROB2Score(cl: {
+function computeROB2DomainJudgements(cl: {
   answers: { field: <T>(key: string) => { get: () => T | null } };
-}): string {
+}): { judgements: Record<string, string | null>; overall: string } {
   const aim = cl.answers.field<string | null>('preliminary.aim').get();
   const isAdhering = aim === 'ADHERING';
   const activeDomains = getROB2ActiveDomainKeys(isAdhering);
 
-  const judgements: string[] = [];
+  const judgements: Record<string, string | null> = {};
   for (const dk of activeDomains) {
     const questions = getROB2DomainQuestions(dk);
     const answers: ROB2DomainAnswers = {};
@@ -321,22 +321,41 @@ function computeROB2Score(cl: {
       answers[qKey] = { answer: cl.answers.field<string | null>(qKey).get() };
     }
     const result = scoreRob2Domain(dk, answers);
-    if (result.judgement) judgements.push(result.judgement);
+    judgements[dk] = result.judgement ?? null;
   }
 
-  if (judgements.length < activeDomains.length) return 'Incomplete';
-  if (judgements.includes('High')) return 'High';
-  if (judgements.includes('Some concerns')) return 'Some concerns';
-  return 'Low';
+  const values = Object.values(judgements);
+  let overall: string;
+  if (values.some(j => j === null)) overall = 'Incomplete';
+  else if (values.includes('High')) overall = 'High';
+  else if (values.includes('Some concerns')) overall = 'Some concerns';
+  else overall = 'Low';
+  return { judgements, overall };
 }
 
-function computeROBINSIScore(cl: {
+function computeROB2Score(cl: {
   answers: { field: <T>(key: string) => { get: () => T | null } };
 }): string {
+  return computeROB2DomainJudgements(cl).overall;
+}
+
+// Chart column ids for the ROB2 figures; both variants of domain 2 render as D2
+const ROB2_CHART_DOMAIN_KEYS: Record<string, string> = {
+  domain1: 'd1',
+  domain2a: 'd2',
+  domain2b: 'd2',
+  domain3: 'd3',
+  domain4: 'd4',
+  domain5: 'd5',
+};
+
+function computeROBINSIDomainJudgements(cl: {
+  answers: { field: <T>(key: string) => { get: () => T | null } };
+}): { judgements: Record<string, string | null>; overall: string } {
   const isPerProtocol = cl.answers.field<boolean | null>('sectionC.isPerProtocol').get() === true;
   const activeDomains = getROBINSIActiveDomainKeys(isPerProtocol);
 
-  const judgements: string[] = [];
+  const judgements: Record<string, string | null> = {};
   for (const dk of activeDomains) {
     const questions = getROBINSIDomainQuestions(dk);
     const answers: ROBINSIDomainAnswers = {};
@@ -344,18 +363,37 @@ function computeROBINSIScore(cl: {
       answers[qKey] = { answer: cl.answers.field<string | null>(qKey).get() };
     }
     const result = scoreRobinsDomain(dk, answers);
-    if (result.judgement) judgements.push(result.judgement);
+    judgements[dk] = result.judgement ?? null;
   }
 
-  if (judgements.length < activeDomains.length) return 'Incomplete';
-  if (judgements.includes('Critical')) return 'Critical';
-  if (judgements.includes('Serious')) return 'Serious';
-  if (judgements.includes('Moderate')) return 'Moderate';
-  if (judgements.includes('Low (except for concerns about uncontrolled confounding)')) {
-    return 'Low (except for concerns about uncontrolled confounding)';
-  }
-  return 'Low';
+  const values = Object.values(judgements);
+  let overall: string;
+  if (values.some(j => j === null)) overall = 'Incomplete';
+  else if (values.includes('Critical')) overall = 'Critical';
+  else if (values.includes('Serious')) overall = 'Serious';
+  else if (values.includes('Moderate')) overall = 'Moderate';
+  else if (values.includes('Low (except for concerns about uncontrolled confounding)')) {
+    overall = 'Low (except for concerns about uncontrolled confounding)';
+  } else overall = 'Low';
+  return { judgements, overall };
 }
+
+function computeROBINSIScore(cl: {
+  answers: { field: <T>(key: string) => { get: () => T | null } };
+}): string {
+  return computeROBINSIDomainJudgements(cl).overall;
+}
+
+// Chart column ids for the ROBINS-I figures; both variants of domain 1 render as D1
+const ROBINSI_CHART_DOMAIN_KEYS: Record<string, string> = {
+  domain1a: 'd1',
+  domain1b: 'd1',
+  domain2: 'd2',
+  domain3: 'd3',
+  domain4: 'd4',
+  domain5: 'd5',
+  domain6: 'd6',
+};
 
 function computeAMSTAR2Score(cl: {
   answers: { field: <T>(key: string) => { get: () => T | null } };
@@ -435,9 +473,23 @@ function buildChecklistEntry(clId: string, cl: ChecklistReactor): ChecklistEntry
   let score: string | null = null;
   let consolidatedAnswers: Record<string, string | null> | null = null;
   if (status === CHECKLIST_STATUS.FINALIZED) {
-    if (type === 'ROB2') score = computeROB2Score(cl);
-    else if (type === 'ROBINS_I') score = computeROBINSIScore(cl);
-    else if (type === 'AMSTAR2') {
+    if (type === 'ROB2') {
+      const { judgements, overall } = computeROB2DomainJudgements(cl);
+      score = overall;
+      consolidatedAnswers = {};
+      for (const [domainKey, judgement] of Object.entries(judgements)) {
+        consolidatedAnswers[ROB2_CHART_DOMAIN_KEYS[domainKey]] = judgement ?? 'No information';
+      }
+      consolidatedAnswers.overall = overall === 'Incomplete' ? 'No information' : overall;
+    } else if (type === 'ROBINS_I') {
+      const { judgements, overall } = computeROBINSIDomainJudgements(cl);
+      score = overall;
+      consolidatedAnswers = {};
+      for (const [domainKey, judgement] of Object.entries(judgements)) {
+        consolidatedAnswers[ROBINSI_CHART_DOMAIN_KEYS[domainKey]] = judgement ?? 'No information';
+      }
+      consolidatedAnswers.overall = overall === 'Incomplete' ? 'No information' : overall;
+    } else if (type === 'AMSTAR2') {
       score = computeAMSTAR2Score(cl);
       const checklist: Record<string, unknown> = {};
       for (const qKey of AMSTAR2_DATA_KEYS) {

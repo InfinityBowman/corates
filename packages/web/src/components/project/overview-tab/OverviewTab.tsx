@@ -47,7 +47,7 @@ import {
 } from '@/lib/inter-rater-reliability.js';
 import { CircularProgress } from './CircularProgress';
 import { ChartSection } from './ChartSection';
-import { AMSTAR2ResultsTable } from './AMSTAR2ResultsTable';
+import { ResultsTables } from './ResultsTables';
 import { AddMemberModal } from './AddMemberModal';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useMembers } from '@/hooks/useMembers';
@@ -396,7 +396,7 @@ export function OverviewTab() {
             </CollapsibleTrigger>
             <CollapsibleContent>
               <div className='border-border border-t px-5 py-5'>
-                <AMSTAR2ResultsTable studies={studies} />
+                <ResultsTables studies={studies} />
               </div>
             </CollapsibleContent>
           </Collapsible>

@@ -1,15 +1,25 @@
 /**
- * ChartSection - Displays AMSTAR charts for a project's checklists.
- * Orchestrates AMSTARRobvis, AMSTARDistribution, and ChartSettingsModal.
+ * ChartSection - Displays appraisal figures for a project's checklists.
+ * Renders one figure group (traffic light + distribution + settings) per
+ * checklist type; ROB2 figures follow the robvis convention of one figure
+ * pair per assessed outcome.
  */
 
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { SettingsIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { AMSTARRobvis } from '@/components/charts/AMSTARRobvis';
-import { AMSTARDistribution } from '@/components/charts/AMSTARDistribution';
+import { TrafficLightChart } from '@/components/charts/TrafficLightChart';
+import { DistributionChart } from '@/components/charts/DistributionChart';
 import { ChartSettingsModal } from '@/components/charts/ChartSettingsModal';
+import {
+  AMSTAR2_CHART_CONFIG,
+  ROB2_CHART_CONFIG,
+  ROBINS_I_CHART_CONFIG,
+} from '@/components/charts/chartConfigs';
+import type { ChartPalette, ChecklistChartConfig } from '@/components/charts/chartConfigs';
 import { CHECKLIST_STATUS } from '@corates/shared/checklists';
+import { useProjectContext } from '../ProjectContext';
+import { useProjectMetaById } from '@/primitives/useProject/reactor';
 import type { StudyInfo } from '@/stores/projectStore';
 
 /**
@@ -80,83 +90,187 @@ function exportChart(
   }
 }
 
-const QUESTION_ORDER = [
-  'q1',
-  'q2',
-  'q3',
-  'q4',
-  'q5',
-  'q6',
-  'q7',
-  'q8',
-  'q9',
-  'q10',
-  'q11',
-  'q12',
-  'q13',
-  'q14',
-  'q15',
-  'q16',
-];
+function slugify(value: string): string {
+  return (
+    value
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'outcome'
+  );
+}
+
+function truncateLabel(name: string): string {
+  return name.length > 20 ? name.slice(0, 20) + '...' : name;
+}
+
+interface ChartItem {
+  id: string;
+  label: string;
+  values: string[];
+}
+
+interface ChartGroupSpec {
+  key: string;
+  heading: string;
+  description: string;
+  config: ChecklistChartConfig;
+  data: ChartItem[];
+  defaultTrafficLightTitle: string;
+  defaultDistributionTitle: string;
+  exportBaseName: string;
+}
 
 interface ChartSectionProps {
   studies: StudyInfo[];
 }
 
 export function ChartSection({ studies }: ChartSectionProps) {
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [customLabels, setCustomLabels] = useState<Array<{ id: string; label: string }>>([]);
-  const [greyscale, setGreyscale] = useState(false);
-  const [robvisTitle, setRobvisTitle] = useState('AMSTAR 2 Item-Level Judgments by Review');
-  const [distributionTitle, setDistributionTitle] = useState(
-    'Level Judgments Across Included Reviews',
-  );
-  const [transparentExport, setTransparentExport] = useState(false);
+  const { projectId } = useProjectContext();
+  const meta = useProjectMetaById(projectId);
+  const outcomes = meta.outcomes;
 
-  const robvisSvgRef = useRef<SVGSVGElement>(null);
+  const groups = useMemo<ChartGroupSpec[]>(() => {
+    const result: ChartGroupSpec[] = [];
 
-  const distributionSvgRef = useRef<SVGSVGElement>(null);
+    // Risk-of-bias tools are assessed per outcome, so each gets one figure
+    // pair per outcome (the robvis convention)
+    const outcomeTools = [
+      { type: 'ROB2', name: 'RoB 2', config: ROB2_CHART_CONFIG, slug: 'rob2' },
+      { type: 'ROBINS_I', name: 'ROBINS-I', config: ROBINS_I_CHART_CONFIG, slug: 'robins-i' },
+    ];
 
-  // Build raw chart data from finalized AMSTAR2 checklists
-  const rawChecklistData = useMemo(() => {
-    if (!studies.length) return [];
+    const amstarData: ChartItem[] = [];
+    const byToolAndOutcome = new Map<string, Map<string, ChartItem[]>>(
+      outcomeTools.map(tool => [tool.type, new Map()]),
+    );
 
-    const data: Array<{ id: string; label: string; questions: string[] }> = [];
     for (const study of studies) {
       for (const checklist of study.checklists || []) {
         if (checklist.status !== CHECKLIST_STATUS.FINALIZED) continue;
-        if (checklist.type !== 'AMSTAR2') continue;
-
         const answersObj = checklist.consolidatedAnswers;
         if (!answersObj) continue;
 
-        data.push({
+        if (checklist.type === 'AMSTAR2') {
+          amstarData.push({
+            id: `${study.id}-${checklist.id}`,
+            label: truncateLabel(study.name),
+            values: AMSTAR2_CHART_CONFIG.columns.map(c => answersObj[c.id] ?? ''),
+          });
+          continue;
+        }
+
+        const tool = outcomeTools.find(t => t.type === checklist.type);
+        if (!tool) continue;
+        const byOutcome = byToolAndOutcome.get(tool.type)!;
+        const outcomeKey = checklist.outcomeId ?? '';
+        const items = byOutcome.get(outcomeKey) ?? [];
+        items.push({
           id: `${study.id}-${checklist.id}`,
-          label: study.name.length > 20 ? study.name.slice(0, 20) + '...' : study.name,
-          questions: QUESTION_ORDER.map(q => answersObj[q] ?? ''),
+          label: truncateLabel(study.name),
+          values: tool.config.columns.map(c => answersObj[c.id] ?? ''),
+        });
+        byOutcome.set(outcomeKey, items);
+      }
+    }
+
+    if (amstarData.length) {
+      result.push({
+        key: 'amstar2',
+        heading: 'AMSTAR-2',
+        description:
+          'Visual representation of AMSTAR-2 quality assessment ratings across completed ' +
+          'checklists. Use the settings to customize chart appearance, labels, and export options.',
+        config: AMSTAR2_CHART_CONFIG,
+        data: amstarData,
+        defaultTrafficLightTitle: 'AMSTAR 2 Item-Level Judgments by Review',
+        defaultDistributionTitle: 'Level Judgments Across Included Reviews',
+        exportBaseName: 'amstar',
+      });
+    }
+
+    for (const tool of outcomeTools) {
+      const byOutcome = byToolAndOutcome.get(tool.type)!;
+      // Project outcome order first; any checklists without a matching
+      // outcome entry go last.
+      const orderedKeys = [
+        ...outcomes.map(o => o.id).filter(id => byOutcome.has(id)),
+        ...[...byOutcome.keys()].filter(key => !outcomes.some(o => o.id === key)),
+      ];
+      for (const outcomeKey of orderedKeys) {
+        const outcomeName = outcomes.find(o => o.id === outcomeKey)?.name ?? 'Unspecified outcome';
+        result.push({
+          key: `${tool.slug}-${outcomeKey || 'none'}`,
+          heading: `${tool.name} - ${outcomeName}`,
+          description:
+            `Risk of bias judgments for the outcome "${outcomeName}", derived from the ` +
+            `${tool.name} algorithm across completed checklists.`,
+          config: tool.config,
+          data: byOutcome.get(outcomeKey) ?? [],
+          defaultTrafficLightTitle: `Risk of Bias (${tool.name}): ${outcomeName}`,
+          defaultDistributionTitle: `Risk of Bias Distribution (${tool.name}): ${outcomeName}`,
+          exportBaseName: `${tool.slug}-${slugify(outcomeName)}`,
         });
       }
     }
-    return data;
-  }, [studies]);
+
+    return result;
+  }, [studies, outcomes]);
+
+  if (groups.length === 0) {
+    return (
+      <div className='border-border bg-card rounded-lg border px-4 py-8 text-center'>
+        <p className='text-muted-foreground'>
+          Once appraisals are completed, this section will display item-level judgments by study and
+          across studies, along with a figure summarizing the distribution of ratings for the
+          included studies.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className='flex flex-col gap-10'>
+      {groups.map(group => (
+        <ChartGroup key={group.key} group={group} showHeading={groups.length > 1} />
+      ))}
+    </div>
+  );
+}
+
+interface ChartGroupProps {
+  group: ChartGroupSpec;
+  showHeading: boolean;
+}
+
+function ChartGroup({ group, showHeading }: ChartGroupProps) {
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [customLabels, setCustomLabels] = useState<Array<{ id: string; label: string }>>([]);
+  const [palette, setPalette] = useState<ChartPalette>('default');
+  const [trafficLightTitle, setTrafficLightTitle] = useState(group.defaultTrafficLightTitle);
+  const [distributionTitle, setDistributionTitle] = useState(group.defaultDistributionTitle);
+  const [transparentExport, setTransparentExport] = useState(false);
+
+  const trafficLightSvgRef = useRef<SVGSVGElement>(null);
+
+  const distributionSvgRef = useRef<SVGSVGElement>(null);
 
   // Sync custom labels when raw data changes
   useEffect(() => {
     setCustomLabels(prev => {
       const currentIds = prev.map(l => l.id).join(',');
-      const newIds = rawChecklistData.map(d => d.id).join(',');
+      const newIds = group.data.map(d => d.id).join(',');
       if (currentIds === newIds) return prev;
-      return rawChecklistData.map(d => ({ id: d.id, label: d.label }));
+      return group.data.map(d => ({ id: d.id, label: d.label }));
     });
-  }, [rawChecklistData]);
+  }, [group.data]);
 
   // Merge custom labels with raw data
-  const checklistData = useMemo(() => {
-    return rawChecklistData.map(item => {
+  const chartData = useMemo(() => {
+    return group.data.map(item => {
       const custom = customLabels.find(l => l.id === item.id);
       return { ...item, label: custom?.label ?? item.label };
     });
-  }, [rawChecklistData, customLabels]);
+  }, [group.data, customLabels]);
 
   const handleLabelChange = useCallback((index: number, newValue: string) => {
     setCustomLabels(prev =>
@@ -164,39 +278,37 @@ export function ChartSection({ studies }: ChartSectionProps) {
     );
   }, []);
 
-  const handleExportRobvis = useCallback(
+  const handleExportTrafficLight = useCallback(
     (format: 'svg' | 'png') =>
-      exportChart(robvisSvgRef.current, 'amstar-quality-assessment', format, transparentExport),
-    [transparentExport],
+      exportChart(
+        trafficLightSvgRef.current,
+        `${group.exportBaseName}-traffic-light`,
+        format,
+        transparentExport,
+      ),
+    [group.exportBaseName, transparentExport],
   );
 
   const handleExportDistribution = useCallback(
     (format: 'svg' | 'png') =>
-      exportChart(distributionSvgRef.current, 'amstar-distribution', format, transparentExport),
-    [transparentExport],
+      exportChart(
+        distributionSvgRef.current,
+        `${group.exportBaseName}-distribution`,
+        format,
+        transparentExport,
+      ),
+    [group.exportBaseName, transparentExport],
   );
-
-  if (checklistData.length === 0) {
-    return (
-      <div className='border-border bg-card rounded-lg border px-4 py-8 text-center'>
-        <p className='text-muted-foreground'>
-          Once appraisals are completed, this section will display domain-level judgments by review
-          and across reviews, along with a figure summarizing the ratings of overall confidence in
-          the results of the included reviews.
-        </p>
-      </div>
-    );
-  }
 
   return (
     <div className='flex flex-col gap-6'>
       {/* Header */}
       <div className='flex items-start justify-between gap-4'>
         <div className='flex-1'>
-          <p className='text-secondary-foreground text-sm'>
-            Visual representation of AMSTAR-2 quality assessment ratings across completed
-            checklists. Use the settings to customize chart appearance, labels, and export options.
-          </p>
+          {showHeading && (
+            <h3 className='text-foreground mb-1 text-sm font-semibold'>{group.heading}</h3>
+          )}
+          <p className='text-secondary-foreground text-sm'>{group.description}</p>
         </div>
         <Button
           variant='ghost'
@@ -209,16 +321,18 @@ export function ChartSection({ studies }: ChartSectionProps) {
         </Button>
       </div>
 
-      <AMSTARRobvis
-        ref={robvisSvgRef}
-        data={checklistData}
-        greyscale={greyscale}
-        title={robvisTitle}
+      <TrafficLightChart
+        ref={trafficLightSvgRef}
+        data={chartData}
+        config={group.config}
+        palette={palette}
+        title={trafficLightTitle}
       />
-      <AMSTARDistribution
+      <DistributionChart
         ref={distributionSvgRef}
-        data={checklistData}
-        greyscale={greyscale}
+        data={chartData}
+        config={group.config}
+        palette={palette}
         title={distributionTitle}
       />
 
@@ -227,13 +341,13 @@ export function ChartSection({ studies }: ChartSectionProps) {
         onClose={() => setShowSettingsModal(false)}
         labels={customLabels}
         onLabelChange={handleLabelChange}
-        greyscale={greyscale}
-        onGreyscaleChange={setGreyscale}
-        robvisTitle={robvisTitle}
-        onRobvisTitleChange={setRobvisTitle}
+        palette={palette}
+        onPaletteChange={setPalette}
+        robvisTitle={trafficLightTitle}
+        onRobvisTitleChange={setTrafficLightTitle}
         distributionTitle={distributionTitle}
         onDistributionTitleChange={setDistributionTitle}
-        onExportRobvis={handleExportRobvis}
+        onExportRobvis={handleExportTrafficLight}
         onExportDistribution={handleExportDistribution}
         transparentExport={transparentExport}
         onTransparentExportChange={setTransparentExport}
