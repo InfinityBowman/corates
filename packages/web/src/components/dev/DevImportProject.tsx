@@ -23,7 +23,8 @@ import { createProject, addMemberToProject } from '@/server/functions/org-projec
 import { importState, applyTemplate } from '@/server/functions/dev-tools.functions';
 import { searchUsers } from '@/server/functions/users.functions';
 import { fetchReferenceByIdentifier } from '@/lib/referenceLookup';
-import { fetchPdfViaProxy, uploadPdf } from '@/api/pdf-api';
+import { uploadPdf } from '@/api/pdf-api';
+import { loadDevPdfPool, takeDevPdf } from '@/lib/devPdfPool';
 import { useOrgs } from '@/hooks/useOrgs';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
@@ -210,6 +211,11 @@ export function DevImportProject() {
         let fetched = 0;
         let pdfCount = 0;
 
+        // Publisher PDFs block automated fetches, so attach from the local dev
+        // pool (populated by `pnpm --filter web dev:pdfs`) round-robin instead.
+        const pdfPool = await loadDevPdfPool();
+        let pdfIndex = 0;
+
         for (const study of studiesWithIds) {
           const identifier = study.doi!;
           try {
@@ -244,21 +250,17 @@ export function DevImportProject() {
 
             const pdfs: Array<Record<string, unknown>> = [];
 
-            // Try fetching any available PDF (proxy handles publisher sources too)
-            if (ref.pdfUrl) {
+            // Attach a PDF from the local dev pool (skips silently if not downloaded)
+            const poolPdf = await takeDevPdf(pdfPool, pdfIndex);
+            if (poolPdf) {
+              pdfIndex++;
               try {
-                const pdfData = await fetchPdfViaProxy(ref.pdfUrl);
-                const safeName = (ref.doi || ref.title || 'document')
-                  .replace(/[^a-zA-Z0-9.-]/g, '_')
-                  .substring(0, 50);
-                const fileName = `${safeName}.pdf`;
-
                 const uploadResult = await uploadPdf(
                   resolvedOrgId,
                   newProject.id,
                   study.id,
-                  pdfData,
-                  fileName,
+                  poolPdf.data,
+                  poolPdf.fileName,
                 );
 
                 pdfs.push({
@@ -270,7 +272,7 @@ export function DevImportProject() {
                 });
                 pdfCount++;
               } catch (pdfErr) {
-                console.warn('Failed to fetch PDF for', identifier, pdfErr);
+                console.warn('Failed to attach dev-pool PDF for', identifier, pdfErr);
               }
             }
 
@@ -291,7 +293,10 @@ export function DevImportProject() {
           }
         }
 
-        const pdfMsg = pdfCount > 0 ? `, ${pdfCount} PDF${pdfCount > 1 ? 's' : ''} attached` : '';
+        const pdfMsg =
+          pdfCount > 0 ? `, ${pdfCount} PDF${pdfCount > 1 ? 's' : ''} attached`
+          : pdfPool.length === 0 ? ' (no PDFs - run `pnpm --filter web dev:pdfs`)'
+          : '';
         setResult({
           success: true,
           message: `Project created${pdfMsg}`,

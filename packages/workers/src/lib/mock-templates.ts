@@ -7,21 +7,146 @@ const ROBINS_I_DIRECTIONS = [
   'Unpredictable',
 ];
 
-// Per-domain answer pools that the ROBINS-I scoring engine resolves to a
-// COMPLETE domain judgement when every question in the domain is set to one of
-// them. The figures derive each domain (and the overall) from the per-question
-// answers, so the 'complete' fill must use these to render a full risk-of-bias
-// row. Verified against scoreRobinsDomain in @corates/shared; the spread of
-// answers yields varied judgements (Critical/Serious/Moderate/Low) for figures.
-const ROBINS_I_COMPLETE_ANSWERS: Record<string, string[]> = {
-  domain1a: ['Y', 'PY'],
-  domain1b: ['Y', 'PY', 'PN', 'N'],
-  domain2: ['PN', 'N'],
-  domain3: ['Y', 'PY', 'PN', 'N', 'NI'],
-  domain4: ['Y', 'PY'],
-  domain5: ['Y', 'PY', 'PN', 'N', 'NI'],
-  domain6: ['Y', 'PY', 'PN', 'N', 'NI'],
+// Per-domain signalling-answer profiles verified against the decision tables
+// in scoreRobinsDomain (@corates/shared). Each profile answers every question
+// in the domain along one scoring path (conditional questions off the path get
+// NA, as in real use) so the domain resolves COMPLETE to the named judgement.
+// The 'complete' fill picks a profile per domain by seed; a uniform answer per
+// domain would collapse most domains to a single judgement on every seed
+// (e.g. all-Y in domain1a is always Critical), making every study's
+// traffic-light row look identical.
+const ROBINS_I_JUDGEMENT_PROFILES: Record<string, Record<string, Record<string, string>>> = {
+  domain1a: {
+    low: { d1a_1: 'Y', d1a_2: 'Y', d1a_3: 'PN', d1a_4: 'PN' },
+    moderate: { d1a_1: 'Y', d1a_2: 'Y', d1a_3: 'PN', d1a_4: 'Y' },
+    serious: { d1a_1: 'Y', d1a_2: 'SN', d1a_3: 'N', d1a_4: 'NA' },
+    critical: { d1a_1: 'Y', d1a_2: 'NA', d1a_3: 'Y', d1a_4: 'Y' },
+  },
+  domain1b: {
+    low: { d1b_1: 'Y', d1b_2: 'Y', d1b_3: 'Y', d1b_4: 'NA', d1b_5: 'PN' },
+    moderate: { d1b_1: 'Y', d1b_2: 'Y', d1b_3: 'Y', d1b_4: 'NA', d1b_5: 'Y' },
+    serious: { d1b_1: 'N', d1b_2: 'NA', d1b_3: 'NA', d1b_4: 'PN', d1b_5: 'PN' },
+    critical: { d1b_1: 'N', d1b_2: 'NA', d1b_3: 'NA', d1b_4: 'Y', d1b_5: 'PN' },
+  },
+  domain2: {
+    low: { d2_1: 'Y', d2_2: 'NA', d2_3: 'NA', d2_4: 'N', d2_5: 'N' },
+    moderate: { d2_1: 'Y', d2_2: 'NA', d2_3: 'NA', d2_4: 'N', d2_5: 'Y' },
+    serious: { d2_1: 'Y', d2_2: 'NA', d2_3: 'NA', d2_4: 'SY', d2_5: 'N' },
+    critical: { d2_1: 'Y', d2_2: 'NA', d2_3: 'NA', d2_4: 'SY', d2_5: 'Y' },
+  },
+  domain3: {
+    low: {
+      d3_1: 'Y',
+      d3_2: 'N',
+      d3_3: 'N',
+      d3_4: 'NA',
+      d3_5: 'NA',
+      d3_6: 'NA',
+      d3_7: 'NA',
+      d3_8: 'NA',
+    },
+    moderate: {
+      d3_1: 'WN',
+      d3_2: 'NI',
+      d3_3: 'N',
+      d3_4: 'NA',
+      d3_5: 'NA',
+      d3_6: 'NA',
+      d3_7: 'NA',
+      d3_8: 'NA',
+    },
+    serious: {
+      d3_1: 'SN',
+      d3_2: 'NI',
+      d3_3: 'N',
+      d3_4: 'NA',
+      d3_5: 'NA',
+      d3_6: 'N',
+      d3_7: 'N',
+      d3_8: 'N',
+    },
+    critical: {
+      d3_1: 'SN',
+      d3_2: 'NI',
+      d3_3: 'N',
+      d3_4: 'NA',
+      d3_5: 'NA',
+      d3_6: 'N',
+      d3_7: 'N',
+      d3_8: 'Y',
+    },
+  },
+  domain4: {
+    low: {
+      d4_1: 'Y',
+      d4_2: 'Y',
+      d4_3: 'Y',
+      d4_4: 'NA',
+      d4_5: 'NA',
+      d4_6: 'NA',
+      d4_7: 'NA',
+      d4_8: 'NA',
+      d4_9: 'NA',
+      d4_10: 'NA',
+      d4_11: 'NA',
+    },
+    moderate: {
+      d4_1: 'Y',
+      d4_2: 'N',
+      d4_3: 'Y',
+      d4_4: 'Y',
+      d4_5: 'Y',
+      d4_6: 'Y',
+      d4_7: 'NA',
+      d4_8: 'NA',
+      d4_9: 'NA',
+      d4_10: 'NA',
+      d4_11: 'Y',
+    },
+    serious: {
+      d4_1: 'Y',
+      d4_2: 'N',
+      d4_3: 'Y',
+      d4_4: 'Y',
+      d4_5: 'Y',
+      d4_6: 'Y',
+      d4_7: 'NA',
+      d4_8: 'NA',
+      d4_9: 'NA',
+      d4_10: 'NA',
+      d4_11: 'N',
+    },
+    critical: {
+      d4_1: 'Y',
+      d4_2: 'N',
+      d4_3: 'Y',
+      d4_4: 'Y',
+      d4_5: 'Y',
+      d4_6: 'SN',
+      d4_7: 'NA',
+      d4_8: 'NA',
+      d4_9: 'NA',
+      d4_10: 'NA',
+      d4_11: 'N',
+    },
+  },
+  // Domain 5's decision table tops out at Serious, so it has no critical profile
+  domain5: {
+    low: { d5_1: 'N', d5_2: 'N', d5_3: 'NA' },
+    moderate: { d5_1: 'N', d5_2: 'Y', d5_3: 'WY' },
+    serious: { d5_1: 'N', d5_2: 'Y', d5_3: 'SY' },
+  },
+  domain6: {
+    low: { d6_1: 'Y', d6_2: 'N', d6_3: 'N', d6_4: 'N' },
+    moderate: { d6_1: 'N', d6_2: 'N', d6_3: 'NI', d6_4: 'N' },
+    serious: { d6_1: 'N', d6_2: 'Y', d6_3: 'N', d6_4: 'N' },
+    critical: { d6_1: 'N', d6_2: 'Y', d6_3: 'Y', d6_4: 'N' },
+  },
 };
+
+// Weighted toward low/moderate so the overall judgement (worst of six domains)
+// is not almost always Critical across studies
+const ROBINS_I_PROFILE_POOL = ['low', 'low', 'low', 'moderate', 'moderate', 'serious', 'critical'];
 
 type RngFunction = () => number;
 
@@ -208,16 +333,18 @@ export function generateROBINSIAnswers(options: ROBINSIOptions = {}): ROBINSIAns
     const questionKeys = Object.keys(skeleton[domainKey]?.answers ?? {});
     if (questionKeys.length === 0) continue;
 
-    // For 'complete', fill every question in the domain with a single answer
-    // drawn from its complete-scoring pool so the domain resolves to a real
-    // judgement. Sparse fills ('partial'/'random') stay deliberately incomplete.
-    const completeAnswer = pickRandom(rng, ROBINS_I_COMPLETE_ANSWERS[domainKey] ?? ['N']);
+    // For 'complete', pick a judgement profile for the domain so the scoring
+    // engine resolves it to that judgement. Sparse fills ('partial'/'random')
+    // stay deliberately incomplete.
+    const profiles = ROBINS_I_JUDGEMENT_PROFILES[domainKey] ?? {};
+    const profileKey = pickRandom(rng, ROBINS_I_PROFILE_POOL);
+    const profile = profiles[profileKey] ?? profiles.serious ?? {};
 
     const domainAnswers: Record<string, { answer: string | null; comment: string }> = {};
     for (const qKey of questionKeys) {
       let answer: string | null = null;
       if (fill === 'complete') {
-        answer = completeAnswer;
+        answer = profile[qKey] ?? 'NI';
       } else if (fill === 'random') {
         answer = pickRandom(rng, ROBINS_I_RESPONSES);
       } else if (fill === 'partial') {
@@ -289,6 +416,83 @@ const ROB2_DOMAINS: Record<string, Array<{ id: string; responseType: 'STANDARD' 
 const ROB2_STANDARD_RESPONSES = ['Y', 'PY', 'PN', 'N', 'NI'] as const;
 const ROB2_WITH_NA_RESPONSES = ['NA', 'Y', 'PY', 'PN', 'N', 'NI'] as const;
 const ROB2_JUDGEMENTS = ['Low', 'Some concerns', 'High'] as const;
+
+// Per-domain signalling-answer profiles verified against the decision trees in
+// scoreRob2Domain (@corates/shared). Each profile answers every question in the
+// domain along one scoring path (conditional questions off the path get NA) so
+// the domain resolves COMPLETE to the judgement it is keyed by. The 'mixed'
+// fill picks a profile per domain by seed; uniformly random answers mostly
+// resolve High or incomplete, turning every figure red.
+const ROB2_JUDGEMENT_PROFILES: Record<string, Record<string, Record<string, string>>> = {
+  domain1: {
+    Low: { d1_1: 'Y', d1_2: 'Y', d1_3: 'N' },
+    'Some concerns': { d1_1: 'PN', d1_2: 'Y', d1_3: 'N' },
+    High: { d1_1: 'NI', d1_2: 'N', d1_3: 'NI' },
+  },
+  domain2a: {
+    Low: {
+      d2a_1: 'N',
+      d2a_2: 'N',
+      d2a_3: 'NA',
+      d2a_4: 'NA',
+      d2a_5: 'NA',
+      d2a_6: 'Y',
+      d2a_7: 'NA',
+    },
+    'Some concerns': {
+      d2a_1: 'Y',
+      d2a_2: 'N',
+      d2a_3: 'Y',
+      d2a_4: 'N',
+      d2a_5: 'NA',
+      d2a_6: 'Y',
+      d2a_7: 'NA',
+    },
+    High: {
+      d2a_1: 'Y',
+      d2a_2: 'Y',
+      d2a_3: 'Y',
+      d2a_4: 'Y',
+      d2a_5: 'N',
+      d2a_6: 'Y',
+      d2a_7: 'NA',
+    },
+  },
+  domain2b: {
+    Low: { d2b_1: 'N', d2b_2: 'N', d2b_3: 'NA', d2b_4: 'N', d2b_5: 'N', d2b_6: 'NA' },
+    'Some concerns': { d2b_1: 'Y', d2b_2: 'Y', d2b_3: 'Y', d2b_4: 'Y', d2b_5: 'N', d2b_6: 'Y' },
+    High: { d2b_1: 'Y', d2b_2: 'Y', d2b_3: 'Y', d2b_4: 'Y', d2b_5: 'N', d2b_6: 'N' },
+  },
+  domain3: {
+    Low: { d3_1: 'Y', d3_2: 'NA', d3_3: 'NA', d3_4: 'NA' },
+    'Some concerns': { d3_1: 'N', d3_2: 'N', d3_3: 'Y', d3_4: 'N' },
+    High: { d3_1: 'N', d3_2: 'N', d3_3: 'Y', d3_4: 'Y' },
+  },
+  domain4: {
+    Low: { d4_1: 'N', d4_2: 'N', d4_3: 'N', d4_4: 'NA', d4_5: 'NA' },
+    'Some concerns': { d4_1: 'N', d4_2: 'N', d4_3: 'Y', d4_4: 'Y', d4_5: 'N' },
+    High: { d4_1: 'N', d4_2: 'N', d4_3: 'Y', d4_4: 'Y', d4_5: 'Y' },
+  },
+  domain5: {
+    Low: { d5_1: 'Y', d5_2: 'N', d5_3: 'N' },
+    'Some concerns': { d5_1: 'N', d5_2: 'N', d5_3: 'N' },
+    High: { d5_1: 'N', d5_2: 'Y', d5_3: 'N' },
+  },
+};
+
+// Weighted toward Low so figures skew green; the overall judgement is the
+// worst of five domains, so even one High per study would turn most rows red
+const ROB2_PROFILE_POOL = [
+  'Low',
+  'Low',
+  'Low',
+  'Low',
+  'Low',
+  'Low',
+  'Some concerns',
+  'Some concerns',
+  'High',
+];
 const ROB2_DIRECTIONS = [
   'Favours experimental',
   'Favours comparator',
@@ -387,10 +591,24 @@ export function generateROB2Answers(options: ROB2Options = {}): ROB2Answers {
     domain4: generateROB2Domain('domain4', fill, rng),
     domain5: generateROB2Domain('domain5', fill, rng),
     overall: {
-      judgement: fill !== 'empty' ? pickRandom(rng, [...ROB2_JUDGEMENTS]) : null,
+      judgement: null,
       direction: fill !== 'empty' ? pickRandom(rng, [...ROB2_DIRECTIONS]) : null,
     },
   };
+
+  if (fill !== 'empty') {
+    const activeJudgements = [
+      answers.domain1,
+      isAdhering ? answers.domain2b : answers.domain2a,
+      answers.domain3,
+      answers.domain4,
+      answers.domain5,
+    ].map(d => d.judgement);
+    answers.overall.judgement =
+      activeJudgements.includes('High') ? 'High'
+      : activeJudgements.includes('Some concerns') ? 'Some concerns'
+      : 'Low';
+  }
 
   return answers;
 }
@@ -398,6 +616,22 @@ export function generateROB2Answers(options: ROB2Options = {}): ROB2Answers {
 function generateROB2Domain(domainKey: string, fill: string, rng: RngFunction): ROB2DomainAnswers {
   const questions = ROB2_DOMAINS[domainKey] || [];
   const domainAnswers: Record<string, { answer: string | null; comment: string }> = {};
+
+  if (fill === 'mixed') {
+    const profiles = ROB2_JUDGEMENT_PROFILES[domainKey] ?? {};
+    const judgement = pickRandom(rng, ROB2_PROFILE_POOL);
+    const profile = profiles[judgement] ?? {};
+
+    for (const q of questions) {
+      domainAnswers[q.id] = { answer: profile[q.id] ?? 'NI', comment: '' };
+    }
+
+    return {
+      answers: domainAnswers,
+      judgement,
+      direction: pickRandom(rng, [...ROB2_DIRECTIONS]),
+    };
+  }
 
   for (const q of questions) {
     const pool =
@@ -408,8 +642,6 @@ function generateROB2Domain(domainKey: string, fill: string, rng: RngFunction): 
       answer = pickRandom(rng, pool);
     } else if (fill === 'all-yes') {
       answer = 'Y';
-    } else if (fill === 'mixed') {
-      answer = pickRandom(rng, pool);
     }
 
     domainAnswers[q.id] = { answer, comment: '' };
@@ -1339,7 +1571,7 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
               createdAt: now,
               updatedAt: now,
               outcomeId,
-              answers: generateROB2Answers({ fill: 'mixed', seed: 1005, isAdhering: false }),
+              answers: generateROB2Answers({ fill: 'mixed', seed: 1035, isAdhering: false }),
             },
             {
               id: generateId('checklist'),
@@ -1361,7 +1593,258 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
               createdAt: now,
               updatedAt: now,
               outcomeId,
-              answers: generateROB2Answers({ fill: 'mixed', seed: 1005, isAdhering: false }),
+              answers: generateROB2Answers({ fill: 'mixed', seed: 1035, isAdhering: false }),
+            },
+          ],
+          pdfs: [],
+          reconciliation: null,
+        },
+        {
+          id: generateId('study'),
+          name: 'Hrobjartsson et al. 2013',
+          description: '',
+          createdAt: now,
+          updatedAt: now,
+          originalTitle:
+            'Observer bias in randomized clinical trials with measurement scale outcomes: a systematic review of trials with both blinded and nonblinded assessors',
+          firstAuthor: 'Hrobjartsson',
+          publicationYear: 2013,
+          authors: 'Hrobjartsson A, Thomsen ASS, Emanuelsson F, Tendal B, Hilden J, Boutron I, et al.',
+          journal: 'CMAJ',
+          doi: '10.1503/cmaj.120744',
+          abstract: '',
+          pdfUrl: null,
+          pdfSource: null,
+          pdfAccessible: false,
+          reviewer1: 'user_reviewer1',
+          reviewer2: 'user_reviewer2',
+          checklists: [
+            {
+              id: generateId('checklist'),
+              type: 'ROB2',
+              title: 'Reviewer 1 Assessment',
+              assignedTo: 'user_reviewer1',
+              status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+              createdAt: now,
+              updatedAt: now,
+              outcomeId,
+              answers: generateROB2Answers({ fill: 'mixed', seed: 1006, isAdhering: false }),
+            },
+            {
+              id: generateId('checklist'),
+              type: 'ROB2',
+              title: 'Reviewer 2 Assessment',
+              assignedTo: 'user_reviewer2',
+              status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+              createdAt: now,
+              updatedAt: now,
+              outcomeId,
+              answers: generateROB2Answers({ fill: 'mixed', seed: 1016, isAdhering: false }),
+            },
+            {
+              id: generateId('checklist'),
+              type: 'ROB2',
+              title: 'Reconciled Checklist',
+              assignedTo: null,
+              status: CHECKLIST_STATUS.FINALIZED,
+              createdAt: now,
+              updatedAt: now,
+              outcomeId,
+              answers: generateROB2Answers({ fill: 'mixed', seed: 1006, isAdhering: false }),
+            },
+          ],
+          pdfs: [],
+          reconciliation: null,
+        },
+        {
+          id: generateId('study'),
+          name: 'Page et al. 2016',
+          description: '',
+          createdAt: now,
+          updatedAt: now,
+          originalTitle:
+            'Empirical evidence of study design biases in randomized trials: systematic review of meta-epidemiological studies',
+          firstAuthor: 'Page',
+          publicationYear: 2016,
+          authors: 'Page MJ, Higgins JPT, Clayton G, Sterne JAC, Hrobjartsson A, Savovic J',
+          journal: 'PLOS ONE',
+          doi: '10.1371/journal.pone.0159267',
+          abstract: '',
+          pdfUrl: null,
+          pdfSource: null,
+          pdfAccessible: false,
+          reviewer1: 'user_reviewer1',
+          reviewer2: 'user_reviewer2',
+          checklists: [
+            {
+              id: generateId('checklist'),
+              type: 'ROB2',
+              title: 'Reviewer 1 Assessment',
+              assignedTo: 'user_reviewer1',
+              status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+              createdAt: now,
+              updatedAt: now,
+              outcomeId,
+              answers: generateROB2Answers({ fill: 'mixed', seed: 1007, isAdhering: false }),
+            },
+            {
+              id: generateId('checklist'),
+              type: 'ROB2',
+              title: 'Reviewer 2 Assessment',
+              assignedTo: 'user_reviewer2',
+              status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+              createdAt: now,
+              updatedAt: now,
+              outcomeId,
+              answers: generateROB2Answers({ fill: 'mixed', seed: 1017, isAdhering: false }),
+            },
+            {
+              id: generateId('checklist'),
+              type: 'ROB2',
+              title: 'Reconciled Checklist',
+              assignedTo: null,
+              status: CHECKLIST_STATUS.FINALIZED,
+              createdAt: now,
+              updatedAt: now,
+              outcomeId,
+              answers: generateROB2Answers({ fill: 'mixed', seed: 1007, isAdhering: false }),
+            },
+          ],
+          pdfs: [],
+          reconciliation: null,
+        },
+        {
+          id: generateId('study'),
+          name: 'Hernan et al. 2016',
+          description: '',
+          createdAt: now,
+          updatedAt: now,
+          originalTitle:
+            'Using Big Data to Emulate a Target Trial When a Randomized Trial Is Not Available',
+          firstAuthor: 'Hernan',
+          publicationYear: 2016,
+          authors: 'Hernan MA, Robins JM',
+          journal: 'American Journal of Epidemiology',
+          doi: '10.1093/aje/kwv254',
+          abstract: '',
+          pdfUrl: null,
+          pdfSource: null,
+          pdfAccessible: false,
+          reviewer1: 'user_reviewer1',
+          reviewer2: 'user_reviewer2',
+          checklists: [
+            {
+              id: generateId('checklist'),
+              type: 'ROBINS_I',
+              title: 'Reviewer 1 Assessment',
+              assignedTo: 'user_reviewer1',
+              status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+              createdAt: now,
+              updatedAt: now,
+              outcomeId,
+              answers: generateROBINSIAnswers({
+                fill: 'complete',
+                seed: 1008,
+                isPerProtocol: false,
+              }),
+            },
+            {
+              id: generateId('checklist'),
+              type: 'ROBINS_I',
+              title: 'Reviewer 2 Assessment',
+              assignedTo: 'user_reviewer2',
+              status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+              createdAt: now,
+              updatedAt: now,
+              outcomeId,
+              answers: generateROBINSIAnswers({
+                fill: 'complete',
+                seed: 1018,
+                isPerProtocol: false,
+              }),
+            },
+            {
+              id: generateId('checklist'),
+              type: 'ROBINS_I',
+              title: 'Reconciled Checklist',
+              assignedTo: null,
+              status: CHECKLIST_STATUS.FINALIZED,
+              createdAt: now,
+              updatedAt: now,
+              outcomeId,
+              answers: generateROBINSIAnswers({
+                fill: 'complete',
+                seed: 1008,
+                isPerProtocol: false,
+              }),
+            },
+          ],
+          pdfs: [],
+          reconciliation: null,
+        },
+        {
+          id: generateId('study'),
+          name: 'Suissa 2008',
+          description: '',
+          createdAt: now,
+          updatedAt: now,
+          originalTitle: 'Immortal Time Bias in Pharmacoepidemiology',
+          firstAuthor: 'Suissa',
+          publicationYear: 2008,
+          authors: 'Suissa S',
+          journal: 'American Journal of Epidemiology',
+          doi: '10.1093/aje/kwm324',
+          abstract: '',
+          pdfUrl: null,
+          pdfSource: null,
+          pdfAccessible: false,
+          reviewer1: 'user_reviewer1',
+          reviewer2: 'user_reviewer2',
+          checklists: [
+            {
+              id: generateId('checklist'),
+              type: 'ROBINS_I',
+              title: 'Reviewer 1 Assessment',
+              assignedTo: 'user_reviewer1',
+              status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+              createdAt: now,
+              updatedAt: now,
+              outcomeId,
+              answers: generateROBINSIAnswers({
+                fill: 'complete',
+                seed: 1019,
+                isPerProtocol: false,
+              }),
+            },
+            {
+              id: generateId('checklist'),
+              type: 'ROBINS_I',
+              title: 'Reviewer 2 Assessment',
+              assignedTo: 'user_reviewer2',
+              status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+              createdAt: now,
+              updatedAt: now,
+              outcomeId,
+              answers: generateROBINSIAnswers({
+                fill: 'complete',
+                seed: 1029,
+                isPerProtocol: false,
+              }),
+            },
+            {
+              id: generateId('checklist'),
+              type: 'ROBINS_I',
+              title: 'Reconciled Checklist',
+              assignedTo: null,
+              status: CHECKLIST_STATUS.FINALIZED,
+              createdAt: now,
+              updatedAt: now,
+              outcomeId,
+              answers: generateROBINSIAnswers({
+                fill: 'complete',
+                seed: 1019,
+                isPerProtocol: false,
+              }),
             },
           ],
           pdfs: [],

@@ -17,6 +17,7 @@
     "db:migrate:prod": "wrangler d1 migrations apply corates-db-prod --remote --env production --config wrangler.jsonc",
     "db:migrate:staging": "wrangler d1 migrations apply corates-db-staging --remote --env staging --config wrangler.jsonc",
     "db:reset:prod": "node ./scripts/reset-db-prod.mjs",
+    "dev:pdfs": "node ./scripts/fetch-dev-pdfs.mjs",
     "db:studio": "drizzle-kit studio",
     "lint": "eslint",
     "format": "prettier --write .",

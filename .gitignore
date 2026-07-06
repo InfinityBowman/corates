@@ -25,6 +25,9 @@ packages/web/app.config.timestamp_*.js
 # testing
 /coverage
 /packages/workers/src/lib/dev-seed/pdfs/
+
+# local dev PDF pool (downloaded via `pnpm --filter web dev:pdfs`)
+/packages/web/public/dev-pdfs/
 **/.vitest**
 __screenshots__/
 __playwright-report__/
