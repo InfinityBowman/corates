@@ -6,7 +6,7 @@ export default function SupportedTools() {
   const tools = getAllTools().map(tool => ({
     name: tool.name,
     status: 'available' as const,
-    description: tool.bestUsedFor,
+    description: tool.summary,
     href: `/resources/${tool.slug}`,
   }));
 

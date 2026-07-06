@@ -7,9 +7,9 @@ export default function Footer() {
   return (
     <footer className='border-t border-gray-200 bg-gray-50'>
       <div className='mx-auto max-w-6xl px-6 py-12'>
-        <div className='mb-8 grid gap-8 md:grid-cols-4'>
+        <div className='mb-8 grid grid-cols-2 gap-8 md:grid-cols-4'>
           {/* Brand */}
-          <div className='md:col-span-1'>
+          <div className='col-span-2 md:col-span-1'>
             <Link to='/' className='text-xl font-bold text-blue-700'>
               CoRATES
             </Link>

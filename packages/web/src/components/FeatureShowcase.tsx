@@ -601,7 +601,9 @@ export default function FeatureShowcase() {
   ];
 
   return (
-    <section className='mx-auto max-w-6xl px-6 py-16 md:py-24'>
+    // scroll-mt offsets the sticky h-16 navbar when arriving via the footer's
+    // /#features anchor link
+    <section id='features' className='mx-auto max-w-6xl scroll-mt-16 px-6 py-16 md:py-24'>
       <div className='mb-16 text-center'>
         <h2 className='mb-4 text-3xl font-bold text-gray-900 md:text-4xl'>
           Everything you need for rigorous study appraisal

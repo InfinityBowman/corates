@@ -45,6 +45,8 @@ export interface ToolContent {
   name: string;
   slug: string;
   description: string;
+  /** Short blurb for tool cards; bestUsedFor carries the full detail-page text */
+  summary: string;
   bestUsedFor: string;
   referenceLinks: ReferenceLink[];
   scoringDescription: string;
@@ -79,6 +81,8 @@ const TOOL_CONTENT: Record<string, ToolContent> = {
       'AMSTAR 2 was published in 2017 as a substantive revision and expansion of the original AMSTAR (2007). Unlike its predecessor, AMSTAR 2 is designed to appraise systematic reviews that include randomized trials, non-randomized studies of interventions, or both, and explicitly distinguishes between critical and non-critical methodological domains.',
     description:
       'AMSTAR 2 is a critical appraisal tool used to evaluate the methodological quality of systematic reviews of healthcare interventions. It comprises 16 items, seven of which are designated as critical domains because weaknesses in those items can substantially undermine the validity of a review and its conclusions. AMSTAR 2 produces an overall confidence rating for the results of a review (High, Moderate, Low, or Critically Low), based on the pattern of critical and non-critical weaknesses identified during the appraisal. The tool is widely used in evidence synthesis, methods research, and decision-making contexts where users need to distinguish high-quality systematic reviews from those whose conclusions should be interpreted with caution.',
+    summary:
+      'Appraising the quality of systematic reviews of healthcare interventions and rating how much confidence to place in their results.',
     bestUsedFor:
       'Appraising the methodological quality of systematic reviews of healthcare interventions, including reviews that include randomized trials, non-randomized studies of interventions, or both. AMSTAR 2 is most useful when users need to decide how much confidence to place in the results of a published systematic review.',
     studyTypes: [
@@ -268,6 +272,8 @@ const TOOL_CONTENT: Record<string, ToolContent> = {
       'Version 2 was first released in November 2024, with the most recent revision posted on November 20, 2025. V2 is currently scoped to follow-up (cohort) studies; further extensions for other non-randomized designs are in development.',
     description:
       'ROBINS-I V2 (Risk Of Bias In Non-randomized Studies - of Interventions, Version 2) is a tool for assessing risk of bias in a specific result from an individual non-randomized study that examines the effect of an intervention on an outcome. ROBINS-I V2 evaluates six bias domains and produces both domain-level and overall risk-of-bias judgements (Low, Moderate, Serious, Critical, or No information). The tool is designed to be used by reviewers conducting systematic reviews that include non-randomized studies of interventions, and is the preferred risk-of-bias tool for non-randomized studies in Cochrane Reviews.',
+    summary:
+      'Assessing risk of bias in non-randomized (cohort) studies of interventions. The recommended tool for non-randomized studies in Cochrane Reviews.',
     bestUsedFor:
       'Assessing risk of bias in the results of follow-up (cohort) studies that compare the health effects of interventions and were not assigned by randomization. ROBINS-I V2 is the recommended risk-of-bias tool for non-randomized studies of interventions in Cochrane systematic reviews.',
     studyTypes: [
@@ -452,6 +458,8 @@ const TOOL_CONTENT: Record<string, ToolContent> = {
       'RoB 2 was published in August 2019 as a substantive replacement for the original Cochrane Risk of Bias tool (2008). The current parallel-trial version on riskofbias.info is dated 22 August 2019. Cochrane has formally adopted RoB 2 as the recommended tool for assessing risk of bias in randomized trials included in Cochrane Reviews.',
     description:
       'RoB 2 is the revised Cochrane Risk of Bias tool for randomized trials. It assesses risk of bias in the result of an individual randomized trial across five bias domains, using a structured set of signalling questions whose responses are mapped via published algorithms to a domain-level judgement of Low risk of bias, Some concerns, or High risk of bias. The domain-level judgements are then combined into an overall risk-of-bias judgement for the result being assessed. RoB 2 is the recommended tool for randomized trials in Cochrane systematic reviews and is widely used in non-Cochrane reviews and methods research as well.',
+    summary:
+      'Assessing risk of bias in randomized controlled trials. The recommended risk-of-bias tool for randomized trials in Cochrane Reviews.',
     bestUsedFor:
       'Assessing risk of bias in the results of individual randomized controlled trials (RCTs) included in a systematic review or evidence synthesis. RoB 2 is the recommended risk-of-bias tool for randomized trials in Cochrane Reviews.',
     studyTypes: [

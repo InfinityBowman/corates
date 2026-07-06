@@ -40,7 +40,7 @@ function ToolCard({ tool }: { tool: ToolContent }) {
         <FileTextIcon className='size-6 text-blue-600' />
       </div>
       <h3 className='mb-2 text-xl font-semibold text-gray-900'>{tool.name}</h3>
-      <p className='mb-4 flex-1 text-sm text-gray-600'>{tool.bestUsedFor}</p>
+      <p className='mb-4 flex-1 text-sm text-gray-600'>{tool.summary}</p>
       <div className='flex items-center gap-2 text-sm font-medium text-blue-600 group-hover:text-blue-700'>
         Learn more
         <ArrowRightIcon className='size-4 transition-transform group-hover:translate-x-1' />
@@ -57,7 +57,7 @@ function ResourcesPage() {
       <Navbar />
 
       <main className='flex-1 py-12'>
-        <div className='mx-auto max-w-4xl px-6'>
+        <div className='mx-auto max-w-6xl px-6'>
           <h1 className='mb-2 text-4xl font-bold text-gray-900'>Resources</h1>
           <p className='mb-10 text-lg text-gray-500'>
             Appraisal tools and guidance for systematic evidence synthesis
