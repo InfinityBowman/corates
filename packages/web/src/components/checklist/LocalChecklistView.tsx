@@ -9,6 +9,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { ChevronLeftIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { ChecklistWithPdf } from '@/components/checklist/ChecklistWithPdf';
 import { CreateLocalChecklist } from '@/components/checklist/CreateLocalChecklist';
 import { LOCAL_PROJECT_ID } from '@/project/localProject';
@@ -130,13 +131,10 @@ function LocalChecklistEditor({ checklistId }: { checklistId: string }) {
 
   const headerContent = (
     <>
-      <button
-        onClick={handleBack}
-        className='text-muted-foreground hover:text-foreground inline-flex items-center gap-2 transition-colors'
-      >
+      <Button variant='ghost' onClick={handleBack} className='text-muted-foreground'>
         <ChevronLeftIcon className='size-5' />
         Back
-      </button>
+      </Button>
       <div className='bg-border h-4 w-px' />
       <span className='bg-secondary text-muted-foreground inline-flex items-center rounded px-2 py-0.5 text-xs font-medium'>
         Local Only
@@ -157,12 +155,7 @@ function LocalChecklistEditor({ checklistId }: { checklistId: string }) {
     return (
       <div className='flex min-h-screen flex-col items-center justify-center gap-4 bg-blue-50'>
         <div className='text-destructive'>Checklist not found</div>
-        <button
-          onClick={handleBack}
-          className='rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700'
-        >
-          Go Back
-        </button>
+        <Button onClick={handleBack}>Go Back</Button>
       </div>
     );
   }

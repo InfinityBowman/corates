@@ -20,6 +20,7 @@ import type { PdfUploadResponse } from '@/api/pdf-api';
 import { getCachedPdf, cachePdf } from '@/primitives/pdfCache.js';
 import type { AnnotationData } from '@/primitives/useProject/annotations';
 import { showToast } from '@/components/ui/toast';
+import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -265,24 +266,23 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <button
-              type='button'
-              onClick={() => setCompleteDialogOpen(false)}
-              className='border-border text-secondary-foreground hover:bg-muted rounded-lg border px-4 py-2 text-sm font-medium'
-            >
+            <Button variant='outline' onClick={() => setCompleteDialogOpen(false)}>
               Cancel
-            </button>
+            </Button>
             <AlertDialogAction onClick={confirmMarkComplete}>Mark Complete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      <button
+      <Button
+        variant='ghost'
+        size='icon-sm'
         onClick={() => navigate({ to: getBackPath() as string })}
-        className='text-muted-foreground/70 hover:text-secondary-foreground transition-colors'
+        className='text-muted-foreground'
+        aria-label='Back to project'
       >
         <ChevronLeftIcon className='size-5' />
-      </button>
+      </Button>
       <div className='text-muted-foreground truncate text-sm'>
         <span className='text-foreground font-medium'>
           {currentChecklist?.type || 'AMSTAR2'} Checklist
@@ -291,7 +291,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
       <div className='ml-auto flex items-center gap-3'>
         <ScoreTag currentScore={currentScore} checklistType={checklistType ?? undefined} />
         {!isReadOnly ?
-          <button
+          <Button
             onClick={handleToggleComplete}
             disabled={!isChecklistValid}
             title={
@@ -301,17 +301,16 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
                 : 'All questions must have a final answer before marking complete'
               : undefined
             }
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+            className={
               currentChecklist?.status === CHECKLIST_STATUS.FINALIZED ?
                 'bg-success-bg text-success hover:bg-success-bg'
-              : !isChecklistValid ? 'bg-muted text-muted-foreground cursor-not-allowed opacity-60'
-              : 'bg-blue-600 text-white hover:bg-blue-700'
-            }`}
+              : undefined
+            }
           >
             {currentChecklist?.status === CHECKLIST_STATUS.FINALIZED ?
               'Completed'
             : 'Mark Complete'}
-          </button>
+          </Button>
         : <span
             className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
               currentChecklist?.status === CHECKLIST_STATUS.FINALIZED ?

@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { InfoIcon, ExternalLinkIcon } from 'lucide-react';
 import { ROBINS_I_CHECKLIST, getActiveDomainKeys } from './checklist-map';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -179,13 +180,9 @@ function ResourcesDialog({ open, onClose }: { open: boolean; onClose: () => void
         </div>
 
         <div className='border-border border-t pt-3'>
-          <button
-            type='button'
-            onClick={onClose}
-            className='bg-secondary text-secondary-foreground hover:bg-muted w-full rounded-lg px-4 py-2 text-sm font-medium transition-colors'
-          >
+          <Button variant='secondary' onClick={onClose} className='w-full'>
             Close
-          </button>
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

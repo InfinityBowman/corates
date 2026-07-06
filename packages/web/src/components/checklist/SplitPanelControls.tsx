@@ -10,6 +10,7 @@ import {
   RowsIcon,
   RefreshCwIcon,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface SplitPanelControlsProps {
   showSecondPanel: boolean;
@@ -105,27 +106,31 @@ export function SplitPanelControls({
           </button>
 
           {/* Reset ratio */}
-          <button
+          <Button
+            variant='ghost'
+            size='icon'
             onClick={() => onResetRatio?.()}
-            className='text-muted-foreground hover:bg-secondary rounded p-1.5 transition-colors'
+            className='text-muted-foreground'
             title={`Reset split (${ratioLabel})`}
             aria-label={`Reset split (${ratioLabel})`}
           >
             <RefreshCwIcon className='size-5' />
-          </button>
+          </Button>
 
           {/* Open PDF in new tab */}
           {hasPdf && (
             <>
               <div className='bg-border mx-1 h-4 w-px' />
-              <button
+              <Button
+                variant='ghost'
+                size='icon'
                 onClick={handleOpenInNewTab}
-                className='text-muted-foreground hover:bg-secondary rounded p-1.5 transition-colors'
+                className='text-muted-foreground'
                 title='Open PDF in new tab'
                 aria-label='Open PDF in new tab'
               >
                 <ExternalLinkIcon className='size-5' />
-              </button>
+              </Button>
             </>
           )}
         </>

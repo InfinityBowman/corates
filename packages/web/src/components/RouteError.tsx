@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import type { ErrorComponentProps } from '@tanstack/react-router';
 import { captureException } from '@/config/sentry';
 import { TriangleAlertIcon, RefreshCwIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export function RouteError({ error, reset }: ErrorComponentProps) {
   useEffect(() => {
@@ -19,14 +20,10 @@ export function RouteError({ error, reset }: ErrorComponentProps) {
         </div>
         <h3 className='text-foreground mb-1 text-base font-semibold'>Something went wrong</h3>
         <p className='text-muted-foreground mb-5 text-sm'>{message}</p>
-        <button
-          type='button'
-          onClick={reset}
-          className='bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors'
-        >
+        <Button onClick={reset}>
           <RefreshCwIcon className='size-3.5' />
           Try again
-        </button>
+        </Button>
       </div>
     </div>
   );

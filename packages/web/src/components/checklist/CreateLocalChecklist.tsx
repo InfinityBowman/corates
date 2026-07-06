@@ -23,6 +23,7 @@ import { connectionPool } from '@/project/ConnectionPool';
 import { LOCAL_PROJECT_ID, createLocalAppraisal } from '@/project/localProject';
 import { db } from '@/primitives/db';
 import { Alert } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { FileUpload, FileUploadDropzone, FileUploadHiddenInput } from '@/components/ui/file-upload';
 import { LANDING_URL } from '@/config/api.js';
 import { getChecklistTypeOptions, DEFAULT_CHECKLIST_TYPE } from '@/checklist-registry/index';
@@ -178,13 +179,16 @@ export function CreateLocalChecklist({ type: typeParam }: { type?: string }) {
                       {(pdfFile.size / 1024 / 1024).toFixed(2)} MB
                     </p>
                   </div>
-                  <button
+                  <Button
                     type='button'
+                    variant='ghost'
+                    size='icon-sm'
                     onClick={() => setPdfFile(null)}
-                    className='text-muted-foreground/70 hover:text-muted-foreground p-1 transition-colors'
+                    className='text-muted-foreground'
+                    aria-label='Remove PDF'
                   >
                     <XIcon className='size-5' />
-                  </button>
+                  </Button>
                 </div>
               : <FileUpload
                   accept={['application/pdf', '.pdf']}
@@ -209,20 +213,18 @@ export function CreateLocalChecklist({ type: typeParam }: { type?: string }) {
 
             {/* Buttons */}
             <div className='flex gap-3'>
-              <button
+              <Button
                 type='button'
+                variant='outline'
+                size='lg'
                 onClick={handleCancel}
-                className='border-border text-secondary-foreground hover:bg-muted flex-1 rounded-lg border px-4 py-3 font-medium transition-colors'
+                className='flex-1'
               >
                 Cancel
-              </button>
-              <button
-                type='submit'
-                disabled={creating}
-                className='flex-1 rounded-lg bg-blue-600 px-4 py-3 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50'
-              >
+              </Button>
+              <Button type='submit' size='lg' disabled={creating} className='flex-1'>
                 {creating ? 'Adding...' : 'Start'}
-              </button>
+              </Button>
             </div>
           </form>
 

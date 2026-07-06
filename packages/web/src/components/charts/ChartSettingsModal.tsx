@@ -4,6 +4,7 @@
 
 import { useState } from 'react';
 import { XIcon, CopyIcon, CheckIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface LabelItem {
   id: string;
@@ -82,12 +83,15 @@ export function ChartSettingsModal({
           {/* Header */}
           <div className='border-border flex items-center justify-between border-b px-6 py-4'>
             <h2 className='text-foreground text-lg font-semibold'>Chart Settings</h2>
-            <button
+            <Button
+              variant='ghost'
+              size='icon'
               onClick={onClose}
-              className='text-muted-foreground hover:bg-muted hover:text-muted-foreground rounded-lg p-1.5 transition-colors'
+              className='text-muted-foreground'
+              aria-label='Close'
             >
               <XIcon className='size-5' />
-            </button>
+            </Button>
           </div>
 
           {/* Content */}
@@ -188,35 +192,23 @@ export function ChartSettingsModal({
                     Quality Assessment Chart
                   </p>
                   <div className='flex gap-2'>
-                    <button
-                      onClick={() => onExportRobvis('svg')}
-                      className='border-border bg-card text-foreground hover:bg-muted rounded-md border px-3 py-1.5 text-xs font-medium transition-colors'
-                    >
+                    <Button variant='outline' size='sm' onClick={() => onExportRobvis('svg')}>
                       Export SVG
-                    </button>
-                    <button
-                      onClick={() => onExportRobvis('png')}
-                      className='border-border bg-card text-foreground hover:bg-muted rounded-md border px-3 py-1.5 text-xs font-medium transition-colors'
-                    >
+                    </Button>
+                    <Button variant='outline' size='sm' onClick={() => onExportRobvis('png')}>
                       Export PNG
-                    </button>
+                    </Button>
                   </div>
                 </div>
                 <div className='bg-muted rounded-lg p-3'>
                   <p className='text-foreground mb-2 text-sm font-medium'>Distribution Chart</p>
                   <div className='flex gap-2'>
-                    <button
-                      onClick={() => onExportDistribution('svg')}
-                      className='border-border bg-card text-foreground hover:bg-muted rounded-md border px-3 py-1.5 text-xs font-medium transition-colors'
-                    >
+                    <Button variant='outline' size='sm' onClick={() => onExportDistribution('svg')}>
                       Export SVG
-                    </button>
-                    <button
-                      onClick={() => onExportDistribution('png')}
-                      className='border-border bg-card text-foreground hover:bg-muted rounded-md border px-3 py-1.5 text-xs font-medium transition-colors'
-                    >
+                    </Button>
+                    <Button variant='outline' size='sm' onClick={() => onExportDistribution('png')}>
                       Export PNG
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -233,30 +225,36 @@ export function ChartSettingsModal({
                 <div className='bg-muted rounded-lg p-4'>
                   <div className='mb-2 flex items-center justify-between'>
                     <h4 className='text-foreground text-xs font-semibold'>APA</h4>
-                    <button
+                    <Button
+                      variant='ghost'
+                      size='icon-sm'
                       onClick={() => copyCitation('apa', apaCitation)}
-                      className='text-muted-foreground hover:bg-card hover:text-foreground inline-flex items-center gap-1 rounded p-1.5 transition-colors'
+                      className='text-muted-foreground hover:bg-card'
                       title='Copy citation'
+                      aria-label='Copy citation'
                     >
                       {copiedCitation === 'apa' ?
                         <CheckIcon className='text-success size-4' />
                       : <CopyIcon className='size-4' />}
-                    </button>
+                    </Button>
                   </div>
                   <p className='text-foreground text-sm leading-relaxed'>{apaCitation}</p>
                 </div>
                 <div className='bg-muted rounded-lg p-4'>
                   <div className='mb-2 flex items-center justify-between'>
                     <h4 className='text-foreground text-xs font-semibold'>AMA</h4>
-                    <button
+                    <Button
+                      variant='ghost'
+                      size='icon-sm'
                       onClick={() => copyCitation('ama', amaCitation)}
-                      className='text-muted-foreground hover:bg-card hover:text-foreground inline-flex items-center gap-1 rounded p-1.5 transition-colors'
+                      className='text-muted-foreground hover:bg-card'
                       title='Copy citation'
+                      aria-label='Copy citation'
                     >
                       {copiedCitation === 'ama' ?
                         <CheckIcon className='text-success size-4' />
                       : <CopyIcon className='size-4' />}
-                    </button>
+                    </Button>
                   </div>
                   <p className='text-foreground text-sm leading-relaxed'>{amaCitation}</p>
                 </div>
@@ -266,12 +264,7 @@ export function ChartSettingsModal({
 
           {/* Footer */}
           <div className='border-border flex justify-end border-t px-6 py-4'>
-            <button
-              onClick={onClose}
-              className='rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700'
-            >
-              Done
-            </button>
+            <Button onClick={onClose}>Done</Button>
           </div>
         </div>
       </div>
