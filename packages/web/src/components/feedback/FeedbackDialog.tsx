@@ -137,10 +137,7 @@ export function FeedbackDialog() {
             )}
 
             <DialogFooter>
-              <Button
-                onClick={handleSubmit}
-                disabled={!message.trim() || formState === 'sending'}
-              >
+              <Button onClick={handleSubmit} disabled={!message.trim() || formState === 'sending'}>
                 {formState === 'sending' ? 'Sending...' : 'Send feedback'}
               </Button>
             </DialogFooter>

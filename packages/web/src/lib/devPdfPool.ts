@@ -38,10 +38,7 @@ export async function loadDevPdfPool(): Promise<DevPdfEntry[]> {
  * Fetch the bytes for the pool entry at `index` (wraps around the pool). Returns
  * null if the file is missing or unreadable.
  */
-export async function takeDevPdf(
-  pool: DevPdfEntry[],
-  index: number,
-): Promise<DevPdf | null> {
+export async function takeDevPdf(pool: DevPdfEntry[], index: number): Promise<DevPdf | null> {
   if (pool.length === 0) return null;
   const entry = pool[index % pool.length];
   try {

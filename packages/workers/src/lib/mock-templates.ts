@@ -1609,7 +1609,8 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
             'Observer bias in randomized clinical trials with measurement scale outcomes: a systematic review of trials with both blinded and nonblinded assessors',
           firstAuthor: 'Hrobjartsson',
           publicationYear: 2013,
-          authors: 'Hrobjartsson A, Thomsen ASS, Emanuelsson F, Tendal B, Hilden J, Boutron I, et al.',
+          authors:
+            'Hrobjartsson A, Thomsen ASS, Emanuelsson F, Tendal B, Hilden J, Boutron I, et al.',
           journal: 'CMAJ',
           doi: '10.1503/cmaj.120744',
           abstract: '',

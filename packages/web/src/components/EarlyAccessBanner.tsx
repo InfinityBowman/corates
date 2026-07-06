@@ -22,10 +22,7 @@ export default function EarlyAccessBanner() {
               >
                 welcome your feedback
               </button>
-            : <Link
-                to='/contact'
-                className='underline underline-offset-2 hover:text-blue-100'
-              >
+            : <Link to='/contact' className='underline underline-offset-2 hover:text-blue-100'>
                 welcome your feedback
               </Link>
             }
