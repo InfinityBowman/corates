@@ -72,3 +72,8 @@ export function captureMessage(
 export function isSentryEnabled(): boolean {
   return !!SENTRY_DSN;
 }
+
+export function getSentryReplayId(): string | undefined {
+  if (!SENTRY_DSN) return undefined;
+  return Sentry.getReplay()?.getReplayId();
+}

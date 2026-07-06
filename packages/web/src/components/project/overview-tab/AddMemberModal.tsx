@@ -32,6 +32,7 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { searchUsers } from '@/server/functions/users.functions';
 import { addMemberToProject } from '@/server/functions/org-projects.functions';
 import type { UserSearchResult } from '@/server/functions/users.server';
+import { track } from '@/lib/analytics';
 
 interface AddMemberModalProps {
   isOpen: boolean;
@@ -135,6 +136,7 @@ export function AddMemberModal({
           : { email: searchQuery.trim(), role: selectedRole }),
         },
       })) as { invitation?: boolean; email?: string };
+      track('Collaborator:Invited', { method: result.invitation ? 'email' : 'direct' });
       if (result.invitation) {
         showToast.success('Invitation Sent', `Invitation sent to ${result.email || searchQuery}`);
       }

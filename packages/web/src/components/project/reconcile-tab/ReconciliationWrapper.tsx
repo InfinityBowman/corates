@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/button';
 import { showToast } from '@/lib/toast';
 import { Spinner } from '@/components/ui/spinner';
 import { usePdfPreviewStore } from '@/stores/pdfPreviewStore';
+import { track } from '@/lib/analytics';
 import { ReconciliationEngine, registerReconciliationAdapter } from './engine';
 import { amstar2Adapter } from './amstar2-reconcile/adapter';
 import { rob2Adapter } from './rob2-reconcile/adapter';
@@ -403,13 +404,14 @@ export function ReconciliationWrapper({
           status: CHECKLIST_STATUS.FINALIZED,
           title: reconciledName || 'Reconciled Checklist',
         });
+        track('Checklist:Completed', { type: checklistType });
         navigate({ to: `${getProjectPath()}?tab=completed` as string });
       } catch (err) {
         const { handleError } = await import('@/lib/error-utils');
         await handleError(err, { setError, showToast: false });
       }
     },
-    [reconciledChecklistId, studyId, updateChecklist, navigate, getProjectPath],
+    [reconciledChecklistId, studyId, checklistType, updateChecklist, navigate, getProjectPath],
   );
 
   // Handle cancel

@@ -3,12 +3,6 @@
  * Allows setting a name, selecting checklist type, and optionally uploading a PDF
  */
 
-declare global {
-  interface Window {
-    plausible?: (event: string, options?: { props?: Record<string, string> }) => void;
-  }
-}
-
 import { useState, useCallback } from 'react';
 import { useNavigate, useSearch, Link } from '@tanstack/react-router';
 import { FileTextIcon, XIcon, CloudUploadIcon } from 'lucide-react';
@@ -28,6 +22,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FileUpload, FileUploadDropzone, FileUploadHiddenInput } from '@/components/ui/file-upload';
 import { LANDING_URL } from '@/config/api.js';
+import { track } from '@/lib/analytics';
 import { getChecklistTypeOptions, DEFAULT_CHECKLIST_TYPE } from '@/checklist-registry/index';
 import { validatePdfFile } from '@/lib/pdfValidation.js';
 
@@ -85,10 +80,10 @@ export function CreateLocalChecklist({ type: typeParam }: { type?: string }) {
           throw new Error(`Unsupported checklist type: ${checklistType}`);
         }
 
-        window.plausible?.('LocalAppraisal', { props: { type: checklistType } });
+        track('LocalAppraisal', { type: checklistType });
 
         if (pdfFile) {
-          window.plausible?.('LocalAppraisal:PDF', { props: { type: checklistType } });
+          track('LocalAppraisal:PDF', { type: checklistType });
           const arrayBuffer = await pdfFile.arrayBuffer();
           await db.localChecklistPdfs.put({
             checklistId: id,

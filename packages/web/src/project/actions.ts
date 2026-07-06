@@ -4,6 +4,7 @@
  */
 
 import { showToast } from '@/lib/toast';
+import { track } from '@/lib/analytics';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { connectionPool } from './ConnectionPool';
 import { studyActions } from './actions/studies';
@@ -44,6 +45,7 @@ export const project = {
           }
           return false;
         }
+        track('Checklist:Created', { type });
         return true;
       } catch (err) {
         console.error('Error adding checklist:', err);
