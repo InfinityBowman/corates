@@ -34,6 +34,7 @@ import {
   NAV_ITEM_TYPES,
   type RobinsINavItem,
 } from './navbar-utils.js';
+import { ROBINSI_RESOURCES } from '@/components/checklist/ROBINSIChecklist/resources';
 import { SectionBQuestionPage } from './pages/SectionBQuestionPage';
 import { DomainQuestionPage } from './pages/DomainQuestionPage';
 import { DomainDirectionPage } from './pages/DomainDirectionPage';
@@ -465,6 +466,7 @@ export const robinsIAdapter: ReconciliationAdapter<
   title: 'ROBINS-I Reconciliation',
   pageCounterLabel: 'Item',
   getPageLabel: (pageIndex: number) => `Item ${pageIndex + 1}`,
+  resources: ROBINSI_RESOURCES,
 
   buildNavItems,
   deriveFinalAnswers,
@@ -472,6 +474,7 @@ export const robinsIAdapter: ReconciliationAdapter<
 
   hasAnswer,
   isAgreement,
+  countsTowardAgreement: item => item.type !== NAV_ITEM_TYPES.SECTION_B,
 
   autoFillFromReviewer1,
   resetAllAnswers,

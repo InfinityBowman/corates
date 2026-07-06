@@ -30,6 +30,7 @@ import {
 } from '@/components/checklist/AMSTAR2Checklist/checklist-compare.js';
 import type { ComparisonResult } from '@corates/shared/checklists/amstar2';
 import { createChecklist } from '@/components/checklist/AMSTAR2Checklist/checklist.js';
+import { AMSTAR2_RESOURCES } from '@/components/checklist/AMSTAR2Checklist/resources';
 import { hasQuestionAnswer } from './navbar-utils.js';
 import { ReconciliationQuestionPage } from './ReconciliationQuestionPage';
 import { Navbar } from './Navbar';
@@ -334,6 +335,7 @@ export const amstar2Adapter: ReconciliationAdapter<
   title: 'Reconciliation',
   pageCounterLabel: 'Question',
   getPageLabel: (pageIndex: number) => `Question ${pageIndex + 1}`,
+  resources: AMSTAR2_RESOURCES,
 
   buildNavItems: () => AMSTAR2_NAV_ITEMS,
   deriveFinalAnswers,

@@ -102,29 +102,36 @@ export function NavbarDomainPill({
         <TooltipContent side='bottom'>{tooltipContent}</TooltipContent>
       </Tooltip>
 
-      {/* Expanded question pills */}
-      {isExpanded && (
-        <div className='flex items-center overflow-visible py-1'>
-          {items.map((item, idx) => {
-            const globalIndex = allNavItems?.indexOf(item) ?? -1;
-            const isFirst = idx === 0;
-            const isLast = idx === items.length - 1;
-            return (
-              <QuestionPill
-                key={item.key}
-                item={item}
-                globalIndex={globalIndex}
-                currentPage={currentPage}
-                goToPage={goToPage}
-                comparison={comparison}
-                finalAnswers={finalAnswers}
-                isFirst={isFirst}
-                isLast={isLast}
-              />
-            );
-          })}
-        </div>
-      )}
+      {/* Horizontal expand/collapse for question pills. Kept mounted so
+          max-width/opacity can transition, matching the ROB-2 pill slide */}
+      <div
+        className='flex items-center overflow-hidden py-1 transition-[max-width,opacity] duration-200 ease-out'
+        style={{
+          // 40px per item rather than ROB2's 36px: the wider "Dir" pill would
+          // otherwise clip when a section expands (worst case: Overall, one pill)
+          maxWidth: isExpanded ? `${items.length * 40}px` : '0px',
+          opacity: isExpanded ? 1 : 0,
+        }}
+      >
+        {items.map((item, idx) => {
+          const globalIndex = allNavItems?.indexOf(item) ?? -1;
+          const isFirst = idx === 0;
+          const isLast = idx === items.length - 1;
+          return (
+            <QuestionPill
+              key={item.key}
+              item={item}
+              globalIndex={globalIndex}
+              currentPage={currentPage}
+              goToPage={goToPage}
+              comparison={comparison}
+              finalAnswers={finalAnswers}
+              isFirst={isFirst}
+              isLast={isLast}
+            />
+          );
+        })}
+      </div>
     </div>
   );
 }

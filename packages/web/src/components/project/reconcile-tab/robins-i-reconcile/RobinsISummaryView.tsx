@@ -110,6 +110,7 @@ interface SummaryStats {
   total: number;
   agreed: number;
   disagreed: number;
+  scoredTotal: number;
   agreementPercentage: number;
   answered: number;
 }
@@ -148,9 +149,13 @@ export function RobinsISummaryView({
         {/* Stats */}
         {summary && (
           <div className='mb-6 grid grid-cols-4 gap-4'>
+            {/* Agreement stats cover domain items only; Section B questions are
+                reconciled but excluded from the agreement rate */}
             <div className='border-border bg-card rounded-lg border p-3 text-center'>
-              <div className='text-secondary-foreground text-2xl font-bold'>{summary.total}</div>
-              <div className='text-muted-foreground text-xs'>Total Items</div>
+              <div className='text-secondary-foreground text-2xl font-bold'>
+                {summary.scoredTotal}
+              </div>
+              <div className='text-muted-foreground text-xs'>Domain Items</div>
             </div>
             <div className='rounded-lg border border-green-200 bg-green-50 p-3 text-center'>
               <div className='text-2xl font-bold text-green-700'>{summary.agreed}</div>

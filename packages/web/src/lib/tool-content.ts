@@ -135,7 +135,7 @@ const TOOL_CONTENT: Record<string, ToolContent> = {
     comparisonWithAlternatives:
       'AMSTAR 2 is one of several tools for appraising systematic reviews. ROBIS (Whiting et al., 2016) is an alternative risk-of-bias tool for systematic reviews developed contemporaneously; ROBIS focuses more directly on bias domains while AMSTAR 2 takes a broader methodological-quality perspective. For appraising the underlying primary studies referenced by a review, use RoB 2 (for randomized trials) or ROBINS-I V2 (for non-randomized cohort studies of interventions) instead. AMSTAR 2 and ROBIS are sometimes applied side by side in methods research to triangulate quality judgements. For comparing systematic reviews across multiple appraisal frameworks, CoRATES supports running parallel appraisals against the same body of evidence.',
     scoringDescription:
-      'AMSTAR 2 does not produce a numerical score. Instead, the pattern of weaknesses across the seven critical and nine non-critical items determines an overall confidence rating: High, Moderate, Low, or Critically Low. The authors of AMSTAR 2 are explicit on this point: AMSTAR 2 is not intended to generate an overall score, and presenting an AMSTAR 2 result as a percentage or item-count is a misuse of the tool. CoRATES applies the published decision rules to derive the overall rating from the pattern of recorded weaknesses, and reviewers can override the suggested rating with documented rationale where the published rules do not capture the specifics of a review.',
+      'AMSTAR 2 does not produce a numerical score. Instead, the pattern of weaknesses across the seven critical and nine non-critical items determines an overall confidence rating: High, Moderate, Low, or Critically Low. The authors of AMSTAR 2 are explicit on this point: AMSTAR 2 is not intended to generate an overall score, and presenting an AMSTAR 2 result as a percentage or item-count is a misuse of the tool. CoRATES applies the published decision rules to derive the overall rating from the pattern of recorded weaknesses.',
     scoreLevels: [
       {
         name: 'High',
@@ -395,7 +395,7 @@ const TOOL_CONTENT: Record<string, ToolContent> = {
       {
         question: 'Does CoRATES automatically score ROBINS-I V2 assessments?',
         answer:
-          'CoRATES applies the V2 algorithms to map signalling-question responses to suggested domain-level and overall risk-of-bias judgements, and updates them in real time as reviewers answer questions. Reviewers can override suggested judgements with documented rationale. CoRATES does not modify the official scoring algorithms.',
+          'CoRATES applies the V2 algorithms to map signalling-question responses to domain-level and overall risk-of-bias judgements, and updates them in real time as reviewers answer questions. CoRATES does not modify the official scoring algorithms.',
       },
       {
         question: 'How does CoRATES support multi-reviewer ROBINS-I V2 assessment?',
@@ -565,7 +565,7 @@ const TOOL_CONTENT: Record<string, ToolContent> = {
       {
         question: 'Does CoRATES automatically score RoB 2 assessments?',
         answer:
-          'CoRATES applies the published RoB 2 algorithms to map signalling-question responses to suggested domain-level and overall risk-of-bias judgements, and updates them in real time as reviewers answer questions. Reviewers can override suggested judgements with documented rationale. CoRATES does not modify the official scoring algorithms.',
+          'CoRATES applies the published RoB 2 algorithms to map signalling-question responses to domain-level and overall risk-of-bias judgements, and updates them in real time as reviewers answer questions. CoRATES does not modify the official scoring algorithms.',
       },
       {
         question: 'Where are the official RoB 2 signalling questions and guidance?',

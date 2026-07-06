@@ -54,6 +54,7 @@ interface SummaryStats {
   total: number;
   agreed: number;
   disagreed: number;
+  scoredTotal: number;
   agreementPercentage: number;
   answered: number;
 }
@@ -119,9 +120,11 @@ export function ROB2SummaryView({
 
       {/* Stats Grid */}
       <div className='grid grid-cols-4 gap-4 border-b p-6'>
+        {/* Agreement stats cover domain items only; preliminary fields are
+            reconciled but excluded from the agreement rate */}
         <div className='bg-muted rounded-lg p-4 text-center'>
-          <div className='text-foreground text-2xl font-bold'>{summary?.total || 0}</div>
-          <div className='text-muted-foreground text-sm'>Total Items</div>
+          <div className='text-foreground text-2xl font-bold'>{summary?.scoredTotal || 0}</div>
+          <div className='text-muted-foreground text-sm'>Domain Items</div>
         </div>
         <div className='rounded-lg bg-green-50 p-4 text-center'>
           <div className='text-2xl font-bold text-green-700'>{summary?.agreed || 0}</div>

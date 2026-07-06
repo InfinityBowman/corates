@@ -7,7 +7,7 @@
  */
 
 import { useState, useMemo, useCallback, useRef, lazy, Suspense } from 'react';
-import { ArrowLeftIcon, ArrowRightIcon } from 'lucide-react';
+import { ArrowLeftIcon, ArrowRightIcon, InfoIcon } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -20,6 +20,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { SplitScreenLayout } from '@/components/checklist/SplitScreenLayout';
+import { ResourcesDialog } from '@/components/checklist/ResourcesDialog';
 import { useReconciliationPresence } from '@/hooks/useReconciliationPresence';
 import { PresenceAvatars } from '../PresenceAvatars';
 import { RemoteCursors } from '../RemoteCursors';
@@ -52,6 +53,7 @@ export function ReconciliationEngine({
   checklist2,
   reconciledChecklist,
   reconciledChecklistId: _reconciledChecklistId,
+  studyName,
   reviewer1Name,
   reviewer2Name,
   onSaveReconciled,
@@ -152,6 +154,8 @@ export function ReconciliationEngine({
 
   const NavbarComponent = adapter.NavbarComponent;
 
+  const [resourcesOpen, setResourcesOpen] = useState(false);
+
   const headerContent = (
     <>
       {/* Back button */}
@@ -173,11 +177,36 @@ export function ReconciliationEngine({
         </p>
       </div>
 
-      <div className='bg-border h-8 w-px shrink-0' />
+      {/* Study name */}
+      {studyName && (
+        <>
+          <div className='bg-border h-8 w-px shrink-0' />
+          <h2
+            className='text-secondary-foreground min-w-0 truncate text-sm font-medium'
+            title={studyName}
+          >
+            {studyName}
+          </h2>
+        </>
+      )}
+
+      {/* Guidance resources */}
+      {adapter.resources && (
+        <Button
+          variant='outline'
+          size='sm'
+          className='shrink-0'
+          onClick={() => setResourcesOpen(true)}
+        >
+          <InfoIcon className='size-4' />
+          Resources
+        </Button>
+      )}
 
       {/* Presence avatars */}
       {presence.remoteUsers.length > 0 && (
         <>
+          <div className='bg-border h-8 w-px shrink-0' />
           <PresenceAvatars
             users={presence.remoteUsers}
             onUserClick={(_userId, page) => {
@@ -185,30 +214,32 @@ export function ReconciliationEngine({
             }}
             getPageLabel={pageIndex => adapter.getPageLabel(pageIndex)}
           />
-          <div className='bg-border h-8 w-px shrink-0' />
         </>
-      )}
-
-      {/* Navbar */}
-      {engine.navItems.length > 0 && (
-        <div className='flex min-w-0 flex-1 items-center overflow-x-auto'>
-          <NavbarComponent
-            navItems={engine.navItems}
-            currentPage={engine.currentPage}
-            viewMode={engine.viewMode}
-            finalAnswers={engine.finalAnswers}
-            comparison={engine.comparison}
-            usersByPage={presence.usersByPage}
-            goToPage={engine.goToPage}
-            setViewMode={engine.setViewMode}
-            onReset={engine.handleReset}
-            expandedDomain={engine.expandedDomain}
-            setExpandedDomain={engine.setExpandedDomain}
-          />
-        </div>
       )}
     </>
   );
+
+  // Navbar gets its own row above the checklist panel only - the title row has
+  // too little horizontal room for the domain pills, and a full-width row would
+  // stack a third bar over the PDF panel's own toolbar
+  const navbarStrip =
+    engine.navItems.length > 0 ?
+      <div className='border-border bg-card sticky top-0 z-10 flex items-center overflow-x-auto border-b px-4'>
+        <NavbarComponent
+          navItems={engine.navItems}
+          currentPage={engine.currentPage}
+          viewMode={engine.viewMode}
+          finalAnswers={engine.finalAnswers}
+          comparison={engine.comparison}
+          usersByPage={presence.usersByPage}
+          goToPage={engine.goToPage}
+          setViewMode={engine.setViewMode}
+          onReset={engine.handleReset}
+          expandedDomain={engine.expandedDomain}
+          setExpandedDomain={engine.setExpandedDomain}
+        />
+      </div>
+    : null;
 
   // -----------------------------------------------------------------------
   // PDF state
@@ -228,6 +259,15 @@ export function ReconciliationEngine({
 
   return (
     <div className='bg-secondary flex h-full flex-col'>
+      {/* Guidance resources dialog */}
+      {adapter.resources && (
+        <ResourcesDialog
+          open={resourcesOpen}
+          onClose={() => setResourcesOpen(false)}
+          resources={adapter.resources}
+        />
+      )}
+
       {/* Save confirmation dialog */}
       <AlertDialog open={engine.finishDialogOpen} onOpenChange={engine.setFinishDialogOpen}>
         <AlertDialogContent>
@@ -264,6 +304,8 @@ export function ReconciliationEngine({
       >
         {/* First panel: Reconciliation view with cursor tracking */}
         <div ref={containerRef} className='relative h-full overflow-auto' onScroll={handleScroll}>
+          {navbarStrip}
+
           <RemoteCursors users={presence.usersWithCursors} containerScrollY={containerScrollY} />
 
           <div className='mx-auto max-w-7xl px-4 py-4'>

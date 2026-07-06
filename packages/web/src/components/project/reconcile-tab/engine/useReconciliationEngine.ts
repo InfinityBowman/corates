@@ -159,21 +159,28 @@ export function useReconciliationEngine({
   );
 
   const summaryStats: ReconciliationSummaryStats = useMemo(() => {
+    // Items the adapter excludes (pre-domain preliminary/Section B fields) still
+    // appear in navigation and the reconciled totals, but are left out of the
+    // reviewer agreement rate.
+    const countsTowardAgreement = adapter.countsTowardAgreement;
+    const scoredItems =
+      countsTowardAgreement ? navItems.filter(item => countsTowardAgreement(item)) : navItems;
     let agreed = 0;
     let disagreed = 0;
-    for (const item of navItems) {
+    for (const item of scoredItems) {
       if (adapter.isAgreement(item, comparison)) {
         agreed++;
       } else {
         disagreed++;
       }
     }
-    const total = navItems.length;
+    const scoredTotal = scoredItems.length;
     return {
-      total,
+      total: navItems.length,
       agreed,
       disagreed,
-      agreementPercentage: total > 0 ? Math.round((agreed / total) * 100) : 0,
+      scoredTotal,
+      agreementPercentage: scoredTotal > 0 ? Math.round((agreed / scoredTotal) * 100) : 0,
       answered: answeredCount,
     };
   }, [adapter, navItems, comparison, answeredCount]);

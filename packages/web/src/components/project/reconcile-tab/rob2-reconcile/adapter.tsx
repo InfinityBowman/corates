@@ -37,6 +37,7 @@ import {
   NAV_ITEM_TYPES,
   type Rob2NavItem,
 } from './navbar-utils.js';
+import { ROB2_RESOURCES } from '@/components/checklist/ROB2Checklist/resources';
 import { PreliminaryPage } from './pages/PreliminaryPage';
 import { SignallingQuestionPage } from './pages/SignallingQuestionPage';
 import { DomainDirectionPage } from './pages/DomainDirectionPage';
@@ -566,6 +567,7 @@ export const rob2Adapter: ReconciliationAdapter<
   title: 'ROB-2 Reconciliation',
   pageCounterLabel: 'Item',
   getPageLabel: (pageIndex: number) => `Item ${pageIndex + 1}`,
+  resources: ROB2_RESOURCES,
 
   buildNavItems,
   deriveFinalAnswers,
@@ -573,6 +575,7 @@ export const rob2Adapter: ReconciliationAdapter<
 
   hasAnswer,
   isAgreement,
+  countsTowardAgreement: item => item.type !== NAV_ITEM_TYPES.PRELIMINARY,
 
   autoFillFromReviewer1,
   resetAllAnswers,

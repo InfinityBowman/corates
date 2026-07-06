@@ -3,6 +3,7 @@ import type * as Y from 'yjs';
 import type { getUserColor } from '@/lib/userColors.js';
 import type { TextRef } from '@/primitives/useProject/checklists';
 import type { PdfEntry } from '@/stores/projectStore';
+import type { ChecklistResources } from '@/components/checklist/ResourcesDialog';
 
 // ---------------------------------------------------------------------------
 // Presence types (mirrored from useReconciliationPresence to avoid
@@ -135,9 +136,12 @@ export interface SummaryContext<
 }
 
 export interface ReconciliationSummaryStats {
+  /** All navigation items, including ones excluded from the agreement rate */
   total: number;
   agreed: number;
   disagreed: number;
+  /** Items counted toward the agreement rate (agreed + disagreed) */
+  scoredTotal: number;
   agreementPercentage: number;
   answered: number;
 }
@@ -172,6 +176,8 @@ export interface ReconciliationAdapter<
   pageCounterLabel: string;
   /** Presence tooltip label (e.g. "Question 3" vs "Item 3") */
   getPageLabel: (pageIndex: number) => string;
+  /** Optional: guidance links shown via a Resources button in the header */
+  resources?: ChecklistResources;
 
   // --- Data derivation ---
 
@@ -208,6 +214,14 @@ export interface ReconciliationAdapter<
 
   /** Whether reviewers agreed on this nav item */
   isAgreement: (item: TNavItem, comparison: TComparison) => boolean;
+
+  /**
+   * Optional: whether this nav item counts toward the agreement rate.
+   * ROB2 excludes preliminary fields and ROBINS-I excludes Section B so the
+   * rate reflects only the risk-of-bias assessment items, not the
+   * pre-domain study-description questions. Omitted = all items count.
+   */
+  countsTowardAgreement?: (item: TNavItem) => boolean;
 
   // --- Write operations ---
 
@@ -292,6 +306,7 @@ export interface ReconciliationEngineProps {
   checklist2: unknown;
   reconciledChecklist: unknown;
   reconciledChecklistId: string | null;
+  studyName?: string;
   reviewer1Name: string;
   reviewer2Name: string;
   onSaveReconciled: (name?: string) => void;

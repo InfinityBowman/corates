@@ -434,6 +434,7 @@ export function ReconciliationWrapper({
     checklist2: checklist2Data,
     reconciledChecklist: reconciledChecklistData,
     reconciledChecklistId,
+    studyName: currentStudy?.name,
     reviewer1Name: getReviewerName(checklist1Meta?.assignedTo ?? null),
     reviewer2Name: getReviewerName(checklist2Meta?.assignedTo ?? null),
     onSaveReconciled: handleSaveReconciled,
