@@ -36,7 +36,7 @@ import {
 import { deleteAdminStorageDocumentsAction } from '@/server/functions/admin-storage.functions';
 
 interface SessionResponse {
-  user?: { role?: string; [key: string]: unknown };
+  user?: { role?: string; name?: string; email?: string; [key: string]: unknown };
   session?: { impersonatedBy?: string; [key: string]: unknown };
 }
 
@@ -44,8 +44,10 @@ interface AdminState {
   isAdminChecked: boolean;
   isAdmin: boolean;
   isImpersonating: boolean;
-  impersonatedBy: string | null;
+  impersonationAdminName: string | null;
 }
+
+const IMPERSONATION_ADMIN_KEY = 'corates-impersonation-admin';
 
 interface AdminActions {
   checkAdminStatus: () => Promise<boolean>;
@@ -58,7 +60,7 @@ export const useAdminStore = create<AdminState & AdminActions>()(set => ({
   isAdminChecked: false,
   isAdmin: false,
   isImpersonating: false,
-  impersonatedBy: null,
+  impersonationAdminName: null,
 
   checkAdminStatus: async () => {
     try {
@@ -83,24 +85,37 @@ export const useAdminStore = create<AdminState & AdminActions>()(set => ({
         toastMessage: false,
       });
       if (data?.session?.impersonatedBy) {
-        set({ isImpersonating: true, impersonatedBy: data.session.impersonatedBy });
+        set({
+          isImpersonating: true,
+          impersonationAdminName: localStorage.getItem(IMPERSONATION_ADMIN_KEY),
+        });
         return;
       }
-      set({ isImpersonating: false, impersonatedBy: null });
+      set({ isImpersonating: false, impersonationAdminName: null });
     } catch (err) {
-      set({ isImpersonating: false, impersonatedBy: null });
+      set({ isImpersonating: false, impersonationAdminName: null });
       console.error('[Admin] Error checking impersonation status:', err);
     }
   },
 
   impersonateUser: async userId => {
+    try {
+      const data = await apiFetch.get<SessionResponse>('/api/auth/get-session', {
+        toastMessage: false,
+      });
+      const adminName = data?.user?.name || data?.user?.email;
+      if (adminName) localStorage.setItem(IMPERSONATION_ADMIN_KEY, adminName);
+    } catch {
+      // Banner falls back to generic text without the stashed name
+    }
     await impersonateUserAction({ data: { userId } });
     set({ isImpersonating: true });
-    window.location.href = '/';
+    window.location.href = '/dashboard';
   },
 
   stopImpersonation: async () => {
     await stopImpersonationAction();
+    localStorage.removeItem(IMPERSONATION_ADMIN_KEY);
     set({ isImpersonating: false });
     window.location.href = '/admin';
   },

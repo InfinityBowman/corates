@@ -45,6 +45,13 @@ export function AppLayout() {
 
   const location = useLocation();
   const isImpersonating = useAdminStore(s => s.isImpersonating);
+  const checkImpersonationStatus = useAdminStore(s => s.checkImpersonationStatus);
+
+  // The store resets on the full-page reload that impersonateUser/stopImpersonation
+  // trigger, so re-derive impersonation state from the session on mount.
+  useEffect(() => {
+    checkImpersonationStatus();
+  }, [checkImpersonationStatus]);
 
   // Routes that should NOT show the main sidebar
   const shouldHideSidebar =
