@@ -13,7 +13,7 @@ export default [
   //   },
   // },
   {
-    files: ['**/*.{js,jsx,ts,tsx}'],
+    files: ['**/*.{js,mjs,jsx,ts,tsx}'],
     plugins: {
       corates: coratesRules,
       '@typescript-eslint': tseslint.plugin,

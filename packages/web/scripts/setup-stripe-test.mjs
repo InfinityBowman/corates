@@ -1,4 +1,3 @@
-/* global console, process */
 /**
  * Stripe Test Setup Script
  * Automatically creates Stripe test products and prices, then writes to .env file

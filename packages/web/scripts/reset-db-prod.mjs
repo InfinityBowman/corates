@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/* global console, process */
 /**
  * Reset production D1 database, clear R2 bucket, and redeploy workers
  *

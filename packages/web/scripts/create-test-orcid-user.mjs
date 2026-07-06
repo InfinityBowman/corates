@@ -1,5 +1,3 @@
-/* global console, process */
-
 // Run with:
 // pnpm user:create-orcid:local -- --email test@example.com --orcid-id 0000-0001-2345-6789
 // Or simply:

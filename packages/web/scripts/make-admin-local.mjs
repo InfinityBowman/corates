@@ -1,5 +1,3 @@
-/* global console, process */
-
 // Run with:
 // pnpm user:make-admin:local -- --email test@example.com
 // Or simply:

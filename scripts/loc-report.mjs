@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/* global console, process */
 /**
  * LOC (Lines of Code) report script using tokei
  *
@@ -126,8 +125,7 @@ function printLanguageTable(data, topN = null) {
   );
   console.log(c('gray', '  ' + '\u2500'.repeat(80)));
 
-  // eslint-disable-next-line no-unused-vars
-  for (const { lang, code, comments, blanks, files } of displayLangs) {
+  for (const { lang, code, comments, files } of displayLangs) {
     const langColor = getLangColor(lang);
     console.log(
       '  ' +

@@ -1,5 +1,3 @@
-/* global console, process */
-
 // run with
 // pnpm -s user:make-admin:prod -- --dry-run --email test@example.com
 // Run the below to make the user (default email) an admin for real:
