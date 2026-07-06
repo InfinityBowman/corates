@@ -222,15 +222,16 @@ export function PricingTable({
             </p>
           </div>
           {isMarketing ?
-            <Link
-              to={buildSignUpUrl(trialPlan)}
-              className='shrink-0 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-blue-700'
+            <Button
+              asChild
+              size='lg'
+              className='h-auto shrink-0 rounded-xl py-2.5 font-semibold'
             >
-              Start Free Trial
-            </Link>
+              <Link to={buildSignUpUrl(trialPlan)}>Start Free Trial</Link>
+            </Button>
           : <Button
               size='lg'
-              className='shrink-0'
+              className='h-auto shrink-0 rounded-xl py-2.5 font-semibold'
               onClick={handleStartTrial}
               disabled={loadingTier !== null}
             >
@@ -368,20 +369,19 @@ export function PricingTable({
         {/* CTA */}
         {plan.cta !== 'none' &&
           (isMarketing ?
-            <Link
-              to={buildSignUpUrl(plan)}
-              className={`mb-6 block w-full rounded-xl px-4 py-3 text-center text-sm font-semibold transition-all focus:ring-2 focus:ring-offset-2 focus:outline-none ${
-                isPopular ?
-                  'bg-primary hover:bg-primary/90 focus:ring-primary text-white'
-                : 'bg-foreground text-background hover:bg-foreground/90 focus:ring-foreground'
+            <Button
+              asChild
+              size='lg'
+              className={`mb-6 h-auto w-full rounded-xl px-4 py-2.5 font-semibold ${
+                !isPopular ? 'bg-foreground text-background hover:bg-foreground/90' : ''
               }`}
             >
-              {getButtonText(plan)}
-            </Link>
+              <Link to={buildSignUpUrl(plan)}>{getButtonText(plan)}</Link>
+            </Button>
           : <Button
               size='lg'
               variant={isCurrent ? 'secondary' : 'default'}
-              className={`mb-6 w-full ${
+              className={`mb-6 h-auto w-full rounded-xl px-4 py-2.5 font-semibold ${
                 !isCurrent && !isPopular ?
                   'bg-foreground text-background hover:bg-foreground/90'
                 : ''
@@ -447,15 +447,16 @@ export function PricingTable({
               </p>
             </div>
             {isMarketing ?
-              <Link
-                to={buildSignUpUrl(singleProjectPlan)}
-                className='bg-foreground text-background hover:bg-foreground/90 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all'
+              <Button
+                asChild
+                size='lg'
+                className='bg-foreground text-background hover:bg-foreground/90 h-auto rounded-xl px-5 py-2.5 font-semibold'
               >
-                Buy Now
-              </Link>
+                <Link to={buildSignUpUrl(singleProjectPlan)}>Buy Now</Link>
+              </Button>
             : <Button
                 size='lg'
-                className='bg-foreground text-background hover:bg-foreground/90'
+                className='bg-foreground text-background hover:bg-foreground/90 h-auto rounded-xl px-5 py-2.5 font-semibold'
                 onClick={handleBuySingleProject}
                 disabled={loadingTier !== null || currentTier === 'single_project'}
               >

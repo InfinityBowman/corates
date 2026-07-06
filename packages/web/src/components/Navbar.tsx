@@ -3,6 +3,7 @@ import { Link, useHydrated } from '@tanstack/react-router';
 import { MenuIcon, XIcon } from 'lucide-react';
 
 import { useAuthStore, selectIsLoggedIn, selectUser } from '@/stores/authStore';
+import { Button } from '@/components/ui/button';
 import EarlyAccessBanner from './EarlyAccessBanner';
 
 const navLinks = [
@@ -49,25 +50,16 @@ function MobileMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
             style={{ animationDelay: getDelay(navLinks.length) }}
           >
             {isLoggedIn ?
-              <Link
-                to='/dashboard'
-                className='block w-full rounded-lg border border-transparent bg-blue-600 px-4 py-3 text-center font-medium text-white shadow-sm transition-colors hover:bg-blue-700'
-              >
-                My Dashboard
-              </Link>
+              <Button asChild size='lg' className='w-full'>
+                <Link to='/dashboard'>My Dashboard</Link>
+              </Button>
             : <>
-                <Link
-                  to='/signin'
-                  className='block w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-center font-medium text-gray-700 transition-colors hover:bg-gray-50'
-                >
-                  Sign In
-                </Link>
-                <Link
-                  to='/signup'
-                  className='bg-primary text-primary-foreground hover:bg-primary/90 block w-full rounded-lg border border-transparent px-4 py-3 text-center font-medium shadow-sm transition-colors'
-                >
-                  Sign Up
-                </Link>
+                <Button asChild variant='outline' size='lg' className='w-full'>
+                  <Link to='/signin'>Sign In</Link>
+                </Button>
+                <Button asChild size='lg' className='w-full'>
+                  <Link to='/signup'>Sign Up</Link>
+                </Button>
               </>
             }
           </div>
@@ -125,33 +117,25 @@ export default function Navbar() {
                 <span className='hidden sm:inline-flex'>
                   Welcome back, {user?.name || 'User'}!&nbsp;
                 </span>
-                <Link
-                  to='/dashboard'
-                  className='hidden items-center gap-2 rounded-lg border border-transparent bg-blue-600 px-4 py-1.5 text-white shadow-sm transition-colors hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:outline-none sm:inline-flex'
-                >
-                  My Dashboard
-                </Link>
+                <Button asChild className='hidden sm:inline-flex'>
+                  <Link to='/dashboard'>My Dashboard</Link>
+                </Button>
               </>
             : <>
-                <Link
-                  to='/signin'
-                  className='focus-visible:ring-primary hidden items-center rounded-lg border border-gray-200 bg-white px-4 py-1.5 text-gray-700 transition-colors hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none sm:inline-flex'
-                >
-                  Sign In
-                </Link>
-                <Link
-                  to='/signup'
-                  className='bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-primary hidden items-center gap-2 rounded-lg border border-transparent px-4 py-1.5 shadow-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none sm:inline-flex'
-                >
-                  Sign Up
-                </Link>
+                <Button asChild variant='outline' className='hidden sm:inline-flex'>
+                  <Link to='/signin'>Sign In</Link>
+                </Button>
+                <Button asChild className='hidden sm:inline-flex'>
+                  <Link to='/signup'>Sign Up</Link>
+                </Button>
               </>
             }
 
             {/* Mobile Menu Button */}
-            <button
-              type='button'
-              className='inline-flex items-center justify-center rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:outline-none sm:hidden'
+            <Button
+              variant='ghost'
+              size='icon-lg'
+              className='text-gray-600 hover:text-gray-900 sm:hidden'
               onClick={toggleMobileMenu}
               aria-expanded={mobileMenuOpen}
               aria-controls='mobile-menu'
@@ -160,7 +144,7 @@ export default function Navbar() {
               {mobileMenuOpen ?
                 <XIcon className='size-6' />
               : <MenuIcon className='size-6' />}
-            </button>
+            </Button>
           </div>
         </div>
       </nav>

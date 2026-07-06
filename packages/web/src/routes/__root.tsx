@@ -3,6 +3,7 @@ import { HeadContent, Link, Outlet, Scripts, createRootRoute } from '@tanstack/r
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
 import { AuthProvider } from '@/components/auth/AuthProvider';
+import { Button } from '@/components/ui/button';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import appCss from '../styles.css?url';
@@ -206,13 +207,10 @@ function RootError({ error, reset }: ErrorComponentProps) {
         </div>
         <h3 className='text-foreground mb-1 text-base font-semibold'>Something went wrong</h3>
         <p className='text-muted-foreground mb-5 text-sm'>{message}</p>
-        <button
-          onClick={reset}
-          className='bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors'
-        >
+        <Button onClick={reset}>
           <RefreshCwIcon className='size-3.5' />
           Try again
-        </button>
+        </Button>
       </div>
     </div>
   );

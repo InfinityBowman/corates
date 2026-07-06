@@ -16,6 +16,7 @@ import { useAuthStore, selectUser, selectIsAuthLoading } from '@/stores/authStor
 import { getInvitation, acceptInvitation } from '@/server/functions/invitations.functions';
 import { getDomainError, getUserFriendlyMessage, parseError } from '@/lib/error-utils';
 import { showToast } from '@/components/ui/toast';
+import { Button } from '@/components/ui/button';
 import { PrimaryButton } from '@/components/auth/AuthButtons';
 import { RouteError } from '@/components/RouteError';
 
@@ -203,13 +204,14 @@ function InvitePage() {
             >
               Accept Invitation
             </PrimaryButton>
-            <button
+            <Button
               type='button'
+              variant='link'
               onClick={handleSwitchAccount}
-              className='text-muted-foreground hover:text-secondary-foreground mx-auto block py-1 text-sm underline-offset-4 transition hover:underline'
+              className='text-muted-foreground hover:text-secondary-foreground mx-auto'
             >
               Sign in with a different account
-            </button>
+            </Button>
           </div>
         : <div className='flex flex-col gap-3'>
             <p className='text-muted-foreground text-xs'>

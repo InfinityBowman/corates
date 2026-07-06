@@ -12,6 +12,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { config } from '../lib/config';
 import { submitContactForm } from '@/server/functions/contact.functions';
+import { Button } from '@/components/ui/button';
 
 const pageUrl = `${config.appUrl}/contact`;
 const title = 'Contact Us - CoRATES';
@@ -191,10 +192,11 @@ function ContactPage() {
                   />
                 </div>
 
-                <button
+                <Button
                   type='submit'
+                  size='lg'
                   disabled={formState === 'sending'}
-                  className='flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
+                  className='h-auto w-full gap-2 rounded-lg py-3 text-base'
                 >
                   {formState === 'sending' ?
                     <>
@@ -206,7 +208,7 @@ function ContactPage() {
                       Send Message
                     </>
                   }
-                </button>
+                </Button>
 
                 {formState === 'sent' && (
                   <p className='text-center text-sm text-green-600'>
