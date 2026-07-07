@@ -125,10 +125,10 @@ export default function Navbar() {
                 </Button>
               </>
             : <>
-                <Button asChild variant='outline' className='hidden sm:inline-flex'>
+                <Button asChild variant='outline' size='lg' className='hidden px-4 sm:inline-flex'>
                   <Link to='/signin'>Sign In</Link>
                 </Button>
-                <Button asChild className='hidden sm:inline-flex'>
+                <Button asChild size='lg' className='hidden px-4 sm:inline-flex'>
                   <Link to='/signup'>Sign Up</Link>
                 </Button>
               </>

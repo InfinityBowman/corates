@@ -25,12 +25,13 @@ CoRATES is a web application designed to streamline the entire quality and risk-
 - **Framework**: React 19 with TanStack Start and TanStack Router
 - **Build**: Vite with TanStack Start
 - **Styling**: Tailwind CSS v4 with @tailwindcss/vite
-- **UI Components**: shadcn/ui (Radix-based) with `@ark-ui/react` for primitives Radix doesn't cover (editable, steps, qr-code, password-input, file-upload); lucide-react for icons
+- **UI Components**: shadcn/ui (Radix-based) with `@ark-ui/react` for primitives Radix doesn't cover (steps, qr-code, file-upload); lucide-react for icons
 - **Data Fetching**: TanStack Query (server state management)
 - **Client State**: Zustand
 - **Tables**: TanStack React Table
 - **Charts**: D3 for user-facing charts, Recharts for admin dashboards
 - **PDF Viewer**: EmbedPDF with plugin ecosystem
+- **PDF Export**: jsPDF with jspdf-autotable for figure and results-table export
 - **Local Storage**: Dexie (IndexedDB wrapper) with y-dexie for Yjs persistence
 - **Forms & Validation**: Zod (schema validation)
 - **Testing**: Vitest (unit + `@testing-library/react` + jsdom), vitest-browser-react for browser component tests, Playwright for e2e
@@ -46,6 +47,7 @@ CoRATES is a web application designed to streamline the entire quality and risk-
 - **Storage**: Cloudflare R2 (S3-compatible object storage for PDFs)
 - **Auth**: Better Auth with org, admin, and Stripe integration for payments
 - **Email**: Postmark for transactional emails
+- **Error Monitoring**: Sentry (`@sentry/react` on the frontend, `@sentry/cloudflare` on Workers)
 - **Validation**: Zod (for schema-heavy routes), ad-hoc type checks elsewhere
 - **Testing**: Vitest with `@cloudflare/vitest-pool-workers` for server tests (real D1 + bindings)
 
@@ -72,7 +74,7 @@ CoRATES is a web application designed to streamline the entire quality and risk-
 - `packages/stripe-purchases` - Isolated Hono-based Cloudflare Worker for Stripe purchase webhooks
 - `packages/db` - Drizzle schema, client, and typed helpers
 - `packages/shared` - Shared TypeScript utilities, types, and domain error definitions
-- `packages/ai` - AI-adjacent utilities
+- `packages/ai` - Python (uv) AI experiments: structured data extraction from research papers using LangExtract
 - `packages/docs` - VitePress documentation and guides
 - `packages/stripe-dev` - Local Stripe listener setup for Turbo
 
