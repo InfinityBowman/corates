@@ -60,7 +60,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.16.20",
+    "@cloudflare/vitest-pool-workers": "^0.18.4",
     "@cloudflare/workers-types": "^4.20260628.1",
     "@vitest/runner": "^4.1.9",
     "@vitest/snapshot": "^4.1.9",
@@ -69,6 +69,6 @@
     "localflare": "^0.5.0",
     "typescript": "^5.9.3",
     "vitest": "^4.1.9",
-    "wrangler": "^4.105.0"
+    "wrangler": "^4.110.0"
   }
 }

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { env } from 'cloudflare:test';
+import { env } from 'cloudflare:workers';
 import { resetTestDatabase } from '@/__tests__/server/helpers';
 import { createDb } from '@corates/db/client';
 import { stripeEventLedger } from '@corates/db/schema';

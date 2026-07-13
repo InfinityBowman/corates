@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { env } from 'cloudflare:test';
+import { env } from 'cloudflare:workers';
 import { createDb } from '@corates/db/client';
 import { DomainErrorException } from '@corates/shared';
 import { resetTestDatabase, clearProjectDOs, seedMediaFile } from '@/__tests__/server/helpers';

@@ -3,7 +3,7 @@ import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
 import { buildOrg, buildOrgMember, resetCounter } from '@/__tests__/server/factories';
 import { createDb } from '@corates/db/client';
 import { DomainErrorException } from '@corates/shared';
-import { env } from 'cloudflare:test';
+import { env } from 'cloudflare:workers';
 import { projects } from '@corates/db/schema';
 import type { OrgId } from '@corates/shared/ids';
 import type { Session } from '@/server/middleware/auth';

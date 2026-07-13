@@ -4,7 +4,8 @@
  */
 
 import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
-import { env, runInDurableObject } from 'cloudflare:test';
+import { runInDurableObject } from 'cloudflare:test';
+import { env } from 'cloudflare:workers';
 import { verifyAuth } from '../../auth/config.js';
 import type { UserSession } from '../UserSession.js';
 import { STATIC_ORIGINS } from '../../config/origins';

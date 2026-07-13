@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { env } from 'cloudflare:test';
+import { env } from 'cloudflare:workers';
 import { createDb } from '@corates/db/client';
 import { subscription } from '@corates/db/schema';
 import { resetTestDatabase } from '@/__tests__/server/helpers';

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
-import { env } from 'cloudflare:test';
+import { env } from 'cloudflare:workers';
 import { DomainErrorException } from '@corates/shared';
 import { sendContactEmail } from '@/server/functions/contact.server';
 

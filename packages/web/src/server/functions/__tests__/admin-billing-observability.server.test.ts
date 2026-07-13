@@ -14,7 +14,7 @@ import {
 import { resetCounter, asOrgId } from '@/__tests__/server/factories';
 import { createDb } from '@corates/db/client';
 import { DomainErrorException } from '@corates/shared';
-import { env } from 'cloudflare:test';
+import { env } from 'cloudflare:workers';
 import type { OrgId } from '@corates/shared/ids';
 import type { Session } from '@/server/middleware/auth';
 import { reconcileAdminOrgBilling } from '@/server/functions/admin-orgs.server';

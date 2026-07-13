@@ -14,11 +14,10 @@
     "binding": "CF_VERSION_METADATA"
   },
 
-  "migrations": [
-    { "tag": "v1", "new_sqlite_classes": ["UserSession", "ProjectDoc"] },
-    { "tag": "v2", "new_sqlite_classes": ["EmailQueue"] },
-    { "tag": "v3", "deleted_classes": ["EmailQueue"] }
-  ],
+  "exports": {
+    "UserSession": { "type": "durable-object", "storage": "sqlite" },
+    "ProjectDoc": { "type": "durable-object", "storage": "sqlite" }
+  },
 
   "durable_objects": {
     "bindings": [

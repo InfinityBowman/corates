@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { env } from 'cloudflare:test';
+import { env } from 'cloudflare:workers';
 import { resetTestDatabase, clearProjectDOs, seedSubscription } from '@/__tests__/server/helpers';
 import {
   buildProject,

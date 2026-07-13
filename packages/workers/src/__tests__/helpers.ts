@@ -1,9 +1,9 @@
 import {
-  env,
   createExecutionContext,
   waitOnExecutionContext,
   runInDurableObject,
 } from 'cloudflare:test';
+import { env } from 'cloudflare:workers';
 import { createDb } from '@corates/db/client';
 import {
   user,

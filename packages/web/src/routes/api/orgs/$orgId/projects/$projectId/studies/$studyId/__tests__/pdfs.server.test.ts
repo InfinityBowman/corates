@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { env } from 'cloudflare:test';
+import { env } from 'cloudflare:workers';
 import { and, eq } from 'drizzle-orm';
 import { createDb } from '@corates/db/client';
 import { mediaFiles } from '@corates/db/schema';

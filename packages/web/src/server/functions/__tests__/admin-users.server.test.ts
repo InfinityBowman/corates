@@ -6,7 +6,7 @@
  * since it returns a Response.
  */
 import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
-import { env } from 'cloudflare:test';
+import { env } from 'cloudflare:workers';
 import { resetTestDatabase } from '@/__tests__/server/helpers';
 import {
   buildAdminUser,

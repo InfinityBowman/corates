@@ -104,7 +104,7 @@
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.42.3",
-    "@cloudflare/vitest-pool-workers": "^0.16.20",
+    "@cloudflare/vitest-pool-workers": "^0.18.4",
     "@cloudflare/workers-types": "^4.20260628.1",
     "@playwright/test": "^1.61.1",
     "@tailwindcss/vite": "^4.3.1",
@@ -127,6 +127,6 @@
     "vite": "^8.1.0",
     "vitest": "^4.1.9",
     "vitest-browser-react": "^2.2.0",
-    "wrangler": "^4.105.0"
+    "wrangler": "^4.110.0"
   }
 }
