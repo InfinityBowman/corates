@@ -19,7 +19,7 @@ const ROBINS_I_JUDGEMENT_PROFILES: Record<string, Record<string, Record<string, 
   domain1a: {
     low: { d1a_1: 'Y', d1a_2: 'Y', d1a_3: 'PN', d1a_4: 'PN' },
     moderate: { d1a_1: 'Y', d1a_2: 'Y', d1a_3: 'PN', d1a_4: 'Y' },
-    serious: { d1a_1: 'Y', d1a_2: 'SN', d1a_3: 'N', d1a_4: 'NA' },
+    serious: { d1a_1: 'Y', d1a_2: 'SN', d1a_3: 'N', d1a_4: 'N' },
     critical: { d1a_1: 'Y', d1a_2: 'NA', d1a_3: 'Y', d1a_4: 'Y' },
   },
   domain1b: {

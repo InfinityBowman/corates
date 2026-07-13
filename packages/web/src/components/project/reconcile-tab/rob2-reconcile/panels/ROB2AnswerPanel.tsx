@@ -39,7 +39,6 @@ interface ROB2AnswerPanelProps {
   commentYText?: any;
   responseOptions: string[];
   readOnly: boolean;
-  hideUseThis?: boolean;
   isSelected?: boolean;
   onAnswerChange?: (_answer: string) => void;
   onUseThis?: () => void;
@@ -56,7 +55,6 @@ export function ROB2AnswerPanel({
   commentYText,
   responseOptions,
   readOnly,
-  hideUseThis,
   isSelected,
   onAnswerChange,
   onUseThis,
@@ -69,7 +67,7 @@ export function ROB2AnswerPanel({
       {/* Panel Header */}
       <div className='mb-4 flex items-center justify-between'>
         <h3 className='text-foreground font-semibold'>{title}</h3>
-        {!isFinal && !hideUseThis && (
+        {!isFinal && (
           <button
             onClick={() => onUseThis?.()}
             className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${

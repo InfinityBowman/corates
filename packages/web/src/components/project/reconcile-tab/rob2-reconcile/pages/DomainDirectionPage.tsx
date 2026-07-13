@@ -158,7 +158,6 @@ export function DomainDirectionPage({
             direction={finalDirection}
             readOnly={false}
             onDirectionChange={onFinalDirectionChange}
-            hideUseThis={true}
           />
         </div>
       </div>

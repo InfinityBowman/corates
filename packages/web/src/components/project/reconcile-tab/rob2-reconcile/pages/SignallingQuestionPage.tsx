@@ -131,7 +131,6 @@ export function SignallingQuestionPage({
           responseOptions={responseOptions}
           readOnly={false}
           onAnswerChange={onFinalAnswerChange}
-          hideUseThis={true}
         />
       </div>
     </div>

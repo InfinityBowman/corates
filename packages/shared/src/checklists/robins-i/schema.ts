@@ -272,7 +272,7 @@ export const DOMAIN_1A: ROBINSDomain = {
       id: 'd1a_4',
       number: '1.4',
       text: 'Did the use of negative controls, quantitative bias analysis, or other considerations, suggest serious uncontrolled confounding?',
-      responseType: 'WITH_NA',
+      responseType: 'STANDARD',
     },
   },
   hasDirection: true,

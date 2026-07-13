@@ -81,7 +81,6 @@ export function DomainQuestionPage({
           comment={reviewer1Data?.comment}
           responseOptions={responseOptions}
           readOnly={true}
-          hideUseThis={isAgreement}
           isSelected={selectedSource === 'reviewer1'}
           onUseThis={onUseReviewer1}
         />
@@ -93,7 +92,6 @@ export function DomainQuestionPage({
           comment={reviewer2Data?.comment}
           responseOptions={responseOptions}
           readOnly={true}
-          hideUseThis={isAgreement}
           isSelected={selectedSource === 'reviewer2'}
           onUseThis={onUseReviewer2}
         />
@@ -105,7 +103,6 @@ export function DomainQuestionPage({
           commentYText={finalCommentYText}
           responseOptions={responseOptions}
           readOnly={false}
-          hideUseThis={true}
           onAnswerChange={onFinalAnswerChange}
         />
       </div>

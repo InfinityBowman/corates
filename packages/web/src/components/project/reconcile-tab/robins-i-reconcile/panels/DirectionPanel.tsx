@@ -17,7 +17,6 @@ interface DirectionPanelProps {
   direction?: string | null;
   directionOptions?: readonly string[];
   readOnly?: boolean;
-  hideUseThis?: boolean;
   isSelected?: boolean;
   onDirectionChange?: (_direction: string) => void;
   onUseThis?: () => void;
@@ -29,7 +28,6 @@ export function DirectionPanel({
   direction,
   directionOptions,
   readOnly = false,
-  hideUseThis = false,
   isSelected = false,
   onDirectionChange,
   onUseThis,
@@ -43,7 +41,7 @@ export function DirectionPanel({
       {/* Panel Header */}
       <div className='mb-4 flex items-center justify-between'>
         <h3 className='text-foreground font-semibold'>{title}</h3>
-        {!isFinal && !hideUseThis && (
+        {!isFinal && (
           <button
             onClick={() => onUseThis?.()}
             className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
