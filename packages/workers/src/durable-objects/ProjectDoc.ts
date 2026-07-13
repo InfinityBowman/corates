@@ -202,6 +202,9 @@ class ProjectDocBase extends DurableObject<Env> {
   private doc: Y.Doc | null = null;
   private awareness: awarenessProtocol.Awareness | null = null;
   private persistence: ProjectDocPersistence = new ProjectDocPersistence(this.ctx);
+  // Set when a durability fallback (forceCompact) failed and the in-memory doc
+  // holds state that storage does not; retried on the next update.
+  private forceCompactPending = false;
 
   _setLoggerForTest(logger: PersistenceLogger): void {
     this.persistence.setLogger(logger);
@@ -609,7 +612,20 @@ class ProjectDocBase extends DurableObject<Env> {
     );
 
     this.persistence.ensureSchema();
-    this.persistence.loadUpdatesIntoDoc(this.doc);
+    try {
+      this.persistence.loadUpdatesIntoDoc(this.doc);
+    } catch (err) {
+      // A corrupt snapshot chunk (the one unguarded load path) means the
+      // doc's base state is unreadable. this.doc was already assigned above,
+      // so without this reset every later initializeDoc call would early
+      // return and silently serve a PARTIAL doc -- clients would then "heal"
+      // us into a forked history. Reset so each request retries the load and
+      // fails loudly until the storage is repaired.
+      this.doc = null;
+      this.awareness = null;
+      captureError(err, { tags: { component: 'project-doc', action: 'initialize-doc-load' } });
+      throw err;
+    }
 
     // After hibernation wake-up, existing WebSocket connections survive but
     // the in-memory Y.Doc was lost. Send sync step 1 to all existing
@@ -625,26 +641,35 @@ class ProjectDocBase extends DurableObject<Env> {
       }
     }
 
-    // On doc update: broadcast to connected clients, then persist synchronously.
+    // On doc update: persist synchronously FIRST, then broadcast. DO output
+    // gates hold outgoing messages behind storage writes initiated before the
+    // send, so this ordering means clients only ever observe updates that
+    // durably landed -- broadcasting first would let clients see state that a
+    // failed write then silently discards.
+    //
     // When the single-row insert cannot store the update (oversized -- e.g. a
     // large merged offline backlog -- or an SQL failure), fall back to
     // persisting the full in-memory doc as a chunked snapshot. Without that
     // fallback the update lives only in memory and is silently lost on the
     // next eviction, while unrelated smaller updates persist fine -- which
-    // reads as one reviewer's work vanishing.
+    // reads as one reviewer's work vanishing. If the fallback itself fails,
+    // retry it on every subsequent update instead of waiting for the
+    // compaction threshold.
     this.doc.on('update', (update: Uint8Array, origin: unknown) => {
+      const result = this.persistence.persistUpdate(update);
+      if (result === 'compact') {
+        this.persistence.compact(this.doc!);
+      } else if (result === 'oversized' || result === 'failed') {
+        this.forceCompactPending = !this.persistence.forceCompact(this.doc!);
+      } else if (this.forceCompactPending) {
+        this.forceCompactPending = !this.persistence.forceCompact(this.doc!);
+      }
+
       const encoder = encoding.createEncoder();
       encoding.writeVarUint(encoder, messageSync);
       syncProtocol.writeUpdate(encoder, update);
       const message = encoding.toUint8Array(encoder);
       this.broadcastBinary(message, origin as WebSocket | null);
-
-      const result = this.persistence.persistUpdate(update);
-      if (result === 'compact') {
-        this.persistence.compact(this.doc!);
-      } else if (result === 'oversized' || result === 'failed') {
-        this.persistence.forceCompact(this.doc!);
-      }
     });
 
     this.awareness.on(

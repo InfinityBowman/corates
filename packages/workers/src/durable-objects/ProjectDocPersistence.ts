@@ -209,18 +209,21 @@ export class ProjectDocPersistence {
    * individual update could not be stored (oversized or insert failure):
    * the snapshot necessarily contains that update since it was already applied
    * to the in-memory doc. Throwing here would crash the doc update handler
-   * mid-transaction, so failures are captured instead; the update then only
-   * survives until eviction (pre-existing behavior, now loudly reported).
+   * mid-transaction, so failures are captured instead and reported via the
+   * return value -- the caller must retry on a later update, or the unstored
+   * state survives only until eviction.
    */
-  forceCompact(doc: Y.Doc): void {
+  forceCompact(doc: Y.Doc): boolean {
     try {
       const snapshot = Y.encodeStateAsUpdate(doc);
       this.writeSnapshotChunked(snapshot);
+      return true;
     } catch (err) {
       this.logger.error('force_compaction_failed', {
         projectId: this.ctx.id.toString(),
         error: err,
       });
+      return false;
     }
   }
 

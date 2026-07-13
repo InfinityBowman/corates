@@ -7,6 +7,7 @@ import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { getWsBaseUrl } from '@/config/api';
 import { useProjectStore } from '@/stores/projectStore';
+import { captureException } from '@/config/sentry';
 
 type Awareness = WebsocketProvider['awareness'];
 
@@ -102,9 +103,9 @@ export function createConnectionManager(
     // Awareness data is ephemeral (cursor positions, presence) so a dropped
     // update is invisible to users and corrected by the next update.
     const AWARENESS_MSG_TYPE = 1;
+    provider.messageHandlers = [...provider.messageHandlers];
     const originalAwarenessHandler = provider.messageHandlers[AWARENESS_MSG_TYPE];
     if (originalAwarenessHandler) {
-      provider.messageHandlers = [...provider.messageHandlers];
       provider.messageHandlers[AWARENESS_MSG_TYPE] = (
         encoder,
         decoder,
@@ -116,6 +117,30 @@ export function createConnectionManager(
           return originalAwarenessHandler(encoder, decoder, prov, emitSynced, msgType);
         } catch (err) {
           console.warn('Awareness update skipped:', (err as Error).message);
+        }
+      };
+    }
+
+    // Wrap the sync message handler so failures are REPORTED, not invisible.
+    // A throw inside readSyncMessage (e.g. while applying the server's state
+    // or encoding our reply) means the client never answers the server's
+    // SyncStep1 -- its local edits are then never pushed, which manifests as
+    // a reviewer's answers silently missing server-side with a clean-looking
+    // session. y-websocket has no error handling here, so without this wrap
+    // the exception surfaces as an unhandled websocket onmessage error at
+    // best and nothing at all at worst.
+    const SYNC_MSG_TYPE = 0;
+    const originalSyncHandler = provider.messageHandlers[SYNC_MSG_TYPE];
+    if (originalSyncHandler) {
+      provider.messageHandlers[SYNC_MSG_TYPE] = (encoder, decoder, prov, emitSynced, msgType) => {
+        try {
+          return originalSyncHandler(encoder, decoder, prov, emitSynced, msgType);
+        } catch (err) {
+          captureException(err, {
+            component: 'yjs-sync',
+            action: 'sync-message-handler',
+            projectId,
+          });
         }
       };
     }

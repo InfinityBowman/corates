@@ -38,8 +38,10 @@ const messageSync = 0;
 interface ProjectDocInternals {
   doc: Y.Doc | null;
   awareness: unknown;
+  forceCompactPending: boolean;
   persistence: {
     persistUpdate(update: Uint8Array): 'ok' | 'compact' | 'oversized' | 'failed';
+    forceCompact(doc: Y.Doc): boolean;
     compact(doc: Y.Doc): void;
     rowCount: number;
   };
@@ -341,6 +343,92 @@ describe('ProjectDoc sync durability edge cases', () => {
       const study = internals.doc!.getMap('reviews').get('study-1');
       expect(study).toBeDefined();
       expect(getChecklist(internals.doc!, 'study-1', 'cl-1').get('status')).toBe('in-progress');
+    });
+  });
+
+  it('a double failure (insert AND snapshot fallback) is retried on the next update', async () => {
+    const stub = getStub();
+    await runInDurableObject(stub, async (instance: ProjectDoc) => {
+      const internals = instance as unknown as ProjectDocInternals;
+      await internals.initializeDoc();
+      const serverDoc = internals.doc!;
+      const seed = new Y.Doc();
+      seedStudyWithChecklist(seed, 'study-1', 'cl-1');
+      Y.applyUpdate(serverDoc, Y.encodeStateAsUpdate(seed));
+
+      const clientDoc = new Y.Doc();
+      Y.applyUpdate(clientDoc, Y.encodeStateAsUpdate(serverDoc));
+      fillChecklist(clientDoc, 'study-1', 'cl-1', { answerCount: 12 });
+
+      // Worst case: the insert fails AND the forced-snapshot fallback fails
+      // (e.g. a transient storage outage). The update now exists only in the
+      // in-memory doc.
+      const originalPersist = internals.persistence.persistUpdate.bind(internals.persistence);
+      const originalForce = internals.persistence.forceCompact.bind(internals.persistence);
+      let forceCalls = 0;
+      internals.persistence.persistUpdate = () => 'failed';
+      internals.persistence.forceCompact = () => {
+        forceCalls++;
+        return false;
+      };
+
+      const sent: Uint8Array[] = [];
+      const ws = makeMockWs(sent);
+      await handshake(internals, clientDoc, ws, sent);
+      expect(answeredCount(internals.doc!, 'study-1', 'cl-1')).toBe(12);
+      expect(forceCalls).toBeGreaterThan(0);
+      expect(internals.forceCompactPending).toBe(true);
+
+      // Storage recovers. The NEXT update (any small live edit) must retry the
+      // forced snapshot -- without the retry flag, the unstored backlog would
+      // wait for the 500-row compaction threshold, an eviction-sized window.
+      internals.persistence.persistUpdate = originalPersist;
+      internals.persistence.forceCompact = originalForce;
+
+      getChecklist(clientDoc, 'study-1', 'cl-1').set('status', 'reviewer-completed');
+      const statusUpdate = Y.encodeStateAsUpdate(
+        clientDoc,
+        Y.encodeStateVector(internals.doc!),
+      );
+      await internals.webSocketMessage(ws, updateMessage(statusUpdate));
+      expect(internals.forceCompactPending).toBe(false);
+
+      await restartDO(internals);
+      expect(answeredCount(internals.doc!, 'study-1', 'cl-1')).toBe(12);
+      expect(getChecklist(internals.doc!, 'study-1', 'cl-1').get('status')).toBe(
+        'reviewer-completed',
+      );
+    });
+  });
+
+  it('a corrupt snapshot chunk fails loudly on every request instead of serving a partial doc', async () => {
+    const stub = getStub();
+    await runInDurableObject(stub, async (instance: ProjectDoc, state) => {
+      const internals = instance as unknown as ProjectDocInternals;
+      await internals.initializeDoc();
+      const seed = new Y.Doc();
+      seedStudyWithChecklist(seed, 'study-1', 'cl-1');
+      Y.applyUpdate(internals.doc!, Y.encodeStateAsUpdate(seed));
+
+      // Corrupt the doc's base state: a garbage snapshot row. Unlike update
+      // rows (skipped with a report), snapshot corruption is unrecoverable --
+      // loading the remaining rows would serve a doc missing its base state
+      // and clients would merge against it (forked history).
+      const garbage = new Uint8Array([9, 8, 7, 6, 5, 4, 3, 2, 1]);
+      state.storage.sql.exec(
+        "INSERT INTO yjs_updates (kind, payload, created_at) VALUES ('snapshot', ?, ?)",
+        garbage.buffer,
+        Date.now(),
+      );
+
+      // The load must throw...
+      await expect(restartDO(internals)).rejects.toThrow();
+      // ...and must KEEP throwing. Before the doc-reset guard, the first
+      // failure left a partially-loaded doc in memory and every subsequent
+      // initializeDoc early-returned with it, silently serving partial state.
+      expect(internals.doc).toBeNull();
+      await expect(internals.initializeDoc()).rejects.toThrow();
+      expect(internals.doc).toBeNull();
     });
   });
 

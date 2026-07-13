@@ -292,4 +292,51 @@ describe('ProjectDoc real-websocket sync', () => {
     socketA.close(1000, 'done');
     socketB.close(1000, 'done');
   });
+
+  it('malformed messages do not kill the socket, the DO, or a healthy peer', async () => {
+    const stub = getStub();
+
+    await runInDurableObject(stub, async (instance: ProjectDoc) => {
+      const internals = instance as unknown as {
+        doc: Y.Doc | null;
+        initializeDoc(): Promise<void>;
+      };
+      await internals.initializeDoc();
+      const seed = new Y.Doc();
+      seedStudyWithChecklist(seed, 'study-1', 'cl-1');
+      Y.applyUpdate(internals.doc!, Y.encodeStateAsUpdate(seed));
+    });
+
+    const hostileDoc = new Y.Doc();
+    const hostileSocket = await openSocket(stub, projectId);
+    const hostile = new MiniSyncClient(hostileDoc, hostileSocket);
+
+    // Garbage frames a buggy or malicious client could produce: truncated
+    // sync payloads, unknown message types, raw noise, and a string frame.
+    hostileSocket.send(new Uint8Array([0]).buffer as ArrayBuffer);
+    hostileSocket.send(new Uint8Array([0, 2, 255, 255]).buffer as ArrayBuffer);
+    hostileSocket.send(new Uint8Array([42, 1, 2, 3]).buffer as ArrayBuffer);
+    hostileSocket.send(new Uint8Array(64).fill(0xff).buffer as ArrayBuffer);
+    hostileSocket.send('not-binary');
+
+    // The DO must survive all of it: a normal handshake on the SAME socket
+    // still syncs the doc down.
+    hostile.sendSyncStep1();
+    await waitFor(() => {
+      const study = hostileDoc.getMap('reviews').get('study-1') as Y.Map<unknown> | undefined;
+      return !!study;
+    });
+
+    // And a healthy second client is unaffected: its live edits still apply.
+    const peerDoc = new Y.Doc();
+    const peerSocket = await openSocket(stub, projectId);
+    const peer = new MiniSyncClient(peerDoc, peerSocket);
+    peer.sendSyncStep1();
+    await waitFor(() => !!peerDoc.getMap('reviews').get('study-1'));
+    fillAnswers(peerDoc, 'study-1', 'cl-1', 4);
+    await waitFor(async () => (await serverAnsweredCount(stub, 'study-1', 'cl-1')) === 4);
+
+    hostileSocket.close(1000, 'done');
+    peerSocket.close(1000, 'done');
+  });
 });
