@@ -28,7 +28,7 @@
     "test:watch": "vitest --config vitest.config.ts",
     "test:server": "pnpm run db:generate:test && vitest run --config vitest.server.config.ts",
     "pretest:dev": "lsof -ti:3010 | xargs kill -9 2>/dev/null || true",
-    "test:dev": "concurrently -k -n web,stripe -c blue,yellow \"APP_URL=http://localhost:3010 AUTH_BASE_URL=http://localhost:3010 vite dev --mode e2e --config vite.config.e2e.ts\" \"stripe listen --forward-to http://localhost:3010/api/auth/stripe/webhook\"",
+    "dev:test": "concurrently -k -n web,stripe -c blue,yellow \"APP_URL=http://localhost:3010 AUTH_BASE_URL=http://localhost:3010 vite dev --mode e2e --config vite.config.e2e.ts\" \"stripe listen --forward-to http://localhost:3010/api/auth/stripe/webhook\"",
     "test:e2e": "playwright test",
     "db:generate:test": "node ./scripts/generate-test-sql.mjs",
     "user:make-admin:local": "node ./scripts/make-admin-local.mjs",
@@ -116,8 +116,6 @@
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
-    "@vitest/browser": "^4.1.9",
-    "@vitest/browser-playwright": "^4.1.9",
     "concurrently": "^10.0.3",
     "drizzle-kit": "^0.31.10",
     "fake-indexeddb": "^6.2.5",
@@ -126,7 +124,6 @@
     "typescript": "^5.9.3",
     "vite": "^8.1.0",
     "vitest": "^4.1.9",
-    "vitest-browser-react": "^2.2.0",
     "wrangler": "^4.110.0"
   }
 }

@@ -27,7 +27,7 @@ export default defineConfig({
   ],
   ...(!isRemote && {
     webServer: {
-      command: 'pnpm test:dev',
+      command: 'pnpm dev:test',
       url: `${BASE_URL}/api/test/health`,
       reuseExistingServer: true,
       timeout: 30_000,

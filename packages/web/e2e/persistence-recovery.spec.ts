@@ -180,6 +180,79 @@ test('Project state survives page refresh', async ({ context, page }) => {
   });
 });
 
+test('Checklist answers survive reload with sync unavailable (local IndexedDB only)', async ({
+  context,
+  page,
+}) => {
+  // The other reload tests run with the WebSocket reachable, so a broken
+  // local persistence path could be masked by the server re-syncing the doc
+  // on load. Here we intercept the sync WebSocket before reloading: the app
+  // still boots over HTTP, but no doc data can arrive from the server, so
+  // any restored answers must have come from IndexedDB via y-dexie.
+  await setupProjectWithStudy(context, page, scenario, 'Offline Persistence E2E');
+
+  await page.getByRole('tab', { name: /To Do/i }).click();
+  await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
+    timeout: 10_000,
+  });
+  await page.getByRole('button', { name: /Select Checklist/i }).click();
+  await page.getByRole('button', { name: /Add Checklist/i }).click();
+  await expect(page.getByRole('button', { name: 'Open', exact: true })).toBeVisible({
+    timeout: 10_000,
+  });
+  await page.getByRole('button', { name: 'Open', exact: true }).click();
+  await expect(page).toHaveURL(/\/checklists\//, { timeout: 10_000 });
+  await expect(page.getByRole('radio', { name: 'Yes' }).first()).toBeVisible({ timeout: 10_000 });
+
+  const yesRadios = page.getByRole('radio', { name: 'Yes' });
+  const round1Count = Math.min(5, await yesRadios.count());
+  for (let i = 0; i < round1Count; i++) {
+    await yesRadios.nth(i).click();
+    await expect(yesRadios.nth(i)).toBeChecked({ timeout: 5_000 });
+  }
+  // Let y-dexie flush the updates to IndexedDB before we reload
+  await page.waitForTimeout(1000);
+  const checkedBeforeOffline = await countCheckedYesRadios(page);
+  expect(checkedBeforeOffline).toBeGreaterThan(0);
+
+  // Intercept all future sync WebSockets: they open but never reach the
+  // server, so the doc cannot be refilled remotely. The counter guards the
+  // guard: if the sync endpoint URL changes and the pattern stops matching,
+  // the final assertion fails instead of the test silently running with a
+  // live server connection.
+  let interceptedSyncSockets = 0;
+  await page.routeWebSocket(/\/api\/project-doc/, () => {
+    interceptedSyncSockets++;
+  });
+
+  await page.reload();
+  await expect(page.getByRole('radio', { name: 'Yes' }).first()).toBeVisible({ timeout: 10_000 });
+  await expect(async () => {
+    expect(await countCheckedYesRadios(page)).toBe(checkedBeforeOffline);
+  }).toPass({ timeout: 10_000 });
+
+  // Make additional edits while sync is unavailable, reload again, and
+  // verify they also survive -- local writes must not depend on the server
+  // acknowledging them.
+  const yesRadiosOffline = page.getByRole('radio', { name: 'Yes' });
+  const round2Limit = Math.min(round1Count + 3, await yesRadiosOffline.count());
+  for (let i = round1Count; i < round2Limit; i++) {
+    await yesRadiosOffline.nth(i).click();
+    await expect(yesRadiosOffline.nth(i)).toBeChecked({ timeout: 5_000 });
+  }
+  await page.waitForTimeout(1000);
+  const checkedWhileOffline = await countCheckedYesRadios(page);
+  expect(checkedWhileOffline).toBeGreaterThan(checkedBeforeOffline);
+
+  await page.reload();
+  await expect(page.getByRole('radio', { name: 'Yes' }).first()).toBeVisible({ timeout: 10_000 });
+  await expect(async () => {
+    expect(await countCheckedYesRadios(page)).toBe(checkedWhileOffline);
+  }).toPass({ timeout: 10_000 });
+
+  expect(interceptedSyncSockets).toBeGreaterThan(0);
+});
+
 test('Project data survives navigate-away and navigate-back (cached phase)', async ({
   context,
   page,

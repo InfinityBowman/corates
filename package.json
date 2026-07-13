@@ -25,7 +25,7 @@
     "lint:fix": "eslint . --fix",
     "test:ui": "pnpm --filter web test",
     "test": "pnpm --recursive run test",
-    "test:dev": "pnpm --filter web run test:dev",
+    "dev:test": "pnpm --filter web run dev:test",
     "typecheck": "pnpm --recursive run typecheck",
     "logs": "pnpm --filter workers run logs",
     "deps:check": "pnpm -r outdated",
