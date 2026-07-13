@@ -5,6 +5,13 @@ const COMPACTION_ROW_THRESHOLD = 500;
 const OPPORTUNISTIC_COMPACTION_MIN = 50;
 // 512 KiB chunks keep individual rows well under the 2 MB DO SQLite row limit.
 const SNAPSHOT_CHUNK_SIZE = 512 * 1024;
+// Updates above this size skip the single-row insert entirely (it would fail
+// at the 2 MB SQLite value cap) and are persisted via a forced chunked
+// snapshot instead. A large merged offline backlog is the realistic producer
+// of oversized updates.
+const MAX_UPDATE_ROW_BYTES = 1024 * 1024;
+
+export type PersistResult = 'ok' | 'compact' | 'oversized' | 'failed';
 
 export interface PersistenceLogger {
   warn(event: string, ctx: Record<string, unknown>): void;
@@ -109,8 +116,8 @@ export class ProjectDocPersistence {
    * applying -- a single chunk on its own is not a valid Yjs update.
    */
   loadUpdatesIntoDoc(doc: Y.Doc): void {
-    const cursor = this.ctx.storage.sql.exec<{ kind: string; payload: ArrayBuffer }>(
-      'SELECT kind, payload FROM yjs_updates ORDER BY seq',
+    const cursor = this.ctx.storage.sql.exec<{ seq: number; kind: string; payload: ArrayBuffer }>(
+      'SELECT seq, kind, payload FROM yjs_updates ORDER BY seq',
     );
 
     let snapshotChunks: Uint8Array[] = [];
@@ -136,7 +143,24 @@ export class ProjectDocPersistence {
         snapshotChunks.push(bytes);
       } else {
         flushSnapshot();
-        Y.applyUpdate(doc, bytes);
+        // A corrupt update row must not brick the DO: an unguarded throw here
+        // propagates out of initializeDoc, turning EVERY subsequent request
+        // (including websocket upgrades) into an internal error until the row
+        // is manually removed. Skip the row and report it loudly instead --
+        // that one update is lost, but connected clients holding it will
+        // re-push it via the sync handshake. Snapshot chunks stay unguarded:
+        // a corrupt snapshot means the doc's base state is gone and loading a
+        // partial doc would let clients "heal" us into a forked history.
+        try {
+          Y.applyUpdate(doc, bytes);
+        } catch (err) {
+          this.logger.error('persistence_corrupt_update_row', {
+            projectId: this.ctx.id.toString(),
+            seq: row.seq,
+            byteLength: bytes.length,
+            error: err,
+          });
+        }
       }
     }
     flushSnapshot();
@@ -144,10 +168,22 @@ export class ProjectDocPersistence {
   }
 
   /**
-   * Insert a Y.Doc update row. Returns true if the row count has crossed
-   * the compaction threshold so the caller can trigger `compact(doc)`.
+   * Insert a Y.Doc update row.
+   *
+   * Returns 'compact' when the row count has crossed the compaction threshold,
+   * and 'oversized' / 'failed' when the update was NOT durably stored -- the
+   * caller must then persist the full in-memory doc via `forceCompact(doc)`,
+   * or the update survives only until the next DO eviction.
    */
-  persistUpdate(update: Uint8Array): boolean {
+  persistUpdate(update: Uint8Array): PersistResult {
+    if (update.length > MAX_UPDATE_ROW_BYTES) {
+      this.logger.warn('persistence_update_oversized', {
+        projectId: this.ctx.id.toString(),
+        byteLength: update.length,
+      });
+      return 'oversized';
+    }
+
     try {
       this.ctx.storage.sql.exec(
         'INSERT INTO yjs_updates (payload, created_at) VALUES (?, ?)',
@@ -161,10 +197,31 @@ export class ProjectDocPersistence {
         byteLength: update.length,
         error: err,
       });
-      return false;
+      return 'failed';
     }
 
-    return this.rowCount >= COMPACTION_ROW_THRESHOLD;
+    return this.rowCount >= COMPACTION_ROW_THRESHOLD ? 'compact' : 'ok';
+  }
+
+  /**
+   * Persist the full in-memory doc as a chunked snapshot, bypassing compact()'s
+   * "nothing to do" bail-outs. This is the durability fallback when an
+   * individual update could not be stored (oversized or insert failure):
+   * the snapshot necessarily contains that update since it was already applied
+   * to the in-memory doc. Throwing here would crash the doc update handler
+   * mid-transaction, so failures are captured instead; the update then only
+   * survives until eviction (pre-existing behavior, now loudly reported).
+   */
+  forceCompact(doc: Y.Doc): void {
+    try {
+      const snapshot = Y.encodeStateAsUpdate(doc);
+      this.writeSnapshotChunked(snapshot);
+    } catch (err) {
+      this.logger.error('force_compaction_failed', {
+        projectId: this.ctx.id.toString(),
+        error: err,
+      });
+    }
   }
 
   /**

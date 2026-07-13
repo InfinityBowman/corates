@@ -49,6 +49,7 @@ import { Route as ApiTestAddProjectMemberRouteImport } from './routes/api/test/a
 import { Route as ApiAuthVerifyEmailRouteImport } from './routes/api/auth/verify-email'
 import { Route as ApiAuthSessionRouteImport } from './routes/api/auth/session'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiAdminProjectDocInfoRouteImport } from './routes/api/admin/project-doc-info'
 import { Route as AppChecklistChecklistIdRouteImport } from './routes/_app/checklist.$checklistId'
 import { Route as AppProtectedSettingsRouteImport } from './routes/_app/_protected/settings'
 import { Route as AppProtectedAdminRouteImport } from './routes/_app/_protected/admin'
@@ -279,6 +280,11 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAdminProjectDocInfoRoute = ApiAdminProjectDocInfoRouteImport.update({
+  id: '/api/admin/project-doc-info',
+  path: '/api/admin/project-doc-info',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppChecklistChecklistIdRoute = AppChecklistChecklistIdRouteImport.update({
   id: '/$checklistId',
   path: '/$checklistId',
@@ -483,6 +489,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AppProtectedAdminRouteWithChildren
   '/settings': typeof AppProtectedSettingsRouteWithChildren
   '/checklist/$checklistId': typeof AppChecklistChecklistIdRoute
+  '/api/admin/project-doc-info': typeof ApiAdminProjectDocInfoRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/auth/verify-email': typeof ApiAuthVerifyEmailRoute
@@ -549,6 +556,7 @@ export interface FileRoutesByTo {
   '/resources/robins-i': typeof ResourcesRobinsIRoute
   '/resources': typeof ResourcesIndexRoute
   '/checklist/$checklistId': typeof AppChecklistChecklistIdRoute
+  '/api/admin/project-doc-info': typeof ApiAdminProjectDocInfoRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/auth/verify-email': typeof ApiAuthVerifyEmailRoute
@@ -622,6 +630,7 @@ export interface FileRoutesById {
   '/_app/_protected/admin': typeof AppProtectedAdminRouteWithChildren
   '/_app/_protected/settings': typeof AppProtectedSettingsRouteWithChildren
   '/_app/checklist/$checklistId': typeof AppChecklistChecklistIdRoute
+  '/api/admin/project-doc-info': typeof ApiAdminProjectDocInfoRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/auth/verify-email': typeof ApiAuthVerifyEmailRoute
@@ -693,6 +702,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/settings'
     | '/checklist/$checklistId'
+    | '/api/admin/project-doc-info'
     | '/api/auth/$'
     | '/api/auth/session'
     | '/api/auth/verify-email'
@@ -759,6 +769,7 @@ export interface FileRouteTypes {
     | '/resources/robins-i'
     | '/resources'
     | '/checklist/$checklistId'
+    | '/api/admin/project-doc-info'
     | '/api/auth/$'
     | '/api/auth/session'
     | '/api/auth/verify-email'
@@ -831,6 +842,7 @@ export interface FileRouteTypes {
     | '/_app/_protected/admin'
     | '/_app/_protected/settings'
     | '/_app/checklist/$checklistId'
+    | '/api/admin/project-doc-info'
     | '/api/auth/$'
     | '/api/auth/session'
     | '/api/auth/verify-email'
@@ -893,6 +905,7 @@ export interface RootRouteChildren {
   ResourcesRob2Route: typeof ResourcesRob2Route
   ResourcesRobinsIRoute: typeof ResourcesRobinsIRoute
   ResourcesIndexRoute: typeof ResourcesIndexRoute
+  ApiAdminProjectDocInfoRoute: typeof ApiAdminProjectDocInfoRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiAuthSessionRoute: typeof ApiAuthSessionRoute
   ApiAuthVerifyEmailRoute: typeof ApiAuthVerifyEmailRoute
@@ -1192,6 +1205,13 @@ declare module '@tanstack/react-router' {
       path: '/api/auth/$'
       fullPath: '/api/auth/$'
       preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/project-doc-info': {
+      id: '/api/admin/project-doc-info'
+      path: '/api/admin/project-doc-info'
+      fullPath: '/api/admin/project-doc-info'
+      preLoaderRoute: typeof ApiAdminProjectDocInfoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/checklist/$checklistId': {
@@ -1593,6 +1613,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResourcesRob2Route: ResourcesRob2Route,
   ResourcesRobinsIRoute: ResourcesRobinsIRoute,
   ResourcesIndexRoute: ResourcesIndexRoute,
+  ApiAdminProjectDocInfoRoute: ApiAdminProjectDocInfoRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiAuthSessionRoute: ApiAuthSessionRoute,
   ApiAuthVerifyEmailRoute: ApiAuthVerifyEmailRoute,

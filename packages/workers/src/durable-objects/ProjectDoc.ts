@@ -107,6 +107,8 @@ interface Review {
 interface Checklist {
   id: string;
   title?: unknown;
+  type?: unknown;
+  outcomeId?: unknown;
   assignedTo?: unknown;
   status: string;
   createdAt?: unknown;
@@ -402,6 +404,8 @@ class ProjectDocBase extends DurableObject<Env> {
           review.checklists.push({
             id: checklistId,
             title: checklistData.title,
+            type: checklistData.type,
+            outcomeId: checklistData.outcomeId,
             assignedTo: checklistData.assignedTo,
             status: (checklistData.status as string) || 'pending',
             createdAt: checklistData.createdAt,
@@ -622,8 +626,12 @@ class ProjectDocBase extends DurableObject<Env> {
     }
 
     // On doc update: broadcast to connected clients, then persist synchronously.
-    // persistUpdate swallows SQL errors -- the update was already broadcast and
-    // lives in the in-memory Y.Doc; clients will re-sync on reconnect.
+    // When the single-row insert cannot store the update (oversized -- e.g. a
+    // large merged offline backlog -- or an SQL failure), fall back to
+    // persisting the full in-memory doc as a chunked snapshot. Without that
+    // fallback the update lives only in memory and is silently lost on the
+    // next eviction, while unrelated smaller updates persist fine -- which
+    // reads as one reviewer's work vanishing.
     this.doc.on('update', (update: Uint8Array, origin: unknown) => {
       const encoder = encoding.createEncoder();
       encoding.writeVarUint(encoder, messageSync);
@@ -631,9 +639,11 @@ class ProjectDocBase extends DurableObject<Env> {
       const message = encoding.toUint8Array(encoder);
       this.broadcastBinary(message, origin as WebSocket | null);
 
-      const needsCompaction = this.persistence.persistUpdate(update);
-      if (needsCompaction) {
+      const result = this.persistence.persistUpdate(update);
+      if (result === 'compact') {
         this.persistence.compact(this.doc!);
+      } else if (result === 'oversized' || result === 'failed') {
+        this.persistence.forceCompact(this.doc!);
       }
     });
 
