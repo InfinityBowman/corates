@@ -75,8 +75,8 @@ class MiniSyncClient {
   }
 }
 
-async function openSocket(stub: DurableObjectStub): Promise<WebSocket> {
-  const response = await stub.fetch('https://internal/api/project-doc/realws-project', {
+async function openSocket(stub: DurableObjectStub, projectId: string): Promise<WebSocket> {
+  const response = await stub.fetch(`https://internal/api/project-doc/${projectId}`, {
     headers: {
       Upgrade: 'websocket',
       'Sec-WebSocket-Key': 'test-key',
@@ -146,10 +146,16 @@ async function serverAnsweredCount(
 }
 
 describe('ProjectDoc real-websocket sync', () => {
-  const projectId = 'realws-project';
+  // Unique DO name per test: the live instance (and its SQL-persisted yjs
+  // rows) survives across tests within a file even after clearProjectDOs,
+  // so reusing a name leaks the previous test's doc state.
+  let testSeq = 0;
+  let projectId = '';
   const userId = 'user-1';
 
   beforeEach(async () => {
+    testSeq += 1;
+    projectId = `realws-project-${testSeq}`;
     await resetTestDatabase();
     await clearProjectDOs([projectId]);
     vi.clearAllMocks();
@@ -214,7 +220,7 @@ describe('ProjectDoc real-websocket sync', () => {
     fillAnswers(clientDoc, 'study-1', 'cl-1', 17);
 
     // Connect for real and run the y-websocket handshake.
-    const socket = await openSocket(stub);
+    const socket = await openSocket(stub, projectId);
     const client = new MiniSyncClient(clientDoc, socket);
     client.sendSyncStep1();
 
@@ -255,7 +261,7 @@ describe('ProjectDoc real-websocket sync', () => {
       Y.applyUpdate(docA, Y.encodeStateAsUpdate(internals.doc!));
     });
     fillAnswers(docA, 'study-1', 'cl-1', 9);
-    const socketA = await openSocket(stub);
+    const socketA = await openSocket(stub, projectId);
     const clientA = new MiniSyncClient(docA, socketA);
     clientA.sendSyncStep1();
     await waitFor(async () => (await serverAnsweredCount(stub, 'study-1', 'cl-1')) === 9);
@@ -263,7 +269,7 @@ describe('ProjectDoc real-websocket sync', () => {
     // Client B connects fresh (empty doc) and must converge to A's answers --
     // this is the second reviewer opening reconciliation.
     const docB = new Y.Doc();
-    const socketB = await openSocket(stub);
+    const socketB = await openSocket(stub, projectId);
     const clientB = new MiniSyncClient(docB, socketB);
     clientB.sendSyncStep1();
 
