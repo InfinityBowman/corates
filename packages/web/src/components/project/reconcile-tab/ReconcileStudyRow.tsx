@@ -4,7 +4,7 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
-import { ChevronRightIcon, GitCompareArrowsIcon } from 'lucide-react';
+import { ChevronRightIcon, GitCompareArrowsIcon, PencilIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
@@ -17,6 +17,7 @@ import {
 import type { ChecklistGroup } from '@corates/shared/checklists';
 import { getChecklistMetadata } from '@/checklist-registry';
 import { PdfListItem } from '@/components/pdf/PdfListItem';
+import { ChangeOutcomeDialog } from '../ChangeOutcomeDialog';
 import { ReconcileStatusTag } from './ReconcileStatusTag';
 import type { StudyInfo, PdfEntry } from '@/stores/projectStore';
 
@@ -38,6 +39,7 @@ export function ReconcileStudyRow({
   getOutcomeName,
 }: ReconcileStudyRowProps) {
   const [expanded, setExpanded] = useState(false);
+  const [changeOutcomeGroup, setChangeOutcomeGroup] = useState<ChecklistGroup | null>(null);
 
   const sortedPdfs = useMemo(() => sortStudyPdfs(study.pdfs || []), [study.pdfs]);
   const hasPdfs = sortedPdfs.length > 0;
@@ -132,9 +134,24 @@ export function ReconcileStudyRow({
               <ReconcileStatusTag study={study} getAssigneeName={getAssigneeName} />
 
               {firstReadyGroup?.outcomeId && (
-                <Badge variant='secondary' data-selectable>
-                  {getGroupOutcomeName(firstReadyGroup)}
-                </Badge>
+                <div className='flex items-center gap-1'>
+                  <Badge variant='secondary' data-selectable>
+                    {getGroupOutcomeName(firstReadyGroup)}
+                  </Badge>
+                  <Button
+                    variant='ghost'
+                    size='icon'
+                    className='size-6'
+                    title='Change outcome'
+                    aria-label='Change outcome'
+                    onClick={e => {
+                      e.stopPropagation();
+                      setChangeOutcomeGroup(firstReadyGroup);
+                    }}
+                  >
+                    <PencilIcon className='size-3.5' />
+                  </Button>
+                </div>
               )}
 
               {hasReadyPair && firstReadyGroup && (
@@ -190,7 +207,19 @@ export function ReconcileStudyRow({
                       <div className='flex flex-wrap items-center gap-2'>
                         <Badge variant='secondary'>{getChecklistMetadata(group.type).name}</Badge>
                         {group.outcomeId && (
-                          <Badge variant='secondary'>{getGroupOutcomeName(group)}</Badge>
+                          <div className='flex items-center gap-1'>
+                            <Badge variant='secondary'>{getGroupOutcomeName(group)}</Badge>
+                            <Button
+                              variant='ghost'
+                              size='icon'
+                              className='size-6'
+                              title='Change outcome'
+                              aria-label='Change outcome'
+                              onClick={() => setChangeOutcomeGroup(group)}
+                            >
+                              <PencilIcon className='size-3.5' />
+                            </Button>
+                          </div>
                         )}
                         <span className='text-secondary-foreground text-sm'>
                           {getReviewerName(group.checklists[0])}{' '}
@@ -226,7 +255,19 @@ export function ReconcileStudyRow({
                       <div className='flex flex-wrap items-center gap-2'>
                         <Badge variant='secondary'>{getChecklistMetadata(group.type).name}</Badge>
                         {group.outcomeId && (
-                          <Badge variant='secondary'>{getGroupOutcomeName(group)}</Badge>
+                          <div className='flex items-center gap-1'>
+                            <Badge variant='secondary'>{getGroupOutcomeName(group)}</Badge>
+                            <Button
+                              variant='ghost'
+                              size='icon'
+                              className='size-6'
+                              title='Change outcome'
+                              aria-label='Change outcome'
+                              onClick={() => setChangeOutcomeGroup(group)}
+                            >
+                              <PencilIcon className='size-3.5' />
+                            </Button>
+                          </div>
                         )}
                         <span className='text-muted-foreground text-sm'>
                           {getReviewerName(group.checklists[0])} -- waiting for second reviewer
@@ -260,6 +301,18 @@ export function ReconcileStudyRow({
           )}
         </CollapsibleContent>
       </Collapsible>
+
+      {changeOutcomeGroup?.outcomeId && (
+        <ChangeOutcomeDialog
+          study={study}
+          checklistType={changeOutcomeGroup.type}
+          outcomeId={changeOutcomeGroup.outcomeId}
+          open={true}
+          onOpenChange={isOpen => {
+            if (!isOpen) setChangeOutcomeGroup(null);
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -4,7 +4,7 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
-import { ChevronRightIcon } from 'lucide-react';
+import { ChevronRightIcon, PencilIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
@@ -17,6 +17,7 @@ import {
   getStatusLabel,
   getStatusStyle,
 } from '@corates/shared/checklists';
+import { ChangeOutcomeDialog } from '../ChangeOutcomeDialog';
 import { PreviousReviewersView } from './PreviousReviewersView';
 import { CompletedOutcomeRow } from './CompletedOutcomeRow';
 import { ReopenReconciliationButton } from './ReopenReconciliationButton';
@@ -49,6 +50,7 @@ export function CompletedStudyRow({
 }: CompletedStudyRowProps) {
   const [expanded, setExpanded] = useState(false);
   const [showPreviousReviewers, setShowPreviousReviewers] = useState(false);
+  const [showChangeOutcome, setShowChangeOutcome] = useState(false);
 
   const sortedPdfs = useMemo(() => sortStudyPdfs(study.pdfs || []), [study.pdfs]);
   const hasPdfs = sortedPdfs.length > 0;
@@ -117,9 +119,24 @@ export function CompletedStudyRow({
             {!hasMultipleOutcomes && firstGroup && (
               <>
                 {firstGroup.outcomeId && (
-                  <Badge variant='secondary' data-selectable>
-                    {getOutcomeName(firstGroup.outcomeId) || 'Unknown Outcome'}
-                  </Badge>
+                  <div className='flex items-center gap-1'>
+                    <Badge variant='secondary' data-selectable>
+                      {getOutcomeName(firstGroup.outcomeId) || 'Unknown Outcome'}
+                    </Badge>
+                    <Button
+                      variant='ghost'
+                      size='icon'
+                      className='size-6'
+                      title='Change outcome'
+                      aria-label='Change outcome'
+                      onClick={e => {
+                        e.stopPropagation();
+                        setShowChangeOutcome(true);
+                      }}
+                    >
+                      <PencilIcon className='size-3.5' />
+                    </Button>
+                  </div>
                 )}
                 <Badge variant='secondary' data-selectable>
                   {getChecklistMetadata(firstGroup.type).name}
@@ -195,6 +212,16 @@ export function CompletedStudyRow({
           </CollapsibleContent>
         </Collapsible>
       </div>
+
+      {firstGroup?.outcomeId && (
+        <ChangeOutcomeDialog
+          study={study}
+          checklistType={firstGroup.type}
+          outcomeId={firstGroup.outcomeId}
+          open={showChangeOutcome}
+          onOpenChange={setShowChangeOutcome}
+        />
+      )}
 
       {showPreviousReviewers && firstGroup && (
         <PreviousReviewersView
