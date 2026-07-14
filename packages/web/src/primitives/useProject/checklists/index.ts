@@ -11,7 +11,7 @@ import type { RobinsIKey, RobinsIAnswers } from '@corates/shared/checklists/robi
 import { ROB2_KEY_SCHEMAS, isRob2Key } from '@corates/shared/checklists/rob2';
 import type { Rob2Key, Rob2Answers } from '@corates/shared/checklists/rob2';
 import { createChecklistOfType, CHECKLIST_TYPES } from '@/checklist-registry';
-import { CHECKLIST_STATUS } from '@corates/shared/checklists';
+import { CHECKLIST_STATUS, getOutcomeKey } from '@corates/shared/checklists';
 import { createCommonOperations } from './common';
 import { AMSTAR2Handler } from './handlers/amstar2';
 import { ROBINSIHandler } from './handlers/robins-i';
@@ -79,6 +79,12 @@ export interface ChecklistOperations {
   ) => string | null;
   updateChecklist: (studyId: string, checklistId: string, updates: Record<string, unknown>) => void;
   deleteChecklist: (studyId: string, checklistId: string) => void;
+  changeChecklistOutcome: (
+    studyId: string,
+    type: string,
+    fromOutcomeId: string,
+    toOutcomeId: string,
+  ) => { success: boolean; error?: string };
   getChecklistAnswersMap: (studyId: string, checklistId: string) => Y.Map<unknown> | null;
   getChecklistData: (studyId: string, checklistId: string) => ChecklistData | null;
   updateChecklistAnswer: (
@@ -222,7 +228,12 @@ export function createChecklistOperations(
       const answersYMap = handler.createAnswersYMap(answersData);
       checklistYMap.set('answers', answersYMap);
 
-      // For ROBINS-I, auto-fill sectionA.outcome with the outcome name
+      checklistsMap.set(checklistId, checklistYMap);
+
+      // For ROBINS-I, auto-fill sectionA.outcome with the outcome name.
+      // This must happen after the checklist is attached to the doc:
+      // Y.Map.get() on an unattached map cannot see prelim content, so the
+      // Y.Text would not be found before integration.
       if (type === CHECKLIST_TYPES.ROBINS_I && outcomeId) {
         const metaMap = ydoc.getMap('meta');
         const outcomesMap = metaMap.get('outcomes') as Y.Map<unknown> | undefined;
@@ -240,13 +251,119 @@ export function createChecklistOperations(
         }
       }
 
-      checklistsMap.set(checklistId, checklistYMap);
       studyYMap.set('updatedAt', now);
       return checklistId;
     } catch (err) {
       console.error('[createChecklist] Error creating checklist:', err);
       return null;
     }
+  }
+
+  /**
+   * Move all checklists of a type from one outcome to another: both reviewer
+   * checklists and, when the group is already reconciled, the finalized
+   * consensus checklist plus its reconciliation progress entry. Everything
+   * moves intact; an in-progress reconciliation blocks the change so we never
+   * have to migrate partial reconciliation state.
+   */
+  function changeChecklistOutcome(
+    studyId: string,
+    type: string,
+    fromOutcomeId: string,
+    toOutcomeId: string,
+  ): { success: boolean; error?: string } {
+    const ydoc = getYDoc();
+    if (!ydoc) return { success: false, error: 'No active project connection' };
+
+    if (!requiresOutcome(type)) {
+      return { success: false, error: `${type} checklists are not linked to outcomes` };
+    }
+    if (fromOutcomeId === toOutcomeId) {
+      return { success: false, error: 'The checklists are already under this outcome' };
+    }
+
+    const outcomesMap = ydoc.getMap('meta').get('outcomes') as Y.Map<unknown> | undefined;
+    const toOutcomeYMap = outcomesMap?.get(toOutcomeId) as Y.Map<unknown> | undefined;
+    if (!toOutcomeYMap) {
+      return { success: false, error: 'Target outcome not found' };
+    }
+    const fromOutcomeYMap = outcomesMap?.get(fromOutcomeId) as Y.Map<unknown> | undefined;
+    const fromOutcomeName = fromOutcomeYMap?.get('name') as string | undefined;
+    const toOutcomeName = toOutcomeYMap.get('name') as string | undefined;
+
+    const studyYMap = ydoc.getMap('reviews').get(studyId) as Y.Map<unknown> | undefined;
+    if (!studyYMap) {
+      return { success: false, error: 'Study not found' };
+    }
+    const checklistsMap = studyYMap.get('checklists') as Y.Map<unknown> | undefined;
+
+    const movers: Y.Map<unknown>[] = [];
+    const targetAssignees = new Set<string | null>();
+    if (checklistsMap) {
+      for (const [, value] of checklistsMap.entries()) {
+        const checklist = value as Y.Map<unknown>;
+        if (checklist.get('type') !== type) continue;
+        const outcomeId = checklist.get('outcomeId');
+        if (outcomeId === fromOutcomeId) {
+          movers.push(checklist);
+        } else if (outcomeId === toOutcomeId) {
+          targetAssignees.add((checklist.get('assignedTo') as string | null) ?? null);
+        }
+      }
+    }
+
+    if (movers.length === 0) {
+      return { success: false, error: 'No checklists found for this outcome' };
+    }
+    if (movers.some(c => c.get('status') === CHECKLIST_STATUS.RECONCILING)) {
+      return {
+        success: false,
+        error: 'Reconciliation is in progress for this outcome. Finish it before changing the outcome.',
+      };
+    }
+    if (movers.some(c => targetAssignees.has((c.get('assignedTo') as string | null) ?? null))) {
+      return {
+        success: false,
+        error: 'A checklist for the target outcome already exists for one of the reviewers',
+      };
+    }
+
+    const now = Date.now();
+    ydoc.transact(() => {
+      for (const mover of movers) {
+        mover.set('outcomeId', toOutcomeId);
+        mover.set('updatedAt', now);
+
+        // Section A of ROBINS-I is auto-filled with the outcome name at
+        // creation; keep it in sync only when it still matches the old name
+        // so user-edited text is never overwritten.
+        if (type === CHECKLIST_TYPES.ROBINS_I && fromOutcomeName && toOutcomeName) {
+          const answersMap = mover.get('answers') as Y.Map<unknown> | undefined;
+          const outcomeText = answersMap?.get('sectionA.outcome');
+          if (outcomeText instanceof Y.Text && outcomeText.toString() === fromOutcomeName) {
+            outcomeText.delete(0, outcomeText.length);
+            outcomeText.insert(0, toOutcomeName);
+          }
+        }
+      }
+
+      const reconciliationsMap = studyYMap.get('reconciliations') as
+        Y.Map<Y.Map<unknown>> | undefined;
+      const oldEntry = reconciliationsMap?.get(getOutcomeKey(fromOutcomeId, type)) as
+        Y.Map<unknown> | undefined;
+      if (reconciliationsMap && oldEntry) {
+        const newEntry = new Y.Map();
+        for (const [key, value] of oldEntry.entries()) {
+          newEntry.set(key, key === 'outcomeId' ? toOutcomeId : value);
+        }
+        reconciliationsMap.set(getOutcomeKey(toOutcomeId, type), newEntry);
+        reconciliationsMap.delete(getOutcomeKey(fromOutcomeId, type));
+      }
+
+      studyYMap.set('updatedAt', now);
+    });
+
+    return { success: true };
   }
 
   function getChecklistData(studyId: string, checklistId: string): ChecklistData | null {
@@ -376,6 +493,7 @@ export function createChecklistOperations(
     createChecklist,
     updateChecklist: commonOps.updateChecklist,
     deleteChecklist: commonOps.deleteChecklist,
+    changeChecklistOutcome,
     getChecklistAnswersMap: commonOps.getChecklistAnswersMap,
     getChecklistData,
     updateChecklistAnswer,

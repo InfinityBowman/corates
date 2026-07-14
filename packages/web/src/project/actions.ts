@@ -54,6 +54,35 @@ export const project = {
       }
     },
 
+    changeOutcome(
+      studyId: string,
+      type: string,
+      fromOutcomeId: string,
+      toOutcomeId: string,
+    ): boolean {
+      const ops = connectionPool.getActiveOps();
+      if (!ops) throw new Error('No active project connection');
+      try {
+        const result = ops.checklist.changeChecklistOutcome(
+          studyId,
+          type,
+          fromOutcomeId,
+          toOutcomeId,
+        );
+        if (!result.success) {
+          showToast.error('Change Failed', result.error || 'Failed to change outcome');
+          return false;
+        }
+        track('Checklist:OutcomeChanged', { type });
+        showToast.success('Outcome Changed', 'Checklists moved to the selected outcome.');
+        return true;
+      } catch (err) {
+        console.error('Error changing checklist outcome:', err);
+        showToast.error('Change Failed', 'Failed to change outcome');
+        return false;
+      }
+    },
+
     update(studyId: string, checklistId: string, updates: Record<string, unknown>): void {
       const ops = connectionPool.getActiveOps();
       if (!ops) throw new Error('No active project connection');

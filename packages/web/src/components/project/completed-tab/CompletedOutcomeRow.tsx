@@ -11,6 +11,8 @@ import {
   getStatusLabel,
   getStatusStyle,
 } from '@corates/shared/checklists';
+import { PencilIcon } from 'lucide-react';
+import { ChangeOutcomeDialog } from '../ChangeOutcomeDialog';
 import { PreviousReviewersView } from './PreviousReviewersView';
 import { ReopenReconciliationButton } from './ReopenReconciliationButton';
 import type { StudyInfo } from '@/stores/projectStore';
@@ -40,6 +42,7 @@ export function CompletedOutcomeRow({
   getReconciliationProgress,
 }: CompletedOutcomeRowProps) {
   const [showPreviousReviewers, setShowPreviousReviewers] = useState(false);
+  const [showChangeOutcome, setShowChangeOutcome] = useState(false);
 
   const finalizedChecklist = outcomeGroup.checklists[0];
   const outcomeName =
@@ -63,7 +66,21 @@ export function CompletedOutcomeRow({
     <>
       <div className='bg-muted/50 flex items-center justify-between rounded-lg p-3'>
         <div className='flex items-center gap-3'>
-          {outcomeName && <Badge variant='secondary'>{outcomeName}</Badge>}
+          {outcomeName && (
+            <div className='flex items-center gap-1'>
+              <Badge variant='secondary'>{outcomeName}</Badge>
+              <Button
+                variant='ghost'
+                size='icon'
+                className='size-6'
+                title='Change outcome'
+                aria-label='Change outcome'
+                onClick={() => setShowChangeOutcome(true)}
+              >
+                <PencilIcon className='size-3.5' />
+              </Button>
+            </div>
+          )}
           <Badge variant='secondary'>{getChecklistMetadata(outcomeGroup.type).name}</Badge>
           <Badge variant='secondary' className={getStatusStyle(finalizedChecklist?.status)}>
             {getStatusLabel(finalizedChecklist?.status)}
@@ -91,6 +108,16 @@ export function CompletedOutcomeRow({
           reconciliationProgress={reconciliationProgress}
           getAssigneeName={getAssigneeName}
           onClose={() => setShowPreviousReviewers(false)}
+        />
+      )}
+
+      {outcomeGroup.outcomeId && (
+        <ChangeOutcomeDialog
+          study={study}
+          checklistType={outcomeGroup.type}
+          outcomeId={outcomeGroup.outcomeId}
+          open={showChangeOutcome}
+          onOpenChange={setShowChangeOutcome}
         />
       )}
     </>
