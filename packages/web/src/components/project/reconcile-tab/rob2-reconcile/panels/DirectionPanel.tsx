@@ -89,6 +89,9 @@ export function DirectionPanel({
                 value={option}
                 checked={optionSelected}
                 onChange={() => onDirectionChange?.(option)}
+                onClick={() => {
+                  if (optionSelected) onDirectionChange?.('');
+                }}
                 className='hidden'
               />
               <span>{option}</span>
