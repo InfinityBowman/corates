@@ -187,6 +187,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # The Playwright image ships no C toolchain, so native modules
+      # (better-sqlite3) hard-fail when their prebuilt-binary download flakes
+      # and prebuild-install falls back to compiling from source.
+      - name: Install native build tools
+        run: apt-get update && apt-get install -y --no-install-recommends make g++
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
 
