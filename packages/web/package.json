@@ -103,7 +103,7 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "^1.42.3",
+    "@cloudflare/vite-plugin": "^1.44.0",
     "@cloudflare/vitest-pool-workers": "^0.18.4",
     "@cloudflare/workers-types": "^4.20260628.1",
     "@playwright/test": "^1.61.1",
