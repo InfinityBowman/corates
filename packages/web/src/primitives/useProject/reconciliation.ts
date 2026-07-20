@@ -7,6 +7,14 @@
  * Note: finalAnswers are stored in a third checklist (reconciled checklist)
  * that both reviewers can edit. This leverages existing checklist infrastructure
  * for automatic Yjs sync. Reconciliation progress only stores metadata references.
+ *
+ * Storage format: progress fields are flat `${outcomeKey}.${field}` keys on the
+ * study's `reconciliations` Y.Map, not a nested Y.Map per outcome. Two clients
+ * saving progress for the same outcome concurrently would race to create the
+ * nested map and Yjs would silently discard the loser's entries; flat keys
+ * merge per-field. Reads still fall back to two older formats: the nested
+ * per-outcome Y.Map, and the single `reconciliation` map that predates
+ * outcome-based reconciliation.
  */
 
 import * as Y from 'yjs';
@@ -35,6 +43,123 @@ export interface ReconciliationProgressEntry extends ReconciliationProgress {
   outcomeKey: string;
 }
 
+const RECONCILIATION_FIELDS = [
+  'checklist1Id',
+  'checklist2Id',
+  'outcomeId',
+  'type',
+  'reconciledChecklistId',
+  'currentPage',
+  'viewMode',
+  'updatedAt',
+] as const;
+
+function readFlatEntry(
+  reconciliationsMap: Y.Map<unknown>,
+  outcomeKey: string,
+  typeFallback: string,
+): ReconciliationProgress | null {
+  const get = (field: string) => reconciliationsMap.get(`${outcomeKey}.${field}`);
+  const checklist1Id = get('checklist1Id') as string | undefined;
+  const checklist2Id = get('checklist2Id') as string | undefined;
+  if (!checklist1Id || !checklist2Id) return null;
+  return {
+    checklist1Id,
+    checklist2Id,
+    outcomeId: (get('outcomeId') as string | null) || null,
+    type: (get('type') as string) || typeFallback,
+    reconciledChecklistId: (get('reconciledChecklistId') as string | null) || null,
+    currentPage: (get('currentPage') as number) || 0,
+    viewMode: (get('viewMode') as string) || 'questions',
+    updatedAt: (get('updatedAt') as number) || 0,
+  };
+}
+
+function readNestedEntry(nested: unknown, typeFallback: string): ReconciliationProgress | null {
+  if (!(nested instanceof Y.Map)) return null;
+  const checklist1Id = nested.get('checklist1Id') as string | undefined;
+  const checklist2Id = nested.get('checklist2Id') as string | undefined;
+  if (!checklist1Id || !checklist2Id) return null;
+  return {
+    checklist1Id,
+    checklist2Id,
+    outcomeId: (nested.get('outcomeId') as string | null) || null,
+    type: (nested.get('type') as string) || typeFallback,
+    reconciledChecklistId: (nested.get('reconciledChecklistId') as string | null) || null,
+    currentPage: (nested.get('currentPage') as number) || 0,
+    viewMode: (nested.get('viewMode') as string) || 'questions',
+    updatedAt: (nested.get('updatedAt') as number) || 0,
+  };
+}
+
+/**
+ * Reads one outcome's progress, preferring whichever format was written more
+ * recently so a client running older code (nested writes) is not shadowed by a
+ * stale flat entry during deploy skew or offline catch-up.
+ */
+export function readReconciliationEntry(
+  reconciliationsMap: Y.Map<unknown>,
+  outcomeKey: string,
+  typeFallback: string,
+): ReconciliationProgress | null {
+  const flat = readFlatEntry(reconciliationsMap, outcomeKey, typeFallback);
+  const nested = readNestedEntry(reconciliationsMap.get(outcomeKey), typeFallback);
+  if (flat && nested) return nested.updatedAt > flat.updatedAt ? nested : flat;
+  return flat ?? nested;
+}
+
+/**
+ * Writes a full progress entry as flat keys and drops any nested-format entry
+ * for the same outcome. Callers must wrap this in a transaction.
+ */
+export function writeReconciliationEntry(
+  reconciliationsMap: Y.Map<unknown>,
+  outcomeKey: string,
+  progress: ReconciliationProgress,
+): void {
+  reconciliationsMap.set(`${outcomeKey}.checklist1Id`, progress.checklist1Id);
+  reconciliationsMap.set(`${outcomeKey}.checklist2Id`, progress.checklist2Id);
+  reconciliationsMap.set(`${outcomeKey}.outcomeId`, progress.outcomeId);
+  reconciliationsMap.set(`${outcomeKey}.type`, progress.type);
+  if (progress.reconciledChecklistId) {
+    reconciliationsMap.set(`${outcomeKey}.reconciledChecklistId`, progress.reconciledChecklistId);
+  }
+  reconciliationsMap.set(`${outcomeKey}.currentPage`, progress.currentPage);
+  reconciliationsMap.set(`${outcomeKey}.viewMode`, progress.viewMode);
+  reconciliationsMap.set(`${outcomeKey}.updatedAt`, progress.updatedAt);
+  if (reconciliationsMap.get(outcomeKey) instanceof Y.Map) {
+    reconciliationsMap.delete(outcomeKey);
+  }
+}
+
+/**
+ * Deletes one outcome's progress in both formats. Callers must wrap this in a
+ * transaction.
+ */
+export function deleteReconciliationEntry(
+  reconciliationsMap: Y.Map<unknown>,
+  outcomeKey: string,
+): void {
+  for (const field of RECONCILIATION_FIELDS) {
+    reconciliationsMap.delete(`${outcomeKey}.${field}`);
+  }
+  reconciliationsMap.delete(outcomeKey);
+}
+
+/** Collects every outcomeKey present in either format. */
+function collectOutcomeKeys(reconciliationsMap: Y.Map<unknown>): Set<string> {
+  const keys = new Set<string>();
+  for (const key of reconciliationsMap.keys()) {
+    const dot = key.lastIndexOf('.');
+    if (dot > 0 && (RECONCILIATION_FIELDS as readonly string[]).includes(key.slice(dot + 1))) {
+      keys.add(key.slice(0, dot));
+    } else if (reconciliationsMap.get(key) instanceof Y.Map) {
+      keys.add(key);
+    }
+  }
+  return keys;
+}
+
 export interface ReconciliationOperations {
   saveReconciliationProgress: (
     studyId: string,
@@ -55,6 +180,13 @@ export function createReconciliationOperations(
   _projectId: string,
   getYDoc: () => Y.Doc | null,
 ): ReconciliationOperations {
+  function getStudyYMap(studyId: string): Y.Map<unknown> | null {
+    const ydoc = getYDoc();
+    if (!ydoc) return null;
+    const studiesMap = ydoc.getMap('reviews');
+    return (studiesMap.get(studyId) as Y.Map<unknown> | undefined) ?? null;
+  }
+
   function saveReconciliationProgress(
     studyId: string,
     outcomeId: string | null,
@@ -64,40 +196,36 @@ export function createReconciliationOperations(
     const ydoc = getYDoc();
     if (!ydoc) return;
 
-    const studiesMap = ydoc.getMap('reviews');
-    const studyYMap = studiesMap.get(studyId) as Y.Map<unknown> | undefined;
+    const studyYMap = getStudyYMap(studyId);
     if (!studyYMap) return;
 
-    let reconciliationsMap = studyYMap.get('reconciliations') as Y.Map<Y.Map<unknown>> | undefined;
-    if (!reconciliationsMap) {
-      reconciliationsMap = new Y.Map();
-      studyYMap.set('reconciliations', reconciliationsMap);
-    }
-
     const outcomeKey = getOutcomeKey(outcomeId, type);
+    const now = Date.now();
 
-    let outcomeProgressMap = reconciliationsMap.get(outcomeKey) as Y.Map<unknown> | undefined;
-    if (!outcomeProgressMap) {
-      outcomeProgressMap = new Y.Map();
-      reconciliationsMap.set(outcomeKey, outcomeProgressMap);
-    }
+    ydoc.transact(() => {
+      // Fallback for docs that predate container pre-creation and have not
+      // synced with the server (which ensures the container) yet.
+      let reconciliationsMap = studyYMap.get('reconciliations') as Y.Map<unknown> | undefined;
+      if (!reconciliationsMap) {
+        reconciliationsMap = new Y.Map();
+        studyYMap.set('reconciliations', reconciliationsMap);
+      }
 
-    outcomeProgressMap.set('checklist1Id', progressData.checklist1Id);
-    outcomeProgressMap.set('checklist2Id', progressData.checklist2Id);
-    outcomeProgressMap.set('outcomeId', outcomeId);
-    outcomeProgressMap.set('type', type);
-    if (progressData.reconciledChecklistId) {
-      outcomeProgressMap.set('reconciledChecklistId', progressData.reconciledChecklistId);
-    }
-    if (progressData.currentPage !== undefined) {
-      outcomeProgressMap.set('currentPage', progressData.currentPage);
-    }
-    if (progressData.viewMode !== undefined) {
-      outcomeProgressMap.set('viewMode', progressData.viewMode);
-    }
-    outcomeProgressMap.set('updatedAt', Date.now());
+      const existing = readReconciliationEntry(reconciliationsMap, outcomeKey, type);
+      writeReconciliationEntry(reconciliationsMap, outcomeKey, {
+        checklist1Id: progressData.checklist1Id,
+        checklist2Id: progressData.checklist2Id,
+        outcomeId,
+        type,
+        reconciledChecklistId:
+          progressData.reconciledChecklistId ?? existing?.reconciledChecklistId ?? null,
+        currentPage: progressData.currentPage ?? existing?.currentPage ?? 0,
+        viewMode: progressData.viewMode ?? existing?.viewMode ?? 'questions',
+        updatedAt: now,
+      });
 
-    studyYMap.set('updatedAt', Date.now());
+      studyYMap.set('updatedAt', now);
+    });
   }
 
   function getReconciliationProgress(
@@ -105,35 +233,14 @@ export function createReconciliationOperations(
     outcomeId: string | null,
     type: string,
   ): ReconciliationProgress | null {
-    const ydoc = getYDoc();
-    if (!ydoc) return null;
-
-    const studiesMap = ydoc.getMap('reviews');
-    const studyYMap = studiesMap.get(studyId) as Y.Map<unknown> | undefined;
+    const studyYMap = getStudyYMap(studyId);
     if (!studyYMap) return null;
 
-    const reconciliationsMap = studyYMap.get('reconciliations') as
-      Y.Map<Y.Map<unknown>> | undefined;
+    const reconciliationsMap = studyYMap.get('reconciliations') as Y.Map<unknown> | undefined;
     if (reconciliationsMap) {
       const outcomeKey = getOutcomeKey(outcomeId, type);
-      const outcomeProgressMap = reconciliationsMap.get(outcomeKey) as Y.Map<unknown> | undefined;
-      if (outcomeProgressMap) {
-        const checklist1Id = outcomeProgressMap.get('checklist1Id') as string | undefined;
-        const checklist2Id = outcomeProgressMap.get('checklist2Id') as string | undefined;
-        if (checklist1Id && checklist2Id) {
-          return {
-            checklist1Id,
-            checklist2Id,
-            outcomeId: (outcomeProgressMap.get('outcomeId') as string | null) || null,
-            type: (outcomeProgressMap.get('type') as string) || type,
-            reconciledChecklistId:
-              (outcomeProgressMap.get('reconciledChecklistId') as string | null) || null,
-            currentPage: (outcomeProgressMap.get('currentPage') as number) || 0,
-            viewMode: (outcomeProgressMap.get('viewMode') as string) || 'questions',
-            updatedAt: (outcomeProgressMap.get('updatedAt') as number) || 0,
-          };
-        }
-      }
+      const entry = readReconciliationEntry(reconciliationsMap, outcomeKey, type);
+      if (entry) return entry;
     }
 
     // Fall back to legacy single-progress format for backward compatibility
@@ -159,34 +266,17 @@ export function createReconciliationOperations(
   }
 
   function getAllReconciliationProgress(studyId: string): ReconciliationProgressEntry[] {
-    const ydoc = getYDoc();
-    if (!ydoc) return [];
-
-    const studiesMap = ydoc.getMap('reviews');
-    const studyYMap = studiesMap.get(studyId) as Y.Map<unknown> | undefined;
+    const studyYMap = getStudyYMap(studyId);
     if (!studyYMap) return [];
 
     const results: ReconciliationProgressEntry[] = [];
 
-    const reconciliationsMap = studyYMap.get('reconciliations') as
-      Y.Map<Y.Map<unknown>> | undefined;
+    const reconciliationsMap = studyYMap.get('reconciliations') as Y.Map<unknown> | undefined;
     if (reconciliationsMap) {
-      for (const [outcomeKey, progressMap] of reconciliationsMap.entries()) {
-        const checklist1Id = progressMap.get('checklist1Id') as string | undefined;
-        const checklist2Id = progressMap.get('checklist2Id') as string | undefined;
-        if (checklist1Id && checklist2Id) {
-          results.push({
-            outcomeKey,
-            outcomeId: (progressMap.get('outcomeId') as string | null) || null,
-            type: (progressMap.get('type') as string) || 'AMSTAR2',
-            checklist1Id,
-            checklist2Id,
-            reconciledChecklistId:
-              (progressMap.get('reconciledChecklistId') as string | null) || null,
-            currentPage: (progressMap.get('currentPage') as number) || 0,
-            viewMode: (progressMap.get('viewMode') as string) || 'questions',
-            updatedAt: (progressMap.get('updatedAt') as number) || 0,
-          });
+      for (const outcomeKey of collectOutcomeKeys(reconciliationsMap)) {
+        const entry = readReconciliationEntry(reconciliationsMap, outcomeKey, 'AMSTAR2');
+        if (entry) {
+          results.push({ outcomeKey, ...entry });
         }
       }
     }
@@ -207,8 +297,7 @@ export function createReconciliationOperations(
             type: 'AMSTAR2',
             checklist1Id,
             checklist2Id,
-            reconciledChecklistId:
-              (legacyMap.get('reconciledChecklistId') as string | null) || null,
+            reconciledChecklistId: (legacyMap.get('reconciledChecklistId') as string | null) || null,
             currentPage: (legacyMap.get('currentPage') as number) || 0,
             viewMode: (legacyMap.get('viewMode') as string) || 'questions',
             updatedAt: (legacyMap.get('updatedAt') as number) || 0,
@@ -228,22 +317,21 @@ export function createReconciliationOperations(
     const ydoc = getYDoc();
     if (!ydoc) return;
 
-    const studiesMap = ydoc.getMap('reviews');
-    const studyYMap = studiesMap.get(studyId) as Y.Map<unknown> | undefined;
+    const studyYMap = getStudyYMap(studyId);
     if (!studyYMap) return;
 
-    const reconciliationsMap = studyYMap.get('reconciliations') as
-      Y.Map<Y.Map<unknown>> | undefined;
-    if (reconciliationsMap) {
-      const outcomeKey = getOutcomeKey(outcomeId, type);
-      reconciliationsMap.delete(outcomeKey);
-    }
+    ydoc.transact(() => {
+      const reconciliationsMap = studyYMap.get('reconciliations') as Y.Map<unknown> | undefined;
+      if (reconciliationsMap) {
+        deleteReconciliationEntry(reconciliationsMap, getOutcomeKey(outcomeId, type));
+      }
 
-    if (!outcomeId || type === 'AMSTAR2') {
-      studyYMap.delete('reconciliation');
-    }
+      if (!outcomeId || type === 'AMSTAR2') {
+        studyYMap.delete('reconciliation');
+      }
 
-    studyYMap.set('updatedAt', Date.now());
+      studyYMap.set('updatedAt', Date.now());
+    });
   }
 
   return {

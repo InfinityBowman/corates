@@ -70,7 +70,14 @@ export function createStudyOperations(
     studyYMap.set('description', description);
     studyYMap.set('createdAt', now);
     studyYMap.set('updatedAt', now);
+    // Pre-create all shared containers here, in the same transaction that
+    // creates the study. Lazily creating them on first write lets two clients
+    // race to create the same container; Yjs keeps one and silently discards
+    // everything inside the other.
     studyYMap.set('checklists', new Y.Map());
+    studyYMap.set('annotations', new Y.Map());
+    studyYMap.set('pdfs', new Y.Map());
+    studyYMap.set('reconciliations', new Y.Map());
 
     // Set optional reference metadata fields
     if (metadata.originalTitle) studyYMap.set('originalTitle', metadata.originalTitle);

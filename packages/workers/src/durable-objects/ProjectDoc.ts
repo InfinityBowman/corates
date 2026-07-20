@@ -12,6 +12,7 @@ import { projectMembers, projects } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
 import type { Env } from '../types';
 import { ProjectDocPersistence, type PersistenceLogger } from './ProjectDocPersistence';
+import { ensureDocContainers } from './ensure-containers';
 
 // y-websocket message types
 const messageSync = 0;
@@ -691,6 +692,11 @@ class ProjectDocBase extends DurableObject<Env> {
         }
       },
     );
+
+    // Backfill lazily-created containers for docs that predate pre-creation.
+    // Must run after the update handler above is attached so the migration
+    // update is persisted and broadcast like any other write.
+    ensureDocContainers(this.doc);
   }
 
   // --- WebSocket handling (Hibernatable API) ---
