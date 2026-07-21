@@ -340,7 +340,8 @@ export function createChecklistOperations(
     if (movers.some(c => c.get('status') === CHECKLIST_STATUS.RECONCILING)) {
       return {
         success: false,
-        error: 'Reconciliation is in progress for this outcome. Finish it before changing the outcome.',
+        error:
+          'Reconciliation is in progress for this outcome. Finish it before changing the outcome.',
       };
     }
     if (movers.some(c => targetAssignees.has((c.get('assignedTo') as string | null) ?? null))) {

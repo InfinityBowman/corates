@@ -43,7 +43,11 @@ function syncDocs(docA: Y.Doc, docB: Y.Doc) {
 
 /** Creates a study through the real ops so containers are pre-created. */
 function addStudy(doc: Y.Doc): string {
-  const ops = createStudyOperations('p1', () => doc, () => true);
+  const ops = createStudyOperations(
+    'p1',
+    () => doc,
+    () => true,
+  );
   const studyId = ops.createStudy('Study 1');
   if (!studyId) throw new Error('createStudy failed');
   return studyId;

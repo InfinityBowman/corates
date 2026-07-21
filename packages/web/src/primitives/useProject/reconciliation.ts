@@ -297,7 +297,8 @@ export function createReconciliationOperations(
             type: 'AMSTAR2',
             checklist1Id,
             checklist2Id,
-            reconciledChecklistId: (legacyMap.get('reconciledChecklistId') as string | null) || null,
+            reconciledChecklistId:
+              (legacyMap.get('reconciledChecklistId') as string | null) || null,
             currentPage: (legacyMap.get('currentPage') as number) || 0,
             viewMode: (legacyMap.get('viewMode') as string) || 'questions',
             updatedAt: (legacyMap.get('updatedAt') as number) || 0,
