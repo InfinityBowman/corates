@@ -701,6 +701,21 @@ class ProjectDocBase extends DurableObject<Env> {
 
   // --- WebSocket handling (Hibernatable API) ---
 
+  /**
+   * Denies a WebSocket upgrade by accepting it and immediately closing with a
+   * policy-violation code and reason. A browser WebSocket cannot read HTTP
+   * rejection status or headers, so an HTTP 403/404 here is indistinguishable
+   * from the server being unreachable; the close reason is the only channel
+   * that reaches the client's access-denied handling.
+   */
+  private rejectWebSocket(reason: string): Response {
+    const pair = new WebSocketPair();
+    const [client, server] = Object.values(pair);
+    server.accept();
+    server.close(1008, reason);
+    return new Response(null, { status: 101, webSocket: client });
+  }
+
   async handleWebSocket(request: Request): Promise<Response> {
     let user: { id: string; [key: string]: unknown } | null = null;
 
@@ -742,10 +757,7 @@ class ProjectDocBase extends DurableObject<Env> {
       .get();
 
     if (!project) {
-      return new Response('Project not found', {
-        status: 404,
-        headers: { 'X-Close-Reason': 'project-not-found' },
-      });
+      return this.rejectWebSocket('project-deleted');
     }
 
     const projectMembership = await db
@@ -755,10 +767,7 @@ class ProjectDocBase extends DurableObject<Env> {
       .get();
 
     if (!projectMembership) {
-      return new Response('Not a project member', {
-        status: 403,
-        headers: { 'X-Close-Reason': 'not-a-member' },
-      });
+      return this.rejectWebSocket('not-a-member');
     }
 
     // Sync member to Yjs if not present

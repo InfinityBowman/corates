@@ -35,7 +35,6 @@ const CLOSE_REASONS = {
 interface ConnectionManagerOptions {
   onSync: () => void;
   isLocalProject: () => boolean;
-  onAccessDenied: (info: { reason: string }) => Promise<void> | void;
 }
 
 export interface ConnectionManager {
@@ -54,7 +53,7 @@ export function createConnectionManager(
   ydoc: Y.Doc,
   options: ConnectionManagerOptions,
 ): ConnectionManager {
-  const { onSync, isLocalProject, onAccessDenied } = options;
+  const { onSync, isLocalProject } = options;
 
   let provider: WebsocketProvider | null = null;
   let consecutiveErrors = 0;
@@ -173,6 +172,10 @@ export function createConnectionManager(
 
         const reason = event.reason || '';
 
+        // Local-data cleanup for these denials is driven by ProjectGate after
+        // it has observed the error. Cleaning up here reset the connection
+        // state in the same tick as the ACCESS_DENIED dispatch, so the gate
+        // never saw the error and stranded the user on the loading skeleton.
         if (reason === CLOSE_REASONS.PROJECT_DELETED) {
           useProjectStore.getState().dispatchConnectionEvent(projectId, {
             type: 'ACCESS_DENIED',
@@ -180,9 +183,6 @@ export function createConnectionManager(
           });
           providerInstance.shouldConnect = false;
           shouldBeConnected = false;
-          if (onAccessDenied) {
-            onAccessDenied({ reason: CLOSE_REASONS.PROJECT_DELETED });
-          }
           return;
         }
 
@@ -193,9 +193,6 @@ export function createConnectionManager(
           });
           providerInstance.shouldConnect = false;
           shouldBeConnected = false;
-          if (onAccessDenied) {
-            onAccessDenied({ reason: CLOSE_REASONS.MEMBERSHIP_REVOKED });
-          }
           return;
         }
 
@@ -210,9 +207,6 @@ export function createConnectionManager(
           });
           providerInstance.shouldConnect = false;
           shouldBeConnected = false;
-          if (onAccessDenied) {
-            onAccessDenied({ reason: CLOSE_REASONS.NOT_A_MEMBER });
-          }
           return;
         }
 
@@ -232,18 +226,18 @@ export function createConnectionManager(
       throttledErrorLog();
 
       if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+        // Repeated connection errors mean the server is unreachable, not that
+        // access was revoked -- deletion and revocation arrive as explicit
+        // close reasons above. Do NOT treat this as access denied: that wiped
+        // local Dexie data (including unsynced edits) over a transient outage.
         useProjectStore.getState().dispatchConnectionEvent(projectId, {
           type: 'ERROR_THRESHOLD_REACHED',
-          message:
-            'Unable to connect to project. It may have been deleted or you may not have access.',
+          message: 'Unable to reach the project server. Check your connection and try again.',
         });
         if (provider) {
           provider.shouldConnect = false;
         }
         shouldBeConnected = false;
-        if (onAccessDenied) {
-          onAccessDenied({ reason: 'connection-failed' });
-        }
         return;
       }
 

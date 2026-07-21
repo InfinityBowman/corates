@@ -146,8 +146,28 @@ describe('ProjectDoc WebSocket Authorization Boundary', () => {
     const wsRequest = createWebSocketRequest(projectId);
     const wsResponse = await stub.fetch(wsRequest);
 
-    expect(wsResponse.status).toBe(403);
-    const text = await wsResponse.text();
-    expect(text).toContain('Not a project member');
+    // Denial is delivered as an accepted handshake followed by an immediate
+    // policy-violation close: a browser WebSocket cannot read an HTTP 403,
+    // so the close reason is the only signal that reaches the client.
+    expect(wsResponse.status).toBe(101);
+    const ws = wsResponse.webSocket;
+    expect(ws).toBeTruthy();
+
+    const closed = new Promise<{ code: number; reason: string }>(resolve => {
+      ws!.addEventListener('close', event => {
+        const closeEvent = event as { code: number; reason: string };
+        resolve({ code: closeEvent.code, reason: closeEvent.reason });
+      });
+    });
+    ws!.accept();
+    const closeEvent = await closed;
+
+    expect(closeEvent.code).toBe(1008);
+    expect(closeEvent.reason).toBe('not-a-member');
+
+    // The denied socket must not be registered for hibernation
+    await runInDurableObject(stub, async (_instance: ProjectDoc, state: DurableObjectState) => {
+      expect(state.getWebSockets().length).toBe(0);
+    });
   });
 });

@@ -7,12 +7,10 @@
  * 2. A removed member deep-linking back to the project (with warm local
  *    cache) must not retain access; they should be redirected away.
  *
- * Both currently FAIL: the removed member is left on an infinite
- * "Syncing project..." skeleton at the project URL. Suspected cause:
- * connection.ts dispatches ACCESS_DENIED and then synchronously calls
- * onAccessDenied -> ConnectionPool.cleanupProjectLocalData -> destroyEntry,
- * which dispatches RESET in the same tick, wiping the error before
- * ProjectGate's redirect effect ever observes it.
+ * Case 1 requires the ACCESS_DENIED error to survive until ProjectGate's
+ * redirect effect observes it (cleanup used to erase it in the same tick).
+ * Case 2 requires the DO to deny the upgrade via accept-then-close with a
+ * close reason -- a browser WebSocket cannot read an HTTP 403/404 rejection.
  *
  * Requires dev test server on localhost:3010 (DEV_MODE=true).
  */
@@ -112,4 +110,3 @@ test('Removed member deep-linking back to the project is denied', async ({ brows
     await cleanupScenario(scenario);
   }
 });
-

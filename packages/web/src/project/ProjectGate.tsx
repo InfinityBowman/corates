@@ -6,13 +6,15 @@
  * Renders fallback while connecting, children + ProjectProvider when synced.
  */
 
-import { useEffect, useLayoutEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import { useProjectOrgId } from '@/hooks/useProjectOrgId';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors';
 import { showToast } from '@/lib/toast';
+import { WifiOffIcon, RefreshCwIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { connectionPool } from './ConnectionPool';
 
 import { ProjectProvider } from '@/components/project/ProjectContext';
@@ -24,6 +26,28 @@ interface ProjectGateProps {
   children: React.ReactNode;
 }
 
+// How long the connecting skeleton may show before we surface an explicit
+// connection-trouble state instead of spinning forever.
+const CONNECT_STALL_TIMEOUT_MS = 15_000;
+
+function ConnectionTrouble({ message }: { message: string }) {
+  return (
+    <div className='flex flex-1 items-center justify-center p-8'>
+      <div className='border-border bg-card w-full max-w-sm rounded-xl border p-6 text-center shadow-sm'>
+        <div className='bg-destructive/10 mx-auto mb-4 flex size-12 items-center justify-center rounded-full'>
+          <WifiOffIcon className='text-destructive size-6' />
+        </div>
+        <h3 className='text-foreground mb-1 text-base font-semibold'>Connection trouble</h3>
+        <p className='text-muted-foreground mb-5 text-sm'>{message}</p>
+        <Button onClick={() => window.location.reload()}>
+          <RefreshCwIcon className='size-3.5' />
+          Retry
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export function ProjectGate({ projectId, fallback, children }: ProjectGateProps) {
   const navigate = useNavigate();
   const orgId = useProjectOrgId(projectId);
@@ -32,6 +56,24 @@ export function ProjectGate({ projectId, fallback, children }: ProjectGateProps)
   const connectionEntryRef = useRef<ReturnType<typeof connectionPool.acquire>>(null);
 
   const connectionState = useProjectStore(s => selectConnectionPhase(s, projectId));
+
+  const isPending =
+    connectionState.phase !== 'synced' &&
+    connectionState.phase !== 'cached' &&
+    !connectionState.error;
+
+  // Fail loudly instead of showing the connecting skeleton forever. Members
+  // have no usable local cache yet, so a reload while the sync server is
+  // unreachable would otherwise never leave the fallback.
+  const [stalled, setStalled] = useState(false);
+  useEffect(() => {
+    if (!isPending) {
+      setStalled(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setStalled(true), CONNECT_STALL_TIMEOUT_MS);
+    return () => window.clearTimeout(timer);
+  }, [isPending, projectId]);
 
   // Connection lifecycle -- acquire on mount, release on unmount
   useLayoutEffect(() => {
@@ -74,26 +116,36 @@ export function ProjectGate({ projectId, fallback, children }: ProjectGateProps)
     }
   }, [isOnline, projectId]);
 
-  // Access denied redirect
+  // Access denied redirect. Local-data cleanup happens here, after the error
+  // has been observed -- cleanup resets the connection state, so running it
+  // from the dispatch site erased the error before this effect could react.
   useEffect(() => {
     if (connectionState.error && ACCESS_DENIED_ERRORS.includes(connectionState.error)) {
       showToast.error('Access Denied', connectionState.error);
       navigate({ to: '/dashboard', replace: true });
+      connectionPool.cleanupProjectLocalData(projectId);
     }
-  }, [connectionState.error, navigate]);
+  }, [connectionState.error, navigate, projectId]);
 
-  // Show fallback while connecting (cached = Dexie data available, render immediately)
-  if (
-    connectionState.phase !== 'synced' &&
-    connectionState.phase !== 'cached' &&
-    !connectionState.error
-  ) {
+  // Show fallback while connecting (cached = Dexie data available, render
+  // immediately). If the connection never becomes usable, surface it -- the
+  // provider keeps retrying underneath, so a recovered connection replaces
+  // this with the project automatically.
+  if (isPending) {
+    if (stalled) {
+      return (
+        <ConnectionTrouble message='Loading is taking longer than expected. Check your connection and try again.' />
+      );
+    }
     return <>{fallback || null}</>;
   }
 
-  // Error state handled by redirect above
   if (connectionState.error) {
-    return null;
+    // Access denied errors are handled by the redirect effect above.
+    if (ACCESS_DENIED_ERRORS.includes(connectionState.error)) {
+      return null;
+    }
+    return <ConnectionTrouble message={connectionState.error} />;
   }
 
   const reactor = connectionPool.getReactor(projectId);
