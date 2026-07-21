@@ -23,29 +23,29 @@ Tests live in `packages/workers/src/durable-objects/__tests__/`
 (ProjectDoc.backlog-sync.test.ts, ProjectDoc.realws-sync.test.ts,
 ProjectDoc.sync-pull.test.ts).
 
-| # | Failure mode | Outcome today | Test |
-|---|--------------|---------------|------|
-| 1 | Offline backlog pushed via handshake, DO restarts | Survives (persisted row or snapshot) | backlog-sync 1, realws 1 |
-| 2 | Backlog update ~1 MB | Survives | backlog-sync 2 |
-| 3 | Backlog update > 2.2 MB (SQLite value cap, enforced identically in local workerd) | WAS silently lost on eviction; now persisted via forced chunked snapshot | backlog-sync 3 |
-| 4 | Insert fails (SQL error) | WAS silently lost; now forced snapshot fallback | backlog-sync 4 |
-| 5 | Insert AND snapshot fallback both fail | Retried on every subsequent update via `forceCompactPending` flag | backlog-sync 5 |
-| 6 | Corrupt persisted update row | WAS a permanent "internal error" on every request; now skipped with `persistence_corrupt_update_row` report | backlog-sync 6 |
-| 7 | Corrupt snapshot chunk | Fails loudly on EVERY request (doc reset on load failure; previously the first failure left a partial doc in memory that later calls silently served) | backlog-sync 7 |
-| 8 | Update whose same-client predecessor was lost | Pending structs: content invisible, but the delete set applies immediately so existing values can read as undefined; handshake heals | backlog-sync 8 |
-| 9 | Dead-socket answers + live-session status (the production incident shape) | Status visible, answers absent; reconnect handshake recovers | backlog-sync 9 |
-| 10 | True eviction / hibernation wake (evictDurableObject) | Storage reload correct, hibernated sockets wake the DO and keep working | realws 1 |
-| 11 | Second client converging on another client's backlog | Converges via proactive SyncStep2 + handshake | realws 2 |
-| 12 | Malformed frames (truncated sync payload, unknown type, raw noise, string frame) | Captured and dropped; same socket and healthy peers keep working | realws 3 |
-| 13 | Client-side throw while applying server sync or encoding the reply | WAS invisible (y-websocket has no error handling; the client simply never answers SyncStep1, so its edits never push); now captured to Sentry with projectId | manual (client) |
+| #   | Failure mode                                                                      | Outcome today                                                                                                                                                | Test                     |
+| --- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------ |
+| 1   | Offline backlog pushed via handshake, DO restarts                                 | Survives (persisted row or snapshot)                                                                                                                         | backlog-sync 1, realws 1 |
+| 2   | Backlog update ~1 MB                                                              | Survives                                                                                                                                                     | backlog-sync 2           |
+| 3   | Backlog update > 2.2 MB (SQLite value cap, enforced identically in local workerd) | WAS silently lost on eviction; now persisted via forced chunked snapshot                                                                                     | backlog-sync 3           |
+| 4   | Insert fails (SQL error)                                                          | WAS silently lost; now forced snapshot fallback                                                                                                              | backlog-sync 4           |
+| 5   | Insert AND snapshot fallback both fail                                            | Retried on every subsequent update via `forceCompactPending` flag                                                                                            | backlog-sync 5           |
+| 6   | Corrupt persisted update row                                                      | WAS a permanent "internal error" on every request; now skipped with `persistence_corrupt_update_row` report                                                  | backlog-sync 6           |
+| 7   | Corrupt snapshot chunk                                                            | Fails loudly on EVERY request (doc reset on load failure; previously the first failure left a partial doc in memory that later calls silently served)        | backlog-sync 7           |
+| 8   | Update whose same-client predecessor was lost                                     | Pending structs: content invisible, but the delete set applies immediately so existing values can read as undefined; handshake heals                         | backlog-sync 8           |
+| 9   | Dead-socket answers + live-session status (the production incident shape)         | Status visible, answers absent; reconnect handshake recovers                                                                                                 | backlog-sync 9           |
+| 10  | True eviction / hibernation wake (evictDurableObject)                             | Storage reload correct, hibernated sockets wake the DO and keep working                                                                                      | realws 1                 |
+| 11  | Second client converging on another client's backlog                              | Converges via proactive SyncStep2 + handshake                                                                                                                | realws 2                 |
+| 12  | Malformed frames (truncated sync payload, unknown type, raw noise, string frame)  | Captured and dropped; same socket and healthy peers keep working                                                                                             | realws 3                 |
+| 13  | Client-side throw while applying server sync or encoding the reply                | WAS invisible (y-websocket has no error handling; the client simply never answers SyncStep1, so its edits never push); now captured to Sentry with projectId | manual (client)          |
 
 ### Not testable locally
 
-| Failure mode | Why | Mitigation |
-|--------------|-----|------------|
-| Websocket message > 1 MiB through the Cloudflare edge (local workerd allows 32 MiB) | Edge-enforced transport cap | A stranded backlog between ~1 MiB and the SQLite cap can never push over the socket in production. Needs a staging test, and ultimately an HTTP force-push path that bypasses the socket. |
-| DO out-of-memory (128 MB isolate) during a huge SyncStep2 apply | Not enforced locally | `getStorageStats()` exposes `memoryUsagePercent`; watch it in the admin dashboard. |
-| Real auto-eviction timing under load | Local eviction is only explicit | Covered logically by evictDurableObject tests. |
+| Failure mode                                                                        | Why                             | Mitigation                                                                                                                                                                                |
+| ----------------------------------------------------------------------------------- | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Websocket message > 1 MiB through the Cloudflare edge (local workerd allows 32 MiB) | Edge-enforced transport cap     | A stranded backlog between ~1 MiB and the SQLite cap can never push over the socket in production. Needs a staging test, and ultimately an HTTP force-push path that bypasses the socket. |
+| DO out-of-memory (128 MB isolate) during a huge SyncStep2 apply                     | Not enforced locally            | `getStorageStats()` exposes `memoryUsagePercent`; watch it in the admin dashboard.                                                                                                        |
+| Real auto-eviction timing under load                                                | Local eviction is only explicit | Covered logically by evictDurableObject tests.                                                                                                                                            |
 
 ## Changes made in this pass
 

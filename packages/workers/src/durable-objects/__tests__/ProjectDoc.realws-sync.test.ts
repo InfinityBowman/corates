@@ -278,8 +278,7 @@ describe('ProjectDoc real-websocket sync', () => {
       const study = docB.getMap('reviews').get('study-1') as Y.Map<unknown> | undefined;
       if (!study) return false;
       const cl = (study.get('checklists') as Y.Map<unknown>)?.get('cl-1') as
-        | Y.Map<unknown>
-        | undefined;
+        Y.Map<unknown> | undefined;
       if (!cl) return false;
       const answers = cl.get('answers') as Y.Map<unknown> | undefined;
       if (!answers) return false;

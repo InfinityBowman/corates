@@ -13,6 +13,11 @@ import type { Rob2Key, Rob2Answers } from '@corates/shared/checklists/rob2';
 import { createChecklistOfType, CHECKLIST_TYPES } from '@/checklist-registry';
 import { CHECKLIST_STATUS, getOutcomeKey } from '@corates/shared/checklists';
 import { createCommonOperations } from './common';
+import {
+  readReconciliationEntry,
+  writeReconciliationEntry,
+  deleteReconciliationEntry,
+} from '../reconciliation';
 import { AMSTAR2Handler } from './handlers/amstar2';
 import { ROBINSIHandler } from './handlers/robins-i';
 import { ROB2Handler } from './handlers/rob2';
@@ -100,6 +105,21 @@ export interface ChecklistOperations {
     text: string,
     maxLength?: number,
   ) => void;
+}
+
+/**
+ * Pre-creates the checklist's annotations sub-map while checklist creation is
+ * still a single-client operation. Creating it lazily on the first annotation
+ * lets two clients race to create it, and Yjs silently discards the loser's
+ * annotations. Skipped when the study-level container is missing (docs that
+ * predate container pre-creation); the lazy path in annotations.ts still
+ * covers those until the server migrates them.
+ */
+function preCreateAnnotationsSubMap(studyYMap: Y.Map<unknown>, checklistId: string): void {
+  const annotationsMap = studyYMap.get('annotations') as Y.Map<unknown> | undefined;
+  if (annotationsMap && !annotationsMap.has(checklistId)) {
+    annotationsMap.set(checklistId, new Y.Map());
+  }
 }
 
 export function createChecklistOperations(
@@ -208,6 +228,7 @@ export function createChecklistOperations(
         });
         checklistYMap.set('answers', answersYMap);
         checklistsMap.set(checklistId, checklistYMap);
+        preCreateAnnotationsSubMap(studyYMap, checklistId);
         studyYMap.set('updatedAt', now);
         return checklistId;
       }
@@ -229,6 +250,7 @@ export function createChecklistOperations(
       checklistYMap.set('answers', answersYMap);
 
       checklistsMap.set(checklistId, checklistYMap);
+      preCreateAnnotationsSubMap(studyYMap, checklistId);
 
       // For ROBINS-I, auto-fill sectionA.outcome with the outcome name.
       // This must happen after the checklist is attached to the doc:
@@ -318,7 +340,8 @@ export function createChecklistOperations(
     if (movers.some(c => c.get('status') === CHECKLIST_STATUS.RECONCILING)) {
       return {
         success: false,
-        error: 'Reconciliation is in progress for this outcome. Finish it before changing the outcome.',
+        error:
+          'Reconciliation is in progress for this outcome. Finish it before changing the outcome.',
       };
     }
     if (movers.some(c => targetAssignees.has((c.get('assignedTo') as string | null) ?? null))) {
@@ -347,17 +370,17 @@ export function createChecklistOperations(
         }
       }
 
-      const reconciliationsMap = studyYMap.get('reconciliations') as
-        Y.Map<Y.Map<unknown>> | undefined;
-      const oldEntry = reconciliationsMap?.get(getOutcomeKey(fromOutcomeId, type)) as
-        Y.Map<unknown> | undefined;
-      if (reconciliationsMap && oldEntry) {
-        const newEntry = new Y.Map();
-        for (const [key, value] of oldEntry.entries()) {
-          newEntry.set(key, key === 'outcomeId' ? toOutcomeId : value);
+      const reconciliationsMap = studyYMap.get('reconciliations') as Y.Map<unknown> | undefined;
+      if (reconciliationsMap) {
+        const fromKey = getOutcomeKey(fromOutcomeId, type);
+        const oldEntry = readReconciliationEntry(reconciliationsMap, fromKey, type);
+        if (oldEntry) {
+          writeReconciliationEntry(reconciliationsMap, getOutcomeKey(toOutcomeId, type), {
+            ...oldEntry,
+            outcomeId: toOutcomeId,
+          });
+          deleteReconciliationEntry(reconciliationsMap, fromKey);
         }
-        reconciliationsMap.set(getOutcomeKey(toOutcomeId, type), newEntry);
-        reconciliationsMap.delete(getOutcomeKey(fromOutcomeId, type));
       }
 
       studyYMap.set('updatedAt', now);

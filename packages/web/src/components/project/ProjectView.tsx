@@ -1,21 +1,14 @@
 /**
  * ProjectView - Main view for a single project
- * Establishes Yjs connection, processes pending data, renders tabbed interface.
+ * Establishes Yjs connection, renders tabbed interface.
  * Child routes (checklist, reconciliation) are rendered via Outlet.
  */
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useMemo, useCallback } from 'react';
 import { useNavigate, useLocation, Outlet } from '@tanstack/react-router';
-import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import { useAllStudiesById, useProjectMetaById } from '@/primitives/useProject/reactor';
-import { useProjectOrgId } from '@/hooks/useProjectOrgId';
 import { useAuthStore, selectUser } from '@/stores/authStore';
-import { ProjectGate } from '@/project';
-import { project } from '@/project';
-import { uploadPdf, deletePdf } from '@/api/pdf-api';
-import { cachePdf } from '@/primitives/pdfCache.js';
-import { bestEffort } from '@/lib/errorLogger.js';
-import { importFromGoogleDrive } from '@/api/google-drive';
+import { ProjectGate, project } from '@/project';
 import { Tabs, TabsContent, TabsIndicator, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -111,7 +104,6 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const user = useAuthStore(selectUser);
-  const orgId = useProjectOrgId(projectId);
 
   const isChildRoute = useMemo(() => {
     const path = location.pathname;
@@ -120,140 +112,6 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
 
   const studies = useAllStudiesById(projectId);
   const meta = useProjectMetaById(projectId);
-  const connectionState = useProjectStore(s => selectConnectionPhase(s, projectId));
-
-  // Read pending data exactly once via lazy initializer (safe for StrictMode)
-  const [pendingState] = useState(() => {
-    const d = (useProjectStore.getState() as any).getPendingProjectData?.(projectId);
-    return {
-      pdfs: d?.pendingPdfs || null,
-      refs: d?.pendingRefs || null,
-      drive: d?.driveFiles || null,
-    };
-  });
-  const [pendingPdfs, setPendingPdfs] = useState<any[] | null>(pendingState.pdfs);
-  const [pendingRefs, setPendingRefs] = useState<any[] | null>(pendingState.refs);
-  const [pendingDriveFiles, setPendingDriveFiles] = useState<any[] | null>(pendingState.drive);
-
-  useEffect(() => {
-    if (
-      connectionState.phase !== 'synced' ||
-      !projectId ||
-      !orgId ||
-      !Array.isArray(pendingPdfs) ||
-      pendingPdfs.length === 0
-    )
-      return;
-    const pdfs = pendingPdfs;
-    setPendingPdfs(null);
-
-    for (const pdf of pdfs) {
-      const studyName = pdf.fileName ? pdf.fileName.replace(/\.pdf$/i, '') : 'Untitled Study';
-      const metadata = {
-        ...(pdf.metadata || {}),
-        originalTitle: pdf.title || pdf.metadata?.title || null,
-        doi: pdf.doi ?? pdf.metadata?.doi ?? null,
-        importSource: pdf.metadata?.importSource || 'pdf',
-      };
-      const studyId = project.study.create(studyName, pdf.metadata?.abstract || '', metadata);
-      if (studyId && pdf.data) {
-        const arrayBuffer = new Uint8Array(pdf.data).buffer;
-        uploadPdf(orgId, projectId, studyId, arrayBuffer, pdf.fileName)
-          .then(result => {
-            bestEffort(cachePdf(projectId, studyId, result.fileName, arrayBuffer), {
-              operation: 'cachePdf (pending upload)',
-              projectId,
-              studyId,
-              fileName: result.fileName,
-            });
-            try {
-              const pdfMetadata = pdf.metadata || {};
-              project.pdf.addToStudy(studyId, {
-                key: result.key,
-                fileName: result.fileName,
-                size: result.size,
-                uploadedBy: user?.id,
-                uploadedAt: Date.now(),
-                title: pdfMetadata.title || pdf.title || null,
-                firstAuthor: pdfMetadata.firstAuthor || null,
-                publicationYear: pdfMetadata.publicationYear || null,
-                journal: pdfMetadata.journal || null,
-                doi: pdf.doi ?? pdfMetadata.doi ?? null,
-              });
-            } catch (metaErr) {
-              console.error('Failed to add PDF metadata:', metaErr);
-              bestEffort(deletePdf(orgId, projectId, studyId, result.fileName), {
-                operation: 'deletePdf (pending upload rollback)',
-                projectId,
-                studyId,
-                fileName: result.fileName,
-              });
-            }
-          })
-          .catch(err => console.error('Error uploading PDF for new study:', err));
-      }
-    }
-  }, [connectionState.phase, projectId, orgId, pendingPdfs, user?.id]);
-
-  useEffect(() => {
-    if (
-      connectionState.phase !== 'synced' ||
-      !projectId ||
-      !Array.isArray(pendingRefs) ||
-      pendingRefs.length === 0
-    )
-      return;
-    const refs = pendingRefs;
-    setPendingRefs(null);
-    for (const ref of refs) {
-      project.study.create(ref.title, ref.metadata?.abstract || '', ref.metadata || {});
-    }
-  }, [connectionState.phase, projectId, pendingRefs]);
-
-  useEffect(() => {
-    if (
-      connectionState.phase !== 'synced' ||
-      !projectId ||
-      !orgId ||
-      !Array.isArray(pendingDriveFiles) ||
-      pendingDriveFiles.length === 0
-    )
-      return;
-    const driveFiles = pendingDriveFiles;
-    setPendingDriveFiles(null);
-    for (const file of driveFiles) {
-      const title = file.title || file.name.replace(/\.pdf$/i, '');
-      const metadata = {
-        ...(file.metadata || {}),
-        importSource: file.metadata?.importSource || file.importSource || 'google-drive',
-      };
-      const studyId = project.study.create(title, file.metadata?.abstract || '', metadata);
-      if (studyId && file.id) {
-        importFromGoogleDrive(file.id, projectId, studyId)
-          .then((result: any) => {
-            try {
-              project.pdf.addToStudy(studyId, {
-                key: result.file.key,
-                fileName: result.file.fileName,
-                size: result.file.size,
-                uploadedBy: user?.id,
-                uploadedAt: Date.now(),
-                source: 'google-drive',
-              });
-            } catch (metaErr) {
-              console.error('Failed to add PDF metadata:', metaErr);
-              bestEffort(deletePdf(orgId, projectId, studyId, result.file.fileName), {
-                operation: 'deletePdf (Google Drive rollback)',
-                projectId,
-                studyId,
-                fileName: result.file.fileName,
-              });
-            }
-          })
-          .catch(err => console.error('Error importing Google Drive file:', err));
-      }
-    }
-  }, [connectionState.phase, projectId, orgId, pendingDriveFiles, user?.id]);
 
   // Tab helpers
   const userId = user?.id;

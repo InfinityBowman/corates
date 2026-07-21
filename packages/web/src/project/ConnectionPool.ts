@@ -209,9 +209,6 @@ class ConnectionPool {
           useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'SYNC_COMPLETE' });
         },
         isLocalProject: () => isLocal,
-        onAccessDenied: async () => {
-          await this.cleanupProjectLocalData(projectId);
-        },
       });
       entry.connectionManager.connect();
     }

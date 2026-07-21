@@ -387,10 +387,7 @@ describe('ProjectDoc sync durability edge cases', () => {
       internals.persistence.forceCompact = originalForce;
 
       getChecklist(clientDoc, 'study-1', 'cl-1').set('status', 'reviewer-completed');
-      const statusUpdate = Y.encodeStateAsUpdate(
-        clientDoc,
-        Y.encodeStateVector(internals.doc!),
-      );
+      const statusUpdate = Y.encodeStateAsUpdate(clientDoc, Y.encodeStateVector(internals.doc!));
       await internals.webSocketMessage(ws, updateMessage(statusUpdate));
       expect(internals.forceCompactPending).toBe(false);
 
