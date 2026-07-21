@@ -15,6 +15,18 @@
 
 import * as Y from 'yjs';
 
+/**
+ * The migration itself can collide: a client holding an unsynced offline
+ * backlog may have lazily created one of these containers (with content in
+ * it) before ever seeing the backfill. Yjs resolves a concurrent same-key
+ * map.set deterministically in favor of the HIGHER clientID, so the backfill
+ * writes under a reserved low clientID: its always-empty containers lose any
+ * such conflict, and the client's populated container survives. Client ids
+ * are random uint32s, so only a client that draws 0 could lose to this
+ * (probability 2^-32, and equal ids already break Yjs outright).
+ */
+const MIGRATION_CLIENT_ID = 1;
+
 const STUDY_CONTAINER_KEYS = ['checklists', 'annotations', 'pdfs', 'reconciliations'] as const;
 
 function studyNeedsContainers(studyYMap: Y.Map<unknown>): boolean {
@@ -45,6 +57,18 @@ function docNeedsContainers(doc: Y.Doc): boolean {
 export function ensureDocContainers(doc: Y.Doc): boolean {
   if (!docNeedsContainers(doc)) return false;
 
+  const originalClientID = doc.clientID;
+  doc.clientID = MIGRATION_CLIENT_ID;
+  try {
+    writeContainers(doc);
+  } finally {
+    doc.clientID = originalClientID;
+  }
+
+  return true;
+}
+
+function writeContainers(doc: Y.Doc): void {
   doc.transact(() => {
     const metaMap = doc.getMap('meta');
     if (!(metaMap.get('outcomes') instanceof Y.Map)) {
@@ -67,6 +91,4 @@ export function ensureDocContainers(doc: Y.Doc): boolean {
       }
     }
   }, 'ensure-containers');
-
-  return true;
 }

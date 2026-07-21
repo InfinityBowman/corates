@@ -123,6 +123,8 @@ export function writeReconciliationEntry(
   reconciliationsMap.set(`${outcomeKey}.type`, progress.type);
   if (progress.reconciledChecklistId) {
     reconciliationsMap.set(`${outcomeKey}.reconciledChecklistId`, progress.reconciledChecklistId);
+  } else {
+    reconciliationsMap.delete(`${outcomeKey}.reconciledChecklistId`);
   }
   reconciliationsMap.set(`${outcomeKey}.currentPage`, progress.currentPage);
   reconciliationsMap.set(`${outcomeKey}.viewMode`, progress.viewMode);
