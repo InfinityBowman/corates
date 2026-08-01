@@ -14,6 +14,10 @@
       "types": "./durable-objects.d.ts",
       "default": "./src/durable-objects/index.ts"
     },
+    "./sync": {
+      "types": "./sync.d.ts",
+      "default": "./src/sync/index.ts"
+    },
     "./queue": {
       "types": "./queue.d.ts",
       "default": "./src/queue.ts"
@@ -48,6 +52,7 @@
   },
   "dependencies": {
     "@better-auth/stripe": "^1.6.22",
+    "@cf-sync/server": "file:../../vendor/cf-sync-server-0.1.0.tgz",
     "@corates/db": "workspace:*",
     "@corates/shared": "workspace:*",
     "@sentry/cloudflare": "^10.62.0",

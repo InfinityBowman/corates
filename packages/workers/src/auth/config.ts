@@ -28,6 +28,7 @@ import {
   getMagicLinkEmailText,
 } from './emailTemplates';
 import { queueEmail } from '@corates/shared/email';
+import { refreshOrgWorkspaceSessions } from '../sync/admin';
 import { notifyOrgMembers, EventTypes } from '../lib/notify';
 import { copyAvatarToR2, isExternalAvatarUrl, isInternalAvatarUrl } from '../lib/avatar-copy';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
@@ -314,6 +315,17 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
                       extra: { orgId: subscription.referenceId },
                     });
                   }
+                  // Entitlement may have flipped: refresh-disconnect the org's
+                  // live sync sessions so reconnects re-run authorize and pick
+                  // up a fresh writeAllowed stamp.
+                  try {
+                    await refreshOrgWorkspaceSessions(env, db, subscription.referenceId);
+                  } catch (err) {
+                    captureError(err, {
+                      tags: { component: 'auth', action: 'subscription-complete-refresh-sync' },
+                      extra: { orgId: subscription.referenceId },
+                    });
+                  }
                 })(),
               );
             }
@@ -338,6 +350,17 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
                       extra: { orgId: subscription.referenceId },
                     });
                   }
+                  // Entitlement may have flipped: refresh-disconnect the org's
+                  // live sync sessions so reconnects re-run authorize and pick
+                  // up a fresh writeAllowed stamp.
+                  try {
+                    await refreshOrgWorkspaceSessions(env, db, subscription.referenceId);
+                  } catch (err) {
+                    captureError(err, {
+                      tags: { component: 'auth', action: 'subscription-update-refresh-sync' },
+                      extra: { orgId: subscription.referenceId },
+                    });
+                  }
                 })(),
               );
             }
@@ -358,6 +381,17 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
                   } catch (err) {
                     captureError(err, {
                       tags: { component: 'auth', action: 'subscription-cancel-notify' },
+                      extra: { orgId: subscription.referenceId },
+                    });
+                  }
+                  // Entitlement may have flipped: refresh-disconnect the org's
+                  // live sync sessions so reconnects re-run authorize and pick
+                  // up a fresh writeAllowed stamp.
+                  try {
+                    await refreshOrgWorkspaceSessions(env, db, subscription.referenceId);
+                  } catch (err) {
+                    captureError(err, {
+                      tags: { component: 'auth', action: 'subscription-cancel-refresh-sync' },
                       extra: { orgId: subscription.referenceId },
                     });
                   }

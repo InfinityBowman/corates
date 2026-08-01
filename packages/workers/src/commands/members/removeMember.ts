@@ -11,6 +11,7 @@ import { projectMembers, projects } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS } from '@corates/shared';
 import { syncMemberWithRetry } from '../../lib/syncWithRetry';
+import { kickWorkspaceUser } from '../../sync/admin';
 import { notifyUser, NotificationTypes } from '../lib/notifications';
 import { getProjectMembership, requireSafeRemoval } from '../../policies';
 import type { Env } from '../../types';
@@ -55,6 +56,10 @@ export async function removeMember(
 
   // Sync member removal to DO with automatic retry
   await syncMemberWithRetry(env, projectId, 'remove', { userId });
+
+  // Kick the removed member's live sync-engine sessions (permanent close;
+  // reconnects re-run authorize against D1 and fail with not-a-member).
+  await kickWorkspaceUser(env, projectId, userId);
 
   // Send notification to removed user (if not self-removal)
   if (!isSelfRemoval) {

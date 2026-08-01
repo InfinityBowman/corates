@@ -9,6 +9,7 @@ import { createDb } from '@corates/db/client';
 import { projects, projectMembers } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
+import { teardownWorkspace } from '../../sync/admin';
 import { disconnectAllFromProject, cleanupProjectStorage } from '../lib/doSync';
 import { notifyUsers, NotificationTypes } from '../lib/notifications';
 import type { Env } from '../../types';
@@ -56,6 +57,11 @@ export async function deleteProject(
       extra: { projectId },
     });
   }
+
+  // Same for the sync-engine workspace: close every session, wipe storage.
+  // Best-effort like the ProjectDoc teardown above — D1 delete is the
+  // authoritative act, and teardownWorkspace logs its own failures.
+  await teardownWorkspace(env, projectId);
 
   // Clean up all PDFs from R2 storage
   try {

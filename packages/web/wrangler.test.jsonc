@@ -11,13 +11,15 @@
 
   "exports": {
     "UserSession": { "type": "durable-object", "storage": "sqlite" },
-    "ProjectDoc": { "type": "durable-object", "storage": "sqlite" }
+    "ProjectDoc": { "type": "durable-object", "storage": "sqlite" },
+    "WorkspaceDO": { "type": "durable-object", "storage": "sqlite" }
   },
 
   "durable_objects": {
     "bindings": [
       { "name": "USER_SESSION", "class_name": "UserSession" },
-      { "name": "PROJECT_DOC", "class_name": "ProjectDoc" }
+      { "name": "PROJECT_DOC", "class_name": "ProjectDoc" },
+      { "name": "WORKSPACE", "class_name": "WorkspaceDO" }
     ]
   },
 
@@ -37,6 +39,7 @@
 
   "vars": {
     "ENVIRONMENT": "test",
+    "SYNC_ADMIN_TOKEN": "test-sync-admin-token",
     "AUTH_BASE_URL": "http://localhost:3010",
     "APP_URL": "http://localhost:3010",
     "DEV_MODE": true,

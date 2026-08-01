@@ -4,7 +4,7 @@
  * subjects (commands, lib helpers, DO classes) directly — there is no real
  * fetch handler to wire.
  */
-export { UserSession, ProjectDoc } from './durable-objects';
+export { UserSession, ProjectDoc, WorkspaceDO } from './durable-objects';
 
 export default {
   async fetch(): Promise<Response> {

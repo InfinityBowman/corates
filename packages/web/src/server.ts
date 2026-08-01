@@ -2,10 +2,11 @@ import * as Sentry from '@sentry/cloudflare';
 import { createStartHandler, defaultStreamHandler } from '@tanstack/react-start/server';
 import { handleEmailQueue } from '@corates/workers/queue';
 import { getProjectDocStub } from '@corates/workers/project-doc-id';
+import { handleSyncFetch } from '@corates/workers/sync';
 
 // Re-export DOs so wrangler DO bindings in wrangler.jsonc resolve against this
 // worker's main module. The class implementations live in @corates/workers.
-export { UserSession, ProjectDoc } from '@corates/workers/durable-objects';
+export { UserSession, ProjectDoc, WorkspaceDO } from '@corates/workers/durable-objects';
 
 const startFetch = createStartHandler(defaultStreamHandler);
 
@@ -53,6 +54,11 @@ const workerHandler = {
       const stub = ns.get(id);
       return stub.fetch(request);
     }
+
+    // Sync-engine routes (`/api/sync/<projectId>` upgrades and
+    // `/api/sync-admin/...`): resolves null for anything else.
+    const syncResponse = await handleSyncFetch(request, env);
+    if (syncResponse) return syncResponse;
 
     // Forward the Worker's ExecutionContext through TanStack Start so file
     // routes can pass it into route handlers (waitUntil for fire-and-forget

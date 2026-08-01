@@ -14,3 +14,10 @@ export declare class ProjectDoc {
   webSocketMessage(ws: WebSocket, message: string | ArrayBuffer): Promise<void>;
   webSocketClose(ws: WebSocket, code: number, reason: string, wasClean: boolean): Promise<void>;
 }
+
+// The sync-engine workspace DO (@cf-sync/server createWorkspaceDO over the
+// @corates/shared/sync app). Opaque on purpose: traffic reaches it through
+// the routers in @corates/workers/sync, never instance methods.
+export declare class WorkspaceDO {
+  fetch(request: Request): Promise<Response>;
+}
