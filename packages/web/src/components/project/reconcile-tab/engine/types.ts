@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react';
-import type * as Y from 'yjs';
 import type { getUserColor } from '@/lib/userColors.js';
 import type { TextRef } from '@/primitives/useProject/checklists';
 import type { PdfEntry } from '@/stores/projectStore';
@@ -70,6 +69,8 @@ export interface EngineContext<
   navItems: TNavItem[];
   checklist1: TChecklist | null;
   checklist2: TChecklist | null;
+  /** Serialized reconciled checklist data (nested shape from answer rows) */
+  reconciledChecklist: TChecklist | null;
   /** Derived via adapter.deriveFinalAnswers */
   finalAnswers: TFinalAnswers;
   /** From adapter.compare */
@@ -78,11 +79,9 @@ export interface EngineContext<
   reviewer2Name: string;
   /** Pre-computed by engine via adapter.isAgreement for current item */
   isAgreement: boolean;
-  /** Raw Yjs write callback - adapter formats args for its data model */
+  /** Raw write callback - adapter formats args for its data model */
   updateChecklistAnswer: (sectionKey: string, data: unknown) => void;
-  /** Y.Text accessor for collaborative comment/note fields */
-  getTextRef: (ref: TextRef) => Y.Text | null;
-  /** Set a Y.Text field value (equality-checked, transacted) */
+  /** Set a text field value (the ref resolves to its flat answer key) */
   setTextValue: (ref: TextRef, text: string) => void;
 }
 
@@ -312,7 +311,6 @@ export interface ReconciliationEngineProps {
   onSaveReconciled: (name?: string) => void;
   onCancel: () => void;
   updateChecklistAnswer: (sectionKey: string, data: unknown) => void;
-  getTextRef: (ref: TextRef) => Y.Text | null;
   setTextValue: (ref: TextRef, text: string) => void;
 
   // PDF

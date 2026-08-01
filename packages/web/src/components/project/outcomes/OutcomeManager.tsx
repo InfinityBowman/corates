@@ -2,7 +2,7 @@
  * OutcomeManager - Manages project-level outcomes for ROB-2 and ROBINS-I checklists
  */
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { ChevronRightIcon, PlusIcon, PencilIcon, Trash2Icon, CheckIcon, XIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { project } from '@/project';
 import { useProjectContext } from '../ProjectContext';
-import { useProjectMetaById } from '@/primitives/useProject/reactor';
+import { useProjectOutcomes } from '@/project/workspace-data';
 import { showToast } from '@/lib/toast';
 
 export function OutcomeManager() {
@@ -33,8 +33,7 @@ export function OutcomeManager() {
   const [isSaving, setIsSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
-  const meta = useProjectMetaById(projectId);
-  const outcomes = useMemo(() => meta?.outcomes ?? [], [meta]);
+  const outcomes = useProjectOutcomes(projectId);
 
   const handleAdd = useCallback(async () => {
     const name = newName.trim();

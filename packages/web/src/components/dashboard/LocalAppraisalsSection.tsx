@@ -4,7 +4,6 @@
 
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import type * as Y from 'yjs';
 import {
   PlusIcon,
   FileTextIcon,
@@ -23,10 +22,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { buildProjectCsv, downloadCsv } from '@/lib/export-csv';
 import { buildProjectPdf, downloadPdf } from '@/lib/export-pdf';
-import { useAllStudiesById } from '@/primitives/useProject/reactor';
+import { useAllStudies } from '@/project/workspace-data';
 import type { StudyInfo } from '@/stores/projectStore';
-import { scoreChecklistOfType } from '@/checklist-registry';
-import { getHandler } from '@/primitives/useProject/checklists/handlers/registry';
+import {
+  serializeAnswerRows,
+  scoreChecklistRows,
+  type ChecklistType,
+} from '@corates/shared/sync';
 import { amstar2 } from '@corates/shared';
 import type { AMSTAR2Checklist } from '@corates/shared/checklists';
 import { connectionPool } from '@/project/ConnectionPool';
@@ -65,7 +67,7 @@ export function LocalAppraisalsSection({
 }: LocalAppraisalsSectionProps) {
   const navigate = useNavigate();
   const animation = useAnimation();
-  const studies = useAllStudiesById(LOCAL_PROJECT_ID);
+  const studies = useAllStudies(LOCAL_PROJECT_ID);
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
@@ -119,30 +121,22 @@ export function LocalAppraisalsSection({
   };
 
   const enrichStudiesForExport = (toExport: StudyInfo[]): StudyInfo[] => {
-    const entry = connectionPool.getEntry(LOCAL_PROJECT_ID);
-    if (!entry) return toExport;
+    const collections = connectionPool.getCollections(LOCAL_PROJECT_ID);
+    if (!collections) return toExport;
 
-    const reviewsMap = entry.ydoc.getMap('reviews');
+    const answerRows = collections.answers.toArray;
     return toExport.map(study => {
-      const studyYMap = reviewsMap.get(study.id) as Y.Map<unknown> | undefined;
-      if (!studyYMap) return study;
-
-      const checklistsMap = (studyYMap as Y.Map<unknown>).get('checklists') as
-        Y.Map<unknown> | undefined;
-      if (!checklistsMap) return study;
-
       const enrichedChecklists = study.checklists.map(cl => {
         if (cl.answers) return cl;
 
-        const clYMap = checklistsMap.get(cl.id) as Y.Map<unknown> | undefined;
-        if (!clYMap) return cl;
+        const flat: Record<string, unknown> = {};
+        for (const row of answerRows) {
+          if (row.checklistId === cl.id) flat[row.key] = row.value;
+        }
 
-        const answersYMap = (clYMap as Y.Map<unknown>).get('answers') as Y.Map<unknown> | undefined;
-        if (!answersYMap) return cl;
-
-        const handler = getHandler(cl.type);
-        const answers = handler ? handler.serializeAnswers(answersYMap) : {};
-        const score = scoreChecklistOfType(cl.type, answers);
+        const type = cl.type as ChecklistType;
+        const answers = serializeAnswerRows(type, flat);
+        const score = scoreChecklistRows(type, flat);
         const enriched = { ...cl, answers, score: score !== 'Error' ? score : null };
 
         if (cl.type === 'AMSTAR2') {

@@ -1,12 +1,10 @@
-import { useMemo } from 'react';
 import { INFORMATION_SOURCES, SECTION_D } from './checklist-map';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
 import {
-  useAnswer,
-  useAnswersYMap,
-  useProjectReactor,
-} from '@/primitives/useProject/reactor/hooks';
-import { resolveYText } from '@/primitives/useProject/reactor/ytext';
+  useWorkspaceProjectId,
+  useAnswerValue,
+  useAnswerWriters,
+} from '@/project/workspace-data';
 
 interface SectionDProps {
   studyId: string;
@@ -15,19 +13,24 @@ interface SectionDProps {
 }
 
 export function SectionD({ studyId, checklistId, disabled }: SectionDProps) {
-  const { ydoc } = useProjectReactor();
-  const answersYMap = useAnswersYMap(studyId, checklistId);
-  const sources = useAnswer<Record<string, boolean>>(studyId, checklistId, 'sectionD.sources');
+  const projectId = useWorkspaceProjectId();
+  const writers = useAnswerWriters(projectId, studyId, checklistId);
+  const sources = useAnswerValue<Record<string, boolean>>(
+    projectId,
+    checklistId,
+    'sectionD.sources',
+  );
+  const otherSpecifyValue =
+    useAnswerValue<string>(projectId, checklistId, 'sectionD.otherSpecify') ?? '';
 
   const handleSourceToggle = (sourceName: string) => {
     const current = sources || {};
-    answersYMap?.set('sectionD.sources', { ...current, [sourceName]: !current[sourceName] });
+    writers.updateAnswer({
+      type: 'ROBINS_I',
+      key: 'sectionD',
+      data: { sources: { ...current, [sourceName]: !current[sourceName] } },
+    });
   };
-
-  const otherSpecifyYText = useMemo(
-    () => resolveYText(ydoc, studyId, checklistId, 'sectionD.otherSpecify'),
-    [ydoc, studyId, checklistId],
-  );
 
   return (
     <div className='border-border bg-card overflow-hidden rounded-lg border shadow-sm'>
@@ -69,7 +72,8 @@ export function SectionD({ studyId, checklistId, disabled }: SectionDProps) {
             </span>
             <div className='mt-2'>
               <NoteEditor
-                yText={otherSpecifyYText}
+                value={otherSpecifyValue}
+                onChange={text => writers.setText('sectionD.otherSpecify', text)}
                 placeholder={SECTION_D.otherField.placeholder}
                 readOnly={disabled}
                 inline={true}

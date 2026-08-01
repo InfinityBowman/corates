@@ -5,7 +5,6 @@
  */
 
 import { useState, useEffect } from 'react';
-import type * as Y from 'yjs';
 import { AMSTAR_CHECKLIST } from '@/components/checklist/AMSTAR2Checklist/checklist-map.js';
 import type { AMSTAR2QuestionAnswer } from '@corates/shared/checklists';
 import { AnswerPanel } from './AnswerPanel';
@@ -39,7 +38,8 @@ interface ReconciliationQuestionPageProps {
   isMultiPart: boolean;
   reviewer1Note: string;
   reviewer2Note: string;
-  finalNoteYText: Y.Text | null;
+  finalNote: string;
+  onFinalNoteChange: (text: string) => void;
 }
 
 export function ReconciliationQuestionPage(props: ReconciliationQuestionPageProps) {
@@ -77,7 +77,8 @@ function SingleQuestionPage({
   isAgreement,
   reviewer1Note,
   reviewer2Note,
-  finalNoteYText,
+  finalNote,
+  onFinalNoteChange,
 }: ReconciliationQuestionPageProps) {
   const reviewer1Answers = rawR1 as AMSTAR2QuestionAnswer | null;
   const reviewer2Answers = rawR2 as AMSTAR2QuestionAnswer | null;
@@ -245,7 +246,8 @@ function SingleQuestionPage({
         <NotesCompareSection
           reviewer1Note={reviewer1Note}
           reviewer2Note={reviewer2Note}
-          finalNoteYText={finalNoteYText}
+          finalNote={finalNote}
+          onFinalNoteChange={onFinalNoteChange}
           reviewer1Name={reviewer1Name}
           reviewer2Name={reviewer2Name}
           collapsed={true}

@@ -1,32 +1,10 @@
 /**
- * useProjectOrgId - Get orgId for a project from store or query cache
+ * useProjectOrgId - Get orgId for a project, reactively, from the D1 projects list.
  */
 
-import { useMemo } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { useProjectMetaById } from '@/primitives/useProject/reactor';
-import { queryKeys } from '@/lib/queryKeys';
+import { useProjectMeta } from '@/project/workspace-data';
 
 export function useProjectOrgId(projectId: string | null | undefined): string | null {
-  const queryClient = useQueryClient();
-  const meta = useProjectMetaById(projectId || '');
-
-  return useMemo(() => {
-    if (!projectId) return null;
-
-    if (meta?.orgId) {
-      return meta.orgId;
-    }
-
-    // Try project list query cache
-    const projectsList = queryClient.getQueryData<Array<{ id: string; orgId?: string }>>(
-      queryKeys.projects.all,
-    );
-    if (Array.isArray(projectsList)) {
-      const found = projectsList.find(p => p.id === projectId);
-      if (found?.orgId) return found.orgId;
-    }
-
-    return null;
-  }, [projectId, meta, queryClient]);
+  const { orgId } = useProjectMeta(projectId || '');
+  return projectId ? orgId : null;
 }

@@ -13,11 +13,7 @@ import { ReviewerAssignment } from '../overview-tab/ReviewerAssignment';
 import { OutcomeManager } from '../outcomes/OutcomeManager';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import type { StudyInfo } from '@/stores/projectStore';
-import {
-  useSortedStudyIdsById,
-  useAllStudiesById,
-  useProjectMembersById,
-} from '@/primitives/useProject/reactor';
+import { useSortedStudyIds, useAllStudies, useProjectMembers } from '@/project/workspace-data';
 import { project } from '@/project';
 import { useProjectContext } from '../ProjectContext';
 import {
@@ -38,9 +34,9 @@ export function AllStudiesTab() {
   const [showReviewersModal, setShowReviewersModal] = useState(false);
   const [editingStudy, setEditingStudy] = useState<StudyInfo | null>(null);
 
-  const studyIds = useSortedStudyIdsById(projectId);
-  const members = useProjectMembersById(projectId);
-  const studies = useAllStudiesById(projectId);
+  const studyIds = useSortedStudyIds(projectId);
+  const members = useProjectMembers(projectId);
+  const studies = useAllStudies(projectId);
   const connectionState = useProjectStore(s => selectConnectionPhase(s, projectId));
   const hasData = connectionState.phase === 'synced' || studyIds.length > 0;
 

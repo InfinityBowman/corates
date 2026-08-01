@@ -6,19 +6,18 @@
  */
 
 import { useState } from 'react';
-import type * as Y from 'yjs';
 import { ChevronRightIcon, BookOpenIcon, ClipboardIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
-import { useYText, applyYTextDiff } from '@/hooks/useYText';
 
 const MAX_LENGTH = 2000;
 
 interface NotesCompareSectionProps {
   reviewer1Note: string;
   reviewer2Note: string;
-  finalNoteYText: Y.Text | null;
+  finalNote: string;
+  onFinalNoteChange: (text: string) => void;
   reviewer1Name: string;
   reviewer2Name: string;
   collapsed?: boolean;
@@ -27,27 +26,25 @@ interface NotesCompareSectionProps {
 export function NotesCompareSection({
   reviewer1Note,
   reviewer2Note,
-  finalNoteYText,
+  finalNote,
+  onFinalNoteChange,
   reviewer1Name,
   reviewer2Name,
   collapsed = true,
 }: NotesCompareSectionProps) {
   const [expanded, setExpanded] = useState(!collapsed);
-  const finalNoteText = useYText(finalNoteYText);
 
   const hasReviewer1Note = (reviewer1Note || '').trim().length > 0;
   const hasReviewer2Note = (reviewer2Note || '').trim().length > 0;
-  const hasFinalNote = finalNoteText.trim().length > 0;
+  const hasFinalNote = finalNote.trim().length > 0;
   const hasAnyNote = hasReviewer1Note || hasReviewer2Note || hasFinalNote;
 
   function copyToFinal(sourceNote: string) {
-    if (!finalNoteYText || !sourceNote) return;
-    const text = sourceNote.slice(0, MAX_LENGTH);
-    applyYTextDiff(finalNoteYText, finalNoteYText.toString(), text);
+    if (!sourceNote) return;
+    onFinalNoteChange(sourceNote.slice(0, MAX_LENGTH));
   }
 
   function mergeToFinal() {
-    if (!finalNoteYText) return;
     const parts: string[] = [];
     if (hasReviewer1Note) {
       parts.push(`[${reviewer1Name}]\n${reviewer1Note}`);
@@ -56,7 +53,7 @@ export function NotesCompareSection({
       parts.push(`[${reviewer2Name}]\n${reviewer2Note}`);
     }
     const merged = parts.join('\n\n').slice(0, MAX_LENGTH);
-    applyYTextDiff(finalNoteYText, finalNoteYText.toString(), merged);
+    onFinalNoteChange(merged);
   }
 
   return (
@@ -149,15 +146,14 @@ export function NotesCompareSection({
                     </Button>
                   )}
                 </div>
-                {finalNoteYText ?
-                  <NoteEditor
-                    yText={finalNoteYText}
-                    inline={true}
-                    placeholder='Add the final reconciled note...'
-                    maxLength={MAX_LENGTH}
-                    focusRingColor='green-500'
-                  />
-                : <p className='text-muted-foreground/70 text-xs italic'>Loading...</p>}
+                <NoteEditor
+                  value={finalNote}
+                  onChange={onFinalNoteChange}
+                  inline={true}
+                  placeholder='Add the final reconciled note...'
+                  maxLength={MAX_LENGTH}
+                  focusRingColor='green-500'
+                />
               </div>
             </div>
           </div>

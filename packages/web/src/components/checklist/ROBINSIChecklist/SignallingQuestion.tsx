@@ -2,15 +2,16 @@ import { useMemo } from 'react';
 import { RESPONSE_LABELS, getResponseOptions } from './checklist-map';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
 import {
-  useAnswer,
-  useAnswersYMap,
-  useProjectReactor,
-} from '@/primitives/useProject/reactor/hooks';
-import { resolveYText } from '@/primitives/useProject/reactor/ytext';
+  useWorkspaceProjectId,
+  useAnswerValue,
+  useAnswerWriters,
+} from '@/project/workspace-data';
+import type { ChecklistAnswerInput } from '@corates/shared/sync';
 
 interface SignallingQuestionProps {
   studyId: string;
   checklistId: string;
+  domainKey: string;
   questionKey: string;
   question: { number?: string; text: string; responseType: any; note?: string };
   disabled?: boolean;
@@ -21,6 +22,7 @@ interface SignallingQuestionProps {
 export function SignallingQuestion({
   studyId,
   checklistId,
+  domainKey,
   questionKey,
   question,
   disabled,
@@ -28,19 +30,18 @@ export function SignallingQuestion({
   isSkippable,
 }: SignallingQuestionProps) {
   const options = useMemo(() => getResponseOptions(question.responseType), [question.responseType]);
-  const answer = useAnswer<string>(studyId, checklistId, questionKey);
-  const answersYMap = useAnswersYMap(studyId, checklistId);
-  const { ydoc } = useProjectReactor();
+  const projectId = useWorkspaceProjectId();
+  const answer = useAnswerValue<string>(projectId, checklistId, questionKey);
+  const commentValue = useAnswerValue<string>(projectId, checklistId, `${questionKey}.comment`);
+  const writers = useAnswerWriters(projectId, studyId, checklistId);
 
   const handleAnswerChange = (value: string) => {
-    if (!answersYMap) return;
-    answersYMap.set(questionKey, answer === value ? null : value);
+    writers.updateAnswer({
+      type: 'ROBINS_I',
+      key: domainKey,
+      data: { answers: { [questionKey]: { answer: answer === value ? null : value } } },
+    } as ChecklistAnswerInput);
   };
-
-  const commentYText = useMemo(
-    () => (showComment ? resolveYText(ydoc, studyId, checklistId, `${questionKey}.comment`) : null),
-    [showComment, ydoc, studyId, checklistId, questionKey],
-  );
 
   return (
     <div
@@ -81,7 +82,8 @@ export function SignallingQuestion({
       {showComment && (
         <div className='mt-2'>
           <NoteEditor
-            yText={commentYText}
+            value={commentValue ?? ''}
+            onChange={text => writers.setText(`${questionKey}.comment`, text)}
             placeholder='Comment (optional)'
             readOnly={disabled}
             inline={true}

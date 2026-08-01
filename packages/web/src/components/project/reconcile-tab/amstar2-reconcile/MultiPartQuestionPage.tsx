@@ -45,7 +45,8 @@ interface MultiPartQuestionPageProps {
   isAgreement: boolean;
   reviewer1Note: string;
   reviewer2Note: string;
-  finalNoteYText: any;
+  finalNote: string;
+  onFinalNoteChange: (text: string) => void;
 }
 
 export function MultiPartQuestionPage({
@@ -59,7 +60,8 @@ export function MultiPartQuestionPage({
   isAgreement,
   reviewer1Note,
   reviewer2Note,
-  finalNoteYText,
+  finalNote,
+  onFinalNoteChange,
 }: MultiPartQuestionPageProps) {
   const question = (AMSTAR_CHECKLIST as any)[questionKey];
   const dataKeys = useMemo(() => getDataKeysForQuestion(questionKey), [questionKey]);
@@ -339,7 +341,8 @@ export function MultiPartQuestionPage({
         <NotesCompareSection
           reviewer1Note={reviewer1Note}
           reviewer2Note={reviewer2Note}
-          finalNoteYText={finalNoteYText}
+          finalNote={finalNote}
+          onFinalNoteChange={onFinalNoteChange}
           reviewer1Name={reviewer1Name}
           reviewer2Name={reviewer2Name}
           collapsed={true}

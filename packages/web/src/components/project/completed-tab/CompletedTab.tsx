@@ -6,7 +6,7 @@ import { useMemo, useCallback } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { CheckCircleIcon } from 'lucide-react';
 import { useProjectContext } from '../ProjectContext';
-import { useAllStudiesById, useProjectMetaById } from '@/primitives/useProject/reactor';
+import { useAllStudies, useProjectOutcomes } from '@/project/workspace-data';
 import { connectionPool } from '@/project/ConnectionPool';
 import {
   getStudiesForTab,
@@ -25,15 +25,14 @@ export function CompletedTab() {
   const conn = connectionPool.getOps(projectId);
   const getAllReconciliationProgress = conn?.reconciliation.getAllReconciliationProgress;
 
-  const studies = useAllStudiesById(projectId);
-  const meta = useProjectMetaById(projectId);
+  const studies = useAllStudies(projectId);
+  const outcomes = useProjectOutcomes(projectId);
 
   const getOutcomeName = useCallback(
     (outcomeId: string) => {
-      const outcomes = meta?.outcomes ?? [];
       return outcomes.find(o => o.id === outcomeId)?.name || null;
     },
-    [meta],
+    [outcomes],
   );
 
   const completedStudies = useMemo(() => getStudiesForTab(studies, 'completed', null), [studies]);

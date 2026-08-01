@@ -9,7 +9,17 @@ import { useProjectContext } from '@/components/project/ProjectContext';
 import { connectionPool } from '@/project/ConnectionPool';
 import { buildChecklistAnswerInput, type TextRef } from '@/primitives/useProject/checklists';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
-import { useStudyById, useProjectMembersById } from '@/primitives/useProject/reactor';
+import {
+  useChecklistAnswerMap,
+  useAnswerWriters,
+  useStudy,
+  useProjectMembers,
+} from '@/project/workspace-data';
+import {
+  serializeAnswerRows,
+  textFieldKey,
+  type ChecklistAnswerInput,
+} from '@corates/shared/sync';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
 import {
@@ -61,14 +71,7 @@ export function ReconciliationWrapper({
 
   const ops = connectionPool.getOps(projectId);
   if (!ops) throw new Error(`No connection for project ${projectId}`);
-  const {
-    createChecklist: createProjectChecklist,
-    updateChecklistAnswer,
-    updateChecklist,
-    getChecklistData,
-    getTextRef: opsGetTextRef,
-    setTextValue: opsSetTextValue,
-  } = ops.checklist;
+  const { createChecklist: createProjectChecklist, updateChecklist } = ops.checklist;
   const { getReconciliationProgress, saveReconciliationProgress } = ops.reconciliation;
   const getAwareness = ops.getAwareness;
 
@@ -83,8 +86,8 @@ export function ReconciliationWrapper({
   }, [user]);
 
   const connectionState = useProjectStore(s => selectConnectionPhase(s, projectId));
-  const currentStudy = useStudyById(projectId, studyId);
-  const members = useProjectMembersById(projectId);
+  const currentStudy = useStudy(projectId, studyId);
+  const members = useProjectMembers(projectId);
 
   // Watch for access-denied errors and redirect
   useEffect(() => {
@@ -193,58 +196,43 @@ export function ReconciliationWrapper({
     [members],
   );
 
-  // Get full checklist data including answers
-  const checklist1Data = useMemo(() => {
-    if (!checklist1Meta || !getChecklistData) return null;
-    const data = getChecklistData(studyId, checklist1Id);
-    if (!data) return null;
-    return {
-      id: checklist1Meta.id,
-      name: currentStudy?.name || 'Checklist 1',
-      reviewerName: getReviewerName(checklist1Meta.assignedTo),
-      createdAt: checklist1Meta.createdAt,
-      ...(data.answers ?? {}),
-    };
-  }, [
-    checklist1Meta,
-    getChecklistData,
-    studyId,
-    checklist1Id,
-    currentStudy?.name,
-    getReviewerName,
-  ]);
-
-  const checklist2Data = useMemo(() => {
-    if (!checklist2Meta || !getChecklistData) return null;
-    const data = getChecklistData(studyId, checklist2Id);
-    if (!data) return null;
-    return {
-      id: checklist2Meta.id,
-      name: currentStudy?.name || 'Checklist 2',
-      reviewerName: getReviewerName(checklist2Meta.assignedTo),
-      createdAt: checklist2Meta.createdAt,
-      ...(data.answers ?? {}),
-    };
-  }, [
-    checklist2Meta,
-    getChecklistData,
-    studyId,
-    checklist2Id,
-    currentStudy?.name,
-    getReviewerName,
-  ]);
-
-  // State for reconciled checklist
-  const [reconciledChecklistId, setReconciledChecklistId] = useState<string | null>(null);
-  const [reconciledChecklistLoading, setReconciledChecklistLoading] = useState(false);
-  const [hasCheckedForReconciled, setHasCheckedForReconciled] = useState(false);
-
   // Extract outcomeId and type from checklist1 metadata
   const outcomeId = checklist1Meta?.outcomeId || null;
   const checklistType = useMemo(
     () => (checklist1Meta?.type || 'AMSTAR2') as import('./engine/types').SupportedChecklistType,
     [checklist1Meta],
   );
+
+  // Get full checklist data including answers, reactively from answer rows
+  const flat1 = useChecklistAnswerMap(projectId, checklist1Id ?? '');
+  const flat2 = useChecklistAnswerMap(projectId, checklist2Id ?? '');
+
+  const checklist1Data = useMemo(() => {
+    if (!checklist1Meta) return null;
+    return {
+      id: checklist1Meta.id,
+      name: currentStudy?.name || 'Checklist 1',
+      reviewerName: getReviewerName(checklist1Meta.assignedTo),
+      createdAt: checklist1Meta.createdAt,
+      ...serializeAnswerRows(checklistType, flat1),
+    };
+  }, [checklist1Meta, checklistType, flat1, currentStudy?.name, getReviewerName]);
+
+  const checklist2Data = useMemo(() => {
+    if (!checklist2Meta) return null;
+    return {
+      id: checklist2Meta.id,
+      name: currentStudy?.name || 'Checklist 2',
+      reviewerName: getReviewerName(checklist2Meta.assignedTo),
+      createdAt: checklist2Meta.createdAt,
+      ...serializeAnswerRows(checklistType, flat2),
+    };
+  }, [checklist2Meta, checklistType, flat2, currentStudy?.name, getReviewerName]);
+
+  // State for reconciled checklist
+  const [reconciledChecklistId, setReconciledChecklistId] = useState<string | null>(null);
+  const [reconciledChecklistLoading, setReconciledChecklistLoading] = useState(false);
+  const [hasCheckedForReconciled, setHasCheckedForReconciled] = useState(false);
 
   // Get or create reconciled checklist (with race condition prevention)
   useEffect(() => {
@@ -377,18 +365,18 @@ export function ReconciliationWrapper({
     return currentStudy.checklists?.find(c => c.id === reconciledChecklistId);
   }, [currentStudy, reconciledChecklistId]);
 
+  const flatReconciled = useChecklistAnswerMap(projectId, reconciledChecklistId ?? '');
+
   const reconciledChecklistData = useMemo(() => {
-    if (!reconciledChecklistId || !reconciledChecklistMeta || !getChecklistData) return null;
-    const data = getChecklistData(studyId, reconciledChecklistId);
-    if (!data) return null;
+    if (!reconciledChecklistId || !reconciledChecklistMeta) return null;
     return {
       id: reconciledChecklistId,
       name: 'Reconciled Checklist',
       reviewerName: 'Consensus',
       createdAt: reconciledChecklistMeta.createdAt || 0,
-      ...(data.answers ?? {}),
+      ...serializeAnswerRows(checklistType, flatReconciled),
     };
-  }, [reconciledChecklistId, reconciledChecklistMeta, getChecklistData, studyId]);
+  }, [reconciledChecklistId, reconciledChecklistMeta, checklistType, flatReconciled]);
 
   // Build project path
   const getProjectPath = useCallback(() => `/projects/${projectId}`, [projectId]);
@@ -419,15 +407,12 @@ export function ReconciliationWrapper({
     navigate({ to: `${getProjectPath()}?tab=reconcile` as string });
   }, [navigate, getProjectPath]);
 
-  const getTextRef = useCallback(
-    (ref: TextRef) => opsGetTextRef(studyId, reconciledChecklistId as string, ref),
-    [opsGetTextRef, studyId, reconciledChecklistId],
-  );
+  const writers = useAnswerWriters(projectId, studyId, reconciledChecklistId ?? '');
 
   const setTextValue = useCallback(
     (ref: TextRef, text: string) =>
-      opsSetTextValue(studyId, reconciledChecklistId as string, ref, text),
-    [opsSetTextValue, studyId, reconciledChecklistId],
+      writers.setText(textFieldKey({ ...ref, type: checklistType }), text),
+    [writers, checklistType],
   );
 
   // Shared props for all reconciliation types
@@ -490,9 +475,8 @@ export function ReconciliationWrapper({
         if (!reconciledChecklistId) return;
         const input = buildChecklistAnswerInput(checklistType, sectionKey, data);
         if (!input) return;
-        updateChecklistAnswer(studyId, reconciledChecklistId, input);
+        writers.updateAnswer(input as ChecklistAnswerInput);
       }}
-      getTextRef={getTextRef}
       setTextValue={setTextValue}
     />
   );

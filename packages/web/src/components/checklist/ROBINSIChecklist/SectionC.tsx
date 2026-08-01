@@ -2,11 +2,10 @@ import { useMemo, useId } from 'react';
 import { SECTION_C } from './checklist-map';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
 import {
-  useAnswer,
-  useAnswersYMap,
-  useProjectReactor,
-} from '@/primitives/useProject/reactor/hooks';
-import { resolveYText } from '@/primitives/useProject/reactor/ytext';
+  useWorkspaceProjectId,
+  useAnswerValue,
+  useAnswerWriters,
+} from '@/project/workspace-data';
 
 interface SectionCProps {
   studyId: string;
@@ -16,9 +15,9 @@ interface SectionCProps {
 
 export function SectionC({ studyId, checklistId, disabled }: SectionCProps) {
   const uniqueId = useId();
-  const { ydoc } = useProjectReactor();
-  const answersYMap = useAnswersYMap(studyId, checklistId);
-  const isPerProtocol = useAnswer<boolean>(studyId, checklistId, 'sectionC.isPerProtocol');
+  const projectId = useWorkspaceProjectId();
+  const writers = useAnswerWriters(projectId, studyId, checklistId);
+  const isPerProtocol = useAnswerValue<boolean>(projectId, checklistId, 'sectionC.isPerProtocol');
 
   const textFields = useMemo(
     () =>
@@ -38,7 +37,7 @@ export function SectionC({ studyId, checklistId, disabled }: SectionCProps) {
   const c4Field = SECTION_C.c4;
 
   const handleProtocolToggle = (value: boolean) => {
-    answersYMap?.set('sectionC.isPerProtocol', value);
+    writers.updateAnswer({ type: 'ROBINS_I', key: 'sectionC', data: { isPerProtocol: value } });
   };
 
   return (
@@ -54,7 +53,6 @@ export function SectionC({ studyId, checklistId, disabled }: SectionCProps) {
         {textFields.map(([key, field]) => (
           <SectionCTextField
             key={key}
-            ydoc={ydoc}
             studyId={studyId}
             checklistId={checklistId}
             field={field}
@@ -97,22 +95,20 @@ export function SectionC({ studyId, checklistId, disabled }: SectionCProps) {
 }
 
 function SectionCTextField({
-  ydoc,
   studyId,
   checklistId,
   field,
   disabled,
 }: {
-  ydoc: any;
   studyId: string;
   checklistId: string;
   field: { label: string; text: string; placeholder: string; stateKey: string };
   disabled?: boolean;
 }) {
-  const yText = useMemo(
-    () => resolveYText(ydoc, studyId, checklistId, `sectionC.${field.stateKey}`),
-    [ydoc, studyId, checklistId, field.stateKey],
-  );
+  const projectId = useWorkspaceProjectId();
+  const flatKey = `sectionC.${field.stateKey}`;
+  const value = useAnswerValue<string>(projectId, checklistId, flatKey) ?? '';
+  const writers = useAnswerWriters(projectId, studyId, checklistId);
 
   return (
     <div className='flex flex-col gap-2'>
@@ -123,7 +119,8 @@ function SectionCTextField({
         </span>
         <div className='mt-2'>
           <NoteEditor
-            yText={yText}
+            value={value}
+            onChange={text => writers.setText(flatKey, text)}
             placeholder={field.placeholder}
             readOnly={disabled}
             inline={true}

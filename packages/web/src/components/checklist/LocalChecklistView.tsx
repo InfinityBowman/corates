@@ -1,9 +1,10 @@
 /**
  * LocalChecklistView - Viewer/editor for a local (offline) appraisal.
  *
- * Answers live in the local-practice Y.Doc and are read via the reactor
- * for reactive updates. PDFs stay in the `localChecklistPdfs` Dexie table --
- * they don't benefit from CRDT storage and would bloat the Y.Doc.
+ * Answers live in the local-practice Y.Doc, mirrored into workspace rows by
+ * the connection pool's bridge and read via the workspace-data hooks. PDFs
+ * stay in the `localChecklistPdfs` Dexie table -- they don't benefit from
+ * CRDT storage and would bloat the Y.Doc.
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -14,11 +15,9 @@ import { Button } from '@/components/ui/button';
 import { ChecklistWithPdf } from '@/components/checklist/ChecklistWithPdf';
 import { CreateLocalChecklist } from '@/components/checklist/CreateLocalChecklist';
 import { LOCAL_PROJECT_ID } from '@/project/localProject';
-import { connectionPool } from '@/project/ConnectionPool';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import { useChecklistViewModel } from '@/primitives/useProject/checklists/useChecklistViewModel';
-import { useChecklistScore } from '@/primitives/useProject/reactor/hooks';
-import { ProjectReactorContext } from '@/primitives/useProject/reactor/context';
+import { useChecklistScore, WorkspaceProjectContext } from '@/project/workspace-data';
 import { db } from '@/primitives/db';
 import { ScoreTag } from '@/components/checklist/ScoreTag';
 import { track } from '@/lib/analytics';
@@ -43,11 +42,10 @@ export function LocalChecklistView({ checklistId, searchType }: LocalChecklistVi
     );
   }
 
-  const reactor = connectionPool.getReactor(LOCAL_PROJECT_ID);
   return (
-    <ProjectReactorContext.Provider value={reactor}>
+    <WorkspaceProjectContext.Provider value={LOCAL_PROJECT_ID}>
       <LocalChecklistEditor checklistId={checklistId} />
-    </ProjectReactorContext.Provider>
+    </WorkspaceProjectContext.Provider>
   );
 }
 
@@ -59,7 +57,7 @@ function LocalChecklistEditor({ checklistId }: { checklistId: string }) {
     checklistId,
     checklistId,
   );
-  const currentScore = useChecklistScore(checklistId, checklistId, checklistType);
+  const currentScore = useChecklistScore(LOCAL_PROJECT_ID, checklistId, checklistType);
 
   const [pdfState, setPdfState] = useState<{
     loading: boolean;

@@ -4,10 +4,13 @@ import { SignallingQuestion } from './SignallingQuestion';
 import { DomainJudgement, JudgementBadge } from './DomainJudgement';
 import { getRequiredQuestions } from './checklist.js';
 import {
-  useAnswer,
-  useAnswersYMap,
-  useROB2DomainScore,
-} from '@/primitives/useProject/reactor/hooks';
+  useWorkspaceProjectId,
+  useAnswerValue,
+  useAnswerWriters,
+  useChecklistAnswerMap,
+  useRob2DomainScore,
+} from '@/project/workspace-data';
+import type { ChecklistAnswerInput } from '@corates/shared/sync';
 import type { DomainAnswers } from '@corates/shared/checklists/rob2';
 
 interface DomainSectionProps {
@@ -33,41 +36,45 @@ export function DomainSection({
   const questions = useMemo(() => getDomainQuestions(domainKey), [domainKey]);
   const questionKeys = useMemo(() => Object.keys(questions), [questions]);
 
-  const { judgement: autoJudgement, isComplete: autoComplete } = useROB2DomainScore(
-    studyId,
+  const projectId = useWorkspaceProjectId();
+  const { judgement: autoJudgement, isComplete: autoComplete } = useRob2DomainScore(
+    projectId,
     checklistId,
     domainKey,
   );
-  const direction = useAnswer<string>(studyId, checklistId, `${domainKey}.direction`);
-  const answersYMap = useAnswersYMap(studyId, checklistId);
+  const direction = useAnswerValue<string>(projectId, checklistId, `${domainKey}.direction`);
+  const flat = useChecklistAnswerMap(projectId, checklistId);
+  const writers = useAnswerWriters(projectId, studyId, checklistId);
 
   const answersForRequired = (() => {
-    if (!answersYMap) return undefined;
     const a: DomainAnswers = {};
     for (const qKey of questionKeys) {
-      a[qKey] = { answer: (answersYMap.get(qKey) as string) ?? null };
+      a[qKey] = { answer: (flat[qKey] as string) ?? null };
     }
     return a;
   })();
 
   const requiredQuestions = getRequiredQuestions(domainKey, answersForRequired);
 
-  const hasAnyAnswer =
-    answersYMap ? questionKeys.some(qKey => answersYMap.get(qKey) != null) : false;
+  const hasAnyAnswer = questionKeys.some(qKey => flat[qKey] != null);
 
   const isQuestionSkippable = (qKey: string) =>
     hasAnyAnswer &&
     requiredQuestions.size > 0 &&
     !requiredQuestions.has(qKey) &&
-    answersYMap?.get(qKey) == null;
+    flat[qKey] == null;
 
   const completionStatus = {
-    answered: answersYMap ? questionKeys.filter(k => answersYMap.get(k) != null).length : 0,
+    answered: questionKeys.filter(k => flat[k] != null).length,
     total: questionKeys.length,
   };
 
   const handleDirectionChange = (dir: string | null) => {
-    answersYMap?.set(`${domainKey}.direction`, dir);
+    writers.updateAnswer({
+      type: 'ROB2',
+      key: domainKey,
+      data: { direction: dir },
+    } as ChecklistAnswerInput);
   };
 
   return (
@@ -112,6 +119,7 @@ export function DomainSection({
                 key={qKey}
                 studyId={studyId}
                 checklistId={checklistId}
+                domainKey={domainKey}
                 questionKey={qKey}
                 question={qDef}
                 disabled={disabled}

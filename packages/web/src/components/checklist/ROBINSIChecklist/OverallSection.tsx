@@ -1,6 +1,13 @@
+import { useMemo } from 'react';
 import { OVERALL_ROB_JUDGEMENTS, BIAS_DIRECTIONS } from './checklist-map';
 import { mapOverallJudgementToDisplay } from './checklist.js';
-import { useAnswer, useAnswersYMap, useROBINSIScore } from '@/primitives/useProject/reactor/hooks';
+import {
+  useWorkspaceProjectId,
+  useAnswerValue,
+  useAnswerWriters,
+  useChecklistAnswerMap,
+} from '@/project/workspace-data';
+import { scoreChecklistRows } from '@corates/shared/sync';
 
 interface OverallSectionProps {
   studyId: string;
@@ -9,16 +16,18 @@ interface OverallSectionProps {
 }
 
 export function OverallSection({ studyId, checklistId, disabled }: OverallSectionProps) {
-  const calculatedScore = useROBINSIScore(studyId, checklistId);
+  const projectId = useWorkspaceProjectId();
+  const flat = useChecklistAnswerMap(projectId, checklistId);
+  const calculatedScore = useMemo(() => scoreChecklistRows('ROBINS_I', flat), [flat]);
   const isIncomplete = calculatedScore === 'Incomplete';
   const effectiveJudgement =
     isIncomplete ? null : mapOverallJudgementToDisplay(calculatedScore as any);
 
-  const direction = useAnswer<string>(studyId, checklistId, 'overall.direction');
-  const answersYMap = useAnswersYMap(studyId, checklistId);
+  const direction = useAnswerValue<string>(projectId, checklistId, 'overall.direction');
+  const writers = useAnswerWriters(projectId, studyId, checklistId);
 
   const handleDirectionChange = (dir: string | null) => {
-    answersYMap?.set('overall.direction', dir);
+    writers.updateAnswer({ type: 'ROBINS_I', key: 'overall', data: { direction: dir } });
   };
 
   const getJudgementColor = (j: string, isSelected: boolean) => {

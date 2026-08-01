@@ -13,7 +13,8 @@ interface SignallingQuestionPageProps {
   reviewer1Data: any;
   reviewer2Data: any;
   finalData: any;
-  finalCommentYText: any;
+  finalComment: string;
+  onFinalCommentChange: (_text: string) => void;
   reviewer1Name: string;
   reviewer2Name: string;
   isAgreement: boolean;
@@ -32,7 +33,8 @@ export function SignallingQuestionPage({
   reviewer1Data,
   reviewer2Data,
   finalData,
-  finalCommentYText,
+  finalComment,
+  onFinalCommentChange,
   reviewer1Name,
   reviewer2Name,
   isAgreement,
@@ -127,7 +129,8 @@ export function SignallingQuestionPage({
           title='Final Answer'
           panelType='final'
           answer={finalData?.answer}
-          commentYText={finalCommentYText}
+          comment={finalComment}
+          onCommentChange={onFinalCommentChange}
           responseOptions={responseOptions}
           readOnly={false}
           onAnswerChange={onFinalAnswerChange}

@@ -291,14 +291,7 @@ function onAfterNavigate(
 function renderPage(
   context: EngineContext<ROB2Checklist, ROB2Checklist, ComparisonResult | null, Rob2NavItem>,
 ) {
-  const {
-    currentItem,
-    checklist1: c1,
-    checklist2: c2,
-    finalAnswers: fa,
-    comparison,
-    getTextRef,
-  } = context;
+  const { currentItem, checklist1: c1, checklist2: c2, finalAnswers: fa, comparison } = context;
   const isAdhering = fa?.preliminary?.aim === 'ADHERING';
   const skippable = getSkippableQuestions(fa, isAdhering, context.navItems);
 
@@ -319,7 +312,7 @@ function renderPage(
         onFinalChange={(value: unknown) =>
           updatePreliminaryField(context.updateChecklistAnswer, currentItem.key, value)
         }
-        getTextRef={getTextRef}
+        setTextValue={context.setTextValue}
         onUseReviewer1={() => {
           const value = c1?.preliminary?.[currentItem.key as keyof ROB2Checklist['preliminary']];
           if (value !== undefined) {
@@ -360,12 +353,13 @@ function renderPage(
         reviewer1Data={c1Domain?.answers?.[questionKey]}
         reviewer2Data={c2Domain?.answers?.[questionKey]}
         finalData={faDomain?.answers?.[questionKey]}
-        finalCommentYText={getTextRef({
-          type: 'ROB2',
-          sectionKey: domainKey,
-          fieldKey: 'comment',
-          questionKey,
-        })}
+        finalComment={faDomain?.answers?.[questionKey]?.comment ?? ''}
+        onFinalCommentChange={(text: string) =>
+          context.setTextValue(
+            { type: 'ROB2', sectionKey: domainKey, fieldKey: 'comment', questionKey },
+            text,
+          )
+        }
         reviewer1Name={context.reviewer1Name}
         reviewer2Name={context.reviewer2Name}
         isAgreement={context.isAgreement}

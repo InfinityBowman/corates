@@ -7,7 +7,7 @@
 import { createContext, useContext, useMemo, useCallback } from 'react';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { useProjectOrgId } from '@/hooks/useProjectOrgId';
-import { useProjectMembersById } from '@/primitives/useProject/reactor';
+import { useProjectMembers } from '@/project/workspace-data';
 
 export interface ProjectMember {
   userId: string;
@@ -39,7 +39,7 @@ interface ProjectProviderProps {
 export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
   const user = useAuthStore(selectUser);
   const orgId = useProjectOrgId(projectId);
-  const members = useProjectMembersById(projectId) as ProjectMember[];
+  const members = useProjectMembers(projectId) as ProjectMember[];
 
   const userRole = useMemo(() => {
     if (!user) return null;

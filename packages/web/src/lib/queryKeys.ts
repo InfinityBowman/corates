@@ -20,6 +20,8 @@ export const queryKeys = {
     all: ['projects'] as const,
     /** Projects for a specific user (legacy) */
     list: (userId: string | null | undefined) => ['projects', userId] as const,
+    /** Members of a project (D1 projectMembers joined with user) */
+    members: (projectId: string) => ['projects', 'members', projectId] as const,
     /** Projects within an organization (legacy, kept for backward compatibility) */
     byOrg: (orgId: string | null | undefined) => ['projects', 'org', orgId] as const,
   },

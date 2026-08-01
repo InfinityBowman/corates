@@ -12,6 +12,7 @@
 
 import { z } from 'zod';
 import { defineSchema } from '@cf-sync/protocol';
+import type { RowOf } from '@cf-sync/protocol';
 import type { ChecklistStatus } from '../checklists/index.js';
 
 export const CHECKLIST_TYPE_VALUES = ['AMSTAR2', 'ROB2', 'ROBINS_I'] as const;
@@ -175,3 +176,12 @@ export const syncSchema = defineSchema({
 });
 
 export type SyncSchema = typeof syncSchema;
+
+// Stored row shapes (schema output, defaults applied) — the read-side types.
+export type StudyRow = RowOf<SyncSchema, 'studies'>;
+export type ChecklistRow = RowOf<SyncSchema, 'checklists'>;
+export type AnswerRow = RowOf<SyncSchema, 'answers'>;
+export type AnnotationRow = RowOf<SyncSchema, 'annotations'>;
+export type OutcomeRow = RowOf<SyncSchema, 'outcomes'>;
+export type PdfRow = RowOf<SyncSchema, 'pdfs'>;
+export type ReconciliationRow = RowOf<SyncSchema, 'reconciliations'>;

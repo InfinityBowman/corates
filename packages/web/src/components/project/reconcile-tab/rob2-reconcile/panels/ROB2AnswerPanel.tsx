@@ -36,7 +36,7 @@ interface ROB2AnswerPanelProps {
   panelType: 'reviewer1' | 'reviewer2' | 'final';
   answer: string | null;
   comment?: string | null;
-  commentYText?: any;
+  onCommentChange?: (_text: string) => void;
   responseOptions: string[];
   readOnly: boolean;
   isSelected?: boolean;
@@ -52,7 +52,7 @@ export function ROB2AnswerPanel({
   panelType,
   answer,
   comment,
-  commentYText,
+  onCommentChange,
   responseOptions,
   readOnly,
   isSelected,
@@ -156,9 +156,9 @@ export function ROB2AnswerPanel({
             </p>
           </div>
         : <NoteEditor
-            yText={commentYText}
+            value={comment ?? ''}
+            onChange={text => onCommentChange?.(text)}
             placeholder='Add the final reconciled comment...'
-            readOnly={false}
             inline={true}
             focusRingColor='blue-400'
           />

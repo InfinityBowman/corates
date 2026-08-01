@@ -16,9 +16,9 @@ import { useProjectOrgId } from '@/hooks/useProjectOrgId';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors';
 import { showToast } from '@/lib/toast';
 import { connectionPool } from './ConnectionPool';
+import { WorkspaceProjectContext } from './workspace-data';
 
 import { ProjectProvider } from '@/components/project/ProjectContext';
-import { ProjectReactorContext } from '@/primitives/useProject/reactor/context';
 
 interface ProjectGateProps {
   projectId: string;
@@ -85,11 +85,9 @@ export function ProjectGate({ projectId, fallback, children }: ProjectGateProps)
     return null;
   }
 
-  const reactor = connectionPool.getReactor(projectId);
-
   return (
-    <ProjectReactorContext.Provider value={reactor}>
+    <WorkspaceProjectContext.Provider value={projectId}>
       <ProjectProvider projectId={projectId}>{children}</ProjectProvider>
-    </ProjectReactorContext.Provider>
+    </WorkspaceProjectContext.Provider>
   );
 }

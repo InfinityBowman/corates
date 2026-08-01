@@ -26,7 +26,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { getChecklistMetadata } from '@/checklist-registry';
 import { CHECKLIST_STATUS, isReconciledChecklist } from '@corates/shared/checklists';
-import { useProjectMetaById } from '@/primitives/useProject/reactor';
+import { useProjectOutcomes } from '@/project/workspace-data';
 import { useProjectContext } from './ProjectContext';
 import { project } from '@/project';
 import type { StudyInfo } from '@/stores/projectStore';
@@ -47,8 +47,7 @@ export function ChangeOutcomeDialog({
   onOpenChange,
 }: ChangeOutcomeDialogProps) {
   const { projectId } = useProjectContext();
-  const meta = useProjectMetaById(projectId);
-  const outcomes = useMemo(() => meta?.outcomes ?? [], [meta?.outcomes]);
+  const outcomes = useProjectOutcomes(projectId);
 
   const [selectedOutcomeId, setSelectedOutcomeId] = useState<string | null>(null);
 

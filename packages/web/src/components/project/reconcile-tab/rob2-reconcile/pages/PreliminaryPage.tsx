@@ -1,6 +1,4 @@
-import { useMemo, useEffect, useEffectEvent, useId, useCallback } from 'react';
-import type * as Y from 'yjs';
-import { useYText } from '@/hooks/useYText';
+import { useMemo, useId, useCallback } from 'react';
 import { CheckIcon, XIcon, AlertTriangleIcon } from 'lucide-react';
 import {
   PRELIMINARY_SECTION,
@@ -258,7 +256,7 @@ interface PreliminaryPageProps {
   isAgreement: boolean;
   isAimMismatch: boolean;
   onFinalChange: (_value: any) => void;
-  getTextRef: (_ref: TextRef) => Y.Text | null;
+  setTextValue: (_ref: TextRef, _text: string) => void;
   onUseReviewer1: () => void;
   onUseReviewer2: () => void;
 }
@@ -297,30 +295,13 @@ export function PreliminaryPage({
   isAgreement,
   isAimMismatch,
   onFinalChange,
-  getTextRef,
+  setTextValue,
   onUseReviewer1,
   onUseReviewer2,
 }: PreliminaryPageProps) {
   const fieldDef = (PRELIMINARY_SECTION as Record<string, any>)[fieldKey];
   const fieldLabel = fieldDef?.label || fieldKey;
   const isTextField = PRELIMINARY_TEXT_FIELDS.includes(fieldKey);
-
-  const preliminaryYText =
-    isTextField ? getTextRef({ type: 'ROB2', sectionKey: 'preliminary', fieldKey }) : null;
-  const preliminaryText = useYText(preliminaryYText);
-
-  // Sync Y.Text changes back to finalAnswers so hasNavItemAnswer detects
-  // the field as answered. useEffectEvent captures the latest onFinalChange
-  // without making it a dependency, so the effect only fires when the
-  // Y.Text content actually changes -- not when navigation swaps the closure.
-  const syncToFinalAnswers = useEffectEvent((text: string) => {
-    onFinalChange(text);
-  });
-
-  useEffect(() => {
-    if (!preliminaryYText) return;
-    syncToFinalAnswers(preliminaryText);
-  }, [preliminaryText, preliminaryYText]);
 
   const fieldType = getFieldType(fieldKey);
   const options = useMemo(() => getOptions(fieldKey), [fieldKey]);
@@ -369,13 +350,15 @@ export function PreliminaryPage({
           />
         );
       default:
-        // Text fields use NoteEditor with Y.Text
+        // Text fields edit the flat answer row directly
         if (isTextField) {
           return (
             <NoteEditor
-              yText={getTextRef({ type: 'ROB2', sectionKey: 'preliminary', fieldKey })}
+              value={typeof finalValue === 'string' ? finalValue : ''}
+              onChange={text =>
+                setTextValue({ type: 'ROB2', sectionKey: 'preliminary', fieldKey }, text)
+              }
               placeholder={fieldDef?.placeholder}
-              readOnly={false}
               inline={true}
               focusRingColor='green-500'
             />

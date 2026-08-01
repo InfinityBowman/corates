@@ -10,7 +10,7 @@ import { DomainSection } from './DomainSection';
 import { OverallSection } from './OverallSection';
 import { ResponseLegend } from './SignallingQuestion';
 import { ScoringSummary } from './ScoringSummary';
-import { useAnswer, useChecklistField } from '@/primitives/useProject/reactor/hooks';
+import { useWorkspaceProjectId, useAnswerValue, useStudy } from '@/project/workspace-data';
 
 interface ROBINSIChecklistProps {
   studyId: string;
@@ -39,15 +39,18 @@ export function ROBINSIChecklist({
     };
   }, []);
 
-  const checklistName = useChecklistField<string>(studyId, checklistId, 'name');
-  const b2Answer = useAnswer<string>(studyId, checklistId, 'sectionB.b2');
-  const b3Answer = useAnswer<string>(studyId, checklistId, 'sectionB.b3');
+  const projectId = useWorkspaceProjectId();
+  const study = useStudy(projectId, studyId);
+  const checklistName = study?.checklists.find(c => c.id === checklistId)?.title ?? null;
+  const b2Answer = useAnswerValue<string>(projectId, checklistId, 'sectionB.b2');
+  const b3Answer = useAnswerValue<string>(projectId, checklistId, 'sectionB.b3');
   const stopAssessment = useMemo(() => {
     const isYesOrPY = (v: string | null) => v === 'Y' || v === 'PY';
     return isYesOrPY(b2Answer) || isYesOrPY(b3Answer);
   }, [b2Answer, b3Answer]);
 
-  const isPerProtocol = useAnswer<boolean>(studyId, checklistId, 'sectionC.isPerProtocol') === true;
+  const isPerProtocol =
+    useAnswerValue<boolean>(projectId, checklistId, 'sectionC.isPerProtocol') === true;
   const activeDomains = useMemo(() => getActiveDomainKeys(isPerProtocol), [isPerProtocol]);
 
   const toggleDomainCollapse = useCallback((domainKey: string) => {

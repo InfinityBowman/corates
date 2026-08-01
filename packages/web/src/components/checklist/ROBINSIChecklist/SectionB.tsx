@@ -3,12 +3,12 @@ import { InfoIcon } from 'lucide-react';
 import { SECTION_B, RESPONSE_LABELS } from './checklist-map';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
 import {
-  useAnswer,
-  useAnswersYMap,
-  useProjectReactor,
-} from '@/primitives/useProject/reactor/hooks';
-import { resolveYText } from '@/primitives/useProject/reactor/ytext';
-import type * as Y from 'yjs';
+  useWorkspaceProjectId,
+  useAnswerValue,
+  useAnswerWriters,
+  getAnswerValue,
+} from '@/project/workspace-data';
+import type { ChecklistAnswerInput } from '@corates/shared/sync';
 
 interface SectionBProps {
   studyId: string;
@@ -18,23 +18,28 @@ interface SectionBProps {
 
 export function SectionB({ studyId, checklistId, disabled }: SectionBProps) {
   const uniqueId = useId();
-  const answersYMap = useAnswersYMap(studyId, checklistId);
+  const projectId = useWorkspaceProjectId();
+  const writers = useAnswerWriters(projectId, studyId, checklistId);
 
-  const b2Answer = useAnswer<string>(studyId, checklistId, 'sectionB.b2');
-  const b3Answer = useAnswer<string>(studyId, checklistId, 'sectionB.b3');
+  const b2Answer = useAnswerValue<string>(projectId, checklistId, 'sectionB.b2');
+  const b3Answer = useAnswerValue<string>(projectId, checklistId, 'sectionB.b3');
   const stopAssessment = useMemo(() => {
     const isYesOrPY = (v: string | null) => v === 'Y' || v === 'PY';
     return isYesOrPY(b2Answer) || isYesOrPY(b3Answer);
   }, [b2Answer, b3Answer]);
 
   const handleAnswerChange = (questionKey: string, value: string) => {
-    const currentVal = answersYMap?.get(`sectionB.${questionKey}`) as string | null;
-    answersYMap?.set(`sectionB.${questionKey}`, currentVal === value ? null : value);
+    const currentVal = getAnswerValue(projectId, checklistId, `sectionB.${questionKey}`) as
+      | string
+      | null;
+    writers.updateAnswer({
+      type: 'ROBINS_I',
+      key: 'sectionB',
+      data: { [questionKey]: { answer: currentVal === value ? null : value } },
+    } as ChecklistAnswerInput);
   };
 
   const responseOptions = ['Y', 'PY', 'PN', 'N'];
-
-  const { ydoc } = useProjectReactor();
 
   return (
     <div className='border-border bg-card overflow-hidden rounded-lg border shadow-sm'>
@@ -51,7 +56,6 @@ export function SectionB({ studyId, checklistId, disabled }: SectionBProps) {
         {Object.entries(SECTION_B as Record<string, any>).map(([key, question]) => (
           <SectionBQuestion
             key={key}
-            ydoc={ydoc}
             studyId={studyId}
             checklistId={checklistId}
             questionKey={key}
@@ -81,7 +85,6 @@ export function SectionB({ studyId, checklistId, disabled }: SectionBProps) {
 }
 
 function SectionBQuestion({
-  ydoc,
   studyId,
   checklistId,
   questionKey,
@@ -91,7 +94,6 @@ function SectionBQuestion({
   responseOptions,
   onAnswerChange,
 }: {
-  ydoc: Y.Doc;
   studyId: string;
   checklistId: string;
   questionKey: string;
@@ -101,12 +103,11 @@ function SectionBQuestion({
   responseOptions: string[];
   onAnswerChange: (key: string, value: string) => void;
 }) {
-  const answer = useAnswer<string>(studyId, checklistId, `sectionB.${questionKey}`);
-
-  const commentYText = useMemo(
-    () => resolveYText(ydoc, studyId, checklistId, `sectionB.${questionKey}.comment`),
-    [ydoc, studyId, checklistId, questionKey],
-  );
+  const projectId = useWorkspaceProjectId();
+  const answer = useAnswerValue<string>(projectId, checklistId, `sectionB.${questionKey}`);
+  const commentValue =
+    useAnswerValue<string>(projectId, checklistId, `sectionB.${questionKey}.comment`) ?? '';
+  const writers = useAnswerWriters(projectId, studyId, checklistId);
 
   return (
     <div className='border-border border-b py-4 last:border-b-0'>
@@ -151,7 +152,8 @@ function SectionBQuestion({
 
         <div className='mt-2'>
           <NoteEditor
-            yText={commentYText}
+            value={commentValue}
+            onChange={text => writers.setText(`sectionB.${questionKey}.comment`, text)}
             placeholder='Comment (optional)'
             readOnly={disabled}
             inline={true}

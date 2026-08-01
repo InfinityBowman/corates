@@ -27,6 +27,13 @@ export {
   type PdfTag,
   type StudyMetadata,
   type SyncSchema,
+  type StudyRow,
+  type ChecklistRow,
+  type AnswerRow,
+  type AnnotationRow,
+  type OutcomeRow,
+  type PdfRow,
+  type ReconciliationRow,
 } from './schema.js';
 export {
   defaultAnswerRows,
@@ -36,3 +43,16 @@ export {
   type JsonValue,
 } from './answer-rows.js';
 export { answerRowId, reconciliationRowId } from './ids.js';
+export {
+  deriveFinalized,
+  rob2JudgementsFromRows,
+  robinsIJudgementsFromRows,
+  ROB2_CHART_DOMAIN_KEYS,
+  ROBINSI_CHART_DOMAIN_KEYS,
+  scoreChecklistRows,
+  serializeAnswerRows,
+  textFieldKey,
+  type AnswerRowMap,
+  type DomainJudgements,
+  type FinalizedDerivation,
+} from './derive.js';

@@ -216,14 +216,7 @@ function renderPage(
     Amstar2NavItem
   >,
 ) {
-  const {
-    currentItem,
-    checklist1,
-    checklist2,
-    finalAnswers: fa,
-    isAgreement,
-    getTextRef,
-  } = context;
+  const { currentItem, checklist1, checklist2, finalAnswers: fa, isAgreement } = context;
   const key = currentItem.key;
 
   // Derive currentFinalAnswer from reconciledChecklist for current question
@@ -264,7 +257,8 @@ function renderPage(
       isMultiPart={!!currentItem.meta?.isMultiPart}
       reviewer1Note={getReviewerNote(checklist1, key)}
       reviewer2Note={getReviewerNote(checklist2, key)}
-      finalNoteYText={getTextRef({ type: 'AMSTAR2', questionKey: key })}
+      finalNote={getReviewerNote(context.reconciledChecklist, key)}
+      onFinalNoteChange={text => context.setTextValue({ type: 'AMSTAR2', questionKey: key }, text)}
     />
   );
 }

@@ -4,10 +4,12 @@ import { ROBINS_I_CHECKLIST, getActiveDomainKeys } from './checklist-map';
 import { ResourcesPopover } from '../ResourcesPopover';
 import { ROBINSI_RESOURCES } from './resources';
 import {
-  useAnswer,
-  useROBINSIScore,
-  useROBINSIDomainScore,
-} from '@/primitives/useProject/reactor/hooks';
+  useWorkspaceProjectId,
+  useAnswerValue,
+  useChecklistAnswerMap,
+  useRobinsIDomainScore,
+} from '@/project/workspace-data';
+import { scoreChecklistRows } from '@corates/shared/sync';
 
 interface ScoringSummaryProps {
   studyId: string;
@@ -15,9 +17,12 @@ interface ScoringSummaryProps {
   onDomainClick?: (_domainKey: string) => void;
 }
 
-export function ScoringSummary({ studyId, checklistId, onDomainClick }: ScoringSummaryProps) {
-  const overallScore = useROBINSIScore(studyId, checklistId);
-  const isPerProtocol = useAnswer<boolean>(studyId, checklistId, 'sectionC.isPerProtocol') === true;
+export function ScoringSummary({ checklistId, onDomainClick }: ScoringSummaryProps) {
+  const projectId = useWorkspaceProjectId();
+  const flat = useChecklistAnswerMap(projectId, checklistId);
+  const overallScore = useMemo(() => scoreChecklistRows('ROBINS_I', flat), [flat]);
+  const isPerProtocol =
+    useAnswerValue<boolean>(projectId, checklistId, 'sectionC.isPerProtocol') === true;
   const activeDomains = useMemo(() => getActiveDomainKeys(isPerProtocol), [isPerProtocol]);
 
   const getOverallColor = () => {
@@ -66,7 +71,6 @@ export function ScoringSummary({ studyId, checklistId, onDomainClick }: ScoringS
           {activeDomains.map((dk: string) => (
             <DomainChip
               key={dk}
-              studyId={studyId}
               checklistId={checklistId}
               domainKey={dk}
               shortName={getDomainShortName(dk)}
@@ -90,19 +94,18 @@ export function ScoringSummary({ studyId, checklistId, onDomainClick }: ScoringS
 }
 
 function DomainChip({
-  studyId,
   checklistId,
   domainKey,
   shortName,
   onClick,
 }: {
-  studyId: string;
   checklistId: string;
   domainKey: string;
   shortName: string;
   onClick: () => void;
 }) {
-  const { judgement: effective } = useROBINSIDomainScore(studyId, checklistId, domainKey);
+  const projectId = useWorkspaceProjectId();
+  const { judgement: effective } = useRobinsIDomainScore(projectId, checklistId, domainKey);
 
   const chipColor = (() => {
     if (!effective) return 'bg-secondary text-muted-foreground border-border';

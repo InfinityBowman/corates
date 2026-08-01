@@ -7,7 +7,7 @@
 
 import { useId, useState } from 'react';
 import { PlusIcon, CheckIcon, AlertCircleIcon } from 'lucide-react';
-import { useProjectMembersById, useProjectMetaById } from '@/primitives/useProject/reactor';
+import { useProjectMembers, useProjectOutcomes } from '@/project/workspace-data';
 import { addStudy } from '@/server/functions/dev-tools.functions';
 import {
   Select,
@@ -56,11 +56,10 @@ interface DevStudyGeneratorProps {
 }
 
 export function DevStudyGenerator({ projectId, orgId }: DevStudyGeneratorProps) {
-  const atomMembers = useProjectMembersById(projectId || '');
-  const meta = useProjectMetaById(projectId || '');
+  const atomMembers = useProjectMembers(projectId || '');
 
   const members: MemberEntry[] = (atomMembers as MemberEntry[]) || [];
-  const outcomes: OutcomeEntry[] = meta?.outcomes ?? [];
+  const outcomes: OutcomeEntry[] = useProjectOutcomes(projectId || '');
 
   const [type, setType] = useState('AMSTAR2');
   const [fillMode, setFillMode] = useState('random');

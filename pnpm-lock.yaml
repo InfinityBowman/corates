@@ -256,12 +256,6 @@ importers:
       '@tanstack/react-table':
         specifier: ^8.21.3
         version: 8.21.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      '@tldraw/state':
-        specifier: 4.5.10
-        version: 4.5.10
-      '@tldraw/state-react':
-        specifier: 4.5.10
-        version: 4.5.10(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       better-auth:
         specifier: ^1.6.22
         version: 1.6.22(166c8ee971de25f670c13a486803b9e1)
@@ -4060,18 +4054,6 @@ packages:
       '@types/react-dom':
         optional: true
 
-  '@tldraw/state-react@4.5.10':
-    resolution: {integrity: sha512-gT173dPZUmHksVGDFFNlinai/CfIgvY3ECXGGXMEwpISbHpxInn1u6U7E60z/hmG7MQ2e6kKQq1H7w+VkMeQmg==}
-    peerDependencies:
-      react: ^18.2.0 || ^19.2.1
-      react-dom: ^18.2.0 || ^19.2.1
-
-  '@tldraw/state@4.5.10':
-    resolution: {integrity: sha512-c7l3/5T16M0p7EJ2GLjpCA2B69abn1790spjsHsfaIWlEzeo29LmTNa906dtkx8b6qPrSUguX6ibE5mEOw7IzA==}
-
-  '@tldraw/utils@4.5.10':
-    resolution: {integrity: sha512-aRxpxmx0lIJx/xuwMaBgNxgcYi+okOElWSdZnnV+ZdUrqAfavpe5e1U6qoOdIhn9/iVfOz+PfmEINUNObi/eLg==}
-
   '@ts-morph/common@0.27.0':
     resolution: {integrity: sha512-Wf29UqxWDpc+i61k3oIOzcUfQt79PIT9y/MWfAGlrkjg6lBC1hwDECLXPVJAhWjiGbfBCxZd65F/LIZF3+jeJQ==}
 
@@ -6621,10 +6603,6 @@ packages:
     resolution: {integrity: sha512-AC/7JofJvZGrrneWNaEnJeOLUx+JlGt7tNa0wZiRPT4MY1wmfKjt2+6O2p2uz2+skll8OZZmJMNqeke7kKbNgQ==}
     hasBin: true
 
-  jittered-fractional-indexing@1.0.1:
-    resolution: {integrity: sha512-OpKFkVr4hU5ivd1ZCjZfHvVpWekraJvcePcMusBmgBmCVQK5JiRCA+4TT1vAUTLqGD9MkhqFwO0l3QspvlZgzw==}
-    engines: {node: '>=18.0.0'}
-
   jose@6.2.2:
     resolution: {integrity: sha512-d7kPDd34KO/YnzaDOlikGpOurfF0ByC2sEV4cANCtdqLlTfBlw2p14O/5d/zv40gJPbIQxfES3nSx1/oYNyuZQ==}
 
@@ -6821,21 +6799,8 @@ packages:
   lodash-es@4.17.23:
     resolution: {integrity: sha512-kVI48u3PZr38HdYz98UmfPnXl2DXrpdctLrFLCd3kOx1xUkOmpFPx7gCWWM5MPkL/fD8zb+Ph0QzjGFs4+hHWg==}
 
-  lodash.isequal@4.5.0:
-    resolution: {integrity: sha512-pDo3lu8Jhfjqls6GkMgpahsF9kCyayhgykjyLMNFTKWrpVdAQtYyB4muAMWozBB4ig/dtWAmsMxLEI8wuz+DYQ==}
-    deprecated: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
-
-  lodash.isequalwith@4.4.0:
-    resolution: {integrity: sha512-dcZON0IalGBpRmJBmMkaoV7d3I80R2O+FrzsZyHdNSFrANq/cgDqKQNmAHE8UEj4+QYWwwhkQOVdLHiAopzlsQ==}
-
   lodash.merge@4.6.2:
     resolution: {integrity: sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==}
-
-  lodash.throttle@4.1.1:
-    resolution: {integrity: sha512-wIkUCfVKpVsWo3JSZlc+8MB5it+2AN5W8J7YVMST30UrvcQNZ1Okbj+rbVniijTWE6FGYy4XJq/rHkas8qJMLQ==}
-
-  lodash.uniq@4.5.0:
-    resolution: {integrity: sha512-xfBaXQd9ryd9dlSDvnvI0lvxfLJlYAZzXomUYzLKtUeOQvOP5piqAWuGtrhWeqaXK9hhoM/iyJc5AV+XfsX3HQ==}
 
   lodash@4.17.21:
     resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
@@ -12146,25 +12111,6 @@ snapshots:
       '@types/react': 19.2.14
       '@types/react-dom': 19.2.3(@types/react@19.2.14)
 
-  '@tldraw/state-react@4.5.10(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
-    dependencies:
-      '@tldraw/state': 4.5.10
-      '@tldraw/utils': 4.5.10
-      react: 19.2.4
-      react-dom: 19.2.4(react@19.2.4)
-
-  '@tldraw/state@4.5.10':
-    dependencies:
-      '@tldraw/utils': 4.5.10
-
-  '@tldraw/utils@4.5.10':
-    dependencies:
-      jittered-fractional-indexing: 1.0.1
-      lodash.isequal: 4.5.0
-      lodash.isequalwith: 4.4.0
-      lodash.throttle: 4.1.1
-      lodash.uniq: 4.5.0
-
   '@ts-morph/common@0.27.0':
     dependencies:
       fast-glob: 3.3.3
@@ -15218,10 +15164,6 @@ snapshots:
 
   jiti@2.7.0: {}
 
-  jittered-fractional-indexing@1.0.1:
-    dependencies:
-      fractional-indexing: 3.2.0
-
   jose@6.2.2: {}
 
   js-tokens@4.0.0: {}
@@ -15409,15 +15351,7 @@ snapshots:
 
   lodash-es@4.17.23: {}
 
-  lodash.isequal@4.5.0: {}
-
-  lodash.isequalwith@4.4.0: {}
-
   lodash.merge@4.6.2: {}
-
-  lodash.throttle@4.1.1: {}
-
-  lodash.uniq@4.5.0: {}
 
   lodash@4.17.21:
     optional: true

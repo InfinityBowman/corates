@@ -5,7 +5,7 @@ import { ChecklistWithPdf } from '@/components/checklist/ChecklistWithPdf';
 import { useProjectContext } from '@/components/project/ProjectContext';
 import { connectionPool } from '@/project/ConnectionPool';
 import { useChecklistViewModel } from '@/primitives/useProject/checklists/useChecklistViewModel';
-import { useChecklistScore } from '@/primitives/useProject/reactor/hooks';
+import { useChecklistScore } from '@/project/workspace-data';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { useStudyAnnotations } from '@/primitives/useProject/useStudyAnnotations';
@@ -72,7 +72,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
     studyId,
     checklistId,
   );
-  const currentScore = useChecklistScore(studyId, checklistId, checklistType);
+  const currentScore = useChecklistScore(projectId, checklistId, checklistType);
 
   const isReadOnly = currentChecklist?.status ? !isEditable(currentChecklist.status) : false;
 

@@ -59,7 +59,6 @@ export function ReconciliationEngine({
   onSaveReconciled,
   onCancel,
   updateChecklistAnswer,
-  getTextRef,
   setTextValue,
   pdfData,
   pdfFileName,
@@ -124,13 +123,13 @@ export function ReconciliationEngine({
       navItems: engine.navItems,
       checklist1,
       checklist2,
+      reconciledChecklist,
       finalAnswers: engine.finalAnswers,
       comparison: engine.comparison,
       reviewer1Name,
       reviewer2Name,
       isAgreement: engine.currentIsAgreement,
       updateChecklistAnswer,
-      getTextRef,
       setTextValue,
     };
   }, [
@@ -138,13 +137,13 @@ export function ReconciliationEngine({
     engine.navItems,
     checklist1,
     checklist2,
+    reconciledChecklist,
     engine.finalAnswers,
     engine.comparison,
     reviewer1Name,
     reviewer2Name,
     engine.currentIsAgreement,
     updateChecklistAnswer,
-    getTextRef,
     setTextValue,
   ]);
 

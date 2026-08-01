@@ -12,10 +12,11 @@ import { createPortal } from 'react-dom';
 import { XIcon, ChevronDownIcon, ChevronUpIcon, BugIcon, BracesIcon } from 'lucide-react';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import {
-  useAllStudiesById,
-  useProjectMembersById,
-  useProjectMetaById,
-} from '@/primitives/useProject/reactor';
+  useAllStudies,
+  useProjectMembers,
+  useProjectMeta,
+  useProjectOutcomes,
+} from '@/project/workspace-data';
 import { useProjectOrgId } from '@/hooks/useProjectOrgId';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -56,9 +57,11 @@ export function DevPanel() {
 
   const orgId = useProjectOrgId(projectId);
 
-  const studies = useAllStudiesById(projectId || '');
-  const members = useProjectMembersById(projectId || '');
-  const meta = useProjectMetaById(projectId || '');
+  const studies = useAllStudies(projectId || '');
+  const members = useProjectMembers(projectId || '');
+  const projectMeta = useProjectMeta(projectId || '');
+  const outcomes = useProjectOutcomes(projectId || '');
+  const meta = { ...projectMeta, outcomes };
   const projectData = projectId ? { studies, members, meta } : null;
 
   const connectionState = useProjectStore(s =>

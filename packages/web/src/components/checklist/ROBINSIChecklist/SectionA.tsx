@@ -1,8 +1,10 @@
-import { useMemo } from 'react';
 import { SECTION_A } from './checklist-map';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
-import { useProjectReactor } from '@/primitives/useProject/reactor/hooks';
-import { resolveYText } from '@/primitives/useProject/reactor/ytext';
+import {
+  useWorkspaceProjectId,
+  useAnswerValue,
+  useAnswerWriters,
+} from '@/project/workspace-data';
 
 interface SectionAProps {
   studyId: string;
@@ -11,8 +13,6 @@ interface SectionAProps {
 }
 
 export function SectionA({ studyId, checklistId, disabled }: SectionAProps) {
-  const { ydoc } = useProjectReactor();
-
   return (
     <div className='border-border bg-card overflow-hidden rounded-lg border shadow-sm'>
       <div className='border-border bg-muted border-b px-6 py-4'>
@@ -28,7 +28,6 @@ export function SectionA({ studyId, checklistId, disabled }: SectionAProps) {
         {Object.entries(SECTION_A as Record<string, any>).map(([key, field]) => (
           <SectionAField
             key={key}
-            ydoc={ydoc}
             studyId={studyId}
             checklistId={checklistId}
             field={field}
@@ -41,22 +40,20 @@ export function SectionA({ studyId, checklistId, disabled }: SectionAProps) {
 }
 
 function SectionAField({
-  ydoc,
   studyId,
   checklistId,
   field,
   disabled,
 }: {
-  ydoc: any;
   studyId: string;
   checklistId: string;
   field: any;
   disabled?: boolean;
 }) {
-  const yText = useMemo(
-    () => resolveYText(ydoc, studyId, checklistId, `sectionA.${field.stateKey}`),
-    [ydoc, studyId, checklistId, field.stateKey],
-  );
+  const projectId = useWorkspaceProjectId();
+  const flatKey = `sectionA.${field.stateKey}`;
+  const value = useAnswerValue<string>(projectId, checklistId, flatKey) ?? '';
+  const writers = useAnswerWriters(projectId, studyId, checklistId);
 
   return (
     <div className='flex flex-col gap-2'>
@@ -68,7 +65,8 @@ function SectionAField({
         </span>
         <div className='mt-2'>
           <NoteEditor
-            yText={yText}
+            value={value}
+            onChange={text => writers.setText(flatKey, text)}
             placeholder={field.placeholder}
             readOnly={disabled}
             inline={true}

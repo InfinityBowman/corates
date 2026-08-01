@@ -38,7 +38,7 @@ interface RobinsAnswerPanelProps {
   panelType: 'reviewer1' | 'reviewer2' | 'final';
   answer?: string | null;
   comment?: string | null;
-  commentYText?: any;
+  onCommentChange?: (_text: string) => void;
   responseOptions: readonly string[];
   readOnly?: boolean;
   isSelected?: boolean;
@@ -51,7 +51,7 @@ export function RobinsAnswerPanel({
   panelType,
   answer,
   comment,
-  commentYText,
+  onCommentChange,
   responseOptions,
   readOnly = false,
   isSelected = false,
@@ -144,9 +144,9 @@ export function RobinsAnswerPanel({
         </label>
         {!readOnly ?
           <NoteEditor
-            yText={commentYText}
+            value={comment ?? ''}
+            onChange={text => onCommentChange?.(text)}
             placeholder='Add the final reconciled comment...'
-            readOnly={false}
             inline={true}
             focusRingColor='blue-400'
           />

@@ -16,7 +16,7 @@ import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { Tabs, TabsList, TabsTrigger, TabsIndicator, TabsContent } from '@/components/ui/tabs';
 import { showToast } from '@/lib/toast';
 import { Spinner } from '@/components/ui/spinner';
-import { useSortedStudyIdsById } from '@/primitives/useProject/reactor';
+import { useSortedStudyIds } from '@/project/workspace-data';
 import { useAddStudies } from '@/hooks/useAddStudies';
 import type { CollectedStudies } from '@/hooks/useAddStudies';
 import type { MergedStudy } from '@/hooks/useAddStudies/deduplication';
@@ -67,7 +67,7 @@ export function AddStudiesForm({
     onStudiesChange,
   });
 
-  const studyIds = useSortedStudyIdsById(projectId || '');
+  const studyIds = useSortedStudyIds(projectId || '');
   const existingStudyCount = projectId ? studyIds.length : 0;
   const hasExistingStudies = !collectMode && !!projectId && existingStudyCount > 0;
 

@@ -6,7 +6,8 @@ interface SectionBQuestionPageProps {
   reviewer1Data?: { answer?: string | null; comment?: string } | null;
   reviewer2Data?: { answer?: string | null; comment?: string } | null;
   finalData?: { answer?: string | null } | null;
-  finalCommentYText?: any;
+  finalComment: string;
+  onFinalCommentChange: (_text: string) => void;
   reviewer1Name: string;
   reviewer2Name: string;
   isAgreement: boolean;
@@ -21,7 +22,8 @@ export function SectionBQuestionPage({
   reviewer1Data,
   reviewer2Data,
   finalData,
-  finalCommentYText,
+  finalComment,
+  onFinalCommentChange,
   reviewer1Name,
   reviewer2Name,
   isAgreement,
@@ -86,7 +88,8 @@ export function SectionBQuestionPage({
           title='Final Answer'
           panelType='final'
           answer={finalData?.answer}
-          commentYText={finalCommentYText}
+          comment={finalComment}
+          onCommentChange={onFinalCommentChange}
           responseOptions={responseOptions}
           readOnly={false}
           onAnswerChange={onFinalAnswerChange}

@@ -206,14 +206,7 @@ function renderPage(
     RobinsINavItem
   >,
 ) {
-  const {
-    currentItem,
-    checklist1: c1,
-    checklist2: c2,
-    finalAnswers: fa,
-    comparison,
-    getTextRef,
-  } = context;
+  const { currentItem, checklist1: c1, checklist2: c2, finalAnswers: fa, comparison } = context;
 
   if (currentItem.type === NAV_ITEM_TYPES.SECTION_B) {
     const c1SectionB = c1?.sectionB;
@@ -234,12 +227,23 @@ function renderPage(
           faSectionB?.[currentItem.key as keyof typeof faSectionB] as
             ROBINSIQuestionAnswer | undefined
         }
-        finalCommentYText={getTextRef({
-          type: 'ROBINS_I',
-          sectionKey: 'sectionB',
-          fieldKey: 'comment',
-          questionKey: currentItem.key,
-        })}
+        // The reconcile comment lives at the top-level `${questionKey}.comment`
+        // flat key (textFieldKey with questionKey set), not under sectionB.
+        finalComment={
+          ((fa as Record<string, unknown>)[currentItem.key] as ROBINSIQuestionAnswer | undefined)
+            ?.comment ?? ''
+        }
+        onFinalCommentChange={(text: string) =>
+          context.setTextValue(
+            {
+              type: 'ROBINS_I',
+              sectionKey: 'sectionB',
+              fieldKey: 'comment',
+              questionKey: currentItem.key,
+            },
+            text,
+          )
+        }
         reviewer1Name={context.reviewer1Name}
         reviewer2Name={context.reviewer2Name}
         isAgreement={context.isAgreement}
@@ -294,12 +298,13 @@ function renderPage(
         reviewer1Data={c1Domain?.answers?.[questionKey]}
         reviewer2Data={c2Domain?.answers?.[questionKey]}
         finalData={faDomain?.answers?.[questionKey]}
-        finalCommentYText={getTextRef({
-          type: 'ROBINS_I',
-          sectionKey: domainKey,
-          fieldKey: 'comment',
-          questionKey,
-        })}
+        finalComment={faDomain?.answers?.[questionKey]?.comment ?? ''}
+        onFinalCommentChange={(text: string) =>
+          context.setTextValue(
+            { type: 'ROBINS_I', sectionKey: domainKey, fieldKey: 'comment', questionKey },
+            text,
+          )
+        }
         reviewer1Name={context.reviewer1Name}
         reviewer2Name={context.reviewer2Name}
         isAgreement={context.isAgreement}

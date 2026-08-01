@@ -44,8 +44,14 @@ import {
 } from '@/primitives/useProject/outcomes.js';
 import { db, deleteProjectData } from '@/primitives/db.js';
 import { migrateLocalChecklistsToYDoc } from './localProject';
-import { ProjectReactor } from '@/primitives/useProject/reactor/core';
-import { migrateYDocToFlatKeys } from '@/primitives/useProject/reactor/migrate';
+import { migrateYDocToFlatKeys } from '@/primitives/useProject/flatKeyMigration';
+import {
+  bridgeLocalDoc,
+  createLocalCollections,
+  type ProjectCollections,
+} from './localCollections';
+
+export type { ProjectCollections } from './localCollections';
 
 function createProjectWorkspace(
   projectId: string,
@@ -83,6 +89,8 @@ export interface TypedProjectOps {
 interface ConnectionEntry {
   /** The engine session ({ client, collections }); null for local practice. */
   workspace: ProjectWorkspace | null;
+  /** Local practice only: local-only collections fed by the Y.Doc bridge. */
+  localCollections: ProjectCollections | null;
   ydoc: Y.Doc;
   dexieProvider: DexieYProvider | null;
   studyOps: StudyOperations | null;
@@ -91,7 +99,6 @@ interface ConnectionEntry {
   reconciliationOps: ReconciliationOperations | null;
   annotationOps: AnnotationOperations | null;
   outcomeOps: OutcomeOperations | null;
-  reactor: ProjectReactor | null;
   refCount: number;
   initialized: boolean;
   _cleanupHandlers: (() => void)[];
@@ -130,6 +137,7 @@ class ConnectionPool {
 
     const entry: ConnectionEntry = {
       workspace: null,
+      localCollections: null,
       ydoc: new Y.Doc(),
       dexieProvider: null,
       studyOps: null,
@@ -138,7 +146,6 @@ class ConnectionPool {
       reconciliationOps: null,
       annotationOps: null,
       outcomeOps: null,
-      reactor: null,
       refCount: 1,
       initialized: false,
       _cleanupHandlers: [],
@@ -168,7 +175,6 @@ class ConnectionPool {
     if (!isLocal) store.setActiveProject(projectId);
     store.setConnectionState(projectId, 'connecting');
 
-    const { ydoc } = entry;
     const getYDoc = () => entry.ydoc;
     const isSynced = () => useProjectStore.getState().connections[projectId]?.phase === 'synced';
 
@@ -179,7 +185,6 @@ class ConnectionPool {
     entry.reconciliationOps = createReconciliationOperations(projectId, getYDoc);
     entry.annotationOps = createAnnotationOperations(projectId, getYDoc);
     entry.outcomeOps = createOutcomeOperations(projectId, getYDoc);
-    entry.reactor = new ProjectReactor(ydoc);
 
     if (isLocal) {
       this.initializeLocalPersistence(projectId, entry, cancelled);
@@ -235,14 +240,14 @@ class ConnectionPool {
         // mutations without any write-back indirection.
         const oldYdoc = entry.ydoc;
         entry.ydoc = project.ydoc;
-        entry.reactor?.dispose();
-        entry.reactor = new ProjectReactor(project.ydoc);
         oldYdoc.destroy();
 
         migrateYDocToFlatKeys(project.ydoc);
         migrateLocalChecklistsToYDoc(project.ydoc)
           .then(() => {
             if (cancelled()) return;
+            entry.localCollections = createLocalCollections(projectId);
+            entry._cleanupHandlers.push(bridgeLocalDoc(project.ydoc, entry.localCollections));
             useProjectStore.getState().setConnectionState(projectId, 'synced');
           })
           .catch(err => console.error('Local checklists migration failed:', err));
@@ -301,18 +306,42 @@ class ConnectionPool {
     return this.registry.get(projectId) || null;
   }
 
-  getReactor(projectId: string): ProjectReactor | null {
-    return this.registry.get(projectId)?.reactor || null;
-  }
-
   /** The engine client for a project, once its session is initialized. */
   getClient(projectId: string): ProjectWorkspace['client'] | null {
     return this.registry.get(projectId)?.workspace?.client ?? null;
   }
 
-  /** The engine collections for a project, once its session is initialized. */
-  getCollections(projectId: string): ProjectWorkspace['collections'] | null {
-    return this.registry.get(projectId)?.workspace?.collections ?? null;
+  /**
+   * The read-surface collections for a project: the engine's for online
+   * sessions, the Y.Doc-bridged local set for local practice. The two carry
+   * the same row types; the cast erases the engine's richer generics.
+   */
+  getCollections(projectId: string): ProjectCollections | null {
+    const entry = this.registry.get(projectId);
+    if (!entry) return null;
+    if (entry.workspace) return entry.workspace.collections as unknown as ProjectCollections;
+    return entry.localCollections;
+  }
+
+  /**
+   * Local practice free-text write: replaces the answer value in the Y.Doc
+   * (plain string; local mode has no co-editing to preserve). The bridge
+   * mirrors it back into rows.
+   */
+  setLocalAnswerValue(
+    projectId: string,
+    studyId: string,
+    checklistId: string,
+    flatKey: string,
+    value: unknown,
+  ): void {
+    const entry = this.registry.get(projectId);
+    if (!entry) return;
+    const study = entry.ydoc.getMap('reviews').get(studyId) as Y.Map<unknown> | undefined;
+    const checklists = study?.get('checklists') as Y.Map<unknown> | undefined;
+    const checklist = checklists?.get(checklistId) as Y.Map<unknown> | undefined;
+    const answers = checklist?.get('answers') as Y.Map<unknown> | undefined;
+    answers?.set(flatKey, value);
   }
 
   /**
@@ -404,7 +433,6 @@ class ConnectionPool {
     }
     entry._cleanupHandlers = [];
 
-    if (entry.reactor) entry.reactor.dispose();
     if (entry.workspace) void entry.workspace.destroy();
     if (entry.dexieProvider) DexieYProvider.release(entry.ydoc);
     if (entry.ydoc) entry.ydoc.destroy();

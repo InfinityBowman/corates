@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import {
   PRELIMINARY_SECTION,
   STUDY_DESIGNS,
@@ -8,11 +7,10 @@ import {
 } from './checklist-map';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
 import {
-  useAnswer,
-  useAnswersYMap,
-  useProjectReactor,
-} from '@/primitives/useProject/reactor/hooks';
-import { resolveYText } from '@/primitives/useProject/reactor/ytext';
+  useWorkspaceProjectId,
+  useAnswerValue,
+  useAnswerWriters,
+} from '@/project/workspace-data';
 
 interface PreliminarySectionProps {
   studyId: string;
@@ -21,36 +19,42 @@ interface PreliminarySectionProps {
 }
 
 export function PreliminarySection({ studyId, checklistId, disabled }: PreliminarySectionProps) {
-  const aim = useAnswer<string>(studyId, checklistId, 'preliminary.aim');
-  const studyDesign = useAnswer<string>(studyId, checklistId, 'preliminary.studyDesign');
-  const deviationsToAddress = useAnswer<string[]>(
-    studyId,
+  const projectId = useWorkspaceProjectId();
+  const aim = useAnswerValue<string>(projectId, checklistId, 'preliminary.aim');
+  const studyDesign = useAnswerValue<string>(projectId, checklistId, 'preliminary.studyDesign');
+  const deviationsToAddress = useAnswerValue<string[]>(
+    projectId,
     checklistId,
     'preliminary.deviationsToAddress',
   );
-  const sources = useAnswer<Record<string, boolean>>(studyId, checklistId, 'preliminary.sources');
-  const answersYMap = useAnswersYMap(studyId, checklistId);
-  const { ydoc } = useProjectReactor();
-
-  const experimentalYText = useMemo(
-    () => resolveYText(ydoc, studyId, checklistId, 'preliminary.experimental'),
-    [ydoc, studyId, checklistId],
+  const sources = useAnswerValue<Record<string, boolean>>(
+    projectId,
+    checklistId,
+    'preliminary.sources',
   );
-  const comparatorYText = useMemo(
-    () => resolveYText(ydoc, studyId, checklistId, 'preliminary.comparator'),
-    [ydoc, studyId, checklistId],
+  const experimentalValue = useAnswerValue<string>(
+    projectId,
+    checklistId,
+    'preliminary.experimental',
   );
-  const numericalResultYText = useMemo(
-    () => resolveYText(ydoc, studyId, checklistId, 'preliminary.numericalResult'),
-    [ydoc, studyId, checklistId],
+  const comparatorValue = useAnswerValue<string>(projectId, checklistId, 'preliminary.comparator');
+  const numericalResultValue = useAnswerValue<string>(
+    projectId,
+    checklistId,
+    'preliminary.numericalResult',
   );
+  const writers = useAnswerWriters(projectId, studyId, checklistId);
 
   const handleStudyDesignChange = (value: string) => {
-    answersYMap?.set('preliminary.studyDesign', value);
+    writers.updateAnswer({ type: 'ROB2', key: 'preliminary', data: { studyDesign: value } });
   };
 
   const handleAimChange = (newAim: string) => {
-    answersYMap?.set('preliminary.aim', aim === newAim ? null : newAim);
+    writers.updateAnswer({
+      type: 'ROB2',
+      key: 'preliminary',
+      data: { aim: aim === newAim ? null : newAim },
+    });
   };
 
   const handleDeviationToggle = (deviation: string) => {
@@ -59,12 +63,20 @@ export function PreliminarySection({ studyId, checklistId, disabled }: Prelimina
       current.includes(deviation) ?
         current.filter((d: string) => d !== deviation)
       : [...current, deviation];
-    answersYMap?.set('preliminary.deviationsToAddress', updated);
+    writers.updateAnswer({
+      type: 'ROB2',
+      key: 'preliminary',
+      data: { deviationsToAddress: updated },
+    });
   };
 
   const handleSourceToggle = (source: string) => {
     const current = sources || {};
-    answersYMap?.set('preliminary.sources', { ...current, [source]: !current[source] });
+    writers.updateAnswer({
+      type: 'ROB2',
+      key: 'preliminary',
+      data: { sources: { ...current, [source]: !current[source] } },
+    });
   };
 
   return (
@@ -110,7 +122,8 @@ export function PreliminarySection({ studyId, checklistId, disabled }: Prelimina
               {PRELIMINARY_SECTION.experimental.label}
             </label>
             <NoteEditor
-              yText={experimentalYText}
+              value={experimentalValue ?? ''}
+              onChange={text => writers.setText('preliminary.experimental', text)}
               placeholder={PRELIMINARY_SECTION.experimental.placeholder}
               readOnly={disabled}
               inline={true}
@@ -121,7 +134,8 @@ export function PreliminarySection({ studyId, checklistId, disabled }: Prelimina
               {PRELIMINARY_SECTION.comparator.label}
             </label>
             <NoteEditor
-              yText={comparatorYText}
+              value={comparatorValue ?? ''}
+              onChange={text => writers.setText('preliminary.comparator', text)}
               placeholder={PRELIMINARY_SECTION.comparator.placeholder}
               readOnly={disabled}
               inline={true}
@@ -135,7 +149,8 @@ export function PreliminarySection({ studyId, checklistId, disabled }: Prelimina
             {PRELIMINARY_SECTION.numericalResult.label}
           </label>
           <NoteEditor
-            yText={numericalResultYText}
+            value={numericalResultValue ?? ''}
+            onChange={text => writers.setText('preliminary.numericalResult', text)}
             placeholder={PRELIMINARY_SECTION.numericalResult.placeholder}
             readOnly={disabled}
             inline={true}
