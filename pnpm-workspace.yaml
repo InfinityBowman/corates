@@ -8,6 +8,7 @@ packages:
 overrides:
   '@cf-sync/protocol': 'file:./vendor/cf-sync-protocol-0.1.1.tgz'
   '@cf-sync/server': 'file:./vendor/cf-sync-server-0.1.0.tgz'
+  '@cf-sync/client': 'file:./vendor/cf-sync-client-0.1.0.tgz'
 
 onlyBuiltDependencies:
   - '@parcel/watcher'

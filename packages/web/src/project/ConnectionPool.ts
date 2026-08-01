@@ -1,18 +1,29 @@
 /**
- * ConnectionPool - Ref-counted connection management for project Y.Doc sessions.
- * Single owner of the connection registry, active project tracking, and operation resolution.
- * See docs/audits/project-sync-refactor-rfc.md
+ * ConnectionPool - Ref-counted project session management over the sync engine.
+ * Single owner of the session registry, active project tracking, and operation
+ * resolution. See docs/audits/project-sync-refactor-rfc.md for the original
+ * shape; the Yjs transport it managed (y-websocket provider, two-Y.Doc Dexie
+ * bridge, connection state machine) is replaced by @cf-sync/client, which owns
+ * reconnection, keepalive, offline persistence, and the mutation outbox.
+ *
+ * Each online entry still carries a bare local Y.Doc feeding the legacy ops
+ * and reactor: the read path (reactor -> live queries) and write path
+ * (ops -> client.mutate.*) move off it in the next two passes of this
+ * migration, and the doc goes with them. Until then it is a local-only write
+ * target — deliberately unsynced.
+ *
+ * Local practice mode (`local-practice`) keeps its Dexie-persisted Y.Doc: it
+ * never syncs, so the engine session does not apply to it.
  */
 
 import * as Y from 'yjs';
 import { DexieYProvider } from 'y-dexie';
-import { useProjectStore } from '@/stores/projectStore';
+import { createWorkspace } from '@cf-sync/client';
+import { syncApp } from '@corates/shared/sync';
+import { useProjectStore, type ConnectionPhase } from '@/stores/projectStore';
 import { queryClient } from '@/lib/queryClient';
 import { queryKeys } from '@/lib/queryKeys';
-import {
-  createConnectionManager,
-  type ConnectionManager,
-} from '@/primitives/useProject/connection';
+import { getWsBaseUrl } from '@/config/api';
 import { createStudyOperations, type StudyOperations } from '@/primitives/useProject/studies';
 import {
   createChecklistOperations,
@@ -36,6 +47,29 @@ import { migrateLocalChecklistsToYDoc } from './localProject';
 import { ProjectReactor } from '@/primitives/useProject/reactor/core';
 import { migrateYDocToFlatKeys } from '@/primitives/useProject/reactor/migrate';
 
+function createProjectWorkspace(
+  projectId: string,
+  handlers: {
+    onFatal: (code: number | string, reason: string | undefined) => void;
+  },
+) {
+  return createWorkspace({
+    url: getWsBaseUrl(),
+    pathPrefix: '/api/sync',
+    workspaceId: projectId,
+    app: syncApp,
+    persist: true,
+    onFatal: error => handlers.onFatal(error.code, error.reason),
+    onMutationRejected: (error, mutation) => {
+      // Rejection UX (toast + rollback surfacing) lands with the write-path
+      // move; until then rejections must at least be visible.
+      console.error('[sync] mutation rejected:', mutation.name, error.code, error.message);
+    },
+  });
+}
+
+export type ProjectWorkspace = ReturnType<typeof createProjectWorkspace>;
+
 export interface TypedProjectOps {
   study: StudyOperations;
   checklist: ChecklistOperations;
@@ -47,9 +81,10 @@ export interface TypedProjectOps {
 }
 
 interface ConnectionEntry {
+  /** The engine session ({ client, collections }); null for local practice. */
+  workspace: ProjectWorkspace | null;
   ydoc: Y.Doc;
   dexieProvider: DexieYProvider | null;
-  connectionManager: ConnectionManager | null;
   studyOps: StudyOperations | null;
   checklistOps: ChecklistOperations | null;
   pdfOps: PdfOperations | null;
@@ -61,6 +96,19 @@ interface ConnectionEntry {
   initialized: boolean;
   _cleanupHandlers: (() => void)[];
 }
+
+/** Close-reason slugs the worker's authorize hook / admin kicks emit, mapped to
+ * the user-facing messages ACCESS_DENIED_ERRORS matches for the redirect. */
+const FATAL_REASON_MESSAGES: Record<string, string> = {
+  'project-deleted': 'This project has been deleted',
+  'membership-revoked': 'You have been removed from this project',
+  'not-a-member': 'You are not a member of this project',
+  'project-not-found': 'This project has been deleted',
+  'auth-required': 'You are not a member of this project',
+};
+
+const GENERIC_FATAL_MESSAGE =
+  'Unable to connect to project. It may have been deleted or you may not have access.';
 
 class ConnectionPool {
   private registry = new Map<string, ConnectionEntry>();
@@ -81,9 +129,9 @@ class ConnectionPool {
     }
 
     const entry: ConnectionEntry = {
+      workspace: null,
       ydoc: new Y.Doc(),
       dexieProvider: null,
-      connectionManager: null,
       studyOps: null,
       checklistOps: null,
       pdfOps: null,
@@ -101,8 +149,9 @@ class ConnectionPool {
   }
 
   /**
-   * Initialize a connection entry: create domain ops, set up Dexie persistence,
-   * connect WebSocket. Call once per entry (guarded by entry.initialized).
+   * Initialize an entry: create domain ops, then either the engine session
+   * (online projects) or Dexie persistence (local practice). Call once per
+   * entry (guarded by entry.initialized).
    */
   initializeConnection(
     projectId: string,
@@ -117,7 +166,7 @@ class ConnectionPool {
     // Local project is a passive singleton — don't clobber the currently-
     // active real project when the local bootstrap runs.
     if (!isLocal) store.setActiveProject(projectId);
-    store.dispatchConnectionEvent(projectId, { type: 'CONNECT_REQUESTED' });
+    store.setConnectionState(projectId, 'connecting');
 
     const { ydoc } = entry;
     const getYDoc = () => entry.ydoc;
@@ -132,7 +181,40 @@ class ConnectionPool {
     entry.outcomeOps = createOutcomeOperations(projectId, getYDoc);
     entry.reactor = new ProjectReactor(ydoc);
 
-    // Dexie persistence (async)
+    if (isLocal) {
+      this.initializeLocalPersistence(projectId, entry, cancelled);
+      return;
+    }
+
+    const workspace = createProjectWorkspace(projectId, {
+      onFatal: (code, reason) => this.handleFatal(projectId, code, reason),
+    });
+    entry.workspace = workspace;
+
+    const applyStatus = (status: string) => {
+      if (cancelled()) return;
+      const current = useProjectStore.getState().connections[projectId];
+      if (current?.phase === 'error') return; // fatal reason wins until cleanup
+      let phase: ConnectionPhase;
+      if (status === 'synced') phase = 'synced';
+      else if (status === 'fatal') return; // handled by onFatal with the reason
+      else phase = workspace.client.hydrated ? 'cached' : 'connecting';
+      useProjectStore.getState().setConnectionState(projectId, phase);
+    };
+
+    entry._cleanupHandlers.push(workspace.client.subscribeStatus(applyStatus));
+    entry._cleanupHandlers.push(
+      workspace.client.subscribeHydrated(() => applyStatus(workspace.client.status)),
+    );
+    applyStatus(workspace.client.status);
+  }
+
+  /** The Dexie-persisted Y.Doc path — local practice only. */
+  private initializeLocalPersistence(
+    projectId: string,
+    entry: ConnectionEntry,
+    cancelled: () => boolean,
+  ): void {
     (db.projects as any).get(projectId).then(async (existingProject: any) => {
       if (cancelled()) return;
 
@@ -149,72 +231,23 @@ class ConnectionPool {
       entry.dexieProvider.whenLoaded.then(() => {
         if (cancelled()) return;
 
-        if (isLocal) {
-          // Local projects use project.ydoc directly -- same pattern as the
-          // prototype. DexieYProvider persists mutations without the two-Y.Doc
-          // write-back indirection that online projects need for WebSocket sync.
-          const oldYdoc = entry.ydoc;
-          entry.ydoc = project.ydoc;
-          entry.reactor?.dispose();
-          entry.reactor = new ProjectReactor(project.ydoc);
-          oldYdoc.destroy();
+        // Local projects use project.ydoc directly — DexieYProvider persists
+        // mutations without any write-back indirection.
+        const oldYdoc = entry.ydoc;
+        entry.ydoc = project.ydoc;
+        entry.reactor?.dispose();
+        entry.reactor = new ProjectReactor(project.ydoc);
+        oldYdoc.destroy();
 
-          migrateYDocToFlatKeys(project.ydoc);
-          migrateLocalChecklistsToYDoc(project.ydoc)
-            .then(() => {
-              if (cancelled()) return;
-              useProjectStore
-                .getState()
-                .dispatchConnectionEvent(projectId, { type: 'LOCAL_READY' });
-            })
-            .catch(err => console.error('Local checklists migration failed:', err));
-          return;
-        }
-
-        try {
-          const persistedState = Y.encodeStateAsUpdate(project.ydoc);
-          Y.applyUpdate(ydoc, persistedState);
-          migrateYDocToFlatKeys(ydoc);
-        } catch (err) {
-          console.error('Corrupted persisted state, clearing local data:', err);
-          deleteProjectData(projectId).catch(() => {});
-        }
-
-        const dexieUpdateHandler = (update: Uint8Array, origin: string) => {
-          if (origin !== 'dexie-sync') {
-            Y.applyUpdate(project.ydoc, update, 'dexie-sync');
-          }
-        };
-        ydoc.on('update', dexieUpdateHandler);
-        entry._cleanupHandlers.push(() => ydoc.off('update', dexieUpdateHandler));
-
-        const reviewsSize = ydoc.getMap('reviews').size;
-        if (reviewsSize > 0) {
-          useProjectStore
-            .getState()
-            .dispatchConnectionEvent(projectId, { type: 'PERSISTENCE_LOADED' });
-        }
+        migrateYDocToFlatKeys(project.ydoc);
+        migrateLocalChecklistsToYDoc(project.ydoc)
+          .then(() => {
+            if (cancelled()) return;
+            useProjectStore.getState().setConnectionState(projectId, 'synced');
+          })
+          .catch(err => console.error('Local checklists migration failed:', err));
       });
     });
-
-    // WebSocket connection (for online projects)
-    if (!isLocal) {
-      entry.connectionManager = createConnectionManager(projectId, ydoc, {
-        onSync: () => {
-          try {
-            migrateYDocToFlatKeys(ydoc);
-          } catch (err) {
-            console.error('Flat-key migration failed during sync:', err);
-          }
-          useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'SYNC_COMPLETE' });
-        },
-        isLocalProject: () => isLocal,
-        onAccessDenied: async () => {
-          await this.cleanupProjectLocalData(projectId);
-        },
-      });
-      entry.connectionManager.connect();
-    }
   }
 
   /**
@@ -254,7 +287,10 @@ class ConnectionPool {
       reconciliation: entry.reconciliationOps,
       annotation: entry.annotationOps,
       outcome: entry.outcomeOps,
-      getAwareness: () => entry.connectionManager?.getAwareness() || null,
+      // Yjs awareness is gone with the provider; the engine's presence API
+      // replaces this in the collaborative-text pass. Until then presence UI
+      // sees no peers.
+      getAwareness: () => null,
     };
   }
 
@@ -267,6 +303,16 @@ class ConnectionPool {
 
   getReactor(projectId: string): ProjectReactor | null {
     return this.registry.get(projectId)?.reactor || null;
+  }
+
+  /** The engine client for a project, once its session is initialized. */
+  getClient(projectId: string): ProjectWorkspace['client'] | null {
+    return this.registry.get(projectId)?.workspace?.client ?? null;
+  }
+
+  /** The engine collections for a project, once its session is initialized. */
+  getCollections(projectId: string): ProjectWorkspace['collections'] | null {
+    return this.registry.get(projectId)?.workspace?.collections ?? null;
   }
 
   /**
@@ -300,28 +346,14 @@ class ConnectionPool {
   }
 
   /**
-   * Reconnect if the connection manager thinks it should.
-   * Called from online/offline handler.
-   */
-  reconnectIfNeeded(projectId: string): void {
-    const entry = this.registry.get(projectId);
-    if (!entry?.connectionManager) return;
-    const cm = entry.connectionManager;
-    if (cm.getShouldReconnect()) {
-      cm.setShouldReconnect(false);
-      cm.reconnect();
-    }
-  }
-
-  /**
-   * Full cleanup: destroy connection, delete Dexie data, clear Zustand.
+   * Full cleanup: destroy the session, delete Dexie data, clear Zustand.
    */
   async cleanupProjectLocalData(projectId: string): Promise<void> {
     if (!projectId) return;
 
     if (this.registry.has(projectId)) {
       const entry = this.registry.get(projectId)!;
-      this.destroyEntry(projectId, entry);
+      this.destroyEntry(projectId, entry, { keepErrorState: true });
     }
 
     try {
@@ -330,21 +362,39 @@ class ConnectionPool {
       console.error('Failed to clear Dexie data for project:', projectId, err);
     }
 
-    useProjectStore.getState().clearProject(projectId);
     queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
-  }
-
-  /**
-   * Get the Awareness instance for a project (for presence features).
-   */
-  getAwareness(projectId: string): unknown {
-    const entry = this.registry.get(projectId);
-    return entry?.connectionManager?.getAwareness() || null;
   }
 
   // --- Private ---
 
-  private destroyEntry(projectId: string, entry: ConnectionEntry): void {
+  /**
+   * A permanent server rejection: an authorize denial or admin kick (reason
+   * slug → access-denied message the gate redirects on), or a schema/protocol
+   * mismatch mid-deploy (reload into the new bundle).
+   */
+  private handleFatal(projectId: string, code: number | string, reason: string | undefined): void {
+    if (code === 'VersionNotSupported') {
+      // A new bundle is the fix. The client's own default reload is replaced
+      // by this handler, so throttle here to avoid a reload loop.
+      const key = `sync-reload:${projectId}`;
+      const last = Number(sessionStorage.getItem(key) || 0);
+      if (Date.now() - last > 60_000) {
+        sessionStorage.setItem(key, String(Date.now()));
+        window.location.reload();
+      }
+      return;
+    }
+
+    const message = (reason && FATAL_REASON_MESSAGES[reason]) || GENERIC_FATAL_MESSAGE;
+    useProjectStore.getState().setConnectionState(projectId, 'error', message);
+    void this.cleanupProjectLocalData(projectId);
+  }
+
+  private destroyEntry(
+    projectId: string,
+    entry: ConnectionEntry,
+    options: { keepErrorState?: boolean } = {},
+  ): void {
     for (const cleanup of entry._cleanupHandlers) {
       try {
         cleanup();
@@ -355,12 +405,17 @@ class ConnectionPool {
     entry._cleanupHandlers = [];
 
     if (entry.reactor) entry.reactor.dispose();
-    if (entry.connectionManager) entry.connectionManager.destroy();
+    if (entry.workspace) void entry.workspace.destroy();
     if (entry.dexieProvider) DexieYProvider.release(entry.ydoc);
     if (entry.ydoc) entry.ydoc.destroy();
 
     this.registry.delete(projectId);
-    useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'RESET' });
+    // Keep the error phase visible through the redirect effect; a fresh mount
+    // starts from a clean record either way (clearProject on next acquire is
+    // unnecessary — setConnectionState overwrites).
+    if (!options.keepErrorState) {
+      useProjectStore.getState().clearProject(projectId);
+    }
   }
 }
 

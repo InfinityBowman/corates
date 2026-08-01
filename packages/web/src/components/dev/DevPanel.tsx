@@ -203,11 +203,11 @@ export function DevPanel() {
                 <Badge variant='warning'>Connecting...</Badge>
               )}
               {isProjectContext &&
-                (connectionState?.phase === 'connected' || connectionState?.phase === 'synced') && (
+                (connectionState?.phase === 'cached' || connectionState?.phase === 'synced') && (
                   <Badge variant='success'>Connected</Badge>
                 )}
               {isProjectContext &&
-                connectionState?.phase !== 'connected' &&
+                connectionState?.phase !== 'cached' &&
                 connectionState?.phase !== 'synced' &&
                 connectionState?.phase !== 'connecting' && (
                   <Badge variant='destructive'>Disconnected</Badge>

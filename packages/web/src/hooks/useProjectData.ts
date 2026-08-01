@@ -42,7 +42,7 @@ export function useProjectData(projectId: string | undefined) {
     studies,
     members,
     meta,
-    connected: phase === 'connected' || phase === 'synced',
+    connected: phase === 'synced',
     connecting: phase === 'connecting',
     synced: phase === 'synced',
     error: connectionState?.error ?? null,

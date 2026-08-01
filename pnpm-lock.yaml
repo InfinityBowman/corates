@@ -7,6 +7,7 @@ settings:
 overrides:
   '@cf-sync/protocol': file:./vendor/cf-sync-protocol-0.1.1.tgz
   '@cf-sync/server': file:./vendor/cf-sync-server-0.1.0.tgz
+  '@cf-sync/client': file:./vendor/cf-sync-client-0.1.0.tgz
 
 importers:
 
@@ -135,6 +136,9 @@ importers:
       '@ark-ui/react':
         specifier: ^5.37.2
         version: 5.37.2(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@cf-sync/client':
+        specifier: file:../../vendor/cf-sync-client-0.1.0.tgz
+        version: file:vendor/cf-sync-client-0.1.0.tgz(@tanstack/db@0.6.17(typescript@5.9.3))(@tanstack/react-db@0.1.95(react@19.2.4)(typescript@5.9.3))(react@19.2.4)(zod@4.4.3)
       '@corates/db':
         specifier: workspace:*
         version: link:../db
@@ -234,6 +238,12 @@ importers:
       '@sentry/vite-plugin':
         specifier: ^5.3.0
         version: 5.3.0(rollup@4.59.0)
+      '@tanstack/db':
+        specifier: ^0.6.16
+        version: 0.6.17(typescript@5.9.3)
+      '@tanstack/react-db':
+        specifier: ^0.1.94
+        version: 0.1.95(react@19.2.4)(typescript@5.9.3)
       '@tanstack/react-query':
         specifier: ^5.101.2
         version: 5.101.2(react@19.2.4)
@@ -318,9 +328,6 @@ importers:
       y-dexie:
         specifier: ^4.4.0
         version: 4.4.0(dexie@4.4.4)(yjs@13.6.31)
-      y-websocket:
-        specifier: ^3.0.0
-        version: 3.0.0(yjs@13.6.31)
       yjs:
         specifier: ^13.6.31
         version: 13.6.31
@@ -897,6 +904,19 @@ packages:
   '@bramus/specificity@2.4.2':
     resolution: {integrity: sha512-ctxtJ/eA+t+6q2++vj5j7FYX3nRu311q1wfYH3xjlLOsczhlhxAg2FWNUXhpGvAw3BWo1xBcvOV6/YLc2r5FJw==}
     hasBin: true
+
+  '@cf-sync/client@file:vendor/cf-sync-client-0.1.0.tgz':
+    resolution: {integrity: sha512-KEGUCTNfjtgqhY6AJWAs1SC1/X4UWqAZh4UPi0pLzX3tAqEvkXhZEZNp1qKDBDhxA7S8e+Sp5uU1toTq5CQj8g==, tarball: file:vendor/cf-sync-client-0.1.0.tgz}
+    version: 0.1.0
+    peerDependencies:
+      '@tanstack/db': ^0.6.16
+      '@tanstack/react-db': ^0.1.94
+      react: '>=18'
+    peerDependenciesMeta:
+      '@tanstack/react-db':
+        optional: true
+      react:
+        optional: true
 
   '@cf-sync/protocol@file:vendor/cf-sync-protocol-0.1.1.tgz':
     resolution: {integrity: sha512-vEwFL7CRotjKIcL5Vj/XdVG1XCkhzOqdtMoRohX7D1TtVKMqQwRvmge/RV7sU79gRkKF1PrZNHfCoAd0es4KRQ==, tarball: file:vendor/cf-sync-protocol-0.1.1.tgz}
@@ -3840,6 +3860,16 @@ packages:
     peerDependencies:
       vite: ^5.2.0 || ^6 || ^7 || ^8
 
+  '@tanstack/db-ivm@0.1.18':
+    resolution: {integrity: sha512-+pZJiRKdoKRM5Epq9T7otD9ZJl82pRFauo7LKuJGrarjVKQ7r+QQlPe3kGdN9LEKSnuNGIWjX9OOY4M8kH4eLw==}
+    peerDependencies:
+      typescript: '>=4.7'
+
+  '@tanstack/db@0.6.17':
+    resolution: {integrity: sha512-/i6+dedEkOCVQbTQtCjQHx3Nqlkqe6zvi+9/JPnSgm47o+akoaPqcSwxTmesDZxc/efHokUtzeD2ocow257RdQ==}
+    peerDependencies:
+      typescript: '>=4.7'
+
   '@tanstack/eslint-config@0.4.0':
     resolution: {integrity: sha512-V+Cd81W/f65dqKJKpytbwTGx9R+IwxKAHsG/uJ3nSLYEh36hlAr54lRpstUhggQB8nf/cP733cIw8DuD2dzQUg==}
     engines: {node: '>=18'}
@@ -3850,8 +3880,17 @@ packages:
     resolution: {integrity: sha512-79pf/RkhteYZTRgcR4F9kbk84P2N8rugQJswxfIqovlbRiT3yI7eBE+5QorIrZaOKktsgzRlXh1l/du/xpl4iA==}
     engines: {node: '>=20.19'}
 
+  '@tanstack/pacer-lite@0.2.2':
+    resolution: {integrity: sha512-eQ1MyLKCHyXiH7NbdmB80W77OhiMgGBUb+qDx/8WMGbwg5Lf/NlfD0TfNYAqY77i8V3AxoDoYdICrQE5ADw4Yw==}
+    engines: {node: '>=18'}
+
   '@tanstack/query-core@5.101.2':
     resolution: {integrity: sha512-hH5MLoJhF7KaIGd7q3xTXGXvslI+GYlM1Z/35aSHHWaCJWB7XvTSHYuV3eM7tw+aE0mT/xMro4M4Q9rCGHT0lw==}
+
+  '@tanstack/react-db@0.1.95':
+    resolution: {integrity: sha512-Om2qgKtoK+iTcE3nR+MaPQsM4JUsDWB8LqFt4yFjwuSawwMJ7bcPnc7gP0V06YKOtm5MzrIu8IV/OexMJbraKQ==}
+    peerDependencies:
+      react: '>=16.8.0'
 
   '@tanstack/react-query@5.101.2':
     resolution: {integrity: sha512-seDkr6kzGzX1okaaTtZPtgA688CDPlXUz1C6xSg0ESqn04Vuc8tlrYms1s3de+znBqhPVxFRfpAfUf+6XvfPWg==}
@@ -7818,6 +7857,9 @@ packages:
       react: ^18.0.0 || ^19.0.0 || ^19.0.0-rc
       react-dom: ^18.0.0 || ^19.0.0 || ^19.0.0-rc
 
+  sorted-btree@1.8.1:
+    resolution: {integrity: sha512-395+XIP+wqNn3USkFSrNz7G3Ss/MXlZEqesxvzCRFwL14h6e8LukDHdLBePn5pwbm5OQ9vGu8mDyz2lLDIqamQ==}
+
   source-map-js@1.2.1:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
     engines: {node: '>=0.10.0'}
@@ -8584,12 +8626,6 @@ packages:
     peerDependencies:
       yjs: ^13.0.0
 
-  y-websocket@3.0.0:
-    resolution: {integrity: sha512-mUHy7AzkOZ834T/7piqtlA8Yk6AchqKqcrCXjKW8J1w2lPtRDjz8W5/CvXz9higKAHgKRKqpI3T33YkRFLkPtg==}
-    engines: {node: '>=16.0.0', npm: '>=8.0.0'}
-    peerDependencies:
-      yjs: ^13.5.6
-
   y18n@5.0.8:
     resolution: {integrity: sha512-0pfFzegeDWJHJIAmTLRP2DwHjdF5s7jo9tuztdQxAhINCdvS+3nGINqPd00AphqJR/0LhANUS6/+7SCb98YOfA==}
     engines: {node: '>=10'}
@@ -9296,6 +9332,16 @@ snapshots:
   '@bramus/specificity@2.4.2':
     dependencies:
       css-tree: 3.2.1
+
+  '@cf-sync/client@file:vendor/cf-sync-client-0.1.0.tgz(@tanstack/db@0.6.17(typescript@5.9.3))(@tanstack/react-db@0.1.95(react@19.2.4)(typescript@5.9.3))(react@19.2.4)(zod@4.4.3)':
+    dependencies:
+      '@cf-sync/protocol': file:vendor/cf-sync-protocol-0.1.1.tgz(zod@4.4.3)
+      '@tanstack/db': 0.6.17(typescript@5.9.3)
+    optionalDependencies:
+      '@tanstack/react-db': 0.1.95(react@19.2.4)(typescript@5.9.3)
+      react: 19.2.4
+    transitivePeerDependencies:
+      - zod
 
   '@cf-sync/protocol@file:vendor/cf-sync-protocol-0.1.1.tgz(zod@4.4.3)':
     dependencies:
@@ -11825,6 +11871,19 @@ snapshots:
       tailwindcss: 4.3.1
       vite: 8.1.0(@types/node@26.0.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
 
+  '@tanstack/db-ivm@0.1.18(typescript@5.9.3)':
+    dependencies:
+      fractional-indexing: 3.2.0
+      sorted-btree: 1.8.1
+      typescript: 5.9.3
+
+  '@tanstack/db@0.6.17(typescript@5.9.3)':
+    dependencies:
+      '@standard-schema/spec': 1.1.0
+      '@tanstack/db-ivm': 0.1.18(typescript@5.9.3)
+      '@tanstack/pacer-lite': 0.2.2
+      typescript: 5.9.3
+
   '@tanstack/eslint-config@0.4.0(@typescript-eslint/utils@8.62.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3)':
     dependencies:
       '@eslint/js': 10.0.1(eslint@9.39.4(jiti@2.7.0))
@@ -11843,7 +11902,17 @@ snapshots:
 
   '@tanstack/history@1.162.0': {}
 
+  '@tanstack/pacer-lite@0.2.2': {}
+
   '@tanstack/query-core@5.101.2': {}
+
+  '@tanstack/react-db@0.1.95(react@19.2.4)(typescript@5.9.3)':
+    dependencies:
+      '@tanstack/db': 0.6.17(typescript@5.9.3)
+      react: 19.2.4
+      use-sync-external-store: 1.6.0(react@19.2.4)
+    transitivePeerDependencies:
+      - typescript
 
   '@tanstack/react-query@5.101.2(react@19.2.4)':
     dependencies:
@@ -16518,6 +16587,8 @@ snapshots:
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
 
+  sorted-btree@1.8.1: {}
+
   source-map-js@1.2.1: {}
 
   source-map-support@0.5.21:
@@ -17316,12 +17387,6 @@ snapshots:
   y-protocols@1.0.7(yjs@13.6.31):
     dependencies:
       lib0: 0.2.117
-      yjs: 13.6.31
-
-  y-websocket@3.0.0(yjs@13.6.31):
-    dependencies:
-      lib0: 0.2.117
-      y-protocols: 1.0.7(yjs@13.6.31)
       yjs: 13.6.31
 
   y18n@5.0.8: {}
