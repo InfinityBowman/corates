@@ -36,6 +36,10 @@
       "types": "./dist/checklists/rob2/index.d.ts",
       "import": "./dist/checklists/rob2/index.js"
     },
+    "./sync": {
+      "types": "./dist/sync/index.d.ts",
+      "import": "./dist/sync/index.js"
+    },
     "./ids": {
       "types": "./dist/ids.d.ts",
       "import": "./dist/ids.js"
@@ -67,10 +71,12 @@
     "test:watch": "vitest"
   },
   "devDependencies": {
+    "@cf-sync/server": "file:../../vendor/cf-sync-server-0.1.0.tgz",
     "typescript": "^5.9.3",
     "vitest": "^4.1.9"
   },
   "dependencies": {
+    "@cf-sync/protocol": "file:../../vendor/cf-sync-protocol-0.1.1.tgz",
     "stripe": "^22.3.0",
     "zod": "^4.4.3"
   }

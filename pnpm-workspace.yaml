@@ -1,6 +1,14 @@
 packages:
   - packages/*
 
+# Vendored cf-sync 0.1.0 tarballs: published 2026-07-26, inside the registry
+# minimumReleaseAge window. The overrides make transitive ^0.1.0 ranges resolve
+# to the local tarballs; swap deps to registry versions and drop this once the
+# window clears.
+overrides:
+  '@cf-sync/protocol': 'file:./vendor/cf-sync-protocol-0.1.1.tgz'
+  '@cf-sync/server': 'file:./vendor/cf-sync-server-0.1.0.tgz'
+
 onlyBuiltDependencies:
   - '@parcel/watcher'
   - '@prisma/engines'

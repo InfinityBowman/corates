@@ -4,6 +4,10 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  '@cf-sync/protocol': file:./vendor/cf-sync-protocol-0.1.1.tgz
+  '@cf-sync/server': file:./vendor/cf-sync-server-0.1.0.tgz
+
 importers:
 
   .:
@@ -69,6 +73,9 @@ importers:
 
   packages/shared:
     dependencies:
+      '@cf-sync/protocol':
+        specifier: file:../../vendor/cf-sync-protocol-0.1.1.tgz
+        version: file:vendor/cf-sync-protocol-0.1.1.tgz(zod@4.4.3)
       stripe:
         specifier: ^22.3.0
         version: 22.3.0(@types/node@26.0.1)
@@ -76,6 +83,9 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
+      '@cf-sync/server':
+        specifier: file:../../vendor/cf-sync-server-0.1.0.tgz
+        version: file:vendor/cf-sync-server-0.1.0.tgz(zod@4.4.3)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -884,6 +894,18 @@ packages:
   '@bramus/specificity@2.4.2':
     resolution: {integrity: sha512-ctxtJ/eA+t+6q2++vj5j7FYX3nRu311q1wfYH3xjlLOsczhlhxAg2FWNUXhpGvAw3BWo1xBcvOV6/YLc2r5FJw==}
     hasBin: true
+
+  '@cf-sync/protocol@file:vendor/cf-sync-protocol-0.1.1.tgz':
+    resolution: {integrity: sha512-vEwFL7CRotjKIcL5Vj/XdVG1XCkhzOqdtMoRohX7D1TtVKMqQwRvmge/RV7sU79gRkKF1PrZNHfCoAd0es4KRQ==, tarball: file:vendor/cf-sync-protocol-0.1.1.tgz}
+    version: 0.1.1
+    peerDependencies:
+      zod: ^4.0.0
+
+  '@cf-sync/server@file:vendor/cf-sync-server-0.1.0.tgz':
+    resolution: {integrity: sha512-3lPlK8X1dUxwqVP4mUi27bS9zewNppDupmUF3eUENCl6HIk3yZ08EmeCVtzBDO6JQbTzkGYwicYu9F8s1yG2GQ==, tarball: file:vendor/cf-sync-server-0.1.0.tgz}
+    version: 0.1.0
+    peerDependencies:
+      zod: ^4.0.0
 
   '@chevrotain/cst-dts-gen@10.5.0':
     resolution: {integrity: sha512-lhmC/FyqQ2o7pGK4Om+hzuDrm9rhFYIJ/AXoQBeongmn870Xeb0L6oGEiuR8nohFNL5sMaQEJWCxr1oIVIVXrw==}
@@ -9271,6 +9293,15 @@ snapshots:
   '@bramus/specificity@2.4.2':
     dependencies:
       css-tree: 3.2.1
+
+  '@cf-sync/protocol@file:vendor/cf-sync-protocol-0.1.1.tgz(zod@4.4.3)':
+    dependencies:
+      zod: 4.4.3
+
+  '@cf-sync/server@file:vendor/cf-sync-server-0.1.0.tgz(zod@4.4.3)':
+    dependencies:
+      '@cf-sync/protocol': file:vendor/cf-sync-protocol-0.1.1.tgz(zod@4.4.3)
+      zod: 4.4.3
 
   '@chevrotain/cst-dts-gen@10.5.0':
     dependencies:
