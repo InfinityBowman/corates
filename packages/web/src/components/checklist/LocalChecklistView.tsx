@@ -16,7 +16,7 @@ import { ChecklistWithPdf } from '@/components/checklist/ChecklistWithPdf';
 import { CreateLocalChecklist } from '@/components/checklist/CreateLocalChecklist';
 import { LOCAL_PROJECT_ID } from '@/project/localProject';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
-import { useChecklistViewModel } from '@/primitives/useProject/checklists/useChecklistViewModel';
+import { useChecklistViewModel } from '@/primitives/useProject/useChecklistViewModel';
 import { useChecklistScore, WorkspaceProjectContext } from '@/project/workspace-data';
 import { db } from '@/primitives/db';
 import { ScoreTag } from '@/components/checklist/ScoreTag';

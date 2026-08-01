@@ -71,6 +71,7 @@ describe('db.js - Unified Dexie Database', () => {
         'formStates',
         'localChecklistPdfs',
         'localChecklists',
+        'localProjects',
         'pdfs',
         'projects',
       ]);

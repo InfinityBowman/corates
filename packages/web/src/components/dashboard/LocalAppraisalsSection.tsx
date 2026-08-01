@@ -32,6 +32,7 @@ import {
 import { amstar2 } from '@corates/shared';
 import type { AMSTAR2Checklist } from '@corates/shared/checklists';
 import { connectionPool } from '@/project/ConnectionPool';
+import { applyLocalMutation } from '@/project/localWrites';
 import { LOCAL_PROJECT_ID } from '@/project/localProject';
 import { db } from '@/primitives/db';
 import {
@@ -101,8 +102,8 @@ export function LocalAppraisalsSection({
       return;
     }
     try {
-      const ops = connectionPool.getOps(LOCAL_PROJECT_ID);
-      ops?.study.deleteStudy(pendingDeleteId);
+      // Cascades the checklist + answers rows.
+      applyLocalMutation(LOCAL_PROJECT_ID, 'study.delete', { id: pendingDeleteId });
       await db.localChecklistPdfs.delete(pendingDeleteId);
     } finally {
       setDeleteDialogOpen(false);
@@ -111,9 +112,18 @@ export function LocalAppraisalsSection({
   };
 
   const handleRename = async (studyId: string, newName: string) => {
-    const ops = connectionPool.getOps(LOCAL_PROJECT_ID);
-    ops?.study.updateStudy(studyId, { name: newName });
-    ops?.checklist.updateChecklist(studyId, studyId, { title: newName });
+    const now = Date.now();
+    applyLocalMutation(LOCAL_PROJECT_ID, 'study.update', {
+      id: studyId,
+      updates: { name: newName },
+      now,
+    });
+    // Local convention: study id === checklist id.
+    applyLocalMutation(LOCAL_PROJECT_ID, 'checklist.update', {
+      checklistId: studyId,
+      updates: { title: newName },
+      now,
+    });
   };
 
   const handleCreate = () => {

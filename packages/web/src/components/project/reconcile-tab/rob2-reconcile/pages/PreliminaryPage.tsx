@@ -9,7 +9,7 @@ import {
 } from '@corates/shared/checklists/rob2';
 import { Button } from '@/components/ui/button';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
-import type { TextRef } from '@/primitives/useProject/checklists';
+import type { TextRef } from '@/components/project/reconcile-tab/engine/types';
 
 const PRELIMINARY_TEXT_FIELDS = ['experimental', 'comparator', 'numericalResult'];
 

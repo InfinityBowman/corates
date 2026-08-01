@@ -13,7 +13,7 @@ import type {
   NavbarContext,
   SummaryContext,
 } from '../engine/types';
-import type { TextRef } from '@/primitives/useProject/checklists';
+import type { TextRef } from '@/components/project/reconcile-tab/engine/types';
 import { assertNever } from '@corates/shared';
 import type {
   ROB2Checklist,

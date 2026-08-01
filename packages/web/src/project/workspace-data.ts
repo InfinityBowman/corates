@@ -7,10 +7,9 @@
  * collections — live, local, offline-capable. Identity and membership read
  * from D1 through React Query and are never mirrored into the workspace.
  *
- * Writers here bridge the two write paths that coexist mid-migration: online
- * projects mutate through the engine (`client.mutate.*`), local practice
- * still mutates its Dexie-persisted Y.Doc through the legacy ops (the pool's
- * ydoc→collection bridge keeps reads coherent either way).
+ * Writers here bridge the two write paths: online projects mutate through the
+ * engine (`client.mutate.*`), local practice applies the same shared mutators
+ * directly to its local-only collections (`applyLocalMutation`).
  */
 
 import { createContext, useCallback, useContext, useMemo } from 'react';
@@ -19,9 +18,11 @@ import { useQuery } from '@tanstack/react-query';
 import {
   answerRowId,
   deriveFinalized,
+  reconciliationRowId,
   scoreChecklistRows,
   type ChecklistAnswerInput,
   type ChecklistType,
+  type ReconciliationRow,
 } from '@corates/shared/sync';
 import {
   getDomainQuestions as getRob2DomainQuestions,
@@ -33,7 +34,7 @@ import {
   scoreRobinsDomain,
   type DomainAnswers as RobinsIDomainAnswers,
 } from '@corates/shared/checklists/robins-i';
-import { CHECKLIST_STATUS } from '@corates/shared/checklists';
+import { CHECKLIST_STATUS, getOutcomeKey } from '@corates/shared/checklists';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import type {
   ChecklistEntry,
@@ -48,6 +49,7 @@ import { getProjectMembers } from '@/server/functions/org-projects.functions';
 import { QUERY_STABLE } from '@/lib/queryPresets';
 import { connectionPool, type ProjectCollections } from './ConnectionPool';
 import { emptyCollections } from './localCollections';
+import { applyLocalMutation } from './localWrites';
 
 /**
  * The project id for the workspace subtree — provided by ProjectGate (online)
@@ -142,7 +144,7 @@ export interface AnswerWriters {
  */
 export function useAnswerWriters(
   projectId: string,
-  studyId: string,
+  _studyId: string,
   checklistId: string,
 ): AnswerWriters {
   const updateAnswer = useCallback(
@@ -152,9 +154,13 @@ export function useAnswerWriters(
         void client.mutate.checklist.updateAnswer({ checklistId, input, now: Date.now() });
         return;
       }
-      connectionPool.getOps(projectId)?.checklist.updateChecklistAnswer(studyId, checklistId, input);
+      applyLocalMutation(projectId, 'checklist.updateAnswer', {
+        checklistId,
+        input,
+        now: Date.now(),
+      });
     },
-    [projectId, studyId, checklistId],
+    [projectId, checklistId],
   );
 
   const setText = useCallback(
@@ -164,9 +170,9 @@ export function useAnswerWriters(
         void client.mutate.checklist.setText({ checklistId, key: flatKey, text });
         return;
       }
-      connectionPool.setLocalAnswerValue(projectId, studyId, checklistId, flatKey, text);
+      applyLocalMutation(projectId, 'checklist.setText', { checklistId, key: flatKey, text });
     },
-    [projectId, studyId, checklistId],
+    [projectId, checklistId],
   );
 
   return useMemo(() => ({ updateAnswer, setText }), [updateAnswer, setText]);
@@ -364,6 +370,73 @@ export function useStudy(projectId: string, studyId: string): StudyInfo | undefi
 export function useSortedStudyIds(projectId: string): string[] {
   const studies = useAllStudies(projectId);
   return useMemo(() => studies.map(s => s.id), [studies]);
+}
+
+// ---------------------------------------------------------------------------
+// Reconciliation progress (workspace-authoritative)
+
+/**
+ * The entry shape the completed/reconcile UIs consume — the reconciliations
+ * row with the legacy ops layer's defaults applied.
+ */
+export interface ReconciliationProgressEntry {
+  studyId: string;
+  outcomeKey: string;
+  outcomeId: string | null;
+  type: string;
+  checklist1Id: string;
+  checklist2Id: string;
+  reconciledChecklistId: string | null;
+  currentPage: number;
+  viewMode: string;
+  updatedAt: number;
+}
+
+function toProgressEntry(row: ReconciliationRow): ReconciliationProgressEntry {
+  return {
+    studyId: row.studyId,
+    outcomeKey: row.outcomeKey,
+    outcomeId: row.outcomeId,
+    type: row.type,
+    checklist1Id: row.checklist1Id,
+    checklist2Id: row.checklist2Id,
+    reconciledChecklistId: row.reconciledChecklistId ?? null,
+    currentPage: row.currentPage ?? 0,
+    viewMode: row.viewMode ?? 'questions',
+    updatedAt: row.updatedAt,
+  };
+}
+
+/** One outcome group's reconciliation progress, reactively. Null when none saved. */
+export function useReconciliationProgress(
+  projectId: string,
+  studyId: string,
+  outcomeId: string | null,
+  type: string,
+): ReconciliationProgressEntry | null {
+  const collections = useCollections(projectId);
+  const rowId = reconciliationRowId(studyId, getOutcomeKey(outcomeId, type));
+  const { data } = useLiveQuery(
+    q =>
+      q
+        .from({ reconciliation: collections.reconciliations })
+        .where(({ reconciliation }) => eq(reconciliation.id, rowId)),
+    [collections, rowId],
+  );
+  return useMemo(() => {
+    const row = data?.[0];
+    return row ? toProgressEntry(row) : null;
+  }, [data]);
+}
+
+/** All reconciliation progress rows for a project, reactively. */
+export function useAllReconciliationProgress(projectId: string): ReconciliationProgressEntry[] {
+  const collections = useCollections(projectId);
+  const { data } = useLiveQuery(
+    q => q.from({ reconciliation: collections.reconciliations }),
+    [collections],
+  );
+  return useMemo(() => (data ?? []).map(toProgressEntry), [data]);
 }
 
 // ---------------------------------------------------------------------------

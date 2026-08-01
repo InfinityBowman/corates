@@ -64,8 +64,20 @@ interface LocalChecklistPdfRow {
   updatedAt: number;
 }
 
+/** Persisted local-practice rows (post-Y.Doc local data plane). */
+interface LocalProjectRow {
+  id: string;
+  updatedAt: number;
+  rows: {
+    studies: unknown[];
+    checklists: unknown[];
+    answers: unknown[];
+  };
+}
+
 class CoratesDB extends Dexie {
   projects!: Table<ProjectRow, string>;
+  localProjects!: Table<LocalProjectRow, string>;
   pdfs!: Table<PdfCacheRow, string>;
   avatars!: Table<AvatarRow, string>;
   formStates!: Table<FormStateRow, string>;
@@ -94,6 +106,14 @@ class CoratesDB extends Dexie {
     this.version(2).stores({
       ops: null,
       queryCache: null,
+    });
+
+    // v3: local practice moves off its Y.Doc onto plain rows (shared sync
+    // schema shapes) applied by the shared mutator functions. The `projects`
+    // ydoc row survives as the one-time migration source until the end of
+    // the sync-engine migration drops it.
+    this.version(3).stores({
+      localProjects: 'id, updatedAt',
     });
   }
 }

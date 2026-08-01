@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import * as Y from 'yjs';
 import { migrateYDocToFlatKeys } from '../flatKeyMigration';
-import { AMSTAR2Handler } from '@/primitives/useProject/checklists/handlers/amstar2';
-import { ROB2Handler } from '@/primitives/useProject/checklists/handlers/rob2';
-import { ROBINSIHandler } from '@/primitives/useProject/checklists/handlers/robins-i';
+import { AMSTAR2Handler } from '@/primitives/useProject/handlers/amstar2';
+import { ROB2Handler } from '@/primitives/useProject/handlers/rob2';
+import { ROBINSIHandler } from '@/primitives/useProject/handlers/robins-i';
 
 function buildNestedAMSTAR2(ydoc: Y.Doc): void {
   ydoc.transact(() => {

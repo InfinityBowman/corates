@@ -1,8 +1,48 @@
 import type { ReactNode } from 'react';
+import { isAmstar2Key } from '@corates/shared/checklists/amstar2';
+import { isRobinsIKey } from '@corates/shared/checklists/robins-i';
+import { isRob2Key } from '@corates/shared/checklists/rob2';
+import type { ChecklistAnswerInput } from '@corates/shared/sync';
 import type { getUserColor } from '@/lib/userColors.js';
-import type { TextRef } from '@/primitives/useProject/checklists';
 import type { PdfEntry } from '@/stores/projectStore';
 import type { ChecklistResources } from '@/components/checklist/ResourcesPopover';
+
+// ---------------------------------------------------------------------------
+// Text field references
+// ---------------------------------------------------------------------------
+
+/** Reference to a free-text field, resolved to its flat answer key by `textFieldKey`. */
+export type TextRef =
+  | { type: 'AMSTAR2'; questionKey: string }
+  | { type: 'ROBINS_I'; sectionKey: string; fieldKey: string; questionKey?: string | null }
+  | { type: 'ROB2'; sectionKey: string; fieldKey: string; questionKey?: string | null };
+
+/**
+ * Narrow a (checklistType, key, data) triple coming from a dynamic patch into
+ * a typed `ChecklistAnswerInput`. Returns null when the key is not valid for
+ * the given checklist type. Data is asserted via `as` because patches arrive
+ * as `unknown` from React event handlers; the mutator's Zod parse catches any
+ * shape mismatch at runtime.
+ */
+export function buildChecklistAnswerInput(
+  checklistType: string,
+  key: string,
+  data: unknown,
+): ChecklistAnswerInput | null {
+  switch (checklistType) {
+    case 'AMSTAR2':
+      if (!isAmstar2Key(key)) return null;
+      return { type: 'AMSTAR2', key, data } as ChecklistAnswerInput;
+    case 'ROBINS_I':
+      if (!isRobinsIKey(key)) return null;
+      return { type: 'ROBINS_I', key, data } as ChecklistAnswerInput;
+    case 'ROB2':
+      if (!isRob2Key(key)) return null;
+      return { type: 'ROB2', key, data } as ChecklistAnswerInput;
+    default:
+      return null;
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Presence types (mirrored from useReconciliationPresence to avoid

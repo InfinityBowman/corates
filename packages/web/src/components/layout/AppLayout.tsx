@@ -29,11 +29,9 @@ export function AppLayout() {
   // Real-time membership sync via WebSocket
   useMembershipSync();
 
-  // Acquire the local-practice Y.Doc once for the app session. Kept refcounted
-  // so the Y.Doc persists across route changes; never released.
+  // Acquire the local-practice session once for the app session. Kept
+  // refcounted so it persists across route changes; never released.
   useEffect(() => {
-    const existing = connectionPool.getEntry(LOCAL_PROJECT_ID);
-    if (existing?.initialized) return;
     const entry = connectionPool.acquire(LOCAL_PROJECT_ID);
     if (entry && !entry.initialized) {
       connectionPool.initializeConnection(LOCAL_PROJECT_ID, entry, {

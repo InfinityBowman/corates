@@ -1,19 +1,28 @@
 /**
  * Project-level actions -- rename, delete, update description
+ *
+ * Project name/description are D1-authoritative (the server fn + React Query);
+ * there is no workspace-side meta write anymore.
  */
 
 import { showToast } from '@/lib/toast';
 import { queryClient } from '@/lib/queryClient';
 import { queryKeys } from '@/lib/queryKeys';
-import { deleteProject } from '@/server/functions/org-projects.functions';
+import { deleteProject, updateProject } from '@/server/functions/org-projects.functions';
 import { connectionPool } from '../ConnectionPool';
 
 export const projectActions = {
   async rename(newName: string): Promise<void> {
-    const ops = connectionPool.getActiveOps();
-    if (!ops) throw new Error('No active project connection');
     try {
-      await ops.study.renameProject(newName);
+      const trimmed = (newName || '').trim();
+      if (!trimmed) throw new Error('Project name is required');
+
+      const projectId = connectionPool.getActiveProjectId();
+      const orgId = connectionPool.getActiveOrgId();
+      if (!projectId || !orgId) throw new Error('No active project connection');
+
+      await updateProject({ data: { orgId, projectId, name: trimmed } });
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
     } catch (err) {
       console.error('Error renaming project:', err);
       showToast.error('Rename Failed', (err as Error).message || 'Failed to rename project');
@@ -21,10 +30,15 @@ export const projectActions = {
   },
 
   async updateDescription(newDescription: string): Promise<void> {
-    const ops = connectionPool.getActiveOps();
-    if (!ops) throw new Error('No active project connection');
     try {
-      await ops.study.updateDescription(newDescription);
+      const trimmed = (newDescription || '').trim();
+
+      const projectId = connectionPool.getActiveProjectId();
+      const orgId = connectionPool.getActiveOrgId();
+      if (!projectId || !orgId) throw new Error('No active project connection');
+
+      await updateProject({ data: { orgId, projectId, description: trimmed || undefined } });
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
     } catch (err) {
       console.error('Error updating description:', err);
       showToast.error('Update Failed', (err as Error).message || 'Failed to update description');

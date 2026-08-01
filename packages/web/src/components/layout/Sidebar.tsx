@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore, selectUser, selectIsLoggedIn } from '@/stores/authStore';
 import { useAllStudies } from '@/project/workspace-data';
-import { connectionPool } from '@/project/ConnectionPool';
+import { applyLocalMutation } from '@/project/localWrites';
 import { LOCAL_PROJECT_ID } from '@/project/localProject';
 import { db } from '@/primitives/db';
 import { useMyProjectsList } from '@/hooks/useMyProjectsList';
@@ -160,8 +160,8 @@ export function Sidebar({
       return;
     }
     try {
-      const ops = connectionPool.getOps(LOCAL_PROJECT_ID);
-      ops?.study.deleteStudy(pendingDeleteId);
+      // Cascades the checklist + answers rows.
+      applyLocalMutation(LOCAL_PROJECT_ID, 'study.delete', { id: pendingDeleteId });
       await db.localChecklistPdfs.delete(pendingDeleteId);
     } catch (err) {
       const { handleError } = await import('@/lib/error-utils');

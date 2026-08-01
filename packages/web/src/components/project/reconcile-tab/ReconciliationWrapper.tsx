@@ -7,11 +7,12 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useProjectContext } from '@/components/project/ProjectContext';
 import { connectionPool } from '@/project/ConnectionPool';
-import { buildChecklistAnswerInput, type TextRef } from '@/primitives/useProject/checklists';
+import { buildChecklistAnswerInput, type TextRef } from './engine/types';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import {
   useChecklistAnswerMap,
   useAnswerWriters,
+  useReconciliationProgress,
   useStudy,
   useProjectMembers,
 } from '@/project/workspace-data';
@@ -26,6 +27,7 @@ import {
   CHECKLIST_STATUS,
   findReconciledChecklistForOutcome,
   getInProgressReconciledChecklists,
+  type ChecklistStatus,
 } from '@corates/shared/checklists';
 import { downloadPdf, getPdfUrl } from '@/api/pdf-api';
 import { getCachedPdf, cachePdf } from '@/primitives/pdfCache.js';
@@ -69,11 +71,9 @@ export function ReconciliationWrapper({
     closePreview();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const ops = connectionPool.getOps(projectId);
-  if (!ops) throw new Error(`No connection for project ${projectId}`);
-  const { createChecklist: createProjectChecklist, updateChecklist } = ops.checklist;
-  const { getReconciliationProgress, saveReconciliationProgress } = ops.reconciliation;
-  const getAwareness = ops.getAwareness;
+  // Fire-and-forget mutations: optimistic apply is immediate, and rejections
+  // surface through the pool's global onMutationRejected toast.
+  const client = connectionPool.getClient(projectId);
 
   // Current user for presence features
   const currentUser = useMemo(() => {
@@ -203,6 +203,36 @@ export function ReconciliationWrapper({
     [checklist1Meta],
   );
 
+  // Reconciliation progress for this outcome group, reactively from the
+  // reconciliations collection (gates the setup effect below).
+  const progress = useReconciliationProgress(projectId, studyId, outcomeId, checklistType);
+
+  const updateChecklist = useCallback(
+    (checklistId: string, updates: { title?: string; status?: ChecklistStatus }) => {
+      void client?.mutate.checklist.update({ checklistId, updates, now: Date.now() });
+    },
+    [client],
+  );
+
+  const saveReconciliationProgress = useCallback(
+    (data: {
+      checklist1Id: string;
+      checklist2Id: string;
+      reconciledChecklistId?: string;
+      currentPage?: number;
+      viewMode?: string;
+    }) => {
+      void client?.mutate.reconciliation.saveProgress({
+        studyId,
+        outcomeId,
+        type: checklistType,
+        data,
+        now: Date.now(),
+      });
+    },
+    [client, studyId, outcomeId, checklistType],
+  );
+
   // Get full checklist data including answers, reactively from answer rows
   const flat1 = useChecklistAnswerMap(projectId, checklist1Id ?? '');
   const flat2 = useChecklistAnswerMap(projectId, checklist2Id ?? '');
@@ -241,7 +271,7 @@ export function ReconciliationWrapper({
       (connectionState.phase !== 'synced' && connectionState.phase !== 'cached') ||
       reconciledChecklistId ||
       hasCheckedForReconciled ||
-      !createProjectChecklist
+      !client
     ) {
       return;
     }
@@ -250,7 +280,6 @@ export function ReconciliationWrapper({
     setReconciledChecklistLoading(true);
 
     // Check if one already exists in reconciliation progress for this outcome
-    const progress = getReconciliationProgress(studyId, outcomeId, checklistType);
     if (
       progress &&
       progress.checklist1Id === checklist1Id &&
@@ -278,7 +307,7 @@ export function ReconciliationWrapper({
       checklistType,
     );
     if (existingReconciled && existingReconciled.status !== CHECKLIST_STATUS.FINALIZED) {
-      saveReconciliationProgress(studyId, outcomeId, checklistType, {
+      saveReconciliationProgress({
         checklist1Id,
         checklist2Id,
         reconciledChecklistId: existingReconciled.id,
@@ -288,20 +317,24 @@ export function ReconciliationWrapper({
       return;
     }
 
-    // Need to create one
-    const newChecklistId = createProjectChecklist(studyId, checklistType, null, outcomeId);
-    if (!newChecklistId) {
-      setError('Failed to create reconciled checklist');
-      setReconciledChecklistLoading(false);
-      return;
-    }
+    // Need to create one — the optimistic apply makes the row exist locally
+    // immediately, so the generated id is usable right away.
+    const newChecklistId = crypto.randomUUID();
+    void client.mutate.checklist.create({
+      id: newChecklistId,
+      studyId,
+      type: checklistType,
+      assignedTo: null,
+      outcomeId,
+      now: Date.now(),
+    });
 
-    updateChecklist(studyId, newChecklistId, {
+    updateChecklist(newChecklistId, {
       status: CHECKLIST_STATUS.RECONCILING,
       title: 'Reconciled Checklist',
     });
 
-    saveReconciliationProgress(studyId, outcomeId, checklistType, {
+    saveReconciliationProgress({
       checklist1Id,
       checklist2Id,
       reconciledChecklistId: newChecklistId,
@@ -319,8 +352,8 @@ export function ReconciliationWrapper({
     checklistType,
     checklist1Id,
     checklist2Id,
-    createProjectChecklist,
-    getReconciliationProgress,
+    client,
+    progress,
     saveReconciliationProgress,
     updateChecklist,
   ]);
@@ -339,7 +372,7 @@ export function ReconciliationWrapper({
       const firstCreated = allReconciled[0];
 
       if (firstCreated.id !== reconciledChecklistId) {
-        saveReconciliationProgress(studyId, outcomeId, checklistType, {
+        saveReconciliationProgress({
           checklist1Id,
           checklist2Id,
           reconciledChecklistId: firstCreated.id,
@@ -388,7 +421,7 @@ export function ReconciliationWrapper({
         if (!reconciledChecklistId) {
           throw new Error('No reconciled checklist found');
         }
-        updateChecklist(studyId, reconciledChecklistId, {
+        updateChecklist(reconciledChecklistId, {
           status: CHECKLIST_STATUS.FINALIZED,
           title: reconciledName || 'Reconciled Checklist',
         });
@@ -399,7 +432,7 @@ export function ReconciliationWrapper({
         await handleError(err, { setError, showToast: false });
       }
     },
-    [reconciledChecklistId, studyId, checklistType, updateChecklist, navigate, getProjectPath],
+    [reconciledChecklistId, checklistType, updateChecklist, navigate, getProjectPath],
   );
 
   // Handle cancel
@@ -433,7 +466,7 @@ export function ReconciliationWrapper({
     pdfs: studyPdfs,
     selectedPdfId,
     onPdfSelect: handlePdfSelect,
-    getAwareness,
+    getAwareness: () => null,
     currentUser,
   };
 

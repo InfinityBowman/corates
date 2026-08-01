@@ -1,12 +1,10 @@
 /**
- * Local-only TanStack DB collections + the Y.Doc → rows bridge.
+ * Local-only TanStack DB collections for local practice, plus the one-time
+ * conversion of the legacy Dexie Y.Doc into rows.
  *
- * Local practice has no engine workspace: its data is a Dexie-persisted Y.Doc.
- * To give it the same read surface as online projects (the workspace-data
- * hooks), the pool creates one local-only collection per table and mirrors the
- * doc into rows on every change — the reactor's job, re-expressed into
- * TanStack DB. Writes still go to the Y.Doc (legacy ops) and flow back through
- * this bridge, so local mode stays fully coherent.
+ * Local practice has no engine workspace: its rows live in these collections
+ * (seeded from the Dexie `localProjects` store, persisted back by the pool)
+ * and are mutated by the shared mutator functions applied directly.
  *
  * Also exports `emptyCollections`: a frozen, never-written set used as the
  * fallback when a project has no session (e.g. sidebar rows for unopened
@@ -78,14 +76,16 @@ function asNumber(value: unknown): number {
   return typeof value === 'number' ? value : 0;
 }
 
-/**
- * Mirror the local Y.Doc's `reviews` tree into the collections; returns an
- * unsubscribe. Rebuild-on-change is fine at local-practice scale.
- */
-export function bridgeLocalDoc(ydoc: Y.Doc, collections: ProjectCollections): () => void {
-  const reviews = ydoc.getMap('reviews');
+export interface LocalRows {
+  studies: unknown[];
+  checklists: unknown[];
+  answers: unknown[];
+}
 
-  const rebuild = () => {
+/** One-time conversion of a legacy local-practice Y.Doc into plain rows. */
+export function rowsFromLocalDoc(ydoc: Y.Doc): LocalRows {
+  const reviews = ydoc.getMap('reviews');
+  {
     const studies = new Map<string, StudyRow>();
     const checklists = new Map<string, ChecklistRow>();
     const answers = new Map<string, AnswerRow>();
@@ -134,28 +134,26 @@ export function bridgeLocalDoc(ydoc: Y.Doc, collections: ProjectCollections): ()
       }
     }
 
-    applyRows(collections.studies, studies);
-    applyRows(collections.checklists, checklists);
-    applyRows(collections.answers, answers);
-  };
-
-  const onChange = () => rebuild();
-  reviews.observeDeep(onChange);
-  rebuild();
-  return () => reviews.unobserveDeep(onChange);
+    return {
+      studies: [...studies.values()],
+      checklists: [...checklists.values()],
+      answers: [...answers.values()],
+    };
+  }
 }
 
-function applyRows<T extends { id: string }>(collection: Collection<T>, next: Map<string, T>): void {
-  for (const row of collection.toArray) {
-    if (!next.has(row.id)) collection.delete(row.id);
-  }
-  for (const [id, row] of next) {
-    const existing = collection.get(id);
-    if (!existing) {
-      collection.insert(row);
-    } else if (JSON.stringify(existing) !== JSON.stringify(row)) {
-      collection.delete(id);
-      collection.insert(row);
-    }
-  }
+/** Seed freshly created collections from persisted rows. */
+export function seedLocalCollections(collections: ProjectCollections, rows: LocalRows): void {
+  for (const row of rows.studies) collections.studies.insert(row as StudyRow);
+  for (const row of rows.checklists) collections.checklists.insert(row as ChecklistRow);
+  for (const row of rows.answers) collections.answers.insert(row as AnswerRow);
+}
+
+/** The current rows, for persistence. */
+export function snapshotLocalCollections(collections: ProjectCollections): LocalRows {
+  return {
+    studies: [...collections.studies.toArray],
+    checklists: [...collections.checklists.toArray],
+    answers: [...collections.answers.toArray],
+  };
 }

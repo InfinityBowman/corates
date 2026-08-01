@@ -1,53 +1,29 @@
 /**
  * ConnectionPool - Ref-counted project session management over the sync engine.
- * Single owner of the session registry, active project tracking, and operation
- * resolution. See docs/audits/project-sync-refactor-rfc.md for the original
- * shape; the Yjs transport it managed (y-websocket provider, two-Y.Doc Dexie
- * bridge, connection state machine) is replaced by @cf-sync/client, which owns
- * reconnection, keepalive, offline persistence, and the mutation outbox.
+ * Single owner of the session registry and active project tracking. The engine
+ * client owns reconnection, keepalive, offline persistence, and the mutation
+ * outbox; reads go through workspace-data hooks over collections, writes
+ * through client.mutate (online) or applyLocalMutation (local practice).
  *
- * Each online entry still carries a bare local Y.Doc feeding the legacy ops
- * and reactor: the read path (reactor -> live queries) and write path
- * (ops -> client.mutate.*) move off it in the next two passes of this
- * migration, and the doc goes with them. Until then it is a local-only write
- * target — deliberately unsynced.
- *
- * Local practice mode (`local-practice`) keeps its Dexie-persisted Y.Doc: it
- * never syncs, so the engine session does not apply to it.
+ * Local practice mode (`local-practice`) has no engine session: its rows live
+ * in local-only collections, persisted to Dexie (`localProjects`) by this
+ * pool, and mutated by the shared mutator functions applied directly. Legacy
+ * local data (the Dexie-persisted Y.Doc) migrates to rows on first load.
  */
 
-import * as Y from 'yjs';
-import { DexieYProvider } from 'y-dexie';
 import { createWorkspace } from '@cf-sync/client';
 import { syncApp } from '@corates/shared/sync';
 import { useProjectStore, type ConnectionPhase } from '@/stores/projectStore';
 import { queryClient } from '@/lib/queryClient';
 import { queryKeys } from '@/lib/queryKeys';
 import { getWsBaseUrl } from '@/config/api';
-import { createStudyOperations, type StudyOperations } from '@/primitives/useProject/studies';
-import {
-  createChecklistOperations,
-  type ChecklistOperations,
-} from '@/primitives/useProject/checklists/index';
-import { createPdfOperations, type PdfOperations } from '@/primitives/useProject/pdfs';
-import {
-  createReconciliationOperations,
-  type ReconciliationOperations,
-} from '@/primitives/useProject/reconciliation.js';
-import {
-  createAnnotationOperations,
-  type AnnotationOperations,
-} from '@/primitives/useProject/annotations';
-import {
-  createOutcomeOperations,
-  type OutcomeOperations,
-} from '@/primitives/useProject/outcomes.js';
+import { showToast } from '@/lib/toast';
 import { db, deleteProjectData } from '@/primitives/db.js';
-import { migrateLocalChecklistsToYDoc } from './localProject';
-import { migrateYDocToFlatKeys } from '@/primitives/useProject/flatKeyMigration';
+import { loadLegacyLocalRows } from './localProject';
 import {
-  bridgeLocalDoc,
   createLocalCollections,
+  seedLocalCollections,
+  snapshotLocalCollections,
   type ProjectCollections,
 } from './localCollections';
 
@@ -67,38 +43,43 @@ function createProjectWorkspace(
     persist: true,
     onFatal: error => handlers.onFatal(error.code, error.reason),
     onMutationRejected: (error, mutation) => {
-      // Rejection UX (toast + rollback surfacing) lands with the write-path
-      // move; until then rejections must at least be visible.
+      // The one place rejections surface: the optimistic overlay has already
+      // rolled back; tell the user their change did not stick. Lifecycle
+      // codes are noise (Stopped on teardown, Timeout offline), not verdicts.
+      if (error.code === 'Stopped' || error.code === 'Timeout') return;
       console.error('[sync] mutation rejected:', mutation.name, error.code, error.message);
+      showToast.error('Change rejected', rejectionMessage(error.code, mutation.name));
     },
   });
 }
 
-export type ProjectWorkspace = ReturnType<typeof createProjectWorkspace>;
-
-export interface TypedProjectOps {
-  study: StudyOperations;
-  checklist: ChecklistOperations;
-  pdf: PdfOperations;
-  reconciliation: ReconciliationOperations;
-  annotation: AnnotationOperations;
-  outcome: OutcomeOperations;
-  getAwareness: () => unknown;
+function rejectionMessage(code: string, mutationName: string): string {
+  switch (code) {
+    case 'ReadOnly':
+      return 'This organization has read-only access. Renew your subscription to make changes.';
+    case 'NotFound':
+      return 'That item no longer exists — it may have been deleted by someone else.';
+    case 'DuplicateChecklist':
+      return 'A checklist for this outcome and reviewer already exists.';
+    case 'OutcomeInUse':
+      return 'This outcome is assigned to existing checklists and cannot be deleted.';
+    case 'ReconciliationInProgress':
+      return 'Reconciliation is in progress for this outcome. Finish it before changing the outcome.';
+    case 'AssigneeConflict':
+      return 'A checklist for the target outcome already exists for one of the reviewers.';
+    default:
+      return `Your change (${mutationName}) was rejected and has been rolled back.`;
+  }
 }
+
+export type ProjectWorkspace = ReturnType<typeof createProjectWorkspace>;
 
 interface ConnectionEntry {
   /** The engine session ({ client, collections }); null for local practice. */
   workspace: ProjectWorkspace | null;
-  /** Local practice only: local-only collections fed by the Y.Doc bridge. */
+  /** Local practice only: local-only collections persisted to Dexie. */
   localCollections: ProjectCollections | null;
-  ydoc: Y.Doc;
-  dexieProvider: DexieYProvider | null;
-  studyOps: StudyOperations | null;
-  checklistOps: ChecklistOperations | null;
-  pdfOps: PdfOperations | null;
-  reconciliationOps: ReconciliationOperations | null;
-  annotationOps: AnnotationOperations | null;
-  outcomeOps: OutcomeOperations | null;
+  localPersistTimer: ReturnType<typeof setTimeout> | null;
   refCount: number;
   initialized: boolean;
   _cleanupHandlers: (() => void)[];
@@ -116,6 +97,8 @@ const FATAL_REASON_MESSAGES: Record<string, string> = {
 
 const GENERIC_FATAL_MESSAGE =
   'Unable to connect to project. It may have been deleted or you may not have access.';
+
+const LOCAL_PERSIST_DEBOUNCE_MS = 300;
 
 class ConnectionPool {
   private registry = new Map<string, ConnectionEntry>();
@@ -138,14 +121,7 @@ class ConnectionPool {
     const entry: ConnectionEntry = {
       workspace: null,
       localCollections: null,
-      ydoc: new Y.Doc(),
-      dexieProvider: null,
-      studyOps: null,
-      checklistOps: null,
-      pdfOps: null,
-      reconciliationOps: null,
-      annotationOps: null,
-      outcomeOps: null,
+      localPersistTimer: null,
       refCount: 1,
       initialized: false,
       _cleanupHandlers: [],
@@ -156,9 +132,9 @@ class ConnectionPool {
   }
 
   /**
-   * Initialize an entry: create domain ops, then either the engine session
-   * (online projects) or Dexie persistence (local practice). Call once per
-   * entry (guarded by entry.initialized).
+   * Initialize an entry: the engine session for online projects, the
+   * row-persisted local plane for local practice. Call once per entry
+   * (guarded by entry.initialized).
    */
   initializeConnection(
     projectId: string,
@@ -175,19 +151,8 @@ class ConnectionPool {
     if (!isLocal) store.setActiveProject(projectId);
     store.setConnectionState(projectId, 'connecting');
 
-    const getYDoc = () => entry.ydoc;
-    const isSynced = () => useProjectStore.getState().connections[projectId]?.phase === 'synced';
-
-    // Initialize domain operations
-    entry.studyOps = createStudyOperations(projectId, getYDoc, isSynced);
-    entry.checklistOps = createChecklistOperations(projectId, getYDoc);
-    entry.pdfOps = createPdfOperations(projectId, getYDoc);
-    entry.reconciliationOps = createReconciliationOperations(projectId, getYDoc);
-    entry.annotationOps = createAnnotationOperations(projectId, getYDoc);
-    entry.outcomeOps = createOutcomeOperations(projectId, getYDoc);
-
     if (isLocal) {
-      this.initializeLocalPersistence(projectId, entry, cancelled);
+      void this.initializeLocalRows(projectId, entry, cancelled);
       return;
     }
 
@@ -214,45 +179,53 @@ class ConnectionPool {
     applyStatus(workspace.client.status);
   }
 
-  /** The Dexie-persisted Y.Doc path — local practice only. */
-  private initializeLocalPersistence(
+  /**
+   * Local practice: seed collections from persisted rows, or — first run
+   * after this migration — from the legacy Dexie Y.Doc, which is then left
+   * in place untouched as a rollback source until the cleanup migration
+   * drops it.
+   */
+  private async initializeLocalRows(
     projectId: string,
     entry: ConnectionEntry,
     cancelled: () => boolean,
-  ): void {
-    (db.projects as any).get(projectId).then(async (existingProject: any) => {
+  ): Promise<void> {
+    try {
+      let stored = await db.localProjects.get(projectId);
       if (cancelled()) return;
 
-      if (!existingProject) {
-        await (db.projects as any).put({ id: projectId, updatedAt: Date.now() });
-      }
-      if (cancelled()) return;
-
-      const project = await (db.projects as any).get(projectId);
-      if (cancelled() || !project) return;
-
-      entry.dexieProvider = DexieYProvider.load(project.ydoc);
-
-      entry.dexieProvider.whenLoaded.then(() => {
+      if (!stored) {
+        const legacyRows = await loadLegacyLocalRows(projectId);
         if (cancelled()) return;
+        stored = { id: projectId, updatedAt: Date.now(), rows: legacyRows };
+        await db.localProjects.put(stored);
+        if (cancelled()) return;
+      }
 
-        // Local projects use project.ydoc directly — DexieYProvider persists
-        // mutations without any write-back indirection.
-        const oldYdoc = entry.ydoc;
-        entry.ydoc = project.ydoc;
-        oldYdoc.destroy();
+      entry.localCollections = createLocalCollections(projectId);
+      seedLocalCollections(entry.localCollections, stored.rows);
+      useProjectStore.getState().setConnectionState(projectId, 'synced');
+    } catch (err) {
+      console.error('Local practice initialization failed:', err);
+      useProjectStore
+        .getState()
+        .setConnectionState(projectId, 'error', 'Local practice data failed to load');
+    }
+  }
 
-        migrateYDocToFlatKeys(project.ydoc);
-        migrateLocalChecklistsToYDoc(project.ydoc)
-          .then(() => {
-            if (cancelled()) return;
-            entry.localCollections = createLocalCollections(projectId);
-            entry._cleanupHandlers.push(bridgeLocalDoc(project.ydoc, entry.localCollections));
-            useProjectStore.getState().setConnectionState(projectId, 'synced');
-          })
-          .catch(err => console.error('Local checklists migration failed:', err));
-      });
-    });
+  /** Debounced Dexie save of a local project's rows; called after local mutations. */
+  scheduleLocalPersist(projectId: string): void {
+    const entry = this.registry.get(projectId);
+    if (!entry?.localCollections) return;
+    if (entry.localPersistTimer) clearTimeout(entry.localPersistTimer);
+    entry.localPersistTimer = setTimeout(() => {
+      entry.localPersistTimer = null;
+      const collections = entry.localCollections;
+      if (!collections) return;
+      db.localProjects
+        .put({ id: projectId, updatedAt: Date.now(), rows: snapshotLocalCollections(collections) })
+        .catch(err => console.error('Local practice persist failed:', err));
+    }, LOCAL_PERSIST_DEBOUNCE_MS);
   }
 
   /**
@@ -269,87 +242,26 @@ class ConnectionPool {
     }
   }
 
-  /**
-   * Get typed operations for a project connection.
-   */
-  getOps(projectId: string): TypedProjectOps | null {
-    const entry = this.registry.get(projectId);
-    if (
-      !entry?.initialized ||
-      !entry.studyOps ||
-      !entry.checklistOps ||
-      !entry.pdfOps ||
-      !entry.reconciliationOps ||
-      !entry.annotationOps ||
-      !entry.outcomeOps
-    ) {
-      return null;
-    }
-    return {
-      study: entry.studyOps,
-      checklist: entry.checklistOps,
-      pdf: entry.pdfOps,
-      reconciliation: entry.reconciliationOps,
-      annotation: entry.annotationOps,
-      outcome: entry.outcomeOps,
-      // Yjs awareness is gone with the provider; the engine's presence API
-      // replaces this in the collaborative-text pass. Until then presence UI
-      // sees no peers.
-      getAwareness: () => null,
-    };
-  }
-
-  /**
-   * Get the raw ConnectionEntry for a project (for direct entry access).
-   */
-  getEntry(projectId: string): ConnectionEntry | null {
-    return this.registry.get(projectId) || null;
-  }
-
   /** The engine client for a project, once its session is initialized. */
   getClient(projectId: string): ProjectWorkspace['client'] | null {
     return this.registry.get(projectId)?.workspace?.client ?? null;
   }
 
+  /** The engine client for the active project (used by the project.* actions). */
+  getActiveClient(): ProjectWorkspace['client'] | null {
+    return this._activeProjectId ? this.getClient(this._activeProjectId) : null;
+  }
+
   /**
    * The read-surface collections for a project: the engine's for online
-   * sessions, the Y.Doc-bridged local set for local practice. The two carry
-   * the same row types; the cast erases the engine's richer generics.
+   * sessions, the persisted local set for local practice. The two carry the
+   * same row types; the cast erases the engine's richer generics.
    */
   getCollections(projectId: string): ProjectCollections | null {
     const entry = this.registry.get(projectId);
     if (!entry) return null;
     if (entry.workspace) return entry.workspace.collections as unknown as ProjectCollections;
     return entry.localCollections;
-  }
-
-  /**
-   * Local practice free-text write: replaces the answer value in the Y.Doc
-   * (plain string; local mode has no co-editing to preserve). The bridge
-   * mirrors it back into rows.
-   */
-  setLocalAnswerValue(
-    projectId: string,
-    studyId: string,
-    checklistId: string,
-    flatKey: string,
-    value: unknown,
-  ): void {
-    const entry = this.registry.get(projectId);
-    if (!entry) return;
-    const study = entry.ydoc.getMap('reviews').get(studyId) as Y.Map<unknown> | undefined;
-    const checklists = study?.get('checklists') as Y.Map<unknown> | undefined;
-    const checklist = checklists?.get(checklistId) as Y.Map<unknown> | undefined;
-    const answers = checklist?.get('answers') as Y.Map<unknown> | undefined;
-    answers?.set(flatKey, value);
-  }
-
-  /**
-   * Get typed operations for the currently active project.
-   */
-  getActiveOps(): TypedProjectOps | null {
-    if (!this._activeProjectId) return null;
-    return this.getOps(this._activeProjectId);
   }
 
   /**
@@ -433,14 +345,27 @@ class ConnectionPool {
     }
     entry._cleanupHandlers = [];
 
+    if (entry.localPersistTimer) {
+      clearTimeout(entry.localPersistTimer);
+      entry.localPersistTimer = null;
+      // Flush the pending save synchronously-ish before the entry goes away.
+      const collections = entry.localCollections;
+      if (collections) {
+        db.localProjects
+          .put({
+            id: projectId,
+            updatedAt: Date.now(),
+            rows: snapshotLocalCollections(collections),
+          })
+          .catch(() => {});
+      }
+    }
+
     if (entry.workspace) void entry.workspace.destroy();
-    if (entry.dexieProvider) DexieYProvider.release(entry.ydoc);
-    if (entry.ydoc) entry.ydoc.destroy();
 
     this.registry.delete(projectId);
     // Keep the error phase visible through the redirect effect; a fresh mount
-    // starts from a clean record either way (clearProject on next acquire is
-    // unnecessary — setConnectionState overwrites).
+    // starts from a clean record either way.
     if (!options.keepErrorState) {
       useProjectStore.getState().clearProject(projectId);
     }
@@ -451,5 +376,4 @@ export const connectionPool = new ConnectionPool();
 
 if (import.meta.env.DEV && typeof window !== 'undefined') {
   (window as any).__connectionPool = connectionPool;
-  (window as any).__Y = Y;
 }
