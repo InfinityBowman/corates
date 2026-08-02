@@ -14,6 +14,7 @@ import {
   ReconcileFieldsContext,
   ReconciledFieldStore,
   serializeFieldsIntoRows,
+  useReconciledTextMap,
 } from './fields';
 import { buildChecklistAnswerInput, type TextRef } from './engine/types';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
@@ -410,24 +411,6 @@ export function ReconciliationWrapper({
     return currentStudy.checklists?.find(c => c.id === reconciledChecklistId);
   }, [currentStudy, reconciledChecklistId]);
 
-  const flatReconciled = useChecklistAnswerMap(projectId, reconciledChecklistId ?? '');
-
-  const reconciledChecklistData = useMemo(() => {
-    if (!reconciledChecklistId || !reconciledChecklistMeta) return null;
-    return {
-      id: reconciledChecklistId,
-      name: 'Reconciled Checklist',
-      reviewerName: 'Consensus',
-      createdAt: reconciledChecklistMeta.createdAt || 0,
-      ...serializeAnswerRows(checklistType, flatReconciled),
-    };
-  }, [reconciledChecklistId, reconciledChecklistMeta, checklistType, flatReconciled]);
-
-  // Build project path
-  const getProjectPath = useCallback(() => `/projects/${projectId}`, [projectId]);
-
-  const writers = useAnswerWriters(projectId, studyId, reconciledChecklistId ?? '');
-
   // The session's Yjs field store (online only): one shared handle per text
   // field of the reconciled checklist, alive for the whole session so
   // editors and programmatic writes converge on the same doc. Local practice
@@ -444,6 +427,35 @@ export function ReconciliationWrapper({
     if (!fieldStore) return;
     return () => fieldStore.dispose();
   }, [fieldStore]);
+
+  const flatReconciled = useChecklistAnswerMap(projectId, reconciledChecklistId ?? '');
+
+  // Mid-session, the reconciled checklist's prose lives in Yjs fields, not
+  // rows — overlay the live field text so derivations over the serialized
+  // shape (the summary's answered-gating, note displays) see it.
+  const fieldTextOverlay = useReconciledTextMap(fieldStore, checklistType);
+
+  const reconciledChecklistData = useMemo(() => {
+    if (!reconciledChecklistId || !reconciledChecklistMeta) return null;
+    return {
+      id: reconciledChecklistId,
+      name: 'Reconciled Checklist',
+      reviewerName: 'Consensus',
+      createdAt: reconciledChecklistMeta.createdAt || 0,
+      ...serializeAnswerRows(checklistType, { ...flatReconciled, ...fieldTextOverlay }),
+    };
+  }, [
+    reconciledChecklistId,
+    reconciledChecklistMeta,
+    checklistType,
+    flatReconciled,
+    fieldTextOverlay,
+  ]);
+
+  // Build project path
+  const getProjectPath = useCallback(() => `/projects/${projectId}`, [projectId]);
+
+  const writers = useAnswerWriters(projectId, studyId, reconciledChecklistId ?? '');
 
   const fieldsContextValue = useMemo(
     () =>

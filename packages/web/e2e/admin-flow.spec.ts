@@ -96,11 +96,13 @@ test('Admin dashboard, user detail (loader pilot), and access control', async ({
   await expect(page.getByText('Admin Dashboard')).toBeVisible({ timeout: 10_000 });
 
   await searchInput.fill(scenario.admin.email);
-  await expect(page.getByRole('link', { name: scenario.admin.name })).toBeVisible({
-    timeout: 10_000,
-  });
+  // The users list is global and churns while parallel workers seed their own
+  // users; target the row by href so a mid-render reorder cannot swap the
+  // click onto another user's link.
+  const adminRowLink = page.locator(`a[href*="/admin/users/${scenario.admin.id}"]`).first();
+  await expect(adminRowLink).toBeVisible({ timeout: 10_000 });
 
-  await page.getByRole('link', { name: scenario.admin.name }).click();
+  await adminRowLink.click();
   await expect(page).toHaveURL(new RegExp(`/admin/users/${scenario.admin.id}`), {
     timeout: 10_000,
   });

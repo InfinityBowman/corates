@@ -171,6 +171,62 @@ export function useReconciledText(fieldKey: string): ReconciledText {
   };
 }
 
+const EMPTY_TEXT_MAP: Record<string, string> = {};
+
+/**
+ * Every non-empty text field of the reconciled checklist as a live flat map —
+ * the overlay the wrapper merges over the serialized answer rows, so
+ * derivations that read the reconciled checklist (the summary's
+ * answered-gating on ROB2 preliminary text, note displays) see the fields'
+ * mid-session content, not the rows the fields only serialize into at
+ * finalize. Null store (local practice) returns empty: rows are already live
+ * there. Takes the store directly because the wrapper calls it above its own
+ * context provider.
+ */
+export function useReconciledTextMap(
+  store: ReconciledFieldStore | null,
+  checklistType: ChecklistType,
+): Record<string, string> {
+  const [map, setMap] = useState<Record<string, string>>(EMPTY_TEXT_MAP);
+
+  useEffect(() => {
+    if (!store) return;
+    const keys = textAnswerKeys(checklistType);
+    let alive = true;
+    const compute = () => {
+      if (!alive) return;
+      const next: Record<string, string> = {};
+      for (const key of keys) {
+        const text = store.handle(key).text.toString();
+        if (text) next[key] = text;
+      }
+      setMap(prev => {
+        const prevKeys = Object.keys(prev);
+        if (
+          prevKeys.length === Object.keys(next).length &&
+          prevKeys.every(key => prev[key] === next[key])
+        ) {
+          return prev;
+        }
+        return next;
+      });
+    };
+    const unsubscribes = keys.map(key => {
+      const handle = store.handle(key);
+      const observer = () => compute();
+      handle.text.observe(observer);
+      return () => handle.text.unobserve(observer);
+    });
+    compute();
+    return () => {
+      alive = false;
+      for (const unsubscribe of unsubscribes) unsubscribe();
+    };
+  }, [store, checklistType]);
+
+  return store ? map : EMPTY_TEXT_MAP;
+}
+
 /** The finalize-time field read window; beyond this we assume we are offline. */
 export const FINALIZE_SYNC_TIMEOUT_MS = 8_000;
 

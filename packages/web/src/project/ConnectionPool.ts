@@ -89,7 +89,9 @@ interface ConnectionEntry {
   yfields: YjsFields | null;
   /** Local practice only: local-only collections persisted to Dexie. */
   localCollections: ProjectCollections | null;
-  localPersistTimer: ReturnType<typeof setTimeout> | null;
+  /** A snapshot put is running; coalesce further writes into one follow-up. */
+  localPersistInFlight: boolean;
+  localPersistQueued: boolean;
   refCount: number;
   initialized: boolean;
   _cleanupHandlers: (() => void)[];
@@ -107,8 +109,6 @@ const FATAL_REASON_MESSAGES: Record<string, string> = {
 
 const GENERIC_FATAL_MESSAGE =
   'Unable to connect to project. It may have been deleted or you may not have access.';
-
-const LOCAL_PERSIST_DEBOUNCE_MS = 300;
 
 class ConnectionPool {
   private registry = new Map<string, ConnectionEntry>();
@@ -132,7 +132,8 @@ class ConnectionPool {
       workspace: null,
       yfields: null,
       localCollections: null,
-      localPersistTimer: null,
+      localPersistInFlight: false,
+      localPersistQueued: false,
       refCount: 1,
       initialized: false,
       _cleanupHandlers: [],
@@ -225,19 +226,46 @@ class ConnectionPool {
     }
   }
 
-  /** Debounced Dexie save of a local project's rows; called after local mutations. */
+  /**
+   * Persist a local project's rows after a mutation — immediately, not on a
+   * timer. Deferred writes lose the tail of a burst on reload (async work in
+   * pagehide does not reliably commit), and the old y-dexie plane persisted
+   * every update, so durability-per-write is the contract to keep. Bursts
+   * (typing) coalesce: while one put runs, further calls fold into a single
+   * follow-up that captures the newest snapshot.
+   */
   scheduleLocalPersist(projectId: string): void {
     const entry = this.registry.get(projectId);
     if (!entry?.localCollections) return;
-    if (entry.localPersistTimer) clearTimeout(entry.localPersistTimer);
-    entry.localPersistTimer = setTimeout(() => {
-      entry.localPersistTimer = null;
-      const collections = entry.localCollections;
-      if (!collections) return;
-      db.localProjects
-        .put({ id: projectId, updatedAt: Date.now(), rows: snapshotLocalCollections(collections) })
-        .catch(err => console.error('Local practice persist failed:', err));
-    }, LOCAL_PERSIST_DEBOUNCE_MS);
+    if (entry.localPersistInFlight) {
+      entry.localPersistQueued = true;
+      return;
+    }
+    void this.persistLocalNow(projectId, entry);
+  }
+
+  /** One snapshot put, chaining a follow-up if writes landed meanwhile. */
+  private persistLocalNow(projectId: string, entry: ConnectionEntry): Promise<void> {
+    const collections = entry.localCollections;
+    if (!collections) return Promise.resolve();
+    entry.localPersistInFlight = true;
+    entry.localPersistQueued = false;
+    return db.localProjects
+      .put({ id: projectId, updatedAt: Date.now(), rows: snapshotLocalCollections(collections) })
+      .catch(err => console.error('Local practice persist failed:', err))
+      .then(() => {
+        entry.localPersistInFlight = false;
+        if (entry.localPersistQueued) return this.persistLocalNow(projectId, entry);
+      });
+  }
+
+  /** Await the current write chain (test seams and teardown paths). */
+  flushLocalPersist(): Promise<void> {
+    const flushes: Promise<void>[] = [];
+    for (const [projectId, entry] of this.registry) {
+      if (entry.localCollections) flushes.push(this.persistLocalNow(projectId, entry));
+    }
+    return Promise.all(flushes).then(() => undefined);
   }
 
   /**
@@ -362,20 +390,16 @@ class ConnectionPool {
     }
     entry._cleanupHandlers = [];
 
-    if (entry.localPersistTimer) {
-      clearTimeout(entry.localPersistTimer);
-      entry.localPersistTimer = null;
-      // Flush the pending save synchronously-ish before the entry goes away.
+    if (entry.localCollections && entry.localPersistQueued) {
+      // A follow-up snapshot was pending; capture it before the entry dies.
       const collections = entry.localCollections;
-      if (collections) {
-        db.localProjects
-          .put({
-            id: projectId,
-            updatedAt: Date.now(),
-            rows: snapshotLocalCollections(collections),
-          })
-          .catch(() => {});
-      }
+      db.localProjects
+        .put({
+          id: projectId,
+          updatedAt: Date.now(),
+          rows: snapshotLocalCollections(collections),
+        })
+        .catch(() => {});
     }
 
     if (entry.workspace) void entry.workspace.destroy();
@@ -390,6 +414,10 @@ class ConnectionPool {
 }
 
 export const connectionPool = new ConnectionPool();
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('pagehide', () => void connectionPool.flushLocalPersist());
+}
 
 if (import.meta.env.DEV && typeof window !== 'undefined') {
   (window as any).__connectionPool = connectionPool;

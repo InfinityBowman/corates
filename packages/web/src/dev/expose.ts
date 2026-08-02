@@ -7,6 +7,7 @@
  */
 
 import { devAddStudy, devApplyTemplate } from './seed';
+import { rewriteLocalRowsToLegacyDoc } from './legacy';
 
 declare global {
   interface Window {
@@ -14,9 +15,13 @@ declare global {
       addStudy: typeof devAddStudy;
       applyTemplate: typeof devApplyTemplate;
     };
+    __devLegacy?: {
+      rewriteLocalRowsToLegacyDoc: typeof rewriteLocalRowsToLegacyDoc;
+    };
   }
 }
 
 window.__devSeed = { addStudy: devAddStudy, applyTemplate: devApplyTemplate };
+window.__devLegacy = { rewriteLocalRowsToLegacyDoc };
 
 export {};

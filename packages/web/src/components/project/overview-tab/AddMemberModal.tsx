@@ -33,6 +33,8 @@ import { searchUsers } from '@/server/functions/users.functions';
 import { addMemberToProject } from '@/server/functions/org-projects.functions';
 import type { UserSearchResult } from '@/server/functions/users.server';
 import { track } from '@/lib/analytics';
+import { queryClient } from '@/lib/queryClient';
+import { queryKeys } from '@/lib/queryKeys';
 
 interface AddMemberModalProps {
   isOpen: boolean;
@@ -140,6 +142,9 @@ export function AddMemberModal({
       if (result.invitation) {
         showToast.success('Invitation Sent', `Invitation sent to ${result.email || searchQuery}`);
       }
+      // The member directory is a D1 fact read through React Query — nothing
+      // pushes it to this client, so refetch after the write.
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.members(projectId) });
       handleClose();
     } catch (err: unknown) {
       const { handleError } = await import('@/lib/error-utils');

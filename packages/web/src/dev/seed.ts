@@ -71,6 +71,11 @@ function createSeedWorkspace(projectId: string) {
     workspaceId: projectId,
     app: syncApp,
     persist: false,
+    // The default clientId is per-tab-per-workspace (sessionStorage), which
+    // would make concurrent seed sessions — and the pool's UI session for an
+    // open project — supersede each other (4409). Each seed session is its
+    // own short-lived client.
+    clientId: `seed_${crypto.randomUUID()}`,
   });
 }
 
