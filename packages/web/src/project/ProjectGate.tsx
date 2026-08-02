@@ -53,10 +53,14 @@ export function ProjectGate({ projectId, fallback, children }: ProjectGateProps)
     };
   }, [projectId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Set active project for the pool (used by project.* action modules)
+  // Set active project for the pool (used by project.* action modules).
+  // Not gated on orgId: the mutation actions only need the projectId, and on
+  // a cold hard-refresh the gate opens at `cached` before the projects query
+  // resolves — waiting for orgId here made every action throw in that window.
+  // orgId is re-stamped by the same effect when it lands.
   useEffect(() => {
-    if (projectId && orgId) {
-      connectionPool.setActiveProject(projectId, orgId);
+    if (projectId) {
+      connectionPool.setActiveProject(projectId, orgId ?? null);
     }
     return () => {
       connectionPool.clearActiveProject();

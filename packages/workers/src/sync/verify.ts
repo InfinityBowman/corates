@@ -18,7 +18,13 @@ import {
   type ChecklistType,
 } from '@corates/shared/sync';
 import { CHECKLIST_STATUS, getOutcomeKey } from '@corates/shared/checklists';
-import { oldExportSchema, type OldProjectExport } from './transform';
+import {
+  normalizeChecklistStatus,
+  oldExportSchema,
+  remapLegacySectionBKeys,
+  type OldProjectExport,
+} from './transform';
+import type { JsonValue } from '@corates/shared/sync';
 
 export interface VerifyResult {
   ok: boolean;
@@ -129,12 +135,35 @@ export function verifyProjectMigration(oldExport: unknown, engineExport: unknown
       violations.push(`study ${study.id} missing`);
       continue;
     }
-    for (const [field, expected] of [
+    // Expected values mirror the transformer's write conditions exactly:
+    // strings are written only when truthy, pdfAccessible when non-null,
+    // publicationYear is stringified.
+    const expectedStudyFields: Array<[string, unknown]> = [
       ['name', study.name ?? 'Untitled Study'],
-      ['reviewer1', study.reviewer1 ?? undefined],
-      ['reviewer2', study.reviewer2 ?? undefined],
-      ['doi', study.doi ?? undefined],
-    ] as const) {
+      ['reviewer1', study.reviewer1 || undefined],
+      ['reviewer2', study.reviewer2 || undefined],
+      ['doi', study.doi || undefined],
+      ['originalTitle', study.originalTitle || undefined],
+      ['firstAuthor', study.firstAuthor || undefined],
+      [
+        'publicationYear',
+        study.publicationYear != null ? String(study.publicationYear) : undefined,
+      ],
+      ['authors', study.authors || undefined],
+      ['journal', study.journal || undefined],
+      ['abstract', study.abstract || undefined],
+      ['importSource', study.importSource || undefined],
+      ['pdfUrl', study.pdfUrl || undefined],
+      ['pdfSource', study.pdfSource || undefined],
+      ['pdfAccessible', study.pdfAccessible ?? undefined],
+      ['pmid', study.pmid || undefined],
+      ['url', study.url || undefined],
+      ['volume', study.volume || undefined],
+      ['issue', study.issue || undefined],
+      ['pages', study.pages || undefined],
+      ['type', study.type || undefined],
+    ];
+    for (const [field, expected] of expectedStudyFields) {
       if (expected !== undefined && studyRow[field] !== expected) {
         violations.push(`study ${study.id} ${field}: "${String(expected)}" → "${String(studyRow[field])}"`);
       }
@@ -151,7 +180,7 @@ export function verifyProjectMigration(oldExport: unknown, engineExport: unknown
         continue;
       }
       if (row.type !== type) violations.push(`checklist ${checklist.id} type mismatch`);
-      if (row.status !== (checklist.status ?? CHECKLIST_STATUS.PENDING)) {
+      if (row.status !== normalizeChecklistStatus(checklist.status)) {
         violations.push(
           `checklist ${checklist.id} status: "${checklist.status}" → "${String(row.status)}"`,
         );
@@ -175,7 +204,14 @@ export function verifyProjectMigration(oldExport: unknown, engineExport: unknown
           answerRows++;
         }
       }
-      for (const [key, value] of Object.entries(checklist.answers)) {
+      // Same legacy-alias salvage the transformer applies (`b1.comment` →
+      // `sectionB.b1.comment`), so the salvaged text is verified rather than
+      // skipped as a dropped key.
+      const exportedAnswers = remapLegacySectionBKeys(
+        checklist.answers as Record<string, JsonValue>,
+        defaults,
+      );
+      for (const [key, value] of Object.entries(exportedAnswers)) {
         if (!(key in defaults)) continue; // dropped by design, reported at transform
         const row = table('answers').get(answerRowId(checklist.id, key));
         if (row && !deepEqual(row.value, value)) {
@@ -228,10 +264,14 @@ export function verifyProjectMigration(oldExport: unknown, engineExport: unknown
       const consensus = progress.reconciledChecklistId ?
         checklistById.get(progress.reconciledChecklistId)
       : undefined;
-      if (consensus && consensus.status !== CHECKLIST_STATUS.FINALIZED) {
+      if (consensus && normalizeChecklistStatus(consensus.status) !== CHECKLIST_STATUS.FINALIZED) {
         const type = consensus.type as ChecklistType;
+        const consensusAnswers = remapLegacySectionBKeys(
+          consensus.answers as Record<string, JsonValue>,
+          defaultAnswerRows(type),
+        );
         for (const textKey of textAnswerKeys(type)) {
-          const text = consensus.answers[textKey];
+          const text = consensusAnswers[textKey];
           if (typeof text !== 'string' || text.length === 0) continue;
           const fieldId = answerRowId(consensus.id, textKey);
           const encoded = engine.extension?.fields?.[fieldId];

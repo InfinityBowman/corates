@@ -113,18 +113,34 @@ function waitForSynced(client: SeedClient, timeoutMs = 15_000): Promise<void> {
   });
 }
 
-/** Fire a plan through the outbox (order-preserving) and await every ack. */
+/**
+ * Fire a plan through the outbox (order-preserving) and await every ack.
+ * allSettled, not all: a single rejection must not abandon the still-inflight
+ * remainder — the session's destroy() in withSeedSession would strand the
+ * unsent tail of the outbox (persist is off, so it would simply be lost).
+ * Failures aggregate into one error after everything settles.
+ */
 async function runPlan(client: SeedClient, plan: SeedMutation[]): Promise<void> {
   const mutate = client.mutate as unknown as Record<
     string,
     Record<string, (args: Record<string, unknown>) => Promise<unknown>>
   >;
-  await Promise.all(
+  const results = await Promise.allSettled(
     plan.map(({ name, args }) => {
       const [namespace, op] = name.split('.');
       return mutate[namespace][op](args);
     }),
   );
+  const failures = results
+    .map((result, index) => ({ result, name: plan[index].name }))
+    .filter(entry => entry.result.status === 'rejected');
+  if (failures.length > 0) {
+    const first = failures[0].result as PromiseRejectedResult;
+    throw new Error(
+      `dev seed: ${failures.length}/${plan.length} mutations rejected ` +
+        `(first: ${failures[0].name}: ${String(first.reason)})`,
+    );
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -149,6 +165,10 @@ function planChecklistAnswers(
     });
   }
   for (const flatKey of textAnswerKeys(type)) {
+    // checklist.create prefills sectionA.outcome with the outcome name and
+    // changeOutcome re-syncs it only while it still matches — overwriting it
+    // with template prose would disable exactly the path dev should exercise.
+    if (flatKey === 'sectionA.outcome') continue;
     const text = resolveNestedTextValue(answers, flatKey);
     if (text) {
       plan.push({ name: 'checklist.setText', args: { checklistId, key: flatKey, text } });
@@ -519,14 +539,21 @@ export async function devApplyTemplate(
   return withSeedSession(projectId, async ({ client, collections }) => {
     if (mode === 'replace') {
       // Studies first (their deletion cascades checklist rows that would
-      // otherwise hold OutcomeInUse), then outcomes.
-      await Promise.all(
-        collections.studies.toArray.map(study => client.mutate.study.delete({ id: study.id })),
+      // otherwise hold OutcomeInUse), then outcomes. Through runPlan so every
+      // deletion settles before we proceed (or the aggregate error surfaces).
+      await runPlan(
+        client,
+        collections.studies.toArray.map(study => ({
+          name: 'study.delete',
+          args: { id: study.id },
+        })),
       );
-      await Promise.all(
-        collections.outcomes.toArray.map(outcome =>
-          client.mutate.outcome.delete({ id: outcome.id }),
-        ),
+      await runPlan(
+        client,
+        collections.outcomes.toArray.map(outcome => ({
+          name: 'outcome.delete',
+          args: { id: outcome.id },
+        })),
       );
     }
 

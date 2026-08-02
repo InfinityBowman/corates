@@ -1,10 +1,11 @@
 /**
  * LocalChecklistView - Viewer/editor for a local (offline) appraisal.
  *
- * Answers live in the local-practice Y.Doc, mirrored into workspace rows by
- * the connection pool's bridge and read via the workspace-data hooks. PDFs
- * stay in the `localChecklistPdfs` Dexie table -- they don't benefit from
- * CRDT storage and would bloat the Y.Doc.
+ * Answers live in the local-practice row collections (persisted to the Dexie
+ * `localProjects` store by the connection pool, mutated via the shared
+ * mutators through applyLocalMutation) and are read via the workspace-data
+ * hooks. PDFs stay in the `localChecklistPdfs` Dexie table -- they are
+ * binary blobs with no collaborative structure to preserve.
  */
 
 import { useState, useEffect, useCallback } from 'react';

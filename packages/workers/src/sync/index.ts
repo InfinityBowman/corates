@@ -9,5 +9,6 @@ export {
   projectWorkspace,
   kickWorkspaceUser,
   refreshOrgWorkspaceSessions,
+  refreshWorkspaceSessions,
   teardownWorkspace,
 } from './admin';

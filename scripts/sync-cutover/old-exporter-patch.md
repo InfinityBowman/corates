@@ -68,10 +68,12 @@ export async function handleDevExport(ctx: DevContext): Promise<Response> {
 
     const pdfsMap = studyYMap.get('pdfs') as Y.Map<unknown> | undefined;
     if (pdfsMap?.entries) {
-      for (const [fileName, pdfValue] of pdfsMap.entries()) {
+      // The map is keyed by pdfId; fileName lives inside the value map and
+      // must NOT be overwritten here (the R2 fetch path is built from it).
+      for (const [pdfId, pdfValue] of pdfsMap.entries()) {
         (study.pdfs as Record<string, unknown>[]).push({
-          ...yMapToPlain(pdfValue as Y.Map<unknown>), // key, size, tag, citation metadata…
-          fileName,
+          ...yMapToPlain(pdfValue as Y.Map<unknown>), // fileName, key, size, tag, citation metadata…
+          id: pdfId,
         });
       }
     }

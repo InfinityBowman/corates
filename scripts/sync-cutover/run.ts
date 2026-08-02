@@ -1,5 +1,5 @@
 /**
- * The cutover driver (CORATES-MAPPING.md §9). Run with:
+ * The cutover driver (CORATES-MAPPING.md section 9). Run with:
  *
  *   pnpm tsx scripts/sync-cutover/run.ts <command> ...
  *
@@ -7,7 +7,7 @@
  *
  *   transform <exports-dir> <out-dir>
  *     Read every `<projectId>.json` old-plane export (patched formatVersion 2
- *     — see old-exporter-patch.md) from exports-dir, write
+ *     - see old-exporter-patch.md) from exports-dir, write
  *     `<projectId>.snapshot.json` engine snapshots and a `report.json` into
  *     out-dir. Fails hard on any invalid export.
  *
@@ -16,9 +16,9 @@
  *     `/api/sync-admin/<projectId>/import`.
  *
  *   verify <exports-dir> --url <worker-origin> --token <SYNC_ADMIN_TOKEN>
- *     Fetch each project's engine export back and run the §9 invariant
+ *     Fetch each project's engine export back and run the section-9 invariant
  *     checks against the original old-plane export. Exits non-zero on any
- *     violation — the unfreeze gate.
+ *     violation - the unfreeze gate.
  *
  * The three stages are separate on purpose: transform runs before the
  * freeze ends (its output is inspectable), import is the one destructive
@@ -31,7 +31,7 @@ import { transformProjectExport } from '../../packages/workers/src/sync/transfor
 import { verifyProjectMigration } from '../../packages/workers/src/sync/verify';
 
 function fail(message: string): never {
-  console.error(`\n✖ ${message}`);
+  console.error(`\nFATAL: ${message}`);
   process.exit(1);
 }
 
@@ -63,7 +63,7 @@ async function adminFetch(
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
   });
   if (!response.ok) {
-    fail(`${init?.method ?? 'GET'} ${url} → ${response.status}: ${await response.text()}`);
+    throw new Error(`${init?.method ?? 'GET'} ${url} -> ${response.status}: ${await response.text()}`);
   }
   return (await response.json()) as Record<string, unknown>;
 }
@@ -86,15 +86,15 @@ if (command === 'transform') {
     writeFileSync(join(outDir, `${projectId}.snapshot.json`), JSON.stringify(snapshot));
     reports.push(report as unknown as Record<string, unknown>);
     console.log(
-      `✔ ${projectId}: ${report.studies} studies, ${report.checklists} checklists, ` +
+      `OK ${projectId}: ${report.studies} studies, ${report.checklists} checklists, ` +
         `${report.answers} answers, ${report.fieldSeeds} field seeds` +
         (report.droppedAnswerKeys.length ? `, ${report.droppedAnswerKeys.length} dropped keys` : '') +
         (report.warnings.length ? `, ${report.warnings.length} WARNINGS` : ''),
     );
-    for (const warning of report.warnings) console.warn(`  ⚠ ${warning}`);
+    for (const warning of report.warnings) console.warn(`  WARNING: ${warning}`);
   }
   writeFileSync(join(outDir, 'report.json'), JSON.stringify(reports, null, 2));
-  console.log(`\n${reports.length} projects transformed → ${outDir}`);
+  console.log(`\n${reports.length} projects transformed to ${outDir}`);
 } else if (command === 'import') {
   const [, , , outDir] = process.argv;
   if (!outDir) fail('usage: import <out-dir> --url <origin> --token <token>');
@@ -107,14 +107,26 @@ if (command === 'transform') {
   if (files.length === 0) fail(`no snapshots in ${outDir}`);
 
   const run = async () => {
+    // Import is idempotent (wholesale replace), so one failing project must
+    // not strand the rest of the fleet mid-freeze: record it, continue, and
+    // re-run for the failures after fixing.
+    const failures: string[] = [];
     for (const file of files) {
       const projectId = basename(file, '.snapshot.json');
       const snapshot = readFileSync(join(outDir, file), 'utf8');
-      const result = await adminFetch(`${origin}/api/sync-admin/${projectId}/import`, token, {
-        method: 'POST',
-        body: snapshot,
-      });
-      console.log(`✔ ${projectId}: imported ${String(result.imported)} rows`);
+      try {
+        const result = await adminFetch(`${origin}/api/sync-admin/${projectId}/import`, token, {
+          method: 'POST',
+          body: snapshot,
+        });
+        console.log(`OK ${projectId}: imported ${String(result.imported)} rows`);
+      } catch (err) {
+        failures.push(projectId);
+        console.error(`FAILED ${projectId}: ${String(err)}`);
+      }
+    }
+    if (failures.length > 0) {
+      fail(`${failures.length}/${files.length} imports failed: ${failures.join(', ')}`);
     }
     console.log(`\n${files.length} projects imported`);
   };
@@ -130,17 +142,24 @@ if (command === 'transform') {
     for (const file of exportFiles(exportsDir)) {
       const projectId = projectIdOf(file);
       const oldExport = JSON.parse(readFileSync(join(exportsDir, file), 'utf8'));
-      const engineExport = await adminFetch(`${origin}/api/sync-admin/${projectId}/export`, token);
+      let engineExport: Record<string, unknown>;
+      try {
+        engineExport = await adminFetch(`${origin}/api/sync-admin/${projectId}/export`, token);
+      } catch (err) {
+        failed++;
+        console.error(`FAILED ${projectId}: engine export fetch failed: ${String(err)}`);
+        continue;
+      }
       const result = verifyProjectMigration(oldExport, engineExport);
       if (result.ok) {
-        console.log(`✔ ${projectId}: invariants hold`);
+        console.log(`OK ${projectId}: invariants hold`);
       } else {
         failed++;
-        console.error(`✖ ${projectId}: ${result.violations.length} violations`);
+        console.error(`FAILED ${projectId}: ${result.violations.length} violations`);
         for (const violation of result.violations) console.error(`    ${violation}`);
       }
     }
-    if (failed > 0) fail(`${failed} project(s) failed verification — do NOT unfreeze`);
+    if (failed > 0) fail(`${failed} project(s) failed verification - do NOT unfreeze`);
     console.log('\nAll projects verified. Safe to unfreeze.');
   };
   run().catch(err => fail(String(err)));

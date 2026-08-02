@@ -1,10 +1,7 @@
 /**
- * useProjectOrgId - Get orgId for a project, reactively, from the D1 projects list.
+ * useProjectOrgId - Get orgId for a project, reactively: the D1 projects
+ * query, with the Dexie-stamped value covering cold hard-refreshes.
+ * Implementation lives with the other D1-fact hooks in workspace-data.
  */
 
-import { useProjectMeta } from '@/project/workspace-data';
-
-export function useProjectOrgId(projectId: string | null | undefined): string | null {
-  const { orgId } = useProjectMeta(projectId || '');
-  return projectId ? orgId : null;
-}
+export { useProjectOrgId } from '@/project/workspace-data';

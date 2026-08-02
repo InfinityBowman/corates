@@ -7,7 +7,6 @@ import {
   useWorkspaceProjectId,
   useAnswerValue,
   useAnswerWriters,
-  getAnswerValue,
   useStudy,
 } from '@/project/workspace-data';
 import type { ChecklistAnswerInput } from '@corates/shared/sync';
@@ -38,22 +37,22 @@ function CriticalButton({
   studyId,
   checklistId,
   qKey,
-  currentAnswers,
 }: {
   studyId: string;
   checklistId: string;
   qKey: string;
-  currentAnswers: boolean[][];
 }) {
   const projectId = useWorkspaceProjectId();
   const critical = useAnswerValue<boolean>(projectId, checklistId, `${qKey}.critical`) ?? false;
   const writers = useAnswerWriters(projectId, studyId, checklistId);
 
   const handleToggle = () => {
+    // Only the changed field: rows are LWW upserts, so bundling the current
+    // answers here would revert a concurrent answer click on a stale render.
     writers.updateAnswer({
       type: 'AMSTAR2',
       key: qKey,
-      data: { answers: currentAnswers, critical: !critical },
+      data: { critical: !critical },
     } as ChecklistAnswerInput);
   };
 
@@ -243,11 +242,10 @@ function StandardQuestion({
 
   const handleChange = (colIdx: number, optIdx: number) => {
     const newAnswers = derive(currentAnswers, colIdx, optIdx);
-    const critical = (getAnswerValue(projectId, checklistId, `${qKey}.critical`) as boolean) ?? false;
     writers.updateAnswer({
       type: 'AMSTAR2',
       key: qKey,
-      data: { answers: newAnswers, critical },
+      data: { answers: newAnswers },
     } as ChecklistAnswerInput);
   };
 
@@ -256,12 +254,7 @@ function StandardQuestion({
       <QuestionInfo question={schema} />
       <div className='flex'>
         <h3 className='text-foreground mb-1 text-sm font-semibold'>{schema.text}</h3>
-        <CriticalButton
-          studyId={studyId}
-          checklistId={checklistId}
-          qKey={qKey}
-          currentAnswers={currentAnswers}
-        />
+        <CriticalButton studyId={studyId} checklistId={checklistId} qKey={qKey} />
       </div>
       <ColumnsGrid
         answers={currentAnswers}
@@ -311,11 +304,10 @@ function Question1({
       if (optIdx === 0 && newAnswers[2][0]) newAnswers[2][1] = false;
       if (optIdx === 1 && newAnswers[2][1]) newAnswers[2][0] = false;
     }
-    const critical = (getAnswerValue(projectId, checklistId, 'q1.critical') as boolean) ?? false;
     writers.updateAnswer({
       type: 'AMSTAR2',
       key: 'q1',
-      data: { answers: newAnswers, critical },
+      data: { answers: newAnswers },
     });
   };
 
@@ -324,12 +316,7 @@ function Question1({
       <QuestionInfo question={question} />
       <div className='flex'>
         <h3 className='text-foreground mb-1 text-sm font-semibold'>{question.text}</h3>
-        <CriticalButton
-          studyId={studyId}
-          checklistId={checklistId}
-          qKey='q1'
-          currentAnswers={currentAnswers}
-        />
+        <CriticalButton studyId={studyId} checklistId={checklistId} qKey='q1' />
       </div>
       <ColumnsGrid
         answers={currentAnswers}
@@ -368,9 +355,6 @@ function Question9({
   const currentA = answersA || question.columns.map(c => c.options.map(() => false));
   const currentB = answersB || (question.columns2 || []).map(c => c.options.map(() => false));
 
-  const currentCritical = (qKey: string) =>
-    (getAnswerValue(projectId, checklistId, `${qKey}.critical`) as boolean) ?? false;
-
   const handleChangeA = (colIdx: number, optIdx: number) => {
     const newAnswers = currentA.map((arr: boolean[]) => [...arr]);
     newAnswers[colIdx][optIdx] = !currentA[colIdx][optIdx];
@@ -392,7 +376,7 @@ function Question9({
     writers.updateAnswer({
       type: 'AMSTAR2',
       key: 'q9a',
-      data: { answers: newAnswers, critical: currentCritical('q9a') },
+      data: { answers: newAnswers },
     });
   };
 
@@ -417,7 +401,7 @@ function Question9({
     writers.updateAnswer({
       type: 'AMSTAR2',
       key: 'q9b',
-      data: { answers: newAnswers, critical: currentCritical('q9b') },
+      data: { answers: newAnswers },
     });
   };
 
@@ -428,12 +412,12 @@ function Question9({
     writers.updateAnswer({
       type: 'AMSTAR2',
       key: 'q9a',
-      data: { answers: currentA, critical: newCritical },
+      data: { critical: newCritical },
     });
     writers.updateAnswer({
       type: 'AMSTAR2',
       key: 'q9b',
-      data: { answers: currentB, critical: newCritical },
+      data: { critical: newCritical },
     });
   };
 
@@ -502,9 +486,6 @@ function Question11({
   const currentA = answersA || question.columns.map(c => c.options.map(() => false));
   const currentB = answersB || (question.columns2 || []).map(c => c.options.map(() => false));
 
-  const currentCritical = (qKey: string) =>
-    (getAnswerValue(projectId, checklistId, `${qKey}.critical`) as boolean) ?? false;
-
   const handleChangeA = (colIdx: number, optIdx: number) => {
     const newAnswers = currentA.map((arr: boolean[]) => [...arr]);
     newAnswers[colIdx][optIdx] = !currentA[colIdx][optIdx];
@@ -524,7 +505,7 @@ function Question11({
     writers.updateAnswer({
       type: 'AMSTAR2',
       key: 'q11a',
-      data: { answers: newAnswers, critical: currentCritical('q11a') },
+      data: { answers: newAnswers },
     });
   };
 
@@ -547,7 +528,7 @@ function Question11({
     writers.updateAnswer({
       type: 'AMSTAR2',
       key: 'q11b',
-      data: { answers: newAnswers, critical: currentCritical('q11b') },
+      data: { answers: newAnswers },
     });
   };
 
@@ -558,12 +539,12 @@ function Question11({
     writers.updateAnswer({
       type: 'AMSTAR2',
       key: 'q11a',
-      data: { answers: currentA, critical: newCritical },
+      data: { critical: newCritical },
     });
     writers.updateAnswer({
       type: 'AMSTAR2',
       key: 'q11b',
-      data: { answers: currentB, critical: newCritical },
+      data: { critical: newCritical },
     });
   };
 

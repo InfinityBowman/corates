@@ -22,6 +22,7 @@ import {
 import { eq, and } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS, AUTH_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import { insertWithQuotaCheck, type InsertRollbackMeta } from '../../lib/quotaTransaction';
+import { refreshWorkspaceSessions } from '../../sync/admin';
 import type { Env } from '../../types';
 
 interface AcceptInvitationActor {
@@ -213,6 +214,9 @@ export async function acceptInvitation(
   } else {
     await db.batch(batchOps as unknown as Parameters<typeof db.batch>[0]);
   }
+
+  // Poke live sessions so other clients refetch the members list.
+  await refreshWorkspaceSessions(env, invitation.projectId);
 
   // Get project name and org slug for response
   const project = await db

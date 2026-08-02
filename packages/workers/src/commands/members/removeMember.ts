@@ -10,7 +10,7 @@ import { createDb } from '@corates/db/client';
 import { projectMembers, projects } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS } from '@corates/shared';
-import { kickWorkspaceUser } from '../../sync/admin';
+import { kickWorkspaceUser, refreshWorkspaceSessions } from '../../sync/admin';
 import { notifyUser, NotificationTypes } from '../lib/notifications';
 import { getProjectMembership, requireSafeRemoval } from '../../policies';
 import type { Env } from '../../types';
@@ -54,8 +54,10 @@ export async function removeMember(
     .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, userId)));
 
   // Kick the removed member's live sync-engine sessions (permanent close;
-  // reconnects re-run authorize against D1 and fail with not-a-member).
+  // reconnects re-run authorize against D1 and fail with not-a-member), and
+  // poke the remaining sessions so their clients refetch the members list.
   await kickWorkspaceUser(env, projectId, userId);
+  await refreshWorkspaceSessions(env, projectId);
 
   // Send notification to removed user (if not self-removal)
   if (!isSelfRemoval) {

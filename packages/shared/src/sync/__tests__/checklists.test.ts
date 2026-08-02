@@ -178,6 +178,34 @@ describe('checklist.create', () => {
     expect(duplicate.error?.code).toBe('DuplicateChecklist');
     expect(engine.get('checklists', 'chk-2')).toBeNull();
   });
+
+  it('rejects a duplicate reconciled (assignedTo: null) checklist for the same outcome', () => {
+    // The concurrent-reconcile-open race: both reviewers create the consensus
+    // checklist; the loser must be rejected and roll back, and the client
+    // adopts the winner (ReconciliationWrapper's repair effect).
+    const engine = newEngine();
+    seedStudy(engine);
+    engine.mutate('outcome.create', { id: 'out-1', name: 'Mortality', createdBy: 'user-1', now: NOW });
+    engine.mutate('checklist.create', {
+      id: 'chk-consensus-1',
+      studyId: 'study-1',
+      type: 'ROB2',
+      assignedTo: null,
+      outcomeId: 'out-1',
+      now: NOW,
+    });
+    const duplicate = engine.mutate('checklist.create', {
+      id: 'chk-consensus-2',
+      studyId: 'study-1',
+      type: 'ROB2',
+      assignedTo: null,
+      outcomeId: 'out-1',
+      now: LATER,
+    });
+    expect(duplicate.error?.code).toBe('DuplicateChecklist');
+    expect(engine.get('checklists', 'chk-consensus-2')).toBeNull();
+    expect(engine.get('checklists', 'chk-consensus-1')).not.toBeNull();
+  });
 });
 
 describe('checklist.updateAnswer', () => {
@@ -207,6 +235,35 @@ describe('checklist.updateAnswer', () => {
     expect(engine.get('answers', answerRowId('chk-1', 'q1.answers'))?.value).toEqual(grid);
     expect(engine.get('answers', answerRowId('chk-1', 'q1.critical'))?.value).toBe(true);
     expect(engine.get('checklists', 'chk-1')).toMatchObject({ status: 'in-progress', updatedAt: LATER });
+  });
+
+  it('writes only the fields present in an AMSTAR2 update (answer/critical never clobber each other)', () => {
+    const engine = newEngine();
+    createAmstar2(engine);
+    const grid = [[true, false, false, false], [false], [true, false]];
+    engine.mutate('checklist.updateAnswer', {
+      checklistId: 'chk-1',
+      input: { type: 'AMSTAR2', key: 'q1', data: { answers: grid, critical: true } },
+      now: LATER,
+    });
+
+    // An answers-only update leaves the critical row untouched...
+    const nextGrid = [[false, true, false, false], [true], [false, true]];
+    engine.mutate('checklist.updateAnswer', {
+      checklistId: 'chk-1',
+      input: { type: 'AMSTAR2', key: 'q1', data: { answers: nextGrid } },
+      now: LATER,
+    });
+    expect(engine.get('answers', answerRowId('chk-1', 'q1.critical'))?.value).toBe(true);
+
+    // ...and a critical-only update leaves the answers row untouched.
+    engine.mutate('checklist.updateAnswer', {
+      checklistId: 'chk-1',
+      input: { type: 'AMSTAR2', key: 'q1', data: { critical: false } },
+      now: LATER,
+    });
+    expect(engine.get('answers', answerRowId('chk-1', 'q1.answers'))?.value).toEqual(nextGrid);
+    expect(engine.get('answers', answerRowId('chk-1', 'q1.critical'))?.value).toBe(false);
   });
 
   it('does not touch the note row on an answer update', () => {

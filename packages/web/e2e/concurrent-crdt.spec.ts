@@ -249,12 +249,9 @@ test.describe('Concurrent CRDT: AMSTAR2', () => {
 
     const projectId = await createProject(setupPage, 'AMSTAR2 CRDT Test');
     await addProjectMember(scenario.orgId, projectId, scenario.userB.id, scenario.cookiesA);
-    // Members are a D1 fact behind a stable query; an out-of-band API add
-    // needs a reload before the assign dialog can offer the new member.
-    await setupPage.reload();
-    await expect(setupPage.getByRole('tab', { name: /Overview/i })).toBeVisible({
-      timeout: 15_000,
-    });
+    // No reload: the worker refresh-disconnects the project's live sessions on
+    // membership changes and the client refetches members on re-sync, so the
+    // assign dialog below sees the new member (assignReviewers waits for it).
     await addStudyViaPdf(setupPage);
     await assignReviewers(setupPage);
 
@@ -339,12 +336,9 @@ test.describe('Concurrent CRDT: ROB2', () => {
 
     const projectId = await createProject(setupPage, 'ROB2 CRDT Test');
     await addProjectMember(scenario.orgId, projectId, scenario.userB.id, scenario.cookiesA);
-    // Members are a D1 fact behind a stable query; an out-of-band API add
-    // needs a reload before the assign dialog can offer the new member.
-    await setupPage.reload();
-    await expect(setupPage.getByRole('tab', { name: /Overview/i })).toBeVisible({
-      timeout: 15_000,
-    });
+    // No reload: the worker refresh-disconnects the project's live sessions on
+    // membership changes and the client refetches members on re-sync, so the
+    // assign dialog below sees the new member (assignReviewers waits for it).
     await addStudyViaPdf(setupPage);
     await assignReviewers(setupPage);
 

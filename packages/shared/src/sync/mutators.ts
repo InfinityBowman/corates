@@ -178,8 +178,10 @@ export const syncMutators = defineMutators(
         updates: z.object({
           name: z.string().optional(),
           description: z.string().optional(),
-          reviewer1: z.string().optional(),
-          reviewer2: z.string().optional(),
+          // Null means un-assign; the merge deletes the key so the stored row
+          // never carries a null (the row schema keeps plain optional strings).
+          reviewer1: z.string().nullable().optional(),
+          reviewer2: z.string().nullable().optional(),
           ...studyMetadataSchema.shape,
         }),
         now: timestamp,
@@ -190,7 +192,8 @@ export const syncMutators = defineMutators(
         if (!study) throw new AppError('NotFound', `Study ${id} does not exist`);
         const merged = { ...study };
         for (const [key, value] of Object.entries(updates)) {
-          if (value !== undefined) (merged as Record<string, unknown>)[key] = value;
+          if (value === null) delete (merged as Record<string, unknown>)[key];
+          else if (value !== undefined) (merged as Record<string, unknown>)[key] = value;
         }
         tx.put('studies', id, { ...merged, updatedAt: now });
       },
@@ -678,7 +681,10 @@ export const syncMutators = defineMutators(
       apply: (tx, { id, updates, now }, ctx) => {
         assertWritable(ctx);
         const annotation = tx.get('annotations', id);
-        if (!annotation) throw new AppError('NotFound', `Annotation ${id} does not exist`);
+        // A late EmbedPDF update racing a delete is expected (the editor keeps
+        // emitting briefly after removal) — a no-op matching the pre-engine
+        // handler's early return, not an error toast.
+        if (!annotation) return;
         tx.put('annotations', id, {
           ...annotation,
           ...(updates.type !== undefined && { type: updates.type }),

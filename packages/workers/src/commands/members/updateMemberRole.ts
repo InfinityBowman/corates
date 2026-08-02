@@ -11,6 +11,7 @@ import { eq, and } from 'drizzle-orm';
 import { notifyUser, NotificationTypes } from '../lib/notifications';
 import { requireSafeRoleChange } from '../../policies';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
+import { refreshWorkspaceSessions } from '../../sync/admin';
 import type { Env } from '../../types';
 import type { ProjectRole } from '../../policies/lib/roles';
 
@@ -51,6 +52,11 @@ export async function updateMemberRole(
       cause: err instanceof Error ? err.message : String(err),
     });
   }
+
+  // Refresh-disconnect the project's sessions: the changed user's connection
+  // re-runs authorize and picks up the fresh role stamp (the invariant
+  // documented in authorize.ts), and other clients refetch the members list.
+  await refreshWorkspaceSessions(env, projectId);
 
   // Send notification to the user whose role was updated
   try {

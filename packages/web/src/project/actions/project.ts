@@ -37,7 +37,10 @@ export const projectActions = {
       const orgId = connectionPool.getActiveOrgId();
       if (!projectId || !orgId) throw new Error('No active project connection');
 
-      await updateProject({ data: { orgId, projectId, description: trimmed || undefined } });
+      // Send '' as-is: the server maps it to null (clear). Turning it into
+      // undefined made clearing a description a silent no-op that reverted
+      // on reload.
+      await updateProject({ data: { orgId, projectId, description: trimmed } });
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
     } catch (err) {
       console.error('Error updating description:', err);

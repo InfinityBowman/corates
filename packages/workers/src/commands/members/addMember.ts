@@ -13,6 +13,7 @@ import { createDomainError, PROJECT_ERRORS } from '@corates/shared';
 import type { OrgId, ProjectId, UserId } from '@corates/shared/ids';
 import { notifyUser, NotificationTypes } from '../lib/notifications';
 import { insertWithQuotaCheck, type InsertRollbackMeta } from '../../lib/quotaTransaction';
+import { refreshWorkspaceSessions } from '../../sync/admin';
 import type { Env } from '../../types';
 import type { ProjectRole } from '../../policies/lib/roles';
 
@@ -125,6 +126,9 @@ export async function addMember(
   } else {
     await db.batch(insertOperations as unknown as Parameters<typeof db.batch>[0]);
   }
+
+  // Poke live sessions so other clients refetch the members list.
+  await refreshWorkspaceSessions(env, projectId);
 
   // Get project name for notification
   const project = await db

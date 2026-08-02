@@ -115,11 +115,16 @@ const oldStudySchema = z.looseObject({
   journal: z.string().nullable().optional(),
   doi: z.string().nullable().optional(),
   abstract: z.string().nullable().optional(),
+  importSource: z.string().nullable().optional(),
   pdfUrl: z.string().nullable().optional(),
   pdfSource: z.string().nullable().optional(),
   pdfAccessible: z.boolean().nullable().optional(),
   pmid: z.string().nullable().optional(),
   url: z.string().nullable().optional(),
+  volume: z.string().nullable().optional(),
+  issue: z.string().nullable().optional(),
+  pages: z.string().nullable().optional(),
+  type: z.string().nullable().optional(),
   reviewer1: z.string().nullable().optional(),
   reviewer2: z.string().nullable().optional(),
   checklists: z.array(oldChecklistSchema).default([]),
@@ -191,6 +196,21 @@ export interface TransformResult {
 // Helpers
 
 const MIGRATION_ACTOR = 'migration';
+
+/**
+ * Pre-2025-12-29 status vocabulary (commit 5e4d3cbe changed it with no Y.Doc
+ * backfill), still carried by checklists not written since. That commit's own
+ * domain-logic migration defines the mapping.
+ */
+const LEGACY_STATUS_MAP: Record<string, string> = {
+  completed: CHECKLIST_STATUS.FINALIZED,
+  'awaiting-reconcile': CHECKLIST_STATUS.REVIEWER_COMPLETED,
+};
+
+export function normalizeChecklistStatus(status: string | undefined): string {
+  if (!status) return CHECKLIST_STATUS.PENDING;
+  return LEGACY_STATUS_MAP[status] ?? status;
+}
 
 function coerceTime(value: number | string | undefined, fallback: number): number {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
@@ -271,6 +291,33 @@ function flattenNestedAnswers(
   return flat;
 }
 
+/**
+ * Reconcile sessions on the old plane stored ROBINS-I Section B consolidated
+ * comments under `b1.comment` (the pre-fix `textFieldKey` resolution) while
+ * the canonical row key is `sectionB.b1.comment`. Salvage those values into
+ * the canonical key instead of dropping them; a non-empty canonical value
+ * (a normal instrument write) wins over the legacy alias.
+ */
+export function remapLegacySectionBKeys(
+  flat: Record<string, JsonValue>,
+  defaults: Record<string, JsonValue>,
+  onRemap?: (from: string, to: string) => void,
+): Record<string, JsonValue> {
+  const out: Record<string, JsonValue> = { ...flat };
+  for (const [key, value] of Object.entries(flat)) {
+    if (key in defaults) continue;
+    const canonical = `sectionB.${key}`;
+    if (!(canonical in defaults)) continue;
+    delete out[key];
+    const existing = out[canonical];
+    if (existing == null || existing === '') {
+      out[canonical] = value;
+      onRemap?.(key, canonical);
+    }
+  }
+  return out;
+}
+
 // ---------------------------------------------------------------------------
 // The transform
 
@@ -323,11 +370,16 @@ export function transformProjectExport(input: unknown): TransformResult {
       ...(study.journal ? { journal: study.journal } : {}),
       ...(study.doi ? { doi: study.doi } : {}),
       ...(study.abstract ? { abstract: study.abstract } : {}),
+      ...(study.importSource ? { importSource: study.importSource } : {}),
       ...(study.pdfUrl ? { pdfUrl: study.pdfUrl } : {}),
       ...(study.pdfSource ? { pdfSource: study.pdfSource } : {}),
       ...(study.pdfAccessible != null ? { pdfAccessible: study.pdfAccessible } : {}),
       ...(study.pmid ? { pmid: study.pmid } : {}),
       ...(study.url ? { url: study.url } : {}),
+      ...(study.volume ? { volume: study.volume } : {}),
+      ...(study.issue ? { issue: study.issue } : {}),
+      ...(study.pages ? { pages: study.pages } : {}),
+      ...(study.type ? { type: study.type } : {}),
       ...(study.reviewer1 ? { reviewer1: study.reviewer1 } : {}),
       ...(study.reviewer2 ? { reviewer2: study.reviewer2 } : {}),
       createdAt: studyCreatedAt,
@@ -346,13 +398,19 @@ export function transformProjectExport(input: unknown): TransformResult {
         );
       }
       const createdAt = coerceTime(checklist.createdAt, studyCreatedAt);
+      const status = normalizeChecklistStatus(checklist.status);
+      if (status !== (checklist.status ?? CHECKLIST_STATUS.PENDING)) {
+        report.warnings.push(
+          `checklist ${checklist.id}: legacy status "${checklist.status}" mapped to "${status}"`,
+        );
+      }
       put('checklists', checklist.id, {
         id: checklist.id,
         studyId: study.id,
         type,
         title: checklist.title ?? `${type} Checklist`,
         assignedTo: checklist.assignedTo ?? null,
-        status: checklist.status ?? CHECKLIST_STATUS.PENDING,
+        status,
         outcomeId: checklist.outcomeId ?? null,
         createdAt,
         updatedAt: coerceTime(checklist.updatedAt, createdAt),
@@ -360,10 +418,14 @@ export function transformProjectExport(input: unknown): TransformResult {
       report.checklists++;
 
       const defaults = defaultAnswerRows(type);
-      const exported =
+      const exported = remapLegacySectionBKeys(
         answersAreFlat(checklist.answers) ?
           (checklist.answers as Record<string, JsonValue>)
-        : flattenNestedAnswers(type, checklist.answers, report.warnings, checklist.id);
+        : flattenNestedAnswers(type, checklist.answers, report.warnings, checklist.id),
+        defaults,
+        (from, to) =>
+          report.warnings.push(`checklist ${checklist.id}: remapped legacy key "${from}" to "${to}"`),
+      );
 
       const merged: Record<string, JsonValue> = { ...defaults };
       for (const [key, value] of Object.entries(exported)) {
@@ -447,12 +509,14 @@ export function transformProjectExport(input: unknown): TransformResult {
       const consensus = progress.reconciledChecklistId ?
         checklistById.get(progress.reconciledChecklistId)
       : undefined;
-      if (consensus && consensus.status !== CHECKLIST_STATUS.FINALIZED) {
+      if (consensus && normalizeChecklistStatus(consensus.status) !== CHECKLIST_STATUS.FINALIZED) {
         const type = consensus.type as ChecklistType;
-        const exported =
+        const exported = remapLegacySectionBKeys(
           answersAreFlat(consensus.answers) ?
             (consensus.answers as Record<string, JsonValue>)
-          : flattenNestedAnswers(type, consensus.answers, report.warnings, consensus.id);
+          : flattenNestedAnswers(type, consensus.answers, report.warnings, consensus.id),
+          defaultAnswerRows(type),
+        );
         for (const textKey of textAnswerKeys(type)) {
           const text = exported[textKey];
           if (typeof text === 'string' && text.length > 0) {
@@ -462,6 +526,32 @@ export function transformProjectExport(input: unknown): TransformResult {
         }
       }
     }
+  }
+
+  // Every produced row must satisfy the live schema — the same validation the
+  // DO applies on import. Failing here moves the failure before the freeze
+  // (transform output is inspectable; a mid-fleet import 400 is not).
+  const tables = syncApp.schema.tables as Record<
+    string,
+    { safeParse: (data: unknown) => { success: boolean; error?: { message: string } } }
+  >;
+  const schemaErrors: string[] = [];
+  for (const row of rows) {
+    const tableSchema = tables[row.tbl];
+    if (!tableSchema) {
+      schemaErrors.push(`${row.tbl}/${row.id}: unknown table`);
+      continue;
+    }
+    const result = tableSchema.safeParse(row.data);
+    if (!result.success) {
+      schemaErrors.push(`${row.tbl}/${row.id}: ${result.error?.message ?? 'invalid'}`);
+    }
+  }
+  if (schemaErrors.length > 0) {
+    throw new Error(
+      `transform: ${schemaErrors.length} row(s) fail the live schema — fix before the freeze:\n` +
+        schemaErrors.slice(0, 20).join('\n'),
+    );
   }
 
   return {

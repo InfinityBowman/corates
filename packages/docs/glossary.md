@@ -77,15 +77,13 @@ The process of resolving disagreements between multiple reviewers' checklist ass
 
 ### Yjs (Y.js)
 
-A CRDT (Conflict-free Replicated Data Type) library for real-time collaborative editing. In CoRATES:
+A CRDT (Conflict-free Replicated Data Type) library for collaborative text
+editing. Since the sync-engine rewrite, CoRATES uses Yjs only for
+reconciliation consolidated notes: per-field Y.Docs attached to the sync
+session's binary lane (the `yjsFields` extension), serialized back into
+answer rows on finalize. All other project content lives in sync-engine rows.
 
-- **ydoc** - The Yjs document containing shared state
-- **Y.Array** - Shared array (e.g., `studies`, `checklists`)
-- **Y.Map** - Shared key-value map (e.g., `metadata`)
-- **provider** - WebSocket connection to sync ydoc with backend
-- **awareness** - User presence protocol (who's online, cursor positions)
-
-**Related:** [Yjs Sync Guide](guides/yjs-sync.md), `packages/workers/src/durable-objects/ProjectDoc.ts`
+**Related:** [Sync Engine Guide](guides/yjs-sync.md), `packages/shared/src/sync/`
 
 ### Durable Objects (DO)
 

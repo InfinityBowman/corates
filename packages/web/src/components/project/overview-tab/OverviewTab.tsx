@@ -176,8 +176,17 @@ export function OverviewTab() {
   }, [pendingRemoveMember, navigate]);
 
   const interRaterMetrics: InterRaterMetrics = useMemo(() => {
-    const getChecklistData = (studyId: string, checklistId: string) =>
-      project.checklist.getData(studyId, checklistId);
+    // getData throws while the pool has no active connection (a cold refresh
+    // renders this tab from cached rows before the gate's effects run) —
+    // treat that window as "no data" rather than crashing into the section
+    // error boundary.
+    const getChecklistData = (studyId: string, checklistId: string) => {
+      try {
+        return project.checklist.getData(studyId, checklistId);
+      } catch {
+        return null;
+      }
+    };
     return calculateInterRaterReliability(studies, getChecklistData);
   }, [studies]);
 

@@ -19,7 +19,7 @@ import { queryClient } from '@/lib/queryClient';
 import { queryKeys } from '@/lib/queryKeys';
 import { getWsBaseUrl } from '@/config/api';
 import { showToast } from '@/lib/toast';
-import { db, deleteProjectData } from '@/primitives/db.js';
+import { db, deleteProjectData, trackSyncCache } from '@/primitives/db.js';
 import { loadLegacyLocalRows } from './localProject';
 import {
   createLocalCollections,
@@ -173,7 +173,16 @@ class ConnectionPool {
     });
     entry.workspace = workspace;
     entry.yfields = createYjsFields(workspace.client);
+    // The engine now persists this project to its own `cf-sync:<id>` database;
+    // record it so logout / membership revocation can wipe that cache.
+    trackSyncCache(projectId).catch(err =>
+      console.warn('Failed to track sync cache for cleanup:', projectId, err),
+    );
 
+    // Membership is D1-authoritative with no live channel of its own; the
+    // workers refresh-disconnect a project's sessions on membership changes,
+    // so a re-sync after having been synced is the poke to refetch members.
+    let hadSynced = false;
     const applyStatus = (status: string) => {
       if (cancelled()) return;
       const current = useProjectStore.getState().connections[projectId];
@@ -183,6 +192,12 @@ class ConnectionPool {
       else if (status === 'fatal') return; // handled by onFatal with the reason
       else phase = workspace.client.hydrated ? 'cached' : 'connecting';
       useProjectStore.getState().setConnectionState(projectId, phase);
+      if (phase === 'synced') {
+        if (hadSynced) {
+          void queryClient.invalidateQueries({ queryKey: queryKeys.projects.members(projectId) });
+        }
+        hadSynced = true;
+      }
     };
 
     entry._cleanupHandlers.push(workspace.client.subscribeStatus(applyStatus));
@@ -257,6 +272,20 @@ class ConnectionPool {
         entry.localPersistInFlight = false;
         if (entry.localPersistQueued) return this.persistLocalNow(projectId, entry);
       });
+  }
+
+  /**
+   * Drop a local-practice entry WITHOUT persisting (dev/e2e seam): the row
+   * store is being deliberately deleted so the legacy converter runs on next
+   * load, and the pagehide flush must not resurrect it from live collections.
+   */
+  discardLocalEntry(projectId: string): void {
+    const entry = this.registry.get(projectId);
+    if (!entry?.localCollections) return;
+    entry.localPersistQueued = false;
+    entry.localCollections = null;
+    this.registry.delete(projectId);
+    useProjectStore.getState().clearProject(projectId);
   }
 
   /** Await the current write chain (test seams and teardown paths). */

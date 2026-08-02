@@ -18,8 +18,8 @@ type SyncClient = NonNullable<ReturnType<typeof connectionPool.getActiveClient>>
 type StudyUpdates = StudyMetadata & {
   name?: string;
   description?: string;
-  reviewer1?: string;
-  reviewer2?: string;
+  reviewer1?: string | null;
+  reviewer2?: string | null;
 };
 
 function requireClient(): SyncClient {
@@ -40,12 +40,15 @@ function getStudyNameFromFilename(pdfFileName: string | null | undefined): strin
 /**
  * Shape loose caller-supplied updates for the study mutators: drop null/
  * undefined values (the Zod schemas take strings, not nulls) and coerce
- * `publicationYear` to a string (reference lookups return numbers).
+ * `publicationYear` to a string (reference lookups return numbers). The
+ * reviewer fields keep null: it is the un-assign signal `study.update`
+ * deletes the key on.
  */
 function toStudyUpdates(updates: Record<string, unknown>): StudyUpdates {
   const shaped: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(updates)) {
-    if (value === undefined || value === null) continue;
+    if (value === undefined) continue;
+    if (value === null && key !== 'reviewer1' && key !== 'reviewer2') continue;
     shaped[key] = key === 'publicationYear' ? String(value) : value;
   }
   return shaped as StudyUpdates;

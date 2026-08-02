@@ -79,6 +79,18 @@ interface LocalProjectRow {
   };
 }
 
+/** Projects with an engine sync cache (a `cf-sync:<projectId>` IndexedDB
+ * database) on this device. Tracked here because Safari has no
+ * `indexedDB.databases()`: wiping the caches on logout or membership
+ * revocation needs an enumerable list. Also stamps the project's orgId
+ * (immutable) so a cold hard-refresh resolves it without waiting on the
+ * network projects query. */
+interface SyncCacheRow {
+  id: string;
+  updatedAt: number;
+  orgId?: string;
+}
+
 class CoratesDB extends Dexie {
   projects!: Table<ProjectRow, string>;
   localProjects!: Table<LocalProjectRow, string>;
@@ -91,6 +103,7 @@ class CoratesDB extends Dexie {
   // type + `migrateLocalChecklistsToYDoc` once the rollback window has passed.
   localChecklists!: Table<LocalChecklistRow, string>;
   localChecklistPdfs!: Table<LocalChecklistPdfRow, string>;
+  syncCaches!: Table<SyncCacheRow, string>;
 
   constructor() {
     super('corates', { addons: [yDexie] });
@@ -119,6 +132,12 @@ class CoratesDB extends Dexie {
     this.version(3).stores({
       localProjects: 'id, updatedAt',
     });
+
+    // v4: track which projects have an engine sync cache so logout/kick can
+    // wipe the per-project `cf-sync:*` IndexedDB databases.
+    this.version(4).stores({
+      syncCaches: 'id, updatedAt',
+    });
   }
 }
 
@@ -138,6 +157,69 @@ db.on('ready', async () => {
   }
 });
 
+// The engine's own persistence lives outside Dexie: one `cf-sync:<projectId>`
+// IndexedDB database per project plus a `cf-sync:client-id:<projectId>`
+// sessionStorage key. Both hold project content / identity and must go when
+// access does.
+const SYNC_DB_PREFIX = 'cf-sync:';
+const SYNC_CLIENT_ID_PREFIX = 'cf-sync:client-id:';
+
+/** Record that a project has an engine sync cache on this device. */
+export async function trackSyncCache(projectId: string): Promise<void> {
+  const existing = await db.syncCaches.get(projectId);
+  await db.syncCaches.put({ ...existing, id: projectId, updatedAt: Date.now() });
+}
+
+/** Stamp a project's orgId for cold-refresh resolution (see SyncCacheRow). */
+export async function rememberProjectOrgId(projectId: string, orgId: string): Promise<void> {
+  const existing = await db.syncCaches.get(projectId);
+  await db.syncCaches.put({ updatedAt: Date.now(), ...existing, id: projectId, orgId });
+}
+
+export async function getCachedProjectOrgId(projectId: string): Promise<string | null> {
+  return (await db.syncCaches.get(projectId))?.orgId ?? null;
+}
+
+/**
+ * Delete one engine cache database. Resolves on completion, or after a short
+ * grace period if an open connection is still blocking deletion — the browser
+ * finishes the delete once that connection closes, so an early resolve never
+ * leaves the data behind, it only stops logout/kick from hanging on it.
+ */
+function deleteSyncDatabase(projectId: string): Promise<void> {
+  return new Promise(resolve => {
+    let settled = false;
+    const done = () => {
+      if (!settled) {
+        settled = true;
+        resolve();
+      }
+    };
+    try {
+      const request = indexedDB.deleteDatabase(`${SYNC_DB_PREFIX}${projectId}`);
+      request.onsuccess = done;
+      request.onerror = done;
+      setTimeout(done, 2000);
+    } catch {
+      done();
+    }
+  });
+}
+
+function clearSyncClientId(projectId: string): void {
+  try {
+    sessionStorage.removeItem(`${SYNC_CLIENT_ID_PREFIX}${encodeURIComponent(projectId)}`);
+  } catch {
+    /* sessionStorage unavailable */
+  }
+}
+
+async function removeSyncCache(projectId: string): Promise<void> {
+  clearSyncClientId(projectId);
+  await deleteSyncDatabase(projectId);
+  await db.syncCaches.delete(projectId);
+}
+
 /**
  * Delete all data for a specific project
  * Used when user is removed from a project or project is deleted
@@ -147,6 +229,7 @@ export async function deleteProjectData(projectId: string): Promise<void> {
     await db.projects.delete(projectId);
     await db.pdfs.where('projectId').equals(projectId).delete();
   });
+  await removeSyncCache(projectId);
 }
 
 /**
@@ -162,4 +245,17 @@ export async function clearAllData(): Promise<void> {
     await db.avatars.clear();
     await db.formStates.clear();
   });
+
+  // Engine caches: every tracked project, in parallel; the tracked list is
+  // the authority (Safari cannot enumerate databases). Clear every client-id
+  // key too so the next login in this tab mints a fresh mutation identity.
+  const tracked = await db.syncCaches.toArray();
+  await Promise.all(tracked.map(row => removeSyncCache(row.id)));
+  try {
+    for (const key of Object.keys(sessionStorage)) {
+      if (key.startsWith(SYNC_CLIENT_ID_PREFIX)) sessionStorage.removeItem(key);
+    }
+  } catch {
+    /* sessionStorage unavailable */
+  }
 }

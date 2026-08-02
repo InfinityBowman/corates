@@ -392,6 +392,21 @@ export function ReconciliationWrapper({
         });
         setReconciledChecklistId(firstCreated.id);
       }
+      return;
+    }
+
+    // The latched id may point at nothing: our optimistic create lost a
+    // concurrent-creation race (the server rejected it as DuplicateChecklist
+    // and rolled the row back), which the >1 branch never sees because only
+    // the winner's row remains. Adopt the surviving checklist instead of
+    // rendering a wedged page against a dead id.
+    if (allReconciled.length === 1 && allReconciled[0].id !== reconciledChecklistId) {
+      saveReconciliationProgress({
+        checklist1Id,
+        checklist2Id,
+        reconciledChecklistId: allReconciled[0].id,
+      });
+      setReconciledChecklistId(allReconciled[0].id);
     }
   }, [
     reconciledChecklistId,

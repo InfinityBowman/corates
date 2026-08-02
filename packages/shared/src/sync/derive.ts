@@ -337,5 +337,11 @@ export function textFieldKey(ref: {
   fieldKey?: string;
 }): string {
   if (ref.type === 'AMSTAR2') return `${ref.questionKey}.note`;
+  // Section B sub-questions are namespaced under the section in the row plane
+  // (`sectionB.b1.comment`); domain signalling questions are globally unique
+  // and keyed bare (`d1_1.comment`). See defaultAnswerRows.
+  if (ref.sectionKey === 'sectionB' && ref.questionKey) {
+    return `sectionB.${ref.questionKey}.${ref.fieldKey}`;
+  }
   return ref.questionKey ? `${ref.questionKey}.${ref.fieldKey}` : `${ref.sectionKey}.${ref.fieldKey}`;
 }

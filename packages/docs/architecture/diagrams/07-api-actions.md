@@ -114,7 +114,7 @@ flowchart TB
             InsertMember -->|DB Error| AddDBError[SYSTEM_DB_ERROR<br/>500]
             InsertMember -->|Success| NotifyUser[Send notification<br/>via UserSession DO]
             NotifyUser -->|Failed| NotifyUserError[Log error<br/>Continue]
-            NotifyUser -->|Success| SyncMemberDO[Sync member to DO]
+            NotifyUser -->|Success| SyncMemberDO[Refresh workspace sessions<br/>clients refetch members]
             SyncMemberDO -->|Failed| SyncMemberError[Log error<br/>Continue]
             SyncMemberDO -->|Success| AddSuccess[201 Created<br/>Return member]
         end
@@ -128,7 +128,7 @@ flowchart TB
             CheckLastOwner -->|Yes| LastOwnerError[PROJECT_LAST_OWNER<br/>400<br/>Assign another owner first]
             CheckLastOwner -->|No| UpdateRoleDB[Update D1<br/>projectMembers.role]
             UpdateRoleDB -->|DB Error| UpdateRoleDBError[SYSTEM_DB_ERROR<br/>500]
-            UpdateRoleDB -->|Success| SyncRoleDO[Sync role to DO]
+            UpdateRoleDB -->|Success| SyncRoleDO[Refresh workspace sessions<br/>reconnects re-stamp role]
             SyncRoleDO -->|Failed| SyncRoleError[Log error<br/>Continue]
             SyncRoleDO -->|Success| UpdateRoleSuccess[200 OK<br/>Success response]
         end
@@ -142,7 +142,7 @@ flowchart TB
             CheckRemoveLastOwner -->|Yes| RemoveLastOwnerError[PROJECT_LAST_OWNER<br/>400<br/>Assign another owner first]
             CheckRemoveLastOwner -->|No| RemoveDB[Delete from D1<br/>projectMembers]
             RemoveDB -->|DB Error| RemoveDBError[SYSTEM_DB_ERROR<br/>500]
-            RemoveDB -->|Success| SyncRemoveDO[Sync removal to DO<br/>forces disconnect]
+            RemoveDB -->|Success| SyncRemoveDO[Kick removed user's sessions<br/>refresh the rest]
             SyncRemoveDO -->|Failed| SyncRemoveError[Log error<br/>Continue]
             SyncRemoveDO -->|Success| NotifyRemoved{Self-removal?}
             NotifyRemoved -->|Yes| RemoveSuccess[200 OK<br/>Success response]

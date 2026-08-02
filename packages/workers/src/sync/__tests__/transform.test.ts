@@ -39,6 +39,11 @@ function buildOldExport(projectId: string) {
         firstAuthor: 'Page',
         publicationYear: 2021,
         doi: '10.1136/bmj.n71',
+        importSource: 'pubmed',
+        volume: '372',
+        issue: '8284',
+        pages: 'n71',
+        type: 'journal-article',
         reviewer1: 'user-a',
         reviewer2: 'user-b',
         checklists: [
@@ -60,11 +65,12 @@ function buildOldExport(projectId: string) {
           },
           {
             // Nested legacy answers (doc untouched since the flat-key
-            // migration shipped): flattens through expandAnswerUpdate.
+            // migration shipped): flattens through expandAnswerUpdate. Also
+            // carries the pre-2025-12-29 status vocabulary.
             id: 'chk-nested',
             type: 'AMSTAR2',
             assignedTo: 'user-b',
-            status: CHECKLIST_STATUS.IN_PROGRESS,
+            status: 'awaiting-reconcile',
             createdAt: 1_753_400_000_000,
             updatedAt: 1_753_400_000_000,
             answers: {
@@ -155,6 +161,63 @@ function buildOldExport(projectId: string) {
           },
         },
       },
+      {
+        id: 'study-3',
+        name: 'Higgins et al. 2020',
+        createdAt: NOW_ISO,
+        updatedAt: NOW_ISO,
+        reviewer1: 'user-a',
+        reviewer2: 'user-b',
+        checklists: [
+          {
+            id: 'chk-ri-1',
+            type: 'ROBINS_I',
+            assignedTo: 'user-a',
+            status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+            outcomeId: 'outcome-1',
+            createdAt: NOW_ISO,
+            updatedAt: NOW_ISO,
+            answers: { 'sectionB.b1': 'Y' },
+          },
+          {
+            id: 'chk-ri-2',
+            type: 'ROBINS_I',
+            assignedTo: 'user-b',
+            status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+            outcomeId: 'outcome-1',
+            createdAt: NOW_ISO,
+            updatedAt: NOW_ISO,
+            answers: { 'sectionB.b1': 'PY' },
+          },
+          {
+            // In-progress ROBINS-I consensus carrying a Section B comment
+            // under the legacy reconcile-session alias (`b1.comment`); the
+            // transformer must salvage it into `sectionB.b1.comment`.
+            id: 'chk-ri-consensus',
+            type: 'ROBINS_I',
+            assignedTo: null,
+            status: CHECKLIST_STATUS.RECONCILING,
+            outcomeId: 'outcome-1',
+            createdAt: NOW_ISO,
+            updatedAt: NOW_ISO,
+            answers: {
+              'sectionB.b1': 'Y',
+              'b1.comment': 'Consolidated: eligible per protocol',
+            },
+          },
+        ],
+        pdfs: [],
+        reconciliations: {
+          'outcome-1': {
+            checklist1Id: 'chk-ri-1',
+            checklist2Id: 'chk-ri-2',
+            reconciledChecklistId: 'chk-ri-consensus',
+            type: 'ROBINS_I',
+            outcomeId: 'outcome-1',
+            updatedAt: NOW_ISO,
+          },
+        },
+      },
     ],
   };
 }
@@ -172,23 +235,51 @@ describe('transformProjectExport', () => {
     expect(() => transformProjectExport(oldExport)).toThrow(/has no outcomeId/);
   });
 
+  it('maps the pre-2025-12-29 status vocabulary onto the live enum', () => {
+    const { snapshot, report } = transformProjectExport(buildOldExport('p-status'));
+    const nested = snapshot.rows.find(row => row.tbl === 'checklists' && row.id === 'chk-nested');
+    expect(nested?.data.status).toBe(CHECKLIST_STATUS.REVIEWER_COMPLETED);
+    expect(report.warnings).toContain(
+      'checklist chk-nested: legacy status "awaiting-reconcile" mapped to "reviewer-completed"',
+    );
+  });
+
+  it('hard-fails at transform time when a row misses the live schema', () => {
+    const oldExport = buildOldExport('p-invalid');
+    (oldExport.studies[0].checklists[0] as { status: string }).status = 'bogus-status';
+    expect(() => transformProjectExport(oldExport)).toThrow(/fail the live schema/);
+  });
+
   it('maps the old plane onto rows and field seeds', () => {
     const { snapshot, report } = transformProjectExport(buildOldExport('p-map'));
 
-    expect(report.studies).toBe(2);
-    expect(report.checklists).toBe(5);
+    expect(report.studies).toBe(3);
+    expect(report.checklists).toBe(8);
     expect(report.outcomes).toBe(1);
     expect(report.pdfs).toBe(1);
     expect(report.annotations).toBe(1);
-    expect(report.reconciliations).toBe(1);
+    expect(report.reconciliations).toBe(2);
     expect(report.droppedAnswerKeys).toEqual(['chk-a2:stale.key']);
-    // Two non-empty text answers on the in-progress consensus checklist.
-    expect(report.fieldSeeds).toBe(2);
+    // Two non-empty text answers on the ROB2 consensus, one salvaged legacy
+    // Section B comment on the ROBINS-I consensus.
+    expect(report.fieldSeeds).toBe(3);
     expect(Object.keys(snapshot.extension?.fields ?? {})).toEqual(
       expect.arrayContaining([
         answerRowId('chk-consensus', 'd1_1.comment'),
         answerRowId('chk-consensus', 'preliminary.experimental'),
+        answerRowId('chk-ri-consensus', 'sectionB.b1.comment'),
       ]),
+    );
+
+    // The legacy alias lands on the canonical row, is reported, not dropped.
+    const salvaged = snapshot.rows.find(
+      row =>
+        row.tbl === 'answers' && row.id === answerRowId('chk-ri-consensus', 'sectionB.b1.comment'),
+    );
+    expect(salvaged?.data.value).toBe('Consolidated: eligible per protocol');
+    expect(report.droppedAnswerKeys).not.toContain('chk-ri-consensus:b1.comment');
+    expect(report.warnings).toContain(
+      'checklist chk-ri-consensus: remapped legacy key "b1.comment" to "sectionB.b1.comment"',
     );
 
     // Every checklist materializes its full default row set.
@@ -210,6 +301,19 @@ describe('transformProjectExport', () => {
     const study = snapshot.rows.find(row => row.tbl === 'studies' && row.id === 'study-1');
     expect(study?.data.createdAt).toBe(Date.parse(NOW_ISO));
     expect(study?.data.updatedAt).toBe(1_753_500_000_000);
+
+    // Citation metadata carries through the row literal in full.
+    expect(study?.data).toMatchObject({
+      originalTitle: 'The PRISMA 2020 statement',
+      firstAuthor: 'Page',
+      publicationYear: '2021',
+      doi: '10.1136/bmj.n71',
+      importSource: 'pubmed',
+      volume: '372',
+      issue: '8284',
+      pages: 'n71',
+      type: 'journal-article',
+    });
   });
 });
 

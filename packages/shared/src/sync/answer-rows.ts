@@ -275,11 +275,19 @@ export function resolveNestedTextValue(
  */
 export function expandAnswerUpdate(input: ChecklistAnswerInput): AnswerWrite[] {
   switch (input.type) {
-    case 'AMSTAR2':
-      return [
-        { key: `${input.key}.answers`, value: input.data.answers },
-        { key: `${input.key}.critical`, value: input.data.critical ?? false },
-      ];
+    case 'AMSTAR2': {
+      // Gated like the other instruments: only the fields present in the
+      // update are written, so concurrent answer/critical mutations on the
+      // same question do not revert each other via full-snapshot upserts.
+      const writes: AnswerWrite[] = [];
+      if (input.data.answers !== undefined) {
+        writes.push({ key: `${input.key}.answers`, value: input.data.answers });
+      }
+      if (input.data.critical !== undefined) {
+        writes.push({ key: `${input.key}.critical`, value: input.data.critical });
+      }
+      return writes;
+    }
     case 'ROB2':
       return expandRob2Update(input.key, input.data);
     case 'ROBINS_I':

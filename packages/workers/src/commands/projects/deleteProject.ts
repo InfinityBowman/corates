@@ -48,11 +48,6 @@ export async function deleteProject(
     .where(eq(projectMembers.projectId, projectId))
     .all();
 
-  // Tear down the sync-engine workspace: close every session, wipe storage.
-  // Best-effort — D1 delete is the authoritative act, and teardownWorkspace
-  // logs its own failures.
-  await teardownWorkspace(env, projectId);
-
   // Clean up all PDFs from R2 storage
   try {
     await cleanupProjectStorage(env, projectId);
@@ -72,6 +67,13 @@ export async function deleteProject(
       'Failed to delete project',
     );
   }
+
+  // Tear down the sync-engine workspace: close every session, wipe storage.
+  // Workspace storage is the only home for project content, so the
+  // destructive reset must come AFTER the authoritative D1 delete — if the
+  // delete fails above, the project stays listed and must stay intact.
+  // Best-effort from here: teardownWorkspace logs its own failures.
+  await teardownWorkspace(env, projectId);
 
   // Send notifications to all members (except the one who deleted)
   const userIds = members.map(m => m.userId);

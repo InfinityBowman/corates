@@ -12,7 +12,7 @@
  * directly to its local-only collections (`applyLocalMutation`).
  */
 
-import { createContext, useCallback, useContext, useMemo } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useLiveQuery, eq } from '@tanstack/react-db';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -47,6 +47,8 @@ import { queryKeys } from '@/lib/queryKeys';
 import { getMyProjects } from '@/server/functions/users.functions';
 import { getProjectMembers } from '@/server/functions/org-projects.functions';
 import { QUERY_STABLE } from '@/lib/queryPresets';
+import { getCachedProjectOrgId, rememberProjectOrgId } from '@/primitives/db.js';
+import { showToast } from '@/lib/toast';
 import { connectionPool, type ProjectCollections } from './ConnectionPool';
 import { emptyCollections } from './localCollections';
 import { applyLocalMutation } from './localWrites';
@@ -154,11 +156,19 @@ export function useAnswerWriters(
         void client.mutate.checklist.updateAnswer({ checklistId, input, now: Date.now() });
         return;
       }
-      applyLocalMutation(projectId, 'checklist.updateAnswer', {
-        checklistId,
-        input,
-        now: Date.now(),
-      });
+      // Local-practice writes apply synchronously; a rejection throws here
+      // (onClick handlers have no catch) — route it to the same toast the
+      // online path's onMutationRejected uses.
+      try {
+        applyLocalMutation(projectId, 'checklist.updateAnswer', {
+          checklistId,
+          input,
+          now: Date.now(),
+        });
+      } catch (err) {
+        console.error('[local] mutation rejected:', err);
+        showToast.error('Change Rejected', 'Your change could not be applied.');
+      }
     },
     [projectId, checklistId],
   );
@@ -170,7 +180,12 @@ export function useAnswerWriters(
         void client.mutate.checklist.setText({ checklistId, key: flatKey, text });
         return;
       }
-      applyLocalMutation(projectId, 'checklist.setText', { checklistId, key: flatKey, text });
+      try {
+        applyLocalMutation(projectId, 'checklist.setText', { checklistId, key: flatKey, text });
+      } catch (err) {
+        console.error('[local] mutation rejected:', err);
+        showToast.error('Change Rejected', 'Your change could not be applied.');
+      }
     },
     [projectId, checklistId],
   );
@@ -488,15 +503,65 @@ export function useProjectMeta(projectId: string): ProjectMetaInfo {
   }, [data, projectId]);
 }
 
+/**
+ * orgId for a project: the D1 projects query is the authority, with the
+ * Dexie-stamped value (written on every successful resolution — orgId is
+ * immutable per project) covering the cold-hard-refresh window where the
+ * workspace hydrates from cache before the network query returns.
+ */
+export function useProjectOrgId(projectId: string | null | undefined): string | null {
+  const { orgId } = useProjectMeta(projectId || '');
+  const [fallbackOrgId, setFallbackOrgId] = useState<string | null>(null);
+  const isLocal = !projectId || projectId.startsWith('local-');
+
+  useEffect(() => {
+    if (!isLocal && projectId && orgId) void rememberProjectOrgId(projectId, orgId);
+  }, [projectId, orgId, isLocal]);
+
+  useEffect(() => {
+    setFallbackOrgId(null);
+    if (isLocal || !projectId) return;
+    let cancelled = false;
+    void getCachedProjectOrgId(projectId).then(value => {
+      if (!cancelled && value) setFallbackOrgId(value);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId, isLocal]);
+
+  if (!projectId) return null;
+  return orgId ?? fallbackOrgId;
+}
+
+/** One error toast per project per failure episode, however many components
+ * mount the members hook; cleared when a fetch succeeds again. */
+const membersErrorToasted = new Set<string>();
+
 /** Project members from D1 (`projectMembers ⨝ user`), in MemberEntry shape. */
 export function useProjectMembers(projectId: string): MemberEntry[] {
-  const { orgId } = useProjectMeta(projectId);
-  const { data } = useQuery({
+  const orgId = useProjectOrgId(projectId);
+  const { data, isError } = useQuery({
     queryKey: queryKeys.projects.members(projectId),
     queryFn: () => getProjectMembers({ data: { orgId: orgId!, projectId } }),
     enabled: Boolean(orgId && projectId && !projectId.startsWith('local-')),
     ...QUERY_STABLE,
   });
+
+  // A failed members fetch silently degrades the page (names render
+  // "Unknown", owner-only controls hide) — say so instead.
+  useEffect(() => {
+    if (isError && !membersErrorToasted.has(projectId)) {
+      membersErrorToasted.add(projectId);
+      showToast.error(
+        'Members Failed to Load',
+        'Member names and roles may be missing or outdated. Retrying in the background.',
+      );
+    } else if (!isError) {
+      membersErrorToasted.delete(projectId);
+    }
+  }, [isError, projectId]);
+
   return useMemo(() => {
     if (!Array.isArray(data)) return [];
     return data.map(member => ({

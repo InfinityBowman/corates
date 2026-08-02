@@ -59,6 +59,26 @@ describe('study mutators', () => {
     ).toBe('NotFound');
   });
 
+  it('update un-assigns a reviewer on null and leaves the other assigned', () => {
+    const engine = newEngine();
+    engine.mutate('study.create', { id: 'study-1', name: 'Trial A', description: '', now: NOW });
+    engine.mutate('study.update', {
+      id: 'study-1',
+      updates: { reviewer1: 'user-2', reviewer2: 'user-3' },
+      now: NOW,
+    });
+
+    const result = engine.mutate('study.update', {
+      id: 'study-1',
+      updates: { reviewer1: 'user-2', reviewer2: null },
+      now: LATER,
+    });
+    expect(result.error).toBeUndefined();
+    const study = engine.get('studies', 'study-1');
+    expect(study?.reviewer1).toBe('user-2');
+    expect(study?.reviewer2).toBeUndefined();
+  });
+
   it('importBatch creates every study in one mutation', () => {
     const engine = newEngine();
     const result = engine.mutate('study.importBatch', {

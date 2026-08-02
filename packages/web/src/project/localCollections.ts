@@ -15,6 +15,7 @@ import * as Y from 'yjs';
 import { createCollection, localOnlyCollectionOptions, type Collection } from '@tanstack/db';
 import {
   answerRowId,
+  reconciliationRowId,
   type AnnotationRow,
   type AnswerRow,
   type ChecklistRow,
@@ -92,6 +93,22 @@ export function rowsFromLocalDoc(ydoc: Y.Doc): LocalRows {
     const studies = new Map<string, StudyRow>();
     const checklists = new Map<string, ChecklistRow>();
     const answers = new Map<string, AnswerRow>();
+    const outcomes: OutcomeRow[] = [];
+    const reconciliations: ReconciliationRow[] = [];
+
+    const outcomesMap = ydoc.getMap('meta').get('outcomes');
+    if (outcomesMap instanceof Y.Map) {
+      for (const [outcomeId, value] of outcomesMap.entries()) {
+        const outcome = plainValue(value) as Record<string, unknown> | null;
+        if (!outcome || typeof outcome !== 'object') continue;
+        outcomes.push({
+          id: outcomeId,
+          name: asString(outcome.name),
+          createdAt: asNumber(outcome.createdAt),
+          createdBy: asString(outcome.createdBy, 'local'),
+        });
+      }
+    }
 
     for (const [studyId, studyValue] of reviews.entries()) {
       const study = studyValue as Y.Map<unknown>;
@@ -135,12 +152,39 @@ export function rowsFromLocalDoc(ydoc: Y.Doc): LocalRows {
           });
         }
       }
+
+      const reconciliationsMap = study.get('reconciliations');
+      if (reconciliationsMap instanceof Y.Map) {
+        for (const [outcomeKey, value] of reconciliationsMap.entries()) {
+          const progress = plainValue(value) as Record<string, unknown> | null;
+          if (!progress || typeof progress !== 'object') continue;
+          reconciliations.push({
+            id: reconciliationRowId(studyId, outcomeKey),
+            studyId,
+            outcomeKey,
+            outcomeId: (progress.outcomeId as string | null) ?? null,
+            type: asString(progress.type, 'AMSTAR2') as ReconciliationRow['type'],
+            checklist1Id: asString(progress.checklist1Id),
+            checklist2Id: asString(progress.checklist2Id),
+            ...(typeof progress.reconciledChecklistId === 'string' ?
+              { reconciledChecklistId: progress.reconciledChecklistId }
+            : {}),
+            ...(typeof progress.currentPage === 'number' ?
+              { currentPage: progress.currentPage }
+            : {}),
+            ...(typeof progress.viewMode === 'string' ? { viewMode: progress.viewMode } : {}),
+            updatedAt: asNumber(progress.updatedAt),
+          } as ReconciliationRow);
+        }
+      }
     }
 
     return {
       studies: [...studies.values()],
       checklists: [...checklists.values()],
       answers: [...answers.values()],
+      outcomes,
+      reconciliations,
     };
   }
 }

@@ -100,7 +100,9 @@ export function DevImportProject() {
   // Template state
   const [templates, setTemplates] = useState<TemplateOption[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState('');
-  const [templateUserIds, setTemplateUserIds] = useState<string[]>([]);
+  // Null while the selected template's user ids are still loading, so Create
+  // cannot enable on a vacuous `.every` and let ids pass through unmapped.
+  const [templateUserIds, setTemplateUserIds] = useState<string[] | null>([]);
   const [projectName, setProjectName] = useState('');
   const [roleAssignments, setRoleAssignments] = useState<Record<string, string>>({});
 
@@ -140,6 +142,7 @@ export function DevImportProject() {
     if (tmpl) setProjectName(tmpl.description);
 
     let cancelled = false;
+    setTemplateUserIds(null);
     void import('@/dev/mock-templates').then(({ getTemplate }) => {
       if (cancelled) return;
       const data = getTemplate(selectedTemplate);
@@ -167,6 +170,7 @@ export function DevImportProject() {
     currentUser &&
     selectedTemplate &&
     projectName.trim() &&
+    templateUserIds !== null &&
     templateUserIds.every(id => roleAssignments[id]);
 
   const canCreateFromJson = resolvedOrgId && jsonProjectName.trim() && jsonText.trim();
@@ -367,7 +371,7 @@ export function DevImportProject() {
                 />
               </div>
 
-              {templateUserIds.length > 0 && (
+              {templateUserIds !== null && templateUserIds.length > 0 && (
                 <div className='flex flex-col gap-2'>
                   <label className='text-2xs text-muted-foreground font-medium tracking-wide uppercase'>
                     Assign Users

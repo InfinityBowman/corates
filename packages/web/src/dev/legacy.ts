@@ -19,7 +19,13 @@ import { DexieYProvider } from 'y-dexie';
 import { db } from '@/primitives/db';
 import { LOCAL_PROJECT_ID } from '@/project/localProject';
 import { connectionPool } from '@/project/ConnectionPool';
-import type { AnswerRow, ChecklistRow, StudyRow } from '@corates/shared/sync';
+import type {
+  AnswerRow,
+  ChecklistRow,
+  OutcomeRow,
+  ReconciliationRow,
+  StudyRow,
+} from '@corates/shared/sync';
 
 /** Give y-dexie a beat to write the doc's updates before releasing it. */
 const PERSIST_SETTLE_MS = 800;
@@ -27,6 +33,9 @@ const PERSIST_SETTLE_MS = 800;
 function textOrEmpty(value: unknown): Y.Text {
   return new Y.Text(typeof value === 'string' ? value : '');
 }
+
+/** Sub-questions carry answers/critical but never a note (only q9/q11 do). */
+const AMSTAR2_SUB_QUESTION = /^(q9|q11)[a-z]$/;
 
 /** Old AMSTAR2 shape: `answers[q1] = Y.Map{answers, critical, note: Y.Text}`. */
 function nestedAmstar2(flat: Record<string, unknown>): Y.Map<unknown> {
@@ -43,7 +52,11 @@ function nestedAmstar2(flat: Record<string, unknown>): Y.Map<unknown> {
     const questionMap = new Y.Map<unknown>();
     if (fields.answers !== undefined) questionMap.set('answers', fields.answers);
     if (fields.critical !== undefined) questionMap.set('critical', fields.critical);
-    questionMap.set('note', textOrEmpty(fields.note));
+    // Faithful to real old docs: sub-questions never had a note field, and
+    // writing one here injected rows the flat plane never produces.
+    if (!AMSTAR2_SUB_QUESTION.test(questionKey)) {
+      questionMap.set('note', textOrEmpty(fields.note));
+    }
     answersMap.set(questionKey, questionMap);
   }
   return answersMap;
@@ -133,6 +146,8 @@ export async function rewriteLocalRowsToLegacyDoc(): Promise<void> {
   const studies = stored.rows.studies as StudyRow[];
   const checklists = stored.rows.checklists as ChecklistRow[];
   const answers = stored.rows.answers as AnswerRow[];
+  const outcomes = (stored.rows.outcomes ?? []) as OutcomeRow[];
+  const reconciliations = (stored.rows.reconciliations ?? []) as ReconciliationRow[];
 
   let row = await db.projects.get(LOCAL_PROJECT_ID);
   if (!row) {
@@ -165,6 +180,7 @@ export async function rewriteLocalRowsToLegacyDoc(): Promise<void> {
           checklistMap.set('title', checklist.title);
           checklistMap.set('assignedTo', checklist.assignedTo);
           checklistMap.set('status', checklist.status);
+          checklistMap.set('outcomeId', checklist.outcomeId ?? null);
           checklistMap.set('createdAt', checklist.createdAt);
           checklistMap.set('updatedAt', checklist.updatedAt);
           const flat: Record<string, unknown> = {};
@@ -175,14 +191,52 @@ export async function rewriteLocalRowsToLegacyDoc(): Promise<void> {
           checklistsMap.set(checklist.id, checklistMap);
         }
         studyMap.set('checklists', checklistsMap);
+
+        const studyReconciliations = reconciliations.filter(r => r.studyId === study.id);
+        if (studyReconciliations.length > 0) {
+          const reconciliationsMap = new Y.Map<unknown>();
+          for (const progress of studyReconciliations) {
+            const progressMap = new Y.Map<unknown>();
+            progressMap.set('checklist1Id', progress.checklist1Id);
+            progressMap.set('checklist2Id', progress.checklist2Id);
+            if (progress.reconciledChecklistId) {
+              progressMap.set('reconciledChecklistId', progress.reconciledChecklistId);
+            }
+            progressMap.set('type', progress.type);
+            progressMap.set('outcomeId', progress.outcomeId ?? null);
+            if (progress.currentPage != null) progressMap.set('currentPage', progress.currentPage);
+            if (progress.viewMode) progressMap.set('viewMode', progress.viewMode);
+            progressMap.set('updatedAt', progress.updatedAt);
+            reconciliationsMap.set(progress.outcomeKey, progressMap);
+          }
+          studyMap.set('reconciliations', reconciliationsMap);
+        }
+
         reviews.set(study.id, studyMap);
       }
+
+      const meta = ydoc.getMap('meta');
+      if (outcomes.length > 0) {
+        const outcomesMap = new Y.Map<unknown>();
+        for (const outcome of outcomes) {
+          const outcomeMap = new Y.Map<unknown>();
+          outcomeMap.set('name', outcome.name);
+          outcomeMap.set('createdAt', outcome.createdAt);
+          outcomeMap.set('createdBy', outcome.createdBy);
+          outcomesMap.set(outcome.id, outcomeMap);
+        }
+        meta.set('outcomes', outcomesMap);
+      }
       // Skip the (even older) localChecklists seeding pass on reload.
-      ydoc.getMap('meta').set('localMigrated', true);
+      meta.set('localMigrated', true);
     });
     await new Promise(resolve => setTimeout(resolve, PERSIST_SETTLE_MS));
   } finally {
     DexieYProvider.release(ydoc);
   }
+  // Drop the live entry first: pagehide's flushLocalPersist would otherwise
+  // re-persist the row store from the still-mounted collections before the
+  // reload, and the converter this seam exists to exercise would never run.
+  connectionPool.discardLocalEntry(LOCAL_PROJECT_ID);
   await db.localProjects.delete(LOCAL_PROJECT_ID);
 }

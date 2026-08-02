@@ -40,6 +40,23 @@ export async function kickWorkspaceUser(
 }
 
 /**
+ * Refresh-disconnect one project's live sync sessions so reconnects re-run
+ * authorize (fresh role/writeAllowed stamps) and clients treat the re-sync as
+ * a membership poke (ConnectionPool refetches the members query). Called on
+ * membership changes; best-effort — D1 is the authority either way.
+ */
+export async function refreshWorkspaceSessions(env: Env, projectId: string): Promise<void> {
+  try {
+    await projectWorkspace(env, projectId).disconnect({ mode: 'refresh' });
+  } catch (err) {
+    captureError(err, {
+      tags: { component: 'workspace-sync', action: 'refresh-sessions' },
+      extra: { projectId },
+    });
+  }
+}
+
+/**
  * Refresh-disconnect every live sync session across an org's projects so
  * reconnects re-run authorize and pick up fresh `writeAllowed` stamps — the
  * freshness mechanism for subscription changes. Best-effort per project.
