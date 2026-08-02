@@ -50,8 +50,8 @@
   },
   "dependencies": {
     "@better-auth/stripe": "^1.6.22",
-    "@cf-sync/server": "file:../../vendor/cf-sync-server-0.1.0.tgz",
-    "@cf-sync/yjs": "file:../../vendor/cf-sync-yjs-0.1.0.tgz",
+    "@cf-sync/server": "^0.1.0",
+    "@cf-sync/yjs": "^0.1.0",
     "@corates/db": "workspace:*",
     "@corates/shared": "workspace:*",
     "@sentry/cloudflare": "^10.62.0",
@@ -64,7 +64,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@cf-sync/protocol": "file:../../vendor/cf-sync-protocol-0.1.1.tgz",
+    "@cf-sync/protocol": "^0.1.1",
     "@cloudflare/vitest-pool-workers": "^0.18.4",
     "@cloudflare/workers-types": "^4.20260628.1",
     "@vitest/runner": "^4.1.9",

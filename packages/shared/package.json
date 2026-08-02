@@ -71,12 +71,12 @@
     "test:watch": "vitest"
   },
   "devDependencies": {
-    "@cf-sync/server": "file:../../vendor/cf-sync-server-0.1.0.tgz",
+    "@cf-sync/server": "^0.1.0",
     "typescript": "^5.9.3",
     "vitest": "^4.1.9"
   },
   "dependencies": {
-    "@cf-sync/protocol": "file:../../vendor/cf-sync-protocol-0.1.1.tgz",
+    "@cf-sync/protocol": "^0.1.1",
     "stripe": "^22.3.0",
     "zod": "^4.4.3"
   }
