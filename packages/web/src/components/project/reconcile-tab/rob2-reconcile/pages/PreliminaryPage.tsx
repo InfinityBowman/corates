@@ -7,9 +7,10 @@ import {
   DEVIATION_OPTIONS,
   INFORMATION_SOURCES,
 } from '@corates/shared/checklists/rob2';
+import { textFieldKey } from '@corates/shared/sync';
 import { Button } from '@/components/ui/button';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
-import type { TextRef } from '@/components/project/reconcile-tab/engine/types';
+import { useReconciledText } from '../../fields';
 
 const PRELIMINARY_TEXT_FIELDS = ['experimental', 'comparator', 'numericalResult'];
 
@@ -246,6 +247,26 @@ function MultiSelectField({
   );
 }
 
+/**
+ * Editable preliminary text field for the final panel — a live collaborative
+ * field (`useReconciledText` — a Yjs field online, the answer row in local
+ * practice).
+ */
+function FinalTextField({ fieldKey, placeholder }: { fieldKey: string; placeholder?: string }) {
+  const text = useReconciledText(textFieldKey({ type: 'ROB2', sectionKey: 'preliminary', fieldKey }));
+  return (
+    <NoteEditor
+      value={text.value}
+      onChange={text.setValue}
+      live={true}
+      disabled={!text.canWrite}
+      placeholder={placeholder}
+      inline={true}
+      focusRingColor='green-500'
+    />
+  );
+}
+
 interface PreliminaryPageProps {
   fieldKey: string;
   reviewer1Value: any;
@@ -256,7 +277,6 @@ interface PreliminaryPageProps {
   isAgreement: boolean;
   isAimMismatch: boolean;
   onFinalChange: (_value: any) => void;
-  setTextValue: (_ref: TextRef, _text: string) => void;
   onUseReviewer1: () => void;
   onUseReviewer2: () => void;
 }
@@ -295,7 +315,6 @@ export function PreliminaryPage({
   isAgreement,
   isAimMismatch,
   onFinalChange,
-  setTextValue,
   onUseReviewer1,
   onUseReviewer2,
 }: PreliminaryPageProps) {
@@ -350,19 +369,8 @@ export function PreliminaryPage({
           />
         );
       default:
-        // Text fields edit the flat answer row directly
         if (isTextField) {
-          return (
-            <NoteEditor
-              value={typeof finalValue === 'string' ? finalValue : ''}
-              onChange={text =>
-                setTextValue({ type: 'ROB2', sectionKey: 'preliminary', fieldKey }, text)
-              }
-              placeholder={fieldDef?.placeholder}
-              inline={true}
-              focusRingColor='green-500'
-            />
-          );
+          return <FinalTextField fieldKey={fieldKey} placeholder={fieldDef?.placeholder} />;
         }
         return <ReadOnlyTextField value={finalValue} />;
     }

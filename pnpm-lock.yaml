@@ -8,6 +8,7 @@ overrides:
   '@cf-sync/protocol': file:./vendor/cf-sync-protocol-0.1.1.tgz
   '@cf-sync/server': file:./vendor/cf-sync-server-0.1.0.tgz
   '@cf-sync/client': file:./vendor/cf-sync-client-0.1.0.tgz
+  '@cf-sync/yjs': file:./vendor/cf-sync-yjs-0.1.0.tgz
 
 importers:
 
@@ -139,6 +140,9 @@ importers:
       '@cf-sync/client':
         specifier: file:../../vendor/cf-sync-client-0.1.0.tgz
         version: file:vendor/cf-sync-client-0.1.0.tgz(@tanstack/db@0.6.17(typescript@5.9.3))(@tanstack/react-db@0.1.95(react@19.2.4)(typescript@5.9.3))(react@19.2.4)(zod@4.4.3)
+      '@cf-sync/yjs':
+        specifier: file:../../vendor/cf-sync-yjs-0.1.0.tgz
+        version: file:vendor/cf-sync-yjs-0.1.0.tgz(@cf-sync/server@0.1.0(zod@4.4.3))(react@19.2.4)(yjs@13.6.31)(zod@4.4.3)
       '@corates/db':
         specifier: workspace:*
         version: link:../db
@@ -407,6 +411,9 @@ importers:
       '@cf-sync/server':
         specifier: file:../../vendor/cf-sync-server-0.1.0.tgz
         version: file:vendor/cf-sync-server-0.1.0.tgz(zod@4.4.3)
+      '@cf-sync/yjs':
+        specifier: file:../../vendor/cf-sync-yjs-0.1.0.tgz
+        version: file:vendor/cf-sync-yjs-0.1.0.tgz(@cf-sync/server@file:vendor/cf-sync-server-0.1.0.tgz(zod@4.4.3))(react@19.2.4)(yjs@13.6.31)(zod@4.4.3)
       '@corates/db':
         specifier: workspace:*
         version: link:../db
@@ -438,6 +445,9 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
+      '@cf-sync/protocol':
+        specifier: file:../../vendor/cf-sync-protocol-0.1.1.tgz
+        version: file:vendor/cf-sync-protocol-0.1.1.tgz(zod@4.4.3)
       '@cloudflare/vitest-pool-workers':
         specifier: ^0.18.4
         version: 0.18.4(@cloudflare/workers-types@4.20260628.1)(@vitest/runner@4.1.9)(@vitest/snapshot@4.1.9)(vitest@4.1.9)
@@ -918,11 +928,29 @@ packages:
     peerDependencies:
       zod: ^4.0.0
 
+  '@cf-sync/server@0.1.0':
+    resolution: {integrity: sha512-3lPlK8X1dUxwqVP4mUi27bS9zewNppDupmUF3eUENCl6HIk3yZ08EmeCVtzBDO6JQbTzkGYwicYu9F8s1yG2GQ==}
+    peerDependencies:
+      zod: ^4.0.0
+
   '@cf-sync/server@file:vendor/cf-sync-server-0.1.0.tgz':
     resolution: {integrity: sha512-3lPlK8X1dUxwqVP4mUi27bS9zewNppDupmUF3eUENCl6HIk3yZ08EmeCVtzBDO6JQbTzkGYwicYu9F8s1yG2GQ==, tarball: file:vendor/cf-sync-server-0.1.0.tgz}
     version: 0.1.0
     peerDependencies:
       zod: ^4.0.0
+
+  '@cf-sync/yjs@file:vendor/cf-sync-yjs-0.1.0.tgz':
+    resolution: {integrity: sha512-uav5rwjFcvE340HW5h2jPpPAY/2qGyNMlNbx0R/RMbkTRpqj/KEKC/6y1X38/zJzzOMRU11tZpVu4fJxxtaQug==, tarball: file:vendor/cf-sync-yjs-0.1.0.tgz}
+    version: 0.1.0
+    peerDependencies:
+      '@cf-sync/server': ^0.1.0
+      react: '>=18'
+      yjs: ^13.6.0
+    peerDependenciesMeta:
+      '@cf-sync/server':
+        optional: true
+      react:
+        optional: true
 
   '@chevrotain/cst-dts-gen@10.5.0':
     resolution: {integrity: sha512-lhmC/FyqQ2o7pGK4Om+hzuDrm9rhFYIJ/AXoQBeongmn870Xeb0L6oGEiuR8nohFNL5sMaQEJWCxr1oIVIVXrw==}
@@ -9312,10 +9340,36 @@ snapshots:
     dependencies:
       zod: 4.4.3
 
+  '@cf-sync/server@0.1.0(zod@4.4.3)':
+    dependencies:
+      '@cf-sync/protocol': file:vendor/cf-sync-protocol-0.1.1.tgz(zod@4.4.3)
+      zod: 4.4.3
+    optional: true
+
   '@cf-sync/server@file:vendor/cf-sync-server-0.1.0.tgz(zod@4.4.3)':
     dependencies:
       '@cf-sync/protocol': file:vendor/cf-sync-protocol-0.1.1.tgz(zod@4.4.3)
       zod: 4.4.3
+
+  '@cf-sync/yjs@file:vendor/cf-sync-yjs-0.1.0.tgz(@cf-sync/server@0.1.0(zod@4.4.3))(react@19.2.4)(yjs@13.6.31)(zod@4.4.3)':
+    dependencies:
+      '@cf-sync/protocol': file:vendor/cf-sync-protocol-0.1.1.tgz(zod@4.4.3)
+      yjs: 13.6.31
+    optionalDependencies:
+      '@cf-sync/server': 0.1.0(zod@4.4.3)
+      react: 19.2.4
+    transitivePeerDependencies:
+      - zod
+
+  '@cf-sync/yjs@file:vendor/cf-sync-yjs-0.1.0.tgz(@cf-sync/server@file:vendor/cf-sync-server-0.1.0.tgz(zod@4.4.3))(react@19.2.4)(yjs@13.6.31)(zod@4.4.3)':
+    dependencies:
+      '@cf-sync/protocol': file:vendor/cf-sync-protocol-0.1.1.tgz(zod@4.4.3)
+      yjs: 13.6.31
+    optionalDependencies:
+      '@cf-sync/server': file:vendor/cf-sync-server-0.1.0.tgz(zod@4.4.3)
+      react: 19.2.4
+    transitivePeerDependencies:
+      - zod
 
   '@chevrotain/cst-dts-gen@10.5.0':
     dependencies:

@@ -16,13 +16,23 @@ import {
   createSyncRoute,
   createWorkspaceDO,
 } from '@cf-sync/server';
+import { yjsFields } from '@cf-sync/yjs/server';
 import { syncApp } from '@corates/shared/sync';
 import { createDb } from '@corates/db/client';
 import { verifyAuth } from '../auth/config';
 import type { Env } from '../types';
 import { buildSyncVerdict } from './authorize';
 
-export class WorkspaceDO extends createWorkspaceDO({ app: syncApp }) {}
+export class WorkspaceDO extends createWorkspaceDO({
+  app: syncApp,
+  // Reconciliation consolidated notes live here as Yjs fields, field id =
+  // the `answers` row id of the reconciled checklist's text key. Same write
+  // gate as the mutator plane: the authorize stamp's writeAllowed.
+  extension: yjsFields({
+    app: syncApp,
+    authorizeWrite: ({ auth }) => auth?.writeAllowed === true,
+  }),
+}) {}
 
 export const SYNC_PATH_PREFIX = '/api/sync';
 export const SYNC_ADMIN_PATH_PREFIX = '/api/sync-admin';

@@ -35,9 +35,11 @@ export {
   type PdfRow,
   type ReconciliationRow,
 } from './schema.js';
+export { presenceSchema, type PresenceState } from './presence.js';
 export {
   defaultAnswerRows,
   expandAnswerUpdate,
+  textAnswerKeys,
   type AnswerWrite,
   type ChecklistAnswerInput,
   type JsonValue,

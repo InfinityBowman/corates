@@ -1,8 +1,10 @@
 /**
  * NotesCompareSection - Side-by-side note comparison for reconciliation view
  *
- * Shows reviewer 1 and reviewer 2 notes (read-only) and allows editing the final note.
- * Supports copying reviewer notes to the final note for convenience.
+ * Shows reviewer 1 and reviewer 2 notes (read-only, from their answer rows)
+ * and edits the final note as a live collaborative field (`useReconciledText`
+ * — a Yjs field online, the answer row in local practice). Supports copying
+ * reviewer notes to the final note for convenience.
  */
 
 import { useState } from 'react';
@@ -10,14 +12,15 @@ import { ChevronRightIcon, BookOpenIcon, ClipboardIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
+import { useReconciledText } from '../fields';
 
 const MAX_LENGTH = 2000;
 
 interface NotesCompareSectionProps {
   reviewer1Note: string;
   reviewer2Note: string;
-  finalNote: string;
-  onFinalNoteChange: (text: string) => void;
+  /** The final note's flat answer key on the reconciled checklist (e.g. `q3.note`). */
+  finalNoteKey: string;
   reviewer1Name: string;
   reviewer2Name: string;
   collapsed?: boolean;
@@ -26,22 +29,22 @@ interface NotesCompareSectionProps {
 export function NotesCompareSection({
   reviewer1Note,
   reviewer2Note,
-  finalNote,
-  onFinalNoteChange,
+  finalNoteKey,
   reviewer1Name,
   reviewer2Name,
   collapsed = true,
 }: NotesCompareSectionProps) {
   const [expanded, setExpanded] = useState(!collapsed);
+  const finalNote = useReconciledText(finalNoteKey);
 
   const hasReviewer1Note = (reviewer1Note || '').trim().length > 0;
   const hasReviewer2Note = (reviewer2Note || '').trim().length > 0;
-  const hasFinalNote = finalNote.trim().length > 0;
+  const hasFinalNote = finalNote.value.trim().length > 0;
   const hasAnyNote = hasReviewer1Note || hasReviewer2Note || hasFinalNote;
 
   function copyToFinal(sourceNote: string) {
     if (!sourceNote) return;
-    onFinalNoteChange(sourceNote.slice(0, MAX_LENGTH));
+    finalNote.setValue(sourceNote.slice(0, MAX_LENGTH));
   }
 
   function mergeToFinal() {
@@ -53,7 +56,7 @@ export function NotesCompareSection({
       parts.push(`[${reviewer2Name}]\n${reviewer2Note}`);
     }
     const merged = parts.join('\n\n').slice(0, MAX_LENGTH);
-    onFinalNoteChange(merged);
+    finalNote.setValue(merged);
   }
 
   return (
@@ -91,6 +94,7 @@ export function NotesCompareSection({
                       variant='link'
                       size='xs'
                       onClick={() => copyToFinal(reviewer1Note)}
+                      disabled={!finalNote.canWrite}
                       title='Copy to final note'
                     >
                       <ClipboardIcon className='size-3' />
@@ -116,6 +120,7 @@ export function NotesCompareSection({
                       variant='link'
                       size='xs'
                       onClick={() => copyToFinal(reviewer2Note)}
+                      disabled={!finalNote.canWrite}
                       title='Copy to final note'
                     >
                       <ClipboardIcon className='size-3' />
@@ -130,7 +135,7 @@ export function NotesCompareSection({
                 : <p className='text-muted-foreground/70 text-xs italic'>No note added</p>}
               </div>
 
-              {/* Final Note (editable) */}
+              {/* Final Note (editable, co-edited live) */}
               <div className='rounded-lg bg-green-50/50 p-3'>
                 <div className='mb-2 flex items-center justify-between'>
                   <h4 className='text-secondary-foreground text-xs font-semibold'>Final Note</h4>
@@ -139,6 +144,7 @@ export function NotesCompareSection({
                       variant='link'
                       size='xs'
                       onClick={mergeToFinal}
+                      disabled={!finalNote.canWrite}
                       className='text-green-600 hover:text-green-800'
                       title='Merge both notes'
                     >
@@ -147,8 +153,10 @@ export function NotesCompareSection({
                   )}
                 </div>
                 <NoteEditor
-                  value={finalNote}
-                  onChange={onFinalNoteChange}
+                  value={finalNote.value}
+                  onChange={finalNote.setValue}
+                  live={true}
+                  disabled={!finalNote.canWrite}
                   inline={true}
                   placeholder='Add the final reconciled note...'
                   maxLength={MAX_LENGTH}

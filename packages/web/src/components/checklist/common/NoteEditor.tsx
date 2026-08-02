@@ -24,6 +24,13 @@ interface NoteEditorProps {
   label?: string;
   inline?: boolean;
   focusRingColor?: string;
+  /**
+   * Live mode: the value is a collaborative text binding (a Yjs field) that
+   * must be followed even while focused — remote co-edits merge into the
+   * textarea instead of being held off by the local draft. Row-backed
+   * callers keep the default draft-hold so LWW echoes don't clobber typing.
+   */
+  live?: boolean;
 }
 
 export function NoteEditor({
@@ -37,6 +44,7 @@ export function NoteEditor({
   label,
   inline = false,
   focusRingColor,
+  live = false,
 }: NoteEditorProps) {
   const initialExpanded = readOnly ? true : !collapsed;
   const [expanded, setExpanded] = useState(initialExpanded);
@@ -44,12 +52,12 @@ export function NoteEditor({
   const [focused, setFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Follow remote/prop updates when not actively editing
+  // Follow remote/prop updates when not actively editing (always, in live mode)
   useEffect(() => {
-    if (!focused) {
+    if (live || !focused) {
       setLocalValue(value);
     }
-  }, [value, focused]);
+  }, [value, focused, live]);
 
   // Auto-resize textarea when value or expanded state changes
   useEffect(() => {

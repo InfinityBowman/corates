@@ -80,6 +80,9 @@ export interface LocalRows {
   studies: unknown[];
   checklists: unknown[];
   answers: unknown[];
+  /** Absent in rows persisted before local reconciliation was supported. */
+  outcomes?: unknown[];
+  reconciliations?: unknown[];
 }
 
 /** One-time conversion of a legacy local-practice Y.Doc into plain rows. */
@@ -147,6 +150,9 @@ export function seedLocalCollections(collections: ProjectCollections, rows: Loca
   for (const row of rows.studies) collections.studies.insert(row as StudyRow);
   for (const row of rows.checklists) collections.checklists.insert(row as ChecklistRow);
   for (const row of rows.answers) collections.answers.insert(row as AnswerRow);
+  for (const row of rows.outcomes ?? []) collections.outcomes.insert(row as OutcomeRow);
+  for (const row of rows.reconciliations ?? [])
+    collections.reconciliations.insert(row as ReconciliationRow);
 }
 
 /** The current rows, for persistence. */
@@ -155,5 +161,7 @@ export function snapshotLocalCollections(collections: ProjectCollections): Local
     studies: [...collections.studies.toArray],
     checklists: [...collections.checklists.toArray],
     answers: [...collections.answers.toArray],
+    outcomes: [...collections.outcomes.toArray],
+    reconciliations: [...collections.reconciliations.toArray],
   };
 }

@@ -37,6 +37,7 @@
   "dependencies": {
     "@ark-ui/react": "^5.37.2",
     "@cf-sync/client": "file:../../vendor/cf-sync-client-0.1.0.tgz",
+    "@cf-sync/yjs": "file:../../vendor/cf-sync-yjs-0.1.0.tgz",
     "@corates/db": "workspace:*",
     "@corates/shared": "workspace:*",
     "@corates/workers": "workspace:*",

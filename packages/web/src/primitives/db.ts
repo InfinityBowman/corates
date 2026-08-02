@@ -64,7 +64,9 @@ interface LocalChecklistPdfRow {
   updatedAt: number;
 }
 
-/** Persisted local-practice rows (post-Y.Doc local data plane). */
+/** Persisted local-practice rows (post-Y.Doc local data plane). Rows written
+ * before outcomes/reconciliations were persisted may lack those keys — the
+ * seed path defaults them to empty. */
 interface LocalProjectRow {
   id: string;
   updatedAt: number;
@@ -72,6 +74,8 @@ interface LocalProjectRow {
     studies: unknown[];
     checklists: unknown[];
     answers: unknown[];
+    outcomes?: unknown[];
+    reconciliations?: unknown[];
   };
 }
 

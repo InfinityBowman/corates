@@ -15,6 +15,7 @@ import type {
 } from '../engine/types';
 import type { TextRef } from '@/components/project/reconcile-tab/engine/types';
 import { assertNever } from '@corates/shared';
+import { textFieldKey } from '@corates/shared/sync';
 import type {
   ROB2Checklist,
   ROB2DomainState,
@@ -312,7 +313,6 @@ function renderPage(
         onFinalChange={(value: unknown) =>
           updatePreliminaryField(context.updateChecklistAnswer, currentItem.key, value)
         }
-        setTextValue={context.setTextValue}
         onUseReviewer1={() => {
           const value = c1?.preliminary?.[currentItem.key as keyof ROB2Checklist['preliminary']];
           if (value !== undefined) {
@@ -353,13 +353,12 @@ function renderPage(
         reviewer1Data={c1Domain?.answers?.[questionKey]}
         reviewer2Data={c2Domain?.answers?.[questionKey]}
         finalData={faDomain?.answers?.[questionKey]}
-        finalComment={faDomain?.answers?.[questionKey]?.comment ?? ''}
-        onFinalCommentChange={(text: string) =>
-          context.setTextValue(
-            { type: 'ROB2', sectionKey: domainKey, fieldKey: 'comment', questionKey },
-            text,
-          )
-        }
+        finalCommentKey={textFieldKey({
+          type: 'ROB2',
+          sectionKey: domainKey,
+          fieldKey: 'comment',
+          questionKey,
+        })}
         reviewer1Name={context.reviewer1Name}
         reviewer2Name={context.reviewer2Name}
         isAgreement={context.isAgreement}

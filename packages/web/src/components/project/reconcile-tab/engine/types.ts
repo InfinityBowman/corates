@@ -5,6 +5,7 @@ import { isRob2Key } from '@corates/shared/checklists/rob2';
 import type { ChecklistAnswerInput } from '@corates/shared/sync';
 import type { getUserColor } from '@/lib/userColors.js';
 import type { PdfEntry } from '@/stores/projectStore';
+import type { ProjectWorkspace } from '@/project/ConnectionPool';
 import type { ChecklistResources } from '@/components/checklist/ResourcesPopover';
 
 // ---------------------------------------------------------------------------
@@ -56,7 +57,7 @@ export interface PresenceUser {
 }
 
 export interface RemoteUser {
-  clientId: number;
+  clientId: string;
   userId: string;
   name: string;
   image: string | null;
@@ -362,7 +363,8 @@ export interface ReconciliationEngineProps {
   selectedPdfId: string | null;
   onPdfSelect: (pdfId: string) => void;
 
-  // Presence
-  getAwareness?: () => unknown;
+  // Presence + collaborative text: the project's engine client, null in
+  // local practice (empty presence, note editors fall back to row writes).
+  client: ProjectWorkspace['client'] | null;
   currentUser: PresenceUser | null;
 }

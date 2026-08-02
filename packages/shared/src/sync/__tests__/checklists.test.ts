@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createTestEngine } from '@cf-sync/server/testing';
 import { syncApp } from '../app.js';
-import { defaultAnswerRows, type ChecklistAnswerInput } from '../answer-rows.js';
+import { defaultAnswerRows, textAnswerKeys, type ChecklistAnswerInput } from '../answer-rows.js';
 import { answerRowId, reconciliationRowId } from '../ids.js';
 
 const NOW = 1_753_500_000_000;
@@ -315,6 +315,27 @@ describe('checklist.setText', () => {
     expect((stored as string).length).toBe(2000);
     // Text writes never bumped checklist.updatedAt on the Y.Doc plane either.
     expect(engine.get('checklists', 'chk-1')?.updatedAt).toBe(NOW);
+  });
+});
+
+describe('textAnswerKeys', () => {
+  it('enumerates exactly the keys defaultAnswerRows seeds as the empty string', () => {
+    for (const type of ['AMSTAR2', 'ROB2', 'ROBINS_I'] as const) {
+      const keys = textAnswerKeys(type);
+      const defaults = defaultAnswerRows(type);
+      expect(keys.length).toBeGreaterThan(0);
+      for (const key of keys) expect(defaults[key]).toBe('');
+      // And nothing text-shaped is missed: every '' default is enumerated.
+      const emptyDefaults = Object.keys(defaults).filter(key => defaults[key] === '');
+      expect(new Set(keys)).toEqual(new Set(emptyDefaults));
+    }
+  });
+
+  it('covers the note/comment keys reconciliation co-edits', () => {
+    expect(textAnswerKeys('AMSTAR2')).toContain('q1.note');
+    expect(textAnswerKeys('ROB2')).toContain('d1_1.comment');
+    expect(textAnswerKeys('ROB2')).toContain('preliminary.experimental');
+    expect(textAnswerKeys('ROBINS_I')).toContain('planning.confoundingFactors');
   });
 });
 

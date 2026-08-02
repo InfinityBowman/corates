@@ -15,6 +15,7 @@ import type {
 } from '../engine/types';
 import type { TextRef } from '@/components/project/reconcile-tab/engine/types';
 import { assertNever } from '@corates/shared';
+import { textFieldKey } from '@corates/shared/sync';
 import type {
   ROBINSIChecklist,
   ROBINSIDomainState,
@@ -227,23 +228,12 @@ function renderPage(
           faSectionB?.[currentItem.key as keyof typeof faSectionB] as
             ROBINSIQuestionAnswer | undefined
         }
-        // The reconcile comment lives at the top-level `${questionKey}.comment`
-        // flat key (textFieldKey with questionKey set), not under sectionB.
-        finalComment={
-          ((fa as Record<string, unknown>)[currentItem.key] as ROBINSIQuestionAnswer | undefined)
-            ?.comment ?? ''
-        }
-        onFinalCommentChange={(text: string) =>
-          context.setTextValue(
-            {
-              type: 'ROBINS_I',
-              sectionKey: 'sectionB',
-              fieldKey: 'comment',
-              questionKey: currentItem.key,
-            },
-            text,
-          )
-        }
+        finalCommentKey={textFieldKey({
+          type: 'ROBINS_I',
+          sectionKey: 'sectionB',
+          fieldKey: 'comment',
+          questionKey: currentItem.key,
+        })}
         reviewer1Name={context.reviewer1Name}
         reviewer2Name={context.reviewer2Name}
         isAgreement={context.isAgreement}
@@ -298,13 +288,12 @@ function renderPage(
         reviewer1Data={c1Domain?.answers?.[questionKey]}
         reviewer2Data={c2Domain?.answers?.[questionKey]}
         finalData={faDomain?.answers?.[questionKey]}
-        finalComment={faDomain?.answers?.[questionKey]?.comment ?? ''}
-        onFinalCommentChange={(text: string) =>
-          context.setTextValue(
-            { type: 'ROBINS_I', sectionKey: domainKey, fieldKey: 'comment', questionKey },
-            text,
-          )
-        }
+        finalCommentKey={textFieldKey({
+          type: 'ROBINS_I',
+          sectionKey: domainKey,
+          fieldKey: 'comment',
+          questionKey,
+        })}
         reviewer1Name={context.reviewer1Name}
         reviewer2Name={context.reviewer2Name}
         isAgreement={context.isAgreement}

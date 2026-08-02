@@ -12,6 +12,7 @@ import type {
   SummaryContext,
 } from '../engine/types';
 import type { AMSTAR2Checklist, AMSTAR2QuestionAnswer } from '@corates/shared/checklists';
+import { textFieldKey } from '@corates/shared/sync';
 
 export interface Amstar2NavItem {
   key: string;
@@ -257,8 +258,7 @@ function renderPage(
       isMultiPart={!!currentItem.meta?.isMultiPart}
       reviewer1Note={getReviewerNote(checklist1, key)}
       reviewer2Note={getReviewerNote(checklist2, key)}
-      finalNote={getReviewerNote(context.reconciledChecklist, key)}
-      onFinalNoteChange={text => context.setTextValue({ type: 'AMSTAR2', questionKey: key }, text)}
+      finalNoteKey={textFieldKey({ type: 'AMSTAR2', questionKey: key })}
     />
   );
 }

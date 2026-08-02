@@ -8,12 +8,16 @@
 
 import { defineApp } from '@cf-sync/protocol';
 import { syncMutators } from './mutators.js';
+import { presenceSchema } from './presence.js';
 import { syncSchema } from './schema.js';
 
 export const syncApp = defineApp({
   version: 1,
   schema: syncSchema,
   mutators: syncMutators,
+  // Presence is never stored, so declaring (or changing) it needs no
+  // version bump.
+  presence: presenceSchema,
 });
 
 export type SyncApp = typeof syncApp;

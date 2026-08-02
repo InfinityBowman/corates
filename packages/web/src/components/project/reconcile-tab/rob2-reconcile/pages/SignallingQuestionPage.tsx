@@ -13,8 +13,8 @@ interface SignallingQuestionPageProps {
   reviewer1Data: any;
   reviewer2Data: any;
   finalData: any;
-  finalComment: string;
-  onFinalCommentChange: (_text: string) => void;
+  /** The final comment's flat answer key on the reconciled checklist (e.g. `d1_1.comment`). */
+  finalCommentKey: string;
   reviewer1Name: string;
   reviewer2Name: string;
   isAgreement: boolean;
@@ -33,8 +33,7 @@ export function SignallingQuestionPage({
   reviewer1Data,
   reviewer2Data,
   finalData,
-  finalComment,
-  onFinalCommentChange,
+  finalCommentKey,
   reviewer1Name,
   reviewer2Name,
   isAgreement,
@@ -129,8 +128,7 @@ export function SignallingQuestionPage({
           title='Final Answer'
           panelType='final'
           answer={finalData?.answer}
-          comment={finalComment}
-          onCommentChange={onFinalCommentChange}
+          finalCommentKey={finalCommentKey}
           responseOptions={responseOptions}
           readOnly={false}
           onAnswerChange={onFinalAnswerChange}

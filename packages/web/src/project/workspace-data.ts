@@ -139,8 +139,8 @@ export interface AnswerWriters {
 
 /**
  * The two write entry points the instrument UIs need. Online projects go
- * through the engine's mutation outbox; local practice writes its Y.Doc via
- * the legacy ops (mirrored back into rows by the pool's bridge).
+ * through the engine's mutation outbox; local practice applies the same
+ * shared mutators directly to its local-only collections.
  */
 export function useAnswerWriters(
   projectId: string,

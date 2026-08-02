@@ -38,8 +38,8 @@ interface ReconciliationQuestionPageProps {
   isMultiPart: boolean;
   reviewer1Note: string;
   reviewer2Note: string;
-  finalNote: string;
-  onFinalNoteChange: (text: string) => void;
+  /** Flat answer key of the final note on the reconciled checklist. */
+  finalNoteKey: string;
 }
 
 export function ReconciliationQuestionPage(props: ReconciliationQuestionPageProps) {
@@ -77,8 +77,7 @@ function SingleQuestionPage({
   isAgreement,
   reviewer1Note,
   reviewer2Note,
-  finalNote,
-  onFinalNoteChange,
+  finalNoteKey,
 }: ReconciliationQuestionPageProps) {
   const reviewer1Answers = rawR1 as AMSTAR2QuestionAnswer | null;
   const reviewer2Answers = rawR2 as AMSTAR2QuestionAnswer | null;
@@ -246,8 +245,7 @@ function SingleQuestionPage({
         <NotesCompareSection
           reviewer1Note={reviewer1Note}
           reviewer2Note={reviewer2Note}
-          finalNote={finalNote}
-          onFinalNoteChange={onFinalNoteChange}
+          finalNoteKey={finalNoteKey}
           reviewer1Name={reviewer1Name}
           reviewer2Name={reviewer2Name}
           collapsed={true}

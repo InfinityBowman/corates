@@ -218,6 +218,21 @@ function defaultRobinsIRows(): Record<string, JsonValue> {
 }
 
 /**
+ * The flat keys holding free prose for a checklist type — exactly the keys
+ * `defaultAnswerRows` seeds as the empty string (text fields are the ones
+ * whose default is `''`; choice/judgement fields default `null`, structured
+ * fields default arrays/objects). During reconciliation these are the fields
+ * hosted as Yjs fields (field id = the `answers` row id); finalize serializes
+ * each field's text back into its row, and the migration transformer uses the
+ * same enumeration to seed fields for in-progress reconciliations.
+ */
+export function textAnswerKeys(type: ChecklistType): string[] {
+  return Object.entries(defaultAnswerRows(type))
+    .filter(([, value]) => value === '')
+    .map(([key]) => key);
+}
+
+/**
  * Expand one validated answer update into flat-key writes — the row-plane port
  * of each handler's `updateAnswer`. Text fields are absent on purpose: they go
  * through `checklist.setText` (the ROBINS-I `sectionD.otherSpecify` rewrite is

@@ -67,7 +67,7 @@ export function ReconciliationEngine({
   pdfs,
   selectedPdfId,
   onPdfSelect,
-  getAwareness,
+  client,
   currentUser,
 }: ReconciliationEngineProps) {
   const adapter = useMemo(() => getReconciliationAdapter(checklistType), [checklistType]);
@@ -95,13 +95,8 @@ export function ReconciliationEngine({
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerScrollY, setContainerScrollY] = useState(0);
 
-  const stableGetAwareness = useMemo(
-    () => (getAwareness ? () => getAwareness() : undefined),
-    [getAwareness],
-  );
-
   const presence = useReconciliationPresence({
-    getAwareness: stableGetAwareness,
+    client,
     getCurrentPage: engine.currentPage,
     checklistType: adapter.checklistType,
     currentUser,

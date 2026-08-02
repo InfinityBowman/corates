@@ -12,6 +12,7 @@
  */
 
 import { createWorkspace } from '@cf-sync/client';
+import { createYjsFields, type YjsFields } from '@cf-sync/yjs/client';
 import { syncApp } from '@corates/shared/sync';
 import { useProjectStore, type ConnectionPhase } from '@/stores/projectStore';
 import { queryClient } from '@/lib/queryClient';
@@ -41,6 +42,9 @@ function createProjectWorkspace(
     workspaceId: projectId,
     app: syncApp,
     persist: true,
+    // Cursor-frequency presence: trailing-edge, matching the old awareness
+    // plane's 50ms mouse throttle.
+    presenceThrottleMs: 50,
     onFatal: error => handlers.onFatal(error.code, error.reason),
     onMutationRejected: (error, mutation) => {
       // The one place rejections surface: the optimistic overlay has already
@@ -77,6 +81,12 @@ export type ProjectWorkspace = ReturnType<typeof createProjectWorkspace>;
 interface ConnectionEntry {
   /** The engine session ({ client, collections }); null for local practice. */
   workspace: ProjectWorkspace | null;
+  /**
+   * Yjs fields attached to the session's binary lane — reconciliation
+   * consolidated notes live here. Null for local practice (no socket; note
+   * editors fall back to row writes). Torn down by client.destroy().
+   */
+  yfields: YjsFields | null;
   /** Local practice only: local-only collections persisted to Dexie. */
   localCollections: ProjectCollections | null;
   localPersistTimer: ReturnType<typeof setTimeout> | null;
@@ -120,6 +130,7 @@ class ConnectionPool {
 
     const entry: ConnectionEntry = {
       workspace: null,
+      yfields: null,
       localCollections: null,
       localPersistTimer: null,
       refCount: 1,
@@ -160,6 +171,7 @@ class ConnectionPool {
       onFatal: (code, reason) => this.handleFatal(projectId, code, reason),
     });
     entry.workspace = workspace;
+    entry.yfields = createYjsFields(workspace.client);
 
     const applyStatus = (status: string) => {
       if (cancelled()) return;
@@ -245,6 +257,11 @@ class ConnectionPool {
   /** The engine client for a project, once its session is initialized. */
   getClient(projectId: string): ProjectWorkspace['client'] | null {
     return this.registry.get(projectId)?.workspace?.client ?? null;
+  }
+
+  /** The Yjs fields attached to a project's session; null for local practice. */
+  getYjsFields(projectId: string): YjsFields | null {
+    return this.registry.get(projectId)?.yfields ?? null;
   }
 
   /** The engine client for the active project (used by the project.* actions). */
