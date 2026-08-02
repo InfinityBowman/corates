@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { env } from 'cloudflare:workers';
 import { createDb } from '@corates/db/client';
-import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
+import { resetTestDatabase } from '@/__tests__/server/helpers';
 import {
   buildUser,
   buildOrg,
@@ -33,7 +33,6 @@ const dummyRequest = new Request('http://localhost/api/accounts/merge', { method
 beforeEach(async () => {
   await resetTestDatabase();
   resetCounter();
-  await clearProjectDOs(['project-1']);
   currentUser = { id: 'user-1', email: 'user1@example.com' };
 });
 

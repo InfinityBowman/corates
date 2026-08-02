@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
+import { resetTestDatabase } from '@/__tests__/server/helpers';
 import { resetCounter } from '@/__tests__/server/factories';
 import { validateCoupon } from '@/server/functions/billing.server';
 
@@ -15,7 +15,6 @@ vi.mock('@corates/shared/stripe', () => ({
 
 beforeEach(async () => {
   await resetTestDatabase();
-  await clearProjectDOs([]);
   vi.clearAllMocks();
   resetCounter();
   stripeConfigured = true;

@@ -8,7 +8,6 @@ import { captureError } from '../../lib/logger';
 import { createDb } from '@corates/db/client';
 import { projectMembers } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { syncMemberWithRetry } from '../../lib/syncWithRetry';
 import { notifyUser, NotificationTypes } from '../lib/notifications';
 import { requireSafeRoleChange } from '../../policies';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
@@ -52,9 +51,6 @@ export async function updateMemberRole(
       cause: err instanceof Error ? err.message : String(err),
     });
   }
-
-  // Sync role update to DO with automatic retry
-  await syncMemberWithRetry(env, projectId, 'update', { userId, role });
 
   // Send notification to the user whose role was updated
   try {

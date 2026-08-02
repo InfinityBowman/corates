@@ -1,4 +1,4 @@
-import { captureError, info } from '@corates/workers/logger';
+import { info } from '@corates/workers/logger';
 import { env } from 'cloudflare:workers';
 import type { Database } from '@corates/db/client';
 import {
@@ -13,14 +13,12 @@ import {
 } from '@corates/db/schema';
 import { eq, or, desc } from 'drizzle-orm';
 import { containsInsensitive } from '@/server/lib/sqlSearch';
-import { syncMemberToDO } from '@corates/workers/project-sync';
-import { getProjectDocStub } from '@corates/workers/project-doc-id';
+import { kickWorkspaceUser } from '@corates/workers/sync';
 import {
   throwDomainError,
   DomainErrorException,
   createValidationError,
   AUTH_ERRORS,
-  USER_ERRORS,
   VALIDATION_ERRORS,
 } from '@corates/shared';
 
@@ -63,8 +61,10 @@ export async function deleteAccount(db: Database, session: Session) {
     .innerJoin(projects, eq(projectMembers.projectId, projects.id))
     .where(eq(projectMembers.userId, userId));
 
+  // Kick the user's live sync sessions before their memberships disappear;
+  // reconnect attempts re-run authorize against D1 and fail permanently.
   await Promise.all(
-    userProjects.map(({ projectId }) => syncMemberToDO(env, projectId, 'remove', { userId })),
+    userProjects.map(({ projectId }) => kickWorkspaceUser(env, projectId, userId)),
   );
 
   await db.batch([
@@ -185,55 +185,3 @@ export async function searchUsers(
   return sanitized;
 }
 
-export async function syncProfile(db: Database, session: Session) {
-  const [userData] = await db
-    .select({
-      name: user.name,
-      givenName: user.givenName,
-      familyName: user.familyName,
-      image: user.image,
-    })
-    .from(user)
-    .where(eq(user.id, session.user.id))
-    .limit(1);
-
-  if (!userData) {
-    throwDomainError(USER_ERRORS.NOT_FOUND, { userId: session.user.id });
-  }
-
-  const userProjects = await db
-    .select({ projectId: projectMembers.projectId })
-    .from(projectMembers)
-    .innerJoin(projects, eq(projectMembers.projectId, projects.id))
-    .where(eq(projectMembers.userId, session.user.id));
-
-  const results = await Promise.all(
-    userProjects.map(async ({ projectId }) => {
-      try {
-        const projectDoc = getProjectDocStub(env, projectId);
-        await projectDoc.syncMember('update', {
-          userId: session.user.id,
-          name: userData.name,
-          givenName: userData.givenName,
-          familyName: userData.familyName,
-          image: userData.image,
-        });
-        return { projectId, success: true };
-      } catch (err) {
-        captureError(err, {
-          tags: { component: 'users', action: 'sync-profile' },
-          extra: { projectId },
-        });
-        return { projectId, success: false };
-      }
-    }),
-  );
-
-  const successCount = results.filter(r => r.success).length;
-
-  return {
-    success: true as const,
-    synced: successCount,
-    total: userProjects.length,
-  };
-}

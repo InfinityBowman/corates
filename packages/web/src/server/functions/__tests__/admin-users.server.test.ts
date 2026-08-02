@@ -32,13 +32,8 @@ import {
   impersonateAdminUser,
 } from '@/server/functions/admin-users.server';
 
-const { mockSyncMemberToDO, mockAuthHandler } = vi.hoisted(() => ({
-  mockSyncMemberToDO: vi.fn(async () => {}),
+const { mockAuthHandler } = vi.hoisted(() => ({
   mockAuthHandler: vi.fn(async () => new Response(JSON.stringify({ ok: true }), { status: 200 })),
-}));
-
-vi.mock('@corates/workers/project-sync', () => ({
-  syncMemberToDO: mockSyncMemberToDO,
 }));
 
 vi.mock('@corates/workers/auth-config', () => ({
@@ -395,17 +390,13 @@ describe('DELETE /api/admin/users/:userId', () => {
     }
   });
 
-  it('cascades delete: syncs DOs, deletes user + related rows', async () => {
+  it('cascades delete: deletes user + related rows', async () => {
     const admin = await buildAdminUser();
-    const { project, owner } = await buildProject();
+    const { owner } = await buildProject();
     await seedSessionRow('del-s', owner.id);
     await seedAccountRow('del-a', owner.id, 'credential');
 
     await deleteAdminUser(mockAdminSession({ userId: admin.id }), createDb(env.DB), owner.id);
-
-    expect(mockSyncMemberToDO).toHaveBeenCalledWith(env, project.id, 'remove', {
-      userId: owner.id,
-    });
 
     const db = createDb(env.DB);
     const [u] = await db.select().from(user).where(eq(user.id, owner.id));

@@ -2,7 +2,7 @@
  * GET /health — deep dependency check used by uptime monitors.
  *
  * Probes D1 (`SELECT 1`), R2 (`list({ limit: 1 })`), and presence of the
- * UserSession + ProjectDoc DO bindings. Returns 200 with `status: 'healthy'`
+ * UserSession + Workspace DO bindings. Returns 200 with `status: 'healthy'`
  * when all checks pass, 503 with `status: 'degraded'` and per-service detail
  * otherwise. Mirrors the original Hono shape (`@/routes/health.ts` in the
  * deleted Hono app) so existing monitors stay compatible.
@@ -16,7 +16,7 @@ interface ServiceStatus {
   status: 'healthy' | 'unhealthy';
   type: string;
   error?: string;
-  bindings?: { USER_SESSION?: boolean; PROJECT_DOC?: boolean };
+  bindings?: { USER_SESSION?: boolean; WORKSPACE?: boolean };
 }
 
 interface HealthChecks {
@@ -63,13 +63,13 @@ export const handleGet = async () => {
     checks.status = 'degraded';
   }
 
-  const doHealthy = !!env.USER_SESSION && !!env.PROJECT_DOC;
+  const doHealthy = !!env.USER_SESSION && !!env.WORKSPACE;
   checks.services.durableObjects = {
     status: doHealthy ? 'healthy' : 'unhealthy',
     type: 'Durable Objects',
     bindings: {
       USER_SESSION: !!env.USER_SESSION,
-      PROJECT_DOC: !!env.PROJECT_DOC,
+      WORKSPACE: !!env.WORKSPACE,
     },
   };
   if (!doHealthy) checks.status = 'degraded';

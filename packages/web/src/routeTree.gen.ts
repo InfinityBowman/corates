@@ -49,7 +49,6 @@ import { Route as ApiTestAddProjectMemberRouteImport } from './routes/api/test/a
 import { Route as ApiAuthVerifyEmailRouteImport } from './routes/api/auth/verify-email'
 import { Route as ApiAuthSessionRouteImport } from './routes/api/auth/session'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
-import { Route as ApiAdminProjectDocInfoRouteImport } from './routes/api/admin/project-doc-info'
 import { Route as AppChecklistChecklistIdRouteImport } from './routes/_app/checklist.$checklistId'
 import { Route as AppProtectedSettingsRouteImport } from './routes/_app/_protected/settings'
 import { Route as AppProtectedAdminRouteImport } from './routes/_app/_protected/admin'
@@ -75,7 +74,6 @@ import { Route as AppProtectedAdminOrgsOrgIdRouteImport } from './routes/_app/_p
 import { Route as AppProtectedAdminBillingStuckStatesRouteImport } from './routes/_app/_protected/admin/billing.stuck-states'
 import { Route as AppProtectedAdminBillingStripeToolsRouteImport } from './routes/_app/_protected/admin/billing.stripe-tools'
 import { Route as AppProtectedAdminBillingLedgerRouteImport } from './routes/_app/_protected/admin/billing.ledger'
-import { Route as ApiOrgsOrgIdProjectsProjectIdDevAddStudyRouteImport } from './routes/api/orgs/$orgId/projects/$projectId/dev/add-study'
 import { Route as ApiOrgsOrgIdProjectsProjectIdStudiesStudyIdPdfsRouteImport } from './routes/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs'
 import { Route as AppProtectedProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRouteImport } from './routes/_app/_protected/projects.$projectId/studies.$studyId.checklists.$checklistId'
 import { Route as ApiOrgsOrgIdProjectsProjectIdStudiesStudyIdPdfsFileNameRouteImport } from './routes/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs/$fileName'
@@ -280,11 +278,6 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiAdminProjectDocInfoRoute = ApiAdminProjectDocInfoRouteImport.update({
-  id: '/api/admin/project-doc-info',
-  path: '/api/admin/project-doc-info',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AppChecklistChecklistIdRoute = AppChecklistChecklistIdRouteImport.update({
   id: '/$checklistId',
   path: '/$checklistId',
@@ -428,12 +421,6 @@ const AppProtectedAdminBillingLedgerRoute =
     path: '/billing/ledger',
     getParentRoute: () => AppProtectedAdminRoute,
   } as any)
-const ApiOrgsOrgIdProjectsProjectIdDevAddStudyRoute =
-  ApiOrgsOrgIdProjectsProjectIdDevAddStudyRouteImport.update({
-    id: '/api/orgs/$orgId/projects/$projectId/dev/add-study',
-    path: '/api/orgs/$orgId/projects/$projectId/dev/add-study',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const ApiOrgsOrgIdProjectsProjectIdStudiesStudyIdPdfsRoute =
   ApiOrgsOrgIdProjectsProjectIdStudiesStudyIdPdfsRouteImport.update({
     id: '/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs',
@@ -489,7 +476,6 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AppProtectedAdminRouteWithChildren
   '/settings': typeof AppProtectedSettingsRouteWithChildren
   '/checklist/$checklistId': typeof AppChecklistChecklistIdRoute
-  '/api/admin/project-doc-info': typeof ApiAdminProjectDocInfoRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/auth/verify-email': typeof ApiAuthVerifyEmailRoute
@@ -527,7 +513,6 @@ export interface FileRoutesByFullPath {
   '/admin/users/$userId': typeof AppProtectedAdminUsersUserIdRoute
   '/admin/orgs/': typeof AppProtectedAdminOrgsIndexRoute
   '/admin/projects/': typeof AppProtectedAdminProjectsIndexRoute
-  '/api/orgs/$orgId/projects/$projectId/dev/add-study': typeof ApiOrgsOrgIdProjectsProjectIdDevAddStudyRoute
   '/projects/$projectId/studies/$studyId/checklists/$checklistId': typeof AppProtectedProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRoute
   '/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs': typeof ApiOrgsOrgIdProjectsProjectIdStudiesStudyIdPdfsRouteWithChildren
   '/projects/$projectId/studies/$studyId/reconcile/$checklist1Id/$checklist2Id': typeof AppProtectedProjectsProjectIdStudiesStudyIdReconcileChecklist1IdChecklist2IdRoute
@@ -556,7 +541,6 @@ export interface FileRoutesByTo {
   '/resources/robins-i': typeof ResourcesRobinsIRoute
   '/resources': typeof ResourcesIndexRoute
   '/checklist/$checklistId': typeof AppChecklistChecklistIdRoute
-  '/api/admin/project-doc-info': typeof ApiAdminProjectDocInfoRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/auth/verify-email': typeof ApiAuthVerifyEmailRoute
@@ -594,7 +578,6 @@ export interface FileRoutesByTo {
   '/admin/users/$userId': typeof AppProtectedAdminUsersUserIdRoute
   '/admin/orgs': typeof AppProtectedAdminOrgsIndexRoute
   '/admin/projects': typeof AppProtectedAdminProjectsIndexRoute
-  '/api/orgs/$orgId/projects/$projectId/dev/add-study': typeof ApiOrgsOrgIdProjectsProjectIdDevAddStudyRoute
   '/projects/$projectId/studies/$studyId/checklists/$checklistId': typeof AppProtectedProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRoute
   '/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs': typeof ApiOrgsOrgIdProjectsProjectIdStudiesStudyIdPdfsRouteWithChildren
   '/projects/$projectId/studies/$studyId/reconcile/$checklist1Id/$checklist2Id': typeof AppProtectedProjectsProjectIdStudiesStudyIdReconcileChecklist1IdChecklist2IdRoute
@@ -630,7 +613,6 @@ export interface FileRoutesById {
   '/_app/_protected/admin': typeof AppProtectedAdminRouteWithChildren
   '/_app/_protected/settings': typeof AppProtectedSettingsRouteWithChildren
   '/_app/checklist/$checklistId': typeof AppChecklistChecklistIdRoute
-  '/api/admin/project-doc-info': typeof ApiAdminProjectDocInfoRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/auth/verify-email': typeof ApiAuthVerifyEmailRoute
@@ -668,7 +650,6 @@ export interface FileRoutesById {
   '/_app/_protected/admin/users/$userId': typeof AppProtectedAdminUsersUserIdRoute
   '/_app/_protected/admin/orgs/': typeof AppProtectedAdminOrgsIndexRoute
   '/_app/_protected/admin/projects/': typeof AppProtectedAdminProjectsIndexRoute
-  '/api/orgs/$orgId/projects/$projectId/dev/add-study': typeof ApiOrgsOrgIdProjectsProjectIdDevAddStudyRoute
   '/_app/_protected/projects/$projectId/studies/$studyId/checklists/$checklistId': typeof AppProtectedProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRoute
   '/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs': typeof ApiOrgsOrgIdProjectsProjectIdStudiesStudyIdPdfsRouteWithChildren
   '/_app/_protected/projects/$projectId/studies/$studyId/reconcile/$checklist1Id/$checklist2Id': typeof AppProtectedProjectsProjectIdStudiesStudyIdReconcileChecklist1IdChecklist2IdRoute
@@ -702,7 +683,6 @@ export interface FileRouteTypes {
     | '/admin'
     | '/settings'
     | '/checklist/$checklistId'
-    | '/api/admin/project-doc-info'
     | '/api/auth/$'
     | '/api/auth/session'
     | '/api/auth/verify-email'
@@ -740,7 +720,6 @@ export interface FileRouteTypes {
     | '/admin/users/$userId'
     | '/admin/orgs/'
     | '/admin/projects/'
-    | '/api/orgs/$orgId/projects/$projectId/dev/add-study'
     | '/projects/$projectId/studies/$studyId/checklists/$checklistId'
     | '/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs'
     | '/projects/$projectId/studies/$studyId/reconcile/$checklist1Id/$checklist2Id'
@@ -769,7 +748,6 @@ export interface FileRouteTypes {
     | '/resources/robins-i'
     | '/resources'
     | '/checklist/$checklistId'
-    | '/api/admin/project-doc-info'
     | '/api/auth/$'
     | '/api/auth/session'
     | '/api/auth/verify-email'
@@ -807,7 +785,6 @@ export interface FileRouteTypes {
     | '/admin/users/$userId'
     | '/admin/orgs'
     | '/admin/projects'
-    | '/api/orgs/$orgId/projects/$projectId/dev/add-study'
     | '/projects/$projectId/studies/$studyId/checklists/$checklistId'
     | '/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs'
     | '/projects/$projectId/studies/$studyId/reconcile/$checklist1Id/$checklist2Id'
@@ -842,7 +819,6 @@ export interface FileRouteTypes {
     | '/_app/_protected/admin'
     | '/_app/_protected/settings'
     | '/_app/checklist/$checklistId'
-    | '/api/admin/project-doc-info'
     | '/api/auth/$'
     | '/api/auth/session'
     | '/api/auth/verify-email'
@@ -880,7 +856,6 @@ export interface FileRouteTypes {
     | '/_app/_protected/admin/users/$userId'
     | '/_app/_protected/admin/orgs/'
     | '/_app/_protected/admin/projects/'
-    | '/api/orgs/$orgId/projects/$projectId/dev/add-study'
     | '/_app/_protected/projects/$projectId/studies/$studyId/checklists/$checklistId'
     | '/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs'
     | '/_app/_protected/projects/$projectId/studies/$studyId/reconcile/$checklist1Id/$checklist2Id'
@@ -905,7 +880,6 @@ export interface RootRouteChildren {
   ResourcesRob2Route: typeof ResourcesRob2Route
   ResourcesRobinsIRoute: typeof ResourcesRobinsIRoute
   ResourcesIndexRoute: typeof ResourcesIndexRoute
-  ApiAdminProjectDocInfoRoute: typeof ApiAdminProjectDocInfoRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiAuthSessionRoute: typeof ApiAuthSessionRoute
   ApiAuthVerifyEmailRoute: typeof ApiAuthVerifyEmailRoute
@@ -921,7 +895,6 @@ export interface RootRouteChildren {
   ApiTestVerifyEmailRoute: typeof ApiTestVerifyEmailRoute
   ApiUsersAvatarRoute: typeof ApiUsersAvatarRouteWithChildren
   ApiAuthStripeWebhookRoute: typeof ApiAuthStripeWebhookRoute
-  ApiOrgsOrgIdProjectsProjectIdDevAddStudyRoute: typeof ApiOrgsOrgIdProjectsProjectIdDevAddStudyRoute
   ApiOrgsOrgIdProjectsProjectIdStudiesStudyIdPdfsRoute: typeof ApiOrgsOrgIdProjectsProjectIdStudiesStudyIdPdfsRouteWithChildren
 }
 
@@ -1207,13 +1180,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/admin/project-doc-info': {
-      id: '/api/admin/project-doc-info'
-      path: '/api/admin/project-doc-info'
-      fullPath: '/api/admin/project-doc-info'
-      preLoaderRoute: typeof ApiAdminProjectDocInfoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_app/checklist/$checklistId': {
       id: '/_app/checklist/$checklistId'
       path: '/$checklistId'
@@ -1388,13 +1354,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/billing/ledger'
       preLoaderRoute: typeof AppProtectedAdminBillingLedgerRouteImport
       parentRoute: typeof AppProtectedAdminRoute
-    }
-    '/api/orgs/$orgId/projects/$projectId/dev/add-study': {
-      id: '/api/orgs/$orgId/projects/$projectId/dev/add-study'
-      path: '/api/orgs/$orgId/projects/$projectId/dev/add-study'
-      fullPath: '/api/orgs/$orgId/projects/$projectId/dev/add-study'
-      preLoaderRoute: typeof ApiOrgsOrgIdProjectsProjectIdDevAddStudyRouteImport
-      parentRoute: typeof rootRouteImport
     }
     '/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs': {
       id: '/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs'
@@ -1613,7 +1572,6 @@ const rootRouteChildren: RootRouteChildren = {
   ResourcesRob2Route: ResourcesRob2Route,
   ResourcesRobinsIRoute: ResourcesRobinsIRoute,
   ResourcesIndexRoute: ResourcesIndexRoute,
-  ApiAdminProjectDocInfoRoute: ApiAdminProjectDocInfoRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiAuthSessionRoute: ApiAuthSessionRoute,
   ApiAuthVerifyEmailRoute: ApiAuthVerifyEmailRoute,
@@ -1629,8 +1587,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiTestVerifyEmailRoute: ApiTestVerifyEmailRoute,
   ApiUsersAvatarRoute: ApiUsersAvatarRouteWithChildren,
   ApiAuthStripeWebhookRoute: ApiAuthStripeWebhookRoute,
-  ApiOrgsOrgIdProjectsProjectIdDevAddStudyRoute:
-    ApiOrgsOrgIdProjectsProjectIdDevAddStudyRoute,
   ApiOrgsOrgIdProjectsProjectIdStudiesStudyIdPdfsRoute:
     ApiOrgsOrgIdProjectsProjectIdStudiesStudyIdPdfsRouteWithChildren,
 }

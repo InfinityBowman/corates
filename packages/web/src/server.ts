@@ -1,19 +1,13 @@
 import * as Sentry from '@sentry/cloudflare';
 import { createStartHandler, defaultStreamHandler } from '@tanstack/react-start/server';
 import { handleEmailQueue } from '@corates/workers/queue';
-import { getProjectDocStub } from '@corates/workers/project-doc-id';
 import { handleSyncFetch } from '@corates/workers/sync';
 
 // Re-export DOs so wrangler DO bindings in wrangler.jsonc resolve against this
 // worker's main module. The class implementations live in @corates/workers.
-export { UserSession, ProjectDoc, WorkspaceDO } from '@corates/workers/durable-objects';
+export { UserSession, WorkspaceDO } from '@corates/workers/durable-objects';
 
 const startFetch = createStartHandler(defaultStreamHandler);
-
-// `/api/project-doc/<projectId>(/<...>)?` — y-websocket appends the room as
-// the trailing segment; we route by path prefix and forward the original
-// Request (including upgrade headers) to the project-scoped DO.
-const PROJECT_DOC_PATH = /^\/api\/project-doc\/([^/]+)(?:\/.*)?$/;
 
 // `/api/sessions/<sessionId>(/<...>)?` — UserSession DO for per-user
 // notification fan-out. WebSocket upgrades only.
@@ -39,13 +33,6 @@ const workerHandler = {
     // DO routes must be handled before TanStack Start (which can't pass
     // WebSocket upgrades through). Same Request is forwarded as-is so the
     // upgrade handshake reaches the DO.
-    const projectMatch = url.pathname.match(PROJECT_DOC_PATH);
-    if (projectMatch) {
-      const projectId = projectMatch[1];
-      const stub = getProjectDocStub(env as never, projectId);
-      return stub.fetch(request);
-    }
-
     const sessionMatch = url.pathname.match(SESSION_PATH);
     if (sessionMatch) {
       const sessionId = sessionMatch[1];

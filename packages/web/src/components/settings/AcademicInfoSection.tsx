@@ -6,7 +6,6 @@ import { useState, useMemo, useCallback, useId } from 'react';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { showToast } from '@/lib/toast';
 import { TITLE_OPTIONS } from '@/components/auth/RoleSelector';
-import { syncProfileToProjects } from '@/lib/syncUtils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -72,7 +71,6 @@ export function AcademicInfoSection() {
         institution: editInstitution?.trim() || null,
         department: editDepartment?.trim() || null,
       });
-      syncProfileToProjects();
       showToast.success('Profile Updated', 'Your academic information has been updated.');
       setIsEditing(false);
     } catch (err) {

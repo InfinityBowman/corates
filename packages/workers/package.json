@@ -22,8 +22,6 @@
       "types": "./queue.d.ts",
       "default": "./src/queue.ts"
     },
-    "./project-sync": "./src/lib/project-sync.ts",
-    "./project-doc-id": "./src/lib/project-doc-id.ts",
     "./email-templates": "./src/auth/emailTemplates.ts",
     "./auth-config": "./src/auth/config.ts",
     "./auth-admin": "./src/auth/admin.ts",

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { env } from 'cloudflare:workers';
-import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
+import { resetTestDatabase } from '@/__tests__/server/helpers';
 import {
   buildProject,
   buildProjectWithMembers,
@@ -24,29 +24,20 @@ function mockSession(): Session {
   } as Session;
 }
 
-vi.mock('@corates/workers/project-sync', () => ({
-  syncMemberToDO: vi.fn(async () => {}),
-}));
-
 vi.mock('@corates/workers/billing-resolver', () => ({
   resolveOrgAccess: vi.fn(),
 }));
 
 let mockResolveOrgAccess: Mock;
-let mockSyncMemberToDO: Mock;
 
 beforeEach(async () => {
   await resetTestDatabase();
   resetCounter();
-  await clearProjectDOs(['project-1']);
   vi.clearAllMocks();
   currentUser = { id: 'user-1', email: 'user1@example.com' };
 
   const billingResolver = await import('@corates/workers/billing-resolver');
   mockResolveOrgAccess = billingResolver.resolveOrgAccess as unknown as Mock;
-
-  const projectSync = await import('@corates/workers/project-sync');
-  mockSyncMemberToDO = projectSync.syncMemberToDO as unknown as Mock;
 
   mockResolveOrgAccess.mockResolvedValue({
     accessMode: 'write',
@@ -57,7 +48,6 @@ beforeEach(async () => {
     entitlements: { 'project.create': true },
   });
 
-  mockSyncMemberToDO.mockResolvedValue(undefined);
 });
 
 describe('handleGetInvitation', () => {
@@ -182,13 +172,6 @@ describe('handleAcceptInvitation', () => {
       .where(eq(projectInvitations.id, (await db.select().from(projectInvitations).get())!.id))
       .get();
     expect(dbInvitation!.acceptedAt).not.toBeNull();
-
-    expect(mockSyncMemberToDO).toHaveBeenCalledWith(
-      expect.any(Object),
-      project.id,
-      'add',
-      expect.objectContaining({ userId: invitee.id, role: 'member' }),
-    );
   });
 
   it('throws for invalid token', async () => {

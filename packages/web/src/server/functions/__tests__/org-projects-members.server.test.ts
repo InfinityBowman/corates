@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { env } from 'cloudflare:workers';
 import { createDb } from '@corates/db/client';
-import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
+import { resetTestDatabase } from '@/__tests__/server/helpers';
 import {
   buildProjectWithMembers,
   buildProject,
@@ -55,7 +55,6 @@ vi.mock('@corates/workers/quota-transaction', () => ({
 
 beforeEach(async () => {
   await resetTestDatabase();
-  await clearProjectDOs(['project-1']);
   vi.clearAllMocks();
   resetCounter();
   currentUser = { id: 'user-1', email: 'user1@example.com' };

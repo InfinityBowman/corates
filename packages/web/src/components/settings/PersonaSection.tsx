@@ -6,7 +6,6 @@ import { useState, useCallback } from 'react';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { showToast } from '@/lib/toast';
 import { ROLES, getRoleLabel } from '@/components/auth/RoleSelector';
-import { syncProfileToProjects } from '@/lib/syncUtils';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -39,7 +38,6 @@ export function PersonaSection() {
     setSaving(true);
     try {
       await updateProfile({ persona: editSelection || null });
-      syncProfileToProjects();
       showToast.success('Profile Updated', 'Your persona has been updated successfully.');
       setIsEditing(false);
     } catch (err) {

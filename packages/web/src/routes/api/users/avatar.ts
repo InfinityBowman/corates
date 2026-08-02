@@ -1,46 +1,18 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
-import type { Database } from '@corates/db/client';
-import { projectMembers, projects } from '@corates/db/schema';
-import { eq } from 'drizzle-orm';
-import { getProjectDocStub } from '@corates/workers/project-doc-id';
 import { FILE_SIZE_LIMITS } from '@corates/workers/constants';
 import { createDomainError, FILE_ERRORS, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import { authMiddleware, type Session } from '@/server/middleware/auth';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
-async function syncAvatarToProjects(
-  db: Database,
-  userId: string,
-  avatarUrl: string,
-): Promise<void> {
-  try {
-    const memberships = await db
-      .select({ projectId: projectMembers.projectId, orgId: projects.orgId })
-      .from(projectMembers)
-      .innerJoin(projects, eq(projectMembers.projectId, projects.id))
-      .where(eq(projectMembers.userId, userId));
-
-    for (const { projectId } of memberships) {
-      try {
-        const projectDoc = getProjectDocStub(env, projectId);
-        await projectDoc.syncMember('update', { userId, image: avatarUrl });
-      } catch (err) {
-        console.error(`Failed to sync avatar to project ${projectId}:`, err);
-      }
-    }
-  } catch (err) {
-    console.error('Failed to sync avatar to projects:', err);
-  }
-}
 
 export const handlePost = async ({
   request,
-  context: { db, session },
+  context: { session },
 }: {
   request: Request;
-  context: { db: Database; session: Session };
+  context: { session: Session };
 }) => {
   const userId = session.user.id;
 
@@ -121,7 +93,6 @@ export const handlePost = async ({
     });
 
     const avatarUrl = `/api/users/avatar/${userId}?t=${timestamp}`;
-    await syncAvatarToProjects(db, userId, avatarUrl);
 
     return Response.json({ success: true as const, url: avatarUrl, key }, { status: 200 });
   } catch (err) {

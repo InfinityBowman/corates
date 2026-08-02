@@ -6,7 +6,6 @@ import {
   fetchMyProjects,
   fetchUserProjects,
   searchUsers as searchUsersImpl,
-  syncProfile,
 } from './users.server';
 
 export const deleteMyAccount = createServerFn({ method: 'POST' })
@@ -37,6 +36,3 @@ export const searchUsers = createServerFn({ method: 'GET' })
     searchUsersImpl(db, session, request, data),
   );
 
-export const syncUserProfile = createServerFn({ method: 'POST' })
-  .middleware([authMiddleware])
-  .handler(async ({ context: { db, session } }) => syncProfile(db, session));

@@ -10,7 +10,6 @@ import { createDb } from '@corates/db/client';
 import { projectMembers, projects } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS } from '@corates/shared';
-import { syncMemberWithRetry } from '../../lib/syncWithRetry';
 import { kickWorkspaceUser } from '../../sync/admin';
 import { notifyUser, NotificationTypes } from '../lib/notifications';
 import { getProjectMembership, requireSafeRemoval } from '../../policies';
@@ -53,9 +52,6 @@ export async function removeMember(
   await db
     .delete(projectMembers)
     .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, userId)));
-
-  // Sync member removal to DO with automatic retry
-  await syncMemberWithRetry(env, projectId, 'remove', { userId });
 
   // Kick the removed member's live sync-engine sessions (permanent close;
   // reconnects re-run authorize against D1 and fail with not-a-member).

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { env } from 'cloudflare:workers';
 import { createDb } from '@corates/db/client';
 import { DomainErrorException } from '@corates/shared';
-import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
+import { resetTestDatabase } from '@/__tests__/server/helpers';
 import { buildOrg, resetCounter } from '@/__tests__/server/factories';
 import { fetchMembers } from '@/server/functions/billing.server';
 import type { Session } from '@/server/middleware/auth';
@@ -37,7 +37,6 @@ vi.mock('@corates/workers/auth-config', () => ({
 
 beforeEach(async () => {
   await resetTestDatabase();
-  await clearProjectDOs([]);
   vi.clearAllMocks();
   resetCounter();
 });

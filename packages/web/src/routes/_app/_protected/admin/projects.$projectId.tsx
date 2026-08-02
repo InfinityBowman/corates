@@ -10,7 +10,7 @@ import {
   HomeIcon,
 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useAdminProjectDetails, useAdminProjectDocStats } from '@/hooks/useAdminQueries';
+import { useAdminProjectDetails, useAdminWorkspaceStats } from '@/hooks/useAdminQueries';
 import { useAdminStore, removeProjectMember, deleteProject } from '@/stores/adminStore';
 import { showToast } from '@/lib/toast';
 import { Button } from '@/components/ui/button';
@@ -19,11 +19,11 @@ import { handleError } from '@/lib/error-utils';
 import { queryKeys } from '@/lib/queryKeys';
 import type {
   ProjectData,
-  ProjectDocStats,
+  WorkspaceStats,
   ProjectMember,
 } from '@/components/admin/projects/types';
 import { ProjectInfoSection } from '@/components/admin/projects/ProjectInfoSection';
-import { ProjectDocStorageSection } from '@/components/admin/projects/ProjectDocStorageSection';
+import { WorkspaceStorageSection } from '@/components/admin/projects/WorkspaceStorageSection';
 import { ProjectMembersSection } from '@/components/admin/projects/ProjectMembersSection';
 import { ProjectFilesSection } from '@/components/admin/projects/ProjectFilesSection';
 import { ProjectInvitationsSection } from '@/components/admin/projects/ProjectInvitationsSection';
@@ -48,8 +48,8 @@ function ProjectDetailPage() {
   // DO storage stats are fetched separately because they route through the
   // ProjectDoc DO and are slower than the D1 details query. Loading them as
   // a sibling query lets the rest of the page render immediately.
-  const docStatsQuery = useAdminProjectDocStats(projectId);
-  const docStats = docStatsQuery.data as ProjectDocStats | undefined;
+  const statsQuery = useAdminWorkspaceStats(projectId);
+  const workspaceStats = statsQuery.data as WorkspaceStats | undefined;
 
   const [confirmDialog, setConfirmDialog] = useState<{
     type: 'delete-project' | 'remove-member';
@@ -185,12 +185,12 @@ function ProjectDetailPage() {
           </div>
 
           <ProjectInfoSection project={projectData.project} stats={projectData.stats} />
-          <ProjectDocStorageSection
-            stats={docStats}
-            isLoading={docStatsQuery.isLoading}
-            isError={docStatsQuery.isError}
-            isFetching={docStatsQuery.isFetching}
-            onRefresh={() => docStatsQuery.refetch()}
+          <WorkspaceStorageSection
+            stats={workspaceStats}
+            isLoading={statsQuery.isLoading}
+            isError={statsQuery.isError}
+            isFetching={statsQuery.isFetching}
+            onRefresh={() => statsQuery.refetch()}
           />
           <ProjectMembersSection
             members={projectData.members}

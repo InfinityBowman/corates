@@ -3,7 +3,7 @@
 declare namespace Cloudflare {
   interface GlobalProps {
     mainModule: typeof import('./src/test-worker');
-    durableNamespaces: 'UserSession' | 'ProjectDoc' | 'WorkspaceDO';
+    durableNamespaces: 'UserSession' | 'WorkspaceDO';
   }
   interface ProductionEnv {
     PDF_BUCKET: R2Bucket;
@@ -33,7 +33,6 @@ declare namespace Cloudflare {
     STRIPE_PRICE_ID_UNLIMITED_TEAM_YEARLY: string;
     STRIPE_PRICE_ID_SINGLE_PROJECT: string;
     USER_SESSION: DurableObjectNamespace<import('./src/test-worker').UserSession>;
-    PROJECT_DOC: DurableObjectNamespace<import('./src/test-worker').ProjectDoc>;
     WORKSPACE: DurableObjectNamespace<import('./src/test-worker').WorkspaceDO>;
   }
   interface Env {
@@ -64,7 +63,6 @@ declare namespace Cloudflare {
     STRIPE_PRICE_ID_UNLIMITED_TEAM_YEARLY: string;
     STRIPE_PRICE_ID_SINGLE_PROJECT: string;
     USER_SESSION: DurableObjectNamespace<import('./src/test-worker').UserSession>;
-    PROJECT_DOC: DurableObjectNamespace<import('./src/test-worker').ProjectDoc>;
     WORKSPACE: DurableObjectNamespace<import('./src/test-worker').WorkspaceDO>;
     CF_VERSION_METADATA?: WorkerVersionMetadata;
     DEV_MODE?: true;

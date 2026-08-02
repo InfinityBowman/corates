@@ -1,24 +1,9 @@
 /**
- * Durable Object sync utilities for commands
- *
- * Consolidates DO sync operations used across commands.
- * Re-exports from project-sync.ts and adds additional helpers.
+ * R2 storage cleanup for commands.
  */
 
 import { info } from '../../lib/logger';
-import { getProjectDocStub } from '../../lib/project-doc-id';
 import type { Env } from '../../types';
-
-// Re-export existing sync functions
-export { syncProjectToDO } from '../../lib/project-sync';
-
-/**
- * Disconnect all connected users from a ProjectDoc Durable Object
- */
-export async function disconnectAllFromProject(env: Env, projectId: string): Promise<void> {
-  const projectDoc = getProjectDocStub(env, projectId);
-  await projectDoc.disconnectAllConnections('project-deleted');
-}
 
 /**
  * Clean up all files from R2 storage for a project

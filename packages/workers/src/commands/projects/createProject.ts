@@ -6,12 +6,9 @@
  * @throws DomainError DB_TRANSACTION_FAILED on database error
  */
 
-import { captureError } from '../../lib/logger';
 import { createDb } from '@corates/db/client';
-import { projects, projectMembers, user } from '@corates/db/schema';
-import { eq } from 'drizzle-orm';
+import { projects, projectMembers } from '@corates/db/schema';
 import { insertWithQuotaCheck, type InsertRollbackMeta } from '../../lib/quotaTransaction';
-import { syncProjectToDO } from '../lib/doSync';
 import { createValidationError, VALIDATION_ERRORS } from '@corates/shared';
 import type { OrgId, ProjectId, ProjectMemberId, UserId } from '@corates/shared/ids';
 import type { Env } from '../../types';
@@ -94,50 +91,6 @@ export async function createProject(
 
   if (!quotaResult.success) {
     throw quotaResult.error;
-  }
-
-  const creator = await db
-    .select({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      givenName: user.givenName,
-      familyName: user.familyName,
-      image: user.image,
-    })
-    .from(user)
-    .where(eq(user.id, actor.id))
-    .get();
-
-  try {
-    await syncProjectToDO(
-      env,
-      projectId,
-      {
-        name: trimmedName,
-        description: trimmedDescription,
-        orgId,
-        createdAt: now.getTime(),
-        updatedAt: now.getTime(),
-      },
-      [
-        {
-          userId: actor.id,
-          role: 'owner',
-          joinedAt: now.getTime(),
-          name: creator?.name || null,
-          email: creator?.email || null,
-          givenName: creator?.givenName || null,
-          familyName: creator?.familyName || null,
-          image: creator?.image || null,
-        },
-      ],
-    );
-  } catch (err) {
-    captureError(err, {
-      tags: { component: 'project', action: 'create-do-sync' },
-      extra: { projectId },
-    });
   }
 
   return {

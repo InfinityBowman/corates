@@ -3,7 +3,7 @@ import { env } from 'cloudflare:workers';
 import { eq } from 'drizzle-orm';
 import { createDb } from '@corates/db/client';
 import { projectInvitations } from '@corates/db/schema';
-import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
+import { resetTestDatabase } from '@/__tests__/server/helpers';
 import {
   buildProject,
   buildProjectInvitation,
@@ -54,7 +54,6 @@ vi.mock('postmark', () => ({
 
 beforeEach(async () => {
   await resetTestDatabase();
-  await clearProjectDOs(['project-1']);
   vi.clearAllMocks();
   resetCounter();
   currentUser = { id: 'user-1', email: 'user1@example.com' };

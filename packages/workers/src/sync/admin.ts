@@ -21,8 +21,7 @@ export function projectWorkspace(env: Env, projectId: string) {
  * Kick a removed member's live sync sessions. Permanent close: the client
  * stops reconnecting and surfaces the reason. Failure is tolerated (D1 is the
  * authority; an open socket without membership can read pokes until it
- * naturally dies, same blast radius the retry-tolerant ProjectDoc sync
- * accepts) but logged.
+ * naturally dies) but logged.
  */
 export async function kickWorkspaceUser(
   env: Env,
@@ -70,8 +69,7 @@ export async function refreshOrgWorkspaceSessions(
 
 /**
  * Project deletion: close every session permanently, then wipe the workspace
- * storage. Best-effort like the ProjectDoc teardown beside it — D1 deletion
- * is the authoritative act.
+ * storage. Best-effort — D1 deletion is the authoritative act.
  */
 export async function teardownWorkspace(env: Env, projectId: string): Promise<void> {
   try {

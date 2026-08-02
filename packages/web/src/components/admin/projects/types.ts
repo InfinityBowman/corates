@@ -59,17 +59,23 @@ export interface ProjectData {
   invitations?: ProjectInvitation[];
 }
 
-export interface ProjectDocStats {
-  rows: {
-    total: number;
-    snapshot: number;
-    update: number;
-    snapshotBytes: number;
-    updateBytes: number;
-    totalBytes: number;
+/** The sync-engine workspace's admin stats (`workspaceAdmin(...).stats()`). */
+export interface WorkspaceStats {
+  workspaceId: string;
+  backendId: string;
+  schemaVersion: number;
+  currentVersion: number;
+  rows: { live: number; tombstones: number };
+  mutationLogEntries: number;
+  knownClients: number;
+  databaseSizeBytes: number;
+  connections: { total: number; ready: number; presence: number };
+  /** The Yjs fields add-on's stats, when mounted. */
+  extension?: {
+    fields: number;
+    frozenFields: number;
+    fieldBytes: number;
+    pendingUpdates: number;
+    cachedDocs: number;
   };
-  encodedSnapshotBytes: number;
-  memoryUsagePercent: number;
-  content: { members: number; studies: number; checklists: number; pdfs: number };
-  timestamps: { oldestRowAt: number | null; newestRowAt: number | null };
 }

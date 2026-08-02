@@ -2,7 +2,7 @@
  * Unified Dexie database for CoRATES client-side storage
  *
  * This module provides a single IndexedDB database for all local data:
- * - Project Y.Doc persistence (via y-dexie)
+ * - Local-practice rows (plus the legacy y-dexie Y.Doc they migrated from)
  * - PDF cache for offline access
  *
  * @see packages/docs/plans/dexie-migration.md
@@ -123,6 +123,20 @@ class CoratesDB extends Dexie {
 }
 
 export const db = new CoratesDB();
+
+// Sync-engine cutover cleanup: online projects' y-dexie docs are dead weight
+// now — the engine persists its own snapshots in a separate IndexedDB — so
+// delete them on every open. The local-practice row is deliberately spared:
+// it is the one-time migration source (see loadLegacyLocalRows) and the
+// rollback copy until that conversion has soaked, after which a schema
+// version drops the `projects` ydoc table and `localChecklists` outright.
+db.on('ready', async () => {
+  try {
+    await db.projects.where('id').notEqual(LOCAL_PROJECT_ID).delete();
+  } catch (err) {
+    console.warn('Failed to clear legacy y-dexie project state:', err);
+  }
+});
 
 /**
  * Delete all data for a specific project

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { env } from 'cloudflare:workers';
 import { createDb } from '@corates/db/client';
 import { DomainErrorException } from '@corates/shared';
-import { resetTestDatabase, clearProjectDOs, seedMediaFile } from '@/__tests__/server/helpers';
+import { resetTestDatabase, seedMediaFile } from '@/__tests__/server/helpers';
 import {
   buildAdminUser,
   buildOrg,
@@ -15,14 +15,13 @@ import type { Session } from '@/server/middleware/auth';
 import {
   listAdminProjects,
   getAdminProjectDetails,
-  getAdminProjectDocStats,
+  getAdminWorkspaceStats,
   removeAdminProjectMember,
   deleteAdminProject,
 } from '@/server/functions/admin-projects.server';
 
 beforeEach(async () => {
   await resetTestDatabase();
-  await clearProjectDOs(['admin-doc-stats-project']);
   vi.clearAllMocks();
   resetCounter();
 });
@@ -152,38 +151,40 @@ describe('getAdminProjectDetails', () => {
   });
 });
 
-describe('getAdminProjectDocStats', () => {
-  it('throws 404 without waking the DO when project missing in D1', async () => {
+describe('getAdminWorkspaceStats', () => {
+  it('throws 404 without waking the workspace when project missing in D1', async () => {
     try {
-      await getAdminProjectDocStats(mockAdminSession(), createDb(env.DB), 'no-such');
+      await getAdminWorkspaceStats(mockAdminSession(), createDb(env.DB), 'no-such');
       expect.unreachable('should have thrown');
     } catch (err) {
       expect((err as DomainErrorException).statusCode).toBe(404);
     }
   });
 
-  it('returns stat shape for an existing empty project', async () => {
+  it('returns engine stat shape for an existing empty project', async () => {
     await buildAdminUser();
     const { org, owner } = await buildOrg();
     const { project } = await buildProject({
       org,
       owner,
-      project: { id: 'admin-doc-stats-project', name: 'Stats' },
+      project: { id: 'admin-ws-stats-project', name: 'Stats' },
     });
 
-    const result = (await getAdminProjectDocStats(
+    const result = (await getAdminWorkspaceStats(
       mockAdminSession(),
       createDb(env.DB),
       project.id,
     )) as {
-      rows: { total: number; totalBytes: number; snapshotBytes: number; updateBytes: number };
-      content: { members: number; studies: number; checklists: number; pdfs: number };
-      memoryUsagePercent: number;
+      workspaceId: string;
+      schemaVersion: number;
+      rows: { live: number; tombstones: number };
+      extension?: { fields: number };
     };
-    expect(typeof result.rows.total).toBe('number');
-    expect(result.content.studies).toBe(0);
-    expect(result.memoryUsagePercent).toBeLessThan(0.01);
-    expect(result.rows.totalBytes).toBe(result.rows.snapshotBytes + result.rows.updateBytes);
+    expect(result.workspaceId).toBe(project.id);
+    expect(result.schemaVersion).toBe(1);
+    expect(result.rows).toEqual({ live: 0, tombstones: 0 });
+    // The Yjs fields add-on is mounted on the workspace DO.
+    expect(result.extension?.fields).toBe(0);
   });
 });
 

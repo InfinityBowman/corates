@@ -28,7 +28,7 @@ import {
 } from '@corates/shared';
 import { isAdminUser } from '@corates/workers/auth-admin';
 import { resolveOrgAccess } from '@corates/workers/billing-resolver';
-import { syncMemberToDO } from '@corates/workers/project-sync';
+import { kickWorkspaceUser } from '@corates/workers/sync';
 import { createAuth } from '@corates/workers/auth-config';
 import type { Session } from '@/server/middleware/auth';
 
@@ -269,8 +269,10 @@ export async function deleteAdminUser(session: Session, db: Database, userId: st
     .innerJoin(projects, eq(projectMembers.projectId, projects.id))
     .where(eq(projectMembers.userId, userId));
 
+  // Kick the user's live sync sessions before their memberships disappear;
+  // reconnect attempts re-run authorize against D1 and fail permanently.
   await Promise.all(
-    userProjects.map(({ projectId }) => syncMemberToDO(env, projectId, 'remove', { userId })),
+    userProjects.map(({ projectId }) => kickWorkspaceUser(env, projectId, userId)),
   );
 
   await db.batch([

@@ -11,7 +11,6 @@ import { projectMembers, projects, member } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS } from '@corates/shared';
 import type { OrgId, ProjectId, UserId } from '@corates/shared/ids';
-import { syncMemberWithRetry } from '../../lib/syncWithRetry';
 import { notifyUser, NotificationTypes } from '../lib/notifications';
 import { insertWithQuotaCheck, type InsertRollbackMeta } from '../../lib/quotaTransaction';
 import type { Env } from '../../types';
@@ -149,18 +148,6 @@ export async function addMember(
       extra: { projectId },
     });
   }
-
-  // Sync member to DO with automatic retry
-  await syncMemberWithRetry(env, projectId, 'add', {
-    userId: userToAdd.id,
-    role,
-    joinedAt: now.getTime(),
-    name: userToAdd.name,
-    email: userToAdd.email,
-    givenName: userToAdd.givenName,
-    familyName: userToAdd.familyName,
-    image: userToAdd.image,
-  });
 
   return {
     member: {

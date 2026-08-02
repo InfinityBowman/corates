@@ -11,7 +11,7 @@
   "compatibility_flags": ["nodejs_compat"],
 
   "migrations": [
-    { "tag": "v1", "new_sqlite_classes": ["UserSession", "ProjectDoc"] },
+    { "tag": "v1", "new_sqlite_classes": ["UserSession"] },
     { "tag": "v2", "new_sqlite_classes": ["EmailQueue"] },
     { "tag": "v3", "deleted_classes": ["EmailQueue"] },
     { "tag": "v4", "new_sqlite_classes": ["WorkspaceDO"] }
@@ -20,7 +20,6 @@
   "durable_objects": {
     "bindings": [
       { "name": "USER_SESSION", "class_name": "UserSession" },
-      { "name": "PROJECT_DOC", "class_name": "ProjectDoc" },
       { "name": "WORKSPACE", "class_name": "WorkspaceDO" }
     ]
   },
