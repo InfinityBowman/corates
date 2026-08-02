@@ -233,6 +233,41 @@ export function textAnswerKeys(type: ChecklistType): string[] {
 }
 
 /**
+ * Resolve one flat text key from a NESTED answers object (a generator's or a
+ * legacy export's section shapes): direct path first
+ * (`sectionB.b1.comment`, `preliminary.experimental`), then the domain scan
+ * for bare question keys (`d1a_2.comment` lives at
+ * `<domain>.answers.d1a_2.comment`). Returns undefined when absent or not a
+ * string. Used by the dev seeder and the migration transformer, which both
+ * turn nested shapes into `checklist.setText`-style flat writes.
+ */
+export function resolveNestedTextValue(
+  answers: Record<string, unknown>,
+  flatKey: string,
+): string | undefined {
+  const parts = flatKey.split('.');
+  let cursor: unknown = answers;
+  for (const part of parts) {
+    if (cursor && typeof cursor === 'object') cursor = (cursor as Record<string, unknown>)[part];
+    else {
+      cursor = undefined;
+      break;
+    }
+  }
+  if (typeof cursor === 'string') return cursor;
+
+  if (parts.length === 2) {
+    const [questionKey, field] = parts;
+    for (const value of Object.values(answers)) {
+      const domain = value as { answers?: Record<string, Record<string, unknown>> } | null;
+      const hit = domain?.answers?.[questionKey]?.[field];
+      if (typeof hit === 'string') return hit;
+    }
+  }
+  return undefined;
+}
+
+/**
  * Expand one validated answer update into flat-key writes — the row-plane port
  * of each handler's `updateAnswer`. Text fields are absent on purpose: they go
  * through `checklist.setText` (the ROBINS-I `sectionD.otherSpecify` rewrite is

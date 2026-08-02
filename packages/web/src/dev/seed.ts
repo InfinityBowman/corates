@@ -25,6 +25,7 @@
 
 import { createWorkspace } from '@cf-sync/client';
 import {
+  resolveNestedTextValue,
   syncApp,
   textAnswerKeys,
   type ChecklistAnswerInput,
@@ -125,35 +126,6 @@ async function runPlan(client: SeedClient, plan: SeedMutation[]): Promise<void> 
 // Answer planning
 
 /**
- * Resolve one flat text key from a generator's nested answers: direct path
- * first (`sectionB.b1.comment`, `preliminary.experimental`), then the
- * domain-scan for bare question keys (`d1a_2.comment` lives at
- * `<domain>.answers.d1a_2.comment`).
- */
-function resolveTextValue(answers: Record<string, unknown>, flatKey: string): string | undefined {
-  const parts = flatKey.split('.');
-  let cursor: unknown = answers;
-  for (const part of parts) {
-    if (cursor && typeof cursor === 'object') cursor = (cursor as Record<string, unknown>)[part];
-    else {
-      cursor = undefined;
-      break;
-    }
-  }
-  if (typeof cursor === 'string') return cursor;
-
-  if (parts.length === 2) {
-    const [questionKey, field] = parts;
-    for (const value of Object.values(answers)) {
-      const domain = value as { answers?: Record<string, Record<string, unknown>> } | null;
-      const hit = domain?.answers?.[questionKey]?.[field];
-      if (typeof hit === 'string') return hit;
-    }
-  }
-  return undefined;
-}
-
-/**
  * Plan one generated answers object onto a checklist: section updates via
  * `checklist.updateAnswer` (the mutator expands them to rows), prose via
  * `checklist.setText`.
@@ -172,7 +144,7 @@ function planChecklistAnswers(
     });
   }
   for (const flatKey of textAnswerKeys(type)) {
-    const text = resolveTextValue(answers, flatKey);
+    const text = resolveNestedTextValue(answers, flatKey);
     if (text) {
       plan.push({ name: 'checklist.setText', args: { checklistId, key: flatKey, text } });
     }
