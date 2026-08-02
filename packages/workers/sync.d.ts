@@ -32,6 +32,13 @@ export declare function projectWorkspace(
 ): {
   stats(): Promise<unknown>;
   export(): Promise<unknown>;
+  import(snapshot: unknown): Promise<{ imported: number; version: number }>;
+  reset(): Promise<{ reset: true }>;
+  disconnect(opts?: {
+    principal?: string;
+    mode?: 'kick' | 'refresh';
+    reason?: string;
+  }): Promise<{ disconnected: number }>;
 };
 
 /**

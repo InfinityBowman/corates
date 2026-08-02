@@ -9,7 +9,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { XIcon, ChevronDownIcon, ChevronUpIcon, BugIcon } from 'lucide-react';
+import { XIcon, ChevronDownIcon, ChevronUpIcon, BugIcon, BracesIcon } from 'lucide-react';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import {
   useAllStudies,
@@ -17,13 +17,18 @@ import {
   useProjectMeta,
   useProjectOutcomes,
 } from '@/project/workspace-data';
+import { useProjectOrgId } from '@/hooks/useProjectOrgId';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsIndicator } from '@/components/ui/tabs';
 import { DevStateTree } from './DevStateTree';
+import { DevQuickActions } from './DevQuickActions';
+import { DevJsonEditor } from './DevJsonEditor';
+import { DevImportProject } from './DevImportProject';
 import { DevToastTester } from './DevToastTester';
+import { DevStudyGenerator } from './DevStudyGenerator';
 
-type TabId = 'toasts' | 'tree';
+type TabId = 'create' | 'toasts' | 'tree' | 'generate' | 'json';
 
 function getProjectIdFromUrl(): string | null {
   const match = window.location.pathname.match(/\/projects\/([^/]+)/);
@@ -50,6 +55,8 @@ export function DevPanel() {
 
   const isProjectContext = !!projectId;
 
+  const orgId = useProjectOrgId(projectId);
+
   const studies = useAllStudies(projectId || '');
   const members = useProjectMembers(projectId || '');
   const projectMeta = useProjectMeta(projectId || '');
@@ -68,10 +75,13 @@ export function DevPanel() {
   const activeTab: TabId = (() => {
     const tab = userSelectedTab;
     if (tab === null) {
-      return isProjectContext ? 'tree' : 'toasts';
+      return isProjectContext ? 'tree' : 'create';
     }
-    if (!isProjectContext && tab === 'tree') {
-      return 'toasts';
+    if (!isProjectContext && (tab === 'tree' || tab === 'generate' || tab === 'json')) {
+      return 'create';
+    }
+    if (isProjectContext && tab === 'create') {
+      return 'tree';
     }
     return tab;
   })();
@@ -230,22 +240,47 @@ export function DevPanel() {
                 className='flex min-h-0 flex-1 flex-col'
               >
                 <TabsList className='border-border bg-muted relative border-b'>
+                  <TabsTrigger value='create' className={tabTriggerClass}>
+                    Create
+                  </TabsTrigger>
                   <TabsTrigger value='toasts' className={tabTriggerClass}>
                     Toasts
                   </TabsTrigger>
                   {isProjectContext && (
-                    <TabsTrigger value='tree' className={tabTriggerClass}>
-                      State Tree
-                    </TabsTrigger>
+                    <>
+                      <TabsTrigger value='tree' className={tabTriggerClass}>
+                        State Tree
+                      </TabsTrigger>
+                      <TabsTrigger value='generate' className={tabTriggerClass}>
+                        Generate
+                      </TabsTrigger>
+                      <TabsTrigger value='json' className={tabTriggerClass}>
+                        <BracesIcon size={14} />
+                        JSON
+                      </TabsTrigger>
+                    </>
                   )}
                   <TabsIndicator className='h-0.5 bg-purple-600' />
                 </TabsList>
 
                 {/* Tab content */}
                 <div className='flex-1 overflow-auto'>
+                  {activeTab === 'create' && <DevImportProject />}
+
                   {activeTab === 'toasts' && <DevToastTester />}
 
                   {activeTab === 'tree' && isProjectContext && <DevStateTree data={projectData} />}
+
+                  {activeTab === 'generate' && isProjectContext && (
+                    <div className='flex flex-col gap-4 p-3'>
+                      <DevStudyGenerator projectId={projectId} />
+                      <DevQuickActions projectId={projectId} orgId={orgId} />
+                    </div>
+                  )}
+
+                  {activeTab === 'json' && isProjectContext && (
+                    <DevJsonEditor projectId={projectId} orgId={orgId} data={projectData} />
+                  )}
                 </div>
               </Tabs>
 

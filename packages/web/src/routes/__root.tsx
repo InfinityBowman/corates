@@ -17,6 +17,11 @@ const LazyDevPanel =
     lazy(() => import('@/components/dev/DevPanel').then(m => ({ default: m.DevPanel })))
   : null;
 
+// The e2e/console seeding seam rides the same flag (window.__devSeed).
+if (import.meta.env.VITE_DEV_PANEL === 'true' && typeof window !== 'undefined') {
+  void import('@/dev/expose');
+}
+
 const emptySubscribe = () => () => {};
 
 /** Render children only on the client, never during SSR. */

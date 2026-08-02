@@ -245,7 +245,6 @@ interface ROBINSIAnswers {
   [domainKey: string]: unknown;
   overall: {
     judgement: string | null;
-    judgementSource: string;
     direction: string | null;
   };
 }
@@ -307,11 +306,9 @@ export function generateROBINSIAnswers(options: ROBINSIOptions = {}): ROBINSIAns
       additional: [],
     },
     overall: {
-      // Derived by the figures from the per-question answers (judgementSource
-      // 'auto'); the app ignores any stored judgement unless it was a manual
-      // override, so we leave it null and let the scoring engine compute it.
+      // Derived by the figures from the per-question answers; we leave it
+      // null and let the scoring engine compute it.
       judgement: null,
-      judgementSource: 'auto',
       direction: null,
     },
   };
@@ -359,7 +356,6 @@ export function generateROBINSIAnswers(options: ROBINSIOptions = {}): ROBINSIAns
     answers[domainKey] = {
       answers: domainAnswers,
       judgement: null,
-      judgementSource: 'auto',
       ...(hasDirection ?
         { direction: fill === 'complete' ? pickRandom(rng, ROBINS_I_DIRECTIONS) : null }
       : {}),
@@ -679,7 +675,7 @@ function timestamp(): number {
   return Date.now();
 }
 
-interface MockMember {
+export interface MockMember {
   userId: string;
   role: string;
   joinedAt: number;
@@ -689,7 +685,7 @@ interface MockMember {
   image: string | null;
 }
 
-interface MockChecklist {
+export interface MockChecklist {
   id: string;
   type: string;
   title: string;
@@ -702,7 +698,7 @@ interface MockChecklist {
   answers: AMSTAR2Answers | ROBINSIAnswers | ROB2Answers;
 }
 
-interface MockPdf {
+export interface MockPdf {
   fileName: string;
   key: string;
   size: number;
@@ -710,14 +706,14 @@ interface MockPdf {
   uploadedAt: number;
 }
 
-interface MockReconciliation {
+export interface MockReconciliation {
   status: string;
   completedAt: number;
   completedBy: string;
   notes: string;
 }
 
-interface MockStudy {
+export interface MockStudy {
   id: string;
   name: string;
   description: string;
@@ -740,7 +736,7 @@ interface MockStudy {
   reconciliation: MockReconciliation | null;
 }
 
-interface MockProjectData {
+export interface MockProjectData {
   version: number;
   meta: {
     name: string;
@@ -906,6 +902,7 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
     const now = timestamp();
     const studyId = generateId('study');
     const checklistId = generateId('checklist');
+    const outcomeId = generateId('outcome');
 
     return {
       version: 1,
@@ -914,6 +911,7 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
         description: 'Project with a partially completed ROBINS-I checklist',
         createdAt: now,
         updatedAt: now,
+        outcomes: { [outcomeId]: { name: 'Primary Outcome', createdAt: now } },
       },
       members: [
         {
@@ -954,6 +952,7 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
               status: CHECKLIST_STATUS.IN_PROGRESS,
               createdAt: now,
               updatedAt: now,
+              outcomeId,
               answers: generateROBINSIAnswers({ fill: 'partial', seed: 54321 }),
             },
           ],

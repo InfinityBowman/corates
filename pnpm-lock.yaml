@@ -142,7 +142,7 @@ importers:
         version: file:vendor/cf-sync-client-0.1.0.tgz(@tanstack/db@0.6.17(typescript@5.9.3))(@tanstack/react-db@0.1.95(react@19.2.4)(typescript@5.9.3))(react@19.2.4)(zod@4.4.3)
       '@cf-sync/yjs':
         specifier: file:../../vendor/cf-sync-yjs-0.1.0.tgz
-        version: file:vendor/cf-sync-yjs-0.1.0.tgz(@cf-sync/server@0.1.0(zod@4.4.3))(react@19.2.4)(yjs@13.6.31)(zod@4.4.3)
+        version: file:vendor/cf-sync-yjs-0.1.0.tgz(@cf-sync/server@file:vendor/cf-sync-server-0.1.0.tgz(zod@4.4.3))(react@19.2.4)(yjs@13.6.31)(zod@4.4.3)
       '@corates/db':
         specifier: workspace:*
         version: link:../db
@@ -336,6 +336,9 @@ importers:
         specifier: ^5.0.14
         version: 5.0.14(@types/react@19.2.14)(immer@11.1.8)(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4))
     devDependencies:
+      '@cf-sync/server':
+        specifier: file:../../vendor/cf-sync-server-0.1.0.tgz
+        version: file:vendor/cf-sync-server-0.1.0.tgz(zod@4.4.3)
       '@cloudflare/vite-plugin':
         specifier: ^1.44.0
         version: 1.44.0(vite@8.1.0(@types/node@26.0.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))(workerd@1.20260708.1)(wrangler@4.110.0(@cloudflare/workers-types@4.20260628.1))
@@ -925,11 +928,6 @@ packages:
   '@cf-sync/protocol@file:vendor/cf-sync-protocol-0.1.1.tgz':
     resolution: {integrity: sha512-vEwFL7CRotjKIcL5Vj/XdVG1XCkhzOqdtMoRohX7D1TtVKMqQwRvmge/RV7sU79gRkKF1PrZNHfCoAd0es4KRQ==, tarball: file:vendor/cf-sync-protocol-0.1.1.tgz}
     version: 0.1.1
-    peerDependencies:
-      zod: ^4.0.0
-
-  '@cf-sync/server@0.1.0':
-    resolution: {integrity: sha512-3lPlK8X1dUxwqVP4mUi27bS9zewNppDupmUF3eUENCl6HIk3yZ08EmeCVtzBDO6JQbTzkGYwicYu9F8s1yG2GQ==}
     peerDependencies:
       zod: ^4.0.0
 
@@ -9340,26 +9338,10 @@ snapshots:
     dependencies:
       zod: 4.4.3
 
-  '@cf-sync/server@0.1.0(zod@4.4.3)':
-    dependencies:
-      '@cf-sync/protocol': file:vendor/cf-sync-protocol-0.1.1.tgz(zod@4.4.3)
-      zod: 4.4.3
-    optional: true
-
   '@cf-sync/server@file:vendor/cf-sync-server-0.1.0.tgz(zod@4.4.3)':
     dependencies:
       '@cf-sync/protocol': file:vendor/cf-sync-protocol-0.1.1.tgz(zod@4.4.3)
       zod: 4.4.3
-
-  '@cf-sync/yjs@file:vendor/cf-sync-yjs-0.1.0.tgz(@cf-sync/server@0.1.0(zod@4.4.3))(react@19.2.4)(yjs@13.6.31)(zod@4.4.3)':
-    dependencies:
-      '@cf-sync/protocol': file:vendor/cf-sync-protocol-0.1.1.tgz(zod@4.4.3)
-      yjs: 13.6.31
-    optionalDependencies:
-      '@cf-sync/server': 0.1.0(zod@4.4.3)
-      react: 19.2.4
-    transitivePeerDependencies:
-      - zod
 
   '@cf-sync/yjs@file:vendor/cf-sync-yjs-0.1.0.tgz(@cf-sync/server@file:vendor/cf-sync-server-0.1.0.tgz(zod@4.4.3))(react@19.2.4)(yjs@13.6.31)(zod@4.4.3)':
     dependencies:
