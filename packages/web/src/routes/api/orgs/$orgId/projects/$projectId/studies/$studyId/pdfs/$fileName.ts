@@ -15,7 +15,7 @@ import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 import { requireProjectAccess } from '@/server/guards/requireProjectAccess';
 import { requireOrgWriteAccess } from '@/server/guards/requireOrgWriteAccess';
 import { authMiddleware, type Session } from '@/server/middleware/auth';
-import { captureError, warn } from '@corates/workers/logger';
+import { captureError, info, warn } from '@corates/workers/logger';
 
 type HandlerArgs = {
   request: Request;
@@ -153,6 +153,13 @@ export const handleDelete = async ({ request, params, context: { db, session } }
     } catch (r2Error) {
       captureError(r2Error, { tags: { component: 'pdfs', action: 'delete-r2' } });
     }
+
+    info('pdf.deleted', {
+      orgId: params.orgId,
+      projectId: params.projectId,
+      studyId: params.studyId,
+      fileName,
+    });
 
     return Response.json({ success: true }, { status: 200 });
   } catch (err) {

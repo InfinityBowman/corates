@@ -10,6 +10,7 @@
  */
 
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
+import { info } from '../../lib/logger';
 import { createStripeClient } from '@corates/shared/stripe';
 import type { Env } from '../../types';
 
@@ -98,6 +99,8 @@ export async function createSingleProjectCheckout(
       'Failed to create checkout session',
     );
   }
+
+  info('billing.checkout_created', { orgId, userId: actor.id, sessionId: checkoutSession.id });
 
   return {
     url: checkoutSession.url,

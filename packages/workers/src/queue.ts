@@ -3,7 +3,7 @@
  * worker (`packages/web/src/server.ts`) wires this into its Cloudflare
  * Workers `queue()` handler.
  */
-import { captureError } from './lib/logger';
+import { captureError, info } from './lib/logger';
 import { createEmailService } from './auth/email';
 import type { EmailPayload } from '@corates/shared/email';
 import type { Env } from './types';
@@ -34,10 +34,11 @@ export async function handleEmailQueue(batch: MessageBatch<unknown>, env: Env): 
           msg.body as Parameters<typeof emailService.sendEmail>[0],
         );
 
+        const masked = msg.body.to?.replace(/^(..).*@/, '$1***@');
         if (result.success) {
+          info('email.sent', { to: masked, subject: msg.body.subject, attempt: msg.attempts });
           msg.ack();
         } else {
-          const masked = msg.body.to?.replace(/^(..).*@/, '$1***@');
           captureError(new Error(`Email send failed for ${masked}: ${result.error}`), {
             tags: { component: 'email-queue' },
             extra: { attempt: msg.attempts },

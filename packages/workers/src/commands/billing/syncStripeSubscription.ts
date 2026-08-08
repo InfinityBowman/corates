@@ -13,6 +13,7 @@
 import { eq } from 'drizzle-orm';
 import { subscription } from '@corates/db/schema';
 import { createStripeClient } from '@corates/shared/stripe';
+import { info } from '../../lib/logger';
 import type { createDb } from '@corates/db/client';
 import type { Env } from '../../types';
 
@@ -105,6 +106,13 @@ export async function syncStripeSubscription(
       ...values,
     });
   }
+
+  info('billing.subscription_synced', {
+    orgId,
+    stripeSubscriptionId: sub.id,
+    status: sub.status,
+    plan: values.plan,
+  });
 
   return { status: sub.status, stripeSubscriptionId: sub.id };
 }

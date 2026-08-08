@@ -1,4 +1,4 @@
-import { captureError } from '@corates/workers/logger';
+import { captureError, info } from '@corates/workers/logger';
 import { env } from 'cloudflare:workers';
 import { createAuth } from '@corates/workers/auth-config';
 import type { Database } from '@corates/db/client';
@@ -90,7 +90,7 @@ export async function createOrganization(
 ): Promise<object> {
   try {
     const orgApi = getOrgApi();
-    return await orgApi.createOrganization({
+    const result = await orgApi.createOrganization({
       headers: request.headers,
       body: {
         name: data.name,
@@ -99,6 +99,8 @@ export async function createOrganization(
         metadata: data.metadata,
       },
     });
+    info('org.created', { orgId: (result as { id?: string } | null)?.id, slug: data.slug });
+    return result;
   } catch (err) {
     const error = err as Error;
     captureError(err, { tags: { component: 'orgs', action: 'create' } });
@@ -218,6 +220,8 @@ export async function deleteOrganization(
       headers: request.headers,
       body: { organizationId: orgId },
     });
+
+    info('org.deleted', { orgId, userId: session.user.id });
 
     return { success: true as const, deleted: orgId };
   } catch (err) {

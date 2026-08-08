@@ -20,7 +20,7 @@ import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 import { requireProjectAccess } from '@/server/guards/requireProjectAccess';
 import { requireOrgWriteAccess } from '@/server/guards/requireOrgWriteAccess';
 import { authMiddleware, type Session } from '@/server/middleware/auth';
-import { captureError } from '@corates/workers/logger';
+import { captureError, info } from '@corates/workers/logger';
 
 type HandlerArgs = {
   request: Request;
@@ -248,6 +248,15 @@ export const handlePost = async ({ request, params, context: { db, session } }: 
         { status: 500 },
       );
     }
+
+    info('pdf.uploaded', {
+      orgId: params.orgId,
+      projectId: params.projectId,
+      studyId: params.studyId,
+      mediaFileId,
+      size: pdfData.byteLength,
+      userId: access.context.userId,
+    });
 
     return Response.json(
       {

@@ -6,7 +6,7 @@
  * @throws DomainError INVITATION_ALREADY_ACCEPTED if invitation was already accepted
  */
 
-import { captureError } from '../../lib/logger';
+import { captureError, info } from '../../lib/logger';
 import { createDb } from '@corates/db/client';
 import { projectInvitations, projects, user } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -131,6 +131,8 @@ export async function createInvitation(
       extra: { projectId },
     });
   }
+
+  info('invitation.created', { orgId, projectId, invitationId, role, emailQueued });
 
   return { invitationId, emailQueued };
 }

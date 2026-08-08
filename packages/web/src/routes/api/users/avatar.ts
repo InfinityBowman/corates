@@ -3,7 +3,7 @@ import { env } from 'cloudflare:workers';
 import { FILE_SIZE_LIMITS } from '@corates/workers/constants';
 import { createDomainError, FILE_ERRORS, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import { authMiddleware, type Session } from '@/server/middleware/auth';
-import { captureError, warn } from '@corates/workers/logger';
+import { captureError, info, warn } from '@corates/workers/logger';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
@@ -94,6 +94,8 @@ export const handlePost = async ({
 
     const avatarUrl = `/api/users/avatar/${userId}?t=${timestamp}`;
 
+    info('avatar.uploaded', { userId, size: file.size });
+
     return Response.json({ success: true as const, url: avatarUrl, key }, { status: 200 });
   } catch (err) {
     const error = err as Error;
@@ -119,6 +121,7 @@ export const handleDelete = async ({
     for (const obj of listed.objects) {
       await env.PDF_BUCKET.delete(obj.key);
     }
+    info('avatar.deleted', { userId });
     return Response.json({ success: true as const, message: 'Avatar deleted' }, { status: 200 });
   } catch (err) {
     const error = err as Error;

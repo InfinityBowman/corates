@@ -8,6 +8,7 @@ import { createDb } from '@corates/db/client';
 import { projects } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
+import { info } from '../../lib/logger';
 import type { Env } from '../../types';
 
 interface UpdateProjectActor {
@@ -51,6 +52,8 @@ export async function updateProject(
       'Failed to update project',
     );
   }
+
+  info('project.updated', { projectId });
 
   return { projectId, updated: true };
 }

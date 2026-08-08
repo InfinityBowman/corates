@@ -5,7 +5,7 @@
  * @throws DomainError LAST_OWNER if removing the last owner
  */
 
-import { captureError } from '../../lib/logger';
+import { captureError, info } from '../../lib/logger';
 import { createDb } from '@corates/db/client';
 import { projectMembers, projects } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -82,6 +82,8 @@ export async function removeMember(
       });
     }
   }
+
+  info('member.removed', { orgId, projectId, userId, isSelfRemoval });
 
   return { removed: userId };
 }

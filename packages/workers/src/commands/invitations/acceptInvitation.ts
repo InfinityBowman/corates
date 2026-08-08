@@ -9,7 +9,7 @@
  * @throws DomainError AUTH_FORBIDDEN if email mismatch or quota exceeded
  */
 
-import { captureError, warn } from '../../lib/logger';
+import { captureError, info, warn } from '../../lib/logger';
 import { createDb } from '@corates/db/client';
 import {
   projectInvitations,
@@ -249,6 +249,14 @@ export async function acceptInvitation(
   } catch (err) {
     captureError(err, { tags: { component: 'invitation', action: 'accept-notify' } });
   }
+
+  info('invitation.accepted', {
+    orgId: invitation.orgId,
+    projectId: invitation.projectId,
+    invitationId: invitation.id,
+    userId: actor.id,
+    role: invitation.role,
+  });
 
   return {
     orgId: invitation.orgId,

@@ -9,6 +9,7 @@
 import { createDb } from '@corates/db/client';
 import { projects, projectMembers } from '@corates/db/schema';
 import { insertWithQuotaCheck, type InsertRollbackMeta } from '../../lib/quotaTransaction';
+import { info } from '../../lib/logger';
 import { createValidationError, VALIDATION_ERRORS } from '@corates/shared';
 import type { OrgId, ProjectId, ProjectMemberId, UserId } from '@corates/shared/ids';
 import type { Env } from '../../types';
@@ -92,6 +93,8 @@ export async function createProject(
   if (!quotaResult.success) {
     throw quotaResult.error;
   }
+
+  info('project.created', { orgId, projectId, userId: actor.id });
 
   return {
     project: {

@@ -5,7 +5,7 @@
  * @throws DomainError AUTH_FORBIDDEN if quota exceeded
  */
 
-import { captureError } from '../../lib/logger';
+import { captureError, info } from '../../lib/logger';
 import { createDb } from '@corates/db/client';
 import { projectMembers, projects, member } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -152,6 +152,8 @@ export async function addMember(
       extra: { projectId },
     });
   }
+
+  info('member.added', { orgId, projectId, userId: userToAdd.id, role });
 
   return {
     member: {

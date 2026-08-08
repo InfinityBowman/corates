@@ -4,7 +4,7 @@
  * @throws DomainError DB_ERROR on database error
  */
 
-import { captureError } from '../../lib/logger';
+import { captureError, info } from '../../lib/logger';
 import { createDb } from '@corates/db/client';
 import { projects, projectMembers } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
@@ -88,6 +88,8 @@ export async function deleteProject(
     },
     actor.id,
   );
+
+  info('project.deleted', { projectId, userId: actor.id, memberCount: members.length });
 
   return { deleted: projectId, notifiedCount };
 }

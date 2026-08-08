@@ -4,7 +4,7 @@
  * @throws DomainError LAST_OWNER if demoting the last owner
  */
 
-import { captureError } from '../../lib/logger';
+import { captureError, info } from '../../lib/logger';
 import { createDb } from '@corates/db/client';
 import { projectMembers } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -72,6 +72,8 @@ export async function updateMemberRole(
       extra: { projectId, userId },
     });
   }
+
+  info('member.role_updated', { orgId, projectId, userId, role });
 
   return { userId, role };
 }
