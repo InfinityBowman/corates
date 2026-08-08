@@ -59,6 +59,10 @@
     "./crypto": {
       "types": "./dist/crypto.d.ts",
       "import": "./dist/crypto.js"
+    },
+    "./logger": {
+      "types": "./dist/logger.d.ts",
+      "import": "./dist/logger.js"
     }
   },
   "scripts": {

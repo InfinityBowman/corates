@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
 import { createAuth } from '@corates/workers/auth-config';
 import { devModeGate } from '@/server/devModeGate';
+import { captureError } from '@corates/workers/logger';
 
 export const handler = async ({ request }: { request: Request }) => {
   const gated = devModeGate(env);
@@ -31,7 +32,7 @@ export const handler = async ({ request }: { request: Request }) => {
       cookies: result.cookies,
     });
   } catch (err) {
-    console.error('[test-seed] Session error:', err);
+    captureError(err, { tags: { component: 'test-routes', action: 'session' } });
     return Response.json({ error: (err as Error).message }, { status: 500 });
   }
 };

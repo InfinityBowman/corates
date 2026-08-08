@@ -4,6 +4,7 @@ import { drizzle } from 'drizzle-orm/d1';
 import { eq } from 'drizzle-orm';
 import { verification } from '@corates/db/schema';
 import { devModeGate } from '@/server/devModeGate';
+import { captureError } from '@corates/workers/logger';
 
 export const handler = async ({ request }: { request: Request }) => {
   const gated = devModeGate(env);
@@ -36,7 +37,7 @@ export const handler = async ({ request }: { request: Request }) => {
 
     return Response.json({ success: true, url: latest.value });
   } catch (err) {
-    console.error('[test-seed] Auth URL error:', err);
+    captureError(err, { tags: { component: 'test-routes', action: 'auth-url' } });
     return Response.json({ error: (err as Error).message }, { status: 500 });
   }
 };

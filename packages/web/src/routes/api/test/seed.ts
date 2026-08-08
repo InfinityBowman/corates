@@ -3,6 +3,7 @@ import { env } from 'cloudflare:workers';
 import { drizzle } from 'drizzle-orm/d1';
 import { user, organization, member, subscription } from '@corates/db/schema';
 import { devModeGate } from '@/server/devModeGate';
+import { captureError } from '@corates/workers/logger';
 
 interface SeedBody {
   users: Array<{
@@ -93,7 +94,7 @@ export const handler = async ({ request }: { request: Request }) => {
       org: { id: body.org.id, name: body.org.name, slug: orgSlug },
     });
   } catch (err) {
-    console.error('[test-seed] Seed error:', err);
+    captureError(err, { tags: { component: 'test-routes', action: 'seed' } });
     return Response.json({ error: (err as Error).message }, { status: 500 });
   }
 };

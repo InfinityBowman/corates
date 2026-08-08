@@ -327,8 +327,9 @@ export default [
     },
   },
   {
-    // Web server functions must use @corates/workers/logger
-    files: ['packages/web/src/server/**/*.{js,ts}'],
+    // Web server functions and API routes must use @corates/workers/logger
+    // (or the shared structured logger) so logs stay queryable in Loki
+    files: ['packages/web/src/server/**/*.{js,ts}', 'packages/web/src/routes/api/**/*.{js,ts}'],
     rules: {
       'no-console': ['error', { allow: ['log'] }],
       'no-restricted-imports': [

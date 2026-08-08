@@ -3,6 +3,7 @@ import { env } from 'cloudflare:workers';
 import { FILE_SIZE_LIMITS } from '@corates/workers/constants';
 import { createDomainError, FILE_ERRORS, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import { authMiddleware, type Session } from '@/server/middleware/auth';
+import { captureError, warn } from '@corates/workers/logger';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
@@ -76,7 +77,7 @@ export const handlePost = async ({
         await env.PDF_BUCKET.delete(obj.key);
       }
     } catch (e) {
-      console.warn('Failed to delete old avatar:', e);
+      warn('Failed to delete old avatar', { error: String(e) });
     }
 
     const arrayBuffer = await file.arrayBuffer();
@@ -96,7 +97,7 @@ export const handlePost = async ({
     return Response.json({ success: true as const, url: avatarUrl, key }, { status: 200 });
   } catch (err) {
     const error = err as Error;
-    console.error('Avatar upload error:', error);
+    captureError(error, { tags: { component: 'avatars', action: 'upload' } });
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'upload_avatar',
       originalError: error.message,
@@ -121,7 +122,7 @@ export const handleDelete = async ({
     return Response.json({ success: true as const, message: 'Avatar deleted' }, { status: 200 });
   } catch (err) {
     const error = err as Error;
-    console.error('Avatar delete error:', error);
+    captureError(error, { tags: { component: 'avatars', action: 'delete' } });
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'delete_avatar',
       originalError: error.message,

@@ -14,6 +14,7 @@ import {
   getEmailVerificationFailurePage,
   getEmailVerificationErrorPage,
 } from '@/server/lib/authHtmlPages';
+import { captureError } from '@corates/workers/logger';
 
 type HandlerArgs = {
   request: Request;
@@ -51,7 +52,7 @@ export const handleGet = async ({ request, context }: HandlerArgs) => {
       headers: { 'Content-Type': 'text/html; charset=utf-8' },
     });
   } catch (error) {
-    console.error('Email verification error:', error);
+    captureError(error, { tags: { component: 'auth-routes', action: 'verify-email' } });
     return new Response(getEmailVerificationErrorPage(), {
       status: 500,
       headers: { 'Content-Type': 'text/html; charset=utf-8' },

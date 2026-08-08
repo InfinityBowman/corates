@@ -9,6 +9,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
 import { devModeGate } from '@/server/devModeGate';
 import { MIGRATION_SQL } from '@/__tests__/server/migration-sql';
+import { captureError } from '@corates/workers/logger';
 
 function parseSqlStatements(sql: string): string[] {
   return sql
@@ -60,7 +61,7 @@ export const handler = async () => {
 
     return Response.json({ success: true, tablesCleared: TABLES_IN_DELETE_ORDER.length });
   } catch (err) {
-    console.error('[test-reset] Error:', err);
+    captureError(err, { tags: { component: 'test-routes', action: 'reset' } });
     return Response.json({ error: (err as Error).message }, { status: 500 });
   }
 };

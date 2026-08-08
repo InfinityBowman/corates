@@ -13,6 +13,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
 import { createAuth } from '@corates/workers/auth-config';
 import { sha256, truncateError } from '@corates/shared/crypto';
+import { createLogger } from '@corates/shared/logger';
 import type { Database } from '@corates/db/client';
 import {
   insertLedgerEntry,
@@ -51,6 +52,13 @@ const ROUTE = '/api/auth/stripe/webhook';
 export const handlePost = async ({ request, context }: HandlerArgs) => {
   const { db } = context;
   const requestId = request.headers.get('x-request-id') ?? crypto.randomUUID();
+  const log = createLogger({
+    service: 'corates-web',
+    env: env.ENVIRONMENT,
+    requestId,
+    cfRay: request.headers.get('cf-ray'),
+    context: { route: ROUTE, method: 'POST' },
+  });
 
   let rawBody: string | undefined;
   let ledgerId: string | undefined;
@@ -72,8 +80,7 @@ export const handlePost = async ({ request, context }: HandlerArgs) => {
         error: truncateError(bodyError as Error),
         httpStatus: 400,
       });
-      console.error('[stripe-webhook] body unreadable', {
-        requestId,
+      log.error('[stripe-webhook] body unreadable', {
         error: truncateError(bodyError as Error),
       });
       return Response.json({ error: 'Body unreadable' }, { status: 400 });
@@ -92,7 +99,7 @@ export const handlePost = async ({ request, context }: HandlerArgs) => {
         error: 'missing_signature',
         httpStatus: 403,
       });
-      console.error('[stripe-webhook] missing signature', { requestId, payloadHash });
+      log.error('[stripe-webhook] missing signature', { payloadHash });
       return Response.json({ error: 'Missing Stripe signature' }, { status: 403 });
     }
 
@@ -100,8 +107,7 @@ export const handlePost = async ({ request, context }: HandlerArgs) => {
 
     const existingEntry = await getLedgerByPayloadHash(db, payloadHash);
     if (existingEntry) {
-      console.info('[stripe-webhook] duplicate payload', {
-        requestId,
+      log.info('[stripe-webhook] duplicate payload', {
         payloadHash,
         ledgerId: existingEntry.id,
         status: existingEntry.status,
@@ -118,7 +124,7 @@ export const handlePost = async ({ request, context }: HandlerArgs) => {
       requestId,
       status: LedgerStatus.RECEIVED,
     });
-    console.info('[stripe-webhook] received', { requestId, payloadHash });
+    log.info('[stripe-webhook] received', { payloadHash });
 
     if (env.ENVIRONMENT === 'production') {
       try {
@@ -133,8 +139,7 @@ export const handlePost = async ({ request, context }: HandlerArgs) => {
             status: LedgerStatus.IGNORED_TEST_MODE,
             httpStatus: 200,
           });
-          console.info('[stripe-webhook] ignored test mode in production', {
-            requestId,
+          log.info('[stripe-webhook] ignored test mode in production', {
             stripeEventId: preCheckEvent.id,
             stripeEventType: preCheckEvent.type,
           });
@@ -195,7 +200,7 @@ export const handlePost = async ({ request, context }: HandlerArgs) => {
           }
         }
       } catch {
-        console.warn('[stripe-webhook] failed to parse verified body', { requestId, ledgerId });
+        log.warn('[stripe-webhook] failed to parse verified body', { ledgerId });
       }
 
       await updateLedgerWithVerifiedFields(db, ledgerId, {
@@ -211,8 +216,7 @@ export const handlePost = async ({ request, context }: HandlerArgs) => {
         stripeSubscriptionId,
         stripeCheckoutSessionId,
       });
-      console.info('[stripe-webhook] processed', {
-        requestId,
+      log.info('[stripe-webhook] processed', {
         stripeEventId,
         stripeEventType: eventType,
         livemode,
@@ -227,8 +231,7 @@ export const handlePost = async ({ request, context }: HandlerArgs) => {
         error: 'invalid_signature',
         httpStatus,
       });
-      console.error('[stripe-webhook] invalid signature', {
-        requestId,
+      log.error('[stripe-webhook] invalid signature', {
         payloadHash,
         httpStatus,
       });
@@ -245,8 +248,7 @@ export const handlePost = async ({ request, context }: HandlerArgs) => {
         error: errorMessage,
         httpStatus,
       });
-      console.error('[stripe-webhook] failed', {
-        requestId,
+      log.error('[stripe-webhook] failed', {
         payloadHash,
         httpStatus,
         error: errorMessage,
@@ -256,7 +258,7 @@ export const handlePost = async ({ request, context }: HandlerArgs) => {
     return response;
   } catch (error) {
     const truncated = truncateError(error as Error);
-    console.error('[stripe-webhook] handler error', { requestId, ledgerId, error: truncated });
+    log.error('[stripe-webhook] handler error', { ledgerId, error: truncated });
 
     if (ledgerId) {
       try {

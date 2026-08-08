@@ -6,6 +6,7 @@ import { user } from '@corates/db/schema';
 import { addMember } from '@corates/workers/commands/members';
 import type { OrgId, ProjectId, UserId } from '@corates/shared/ids';
 import { devModeGate } from '@/server/devModeGate';
+import { captureError } from '@corates/workers/logger';
 
 export const handler = async ({ request }: { request: Request }) => {
   const gated = devModeGate(env);
@@ -43,7 +44,7 @@ export const handler = async ({ request }: { request: Request }) => {
 
     return Response.json({ success: true, ...result });
   } catch (err) {
-    console.error('[test-seed] Add project member error:', err);
+    captureError(err, { tags: { component: 'test-routes', action: 'add-project-member' } });
     return Response.json({ error: (err as Error).message }, { status: 500 });
   }
 };

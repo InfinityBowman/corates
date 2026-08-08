@@ -15,6 +15,7 @@ import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 import { requireProjectAccess } from '@/server/guards/requireProjectAccess';
 import { requireOrgWriteAccess } from '@/server/guards/requireOrgWriteAccess';
 import { authMiddleware, type Session } from '@/server/middleware/auth';
+import { captureError, warn } from '@corates/workers/logger';
 
 type HandlerArgs = {
   request: Request;
@@ -88,7 +89,7 @@ export const handleGet = async ({ params, context: { db, session } }: HandlerArg
     });
   } catch (err) {
     const error = err as Error;
-    console.error('PDF download error:', error);
+    captureError(error, { tags: { component: 'pdfs', action: 'download' } });
     return Response.json(
       createDomainError(
         SYSTEM_ERRORS.INTERNAL_ERROR,
@@ -132,7 +133,7 @@ export const handleDelete = async ({ request, params, context: { db, session } }
       try {
         await env.PDF_BUCKET.delete(key);
       } catch (r2Error) {
-        console.warn('PDF not found in database, R2 delete also failed:', r2Error);
+        warn('PDF not found in database, R2 delete also failed', { error: String(r2Error) });
       }
       return Response.json({ success: true }, { status: 200 });
     }
@@ -150,13 +151,13 @@ export const handleDelete = async ({ request, params, context: { db, session } }
     try {
       await env.PDF_BUCKET.delete(key);
     } catch (r2Error) {
-      console.error('Failed to delete PDF from R2 after database delete:', r2Error);
+      captureError(r2Error, { tags: { component: 'pdfs', action: 'delete-r2' } });
     }
 
     return Response.json({ success: true }, { status: 200 });
   } catch (err) {
     const error = err as Error;
-    console.error('PDF delete error:', error);
+    captureError(error, { tags: { component: 'pdfs', action: 'delete' } });
     return Response.json(
       createDomainError(SYSTEM_ERRORS.DB_ERROR, {
         operation: 'delete_pdf',

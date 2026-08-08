@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
 import { createDomainError, FILE_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 import { authMiddleware } from '@/server/middleware/auth';
+import { captureError } from '@corates/workers/logger';
 
 export const handler = async ({ params }: { request: Request; params: { userId: string } }) => {
   const { userId } = params;
@@ -29,7 +30,7 @@ export const handler = async ({ params }: { request: Request; params: { userId: 
     return new Response(object.body, { headers });
   } catch (err) {
     const error = err as Error;
-    console.error('Avatar fetch error:', error);
+    captureError(error, { tags: { component: 'avatars', action: 'fetch' } });
     const dbError = createDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'fetch_avatar',
       originalError: error.message,

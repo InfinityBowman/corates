@@ -20,6 +20,7 @@ import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 import { requireProjectAccess } from '@/server/guards/requireProjectAccess';
 import { requireOrgWriteAccess } from '@/server/guards/requireOrgWriteAccess';
 import { authMiddleware, type Session } from '@/server/middleware/auth';
+import { captureError } from '@corates/workers/logger';
 
 type HandlerArgs = {
   request: Request;
@@ -78,7 +79,7 @@ export const handleGet = async ({ params, context: { db, session } }: HandlerArg
     return Response.json({ pdfs }, { status: 200 });
   } catch (err) {
     const error = err as Error;
-    console.error('PDF list error:', error);
+    captureError(error, { tags: { component: 'pdfs', action: 'list' } });
     return Response.json(
       createDomainError(SYSTEM_ERRORS.DB_ERROR, {
         operation: 'list_pdfs',
@@ -232,11 +233,11 @@ export const handlePost = async ({ request, params, context: { db, session } }: 
       });
     } catch (dbErr) {
       const dbError = dbErr as Error;
-      console.error('Failed to insert mediaFiles record after R2 upload:', dbError);
+      captureError(dbError, { tags: { component: 'pdfs', action: 'insert-media-record' } });
       try {
         await env.PDF_BUCKET.delete(key);
       } catch (cleanupError) {
-        console.error('Failed to cleanup R2 object after DB insert failure:', cleanupError);
+        captureError(cleanupError, { tags: { component: 'pdfs', action: 'cleanup-r2' } });
       }
       return Response.json(
         createDomainError(
@@ -261,7 +262,7 @@ export const handlePost = async ({ request, params, context: { db, session } }: 
     );
   } catch (err) {
     const error = err as Error;
-    console.error('PDF upload error:', error);
+    captureError(error, { tags: { component: 'pdfs', action: 'upload' } });
     return Response.json(
       createDomainError(
         FILE_ERRORS.UPLOAD_FAILED,

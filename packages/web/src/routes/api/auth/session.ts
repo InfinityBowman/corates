@@ -8,6 +8,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
 import { createAuth } from '@corates/workers/auth-config';
+import { captureError } from '@corates/workers/logger';
 
 type HandlerArgs = {
   request: Request;
@@ -25,7 +26,7 @@ export const handleGet = async ({ request, context }: HandlerArgs) => {
       sessionToken: session?.session?.id ?? null,
     });
   } catch (error) {
-    console.error('Session fetch error:', error);
+    captureError(error, { tags: { component: 'auth-routes', action: 'session' } });
     return Response.json({ user: null, session: null });
   }
 };

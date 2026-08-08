@@ -1,28 +1,11 @@
 import type { Context } from 'hono';
 import type { Env } from '../../types';
 import { truncateError } from '@corates/shared/crypto';
-
-const LogLevel = {
-  DEBUG: 'debug',
-  INFO: 'info',
-  WARN: 'warn',
-  ERROR: 'error',
-} as const;
-
-type LogLevelType = (typeof LogLevel)[keyof typeof LogLevel];
-
-interface LogEntry {
-  ts: string;
-  level: LogLevelType;
-  service: string;
-  env: string;
-  requestId: string;
-  cfRay: string | null;
-  message: string;
-  route?: string;
-  method?: string;
-  [key: string]: unknown;
-}
+import {
+  createLogger as createCoreLogger,
+  type Logger as CoreLogger,
+  type LogEntry,
+} from '@corates/shared/logger';
 
 interface StripeLogData {
   stripeEventId?: string;
@@ -64,80 +47,30 @@ interface LoggerOptions {
 export function createLogger({ c, service, env }: LoggerOptions): Logger {
   const requestId = getOrCreateRequestId(c);
   const cfRay = c?.req?.header('cf-ray') || null;
-  const environment = env?.ENVIRONMENT || 'development';
 
   if (c?.header) {
     c.header('X-Request-Id', requestId);
   }
 
-  function buildLogEntry(
-    level: LogLevelType,
-    message: string,
-    data: Record<string, unknown> = {},
-  ): LogEntry {
-    const entry: LogEntry = {
-      ts: new Date().toISOString(),
-      level,
-      service,
-      env: environment,
-      requestId,
-      cfRay,
-      message,
-      ...data,
-    };
-
-    if (c?.req) {
-      entry.route = c.req.path;
-      entry.method = c.req.method;
-    }
-
-    return entry;
-  }
-
-  function output(level: LogLevelType, entry: LogEntry): void {
-    const json = JSON.stringify(entry);
-    switch (level) {
-      case LogLevel.ERROR:
-        console.error(json);
-        break;
-      case LogLevel.WARN:
-        console.warn(json);
-        break;
-      case LogLevel.DEBUG:
-        console.debug(json);
-        break;
-      default:
-        console.log(json);
-    }
-  }
-
-  const logger: Logger = {
+  const core = createCoreLogger({
+    service,
+    env: env?.ENVIRONMENT || 'development',
     requestId,
     cfRay,
+    context: c?.req ? { route: c.req.path, method: c.req.method } : undefined,
+  });
 
-    debug(message: string, data?: Record<string, unknown>): LogEntry {
-      const entry = buildLogEntry(LogLevel.DEBUG, message, data);
-      output(LogLevel.DEBUG, entry);
-      return entry;
-    },
+  return wrap(core, requestId, cfRay);
+}
 
-    info(message: string, data?: Record<string, unknown>): LogEntry {
-      const entry = buildLogEntry(LogLevel.INFO, message, data);
-      output(LogLevel.INFO, entry);
-      return entry;
-    },
-
-    warn(message: string, data?: Record<string, unknown>): LogEntry {
-      const entry = buildLogEntry(LogLevel.WARN, message, data);
-      output(LogLevel.WARN, entry);
-      return entry;
-    },
-
-    error(message: string, data?: Record<string, unknown>): LogEntry {
-      const entry = buildLogEntry(LogLevel.ERROR, message, data);
-      output(LogLevel.ERROR, entry);
-      return entry;
-    },
+function wrap(core: CoreLogger, requestId: string, cfRay: string | null): Logger {
+  return {
+    requestId,
+    cfRay,
+    debug: core.debug,
+    info: core.info,
+    warn: core.warn,
+    error: core.error,
 
     stripe(action: string, data: StripeLogData = {}): LogEntry {
       const stripeData: Record<string, unknown> = {
@@ -163,40 +96,16 @@ export function createLogger({ c, service, env }: LoggerOptions): Logger {
         ...(data.signaturePresent !== undefined && { signaturePresent: data.signaturePresent }),
       };
 
-      const level = data.outcome === 'failed' || data.errorCode ? LogLevel.ERROR : LogLevel.INFO;
-      const entry = buildLogEntry(level, `stripe.${action}`, stripeData);
-      output(level, entry);
-      return entry;
+      const isFailure = data.outcome === 'failed' || data.errorCode;
+      return isFailure ?
+          core.error(`stripe.${action}`, stripeData)
+        : core.info(`stripe.${action}`, stripeData);
     },
 
     child(context: Record<string, unknown>): Logger {
-      const parent = this;
-      return {
-        requestId,
-        cfRay,
-        debug(message: string, data?: Record<string, unknown>): LogEntry {
-          return parent.debug(message, { ...context, ...data });
-        },
-        info(message: string, data?: Record<string, unknown>): LogEntry {
-          return parent.info(message, { ...context, ...data });
-        },
-        warn(message: string, data?: Record<string, unknown>): LogEntry {
-          return parent.warn(message, { ...context, ...data });
-        },
-        error(message: string, data?: Record<string, unknown>): LogEntry {
-          return parent.error(message, { ...context, ...data });
-        },
-        stripe(action: string, data?: StripeLogData): LogEntry {
-          return parent.stripe(action, { ...context, ...data } as StripeLogData);
-        },
-        child(additionalContext: Record<string, unknown>): Logger {
-          return parent.child({ ...context, ...additionalContext });
-        },
-      };
+      return wrap(core.child(context), requestId, cfRay);
     },
   };
-
-  return logger;
 }
 
 function getOrCreateRequestId(c?: Context): string {
@@ -208,18 +117,4 @@ function getOrCreateRequestId(c?: Context): string {
   return crypto.randomUUID();
 }
 
-interface TimingResult<T> {
-  result: T;
-  durationMs: number;
-}
-
-export async function withTiming<T>(fn: () => Promise<T>): Promise<TimingResult<T>> {
-  const start = Date.now();
-  try {
-    const result = await fn();
-    return { result, durationMs: Date.now() - start };
-  } catch (error) {
-    (error as Error & { durationMs: number }).durationMs = Date.now() - start;
-    throw error;
-  }
-}
+export { withTiming } from '@corates/shared/logger';

@@ -4,6 +4,7 @@ import { drizzle } from 'drizzle-orm/d1';
 import { eq } from 'drizzle-orm';
 import { user, member, session, account, verification } from '@corates/db/schema';
 import { devModeGate } from '@/server/devModeGate';
+import { captureError } from '@corates/workers/logger';
 
 export const handler = async ({ request }: { request: Request }) => {
   const gated = devModeGate(env);
@@ -33,7 +34,7 @@ export const handler = async ({ request }: { request: Request }) => {
 
     return Response.json({ success: true, deletedCount: users.length });
   } catch (err) {
-    console.error('[test-seed] Cleanup by email error:', err);
+    captureError(err, { tags: { component: 'test-routes', action: 'cleanup-user-by-email' } });
     return Response.json({ error: (err as Error).message }, { status: 500 });
   }
 };
