@@ -66,6 +66,7 @@ packages/workers/.dev.vars
 config/secrets.json
 .secrets/
 secrets.txt
+infra/observability/.env
 
 # Generated files
 openapi.json

@@ -1,0 +1,46 @@
+# Loki in monolithic mode, chunks and index stored in the corates-loki R2 bucket.
+# R2 credentials are injected as env vars by compose (-config.expand-env=true).
+
+auth_enabled: false # auth is enforced by Traefik basic auth in front
+
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9095
+
+common:
+  replication_factor: 1
+  path_prefix: /loki
+  ring:
+    kvstore:
+      store: inmemory
+  storage:
+    s3:
+      endpoint: https://2ab59c3eb44887bfa2bac00afd32290a.r2.cloudflarestorage.com
+      bucketnames: corates-loki
+      access_key_id: ${R2_ACCESS_KEY_ID}
+      secret_access_key: ${R2_SECRET_ACCESS_KEY}
+      region: auto
+      s3forcepathstyle: true
+
+schema_config:
+  configs:
+    - from: '2026-08-08'
+      store: tsdb
+      object_store: s3
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
+
+compactor:
+  working_directory: /loki/compactor
+  retention_enabled: true
+  delete_request_store: s3
+
+limits_config:
+  retention_period: 90d
+  # Required for OTLP ingestion; OTLP attributes land as structured metadata
+  allow_structured_metadata: true
+
+analytics:
+  reporting_enabled: false

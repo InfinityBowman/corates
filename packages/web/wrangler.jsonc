@@ -150,7 +150,10 @@
           "enabled": true,
           "head_sampling_rate": 1,
           "invocation_logs": true,
-          "persist": true
+          "persist": true,
+          // OTLP export to self-hosted Loki (infra/observability); destination is
+          // configured in the dashboard under Workers Observability and matched by name
+          "destinations": ["corates-loki"]
         },
         "traces": {
           "enabled": true
@@ -221,7 +224,8 @@
           "enabled": true,
           "head_sampling_rate": 1,
           "invocation_logs": true,
-          "persist": true
+          "persist": true,
+          "destinations": ["corates-loki"]
         }
       },
       "vars": {
