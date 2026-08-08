@@ -69,9 +69,7 @@ flowchart TB
         CheckEditRole -->|No| UpdateForbidden[AUTH_FORBIDDEN<br/>403<br/>Only owners and collaborators]
         CheckEditRole -->|Yes| UpdateDB[Update D1 projects]
         UpdateDB -->|DB Error| UpdateDBError[SYSTEM_DB_ERROR<br/>500]
-        UpdateDB -->|Success| UpdateSyncDO[Sync meta to DO]
-        UpdateSyncDO -->|Sync Failed| UpdateSyncError[Log error<br/>Continue]
-        UpdateSyncDO -->|Success| UpdateSuccess[200 OK<br/>Success response]
+        UpdateDB -->|Success| UpdateSuccess[200 OK<br/>Success response]
     end
 
     subgraph DeleteFlow["Delete Project"]
@@ -79,13 +77,13 @@ flowchart TB
         CheckOwner -->|No| DeleteForbidden[AUTH_FORBIDDEN<br/>403<br/>Only owners can delete]
         CheckOwner -->|Yes| GetMembers[Get all members<br/>for notifications]
         GetMembers -->|DB Error| DeleteDBError1[SYSTEM_DB_ERROR<br/>500]
-        GetMembers -->|Success| DisconnectDO[Disconnect all users<br/>from ProjectDoc DO]
-        DisconnectDO -->|Failed| DisconnectError[Log error<br/>Continue]
-        DisconnectDO -->|Success| CleanupR2[Delete all PDFs<br/>from R2 storage]
+        GetMembers -->|Success| CleanupR2[Delete all PDFs<br/>from R2 storage]
         CleanupR2 -->|Failed| R2Error[Log error<br/>Continue]
         CleanupR2 -->|Success| DeleteDB[Delete from D1<br/>projects cascade]
         DeleteDB -->|DB Error| DeleteDBError2[SYSTEM_DB_ERROR<br/>500]
-        DeleteDB -->|Success| NotifyMembers[Send notifications<br/>to all members]
+        DeleteDB -->|Success| TeardownDO[Teardown workspace DO<br/>close sessions + wipe storage]
+        TeardownDO -->|Failed| TeardownError[Log error<br/>Continue]
+        TeardownDO -->|Success| NotifyMembers[Send notifications<br/>to all members]
         NotifyMembers -->|Some Failed| NotifyError[Log errors<br/>Continue]
         NotifyMembers -->|Success| DeleteSuccess[200 OK<br/>Success response]
     end
@@ -163,11 +161,10 @@ flowchart TB
     style UpdateValidationError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
     style UpdateForbidden fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
     style UpdateDBError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
-    style UpdateSyncError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
     style DeleteForbidden fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
     style DeleteDBError1 fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
     style DeleteDBError2 fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
-    style DisconnectError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
+    style TeardownError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
     style R2Error fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
     style NotifyError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
     style AddForbidden fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
@@ -725,5 +722,5 @@ External API calls can fail:
 
 - **D1 Database**: Cloudflare D1 SQL database for persistent storage
 - **R2 Storage**: Cloudflare R2 object storage for PDFs
-- **Durable Objects**: ProjectDoc and UserSession for real-time sync
+- **Durable Objects**: WorkspaceDO (sync engine) and UserSession (notifications) for real-time features
 - **External APIs**: DOI lookup, Google Drive API

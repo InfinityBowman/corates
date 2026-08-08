@@ -4,12 +4,12 @@ CoRATES uses Vitest for unit and server tests, and Playwright for end-to-end tes
 
 ## Test layers
 
-| Layer   | Runs in                             | Config                     | File pattern                     | Purpose                                                    |
-| ------- | ----------------------------------- | -------------------------- | -------------------------------- | ---------------------------------------------------------- |
-| Unit    | jsdom                               | `vitest.config.ts`         | `*.test.ts[x]`                   | Pure functions, hooks, Zustand stores, React components    |
-| Server  | Workers pool                        | `vitest.server.config.ts`  | `*.server.test.ts`               | TanStack Start route handlers against a real D1 + bindings |
-| Browser | real browser (vitest-browser-react) | `vitest.browser.config.ts` | `*.browser.test.tsx`             | Component tests needing real layout/IO                     |
-| E2E     | Playwright                          | `playwright.config.ts`     | `*.spec.ts` (under `tests/e2e/`) | Full user flows against a running dev server               |
+| Layer   | Runs in                             | Config                     | File pattern               | Purpose                                                    |
+| ------- | ----------------------------------- | -------------------------- | -------------------------- | ---------------------------------------------------------- |
+| Unit    | jsdom                               | `vitest.config.ts`         | `*.test.ts[x]`             | Pure functions, hooks, Zustand stores, React components    |
+| Server  | Workers pool                        | `vitest.server.config.ts`  | `*.server.test.ts`         | TanStack Start route handlers against a real D1 + bindings |
+| Browser | real browser (vitest-browser-react) | `vitest.browser.config.ts` | `*.browser.test.tsx`       | Component tests needing real layout/IO                     |
+| E2E     | Playwright                          | `playwright.config.ts`     | `*.spec.ts` (under `e2e/`) | Full user flows against a running dev server               |
 
 The unit config explicitly **excludes** `*.server.test.ts` and `*.browser.test.tsx`, so all three can coexist without cross-contamination.
 
@@ -264,7 +264,7 @@ For SELF tests, mock at the same module boundary — `vi.mock('@corates/workers/
 
 ## E2E tests
 
-Playwright specs live under `packages/web/tests/e2e/`. They run against a dev server the user starts manually (`pnpm --filter web dev`). Ask the user to confirm the server is running before invoking `test:e2e`.
+Playwright specs live under `packages/web/e2e/`. They run against a dev server the user starts manually (`pnpm --filter web dev`). Ask the user to confirm the server is running before invoking `test:e2e`.
 
 Prefer e2e coverage on:
 

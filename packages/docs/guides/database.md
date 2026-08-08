@@ -938,7 +938,7 @@ This creates a named restore point you can easily reference later.
 ### Limitations
 
 - **R2 files are not covered:** Time Travel only applies to D1. PDFs and avatars in R2 cannot be restored.
-- **Durable Objects are not covered:** Y.js state in ProjectDoc Durable Objects has no Time Travel.
+- **Durable Objects are not covered:** Sync-engine row state in WorkspaceDO Durable Objects has no Time Travel (the `/api/sync-admin` export/import surface is the tool for workspace snapshots).
 - **Restore is database-wide:** You cannot restore individual tables or rows; the entire database is restored.
 - **Workers must be compatible:** After restoring to an older schema, ensure your deployed workers are compatible.
 

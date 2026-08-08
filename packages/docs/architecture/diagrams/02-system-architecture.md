@@ -8,8 +8,8 @@ flowchart TB
         UI[shadcn/ui Components]
         Stores[Zustand Stores<br/>authStore, projectStore, adminStore]
         Query[TanStack Query Cache]
-        YjsClient[Yjs Client]
-        IDB[(IndexedDB<br/>y-dexie + app caches)]
+        SyncClient[cf-sync Client<br/>ConnectionPool]
+        IDB[(IndexedDB<br/>cf-sync caches + app caches)]
     end
 
     subgraph MainWorker["App Worker (TanStack Start)"]
@@ -17,7 +17,7 @@ flowchart TB
         Auth[Better Auth]
 
         subgraph DurableObjects["Durable Objects"]
-            ProjectDoc[ProjectDoc<br/>One per project<br/>Yjs sync & content]
+            WorkspaceDO[WorkspaceDO<br/>One per project<br/>Row sync & content]
             UserSession[UserSession<br/>One per user<br/>Notifications]
         end
         EmailQueue[Cloudflare Queue<br/>Email delivery]
@@ -34,9 +34,9 @@ flowchart TB
 
     UI --> Stores
     UI --> Query
-    Stores --> YjsClient
-    YjsClient <-->|"WebSocket<br/>Yjs sync"| ProjectDoc
-    YjsClient <--> IDB
+    Stores --> SyncClient
+    SyncClient <-->|"WebSocket<br/>/api/sync/:projectId"| WorkspaceDO
+    SyncClient <--> IDB
     UI <-->|"WebSocket<br/>Notifications"| UserSession
     Query -->|"REST"| Routes
     Routes --> Auth
@@ -44,7 +44,7 @@ flowchart TB
     Routes --> R2
     Routes -->|"send notification"| UserSession
     StripeWebhook -->|"verifies + writes"| D1
-    ProjectDoc -->|"reads access control"| D1
+    WorkspaceDO -->|"authorize on connect<br/>reads D1 membership"| D1
 ```
 
 ## Key Components
@@ -55,7 +55,7 @@ flowchart TB
 - **Routing**: TanStack Router file-based routes under `packages/web/src/routes/`
 - **Client state**: Zustand stores in `@/stores/` (authStore, projectStore, adminStore, pdfPreviewStore)
 - **Server state**: TanStack Query, with hooks in `@/hooks/`
-- **Yjs Client**: CRDT sync with `y-dexie` for project content, alongside other app data in a single IndexedDB
+- **Sync client**: `ConnectionPool` (`packages/web/src/project/`) owns ref-counted engine sessions per project; rows are cached in per-project `cf-sync:<projectId>` IndexedDB databases alongside the app's Dexie caches
 - **Notification WebSocket**: Real-time connection to UserSession for user-level notifications (project invites, etc.)
 
 ### Backend (Cloudflare Workers)
@@ -69,7 +69,7 @@ Both Workers share:
 
 - **Better Auth**: Authentication and session management (in the main app Worker; the Stripe worker does not authenticate user sessions)
 - **Durable Objects**:
-  - **ProjectDoc**: One per project, holds Yjs document for real-time collaboration and content storage
+  - **WorkspaceDO**: One per project, holds the authoritative sync-engine rows for real-time collaboration and content storage
   - **UserSession**: One per user, manages WebSocket connections for real-time notifications (e.g., project invites)
 - **Cloudflare Queue**: Async email delivery with retries and dead letter queue, consumed by Postmark
 
@@ -77,7 +77,7 @@ Both Workers share:
 
 - **D1**: SQLite database for users, project metadata (id, name, description), and access control (project_members table). Source of truth for authorization.
 - **Durable Objects**:
-  - **ProjectDoc**: Persistent storage for Yjs documents containing all project content (studies, checklists, answers) and synced metadata. One ProjectDoc per project.
+  - **WorkspaceDO**: Persistent DO storage for the row collections containing all project content (studies, checklists, answers). One workspace per project; membership and project metadata stay in D1.
   - **UserSession**: Stores pending notifications when users are offline, manages WebSocket connections for real-time delivery. One UserSession per user.
 - **R2**: Object storage for PDF documents
 
@@ -90,4 +90,4 @@ The `UserSession` Durable Object enables real-time, user-level notifications:
 3. **If the user is offline**, the notification is stored as "pending" and delivered when they reconnect
 4. **Frontend connects** to `/api/sessions/:userId` via WebSocket to receive notifications in real-time
 
-This is separate from ProjectDoc WebSockets, which handle collaborative editing of project content. UserSession handles user-level events like project invitations, membership changes, etc.
+This is separate from the sync-engine WebSockets (`/api/sync/:projectId`), which handle collaborative editing of project content. UserSession handles user-level events like project invitations, membership changes, etc.

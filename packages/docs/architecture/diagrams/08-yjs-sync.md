@@ -2,20 +2,20 @@
 flowchart TB
     subgraph Client["Client (Local-First)"]
         UI[UI Components]
-        YDoc[Y.Doc]
-        Dexie[(Dexie/y-dexie<br/>Unified IndexedDB)]
+        Workspace[cf-sync Workspace<br/>Row Collections]
+        IDB[(cf-sync IndexedDB<br/>+ Dexie app caches)]
         Cache[PDF Cache]
     end
 
     subgraph Server["Server (Authoritative)"]
-        DO[ProjectDoc DO<br/>Y.Doc State]
-        D1[(D1<br/>Metadata)]
+        DO[WorkspaceDO<br/>Row State]
+        D1[(D1<br/>Metadata & Membership)]
         R2[(R2<br/>PDFs)]
     end
 
-    YDoc <-->|"Local First"| Dexie
-    YDoc <-->|"WebSocket Sync"| DO
-    UI -->|"Read/Write"| YDoc
-    Cache -->|"Cache"| Dexie
-    DO -->|"Read"| D1
+    Workspace <-->|"Local First"| IDB
+    Workspace <-->|"WebSocket Sync<br/>named mutators"| DO
+    UI -->|"Read/Write"| Workspace
+    Cache -->|"Cache"| IDB
+    DO -->|"Authorize on connect"| D1
 ```
