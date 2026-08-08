@@ -20,57 +20,6 @@ interface DevContext {
   yMapToPlain: (_map: Y.Map<unknown>) => Record<string, unknown>;
 }
 
-interface ExportData {
-  version: number;
-  exportedAt: string;
-  projectId: string;
-  meta: Record<string, unknown>;
-  members: Array<{ userId: string; [key: string]: unknown }>;
-  studies: Study[];
-}
-
-interface Study {
-  id: string;
-  name?: unknown;
-  description?: unknown;
-  createdAt?: unknown;
-  updatedAt?: unknown;
-  originalTitle?: unknown;
-  firstAuthor?: unknown;
-  publicationYear?: unknown;
-  authors?: unknown;
-  journal?: unknown;
-  doi?: unknown;
-  abstract?: unknown;
-  pdfUrl?: unknown;
-  pdfSource?: unknown;
-  pdfAccessible?: unknown;
-  reviewer1?: unknown;
-  reviewer2?: unknown;
-  checklists: Checklist[];
-  pdfs: Pdf[];
-  reconciliation?: unknown;
-}
-
-interface Checklist {
-  id: string;
-  type?: unknown;
-  title?: unknown;
-  assignedTo?: unknown;
-  status?: unknown;
-  createdAt?: unknown;
-  updatedAt?: unknown;
-  answers?: Record<string, unknown>;
-}
-
-interface Pdf {
-  fileName: string;
-  key?: unknown;
-  size?: unknown;
-  uploadedBy?: unknown;
-  uploadedAt?: unknown;
-}
-
 interface ImportData {
   meta?: Record<string, unknown>;
   members?: Array<{
@@ -190,88 +139,94 @@ interface PatchResult {
 }
 
 /**
- * Export the full Y.Doc state as JSON
+ * Export the full Y.Doc state as JSON.
+ *
+ * formatVersion 2: complete export for the sync-engine cutover. Studies and
+ * checklists are spread verbatim (outcomeId, sourceChecklists, reviewerName…),
+ * and the annotations/reconciliations subtrees plus full pdf metadata are
+ * included — the v1 field lists silently dropped all of them.
  */
 export async function handleDevExport(ctx: DevContext): Promise<Response> {
   const { doc, stateId, yMapToPlain } = ctx;
 
-  const exportData: ExportData = {
-    version: 1,
+  const exportData = {
+    formatVersion: 2, // the cutover transformer refuses v1
     exportedAt: new Date().toISOString(),
     projectId: stateId,
-    meta: yMapToPlain(doc.getMap('meta')),
-    members: [],
-    studies: [],
+    meta: yMapToPlain(doc.getMap('meta')), // carries `outcomes`
+    members: [] as Record<string, unknown>[],
+    studies: [] as Record<string, unknown>[],
   };
 
-  // Export members
   const membersMap = doc.getMap('members');
   for (const [userId, value] of membersMap.entries()) {
-    exportData.members.push({
-      userId,
-      ...yMapToPlain(value as Y.Map<unknown>),
-    });
+    exportData.members.push({ userId, ...yMapToPlain(value as Y.Map<unknown>) });
   }
 
-  // Export studies (reviews) with nested checklists and pdfs
   const reviewsMap = doc.getMap('reviews');
   for (const [studyId, studyValue] of reviewsMap.entries()) {
     const studyYMap = studyValue as Y.Map<unknown>;
     const studyData = yMapToPlain(studyYMap);
-    const study: Study = {
+    const study: Record<string, unknown> = {
+      ...studyData, // every scalar study field, verbatim
       id: studyId,
-      name: studyData.name,
-      description: studyData.description,
-      createdAt: studyData.createdAt,
-      updatedAt: studyData.updatedAt,
-      originalTitle: studyData.originalTitle,
-      firstAuthor: studyData.firstAuthor,
-      publicationYear: studyData.publicationYear,
-      authors: studyData.authors,
-      journal: studyData.journal,
-      doi: studyData.doi,
-      abstract: studyData.abstract,
-      pdfUrl: studyData.pdfUrl,
-      pdfSource: studyData.pdfSource,
-      pdfAccessible: studyData.pdfAccessible,
-      reviewer1: studyData.reviewer1,
-      reviewer2: studyData.reviewer2,
-      checklists: [],
-      pdfs: [],
-      reconciliation: studyData.reconciliation || null,
+      checklists: [] as Record<string, unknown>[],
+      pdfs: [] as Record<string, unknown>[],
     };
+    // The nested maps are re-exported in list/keyed form below; drop the
+    // toJSON copies so the export has one canonical representation of each.
+    delete study.reconciliation;
+    delete study.annotations;
 
-    // Export checklists
     const checklistsMap = studyYMap.get('checklists') as Y.Map<unknown> | undefined;
-    if (checklistsMap && checklistsMap.entries) {
+    if (checklistsMap?.entries) {
       for (const [checklistId, checklistValue] of checklistsMap.entries()) {
         const checklistData = yMapToPlain(checklistValue as Y.Map<unknown>);
-        study.checklists.push({
+        (study.checklists as Record<string, unknown>[]).push({
+          ...checklistData, // includes outcomeId, sourceChecklists, reviewerName
           id: checklistId,
-          type: checklistData.type,
-          title: checklistData.title,
-          assignedTo: checklistData.assignedTo,
           status: checklistData.status || 'pending',
-          createdAt: checklistData.createdAt,
-          updatedAt: checklistData.updatedAt,
           answers: (checklistData.answers as Record<string, unknown>) || {},
         });
       }
     }
 
-    // Export PDFs
     const pdfsMap = studyYMap.get('pdfs') as Y.Map<unknown> | undefined;
-    if (pdfsMap && pdfsMap.entries) {
-      for (const [fileName, pdfValue] of pdfsMap.entries()) {
-        const pdfData = yMapToPlain(pdfValue as Y.Map<unknown>);
-        study.pdfs.push({
-          fileName,
-          key: pdfData.key,
-          size: pdfData.size,
-          uploadedBy: pdfData.uploadedBy,
-          uploadedAt: pdfData.uploadedAt,
-        });
+    if (pdfsMap?.entries) {
+      // Two keying eras coexist: web-written entries are keyed by pdfId and
+      // carry their own `id`; legacy syncPdf entries are keyed by fileName and
+      // have none. Export the value verbatim — no `id` synthesized from the map
+      // key (a fileName can repeat across studies; the transformer derives a
+      // unique fallback id from the R2 `key` when `id` is absent).
+      for (const [, pdfValue] of pdfsMap.entries()) {
+        (study.pdfs as Record<string, unknown>[]).push(
+          yMapToPlain(pdfValue as Y.Map<unknown>), // id?, key, fileName, size, tag, citation metadata…
+        );
       }
+    }
+
+    const annotationsMap = studyYMap.get('annotations') as Y.Map<unknown> | undefined;
+    if (annotationsMap?.entries) {
+      const annotations: Record<string, unknown> = {};
+      for (const [checklistId, checklistAnnotations] of annotationsMap.entries()) {
+        const perChecklist = checklistAnnotations as Y.Map<unknown>;
+        if (!perChecklist?.entries) continue;
+        const entries: Record<string, unknown> = {};
+        for (const [annotationId, annotation] of perChecklist.entries()) {
+          entries[annotationId] = yMapToPlain(annotation as Y.Map<unknown>);
+        }
+        annotations[checklistId] = entries;
+      }
+      study.annotations = annotations;
+    }
+
+    const reconciliationsMap = studyYMap.get('reconciliations') as Y.Map<unknown> | undefined;
+    if (reconciliationsMap?.entries) {
+      const reconciliations: Record<string, unknown> = {};
+      for (const [outcomeKey, progress] of reconciliationsMap.entries()) {
+        reconciliations[outcomeKey] = yMapToPlain(progress as Y.Map<unknown>);
+      }
+      study.reconciliations = reconciliations;
     }
 
     exportData.studies.push(study);
