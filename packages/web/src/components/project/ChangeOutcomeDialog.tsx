@@ -113,7 +113,10 @@ export function ChangeOutcomeDialog({
         </DialogHeader>
 
         {availableOutcomes.length > 0 ?
-          <Select value={selectedOutcomeId || ''} onValueChange={v => setSelectedOutcomeId(v || null)}>
+          <Select
+            value={selectedOutcomeId || ''}
+            onValueChange={v => setSelectedOutcomeId(v || null)}
+          >
             <SelectTrigger>
               <SelectValue placeholder='Select new outcome...' />
             </SelectTrigger>
