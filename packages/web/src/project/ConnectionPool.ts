@@ -201,10 +201,9 @@ class ConnectionPool {
       console.warn('Failed to track sync cache for cleanup:', projectId, err),
     );
 
-    // Membership is D1-authoritative with no live channel of its own; the
-    // workers refresh-disconnect a project's sessions on membership changes,
-    // so a re-sync after having been synced is the poke to refetch members.
-    let hadSynced = false;
+    // Membership is D1-authoritative; the workers refresh-disconnect on
+    // membership changes, so every 'synced' refetches members. No
+    // first-synced gate — the refresh can race the initial connection.
     const applyStatus = (status: string) => {
       if (cancelled()) return;
       const current = useProjectStore.getState().connections[projectId];
@@ -216,10 +215,7 @@ class ConnectionPool {
       else phase = workspace.client.hydrated ? 'cached' : 'connecting';
       useProjectStore.getState().setConnectionState(projectId, phase);
       if (phase === 'synced') {
-        if (hadSynced) {
-          void queryClient.invalidateQueries({ queryKey: queryKeys.projects.members(projectId) });
-        }
-        hadSynced = true;
+        void queryClient.invalidateQueries({ queryKey: queryKeys.projects.members(projectId) });
       }
     };
 

@@ -133,7 +133,11 @@ jobs:
           VITE_API_URL: 'https://staging.corates.org'
           VITE_PUBLIC_APP_URL: 'https://staging.corates.org'
           VITE_BASEPATH: '/'
-          VITE_DEV_PANEL: 'false'
+          # The e2e job runs against this deployment and seeds through the
+          # in-page dev seams (window.__devSeed / __devLegacy), which only
+          # exist when the dev panel is compiled in. Staging is a test
+          # environment (DEV_MODE is already true on its worker).
+          VITE_DEV_PANEL: 'true'
           VITE_GOOGLE_PICKER_API_KEY: ${{ vars.VITE_GOOGLE_PICKER_API_KEY }}
           VITE_GOOGLE_PICKER_APP_ID: ${{ vars.VITE_GOOGLE_PICKER_APP_ID }}
         run: pnpm --filter web build
