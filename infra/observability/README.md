@@ -16,6 +16,7 @@ Workers (prod/staging) -> OTLP export -> loki.jacobmaynard.dev/otlp/v1/logs -> L
 - `config/` - Loki config and Grafana datasource provisioning; rsynced to
   `/home/jacob/corates/observability/` on the box by deploy.sh (bind mounts resolve
   remotely when using a docker context)
+- `dashboards/` - Grafana dashboard JSON, imported by hand via Dashboards > New > Import
 - `.env` (gitignored) - R2 S3 credentials, Loki basic-auth htpasswd, Grafana admin password
 - `deploy.sh` - rsync config, then `docker --context homelab compose up -d`
 
