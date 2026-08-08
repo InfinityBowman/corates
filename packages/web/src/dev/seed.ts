@@ -544,8 +544,13 @@ export interface ApplyTemplateOptions extends PlanTemplateOptions {
 export async function devApplyTemplate(
   projectId: string,
   templateName: string,
-  { mode = 'replace', orgId, enrichReferences = false, onProgress, ...planOptions }:
-    ApplyTemplateOptions,
+  {
+    mode = 'replace',
+    orgId,
+    enrichReferences = false,
+    onProgress,
+    ...planOptions
+  }: ApplyTemplateOptions,
 ): Promise<{ studies: number; pdfs: number; references: number }> {
   const data = getTemplate(templateName);
   if (!data) throw new Error(`devApplyTemplate: unknown template "${templateName}"`);
