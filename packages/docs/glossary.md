@@ -32,11 +32,11 @@ A systematic review project containing studies, checklists, and PDFs. Projects:
 
 - Belong to a single organization
 - Have their own member list (project-level access)
-- Use Yjs CRDT for real-time collaboration
-- Store data in a Durable Object (ProjectDoc)
+- Collaborate in real time over the cf-sync engine (row collections, named mutators)
+- Store collaborative data in a workspace Durable Object (WorkspaceDO), one per project
 - Have a unique `projectId` (UUID)
 
-**Related:** `packages/workers/src/durable-objects/ProjectDoc.ts`, Yjs Sync
+**Related:** `packages/workers/src/sync/workspace.ts`, [Sync Engine Guide](guides/yjs-sync.md)
 
 ### Study
 
@@ -47,14 +47,14 @@ A publication or research study being evaluated in a systematic review. Studies:
 - Can have associated PDF files stored in R2
 - Track metadata like title, authors, year, journal
 
-**Related:** Studies are stored in the Yjs document as an array
+**Related:** Studies are rows in the project's workspace collections (sync engine)
 
 ### Checklist
 
 A structured assessment tool (AMSTAR2, ROBINS-I, etc.) used to evaluate a study. Checklists:
 
 - Follow a specific schema (questions, domains, scoring)
-- Support collaborative completion with Yjs
+- Support collaborative completion via sync-engine mutators
 - Can be reconciled between multiple reviewers
 - Track completion status and assessor
 
@@ -92,7 +92,7 @@ Cloudflare's distributed computing primitive providing:
 - Single-threaded, stateful compute (like an actor)
 - In-memory state with optional persistent storage
 - WebSocket support for real-time connections
-- Used for ProjectDoc (Yjs sync) and UserSession (presence)
+- Used for WorkspaceDO (sync engine, one workspace per project) and UserSession (per-user notifications)
 
 **Related:** [durable-objects.mdc](../../.cursor/rules/durable-objects.mdc)
 
@@ -101,14 +101,15 @@ Cloudflare's distributed computing primitive providing:
 Browser-based persistent storage used for offline-first capabilities:
 
 - **corates** - Unified Dexie database containing:
-  - `projects` - Y.Doc persistence (via y-dexie)
+  - `projects` - Legacy y-dexie Y.Doc rows, kept only as the one-time sync-engine migration source
+  - `localProjects` - Local practice project rows
+  - `syncCaches` - Tracks which projects have an engine sync cache (for wipe on logout/kick)
   - `pdfs` - PDF file cache with LRU eviction
   - `avatars` - User avatar cache
   - `formStates` - Form auto-save for OAuth redirects
-  - `queryCache` - TanStack Query persistence
-  - `localChecklists` - Offline practice checklists
+  - `localChecklists` - Legacy offline practice checklists (migration source)
   - `localChecklistPdfs` - PDFs for local checklists
-  - `ops` - Operation queue for offline mutations (future)
+- **cf-sync:\<projectId\>** - One per-project IndexedDB database for the sync engine's local cache
 
 **Related:** `packages/web/src/primitives/db.ts`
 
@@ -257,7 +258,7 @@ Design pattern prioritizing local data and offline functionality:
 
 - IndexedDB as primary data store
 - Sync to server when online
-- Conflict resolution with CRDTs (Yjs)
+- Conflict resolution via last-writer-wins rows (Yjs CRDTs for reconciliation notes)
 - Works offline with cached data
 
 **Related:** [Offline/Local-First Audit](audits/offline-local-first-audit-2026-01.md)

@@ -329,18 +329,6 @@ export function createTestEnv(overrides: Record<string, unknown> = {}): Record<s
     get: (_id: unknown) => ({
       fetch: async () => new Response(JSON.stringify({ ok: true }), { status: 200 }),
       notify: async () => {},
-      syncProject: async () => {},
-      syncMember: async () => {},
-      syncPdf: async () => {},
-      disconnectAllConnections: async () => {},
-      getProjectInfo: async () => ({}),
-      devExport: async () => ({}),
-      devImport: async () => ({ success: true }),
-      devPatch: async () => ({ success: true }),
-      devReset: async () => ({ success: true }),
-      devRaw: async () => ({}),
-      devTemplates: async () => ({ templates: [] }),
-      devApplyTemplate: async () => ({ success: true }),
     }),
   };
 

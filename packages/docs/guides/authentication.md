@@ -80,7 +80,7 @@ The following endpoints require authentication:
 - `/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/*` - PDF management (requires project access)
 - `/api/users/*` - User management (requires auth)
 - `/api/sessions/:sessionId/*` - User session Durable Object (requires auth)
-- `/api/project/:projectId/*` - Project Document Durable Object (requires auth)
+- `/api/sync/:projectId` - Sync-engine workspace WebSocket (requires auth + project membership, checked against D1 on connect)
 - `/api/admin/*` - Admin endpoints (requires admin role)
 - `/api/billing/*` - Billing endpoints (requires auth)
 - `/api/google-drive/*` - Google Drive integration (requires auth)
@@ -124,7 +124,7 @@ export const authClient = createAuthClient({
 
 ### Auth Store
 
-`useAuthStore` (Zustand, at `packages/web/src/stores/authStore.ts`) holds auth state that must be accessible from outside React -- Yjs callbacks, API interceptors, cross-tab broadcasts. `AuthProvider` syncs Better Auth's `useSession()` into the store.
+`useAuthStore` (Zustand, at `packages/web/src/stores/authStore.ts`) holds auth state that must be accessible from outside React -- sync-engine callbacks, API interceptors, cross-tab broadcasts. `AuthProvider` syncs Better Auth's `useSession()` into the store.
 
 Key fields:
 
@@ -250,10 +250,10 @@ curl -X GET http://localhost:8787/api/auth/session \
 
 ### WebSocket Authentication
 
-For WebSocket connections, authenticate via URL parameter:
+WebSocket upgrades authenticate with the same Better Auth session cookie as REST requests -- the browser sends cookies on the upgrade request automatically:
 
 ```javascript
-const ws = new WebSocket('ws://localhost:8787/api/project/my-project?token=YOUR_SESSION_TOKEN');
+const ws = new WebSocket('ws://localhost:8787/api/sync/my-project-id?clientId=MY_CLIENT_ID');
 ```
 
 ## Session Management
@@ -400,8 +400,8 @@ Project invitations now use a **combined flow** that ensures org membership befo
    - Checks expiration and acceptance status
    - Verifies email match (case-insensitive, trimmed)
    - **Ensures org membership** (adds with `orgRole` if not already a member)
-   - Adds user to project as a member with specified `role`
-   - Syncs member data to ProjectDoc Durable Object
+   - Adds user to project as a member with specified `role` (membership is a D1 fact, read by the sync engine at authorize time)
+   - Refresh-disconnects the project's sync sessions so connected clients refetch the members query
    - Sends notification via UserSession Durable Object
 
 ### Email Matching Security

@@ -34,7 +34,7 @@ flowchart LR
     Client -->|"Request"| API
     API --> GuardsPolicies
 
-    orgprojects --> ProjectDoc
+    orgprojects -->|"admin seams:<br/>teardown/kick/refresh"| WorkspaceDO
     pdfs --> R2[(R2 Storage)]
     auth --> D1[(D1 Database)]
     orgs --> D1
@@ -147,9 +147,10 @@ Google Drive integration endpoints for importing documents.
 
 ### Durable Object Routes
 
-These routes connect to Durable Objects directly:
+These routes connect to Durable Objects directly (handled ahead of the TanStack Start router in the worker entry, not as file-based routes):
 
-- `/api/project/:projectId` - ProjectDoc WebSocket connection for Yjs sync
+- `/api/sync/:projectId` - Sync-engine WebSocket connection (WorkspaceDO)
+- `/api/sync-admin/:projectId/:op` - Bearer-token-gated workspace admin surface (export/import/stats/reset)
 - `/api/sessions/:sessionId` - UserSession WebSocket connection
 
 ## Typical handler ordering

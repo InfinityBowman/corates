@@ -18,12 +18,16 @@
  * `user_reviewer1`) render as unknown members unless remapped to real
  * project members via `userMapping`. Template PDF rows attach with their
  * fake R2 keys, matching the old plane's behavior (viewing them fails —
- * they exist for list UIs).
+ * they exist for list UIs). When `devApplyTemplate` is given an `orgId`,
+ * it additionally uploads real PDFs from the local dev pool and attaches
+ * them with real R2 keys, so template projects get viewable PDFs.
  *
  * Dev-only: lazy-import this module so fixtures stay out of the main bundle.
  */
 
 import { createWorkspace } from '@cf-sync/client';
+import { loadDevPdfPool, takeDevPdf } from '@/lib/devPdfPool';
+import { fetchReferenceByIdentifier } from '@/lib/referenceLookup';
 import {
   resolveNestedTextValue,
   syncApp,
@@ -526,13 +530,28 @@ function planTemplateStudy(
 
 export interface ApplyTemplateOptions extends PlanTemplateOptions {
   mode?: 'replace' | 'merge';
+  /** When set, upload one real PDF per study from the local dev pool and
+   * attach it with its real R2 key. Skipped when the pool is not downloaded. */
+  orgId?: string;
+  /** Fetch real reference metadata (CrossRef/Unpaywall) for studies with DOIs
+   * and merge it over the fixture metadata. Off by default so e2e seeding
+   * never depends on external APIs. */
+  enrichReferences?: boolean;
+  /** Interim status text (reference fetches, PDF uploads) for the dev UI. */
+  onProgress?: (message: string) => void;
 }
 
 export async function devApplyTemplate(
   projectId: string,
   templateName: string,
-  { mode = 'replace', ...planOptions }: ApplyTemplateOptions,
-): Promise<{ studies: number }> {
+  {
+    mode = 'replace',
+    orgId,
+    enrichReferences = false,
+    onProgress,
+    ...planOptions
+  }: ApplyTemplateOptions,
+): Promise<{ studies: number; pdfs: number; references: number }> {
   const data = getTemplate(templateName);
   if (!data) throw new Error(`devApplyTemplate: unknown template "${templateName}"`);
 
@@ -557,10 +576,119 @@ export async function devApplyTemplate(
       );
     }
 
-    const plan = planTemplate(data, planOptions);
+    const ctx = defaultSeedContext();
+    const plan = planTemplate(data, planOptions, ctx);
     await runPlan(client, plan);
-    return { studies: data.studies.length };
+
+    const references =
+      enrichReferences ? await enrichStudyReferences(client, data, ctx, onProgress) : 0;
+    const pdfs =
+      orgId ?
+        await attachPoolPdfs(client, orgId, projectId, data, planOptions.actorId, ctx, onProgress)
+      : 0;
+    return { studies: data.studies.length, pdfs, references };
   });
+}
+
+/**
+ * Fetch real reference metadata for every template study with a DOI and merge
+ * it over the fixture metadata via `study.update`, plus a readable study name
+ * ("Smith et al. 2021"). Sequential on purpose — CrossRef rate-limits bursts.
+ * A failed lookup skips that study rather than failing the seed.
+ */
+async function enrichStudyReferences(
+  client: SeedClient,
+  data: MockProjectData,
+  ctx: SeedContext,
+  onProgress?: (message: string) => void,
+): Promise<number> {
+  const withDois = data.studies.filter(study => study.doi);
+  const plan: SeedMutation[] = [];
+  for (const study of withDois) {
+    try {
+      const ref = await fetchReferenceByIdentifier(study.doi);
+      const updates: Record<string, unknown> = {};
+      const merge = (key: string, value: unknown) => {
+        if (value !== null && value !== undefined && value !== '') updates[key] = value;
+      };
+      merge('originalTitle', ref.title);
+      merge('firstAuthor', ref.firstAuthor);
+      merge('publicationYear', ref.publicationYear ? String(ref.publicationYear) : null);
+      merge('authors', ref.authors);
+      merge('journal', ref.journal);
+      merge('doi', ref.doi);
+      merge('abstract', ref.abstract);
+      merge('pdfUrl', ref.pdfUrl);
+      merge('pdfSource', ref.pdfSource);
+      merge('pdfAccessible', ref.pdfAccessible);
+      if (ref.firstAuthor && ref.publicationYear) {
+        updates.name = `${ref.firstAuthor} et al. ${ref.publicationYear}`;
+      } else if (ref.title) {
+        updates.name = ref.title.length > 60 ? `${ref.title.slice(0, 57)}...` : ref.title;
+      }
+      plan.push({ name: 'study.update', args: { id: study.id, updates, now: ctx.now } });
+      onProgress?.(`Fetching references (${plan.length}/${withDois.length})...`);
+    } catch (err) {
+      console.warn(`dev seed: reference lookup failed for ${study.doi}`, err);
+    }
+  }
+  await runPlan(client, plan);
+  return plan.length;
+}
+
+/**
+ * Upload one dev-pool PDF per study (round-robin over the pool) and attach it
+ * through the seed session. Publisher PDFs block automated downloads, so the
+ * pool (`pnpm --filter web dev:pdfs`) is the only way template projects get
+ * real, viewable PDFs. An empty pool or a failed upload skips that study
+ * rather than failing the whole seed.
+ */
+async function attachPoolPdfs(
+  client: SeedClient,
+  orgId: string,
+  projectId: string,
+  data: MockProjectData,
+  actorId: string,
+  ctx: SeedContext,
+  onProgress?: (message: string) => void,
+): Promise<number> {
+  const pool = await loadDevPdfPool();
+  if (pool.length === 0) return 0;
+
+  // Lazy: @/api/pdf-api transitively imports server-function modules that
+  // reference `cloudflare:workers`, which the unit-test module graph (via
+  // seed.test.ts) cannot resolve.
+  const { uploadPdf } = await import('@/api/pdf-api');
+
+  const plan: SeedMutation[] = [];
+  for (const [index, study] of data.studies.entries()) {
+    const poolPdf = await takeDevPdf(pool, index);
+    if (!poolPdf) continue;
+    try {
+      onProgress?.(`Uploading PDFs (${plan.length + 1}/${data.studies.length})...`);
+      const uploaded = await uploadPdf(orgId, projectId, study.id, poolPdf.data, poolPdf.fileName);
+      plan.push({
+        name: 'pdf.attach',
+        args: {
+          studyId: study.id,
+          pdf: {
+            id: ctx.id('pdf'),
+            key: uploaded.key,
+            fileName: uploaded.fileName,
+            size: uploaded.size,
+            uploadedBy: actorId,
+            uploadedAt: ctx.now,
+          },
+          tag: 'primary',
+          now: ctx.now,
+        },
+      });
+    } catch (err) {
+      console.warn(`dev seed: pool PDF upload failed for study ${study.id}`, err);
+    }
+  }
+  await runPlan(client, plan);
+  return plan.length;
 }
 
 export type { MockProjectData };

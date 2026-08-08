@@ -1,47 +1,48 @@
-# Real-Time Sync Flow (CRDT)
+# Real-Time Sync Flow
 
-How local-first sync works with Yjs CRDTs.
+How local-first sync works on the cf-sync engine.
 
 ```mermaid
 sequenceDiagram
     participant Client1 as Client A
-    participant Dexie as Dexie (y-dexie)
-    participant DO as ProjectDoc (Durable Object)
+    participant Cache as IndexedDB (cf-sync cache + outbox)
+    participant DO as WorkspaceDO (Durable Object)
     participant Client2 as Client B
 
     Note over Client1,Client2: Local-First Architecture
 
-    Client1->>Dexie: Save change locally
-    Client1->>DO: WebSocket: sync update
-    DO->>DO: Merge Yjs CRDT
-    DO->>Client2: Broadcast update
-    Client2->>Dexie: Persist merged state
+    Client1->>Client1: Named mutation (optimistic apply)
+    Client1->>Cache: Persist rows + enqueue mutation
+    Client1->>DO: WebSocket: mutation
+    DO->>DO: Validate (Zod) + apply mutator
+    DO->>Client2: Broadcast updated rows
+    Client2->>Cache: Persist updated rows
 
-    Note over Client1,Dexie: Offline scenario
-    Client1->>Dexie: Save changes offline
+    Note over Client1,Cache: Offline scenario
+    Client1->>Cache: Mutations queue in outbox
     Client1--xDO: Connection lost
     Note over Client1: Continue working...
-    Client1->>DO: Reconnect + sync
-    DO->>DO: Auto-merge (conflict-free)
-    DO->>Client1: Sync complete
+    Client1->>DO: Reconnect + replay outbox
+    DO->>DO: Apply mutations in order
+    DO->>Client1: Sync complete (rejections roll back)
 ```
 
 ## How It Works
 
 ### Local-First Principles
 
-1. **All changes are local first** - Data saves to Dexie immediately via y-dexie
-2. **Background sync** - Changes push to server when connected
-3. **Conflict-free** - Yjs CRDTs automatically merge concurrent edits
+1. **All changes are local first** - Mutations apply optimistically and persist to the per-project `cf-sync:<projectId>` IndexedDB database immediately
+2. **Background sync** - A durable outbox pushes mutations to the server when connected
+3. **Conflict handling** - Rows are last-writer-wins upserts; flat-keyed answer rows carry only the fields that changed, so concurrent edits to different fields do not clobber each other. Yjs CRDTs remain only for reconciliation consolidated notes.
 
 ### Offline Support
 
 - Users can continue working without internet
-- Changes queue locally in Dexie (unified database)
-- On reconnect, all changes sync and merge automatically
+- Mutations queue locally in the outbox
+- On reconnect, the outbox replays in order; rejected mutations roll back the optimistic overlay and surface a toast
 
 ### Durable Objects
 
-- One `ProjectDoc` per project holds the authoritative Yjs document
-- WebSocket connections enable real-time collaboration
+- One `WorkspaceDO` per project holds the authoritative row collections
+- WebSocket connections (`/api/sync/:projectId`) enable real-time collaboration
 - State persists across worker restarts
