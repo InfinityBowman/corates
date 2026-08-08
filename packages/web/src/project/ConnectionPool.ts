@@ -19,6 +19,7 @@ import { queryClient } from '@/lib/queryClient';
 import { queryKeys } from '@/lib/queryKeys';
 import { getWsBaseUrl } from '@/config/api';
 import { showToast } from '@/lib/toast';
+import { PROJECT_SUPERSEDED_ERROR, SESSION_EXPIRED_ERROR } from '@/constants/errors';
 import { db, deleteProjectData, trackSyncCache } from '@/primitives/db.js';
 import { loadLegacyLocalRows } from './localProject';
 import {
@@ -98,14 +99,35 @@ interface ConnectionEntry {
 }
 
 /** Close-reason slugs the worker's authorize hook / admin kicks emit, mapped to
- * the user-facing messages ACCESS_DENIED_ERRORS matches for the redirect. */
+ * the user-facing messages the gate matches to pick its redirect. */
 const FATAL_REASON_MESSAGES: Record<string, string> = {
   'project-deleted': 'This project has been deleted',
   'membership-revoked': 'You have been removed from this project',
   'not-a-member': 'You are not a member of this project',
   'project-not-found': 'This project has been deleted',
-  'auth-required': 'You are not a member of this project',
+  'auth-required': SESSION_EXPIRED_ERROR,
+  superseded: PROJECT_SUPERSEDED_ERROR,
 };
+
+/**
+ * The only reasons that justify deleting this project's local data. They all
+ * mean the same thing: the user no longer holds the project, so cached rows
+ * must not linger on the device.
+ *
+ * Everything else is a connection fault, not a verdict. `auth-required` is any
+ * falsy session at the upgrade (an expired cookie, a D1 blip inside
+ * getSession); `superseded` is a second socket presenting the same clientId,
+ * which a duplicated tab does by itself because sessionStorage is cloned. The
+ * outbox is the only copy of work that has not reached the server yet, and it
+ * lives in the database this would delete, so an unrecognised slug keeps the
+ * data too.
+ */
+const ACCESS_REVOKED_REASONS = new Set([
+  'project-deleted',
+  'membership-revoked',
+  'not-a-member',
+  'project-not-found',
+]);
 
 const GENERIC_FATAL_MESSAGE =
   'Unable to connect to project. It may have been deleted or you may not have access.';
@@ -402,7 +424,9 @@ class ConnectionPool {
 
     const message = (reason && FATAL_REASON_MESSAGES[reason]) || GENERIC_FATAL_MESSAGE;
     useProjectStore.getState().setConnectionState(projectId, 'error', message);
-    void this.cleanupProjectLocalData(projectId);
+    if (reason && ACCESS_REVOKED_REASONS.has(reason)) {
+      void this.cleanupProjectLocalData(projectId);
+    }
   }
 
   private destroyEntry(

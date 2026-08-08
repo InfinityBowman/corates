@@ -42,8 +42,18 @@ WorkspaceDO):
    `main`, apply `old-exporter-patch.md`, deploy. Verify one export
    transforms cleanly.
 
-1. **Freeze**: set `MIGRATION_FREEZE=true` on the old worker. New sockets
-   get 503; clients show connection-lost. The export route keeps working.
+1. **Freeze**: set `MIGRATION_FREEZE=true` on the old worker, as a full
+   deploy: publishing a version restarts every Durable Object and drops its
+   sockets, which the `fetch` guard alone does not do. Then sweep the fleet
+   (`disconnectAllConnections('migration')` per project, see the patch doc)
+   so no socket outlives the freeze on rollout timing. New connections get
+   503; clients show connection-lost. The export route keeps working.
+
+   From here until step 7 the app is still served, so tabs left open keep
+   accepting edits into their local Y.Doc. Those never reach the server and
+   are unreachable once step 4 lands: the same accepted loss as the
+   pre-window offline edits, extended over the window. Keep the window
+   short and say so in the announcement.
 
 2. **Export everything**:
 

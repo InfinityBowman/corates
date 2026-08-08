@@ -126,12 +126,14 @@ if (migrationMatch) {
   const expected = (env as { SYNC_ADMIN_TOKEN?: string }).SYNC_ADMIN_TOKEN;
   if (!expected || token !== expected) return new Response('forbidden', { status: 403 });
   const stub = getProjectDocStub(env as never, migrationMatch[1]);
-  return stub.fetch(new Request(`https://do/dev/export`, { method: 'GET' }));
+  return Response.json(await stub.devExport());
 }
 ```
 
-(Adjust the forwarded request to however `dev-export` is dispatched inside
-`ProjectDoc.fetch` — mirror the existing dev route plumbing.)
+Call the `devExport()` RPC method, not `stub.fetch()`. `ProjectDoc.fetch`
+rejects everything that is not a WebSocket upgrade with a 405, and step 3
+puts the freeze guard ahead of even that, so a forwarded request would 503
+against the very freeze this export has to run during.
 
 ## 3. Add the freeze switch
 
@@ -144,10 +146,24 @@ if ((this.env as { MIGRATION_FREEZE?: string }).MIGRATION_FREEZE === 'true') {
 ```
 
 Setting the `MIGRATION_FREEZE` var (wrangler.jsonc vars + redeploy, or a
-Cloudflare dashboard var change) closes every new socket; existing sockets
-die on their next reconnect. Clients show the connection-lost state — that
-is the announced freeze window. The export route above must be added
-*before* this guard (it must work during the freeze).
+Cloudflare dashboard var change) makes every new connection 503. Clients show
+the connection-lost state; that is the announced freeze window.
+
+The guard sits in `fetch`, which only runs for the upgrade handshake, so it
+has no effect on a socket that is already open: `webSocketMessage` is not
+gated, and those clients keep writing to the Y.Doc. What actually closes them
+is the deploy itself: publishing a new version restarts every Durable Object
+and drops its WebSockets, so the freeze is only airtight if it lands as a
+full deploy. Do not rely on that alone: after the var is live, sweep the
+fleet explicitly so the guarantee does not depend on rollout timing.
+
+```ts
+// Per project, after MIGRATION_FREEZE is live and before the export.
+await getProjectDocStub(env as never, projectId).disconnectAllConnections('migration');
+```
+
+Anything written between the export and the `deleted_classes` deploy is gone:
+it is in no export and no backup. Export last, sweep first.
 
 ## Sanity check before relying on it
 

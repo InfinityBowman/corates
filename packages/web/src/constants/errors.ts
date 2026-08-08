@@ -18,3 +18,17 @@ export const ACCESS_DENIED_ERRORS: string[] = [
   PROJECT_ERRORS.NOT_FOUND.defaultMessage,
   PROJECT_ERRORS.ACCESS_DENIED.defaultMessage,
 ];
+
+export const SESSION_EXPIRED_ERROR = 'Your session has expired. Sign in again to reconnect.';
+export const PROJECT_SUPERSEDED_ERROR = 'This project was opened in another tab or window.';
+
+/**
+ * Connection faults that end the session without taking away access. The
+ * project cannot render until the user reconnects, but their cached rows and
+ * queued mutations are still theirs -- kept apart from ACCESS_DENIED_ERRORS so
+ * neither the message nor the cleanup treats a dropped socket as a revocation.
+ */
+export const RECOVERABLE_FATAL_ERRORS: string[] = [
+  SESSION_EXPIRED_ERROR,
+  PROJECT_SUPERSEDED_ERROR,
+];
