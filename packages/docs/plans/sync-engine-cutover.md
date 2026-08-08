@@ -38,9 +38,9 @@ WorkspaceDO):
 
 ## The cutover
 
-0. **Patch the old worker** (days before): branch `cutover-exporter` off
-   `main`, apply `old-exporter-patch.md`, deploy. Verify one export
-   transforms cleanly.
+0. **Patch the old worker** (days before): deploy the `cutover-exporter`
+   branch (off `main`; `old-exporter-patch.md` applied as commit `6b616682`,
+   workerd-tested). Verify one export transforms cleanly.
 
 1. **Freeze**: set `MIGRATION_FREEZE=true` on the old worker, as a full
    deploy: publishing a version restarts every Durable Object and drops its

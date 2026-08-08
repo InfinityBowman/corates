@@ -13,10 +13,11 @@ today. The shipped `handleDevExport` (v1) silently drops:
 - pdf `tag` and citation metadata (`title`, `firstAuthor`, …)
 - `sourceChecklists` on consensus checklists (informational)
 
-Before the freeze, branch off `main` (e.g. `cutover-exporter`), apply the
-changes below to `packages/workers/src/durable-objects/dev-handlers.ts`, and
-deploy. This deploy touches only the export path and the freeze switch; the
-app is otherwise unchanged.
+**Applied**: this patch landed as commit `6b616682` on the `cutover-exporter`
+branch (off `main`), with a workerd test pinning the v2 shape
+(`ProjectDoc.migration-export.test.ts`). The sections below remain as the
+spec of record; the branch is what gets deployed. This deploy touches only
+the export path and the freeze switch; the app is otherwise unchanged.
 
 ## 1. Replace the study/checklist/pdf export loops in `handleDevExport`
 
@@ -68,13 +69,15 @@ export async function handleDevExport(ctx: DevContext): Promise<Response> {
 
     const pdfsMap = studyYMap.get('pdfs') as Y.Map<unknown> | undefined;
     if (pdfsMap?.entries) {
-      // The map is keyed by pdfId; fileName lives inside the value map and
-      // must NOT be overwritten here (the R2 fetch path is built from it).
-      for (const [pdfId, pdfValue] of pdfsMap.entries()) {
-        (study.pdfs as Record<string, unknown>[]).push({
-          ...yMapToPlain(pdfValue as Y.Map<unknown>), // fileName, key, size, tag, citation metadata…
-          id: pdfId,
-        });
+      // Two keying eras coexist: web-written entries are keyed by pdfId and
+      // carry their own `id`; legacy syncPdf entries are keyed by fileName and
+      // have none. Export the value verbatim — no `id` synthesized from the map
+      // key (a fileName can repeat across studies; the transformer derives a
+      // unique fallback id from the R2 `key` when `id` is absent).
+      for (const [, pdfValue] of pdfsMap.entries()) {
+        (study.pdfs as Record<string, unknown>[]).push(
+          yMapToPlain(pdfValue as Y.Map<unknown>), // id?, key, fileName, size, tag, citation metadata…
+        );
       }
     }
 
