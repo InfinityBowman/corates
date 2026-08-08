@@ -75,7 +75,7 @@ const oldPdfSchema = z.looseObject({
   tag: z.string().optional(),
   title: z.string().optional(),
   firstAuthor: z.string().optional(),
-  publicationYear: z.string().optional(),
+  publicationYear: z.union([z.string(), z.number()]).nullable().optional(),
   journal: z.string().optional(),
   doi: z.string().optional(),
 });
@@ -83,7 +83,10 @@ const oldPdfSchema = z.looseObject({
 const oldAnnotationSchema = z.looseObject({
   id: z.string().optional(),
   pdfId: z.string(),
-  type: z.string().optional(),
+  // Old embedpdf stamped its numeric PdfAnnotationSubtype enum here; the row
+  // column is denormalized metadata (rendering reads embedPdfData), so a
+  // stringified code is faithful.
+  type: z.union([z.string(), z.number()]).optional(),
   pageIndex: z.number().optional(),
   embedPdfData: z.string().optional(),
   createdBy: z.string().optional(),
@@ -129,9 +132,7 @@ const oldStudySchema = z.looseObject({
   reviewer2: z.string().nullable().optional(),
   checklists: z.array(oldChecklistSchema).default([]),
   pdfs: z.array(oldPdfSchema).default([]),
-  annotations: z
-    .record(z.string(), z.record(z.string(), oldAnnotationSchema))
-    .optional(),
+  annotations: z.record(z.string(), z.record(z.string(), oldAnnotationSchema)).optional(),
   reconciliations: z.record(z.string(), oldReconciliationSchema).optional(),
 });
 
@@ -424,7 +425,9 @@ export function transformProjectExport(input: unknown): TransformResult {
         : flattenNestedAnswers(type, checklist.answers, report.warnings, checklist.id),
         defaults,
         (from, to) =>
-          report.warnings.push(`checklist ${checklist.id}: remapped legacy key "${from}" to "${to}"`),
+          report.warnings.push(
+            `checklist ${checklist.id}: remapped legacy key "${from}" to "${to}"`,
+          ),
       );
 
       const merged: Record<string, JsonValue> = { ...defaults };
@@ -455,7 +458,7 @@ export function transformProjectExport(input: unknown): TransformResult {
         tag: pdf.tag ?? 'secondary',
         ...(pdf.title ? { title: pdf.title } : {}),
         ...(pdf.firstAuthor ? { firstAuthor: pdf.firstAuthor } : {}),
-        ...(pdf.publicationYear ? { publicationYear: pdf.publicationYear } : {}),
+        ...(pdf.publicationYear != null ? { publicationYear: String(pdf.publicationYear) } : {}),
         ...(pdf.journal ? { journal: pdf.journal } : {}),
         ...(pdf.doi ? { doi: pdf.doi } : {}),
       });
@@ -471,7 +474,7 @@ export function transformProjectExport(input: unknown): TransformResult {
           studyId: study.id,
           checklistId,
           pdfId: annotation.pdfId,
-          type: annotation.type ?? 'highlight',
+          type: annotation.type != null ? String(annotation.type) : 'highlight',
           pageIndex: annotation.pageIndex ?? 0,
           embedPdfData: annotation.embedPdfData ?? '{}',
           createdBy: annotation.createdBy ?? MIGRATION_ACTOR,
@@ -506,9 +509,10 @@ export function transformProjectExport(input: unknown): TransformResult {
 
       // In-progress consolidated notes land on Yjs fields (§5: never
       // LWW-then-upgrade). Finalized consensus checklists stay row-only.
-      const consensus = progress.reconciledChecklistId ?
-        checklistById.get(progress.reconciledChecklistId)
-      : undefined;
+      const consensus =
+        progress.reconciledChecklistId ?
+          checklistById.get(progress.reconciledChecklistId)
+        : undefined;
       if (consensus && normalizeChecklistStatus(consensus.status) !== CHECKLIST_STATUS.FINALIZED) {
         const type = consensus.type as ChecklistType;
         const exported = remapLegacySectionBKeys(

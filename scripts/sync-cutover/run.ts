@@ -63,7 +63,9 @@ async function adminFetch(
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
   });
   if (!response.ok) {
-    throw new Error(`${init?.method ?? 'GET'} ${url} -> ${response.status}: ${await response.text()}`);
+    throw new Error(
+      `${init?.method ?? 'GET'} ${url} -> ${response.status}: ${await response.text()}`,
+    );
   }
   return (await response.json()) as Record<string, unknown>;
 }
@@ -81,14 +83,27 @@ if (command === 'transform') {
     const oldExport = JSON.parse(readFileSync(join(exportsDir, file), 'utf8'));
     const { snapshot, report } = transformProjectExport(oldExport);
     if (snapshot.workspaceId !== projectId) {
-      fail(`${file}: export projectId "${snapshot.workspaceId}" does not match file name`);
+      // The old exporter stamps projectId with the DO's internal id
+      // (ctx.id.toString(), 64 hex chars) — the DO never knew its own name.
+      // The file name is the id the export was fetched by (from the D1
+      // project listing), so it is authoritative; the hard failure remains
+      // for an embedded id that is a genuinely different project id
+      // (a misnamed or shuffled file).
+      if (/^[0-9a-f]{64}$/.test(snapshot.workspaceId)) {
+        snapshot.workspaceId = projectId;
+        report.projectId = projectId;
+      } else {
+        fail(`${file}: export projectId "${snapshot.workspaceId}" does not match file name`);
+      }
     }
     writeFileSync(join(outDir, `${projectId}.snapshot.json`), JSON.stringify(snapshot));
     reports.push(report as unknown as Record<string, unknown>);
     console.log(
       `OK ${projectId}: ${report.studies} studies, ${report.checklists} checklists, ` +
         `${report.answers} answers, ${report.fieldSeeds} field seeds` +
-        (report.droppedAnswerKeys.length ? `, ${report.droppedAnswerKeys.length} dropped keys` : '') +
+        (report.droppedAnswerKeys.length ?
+          `, ${report.droppedAnswerKeys.length} dropped keys`
+        : '') +
         (report.warnings.length ? `, ${report.warnings.length} WARNINGS` : ''),
     );
     for (const warning of report.warnings) console.warn(`  WARNING: ${warning}`);
