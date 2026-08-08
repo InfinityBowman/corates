@@ -18,6 +18,12 @@ const PROJECT_DOC_PATH = /^\/api\/project-doc\/([^/]+)(?:\/.*)?$/;
 // notification fan-out. WebSocket upgrades only.
 const SESSION_PATH = /^\/api\/sessions\/([^/]+)(?:\/.*)?$/;
 
+// `/api/migration/export/<projectId>` — one-time sync-engine cutover export,
+// bearer-gated by SYNC_ADMIN_TOKEN. Calls the devExport() RPC directly:
+// ProjectDoc.fetch serves only WebSocket upgrades and the MIGRATION_FREEZE
+// guard 503s it, but the export has to run during the freeze.
+const MIGRATION_EXPORT_PATH = /^\/api\/migration\/export\/([^/]+)$/;
+
 interface DOEnv {
   USER_SESSION: {
     idFromName(name: string): unknown;
@@ -34,6 +40,17 @@ interface SentryEnv {
 const workerHandler = {
   async fetch(request: Request, env: unknown, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
+
+    const migrationMatch = url.pathname.match(MIGRATION_EXPORT_PATH);
+    if (migrationMatch) {
+      const token = request.headers.get('Authorization')?.replace(/^Bearer /, '');
+      const expected = (env as { SYNC_ADMIN_TOKEN?: string }).SYNC_ADMIN_TOKEN;
+      if (!expected || token !== expected) {
+        return new Response('forbidden', { status: 403 });
+      }
+      const stub = getProjectDocStub(env as never, migrationMatch[1]);
+      return Response.json(await stub.devExport());
+    }
 
     // DO routes must be handled before TanStack Start (which can't pass
     // WebSocket upgrades through). Same Request is forwarded as-is so the

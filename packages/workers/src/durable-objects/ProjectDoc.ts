@@ -223,6 +223,14 @@ class ProjectDocBase extends DurableObject<Env> {
    * the getProjectInfo() RPC; all other HTTP methods are rejected.
    */
   async fetch(request: Request): Promise<Response> {
+    // Cutover freeze: refuse new connections while the migration export runs.
+    // Only gates the upgrade handshake — open sockets are closed by the deploy
+    // that carries the var, plus an explicit disconnectAllConnections sweep.
+    // The migration export path is unaffected: it calls the devExport() RPC.
+    if ((this.env as { MIGRATION_FREEZE?: string }).MIGRATION_FREEZE === 'true') {
+      return new Response('migration in progress', { status: 503 });
+    }
+
     const upgradeHeader = request.headers.get('Upgrade');
 
     try {
