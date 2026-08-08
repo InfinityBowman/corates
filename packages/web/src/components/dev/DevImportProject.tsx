@@ -27,6 +27,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { createProject, addMemberToProject } from '@/server/functions/org-projects.functions';
 import { importState } from '@/server/functions/dev-tools.functions';
 import { searchUsers } from '@/server/functions/users.functions';
+import { collectSnapshotUserIds, remapSnapshotUserIds } from '@/dev/snapshot';
 import { useOrgs } from '@/hooks/useOrgs';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
@@ -63,13 +64,14 @@ interface SearchResult {
 }
 
 /** Distinct template-user ids referenced by a template's studies, in
- * appearance order — each becomes a mapping row in the Assign Users UI. */
+ * appearance order — each becomes a mapping row in the Assign Users UI.
+ * PDF uploadedBy ids are deliberately not surfaced: they only label list
+ * rows, and pool-PDF uploads use the creating user anyway. */
 function collectTemplateUserIds(data: {
   studies: Array<{
     reviewer1: string | null;
     reviewer2: string | null;
     checklists: Array<{ assignedTo: string | null }>;
-    pdfs: Array<{ uploadedBy: string }>;
   }>;
 }): string[] {
   const ids = new Set<string>();
@@ -79,11 +81,19 @@ function collectTemplateUserIds(data: {
     for (const checklist of study.checklists) {
       if (checklist.assignedTo) ids.add(checklist.assignedTo);
     }
-    for (const pdf of study.pdfs) {
-      if (pdf.uploadedBy) ids.add(pdf.uploadedBy);
-    }
   }
   return [...ids];
+}
+
+/** Friendly labels for the fixture user ids; unknown ids show as-is. */
+const TEMPLATE_USER_LABELS: Record<string, string> = {
+  user_lead: 'Lead',
+  user_reviewer1: 'Reviewer 1',
+  user_reviewer2: 'Reviewer 2',
+};
+
+function templateUserLabel(id: string): string {
+  return TEMPLATE_USER_LABELS[id] ?? id;
 }
 
 export function DevImportProject() {
@@ -109,6 +119,8 @@ export function DevImportProject() {
   // JSON state
   const [jsonProjectName, setJsonProjectName] = useState('Imported Project');
   const [jsonText, setJsonText] = useState('');
+  const [jsonUserIds, setJsonUserIds] = useState<string[]>([]);
+  const [jsonAssignments, setJsonAssignments] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (orgs.length > 0 && !selectedOrgId) {
@@ -153,6 +165,22 @@ export function DevImportProject() {
     };
   }, [selectedTemplate, templates]);
 
+  // Surface the user ids a pasted snapshot references so they can be
+  // remapped to real members before import (unmapped ids pass through).
+  const debouncedJsonText = useDebouncedValue(jsonText, 300);
+  useEffect(() => {
+    let ids: string[] = [];
+    try {
+      const parsed: unknown = JSON.parse(debouncedJsonText);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        ids = collectSnapshotUserIds(parsed as Record<string, unknown>);
+      }
+    } catch {
+      // Not valid JSON (yet) -- no mapping rows to offer
+    }
+    setJsonUserIds(ids);
+  }, [debouncedJsonText]);
+
   const handleAssignRole = useCallback((roleId: string, userId: string) => {
     setRoleAssignments(prev => ({ ...prev, [roleId]: userId }));
   }, []);
@@ -175,6 +203,23 @@ export function DevImportProject() {
 
   const canCreateFromJson = resolvedOrgId && jsonProjectName.trim() && jsonText.trim();
 
+  // Add mapped users as project members (skip creator, they're already a
+  // member) so remapped reviewer ids resolve in member UIs.
+  const addAssignedMembers = async (projectId: string, mapping: Record<string, string>) => {
+    if (!resolvedOrgId) return;
+    const assignedUserIds = [...new Set(Object.values(mapping))];
+    for (const userId of assignedUserIds) {
+      if (userId === currentUser?.id) continue;
+      try {
+        await addMemberToProject({
+          data: { orgId: resolvedOrgId, projectId, userId, role: 'member' },
+        });
+      } catch {
+        // Non-fatal -- user may already be a member or not in org
+      }
+    }
+  };
+
   const handleCreateFromTemplate = async () => {
     if (!resolvedOrgId || !currentUser || !selectedTemplate || !projectName.trim()) return;
 
@@ -186,31 +231,32 @@ export function DevImportProject() {
         data: { orgId: resolvedOrgId, name: projectName.trim() },
       })) as { id: string };
 
-      // Add mapped users as project members first (skip creator, they're
-      // already a member) so the seeded reviewer ids resolve in member UIs.
-      const assignedUserIds = [...new Set(Object.values(roleAssignments))];
-      for (const userId of assignedUserIds) {
-        if (userId === currentUser.id) continue;
-        try {
-          await addMemberToProject({
-            data: { orgId: resolvedOrgId, projectId: newProject.id, userId, role: 'member' },
-          });
-        } catch {
-          // Non-fatal -- user may already be a member or not in org
-        }
-      }
+      await addAssignedMembers(newProject.id, roleAssignments);
 
       const { devApplyTemplate } = await import('@/dev/seed');
-      const { studies } = await devApplyTemplate(newProject.id, selectedTemplate, {
-        mode: 'replace',
-        userMapping: roleAssignments,
-        actorId: currentUser.id,
-      });
+      const { studies, pdfs, references } = await devApplyTemplate(
+        newProject.id,
+        selectedTemplate,
+        {
+          mode: 'replace',
+          userMapping: roleAssignments,
+          actorId: currentUser.id,
+          orgId: resolvedOrgId,
+          enrichReferences: true,
+          onProgress: message => setResult({ success: true, message }),
+        },
+      );
 
-      setResult({
-        success: true,
-        message: `Project created with ${studies} ${studies === 1 ? 'study' : 'studies'}`,
-      });
+      let message = `Project created with ${studies} ${studies === 1 ? 'study' : 'studies'}`;
+      if (references > 0) {
+        message += `, ${references} ${references === 1 ? 'reference' : 'references'}`;
+      }
+      if (pdfs > 0) {
+        message += `, ${pdfs} ${pdfs === 1 ? 'PDF' : 'PDFs'}`;
+      } else if (studies > 0) {
+        message += ' (no dev PDFs: run pnpm --filter web dev:pdfs)';
+      }
+      setResult({ success: true, message });
 
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
 
@@ -247,8 +293,14 @@ export function DevImportProject() {
         data: { orgId: resolvedOrgId, name: jsonProjectName.trim() },
       })) as { id: string };
 
+      await addAssignedMembers(newProject.id, jsonAssignments);
+
       await importState({
-        data: { orgId: resolvedOrgId, projectId: newProject.id, snapshot },
+        data: {
+          orgId: resolvedOrgId,
+          projectId: newProject.id,
+          snapshot: remapSnapshotUserIds(snapshot, jsonAssignments),
+        },
       });
 
       setResult({ success: true, message: 'Project imported' });
@@ -379,7 +431,7 @@ export function DevImportProject() {
                   {templateUserIds.map(templateUserId => (
                     <UserSearchField
                       key={templateUserId}
-                      label={templateUserId}
+                      label={templateUserLabel(templateUserId)}
                       selectedUserId={roleAssignments[templateUserId] || null}
                       currentUser={currentUser}
                       excludeUserIds={Object.entries(roleAssignments)
@@ -448,6 +500,36 @@ export function DevImportProject() {
               onChange={e => setJsonText(e.target.value)}
             />
           </div>
+
+          {jsonUserIds.length > 0 && (
+            <div className='flex flex-col gap-2'>
+              <label className='text-2xs text-muted-foreground font-medium tracking-wide uppercase'>
+                Map Users (optional, unmapped ids pass through)
+              </label>
+              {jsonUserIds.map(snapshotUserId => (
+                <UserSearchField
+                  key={snapshotUserId}
+                  label={templateUserLabel(snapshotUserId)}
+                  selectedUserId={jsonAssignments[snapshotUserId] || null}
+                  currentUser={currentUser}
+                  excludeUserIds={Object.entries(jsonAssignments)
+                    .filter(([k]) => k !== snapshotUserId)
+                    .map(([, v]) => v)}
+                  onSelect={userId =>
+                    setJsonAssignments(prev => ({ ...prev, [snapshotUserId]: userId }))
+                  }
+                  onClear={() =>
+                    setJsonAssignments(prev => {
+                      const next = { ...prev };
+                      delete next[snapshotUserId];
+                      return next;
+                    })
+                  }
+                  disabled={isCreating}
+                />
+              ))}
+            </div>
+          )}
 
           <Button
             size='sm'
