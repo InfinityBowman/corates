@@ -253,7 +253,9 @@ function MultiSelectField({
  * practice).
  */
 function FinalTextField({ fieldKey, placeholder }: { fieldKey: string; placeholder?: string }) {
-  const text = useReconciledText(textFieldKey({ type: 'ROB2', sectionKey: 'preliminary', fieldKey }));
+  const text = useReconciledText(
+    textFieldKey({ type: 'ROB2', sectionKey: 'preliminary', fieldKey }),
+  );
   return (
     <NoteEditor
       value={text.value}

@@ -1,10 +1,6 @@
 import { INFORMATION_SOURCES, SECTION_D } from './checklist-map';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
-import {
-  useWorkspaceProjectId,
-  useAnswerValue,
-  useAnswerWriters,
-} from '@/project/workspace-data';
+import { useWorkspaceProjectId, useAnswerValue, useAnswerWriters } from '@/project/workspace-data';
 
 interface SectionDProps {
   studyId: string;

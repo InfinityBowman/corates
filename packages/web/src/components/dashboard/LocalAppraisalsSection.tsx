@@ -24,11 +24,7 @@ import { buildProjectCsv, downloadCsv } from '@/lib/export-csv';
 import { buildProjectPdf, downloadPdf } from '@/lib/export-pdf';
 import { useAllStudies } from '@/project/workspace-data';
 import type { StudyInfo } from '@/stores/projectStore';
-import {
-  serializeAnswerRows,
-  scoreChecklistRows,
-  type ChecklistType,
-} from '@corates/shared/sync';
+import { serializeAnswerRows, scoreChecklistRows, type ChecklistType } from '@corates/shared/sync';
 import { amstar2 } from '@corates/shared';
 import type { AMSTAR2Checklist } from '@corates/shared/checklists';
 import { connectionPool } from '@/project/ConnectionPool';

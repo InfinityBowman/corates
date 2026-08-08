@@ -87,7 +87,11 @@ export function verifyProjectMigration(oldExport: unknown, engineExport: unknown
 
   const parsedOld = oldExportSchema.safeParse(oldExport);
   if (!parsedOld.success) {
-    return { ok: false, violations: [`old export failed validation: ${parsedOld.error.message}`], notes };
+    return {
+      ok: false,
+      violations: [`old export failed validation: ${parsedOld.error.message}`],
+      notes,
+    };
   }
   const old: OldProjectExport = parsedOld.data;
   const engine = engineExport as EngineExport;
@@ -165,7 +169,9 @@ export function verifyProjectMigration(oldExport: unknown, engineExport: unknown
     ];
     for (const [field, expected] of expectedStudyFields) {
       if (expected !== undefined && studyRow[field] !== expected) {
-        violations.push(`study ${study.id} ${field}: "${String(expected)}" → "${String(studyRow[field])}"`);
+        violations.push(
+          `study ${study.id} ${field}: "${String(expected)}" → "${String(studyRow[field])}"`,
+        );
       }
     }
 
@@ -220,7 +226,9 @@ export function verifyProjectMigration(oldExport: unknown, engineExport: unknown
           );
         }
       }
-      notes.push(`checklist ${checklist.id}: ${answerRows}/${Object.keys(defaults).length} answer rows`);
+      notes.push(
+        `checklist ${checklist.id}: ${answerRows}/${Object.keys(defaults).length} answer rows`,
+      );
     }
 
     for (const pdf of study.pdfs) {
@@ -261,9 +269,10 @@ export function verifyProjectMigration(oldExport: unknown, engineExport: unknown
 
       // In-progress consolidated notes must be readable back out of the Yjs
       // field seeds, character for character.
-      const consensus = progress.reconciledChecklistId ?
-        checklistById.get(progress.reconciledChecklistId)
-      : undefined;
+      const consensus =
+        progress.reconciledChecklistId ?
+          checklistById.get(progress.reconciledChecklistId)
+        : undefined;
       if (consensus && normalizeChecklistStatus(consensus.status) !== CHECKLIST_STATUS.FINALIZED) {
         const type = consensus.type as ChecklistType;
         const consensusAnswers = remapLegacySectionBKeys(

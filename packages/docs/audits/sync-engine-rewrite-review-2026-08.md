@@ -21,7 +21,7 @@
 
 ## Priority guide
 
-Fix-before-cutover: issues 1-5  (migration correctness) and 6-9 (runtime data loss /
+Fix-before-cutover: issues 1-5 (migration correctness) and 6-9 (runtime data loss /
 exposure). The cutover is one-way; the invariant gate is blind to 1, 3, 4, and 5, so a
 green verify does not currently imply a lossless migration.
 
@@ -41,6 +41,7 @@ The old plane keys `pdfsMap` by `pdfId`, not fileName (`main:packages/web/src/pr
 Worse than mislabeling: `packages/web/src/api/pdf-api.ts:64` builds the R2 fetch path from `fileName`, so every migrated PDF 404s on view/download/re-extract. The misnamed loop variable is inherited from main's dev exporter (`dev-handlers.ts:265,268`), but this branch is what pipes it into a one-way production migration.
 
 **Evidence:**
+
 - `scripts/sync-cutover/old-exporter-patch.md:69-77` (the clobber)
 - `packages/workers/src/sync/transform.ts:389`, `packages/workers/src/sync/verify.ts:195`
 - `packages/web/src/api/pdf-api.ts:64`
@@ -57,6 +58,7 @@ Worse than mislabeling: `packages/web/src/api/pdf-api.ts:64` builds the R2 fetch
 The transformer builds the study row as a hand-enumerated literal and never references `importSource`, `volume`, `issue`, `pages`, or `type`. All five are declared in the new schema (`packages/shared/src/sync/schema.ts:46,52-55`), written by the old plane, populated by real import flows (PubMed/DOI/RIS via `referenceLookup.ts`, `referenceParser.ts`, deduplication), and read by the new UI (`workspace-data.ts:343,349-352`). `oldStudySchema` is a `looseObject`, so the data survives parsing and is then discarded. Nothing lands in `report.warnings`, and `verify.ts:132-141` compares only name/reviewer1/reviewer2/doi. Silent and unrecoverable after unfreeze.
 
 **Evidence:**
+
 - `packages/workers/src/sync/transform.ts:315-335` (the literal), `:105-131` (oldStudySchema)
 - `packages/workers/src/sync/verify.ts:131-141`
 
@@ -74,6 +76,7 @@ The transformer builds the study row as a hand-enumerated literal and never refe
 After cutover such a study gets no `reconciliations` row and, critically, no Yjs field seeds (`transform.ts:423-464` seeds only from the plural map). The row itself self-heals on next open via `ReconciliationWrapper.tsx:314-327`, but the missing field seeds are destructive: `useReconciledText` has no row fallback, so the migrated consolidated notes are invisible, and `serializeFieldsIntoRows` then writes the empty field text over the non-empty row at finalize. `verify.ts:209-250` derives expectations from the same stripped export, so the gate reports green.
 
 **Evidence:**
+
 - `scripts/sync-cutover/old-exporter-patch.md:53`
 - `packages/workers/src/sync/transform.ts:423-464`, `packages/workers/src/sync/verify.ts:209-250`
 - `packages/web/src/components/project/reconcile-tab/fields.ts:151-160, 240-253`
@@ -90,6 +93,7 @@ After cutover such a study gets no `reconciliations` row and, critically, no Yjs
 `textFieldKey` returns `${questionKey}.${fieldKey}` when questionKey is present, so the reconcile adapter stores Section B consolidated comments under `b1.comment` while the canonical row key is `sectionB.b1.comment`. That mismatch exists on main too (same user-visible symptom). What is new: `transform.ts:368-375` pushes any exported key not in `defaultAnswerRows` into `droppedAnswerKeys` instead of writing a row, so every Section B comment ever typed in a reconcile session is destroyed at migration. On main the data at least sat recoverable in the doc. Neither the field-seeding pass nor the gate (both enumerate `textAnswerKeys`) seeds or flags it.
 
 **Evidence:**
+
 - `packages/shared/src/sync/derive.ts:333-341` (`textFieldKey`)
 - `packages/web/src/components/project/reconcile-tab/robins-i-reconcile/adapter.tsx:231-236`
 - `packages/workers/src/sync/transform.ts:368-375`, `packages/workers/src/sync/verify.ts:233`
@@ -106,6 +110,7 @@ After cutover such a study gets no `reconciliations` row and, critically, no Yjs
 Three lax-to-strict mismatches flow from transform output into the DO's strict row validation: checklist `status` (`z.string()` vs the 5-value enum), reconciliation `type` (`z.string()` vs `checklistTypeSchema`), and pdf `tag` (`z.string()` vs `pdfTagSchema`). Out-of-enum statuses are genuinely reachable: the status vocabulary changed 2025-12-29 (commit `5e4d3cbe`) with no Y.Doc backfill, so checklists last written before that date carry `completed` / `awaiting-reconcile`. The runner has no per-project catch: the first 400 kills the process with the fleet half-imported mid-freeze. Import is idempotent (wholesale replace) and re-run is documented, so this costs freeze-window time rather than data.
 
 **Evidence:**
+
 - `packages/workers/src/sync/transform.ts:61, 75, 98, 355, 393, 434`
 - `packages/shared/src/sync/schema.ts:94, 153, 168`
 - `scripts/sync-cutover/run.ts:56-68, 109-121`
@@ -126,6 +131,7 @@ Three lax-to-strict mismatches flow from transform output into the DO's strict r
 `deleteProject.ts:54` calls `teardownWorkspace` (which runs `workspace.reset()`, i.e. `ctx.storage.deleteAll()`) before `db.delete(projects)` at `:67`. Workspace storage is the only home for studies/checklists/answers/Yjs fields. If the D1 delete then fails, the project row survives, still listed and joinable, but empty. A concrete trigger exists: `cleanupProjectStorage` issues one R2 subrequest per object between the reset and the D1 delete, so a PDF-heavy project can exhaust the subrequest budget and make the D1 delete fail. Main's equivalent (`disconnectAllFromProject`) was non-destructive. DO point-in-time recovery makes this operator-recoverable, but nothing in the app can heal it.
 
 **Evidence:**
+
 - `packages/workers/src/commands/projects/deleteProject.ts:54-74`
 - `packages/workers/src/sync/admin.ts:74-85`
 - `packages/workers/src/commands/lib/storage.ts:24`
@@ -144,6 +150,7 @@ The engine persists full project content to `cf-sync:<projectId>` IndexedDB data
 Secondary: the engine's clientId lives in sessionStorage (`cf-sync:client-id:<workspaceId>`) and is not cleared on signout. If user B (a legitimate member) logs in in the same tab, B inherits A's clientId and replays A's queued unsent offline mutations under B's identity.
 
 **Evidence:**
+
 - `packages/web/src/project/ConnectionPool.ts:39-44, 337-352`
 - `packages/web/src/primitives/db.ts:127-165`, `packages/web/src/stores/authStore.ts:154`
 - vendored `@cf-sync/client` `IndexedDBSyncStore` (dbName `cf-sync:<workspaceId>`); `SyncStore.reset()` exists but is only invoked on schema-version mismatch
@@ -160,6 +167,7 @@ Secondary: the engine's clientId lives in sessionStorage (`cf-sync:client-id:<wo
 `expandAnswerUpdate`'s AMSTAR2 branch unconditionally emits both `${key}.answers` and `${key}.critical` (with `critical ?? false`), unlike the ROB2/ROBINS-I branches which gate each write on `!== undefined`. Every AMSTAR2 UI interaction therefore sends a full two-row snapshot, and rows are last-writer-wins upserts with no merge. Client A clicks an answer while client B toggles Critical from a stale render: whichever mutation arrives second silently reverts the other's change. The critical toggles capture `currentAnswers` at render, making the toggle-reverts-answer direction the dangerous one. Main wrote one Y.Map key per interaction, so the facts were independent. Bonus hazard: any caller omitting `critical` silently clears it to false.
 
 **Evidence:**
+
 - `packages/shared/src/sync/answer-rows.ts:278-282` (vs `:295-300`, `:323-331`)
 - `packages/web/src/components/checklist/AMSTAR2Checklist/AMSTAR2Checklist.tsx:52-58, 244-252, 302-320, 426-441, 556-570`
 - vendored `@cf-sync/server` row put: unconditional `ON CONFLICT DO UPDATE`
@@ -176,6 +184,7 @@ Secondary: the engine's clientId lives in sessionStorage (`cf-sync:client-id:<wo
 `checklist.create`'s duplicate guard matches reconciled checklists (`assignedTo: null`). Two reviewers opening the reconcile page near-simultaneously both create; the server rejects the loser with `DuplicateChecklist` and rolls back its optimistic rows. The repair effect requires `allReconciled.length > 1`, which after rollback never holds, and nothing else rewrites `reconciledChecklistId`, so the loser renders a fully-drawn but blank reconciliation page where every answer click toasts "That item no longer exists." The trigger is wider than a true race: the setup effect runs at phase `cached`, so a reviewer whose cached rows predate the other's creation duplicates on open with no concurrency at all. Reload heals; nothing in-session does. Main's guard was client-local, both writes merged via Yjs, and the repair effect resolved it.
 
 **Evidence:**
+
 - `packages/shared/src/sync/mutators.ts:232-246`
 - `packages/web/src/components/project/reconcile-tab/ReconciliationWrapper.tsx:282-284, 337-355, 379-394, 567`
 - Test gap: `packages/shared/src/sync/__tests__/checklists.test.ts:158-179` covers the guard only for `assignedTo: 'user-2'`, never the reconciled case
@@ -192,6 +201,7 @@ Secondary: the engine's clientId lives in sessionStorage (`cf-sync:client-id:<wo
 `toStudyUpdates` strips both `null` and `undefined`, so `{reviewer1: 'alice', reviewer2: null}` from AssignReviewersModal reaches `study.update` as `{reviewer1: 'alice'}` and the removed reviewer stays assigned; the modal closes as success. Main wrote the null into the Y.Map and the read side treated it as unassigned. The fix needs schema work: `reviewer1/reviewer2` are `z.string().optional()` (not nullable) in both the row schema and the mutator args, so passing null through today would fail validation at three layers.
 
 **Evidence:**
+
 - `packages/web/src/project/actions/studies.ts:45-52, 281-288`
 - `packages/web/src/components/project/all-studies-tab/AssignReviewersModal.tsx:81-84`
 - `packages/shared/src/sync/schema.ts:80-81`, `packages/shared/src/sync/mutators.ts:181-196`
@@ -215,6 +225,7 @@ Secondary: the engine's clientId lives in sessionStorage (`cf-sync:client-id:<wo
 Corrections to the original claim: the offline-hard-refresh framing is unreachable (no service worker), and the error-boundary latch clears on tab switch.
 
 **Evidence:**
+
 - `packages/web/src/hooks/useProjectOrgId.ts:7-10`, `packages/web/src/project/workspace-data.ts:472-501`
 - `packages/web/src/project/ProjectGate.tsx:57-64, 75-81`, `packages/web/src/project/actions.ts:21-31, 101-103`
 - `packages/web/src/components/project/overview-tab/OverviewTab.tsx:177-181`
@@ -232,6 +243,7 @@ Corrections to the original claim: the offline-hard-refresh framing is unreachab
 Main's NoteEditor edited a Y.Text via minimal diffs, so concurrent edits to the same note merged. The branch stores instrument notes as whole-string rows written per keystroke; any concurrent edit loses one side wholesale. The focused draft-hold (`if (live || !focused) setLocalValue(value)`) additionally means the losing writer never sees the remote text before overwriting it. Scope: the four reconciliation consolidated-note editors pass `live` and are not exposed; the per-reviewer instrument notes are, with realistic concurrency being same-user-two-tabs or a second member opening someone else's checklist (nothing blocks that beyond status). The clobber happens on keystroke, not blur.
 
 **Evidence:**
+
 - `packages/web/src/components/checklist/common/NoteEditor.tsx:56-60, 79-83`
 - `main:packages/web/src/components/checklist/common/NoteEditor.tsx` (Y.Text + `applyYTextDiff`)
 

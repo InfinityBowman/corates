@@ -28,7 +28,4 @@ export const PROJECT_SUPERSEDED_ERROR = 'This project was opened in another tab 
  * queued mutations are still theirs -- kept apart from ACCESS_DENIED_ERRORS so
  * neither the message nor the cleanup treats a dropped socket as a revocation.
  */
-export const RECOVERABLE_FATAL_ERRORS: string[] = [
-  SESSION_EXPIRED_ERROR,
-  PROJECT_SUPERSEDED_ERROR,
-];
+export const RECOVERABLE_FATAL_ERRORS: string[] = [SESSION_EXPIRED_ERROR, PROJECT_SUPERSEDED_ERROR];

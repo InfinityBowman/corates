@@ -30,8 +30,7 @@ export function SectionB({ studyId, checklistId, disabled }: SectionBProps) {
 
   const handleAnswerChange = (questionKey: string, value: string) => {
     const currentVal = getAnswerValue(projectId, checklistId, `sectionB.${questionKey}`) as
-      | string
-      | null;
+      string | null;
     writers.updateAnswer({
       type: 'ROBINS_I',
       key: 'sectionB',

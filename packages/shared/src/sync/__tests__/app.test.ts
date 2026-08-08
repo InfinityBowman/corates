@@ -10,7 +10,12 @@ describe('write gate', () => {
       principal: 'user-1',
       auth: { role: 'member', writeAllowed: false },
     });
-    const result = engine.mutate('study.create', { id: 's1', name: 'Trial', description: '', now: NOW });
+    const result = engine.mutate('study.create', {
+      id: 's1',
+      name: 'Trial',
+      description: '',
+      now: NOW,
+    });
     expect(result.error?.code).toBe('ReadOnly');
     expect(engine.get('studies', 's1')).toBeNull();
     // Invariant 2: permanent rejections advance last_mutation_id.

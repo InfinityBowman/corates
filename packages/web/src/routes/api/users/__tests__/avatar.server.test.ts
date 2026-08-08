@@ -17,7 +17,6 @@ function mockSession() {
   };
 }
 
-
 async function clearR2(prefix: string) {
   const listed = await env.PDF_BUCKET.list({ prefix });
   for (const obj of listed.objects) {
@@ -139,7 +138,6 @@ describe('POST /api/users/avatar', () => {
     const newObj = await env.PDF_BUCKET.get(body2.key);
     expect(newObj).not.toBeNull();
   });
-
 });
 
 describe('GET /api/users/avatar/:userId', () => {

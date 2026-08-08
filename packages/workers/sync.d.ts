@@ -46,7 +46,4 @@ export declare function projectWorkspace(
  * `/api/sync-admin/<projectId>/<op>` admin requests; resolves null for
  * anything else so the worker entry can fall through to TanStack Start.
  */
-export declare function handleSyncFetch(
-  request: Request,
-  env: unknown,
-): Promise<Response | null>;
+export declare function handleSyncFetch(request: Request, env: unknown): Promise<Response | null>;

@@ -133,7 +133,8 @@ export function rowsFromLocalDoc(ydoc: Y.Doc): LocalRows {
           type,
           title: asString(checklist.get('title')),
           assignedTo: (checklist.get('assignedTo') as string | null) ?? null,
-          status: (asString(checklist.get('status'), 'pending') as ChecklistRow['status']) ?? 'pending',
+          status:
+            (asString(checklist.get('status'), 'pending') as ChecklistRow['status']) ?? 'pending',
           outcomeId: (checklist.get('outcomeId') as string | null) ?? null,
           createdAt: asNumber(checklist.get('createdAt')),
           updatedAt: asNumber(checklist.get('updatedAt')),

@@ -63,7 +63,13 @@ async function seedMember() {
     createdAt: nowSec,
     updatedAt: nowSec,
   });
-  await seedProjectMember({ id: 'pm-ws-1', projectId: PROJECT, userId: USER, role: 'owner', joinedAt: nowSec });
+  await seedProjectMember({
+    id: 'pm-ws-1',
+    projectId: PROJECT,
+    userId: USER,
+    role: 'owner',
+    joinedAt: nowSec,
+  });
 }
 
 function upgradeRequest(projectId: string) {
@@ -221,7 +227,12 @@ async function fieldClient(projectId: string, clientId: string) {
   };
 
   socket.send(
-    JSON.stringify({ type: 'hello', protocolVersion: PROTOCOL_VERSION, schemaVersion: 1, cursor: null }),
+    JSON.stringify({
+      type: 'hello',
+      protocolVersion: PROTOCOL_VERSION,
+      schemaVersion: 1,
+      cursor: null,
+    }),
   );
   for (;;) {
     const msg = await nextJson();

@@ -30,7 +30,12 @@ async function seedBase(role: 'owner' | 'member' = 'member') {
     createdAt: nowSec,
     updatedAt: nowSec,
   });
-  await seedOrganization({ id: ORG, name: 'Sync Org', slug: `sync-org-${nowSec}`, createdAt: nowSec });
+  await seedOrganization({
+    id: ORG,
+    name: 'Sync Org',
+    slug: `sync-org-${nowSec}`,
+    createdAt: nowSec,
+  });
   await seedProject({
     id: PROJECT,
     name: 'Sync Project',
@@ -39,7 +44,13 @@ async function seedBase(role: 'owner' | 'member' = 'member') {
     createdAt: nowSec,
     updatedAt: nowSec,
   });
-  await seedProjectMember({ id: 'pm-sync-1', projectId: PROJECT, userId: USER, role, joinedAt: nowSec });
+  await seedProjectMember({
+    id: 'pm-sync-1',
+    projectId: PROJECT,
+    userId: USER,
+    role,
+    joinedAt: nowSec,
+  });
 }
 
 describe('buildSyncVerdict', () => {

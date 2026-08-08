@@ -277,4 +277,3 @@ export async function deleteAdminProject(session: Session, db: Database, project
   await db.delete(projects).where(eq(projects.id, projectId));
   return { success: true, message: 'Project deleted' };
 }
-

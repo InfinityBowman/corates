@@ -327,7 +327,11 @@ export function useAllStudies(projectId: string): StudyInfo[] {
       if (row.status === CHECKLIST_STATUS.FINALIZED) {
         const flat = answersByChecklist.get(row.id) ?? {};
         const derived = deriveFinalized(row.type, flat);
-        entry = { ...entry, score: derived.score, consolidatedAnswers: derived.consolidatedAnswers };
+        entry = {
+          ...entry,
+          score: derived.score,
+          consolidatedAnswers: derived.consolidatedAnswers,
+        };
       }
       const list = checklistsByStudy.get(row.studyId) ?? [];
       list.push(entry);
@@ -491,9 +495,11 @@ export function useProjectMeta(projectId: string): ProjectMetaInfo {
     ...QUERY_STABLE,
   });
   return useMemo(() => {
-    const project = (data as Array<{ id: string; name?: string; description?: string | null; orgId?: string }> | undefined)?.find(
-      p => p.id === projectId,
-    );
+    const project = (
+      data as
+        | Array<{ id: string; name?: string; description?: string | null; orgId?: string }>
+        | undefined
+    )?.find(p => p.id === projectId);
     if (!project) return EMPTY_META;
     return {
       name: project.name ?? null,
@@ -568,9 +574,7 @@ export function useProjectMembers(projectId: string): MemberEntry[] {
       userId: member.userId,
       role: member.role ?? 'member',
       joinedAt:
-        member.joinedAt instanceof Date
-          ? member.joinedAt.getTime()
-          : Number(member.joinedAt ?? 0),
+        member.joinedAt instanceof Date ? member.joinedAt.getTime() : Number(member.joinedAt ?? 0),
       name: member.name ?? '',
       email: member.email ?? '',
       givenName: member.givenName ?? '',

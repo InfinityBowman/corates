@@ -96,7 +96,10 @@ describe('planTemplate', () => {
       const data = getTemplate(name)!;
       const plan = planTemplate(
         data,
-        { actorId: 'dev-user', userMapping: { user_reviewer1: 'real-1', user_reviewer2: 'real-2' } },
+        {
+          actorId: 'dev-user',
+          userMapping: { user_reviewer1: 'real-1', user_reviewer2: 'real-2' },
+        },
         testContext(),
       );
       apply(engine, plan);
@@ -106,9 +109,7 @@ describe('planTemplate', () => {
       expect(engine.list('checklists')).toHaveLength(expectedChecklists);
       // The user mapping reached assignment fields.
       if (data.studies.some(s => s.reviewer1 === 'user_reviewer1')) {
-        expect(
-          engine.list('studies').some(row => row.data.reviewer1 === 'real-1'),
-        ).toBe(true);
+        expect(engine.list('studies').some(row => row.data.reviewer1 === 'real-1')).toBe(true);
       }
     });
   }

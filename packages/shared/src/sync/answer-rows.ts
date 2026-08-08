@@ -38,7 +38,8 @@ import {
 } from '../checklists/robins-i/index.js';
 import type { ChecklistType } from './schema.js';
 
-export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
+export type JsonValue =
+  string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
 /**
  * One validated answer update: an instrument, one of its section/question keys,
@@ -112,7 +113,11 @@ export function defaultAnswerRows(type: ChecklistType): Record<string, JsonValue
 function defaultAmstar2Rows(): Record<string, JsonValue> {
   // createdAt only feeds a formatted date in checklist metadata, which the
   // answer extraction drops — pinned so the expansion is a pure function.
-  const template = createAMSTAR2Checklist({ id: 'defaults', name: 'AMSTAR2 Checklist', createdAt: 0 });
+  const template = createAMSTAR2Checklist({
+    id: 'defaults',
+    name: 'AMSTAR2 Checklist',
+    createdAt: 0,
+  });
   const rows: Record<string, JsonValue> = {};
   const added = new Set<string>();
 
@@ -166,7 +171,11 @@ function defaultRob2Rows(): Record<string, JsonValue> {
 }
 
 function defaultRobinsIRows(): Record<string, JsonValue> {
-  const template = createROBINSIChecklist({ id: 'defaults', name: 'ROBINS_I Checklist', createdAt: 0 });
+  const template = createROBINSIChecklist({
+    id: 'defaults',
+    name: 'ROBINS_I Checklist',
+    createdAt: 0,
+  });
   const rows: Record<string, JsonValue> = {};
 
   for (const key of ROBINS_I_TEMPLATE_KEYS) {
@@ -351,10 +360,16 @@ function expandRobinsIUpdate(key: RobinsIKey, data: RobinsIAnswers[RobinsIKey]):
   } else if (key === 'confoundingEvaluation') {
     const section = data as RobinsIAnswers['confoundingEvaluation'];
     if (section.predefined !== undefined) {
-      writes.push({ key: 'confoundingEvaluation.predefined', value: section.predefined as JsonValue });
+      writes.push({
+        key: 'confoundingEvaluation.predefined',
+        value: section.predefined as JsonValue,
+      });
     }
     if (section.additional !== undefined) {
-      writes.push({ key: 'confoundingEvaluation.additional', value: section.additional as JsonValue });
+      writes.push({
+        key: 'confoundingEvaluation.additional',
+        value: section.additional as JsonValue,
+      });
     }
   } else if (key === 'sectionD') {
     const section = data as RobinsIAnswers['sectionD'];

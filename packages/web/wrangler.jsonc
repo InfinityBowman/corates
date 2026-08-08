@@ -105,15 +105,15 @@
       "durable_objects": {
         "bindings": [
           { "name": "USER_SESSION", "class_name": "UserSession" },
-      { "name": "WORKSPACE", "class_name": "WorkspaceDO" }
+          { "name": "WORKSPACE", "class_name": "WorkspaceDO" }
         ]
       },
       "migrations": [
         { "tag": "v1", "new_sqlite_classes": ["UserSession", "ProjectDoc"] },
         { "tag": "v2", "new_sqlite_classes": ["EmailQueue"] },
         { "tag": "v3", "deleted_classes": ["EmailQueue"] },
-    { "tag": "v4", "new_sqlite_classes": ["WorkspaceDO"] },
-    { "tag": "v5", "deleted_classes": ["ProjectDoc"] }
+        { "tag": "v4", "new_sqlite_classes": ["WorkspaceDO"] },
+        { "tag": "v5", "deleted_classes": ["ProjectDoc"] }
       ],
       "d1_databases": [
         {
@@ -176,15 +176,15 @@
       "durable_objects": {
         "bindings": [
           { "name": "USER_SESSION", "class_name": "UserSession" },
-      { "name": "WORKSPACE", "class_name": "WorkspaceDO" }
+          { "name": "WORKSPACE", "class_name": "WorkspaceDO" }
         ]
       },
       "migrations": [
         { "tag": "v1", "new_sqlite_classes": ["UserSession", "ProjectDoc"] },
         { "tag": "v2", "new_sqlite_classes": ["EmailQueue"] },
         { "tag": "v3", "deleted_classes": ["EmailQueue"] },
-    { "tag": "v4", "new_sqlite_classes": ["WorkspaceDO"] },
-    { "tag": "v5", "deleted_classes": ["ProjectDoc"] }
+        { "tag": "v4", "new_sqlite_classes": ["WorkspaceDO"] },
+        { "tag": "v5", "deleted_classes": ["ProjectDoc"] }
       ],
       "d1_databases": [
         {

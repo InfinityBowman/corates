@@ -211,7 +211,8 @@ class ConnectionPool {
       if (current?.phase === 'error') return; // fatal reason wins until cleanup
       let phase: ConnectionPhase;
       if (status === 'synced') phase = 'synced';
-      else if (status === 'fatal') return; // handled by onFatal with the reason
+      else if (status === 'fatal')
+        return; // handled by onFatal with the reason
       else phase = workspace.client.hydrated ? 'cached' : 'connecting';
       useProjectStore.getState().setConnectionState(projectId, phase);
       if (phase === 'synced') {

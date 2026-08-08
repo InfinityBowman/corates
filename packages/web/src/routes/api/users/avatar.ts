@@ -6,7 +6,6 @@ import { authMiddleware, type Session } from '@/server/middleware/auth';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
-
 export const handlePost = async ({
   request,
   context: { session },

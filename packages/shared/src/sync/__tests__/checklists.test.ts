@@ -76,7 +76,11 @@ describe('checklist.create', () => {
     expect(answers.size).toBe(Object.keys(defaults).length);
 
     // The q1 answer grid comes straight from the shared template.
-    expect(answers.get('q1.answers')).toEqual([[false, false, false, false], [false], [false, false]]);
+    expect(answers.get('q1.answers')).toEqual([
+      [false, false, false, false],
+      [false],
+      [false, false],
+    ]);
     expect(answers.get('q2.critical')).toBe(true);
     // Sub-questions share their parent's note: q9a/q9b have none, q9 does.
     expect(answers.has('q9a.note')).toBe(false);
@@ -87,7 +91,12 @@ describe('checklist.create', () => {
   it('materializes ROB2 defaults without any stored judgement keys', () => {
     const engine = newEngine();
     seedStudy(engine);
-    engine.mutate('outcome.create', { id: 'out-1', name: 'Mortality', createdBy: 'user-1', now: NOW });
+    engine.mutate('outcome.create', {
+      id: 'out-1',
+      name: 'Mortality',
+      createdBy: 'user-1',
+      now: NOW,
+    });
     engine.mutate('checklist.create', {
       id: 'chk-1',
       studyId: 'study-1',
@@ -108,7 +117,9 @@ describe('checklist.create', () => {
       expect(key).not.toMatch(/judgement/);
     }
     // Every domain question landed as a bare key plus its comment.
-    const bareKeys = [...answers.keys()].filter(key => /^d\d+[a-z]?_/.test(key) && !key.includes('.'));
+    const bareKeys = [...answers.keys()].filter(
+      key => /^d\d+[a-z]?_/.test(key) && !key.includes('.'),
+    );
     expect(bareKeys.length).toBeGreaterThan(0);
     for (const key of bareKeys) {
       expect(answers.get(key)).toBeNull();
@@ -119,7 +130,12 @@ describe('checklist.create', () => {
   it('materializes ROBINS-I defaults and prefills sectionA.outcome with the outcome name', () => {
     const engine = newEngine();
     seedStudy(engine);
-    engine.mutate('outcome.create', { id: 'out-1', name: 'Mortality', createdBy: 'user-1', now: NOW });
+    engine.mutate('outcome.create', {
+      id: 'out-1',
+      name: 'Mortality',
+      createdBy: 'user-1',
+      now: NOW,
+    });
     engine.mutate('checklist.create', {
       id: 'chk-1',
       studyId: 'study-1',
@@ -158,7 +174,12 @@ describe('checklist.create', () => {
   it('rejects a duplicate (type, outcome, assignee) checklist', () => {
     const engine = newEngine();
     seedStudy(engine);
-    engine.mutate('outcome.create', { id: 'out-1', name: 'Mortality', createdBy: 'user-1', now: NOW });
+    engine.mutate('outcome.create', {
+      id: 'out-1',
+      name: 'Mortality',
+      createdBy: 'user-1',
+      now: NOW,
+    });
     engine.mutate('checklist.create', {
       id: 'chk-1',
       studyId: 'study-1',
@@ -185,7 +206,12 @@ describe('checklist.create', () => {
     // adopts the winner (ReconciliationWrapper's repair effect).
     const engine = newEngine();
     seedStudy(engine);
-    engine.mutate('outcome.create', { id: 'out-1', name: 'Mortality', createdBy: 'user-1', now: NOW });
+    engine.mutate('outcome.create', {
+      id: 'out-1',
+      name: 'Mortality',
+      createdBy: 'user-1',
+      now: NOW,
+    });
     engine.mutate('checklist.create', {
       id: 'chk-consensus-1',
       studyId: 'study-1',
@@ -234,7 +260,10 @@ describe('checklist.updateAnswer', () => {
 
     expect(engine.get('answers', answerRowId('chk-1', 'q1.answers'))?.value).toEqual(grid);
     expect(engine.get('answers', answerRowId('chk-1', 'q1.critical'))?.value).toBe(true);
-    expect(engine.get('checklists', 'chk-1')).toMatchObject({ status: 'in-progress', updatedAt: LATER });
+    expect(engine.get('checklists', 'chk-1')).toMatchObject({
+      status: 'in-progress',
+      updatedAt: LATER,
+    });
   });
 
   it('writes only the fields present in an AMSTAR2 update (answer/critical never clobber each other)', () => {
@@ -281,7 +310,12 @@ describe('checklist.updateAnswer', () => {
   it('writes ROB2 domain answers as bare keys and the direction key', () => {
     const engine = newEngine();
     seedStudy(engine);
-    engine.mutate('outcome.create', { id: 'out-1', name: 'Mortality', createdBy: 'user-1', now: NOW });
+    engine.mutate('outcome.create', {
+      id: 'out-1',
+      name: 'Mortality',
+      createdBy: 'user-1',
+      now: NOW,
+    });
     engine.mutate('checklist.create', {
       id: 'chk-1',
       studyId: 'study-1',
@@ -317,7 +351,11 @@ describe('checklist.updateAnswer', () => {
     const before = engine.lastMutationId();
     const result = engine.mutate('checklist.updateAnswer', {
       checklistId: 'chk-1',
-      input: { type: 'AMSTAR2', key: 'q1', data: { answers: 'nope' } } as unknown as ChecklistAnswerInput,
+      input: {
+        type: 'AMSTAR2',
+        key: 'q1',
+        data: { answers: 'nope' },
+      } as unknown as ChecklistAnswerInput,
       now: LATER,
     });
     expect(result.error?.code).toBe('InvalidArgs');
@@ -330,7 +368,11 @@ describe('checklist.updateAnswer', () => {
     createAmstar2(engine);
     const result = engine.mutate('checklist.updateAnswer', {
       checklistId: 'chk-1',
-      input: { type: 'AMSTAR2', key: 'q99', data: { answers: [] } } as unknown as ChecklistAnswerInput,
+      input: {
+        type: 'AMSTAR2',
+        key: 'q99',
+        data: { answers: [] },
+      } as unknown as ChecklistAnswerInput,
       now: LATER,
     });
     expect(result.error?.code).toBe('InvalidArgs');
@@ -399,8 +441,18 @@ describe('textAnswerKeys', () => {
 describe('checklist.changeOutcome', () => {
   function setup(engine: Engine) {
     seedStudy(engine);
-    engine.mutate('outcome.create', { id: 'out-1', name: 'Mortality', createdBy: 'user-1', now: NOW });
-    engine.mutate('outcome.create', { id: 'out-2', name: 'Quality of life', createdBy: 'user-1', now: NOW });
+    engine.mutate('outcome.create', {
+      id: 'out-1',
+      name: 'Mortality',
+      createdBy: 'user-1',
+      now: NOW,
+    });
+    engine.mutate('outcome.create', {
+      id: 'out-2',
+      name: 'Quality of life',
+      createdBy: 'user-1',
+      now: NOW,
+    });
     engine.mutate('checklist.create', {
       id: 'chk-1',
       studyId: 'study-1',
@@ -439,7 +491,10 @@ describe('checklist.changeOutcome', () => {
     });
     expect(result.error).toBeUndefined();
 
-    expect(engine.get('checklists', 'chk-1')).toMatchObject({ outcomeId: 'out-2', updatedAt: LATER });
+    expect(engine.get('checklists', 'chk-1')).toMatchObject({
+      outcomeId: 'out-2',
+      updatedAt: LATER,
+    });
     expect(engine.get('checklists', 'chk-2')?.outcomeId).toBe('out-2');
     expect(engine.get('reconciliations', reconciliationRowId('study-1', 'out-1'))).toBeNull();
     expect(engine.get('reconciliations', reconciliationRowId('study-1', 'out-2'))).toMatchObject({
@@ -576,6 +631,8 @@ describe('checklist.delete', () => {
     expect(answersFor(engine, 'chk-1').size).toBe(0);
     expect(engine.get('studies', 'study-1')?.updatedAt).toBe(LATER);
 
-    expect(engine.mutate('checklist.delete', { checklistId: 'chk-1', now: LATER }).error).toBeUndefined();
+    expect(
+      engine.mutate('checklist.delete', { checklistId: 'chk-1', now: LATER }).error,
+    ).toBeUndefined();
   });
 });

@@ -25,7 +25,10 @@ interface LocalTx {
   del(tbl: string, id: string): void;
 }
 
-function standardParse(schema: { '~standard': { validate: (v: unknown) => unknown } }, value: unknown): unknown {
+function standardParse(
+  schema: { '~standard': { validate: (v: unknown) => unknown } },
+  value: unknown,
+): unknown {
   const result = schema['~standard'].validate(value) as {
     value?: unknown;
     issues?: Array<{ message: string }>;
@@ -51,7 +54,9 @@ function makeTx(collections: ProjectCollections): LocalTx {
     get: (tbl, id) => cols[tbl]?.get(id) ?? null,
     list: tbl => (cols[tbl]?.toArray ?? []).map(row => ({ id: row.id, data: row })),
     put: (tbl, id, data) => {
-      const tableSchema = (syncSchema.tables as Record<string, { '~standard': { validate: (v: unknown) => unknown } }>)[tbl];
+      const tableSchema = (
+        syncSchema.tables as Record<string, { '~standard': { validate: (v: unknown) => unknown } }>
+      )[tbl];
       const validated = tableSchema ? standardParse(tableSchema, data) : data;
       const col = cols[tbl];
       if (!col) return;

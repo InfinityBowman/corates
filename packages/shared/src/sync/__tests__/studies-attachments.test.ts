@@ -27,7 +27,12 @@ describe('study mutators', () => {
     });
     expect(result.error).toBeUndefined();
     const study = engine.get('studies', 'study-1');
-    expect(study).toMatchObject({ name: 'Trial A', description: 'desc', doi: '10.1000/x', journal: 'BMJ' });
+    expect(study).toMatchObject({
+      name: 'Trial A',
+      description: 'desc',
+      doi: '10.1000/x',
+      journal: 'BMJ',
+    });
     expect(study?.firstAuthor).toBeUndefined();
     expect(study?.pdfAccessible).toBeUndefined();
   });
@@ -89,14 +94,24 @@ describe('study mutators', () => {
       now: NOW,
     });
     expect(result.error).toBeUndefined();
-    expect(engine.list('studies').map(row => row.id).sort()).toEqual(['s1', 's2']);
+    expect(
+      engine
+        .list('studies')
+        .map(row => row.id)
+        .sort(),
+    ).toEqual(['s1', 's2']);
     expect(engine.lastMutationId()).toBe(1);
   });
 
   it('delete cascades to checklists, answers, pdfs, annotations, and reconciliations', () => {
     const engine = newEngine();
     engine.mutate('study.create', { id: 'study-1', name: 'Trial A', description: '', now: NOW });
-    engine.mutate('outcome.create', { id: 'out-1', name: 'Mortality', createdBy: 'user-1', now: NOW });
+    engine.mutate('outcome.create', {
+      id: 'out-1',
+      name: 'Mortality',
+      createdBy: 'user-1',
+      now: NOW,
+    });
     engine.mutate('checklist.create', {
       id: 'chk-1',
       studyId: 'study-1',
@@ -133,7 +148,13 @@ describe('study mutators', () => {
     const result = engine.mutate('study.delete', { id: 'study-1' });
     expect(result.error).toBeUndefined();
     expect(engine.get('studies', 'study-1')).toBeNull();
-    for (const table of ['checklists', 'answers', 'annotations', 'pdfs', 'reconciliations'] as const) {
+    for (const table of [
+      'checklists',
+      'answers',
+      'annotations',
+      'pdfs',
+      'reconciliations',
+    ] as const) {
       expect(engine.list(table)).toEqual([]);
     }
     // The outcome is project-scoped, not study-scoped; it survives.
@@ -144,17 +165,35 @@ describe('study mutators', () => {
 describe('outcome mutators', () => {
   it('create trims the name and rejects blank names', () => {
     const engine = newEngine();
-    engine.mutate('outcome.create', { id: 'out-1', name: '  Mortality  ', createdBy: 'user-1', now: NOW });
-    expect(engine.get('outcomes', 'out-1')).toMatchObject({ name: 'Mortality', createdBy: 'user-1' });
+    engine.mutate('outcome.create', {
+      id: 'out-1',
+      name: '  Mortality  ',
+      createdBy: 'user-1',
+      now: NOW,
+    });
+    expect(engine.get('outcomes', 'out-1')).toMatchObject({
+      name: 'Mortality',
+      createdBy: 'user-1',
+    });
 
-    const blank = engine.mutate('outcome.create', { id: 'out-2', name: '   ', createdBy: 'user-1', now: NOW });
+    const blank = engine.mutate('outcome.create', {
+      id: 'out-2',
+      name: '   ',
+      createdBy: 'user-1',
+      now: NOW,
+    });
     expect(blank.error?.code).toBe('InvalidName');
   });
 
   it('delete refuses while any checklist references the outcome', () => {
     const engine = newEngine();
     engine.mutate('study.create', { id: 'study-1', name: 'Trial A', description: '', now: NOW });
-    engine.mutate('outcome.create', { id: 'out-1', name: 'Mortality', createdBy: 'user-1', now: NOW });
+    engine.mutate('outcome.create', {
+      id: 'out-1',
+      name: 'Mortality',
+      createdBy: 'user-1',
+      now: NOW,
+    });
     engine.mutate('checklist.create', {
       id: 'chk-1',
       studyId: 'study-1',
@@ -345,6 +384,8 @@ describe('reconciliation mutators', () => {
       type: 'AMSTAR2',
       now: LATER,
     });
-    expect(engine.get('reconciliations', reconciliationRowId('study-1', 'type:AMSTAR2'))).toBeNull();
+    expect(
+      engine.get('reconciliations', reconciliationRowId('study-1', 'type:AMSTAR2')),
+    ).toBeNull();
   });
 });

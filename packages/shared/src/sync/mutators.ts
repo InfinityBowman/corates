@@ -67,10 +67,7 @@ function assertWritable(ctx: WriteGateContext): void {
  * the same validation the Y.Doc plane ran client-side, now enforced by the
  * server before apply.
  */
-function answerBranches(
-  type: string,
-  schemas: Record<string, z.ZodType>,
-): z.ZodType[] {
+function answerBranches(type: string, schemas: Record<string, z.ZodType>): z.ZodType[] {
   return Object.entries(schemas).map(([key, data]) =>
     z.object({ type: z.literal(type), key: z.literal(key), data }),
   );
@@ -207,7 +204,13 @@ export const syncMutators = defineMutators(
         // map delete; rows cascade explicitly. Deleting an already-deleted
         // study is a no-op, not an error, so racing deletes both succeed.
         tx.del('studies', id);
-        for (const table of ['checklists', 'answers', 'annotations', 'pdfs', 'reconciliations'] as const) {
+        for (const table of [
+          'checklists',
+          'answers',
+          'annotations',
+          'pdfs',
+          'reconciliations',
+        ] as const) {
           for (const row of tx.list(table)) {
             if (row.data.studyId === id) tx.del(table, row.id);
           }
@@ -338,10 +341,16 @@ export const syncMutators = defineMutators(
       apply: (tx, { studyId, type, fromOutcomeId, toOutcomeId, now }, ctx) => {
         assertWritable(ctx);
         if (!requiresOutcome(type)) {
-          throw new AppError('InvalidOutcomeChange', `${type} checklists are not linked to outcomes`);
+          throw new AppError(
+            'InvalidOutcomeChange',
+            `${type} checklists are not linked to outcomes`,
+          );
         }
         if (fromOutcomeId === toOutcomeId) {
-          throw new AppError('InvalidOutcomeChange', 'The checklists are already under this outcome');
+          throw new AppError(
+            'InvalidOutcomeChange',
+            'The checklists are already under this outcome',
+          );
         }
         const toOutcome = tx.get('outcomes', toOutcomeId);
         if (!toOutcome) throw new AppError('NotFound', 'Target outcome not found');
@@ -436,9 +445,9 @@ export const syncMutators = defineMutators(
         tx.put('checklists', checklistId, {
           ...checklist,
           status:
-            checklist.status === CHECKLIST_STATUS.PENDING
-              ? CHECKLIST_STATUS.IN_PROGRESS
-              : checklist.status,
+            checklist.status === CHECKLIST_STATUS.PENDING ?
+              CHECKLIST_STATUS.IN_PROGRESS
+            : checklist.status,
           updatedAt: now,
         });
       },
@@ -596,7 +605,13 @@ export const syncMutators = defineMutators(
         const pdf = tx.get('pdfs', pdfId);
         if (!pdf) throw new AppError('NotFound', `PDF ${pdfId} does not exist`);
         const merged: Record<string, unknown> = { ...pdf };
-        for (const field of ['title', 'firstAuthor', 'publicationYear', 'journal', 'doi'] as const) {
+        for (const field of [
+          'title',
+          'firstAuthor',
+          'publicationYear',
+          'journal',
+          'doi',
+        ] as const) {
           const value = metadata[field];
           if (value === undefined) continue;
           if (value) merged[field] = value;
@@ -619,7 +634,11 @@ export const syncMutators = defineMutators(
         createdBy: z.string().default('unknown'),
         now: timestamp,
       }),
-      apply: (tx, { id, studyId, checklistId, pdfId, type, pageIndex, embedPdfData, createdBy, now }, ctx) => {
+      apply: (
+        tx,
+        { id, studyId, checklistId, pdfId, type, pageIndex, embedPdfData, createdBy, now },
+        ctx,
+      ) => {
         assertWritable(ctx);
         tx.put('annotations', id, {
           id,

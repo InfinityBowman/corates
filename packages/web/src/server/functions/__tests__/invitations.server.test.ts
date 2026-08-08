@@ -47,7 +47,6 @@ beforeEach(async () => {
     },
     entitlements: { 'project.create': true },
   });
-
 });
 
 describe('handleGetInvitation', () => {

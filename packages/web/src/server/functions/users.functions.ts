@@ -35,4 +35,3 @@ export const searchUsers = createServerFn({ method: 'GET' })
   .handler(async ({ data, context: { db, session, request } }) =>
     searchUsersImpl(db, session, request, data),
   );
-

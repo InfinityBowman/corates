@@ -63,9 +63,7 @@ export async function deleteAccount(db: Database, session: Session) {
 
   // Kick the user's live sync sessions before their memberships disappear;
   // reconnect attempts re-run authorize against D1 and fail permanently.
-  await Promise.all(
-    userProjects.map(({ projectId }) => kickWorkspaceUser(env, projectId, userId)),
-  );
+  await Promise.all(userProjects.map(({ projectId }) => kickWorkspaceUser(env, projectId, userId)));
 
   await db.batch([
     db.update(mediaFiles).set({ uploadedBy: null }).where(eq(mediaFiles.uploadedBy, userId)),
@@ -184,4 +182,3 @@ export async function searchUsers(
 
   return sanitized;
 }
-

@@ -1,10 +1,6 @@
 import { PLANNING_SECTION } from './checklist-map';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
-import {
-  useWorkspaceProjectId,
-  useAnswerValue,
-  useAnswerWriters,
-} from '@/project/workspace-data';
+import { useWorkspaceProjectId, useAnswerValue, useAnswerWriters } from '@/project/workspace-data';
 
 interface PlanningSectionProps {
   studyId: string;

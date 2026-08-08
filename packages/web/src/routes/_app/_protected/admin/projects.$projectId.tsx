@@ -17,11 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { handleError } from '@/lib/error-utils';
 import { queryKeys } from '@/lib/queryKeys';
-import type {
-  ProjectData,
-  WorkspaceStats,
-  ProjectMember,
-} from '@/components/admin/projects/types';
+import type { ProjectData, WorkspaceStats, ProjectMember } from '@/components/admin/projects/types';
 import { ProjectInfoSection } from '@/components/admin/projects/ProjectInfoSection';
 import { WorkspaceStorageSection } from '@/components/admin/projects/WorkspaceStorageSection';
 import { ProjectMembersSection } from '@/components/admin/projects/ProjectMembersSection';

@@ -48,4 +48,3 @@ export const deleteAdminProjectAction = createServerFn({ method: 'POST' })
   .handler(async ({ data, context: { session, db } }) =>
     deleteAdminProject(session, db, data.projectId),
   );
-

@@ -268,10 +268,12 @@ function seedRob2(answersYMap: Y.Map<unknown>, source: Record<string, unknown>):
  * the cleanup migration drops the `projects` ydoc table.
  */
 export async function loadLegacyLocalRows(projectId: string): Promise<LocalRows> {
-  const existing = await (db.projects as unknown as {
-    get: (id: string) => Promise<{ ydoc: Y.Doc } | undefined>;
-    put: (row: { id: string; updatedAt: number }) => Promise<unknown>;
-  }).get(projectId);
+  const existing = await (
+    db.projects as unknown as {
+      get: (id: string) => Promise<{ ydoc: Y.Doc } | undefined>;
+      put: (row: { id: string; updatedAt: number }) => Promise<unknown>;
+    }
+  ).get(projectId);
   if (!existing) {
     return { studies: [], checklists: [], answers: [] };
   }

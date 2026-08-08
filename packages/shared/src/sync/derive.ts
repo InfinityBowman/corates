@@ -50,7 +50,10 @@ function isSectionBKey(key: string): boolean {
  * scoring helpers and reconciliation UI consume — the row-plane port of each
  * checklist handler's `serializeAnswers`.
  */
-export function serializeAnswerRows(type: ChecklistType, flat: AnswerRowMap): Record<string, unknown> {
+export function serializeAnswerRows(
+  type: ChecklistType,
+  flat: AnswerRowMap,
+): Record<string, unknown> {
   switch (type) {
     case 'AMSTAR2':
       return serializeAmstar2(flat);
@@ -343,5 +346,7 @@ export function textFieldKey(ref: {
   if (ref.sectionKey === 'sectionB' && ref.questionKey) {
     return `sectionB.${ref.questionKey}.${ref.fieldKey}`;
   }
-  return ref.questionKey ? `${ref.questionKey}.${ref.fieldKey}` : `${ref.sectionKey}.${ref.fieldKey}`;
+  return ref.questionKey ?
+      `${ref.questionKey}.${ref.fieldKey}`
+    : `${ref.sectionKey}.${ref.fieldKey}`;
 }
