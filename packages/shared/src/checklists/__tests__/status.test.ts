@@ -68,8 +68,13 @@ describe('Checklist Status', () => {
       expect(canTransitionTo('finalized', 'in-progress')).toBe(false);
     });
 
-    it('should not allow reviewer-completed to transition', () => {
-      expect(canTransitionTo('reviewer-completed', 'in-progress')).toBe(false);
+    it('should allow reviewer-completed to transition back to in-progress', () => {
+      expect(canTransitionTo('reviewer-completed', 'in-progress')).toBe(true);
+    });
+
+    it('should not allow reviewer-completed to transition anywhere else', () => {
+      expect(canTransitionTo('reviewer-completed', 'pending')).toBe(false);
+      expect(canTransitionTo('reviewer-completed', 'finalized')).toBe(false);
     });
 
     it('should allow staying in the same state', () => {

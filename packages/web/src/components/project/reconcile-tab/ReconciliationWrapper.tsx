@@ -416,6 +416,31 @@ export function ReconciliationWrapper({
     saveReconciliationProgress,
   ]);
 
+  // Someone else can send this outcome group back to To-Do while we are on the
+  // page, which un-completes the reviewer checklists and deletes the consensus
+  // checklist under us. The race-recovery effect above cannot help — it adopts
+  // a surviving reconciled checklist, and here none survives — so the latched
+  // id would point at a deleted row and the engine would render against it.
+  useEffect(() => {
+    if (
+      !currentStudy ||
+      (connectionState.phase !== 'synced' && connectionState.phase !== 'cached')
+    ) {
+      return;
+    }
+
+    const stillAwaiting = [checklist1Meta, checklist2Meta].every(
+      meta => meta?.status === CHECKLIST_STATUS.REVIEWER_COMPLETED,
+    );
+    if (stillAwaiting) return;
+
+    showToast.info(
+      'Reconciliation Cancelled',
+      "This appraisal was sent back to the reviewers' To-Do lists.",
+    );
+    navigate({ to: `/projects/${projectId}?tab=todo` as string, replace: true });
+  }, [currentStudy, connectionState.phase, checklist1Meta, checklist2Meta, navigate, projectId]);
+
   // Get reconciled checklist metadata
   const reconciledChecklistMeta = useMemo(() => {
     if (!currentStudy || !reconciledChecklistId) return null;

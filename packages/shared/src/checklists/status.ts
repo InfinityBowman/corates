@@ -85,6 +85,14 @@ export function canTransitionTo(
     return true;
   }
 
+  // Can send a reviewer checklist awaiting reconciliation back to the todo phase
+  if (
+    currentStatus === CHECKLIST_STATUS.REVIEWER_COMPLETED &&
+    newStatus === CHECKLIST_STATUS.IN_PROGRESS
+  ) {
+    return true;
+  }
+
   // Cannot otherwise transition from finalized or reviewer-completed (locked)
   if (
     currentStatus === CHECKLIST_STATUS.FINALIZED ||

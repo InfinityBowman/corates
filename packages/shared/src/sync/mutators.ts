@@ -415,6 +415,74 @@ export const syncMutators = defineMutators(
       },
     },
 
+    /**
+     * Return an outcome group's reviewer checklists to the To-Do phase.
+     *
+     * The consensus checklist is discarded rather than kept: it is derived from
+     * the very answers that are about to become editable again, so preserving
+     * it would leave a third checklist whose contents no longer correspond to
+     * either reviewer. Reopening an already-finalized reconciliation is the
+     * Completed tab's job (`getReopenableReconciledChecklist`), so a finalized
+     * group is rejected here instead of being silently thrown away.
+     */
+    'checklist.sendBackToTodo': {
+      args: z.object({
+        studyId: z.string(),
+        outcomeId: z.string().nullable(),
+        type: CHECKLIST_TYPE,
+        now: timestamp,
+      }),
+      apply: (tx, { studyId, outcomeId, type, now }, ctx) => {
+        assertWritable(ctx);
+        const study = tx.get('studies', studyId);
+        if (!study) throw new AppError('NotFound', `Study ${studyId} does not exist`);
+
+        const reviewerChecklists = [];
+        // Concurrent opens can transiently leave more than one consensus
+        // checklist for a group, so collect them all rather than the first.
+        const reconciledChecklists = [];
+        for (const row of tx.list('checklists')) {
+          const checklist = row.data;
+          if (checklist.studyId !== studyId || checklist.type !== type) continue;
+          if (checklist.outcomeId !== outcomeId) continue;
+          if (checklist.assignedTo === null) reconciledChecklists.push(checklist);
+          else if (checklist.status === CHECKLIST_STATUS.REVIEWER_COMPLETED) {
+            reviewerChecklists.push(checklist);
+          }
+        }
+
+        if (reviewerChecklists.length === 0) {
+          throw new AppError(
+            'NotFound',
+            'No reviewer checklists are awaiting reconciliation for this outcome',
+          );
+        }
+        if (reconciledChecklists.some(c => c.status === CHECKLIST_STATUS.FINALIZED)) {
+          throw new AppError(
+            'ReconciliationFinalized',
+            'This outcome is already reconciled. Reopen it from the Completed tab first.',
+          );
+        }
+
+        for (const checklist of reviewerChecklists) {
+          tx.put('checklists', checklist.id, {
+            ...checklist,
+            status: CHECKLIST_STATUS.IN_PROGRESS,
+            updatedAt: now,
+          });
+        }
+
+        for (const reconciled of reconciledChecklists) {
+          tx.del('checklists', reconciled.id);
+          deleteAnswerRows(tx, reconciled.id);
+        }
+
+        tx.del('reconciliations', reconciliationRowId(studyId, getOutcomeKey(outcomeId, type)));
+
+        tx.put('studies', studyId, { ...study, updatedAt: now });
+      },
+    },
+
     'checklist.updateAnswer': {
       args: z.object({
         checklistId: z.string(),

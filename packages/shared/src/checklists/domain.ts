@@ -434,6 +434,51 @@ export function getReopenableReconciledChecklist(
 }
 
 /**
+ * Describes what sending an outcome group back to the todo phase would do:
+ * which reviewer checklists become editable again, and which consensus
+ * checklist (if reconciliation was already started) gets discarded.
+ */
+export interface SendBackToTodoPlan {
+  reviewerChecklists: StudyChecklist[];
+  reconciledChecklist: StudyChecklist | null;
+}
+
+/**
+ * Builds the plan for sending an outcome group back to the todo phase, or
+ * returns null when the action does not apply.
+ *
+ * Mirrors the `checklist.sendBackToTodo` mutator's guards so the UI only
+ * offers the action when the server would accept it: a group whose
+ * reconciliation is already finalized must be reopened from the Completed tab
+ * instead.
+ *
+ * @param study - The study object
+ * @param outcomeId - The outcome ID (null for AMSTAR2)
+ * @param type - The checklist type
+ * @returns The plan, or null if the group cannot be sent back
+ */
+export function getSendBackToTodoPlan(
+  study: Study | null | undefined,
+  outcomeId: string | null,
+  type: string,
+): SendBackToTodoPlan | null {
+  if (!study) return null;
+
+  const checklists = study.checklists || [];
+  const inGroup = checklists.filter(c => c.type === type && (c.outcomeId ?? null) === outcomeId);
+
+  const reviewerChecklists = inGroup.filter(
+    c => !isReconciledChecklist(c) && c.status === CHECKLIST_STATUS.REVIEWER_COMPLETED,
+  );
+  if (reviewerChecklists.length === 0) return null;
+
+  const reconciledChecklists = inGroup.filter(isReconciledChecklist);
+  if (reconciledChecklists.some(c => c.status === CHECKLIST_STATUS.FINALIZED)) return null;
+
+  return { reviewerChecklists, reconciledChecklist: reconciledChecklists[0] ?? null };
+}
+
+/**
  * Groups completed checklists by outcome
  */
 export function getCompletedChecklistsByOutcome(study: Study | null | undefined): ChecklistGroup[] {

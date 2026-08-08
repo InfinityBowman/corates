@@ -80,6 +80,19 @@ export const project = {
       return true;
     },
 
+    sendBackToTodo(studyId: string, type: string, outcomeId: string | null): boolean {
+      const client = requireClient();
+      void client.mutate.checklist.sendBackToTodo({
+        studyId,
+        outcomeId,
+        type: type as 'AMSTAR2' | 'ROB2' | 'ROBINS_I',
+        now: Date.now(),
+      });
+      track('Checklist:SentBackToTodo', { type });
+      showToast.success('Sent Back', "The appraisal is back in the reviewers' To-Do lists.");
+      return true;
+    },
+
     update(_studyId: string, checklistId: string, updates: Record<string, unknown>): void {
       const client = requireClient();
       void client.mutate.checklist.update({
