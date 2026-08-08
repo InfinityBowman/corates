@@ -1,16 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const mockCreateStudy = vi.fn().mockReturnValue('study-1');
-const mockUpdateStudy = vi.fn();
-const mockAddPdfToStudy = vi.fn();
+const mockStudyCreate = vi.fn().mockResolvedValue(undefined);
+const mockStudyUpdate = vi.fn().mockResolvedValue(undefined);
+const mockPdfAttach = vi.fn().mockResolvedValue(undefined);
 
 vi.mock('@/project/ConnectionPool', () => ({
   connectionPool: {
     getActiveProjectId: () => 'proj-1',
     getActiveOrgId: () => 'org-1',
-    getActiveOps: () => ({
-      study: { createStudy: mockCreateStudy, updateStudy: mockUpdateStudy },
-      pdf: { addPdfToStudy: mockAddPdfToStudy },
+    getActiveClient: () => ({
+      mutate: {
+        study: { create: mockStudyCreate, update: mockStudyUpdate },
+        pdf: { attach: mockPdfAttach },
+      },
     }),
   },
 }));
@@ -80,7 +82,7 @@ import { uploadPdf } from '@/api/pdf-api';
 describe('studyActions.addBatch', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockCreateStudy.mockReturnValue('study-1');
+    mockStudyCreate.mockResolvedValue(undefined);
   });
 
   it('derives study name from googleDriveFileName when pdfFileName is absent', async () => {
@@ -88,7 +90,9 @@ describe('studyActions.addBatch', () => {
       { googleDriveFileId: 'drive-1', googleDriveFileName: 'Witt2019.pdf', title: 'Witt2019' },
     ]);
 
-    expect(mockCreateStudy).toHaveBeenCalledWith('Witt2019', '', expect.any(Object));
+    expect(mockStudyCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'Witt2019', description: '' }),
+    );
   });
 
   it('prefers pdfFileName over googleDriveFileName for study name', async () => {
@@ -101,13 +105,17 @@ describe('studyActions.addBatch', () => {
       },
     ]);
 
-    expect(mockCreateStudy).toHaveBeenCalledWith('LocalFile', '', expect.any(Object));
+    expect(mockStudyCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'LocalFile', description: '' }),
+    );
   });
 
   it('falls back to Untitled Study when no filename is available', async () => {
     await studyActions.addBatch([{ title: 'Some Paper', doi: '10.1234/test' }]);
 
-    expect(mockCreateStudy).toHaveBeenCalledWith('Untitled Study', '', expect.any(Object));
+    expect(mockStudyCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'Untitled Study' }),
+    );
     expect(importFromGoogleDrive).not.toHaveBeenCalled();
     expect(uploadPdf).not.toHaveBeenCalled();
   });
@@ -134,26 +142,31 @@ describe('studyActions.addBatch', () => {
       { googleDriveFileId: 'drive-1', googleDriveFileName: 'Witt2019.pdf', title: 'Witt2019' },
     ]);
 
-    expect(importFromGoogleDrive).toHaveBeenCalledWith('drive-1', 'proj-1', 'study-1');
-    expect(mockAddPdfToStudy).toHaveBeenCalledWith(
-      'study-1',
-      expect.objectContaining({ source: 'google-drive', fileName: 'Witt2019.pdf' }),
-      'primary',
-    );
-    expect(mockUpdateStudy).toHaveBeenCalledWith(
-      'study-1',
+    const studyId = mockStudyCreate.mock.calls[0][0].id;
+    expect(importFromGoogleDrive).toHaveBeenCalledWith('drive-1', 'proj-1', studyId);
+    expect(mockPdfAttach).toHaveBeenCalledWith(
       expect.objectContaining({
-        originalTitle: 'Actual Paper Title',
-        doi: '10.1234/extracted',
-        firstAuthor: 'Witt C',
-        publicationYear: 2019,
-        journal: 'Nature',
-        fileName: 'Witt2019.pdf',
+        studyId,
+        pdf: expect.objectContaining({ fileName: 'Witt2019.pdf' }),
+        tag: 'primary',
+      }),
+    );
+    expect(mockStudyUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: studyId,
+        updates: expect.objectContaining({
+          originalTitle: 'Actual Paper Title',
+          doi: '10.1234/extracted',
+          firstAuthor: 'Witt C',
+          // Coerced to a string for the mutator's schema.
+          publicationYear: '2019',
+          journal: 'Nature',
+        }),
       }),
     );
   });
 
-  it('sets fileName on study even when PDF has no extractable metadata', async () => {
+  it('skips the study.update mutation when the PDF has no extractable metadata', async () => {
     vi.mocked(extractPdfTitle).mockResolvedValueOnce(null);
     vi.mocked(extractPdfDoi).mockResolvedValueOnce(null);
 
@@ -161,10 +174,8 @@ describe('studyActions.addBatch', () => {
       { googleDriveFileId: 'drive-1', googleDriveFileName: 'Witt2019.pdf', title: 'Witt2019' },
     ]);
 
-    expect(mockUpdateStudy).toHaveBeenCalledTimes(1);
-    const updates = mockUpdateStudy.mock.calls[0][1];
-    expect(updates.fileName).toBe('Witt2019.pdf');
-    expect(updates.originalTitle).toBeUndefined();
+    expect(mockPdfAttach).toHaveBeenCalledTimes(1);
+    expect(mockStudyUpdate).not.toHaveBeenCalled();
   });
 
   it('routes local PDFs through uploadPdf', async () => {
@@ -172,10 +183,11 @@ describe('studyActions.addBatch', () => {
       { pdfData: new ArrayBuffer(8), pdfFileName: 'Local.pdf', title: 'Local' },
     ]);
 
+    const studyId = mockStudyCreate.mock.calls[0][0].id;
     expect(uploadPdf).toHaveBeenCalledWith(
       'org-1',
       'proj-1',
-      'study-1',
+      studyId,
       expect.any(ArrayBuffer),
       'Local.pdf',
     );
@@ -183,13 +195,13 @@ describe('studyActions.addBatch', () => {
   });
 
   it('counts successes and manual PDFs correctly across a mixed batch', async () => {
-    mockCreateStudy
-      .mockReturnValueOnce('s1')
-      .mockReturnValueOnce('s2')
+    mockStudyCreate
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(undefined)
       .mockImplementationOnce(() => {
         throw new Error('boom');
       })
-      .mockReturnValueOnce('s4');
+      .mockResolvedValueOnce(undefined);
 
     const result = await studyActions.addBatch([
       { googleDriveFileId: 'd1', googleDriveFileName: 'A.pdf', title: 'A' },

@@ -1,113 +1,60 @@
 /**
- * Tests for projectStore - Connection state and active project tracking (Zustand)
+ * projectStore — the engine-fed connection phase projection.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { useProjectStore } from '@/stores/projectStore.ts';
+import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 
-describe('projectStore - Connection State Management', () => {
+const PROJECT = 'project-store-test';
+
+describe('projectStore connection state', () => {
   beforeEach(() => {
-    useProjectStore.setState({
-      activeProjectId: null,
-      connections: {},
+    useProjectStore.getState().clearProject(PROJECT);
+  });
+
+  it('starts idle for unknown projects', () => {
+    const state = selectConnectionPhase(useProjectStore.getState(), PROJECT);
+    expect(state).toEqual({ phase: 'idle', error: null });
+  });
+
+  it('stores phase transitions from the pool', () => {
+    const store = useProjectStore.getState();
+    store.setConnectionState(PROJECT, 'connecting');
+    expect(selectConnectionPhase(useProjectStore.getState(), PROJECT).phase).toBe('connecting');
+
+    store.setConnectionState(PROJECT, 'cached');
+    expect(selectConnectionPhase(useProjectStore.getState(), PROJECT).phase).toBe('cached');
+
+    store.setConnectionState(PROJECT, 'synced');
+    expect(selectConnectionPhase(useProjectStore.getState(), PROJECT).phase).toBe('synced');
+  });
+
+  it('carries the error message for the access-denied redirect', () => {
+    useProjectStore
+      .getState()
+      .setConnectionState(PROJECT, 'error', 'You are not a member of this project');
+    const state = selectConnectionPhase(useProjectStore.getState(), PROJECT);
+    expect(state.phase).toBe('error');
+    expect(state.error).toBe('You are not a member of this project');
+  });
+
+  it('setConnectionState without an error resets a previous error', () => {
+    const store = useProjectStore.getState();
+    store.setConnectionState(PROJECT, 'error', 'boom');
+    store.setConnectionState(PROJECT, 'connecting');
+    expect(selectConnectionPhase(useProjectStore.getState(), PROJECT)).toEqual({
+      phase: 'connecting',
+      error: null,
     });
   });
 
-  describe('getConnectionState via selector', () => {
-    it('should return default state for unknown project', () => {
-      const state = useProjectStore.getState().connections['unknown'];
-      expect(state).toBeUndefined();
-    });
-  });
-
-  describe('dispatchConnectionEvent', () => {
-    it('should transition through connection phases', () => {
-      const projectId = 'conn-test';
-
-      useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'CONNECT_REQUESTED' });
-      let conn = useProjectStore.getState().connections[projectId];
-      expect(conn.phase).toBe('connecting');
-
-      useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'REMOTE_CONNECTED' });
-      conn = useProjectStore.getState().connections[projectId];
-      expect(conn.phase).toBe('connected');
-
-      useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'SYNC_COMPLETE' });
-      conn = useProjectStore.getState().connections[projectId];
-      expect(conn.phase).toBe('synced');
-    });
-
-    it('should set error state on access denied', () => {
-      const projectId = 'error-test';
-
-      useProjectStore.getState().dispatchConnectionEvent(projectId, {
-        type: 'ACCESS_DENIED',
-        reason: 'Connection failed',
-      });
-
-      const conn = useProjectStore.getState().connections[projectId];
-      expect(conn.phase).toBe('error');
-      expect(conn.error).toBe('Connection failed');
-    });
-
-    it('should reset to idle', () => {
-      const projectId = 'reset-test';
-
-      useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'CONNECT_REQUESTED' });
-      useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'SYNC_COMPLETE' });
-      expect(useProjectStore.getState().connections[projectId].phase).toBe('synced');
-
-      useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'RESET' });
-      expect(useProjectStore.getState().connections[projectId].phase).toBe('idle');
-    });
-  });
-});
-
-describe('projectStore - Active Project', () => {
-  beforeEach(() => {
-    useProjectStore.setState({
-      activeProjectId: null,
-      connections: {},
-    });
-  });
-
-  describe('setActiveProject', () => {
-    it('should return null when no active project', () => {
-      expect(useProjectStore.getState().activeProjectId).toBeNull();
-    });
-
-    it('should set active project ID', () => {
-      useProjectStore.getState().setActiveProject('project-123');
-      expect(useProjectStore.getState().activeProjectId).toBe('project-123');
-    });
-  });
-
-  describe('clearProject', () => {
-    it('should clear connection state', () => {
-      const projectId = 'clear-with-connection';
-      useProjectStore.getState().dispatchConnectionEvent(projectId, { type: 'CONNECT_REQUESTED' });
-
-      useProjectStore.getState().clearProject(projectId);
-
-      const connState = useProjectStore.getState().connections[projectId];
-      expect(connState).toBeUndefined();
-    });
-
-    it('should clear active project if it matches', () => {
-      const projectId = 'active-to-clear';
-      useProjectStore.getState().setActiveProject(projectId);
-
-      useProjectStore.getState().clearProject(projectId);
-
-      expect(useProjectStore.getState().activeProjectId).toBeNull();
-    });
-
-    it('should not clear active project if it does not match', () => {
-      useProjectStore.getState().setActiveProject('other-project');
-
-      useProjectStore.getState().clearProject('different-project');
-
-      expect(useProjectStore.getState().activeProjectId).toBe('other-project');
-    });
+  it('clearProject removes the record and active pointer', () => {
+    const store = useProjectStore.getState();
+    store.setActiveProject(PROJECT);
+    store.setConnectionState(PROJECT, 'synced');
+    store.clearProject(PROJECT);
+    const state = useProjectStore.getState();
+    expect(state.connections[PROJECT]).toBeUndefined();
+    expect(state.activeProjectId).toBeNull();
   });
 });

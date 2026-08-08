@@ -21,8 +21,8 @@ import {
 } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS, AUTH_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
-import { syncMemberToDO } from '../../lib/project-sync';
 import { insertWithQuotaCheck, type InsertRollbackMeta } from '../../lib/quotaTransaction';
+import { refreshWorkspaceSessions } from '../../sync/admin';
 import type { Env } from '../../types';
 
 interface AcceptInvitationActor {
@@ -215,6 +215,9 @@ export async function acceptInvitation(
     await db.batch(batchOps as unknown as Parameters<typeof db.batch>[0]);
   }
 
+  // Poke live sessions so other clients refetch the members list.
+  await refreshWorkspaceSessions(env, invitation.projectId);
+
   // Get project name and org slug for response
   const project = await db
     .select({ name: projects.name })
@@ -245,25 +248,6 @@ export async function acceptInvitation(
     });
   } catch (err) {
     captureError(err, { tags: { component: 'invitation', action: 'accept-notify' } });
-  }
-
-  // DO sync
-  try {
-    await syncMemberToDO(env, invitation.projectId, 'add', {
-      userId: actor.id,
-      role: invitation.role ?? undefined,
-      joinedAt: nowDate.getTime(),
-      name: currentUser.name,
-      email: currentUser.email,
-      givenName: currentUser.givenName,
-      familyName: currentUser.familyName,
-      image: currentUser.image,
-    });
-  } catch (err) {
-    captureError(err, {
-      tags: { component: 'invitation', action: 'accept-do-sync' },
-      extra: { projectId: invitation.projectId },
-    });
   }
 
   return {

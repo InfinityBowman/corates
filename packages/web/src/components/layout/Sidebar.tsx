@@ -20,8 +20,8 @@ import {
   TriangleAlertIcon,
 } from 'lucide-react';
 import { useAuthStore, selectUser, selectIsLoggedIn } from '@/stores/authStore';
-import { useAllStudiesById } from '@/primitives/useProject/reactor';
-import { connectionPool } from '@/project/ConnectionPool';
+import { useAllStudies } from '@/project/workspace-data';
+import { applyLocalMutation } from '@/project/localWrites';
 import { LOCAL_PROJECT_ID } from '@/project/localProject';
 import { db } from '@/primitives/db';
 import { useMyProjectsList } from '@/hooks/useMyProjectsList';
@@ -68,7 +68,7 @@ export function Sidebar({
     updatedAt?: number;
     createdAt?: number;
   }
-  const localStudies = useAllStudiesById(LOCAL_PROJECT_ID);
+  const localStudies = useAllStudies(LOCAL_PROJECT_ID);
   const checklists = useMemo<LocalChecklistSummary[]>(() => {
     const out: LocalChecklistSummary[] = [];
     for (const study of localStudies) {
@@ -160,8 +160,8 @@ export function Sidebar({
       return;
     }
     try {
-      const ops = connectionPool.getOps(LOCAL_PROJECT_ID);
-      ops?.study.deleteStudy(pendingDeleteId);
+      // Cascades the checklist + answers rows.
+      applyLocalMutation(LOCAL_PROJECT_ID, 'study.delete', { id: pendingDeleteId });
       await db.localChecklistPdfs.delete(pendingDeleteId);
     } catch (err) {
       const { handleError } = await import('@/lib/error-utils');

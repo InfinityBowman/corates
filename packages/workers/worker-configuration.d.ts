@@ -3,7 +3,7 @@
 declare namespace Cloudflare {
   interface GlobalProps {
     mainModule: typeof import('./src/test-worker');
-    durableNamespaces: 'UserSession' | 'ProjectDoc';
+    durableNamespaces: 'UserSession' | 'WorkspaceDO';
   }
   interface ProductionEnv {
     PDF_BUCKET: R2Bucket;
@@ -12,6 +12,7 @@ declare namespace Cloudflare {
     ENVIRONMENT: 'production';
     AUTH_BASE_URL: 'https://corates.org';
     AUTH_SECRET: string;
+    SYNC_ADMIN_TOKEN?: string;
     EMAIL_FROM: string;
     POSTMARK_SERVER_TOKEN: string;
     APP_URL: string;
@@ -32,7 +33,7 @@ declare namespace Cloudflare {
     STRIPE_PRICE_ID_UNLIMITED_TEAM_YEARLY: string;
     STRIPE_PRICE_ID_SINGLE_PROJECT: string;
     USER_SESSION: DurableObjectNamespace<import('./src/test-worker').UserSession>;
-    PROJECT_DOC: DurableObjectNamespace<import('./src/test-worker').ProjectDoc>;
+    WORKSPACE: DurableObjectNamespace<import('./src/test-worker').WorkspaceDO>;
   }
   interface Env {
     PDF_BUCKET: R2Bucket;
@@ -41,6 +42,7 @@ declare namespace Cloudflare {
     ENVIRONMENT: 'production' | 'development';
     AUTH_BASE_URL: 'https://corates.org' | 'http://localhost:8787';
     AUTH_SECRET: string;
+    SYNC_ADMIN_TOKEN?: string;
     EMAIL_FROM: string;
     POSTMARK_SERVER_TOKEN: string;
     APP_URL: string;
@@ -61,7 +63,7 @@ declare namespace Cloudflare {
     STRIPE_PRICE_ID_UNLIMITED_TEAM_YEARLY: string;
     STRIPE_PRICE_ID_SINGLE_PROJECT: string;
     USER_SESSION: DurableObjectNamespace<import('./src/test-worker').UserSession>;
-    PROJECT_DOC: DurableObjectNamespace<import('./src/test-worker').ProjectDoc>;
+    WORKSPACE: DurableObjectNamespace<import('./src/test-worker').WorkspaceDO>;
     CF_VERSION_METADATA?: WorkerVersionMetadata;
     DEV_MODE?: true;
     SENTRY_DSN?: 'https://3ddf61abb06680bffc1ebc7f540f05de@o4510738063818752.ingest.us.sentry.io/4510738126274560';

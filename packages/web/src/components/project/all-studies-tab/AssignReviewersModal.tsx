@@ -5,7 +5,7 @@
 import { useState, useEffect, useEffectEvent, useMemo, useCallback } from 'react';
 import { UserIcon } from 'lucide-react';
 import type { StudyInfo } from '@/stores/projectStore';
-import { useProjectMembersById } from '@/primitives/useProject/reactor';
+import { useProjectMembers } from '@/project/workspace-data';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
@@ -38,7 +38,7 @@ export function AssignReviewersModal({
   const [reviewer2, setReviewer2] = useState('_unassigned');
   const [saving, setSaving] = useState(false);
 
-  const members = useProjectMembersById(projectId);
+  const members = useProjectMembers(projectId);
 
   const memberItems = useMemo(
     () => [

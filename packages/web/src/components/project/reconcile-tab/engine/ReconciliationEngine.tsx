@@ -59,7 +59,6 @@ export function ReconciliationEngine({
   onSaveReconciled,
   onCancel,
   updateChecklistAnswer,
-  getTextRef,
   setTextValue,
   pdfData,
   pdfFileName,
@@ -68,7 +67,7 @@ export function ReconciliationEngine({
   pdfs,
   selectedPdfId,
   onPdfSelect,
-  getAwareness,
+  client,
   currentUser,
 }: ReconciliationEngineProps) {
   const adapter = useMemo(() => getReconciliationAdapter(checklistType), [checklistType]);
@@ -96,13 +95,8 @@ export function ReconciliationEngine({
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerScrollY, setContainerScrollY] = useState(0);
 
-  const stableGetAwareness = useMemo(
-    () => (getAwareness ? () => getAwareness() : undefined),
-    [getAwareness],
-  );
-
   const presence = useReconciliationPresence({
-    getAwareness: stableGetAwareness,
+    client,
     getCurrentPage: engine.currentPage,
     checklistType: adapter.checklistType,
     currentUser,
@@ -124,13 +118,13 @@ export function ReconciliationEngine({
       navItems: engine.navItems,
       checklist1,
       checklist2,
+      reconciledChecklist,
       finalAnswers: engine.finalAnswers,
       comparison: engine.comparison,
       reviewer1Name,
       reviewer2Name,
       isAgreement: engine.currentIsAgreement,
       updateChecklistAnswer,
-      getTextRef,
       setTextValue,
     };
   }, [
@@ -138,13 +132,13 @@ export function ReconciliationEngine({
     engine.navItems,
     checklist1,
     checklist2,
+    reconciledChecklist,
     engine.finalAnswers,
     engine.comparison,
     reviewer1Name,
     reviewer2Name,
     engine.currentIsAgreement,
     updateChecklistAnswer,
-    getTextRef,
     setTextValue,
   ]);
 

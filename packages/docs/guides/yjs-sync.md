@@ -1,417 +1,80 @@
-# Yjs Sync Guide
+# Sync Engine Guide
 
-This guide explains how collaborative editing works in CoRATES using Yjs CRDTs, Durable Objects, and WebSocket connections.
+This guide explains how collaborative editing works in CoRATES on the
+`@cf-sync` engine: a row-based sync plane served by a Durable Object, with
+Yjs retained only for the one surface that needs character-level merging.
+
+It replaces the old Yjs/y-websocket guide. The ProjectDoc Durable Object,
+the y-dexie project Y.Doc mirror, and the store-mirroring sync manager it
+described were retired in the sync-engine rewrite; the one-time migration is
+documented in `packages/docs/plans/sync-engine-cutover.md`.
 
 ## Overview
 
-CoRATES uses Yjs (Yet another CRDT) for real-time collaborative editing. The architecture consists of:
-
-- **Frontend**: Yjs documents synced via WebSocket
-- **Backend**: Durable Object holding authoritative Yjs document
-- **Persistence**: IndexedDB on client, Durable Object storage on server
-- **Sync Protocol**: y-protocols/sync for document updates, y-protocols/awareness for presence
-
-## Architecture
-
-### Yjs Document Structure
-
-The Yjs document is organized hierarchically:
-
-```
-Project (Y.Doc)
-├── meta (Y.Map) - Project metadata (name, description, etc.)
-├── members (Y.Map) - Project members (userId => { role, joinedAt })
-└── reviews (Y.Map) - Reviews/Studies
-    └── reviewId (Y.Map)
-        ├── id, name, description, createdAt, updatedAt
-        ├── checklists (Y.Map)
-        │   └── checklistId (Y.Map)
-        │       ├── id, title, assignedTo, status
-        │       └── answers (Y.Map) - questionKey => { value, notes, updatedAt, updatedBy }
-        └── pdfs (Y.Array) - PDF metadata
-```
-
-### Durable Object Implementation
-
-The ProjectDoc Durable Object holds the authoritative Yjs document:
-
-```js
-import * as Y from 'yjs';
-import * as syncProtocol from 'y-protocols/sync';
-import * as awarenessProtocol from 'y-protocols/awareness';
-import * as encoding from 'lib0/encoding';
-import * as decoding from 'lib0/decoding';
-
-// y-websocket message types
-const messageSync = 0;
-const messageAwareness = 1;
-
-/**
- * ProjectDoc Durable Object
- *
- * Holds the authoritative Y.Doc for a project with hierarchical structure.
- */
-export class ProjectDoc {
-  constructor(state, env) {
-    this.state = state;
-    this.env = env;
-    this.sessions = new Map(); // Map<WebSocket, { user, awarenessClientId }>
-    this.doc = null;
-    this.awareness = null;
-  }
-}
-```
-
-### Document Initialization and Persistence
-
-The Durable Object loads persisted state on initialization and saves on every update:
-
-```js
-async initializeDoc() {
-  if (!this.doc) {
-    this.doc = new Y.Doc();
-    this.awareness = new awarenessProtocol.Awareness(this.doc);
-
-    // Load persisted state if exists
-    const persistedState = await this.state.storage.get('yjs-state');
-    if (persistedState) {
-      Y.applyUpdate(this.doc, new Uint8Array(persistedState));
-    }
-
-    // Persist the FULL document state on every update
-    this.doc.on('update', async (update, origin) => {
-      const fullState = Y.encodeStateAsUpdate(this.doc);
-      await this.state.storage.put('yjs-state', Array.from(fullState));
-      // Broadcast update to all connected clients
-      this.broadcastBinary(message, origin);
-    });
-  }
-}
-```
-
-## Client-Side Sync
-
-### Unified Dexie Database
-
-CoRATES uses a unified Dexie database with the `y-dexie` addon for client-side persistence. This provides:
-
-- Single IndexedDB database for all client data
-- Native Y.Doc persistence via y-dexie addon
-- PDF cache, operation queue, avatar cache, and more
-
-```js
-import Dexie from 'dexie';
-import yDexie from 'y-dexie';
-
-class CoratesDB extends Dexie {
-  constructor() {
-    super('corates', { addons: [yDexie] });
-
-    this.version(1).stores({
-      // Y.Doc stored as 'ydoc' property via y-dexie
-      projects: 'id, orgId, updatedAt, ydoc: Y.Doc',
-      pdfs: 'id, projectId, studyId, cachedAt',
-      ops: '++id, idempotencyKey, status, createdAt',
-      avatars: 'userId, cachedAt',
-      formStates: 'key, type, timestamp',
-      localChecklists: 'id, createdAt, updatedAt',
-      localChecklistPdfs: 'checklistId, updatedAt',
-      queryCache: 'key',
-    });
-  }
-}
-
-export const db = new CoratesDB();
-```
-
-### Connection Registry
-
-The `useProject` hook uses a connection registry to prevent multiple connections to the same project:
-
-```js
-const connectionRegistry = new Map();
-
-function getOrCreateConnection(projectId) {
-  if (!projectId) return null;
-
-  if (connectionRegistry.has(projectId)) {
-    const entry = connectionRegistry.get(projectId);
-    entry.refCount++;
-    return entry;
-  }
-
-  const entry = {
-    ydoc: new Y.Doc(),
-    dexieProvider: null,
-    connectionManager: null,
-    syncManager: null,
-    studyOps: null,
-    checklistOps: null,
-    pdfOps: null,
-    reconciliationOps: null,
-    refCount: 1,
-    initialized: false,
-  };
-
-  connectionRegistry.set(projectId, entry);
-  return entry;
-}
-```
-
-### useProject Hook
-
-The `useProject` primitive manages client-side Yjs connection with y-dexie persistence:
-
-```js
-import { DexieYProvider } from 'y-dexie';
-import { db } from '../db.js';
-
-function connect() {
-  const { ydoc } = connectionEntry;
-
-  // Ensure the project row exists in Dexie, then load the Y.Doc
-  db.projects.get(projectId).then(async existingProject => {
-    if (!existingProject) {
-      await db.projects.put({ id: projectId, updatedAt: Date.now() });
-    }
-
-    const project = await db.projects.get(projectId);
-
-    // Load the Dexie Y.Doc and apply its state
-    connectionEntry.dexieProvider = DexieYProvider.load(project.ydoc);
-
-    connectionEntry.dexieProvider.whenLoaded.then(() => {
-      // Apply persisted state from Dexie to our Y.Doc
-      const persistedState = Y.encodeStateAsUpdate(project.ydoc);
-      Y.applyUpdate(ydoc, persistedState);
-
-      // Subscribe to updates to persist them to Dexie
-      ydoc.on('update', (update, origin) => {
-        if (origin !== 'dexie-sync') {
-          Y.applyUpdate(project.ydoc, update, 'dexie-sync');
-        }
-      });
-    });
-  });
-}
-```
-
-### Sync Manager
-
-The sync manager handles bidirectional sync between Yjs and the store:
-
-```js
-export function createSyncManager(projectId, getYDoc) {
-  /**
-   * Sync from Y.Doc to store
-   * Called when Y.Doc changes (from local edits or remote sync)
-   */
-  function syncFromYDoc() {
-    const ydoc = getYDoc();
-    if (!ydoc) return;
-
-    const metaYMap = ydoc.getMap('meta');
-    const membersYMap = ydoc.getMap('members');
-    const reviewsYMap = ydoc.getMap('reviews');
-
-    // Convert Yjs structures to plain objects
-    const meta = yMapToPlain(metaYMap);
-    const members = Array.from(membersYMap.entries()).map(([userId, memberData]) => ({
-      userId,
-      ...yMapToPlain(memberData),
-    }));
-
-    const studies = Array.from(reviewsYMap.entries())
-      .map(([studyId, studyYMap]) => buildStudyFromYMap(studyId, studyData, studyYMap))
-      .filter(Boolean);
-
-    // Update store
-    projectStore.setProjectData(projectId, { meta, members, studies });
-    projectStore.setConnectionState(projectId, { synced: true });
-  }
-
-  return { syncFromYDoc };
-}
-```
-
-### y-dexie Persistence
-
-Client-side persistence uses y-dexie, which stores Y.Doc directly in Dexie tables:
-
-```js
-import { DexieYProvider } from 'y-dexie';
-import { db } from '../db.js';
-
-// The ydoc property on project rows is managed by y-dexie
-const project = await db.projects.get(projectId);
-connectionEntry.dexieProvider = DexieYProvider.load(project.ydoc);
-```
-
-**Key difference from y-indexeddb:** y-dexie integrates directly with Dexie, allowing Y.Doc to be stored alongside other project data in a single database.
-
-## WebSocket Connection
-
-### Connection Lifecycle
-
-1. **Connect**: Client opens WebSocket to Durable Object
-2. **Authenticate**: Session token sent in query parameter or header
-3. **Sync**: Initial document state sent from server
-4. **Subscribe**: Client subscribes to updates
-5. **Update**: Changes broadcast to all connected clients
-
-### WebSocket Message Types
-
-- `messageSync` (0): Document update messages
-- `messageAwareness` (1): Presence/awareness updates
-
-### Handling Updates
-
-```js
-// Client receives update
-ws.onmessage = event => {
-  const data = JSON.parse(event.data);
-  if (data.type === 'sync' || data.type === 'update') {
-    const update = new Uint8Array(data.update);
-    Y.applyUpdate(ydoc, update);
-    // Sync manager will update the store
-  }
-};
-```
-
-## Offline Support
-
-### Client-Side
-
-- **Dexie/y-dexie**: All Yjs updates persisted locally in unified database
-- **Queue**: Changes queue when offline (in `ops` table)
-- **Sync**: Automatic sync when connection restored
-
-### Server-Side
-
-- **Durable Object Storage**: Full document state persisted
-- **State Vector**: Efficient diff-based sync on reconnect
-
-### Local Projects
-
-Local projects (prefixed with `local-`) work entirely offline without WebSocket connection:
-
-```js
-const isLocalProject = () => projectId && projectId.startsWith('local-');
-
-// For local projects, don't connect to WebSocket
-if (isLocalProject()) {
-  projectStore.setConnectionState(projectId, {
-    connecting: false,
-    connected: true,
-    synced: true,
-  });
-  return;
-}
-```
-
-## Data Operations
-
-### Reading Data
-
-Read from the store (which is kept in sync with Yjs):
-
-```js
-import projectStore from '@/stores/projectStore.js';
-
-const studies = () => projectStore.getStudies(projectId);
-const meta = () => projectStore.getMeta(projectId);
-```
-
-### Writing Data
-
-Write via action store, which updates Yjs:
-
-```js
-import projectActionsStore from '@/stores/projectActionsStore';
-
-// Create study
-await projectActionsStore.createStudy({
-  id: studyId,
-  name: 'Study Name',
-});
-
-// Update checklist answer
-await projectActionsStore.updateChecklistAnswer(studyId, checklistId, 'q1', {
-  value: 'yes',
-  notes: 'Based on section 2.1',
-});
-```
-
-### Yjs Data Structures
-
-Use appropriate Yjs types:
-
-- **Y.Map**: For key-value objects (meta, members, answers)
-- **Y.Array**: For ordered lists (PDFs)
-- **Y.Text**: For collaborative text (notes)
-
-```js
-// Update Y.Map
-const metaYMap = ydoc.getMap('meta');
-metaYMap.set('name', 'New Project Name');
-
-// Update Y.Array
-const pdfsYArray = studyYMap.get('pdfs');
-pdfsYArray.push([{ id: pdfId, name: 'document.pdf' }]);
-
-// Update nested Y.Map
-const answersYMap = checklistYMap.get('answers');
-const answerData = answersYMap.get('q1') || new Y.Map();
-answerData.set('value', 'yes');
-answersYMap.set('q1', answerData);
-```
-
-## Awareness (Presence)
-
-Awareness protocol tracks user presence:
-
-- Current cursor position
-- User information
-- Custom presence data
-
-```js
-import * as awarenessProtocol from 'y-protocols/awareness';
-
-const awareness = new awarenessProtocol.Awareness(ydoc);
-awareness.setLocalStateField('user', {
-  name: 'John Doe',
-  color: '#ff0000',
-});
-```
-
-## Conflict Resolution
-
-Yjs uses CRDTs (Conflict-free Replicated Data Types) for automatic conflict resolution:
-
-- **No conflicts**: All changes merge automatically
-- **Last write wins**: For scalar values (strings, numbers)
-- **Ordered merging**: For arrays (based on logical timestamps)
-
-## Best Practices
-
-### DO
-
-- Read from store, not directly from Yjs
-- Write via action stores, not directly to Yjs
-- Use Y.Map for objects, Y.Array for lists
-- Handle offline scenarios gracefully
-- Clean up connections when components unmount
-
-### DON'T
-
-- Don't modify Yjs structures directly from components
-- Don't bypass the store when reading data
-- Don't create new Y.Doc instances for the same project
-- Don't forget to handle connection errors
-- Don't store large binary data in Yjs (use R2/storage instead)
-
-## Related Guides
-
-- [State Management Guide](/guides/state-management) - For store patterns
-- [Primitives Guide](/guides/primitives) - For useProject hook
-- [Architecture Diagrams](/architecture/diagrams/08-yjs-sync) - For visual architecture
+- **App definition** (`packages/shared/src/sync`): the schema (tables and
+  row shapes), named mutators, presence schema, and derivation helpers. Both
+  sides consume the same `syncApp` - `createWorkspaceDO(syncApp)` in the
+  worker, `createWorkspace({ app: syncApp })` in the browser.
+- **Server** (`packages/workers/src/sync`): one WorkspaceDO per project holds
+  the authoritative rows in DO storage. `authorize` checks D1 membership on
+  connect and stamps `role` / `writeAllowed` onto the session. Admin seams
+  (`kickWorkspaceUser`, `refreshWorkspaceSessions`, `teardownWorkspace`)
+  let commands close or refresh live sessions.
+- **Client** (`packages/web/src/project`): `ConnectionPool` owns ref-counted
+  sessions. Reads go through the workspace-data hooks (live queries over the
+  engine's collections); writes go through `client.mutate.*` - optimistic
+  apply, a durable outbox, and rollback plus a toast on rejection.
+- **Persistence**: DO storage on the server; one `cf-sync:<projectId>`
+  IndexedDB database per project on the client (plus a per-tab clientId in
+  sessionStorage). Both are tracked in Dexie (`syncCaches`) and wiped on
+  logout and membership revocation.
+
+## One authority per fact
+
+Collaborative content (studies, checklists, answers, outcomes, pdfs,
+annotations, reconciliations) lives in workspace rows: live, local,
+offline-capable. Identity and membership are D1-authoritative, read through
+React Query, and never mirrored into the workspace. Membership changes
+refresh-disconnect the project's sessions; clients treat a re-sync as the
+poke to refetch the members query.
+
+## Writes: named mutators, not row puts
+
+Direct row writes are disabled. Every write is a named mutation (for example
+`checklist.updateAnswer`, `study.update`, `reconciliation.saveProgress`)
+defined once in `packages/shared/src/sync/mutators.ts`, validated with Zod,
+and executed on both the optimistic client apply and the authoritative
+server apply. Rejections roll back the optimistic overlay and surface
+through the pool's rejection toast.
+
+Answer storage is flat-keyed: one `answers` row per field (for example
+`q1.answers`, `sectionB.b1.comment`), expanded from section-level updates by
+`expandAnswerUpdate`. Updates carry only the fields that changed - rows are
+last-writer-wins upserts, so partial updates are what keep concurrent edits
+to different fields of the same question from clobbering each other.
+
+## Where Yjs still lives
+
+Reconciliation consolidated notes are the one surface with concurrent
+free-text editing, and they run on per-field Y.Docs attached to the
+session's binary lane (the `yjsFields` extension; field id = the answer row
+id). Finalizing a reconciliation serializes each field's text back into its
+answer row. Everything else that was once Y.Text is a plain string row.
+
+Presence (cursor positions, who is viewing) uses the engine's presence
+channel, throttled and never stored.
+
+## Local practice
+
+Local projects (ids prefixed `local-`) have no engine session. Their rows
+live in local-only collections, persisted to the Dexie `localProjects`
+store by the pool on every mutation, and mutated by the same shared mutator
+functions via `applyLocalMutation`. Legacy local Y.Docs are converted to
+rows once on first load (`loadLegacyLocalRows`).
+
+## Related
+
+- `packages/docs/plans/sync-engine-cutover.md` - the one-time migration
+  runbook (exporter patch, transformer, invariant gate)
+- [State Management Guide](/guides/state-management) - store patterns
+- [Architecture Diagrams](/architecture/diagrams) - visual architecture

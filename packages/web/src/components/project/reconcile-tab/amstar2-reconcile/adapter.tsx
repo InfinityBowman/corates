@@ -12,6 +12,7 @@ import type {
   SummaryContext,
 } from '../engine/types';
 import type { AMSTAR2Checklist, AMSTAR2QuestionAnswer } from '@corates/shared/checklists';
+import { textFieldKey } from '@corates/shared/sync';
 
 export interface Amstar2NavItem {
   key: string;
@@ -216,14 +217,7 @@ function renderPage(
     Amstar2NavItem
   >,
 ) {
-  const {
-    currentItem,
-    checklist1,
-    checklist2,
-    finalAnswers: fa,
-    isAgreement,
-    getTextRef,
-  } = context;
+  const { currentItem, checklist1, checklist2, finalAnswers: fa, isAgreement } = context;
   const key = currentItem.key;
 
   // Derive currentFinalAnswer from reconciledChecklist for current question
@@ -264,7 +258,7 @@ function renderPage(
       isMultiPart={!!currentItem.meta?.isMultiPart}
       reviewer1Note={getReviewerNote(checklist1, key)}
       reviewer2Note={getReviewerNote(checklist2, key)}
-      finalNoteYText={getTextRef({ type: 'AMSTAR2', questionKey: key })}
+      finalNoteKey={textFieldKey({ type: 'AMSTAR2', questionKey: key })}
     />
   );
 }

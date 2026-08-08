@@ -13,8 +13,9 @@ import type {
   NavbarContext,
   SummaryContext,
 } from '../engine/types';
-import type { TextRef } from '@/primitives/useProject/checklists';
+import type { TextRef } from '@/components/project/reconcile-tab/engine/types';
 import { assertNever } from '@corates/shared';
+import { textFieldKey } from '@corates/shared/sync';
 import type {
   ROBINSIChecklist,
   ROBINSIDomainState,
@@ -206,14 +207,7 @@ function renderPage(
     RobinsINavItem
   >,
 ) {
-  const {
-    currentItem,
-    checklist1: c1,
-    checklist2: c2,
-    finalAnswers: fa,
-    comparison,
-    getTextRef,
-  } = context;
+  const { currentItem, checklist1: c1, checklist2: c2, finalAnswers: fa, comparison } = context;
 
   if (currentItem.type === NAV_ITEM_TYPES.SECTION_B) {
     const c1SectionB = c1?.sectionB;
@@ -234,7 +228,7 @@ function renderPage(
           faSectionB?.[currentItem.key as keyof typeof faSectionB] as
             ROBINSIQuestionAnswer | undefined
         }
-        finalCommentYText={getTextRef({
+        finalCommentKey={textFieldKey({
           type: 'ROBINS_I',
           sectionKey: 'sectionB',
           fieldKey: 'comment',
@@ -294,7 +288,7 @@ function renderPage(
         reviewer1Data={c1Domain?.answers?.[questionKey]}
         reviewer2Data={c2Domain?.answers?.[questionKey]}
         finalData={faDomain?.answers?.[questionKey]}
-        finalCommentYText={getTextRef({
+        finalCommentKey={textFieldKey({
           type: 'ROBINS_I',
           sectionKey: domainKey,
           fieldKey: 'comment',

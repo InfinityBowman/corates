@@ -2,14 +2,13 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { env } from 'cloudflare:workers';
 import { DomainErrorException } from '@corates/shared';
 import { createDb } from '@corates/db/client';
-import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
+import { resetTestDatabase } from '@/__tests__/server/helpers';
 import { buildUser, resetCounter } from '@/__tests__/server/factories';
 import { listUsers, usersPostDeprecated } from '@/server/functions/db-users.server';
 
 beforeEach(async () => {
   await resetTestDatabase();
   resetCounter();
-  await clearProjectDOs(['project-1']);
 });
 
 describe('listUsers', () => {

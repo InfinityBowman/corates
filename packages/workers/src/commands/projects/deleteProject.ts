@@ -9,7 +9,8 @@ import { createDb } from '@corates/db/client';
 import { projects, projectMembers } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
-import { disconnectAllFromProject, cleanupProjectStorage } from '../lib/doSync';
+import { teardownWorkspace } from '../../sync/admin';
+import { cleanupProjectStorage } from '../lib/storage';
 import { notifyUsers, NotificationTypes } from '../lib/notifications';
 import type { Env } from '../../types';
 
@@ -47,16 +48,6 @@ export async function deleteProject(
     .where(eq(projectMembers.projectId, projectId))
     .all();
 
-  // Disconnect all connected users from the ProjectDoc DO
-  try {
-    await disconnectAllFromProject(env, projectId);
-  } catch (err) {
-    captureError(err, {
-      tags: { component: 'project', action: 'delete-disconnect' },
-      extra: { projectId },
-    });
-  }
-
   // Clean up all PDFs from R2 storage
   try {
     await cleanupProjectStorage(env, projectId);
@@ -76,6 +67,13 @@ export async function deleteProject(
       'Failed to delete project',
     );
   }
+
+  // Tear down the sync-engine workspace: close every session, wipe storage.
+  // Workspace storage is the only home for project content, so the
+  // destructive reset must come AFTER the authoritative D1 delete — if the
+  // delete fails above, the project stays listed and must stay intact.
+  // Best-effort from here: teardownWorkspace logs its own failures.
+  await teardownWorkspace(env, projectId);
 
   // Send notifications to all members (except the one who deleted)
   const userIds = members.map(m => m.userId);

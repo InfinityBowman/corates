@@ -1,8 +1,6 @@
-import { useMemo } from 'react';
 import { PLANNING_SECTION } from './checklist-map';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
-import { useProjectReactor } from '@/primitives/useProject/reactor/hooks';
-import { resolveYText } from '@/primitives/useProject/reactor/ytext';
+import { useWorkspaceProjectId, useAnswerValue, useAnswerWriters } from '@/project/workspace-data';
 
 interface PlanningSectionProps {
   studyId: string;
@@ -12,12 +10,9 @@ interface PlanningSectionProps {
 
 export function PlanningSection({ studyId, checklistId, disabled }: PlanningSectionProps) {
   const p1Field = PLANNING_SECTION.p1;
-  const { ydoc } = useProjectReactor();
-
-  const yText = useMemo(
-    () => resolveYText(ydoc, studyId, checklistId, 'planning.confoundingFactors'),
-    [ydoc, studyId, checklistId],
-  );
+  const projectId = useWorkspaceProjectId();
+  const value = useAnswerValue<string>(projectId, checklistId, 'planning.confoundingFactors') ?? '';
+  const writers = useAnswerWriters(projectId, studyId, checklistId);
 
   return (
     <div className='border-border bg-card overflow-hidden rounded-lg border shadow-sm'>
@@ -37,7 +32,8 @@ export function PlanningSection({ studyId, checklistId, disabled }: PlanningSect
             </span>
             <div className='mt-2'>
               <NoteEditor
-                yText={yText}
+                value={value}
+                onChange={text => writers.setText('planning.confoundingFactors', text)}
                 placeholder={p1Field.placeholder}
                 readOnly={disabled}
                 inline={true}

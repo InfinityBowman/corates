@@ -7,7 +7,6 @@ import {
   FileTextIcon,
   AlertCircleIcon,
   HomeIcon,
-  ZapIcon,
 } from 'lucide-react';
 import { useAdminProjects, useAdminOrgs } from '@/hooks/useAdminQueries';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
@@ -21,7 +20,6 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
 import {
   Select,
   SelectContent,
@@ -29,7 +27,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { wakeAllProjectDOsAction } from '@/server/functions/admin-projects.functions';
 import type { ColumnDef } from '@tanstack/react-table';
 
 interface ProjectRow {
@@ -57,39 +54,12 @@ export const Route = createFileRoute('/_app/_protected/admin/projects/')({
   component: AdminProjectList,
 });
 
-interface WakeResult {
-  total: number;
-  succeeded: number;
-  failed: number;
-  errors: Array<{ projectId: string; error: string }>;
-}
-
 function AdminProjectList() {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [selectedOrgId, setSelectedOrgId] = useState('');
   const debouncedSearch = useDebouncedValue(search, 300);
-  const [waking, setWaking] = useState(false);
-  const [wakeResult, setWakeResult] = useState<WakeResult | null>(null);
-
-  const handleWakeAllDOs = async () => {
-    setWaking(true);
-    setWakeResult(null);
-    try {
-      const result = await wakeAllProjectDOsAction();
-      setWakeResult(result as WakeResult);
-    } catch {
-      setWakeResult({
-        total: 0,
-        succeeded: 0,
-        failed: 1,
-        errors: [{ projectId: '-', error: 'Request failed' }],
-      });
-    } finally {
-      setWaking(false);
-    }
-  };
   const limit = 20;
 
   const projectsQuery = useAdminProjects({
@@ -212,35 +182,6 @@ function AdminProjectList() {
         description='Manage all projects across organizations'
         iconColor='green'
       />
-
-      {/* DO Operations */}
-      <AdminSection title='Durable Object Operations'>
-        <div className='flex items-center gap-4'>
-          <Button variant='outline' size='sm' onClick={handleWakeAllDOs} disabled={waking}>
-            {waking ?
-              <Spinner size='sm' variant='current' className='mr-2' />
-            : <ZapIcon className='mr-2 size-4' />}
-            {waking ? 'Waking DOs...' : 'Wake All DOs'}
-          </Button>
-          {wakeResult && (
-            <span className='text-muted-foreground text-sm'>
-              {wakeResult.succeeded}/{wakeResult.total} succeeded
-              {wakeResult.failed > 0 && (
-                <span className='text-destructive ml-1'>({wakeResult.failed} failed)</span>
-              )}
-            </span>
-          )}
-        </div>
-        {wakeResult && wakeResult.errors.length > 0 && (
-          <div className='border-destructive/20 bg-destructive/5 mt-2 rounded border p-3 text-sm'>
-            {wakeResult.errors.map((e, i) => (
-              <div key={i} className='text-destructive'>
-                {e.projectId}: {e.error}
-              </div>
-            ))}
-          </div>
-        )}
-      </AdminSection>
 
       {/* Search and Filter Bar */}
       <div className='flex flex-col gap-4 sm:flex-row'>

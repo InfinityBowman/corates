@@ -1,17 +1,18 @@
 /**
- * E2E Test: Nested-to-flat Y.Map migration for checklist answers
+ * E2E Test: legacy local-practice data migrates on load
  *
- * Verifies that old nested-format Y.Doc data (pre-2026-05-02) is automatically
- * migrated to flat dot-notation keys when a project is loaded. The migration
- * runs in ConnectionPool after DexieYProvider loads persisted state.
+ * Verifies the one-time ydoc→rows converter (`loadLegacyLocalRows`) — the
+ * path a device with pre-cutover local data takes on its first load of the
+ * new bundle, including the nested→flat answer migration for docs untouched
+ * since before 2026-05.
  *
  * Strategy:
- *   1. Create a local checklist and answer questions via the UI
- *   2. Rewrite the answers Y.Map to old nested format via page.evaluate
- *   3. Reload -- migration runs on the DexieYProvider's persisted state
+ *   1. Create a local checklist and answer questions via the UI (row plane)
+ *   2. Rewrite the rows into a legacy NESTED Y.Doc in Dexie and delete the
+ *      row store (window.__devLegacy, behind VITE_DEV_PANEL)
+ *   3. Reload — the converter runs: DexieYProvider load → flat-key migration
+ *      → rows
  *   4. Verify answers still display correctly
- *
- * Uses the dev-mode window.__connectionPool and window.__Y exposures.
  *
  * Prerequisites:
  *   pnpm --filter web dev  (localhost:3010)
@@ -45,146 +46,18 @@ async function createLocalChecklist(
 }
 
 /**
- * Rewrite a local checklist's flat-key answers to old nested Y.Map format.
- * Simulates a production Y.Doc created before the flat-key migration.
+ * Rewrite the current local-practice rows into a legacy nested Y.Doc and
+ * drop the row store, so the reload takes the one-time converter path.
  */
-async function rewriteAMSTAR2ToNested(page: import('@playwright/test').Page) {
-  await page.evaluate(() => {
-    const pool = (window as any).__connectionPool;
-    const Y = (window as any).__Y;
-    if (!pool || !Y) throw new Error('Dev-mode globals not available');
-
-    const entry = pool.getEntry('local-practice');
-    if (!entry) throw new Error('No local-practice connection entry');
-
-    const ydoc = entry.ydoc;
-    const checklistId = window.location.pathname.split('/').pop()!;
-    const study = ydoc.getMap('reviews').get(checklistId) as any;
-    const answersMap = study.get('checklists').get(checklistId).get('answers') as any;
-
-    ydoc.transact(() => {
-      // Group flat keys by question prefix
-      const grouped: Record<string, Record<string, any>> = {};
-      for (const [key, value] of answersMap.entries()) {
-        const dotIdx = key.indexOf('.');
-        if (dotIdx === -1) continue;
-        const prefix = key.substring(0, dotIdx);
-        const field = key.substring(dotIdx + 1);
-        if (!grouped[prefix]) grouped[prefix] = {};
-        grouped[prefix][field] = value;
+async function rewriteToLegacyDoc(page: import('@playwright/test').Page) {
+  await page.evaluate(async () => {
+    const legacy = (
+      window as unknown as {
+        __devLegacy?: { rewriteLocalRowsToLegacyDoc: () => Promise<void> };
       }
-
-      // Clear all flat keys
-      for (const key of [...answersMap.keys()]) {
-        answersMap.delete(key);
-      }
-
-      // Recreate as nested Y.Maps (old format)
-      for (const [qKey, fields] of Object.entries(grouped)) {
-        const qMap = new Y.Map();
-        if (fields.answers !== undefined) qMap.set('answers', fields.answers);
-        if (fields.critical !== undefined) qMap.set('critical', fields.critical);
-        qMap.set('note', new Y.Text());
-        answersMap.set(qKey, qMap);
-      }
-    });
-  });
-}
-
-async function rewriteROB2ToNested(page: import('@playwright/test').Page) {
-  await page.evaluate(() => {
-    const pool = (window as any).__connectionPool;
-    const Y = (window as any).__Y;
-    if (!pool || !Y) throw new Error('Dev-mode globals not available');
-
-    const entry = pool.getEntry('local-practice');
-    const ydoc = entry.ydoc;
-    const checklistId = window.location.pathname.split('/').pop()!;
-    const study = ydoc.getMap('reviews').get(checklistId) as any;
-    const answersMap = study.get('checklists').get(checklistId).get('answers') as any;
-
-    const entries: [string, any][] = [...answersMap.entries()];
-
-    ydoc.transact(() => {
-      for (const key of [...answersMap.keys()]) {
-        answersMap.delete(key);
-      }
-
-      // Build nested preliminary
-      const preliminary = new Y.Map();
-      for (const [key, value] of entries) {
-        if (!key.startsWith('preliminary.')) continue;
-        const field = key.substring('preliminary.'.length);
-        if (value instanceof Y.Text) {
-          preliminary.set(field, new Y.Text());
-        } else {
-          preliminary.set(field, value);
-        }
-      }
-      answersMap.set('preliminary', preliminary);
-
-      // Build nested domains
-      const domainAnswers: Record<string, Record<string, Record<string, any>>> = {};
-      const domainMeta: Record<string, Record<string, any>> = {};
-
-      for (const [key, value] of entries) {
-        if (key.startsWith('preliminary.') || key.startsWith('overall.')) continue;
-
-        const dotIdx = key.indexOf('.');
-        if (dotIdx === -1) {
-          // Bare question key like "d1_1"
-          const match = key.match(/^d(\d+[a-z]?)_/);
-          if (match) {
-            const domain = `domain${match[1]}`;
-            if (!domainAnswers[domain]) domainAnswers[domain] = {};
-            if (!domainAnswers[domain][key]) domainAnswers[domain][key] = {};
-            domainAnswers[domain][key].answer = value;
-          }
-        } else {
-          const prefix = key.substring(0, dotIdx);
-          const field = key.substring(dotIdx + 1);
-          if (prefix.startsWith('domain')) {
-            if (!domainMeta[prefix]) domainMeta[prefix] = {};
-            domainMeta[prefix][field] = value;
-          } else {
-            // Question comment like "d1_1.comment"
-            const match = prefix.match(/^d(\d+[a-z]?)_/);
-            if (match) {
-              const domain = `domain${match[1]}`;
-              if (!domainAnswers[domain]) domainAnswers[domain] = {};
-              if (!domainAnswers[domain][prefix]) domainAnswers[domain][prefix] = {};
-              domainAnswers[domain][prefix][field] = true;
-            }
-          }
-        }
-      }
-
-      const allDomains = new Set([...Object.keys(domainAnswers), ...Object.keys(domainMeta)]);
-      for (const domain of allDomains) {
-        const domainYMap = new Y.Map();
-        const meta = domainMeta[domain] || {};
-        if (meta.direction !== undefined) domainYMap.set('direction', meta.direction);
-
-        const answersNested = new Y.Map();
-        const qas = domainAnswers[domain] || {};
-        for (const [qKey, qVal] of Object.entries(qas)) {
-          const qYMap = new Y.Map();
-          if (qVal.answer !== undefined) qYMap.set('answer', qVal.answer);
-          qYMap.set('comment', new Y.Text());
-          answersNested.set(qKey, qYMap);
-        }
-        domainYMap.set('answers', answersNested);
-        answersMap.set(domain, domainYMap);
-      }
-
-      // Overall
-      const overallDirection = entries.find(([k]) => k === 'overall.direction');
-      if (overallDirection) {
-        const overall = new Y.Map();
-        overall.set('direction', overallDirection[1]);
-        answersMap.set('overall', overall);
-      }
-    });
+    ).__devLegacy;
+    if (!legacy) throw new Error('Dev-mode globals not available');
+    await legacy.rewriteLocalRowsToLegacyDoc();
   });
 }
 
@@ -201,16 +74,10 @@ test.describe('Flat-key migration', () => {
     const checkedBefore = await page.getByRole('radio', { name: 'Yes', checked: true }).count();
     expect(checkedBefore).toBeGreaterThan(0);
 
-    // Allow DexieYProvider to persist
-    await page.waitForTimeout(1000);
+    // Rewrite the rows into a legacy nested Y.Doc (flushes rows itself)
+    await rewriteToLegacyDoc(page);
 
-    // Rewrite answers to old nested format
-    await rewriteAMSTAR2ToNested(page);
-
-    // Allow persistence of the nested format
-    await page.waitForTimeout(1000);
-
-    // Reload -- migrateYDocToFlatKeys runs in ConnectionPool
+    // Reload -- the one-time converter (incl. flat-key migration) runs
     await page.reload();
     await expect(page.getByText('Loading checklist...')).toBeHidden({ timeout: 15_000 });
 
@@ -243,13 +110,9 @@ test.describe('Flat-key migration', () => {
     // Count selected answers before rewrite
     const selectedBefore = await countSelectedToggleButtons(page, 'Y');
 
-    // Rewrite to nested format (Y.Text content is lost in the rewrite since
-    // we create new instances, but structural data like study design, aim,
-    // and signalling question answers preserve their primitive values)
-    await rewriteROB2ToNested(page);
-    await page.waitForTimeout(1000);
-
-    // Reload -- migration runs
+    // Rewrite the rows into a legacy nested Y.Doc, then reload -- the
+    // one-time converter (incl. flat-key migration) runs
+    await rewriteToLegacyDoc(page);
     await page.reload();
     await expect(page.getByText('Loading checklist...')).toBeHidden({ timeout: 15_000 });
 

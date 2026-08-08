@@ -1,16 +1,15 @@
-import { useMemo } from 'react';
 import { InfoIcon } from 'lucide-react';
 import { AMSTAR_CHECKLIST } from './checklist-map';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
 import {
-  useAnswer,
-  useAnswersYMap,
-  useChecklistField,
-  useProjectReactor,
-} from '@/primitives/useProject/reactor/hooks';
-import { resolveYText } from '@/primitives/useProject/reactor/ytext';
+  useWorkspaceProjectId,
+  useAnswerValue,
+  useAnswerWriters,
+  useStudy,
+} from '@/project/workspace-data';
+import type { ChecklistAnswerInput } from '@corates/shared/sync';
 import type { AMSTAR2QuestionSchema, AMSTAR2Column } from '@corates/shared/checklists/amstar2';
 
 function QuestionInfo({ question }: { question: AMSTAR2QuestionSchema }) {
@@ -43,8 +42,19 @@ function CriticalButton({
   checklistId: string;
   qKey: string;
 }) {
-  const critical = useAnswer<boolean>(studyId, checklistId, `${qKey}.critical`) ?? false;
-  const answersYMap = useAnswersYMap(studyId, checklistId);
+  const projectId = useWorkspaceProjectId();
+  const critical = useAnswerValue<boolean>(projectId, checklistId, `${qKey}.critical`) ?? false;
+  const writers = useAnswerWriters(projectId, studyId, checklistId);
+
+  const handleToggle = () => {
+    // Only the changed field: rows are LWW upserts, so bundling the current
+    // answers here would revert a concurrent answer click on a stale render.
+    writers.updateAnswer({
+      type: 'AMSTAR2',
+      key: qKey,
+      data: { critical: !critical },
+    } as ChecklistAnswerInput);
+  };
 
   return (
     <div className='ml-auto'>
@@ -55,7 +65,7 @@ function CriticalButton({
             'border border-red-300 bg-red-100 text-red-700 hover:bg-red-200'
           : 'border-border bg-secondary text-secondary-foreground hover:bg-muted border'
         }`}
-        onClick={() => answersYMap?.set(`${qKey}.critical`, !critical)}
+        onClick={handleToggle}
         aria-pressed={critical}
       >
         {critical ? 'Critical' : 'Not Critical'}
@@ -202,7 +212,7 @@ function deriveTwoColThreeRadio(
   return newAnswers;
 }
 
-// -- StandardQuestion: self-contained question with reactor hooks --
+// -- StandardQuestion: self-contained question with row hooks --
 
 interface QuestionConfig {
   qKey: string;
@@ -223,21 +233,21 @@ function StandardQuestion({
   readOnly?: boolean;
 }) {
   const { qKey, schema, derive, width } = config;
-  const answers = useAnswer<boolean[][]>(studyId, checklistId, `${qKey}.answers`);
-  const answersYMap = useAnswersYMap(studyId, checklistId);
-  const { ydoc } = useProjectReactor();
+  const projectId = useWorkspaceProjectId();
+  const answers = useAnswerValue<boolean[][]>(projectId, checklistId, `${qKey}.answers`);
+  const noteValue = useAnswerValue<string>(projectId, checklistId, `${qKey}.note`) ?? '';
+  const writers = useAnswerWriters(projectId, studyId, checklistId);
 
   const currentAnswers = answers || schema.columns.map(c => c.options.map(() => false));
 
   const handleChange = (colIdx: number, optIdx: number) => {
     const newAnswers = derive(currentAnswers, colIdx, optIdx);
-    answersYMap?.set(`${qKey}.answers`, newAnswers);
+    writers.updateAnswer({
+      type: 'AMSTAR2',
+      key: qKey,
+      data: { answers: newAnswers },
+    } as ChecklistAnswerInput);
   };
-
-  const noteYText = useMemo(
-    () => resolveYText(ydoc, studyId, checklistId, `${qKey}.note`),
-    [ydoc, studyId, checklistId, qKey],
-  );
 
   return (
     <div className='bg-card relative rounded-lg p-7 pb-3 shadow-md'>
@@ -253,7 +263,12 @@ function StandardQuestion({
         handleChange={handleChange}
         width={width}
       />
-      <NoteEditor yText={noteYText} readOnly={readOnly} collapsed={true} />
+      <NoteEditor
+        value={noteValue}
+        onChange={text => writers.setText(`${qKey}.note`, text)}
+        readOnly={readOnly}
+        collapsed={true}
+      />
     </div>
   );
 }
@@ -270,9 +285,10 @@ function Question1({
   readOnly?: boolean;
 }) {
   const question = AMSTAR_CHECKLIST.q1;
-  const answers = useAnswer<boolean[][]>(studyId, checklistId, 'q1.answers');
-  const answersYMap = useAnswersYMap(studyId, checklistId);
-  const { ydoc } = useProjectReactor();
+  const projectId = useWorkspaceProjectId();
+  const answers = useAnswerValue<boolean[][]>(projectId, checklistId, 'q1.answers');
+  const noteValue = useAnswerValue<string>(projectId, checklistId, 'q1.note') ?? '';
+  const writers = useAnswerWriters(projectId, studyId, checklistId);
 
   const currentAnswers = answers || question.columns.map(c => c.options.map(() => false));
 
@@ -288,13 +304,12 @@ function Question1({
       if (optIdx === 0 && newAnswers[2][0]) newAnswers[2][1] = false;
       if (optIdx === 1 && newAnswers[2][1]) newAnswers[2][0] = false;
     }
-    answersYMap?.set('q1.answers', newAnswers);
+    writers.updateAnswer({
+      type: 'AMSTAR2',
+      key: 'q1',
+      data: { answers: newAnswers },
+    });
   };
-
-  const noteYText = useMemo(
-    () => resolveYText(ydoc, studyId, checklistId, 'q1.note'),
-    [ydoc, studyId, checklistId],
-  );
 
   return (
     <div className='bg-card relative rounded-lg p-7 pb-3 shadow-md'>
@@ -309,7 +324,12 @@ function Question1({
         columns={question.columns}
         handleChange={handleChange}
       />
-      <NoteEditor yText={noteYText} readOnly={readOnly} collapsed={true} />
+      <NoteEditor
+        value={noteValue}
+        onChange={text => writers.setText('q1.note', text)}
+        readOnly={readOnly}
+        collapsed={true}
+      />
     </div>
   );
 }
@@ -326,10 +346,11 @@ function Question9({
   readOnly?: boolean;
 }) {
   const question = AMSTAR_CHECKLIST.q9;
-  const answersA = useAnswer<boolean[][]>(studyId, checklistId, 'q9a.answers');
-  const answersB = useAnswer<boolean[][]>(studyId, checklistId, 'q9b.answers');
-  const answersYMap = useAnswersYMap(studyId, checklistId);
-  const { ydoc } = useProjectReactor();
+  const projectId = useWorkspaceProjectId();
+  const answersA = useAnswerValue<boolean[][]>(projectId, checklistId, 'q9a.answers');
+  const answersB = useAnswerValue<boolean[][]>(projectId, checklistId, 'q9b.answers');
+  const noteValue = useAnswerValue<string>(projectId, checklistId, 'q9.note') ?? '';
+  const writers = useAnswerWriters(projectId, studyId, checklistId);
 
   const currentA = answersA || question.columns.map(c => c.options.map(() => false));
   const currentB = answersB || (question.columns2 || []).map(c => c.options.map(() => false));
@@ -352,7 +373,11 @@ function Question9({
       );
     }
 
-    answersYMap?.set('q9a.answers', newAnswers);
+    writers.updateAnswer({
+      type: 'AMSTAR2',
+      key: 'q9a',
+      data: { answers: newAnswers },
+    });
   };
 
   const handleChangeB = (colIdx: number, optIdx: number) => {
@@ -373,22 +398,28 @@ function Question9({
       );
     }
 
-    answersYMap?.set('q9b.answers', newAnswers);
+    writers.updateAnswer({
+      type: 'AMSTAR2',
+      key: 'q9b',
+      data: { answers: newAnswers },
+    });
   };
+
+  const critical = useAnswerValue<boolean>(projectId, checklistId, 'q9a.critical') ?? false;
 
   const handleCriticalToggle = () => {
-    const currentCritical = (answersYMap?.get('q9a.critical') as boolean) ?? false;
-    const newCritical = !currentCritical;
-    answersYMap?.set('q9a.critical', newCritical);
-    answersYMap?.set('q9b.critical', newCritical);
+    const newCritical = !critical;
+    writers.updateAnswer({
+      type: 'AMSTAR2',
+      key: 'q9a',
+      data: { critical: newCritical },
+    });
+    writers.updateAnswer({
+      type: 'AMSTAR2',
+      key: 'q9b',
+      data: { critical: newCritical },
+    });
   };
-
-  const critical = useAnswer<boolean>(studyId, checklistId, 'q9a.critical') ?? false;
-
-  const noteYText = useMemo(
-    () => resolveYText(ydoc, studyId, checklistId, 'q9.note'),
-    [ydoc, studyId, checklistId],
-  );
 
   return (
     <div className='bg-card relative rounded-lg p-7 pb-3 text-sm shadow-md'>
@@ -424,7 +455,12 @@ function Question9({
         columns={question.columns2}
         handleChange={handleChangeB}
       />
-      <NoteEditor yText={noteYText} readOnly={readOnly} collapsed={true} />
+      <NoteEditor
+        value={noteValue}
+        onChange={text => writers.setText('q9.note', text)}
+        readOnly={readOnly}
+        collapsed={true}
+      />
     </div>
   );
 }
@@ -441,10 +477,11 @@ function Question11({
   readOnly?: boolean;
 }) {
   const question = AMSTAR_CHECKLIST.q11;
-  const answersA = useAnswer<boolean[][]>(studyId, checklistId, 'q11a.answers');
-  const answersB = useAnswer<boolean[][]>(studyId, checklistId, 'q11b.answers');
-  const answersYMap = useAnswersYMap(studyId, checklistId);
-  const { ydoc } = useProjectReactor();
+  const projectId = useWorkspaceProjectId();
+  const answersA = useAnswerValue<boolean[][]>(projectId, checklistId, 'q11a.answers');
+  const answersB = useAnswerValue<boolean[][]>(projectId, checklistId, 'q11b.answers');
+  const noteValue = useAnswerValue<string>(projectId, checklistId, 'q11.note') ?? '';
+  const writers = useAnswerWriters(projectId, studyId, checklistId);
 
   const currentA = answersA || question.columns.map(c => c.options.map(() => false));
   const currentB = answersB || (question.columns2 || []).map(c => c.options.map(() => false));
@@ -465,7 +502,11 @@ function Question11({
       );
     }
 
-    answersYMap?.set('q11a.answers', newAnswers);
+    writers.updateAnswer({
+      type: 'AMSTAR2',
+      key: 'q11a',
+      data: { answers: newAnswers },
+    });
   };
 
   const handleChangeB = (colIdx: number, optIdx: number) => {
@@ -484,22 +525,28 @@ function Question11({
       );
     }
 
-    answersYMap?.set('q11b.answers', newAnswers);
+    writers.updateAnswer({
+      type: 'AMSTAR2',
+      key: 'q11b',
+      data: { answers: newAnswers },
+    });
   };
+
+  const critical = useAnswerValue<boolean>(projectId, checklistId, 'q11a.critical') ?? false;
 
   const handleCriticalToggle = () => {
-    const currentCritical = (answersYMap?.get('q11a.critical') as boolean) ?? false;
-    const newCritical = !currentCritical;
-    answersYMap?.set('q11a.critical', newCritical);
-    answersYMap?.set('q11b.critical', newCritical);
+    const newCritical = !critical;
+    writers.updateAnswer({
+      type: 'AMSTAR2',
+      key: 'q11a',
+      data: { critical: newCritical },
+    });
+    writers.updateAnswer({
+      type: 'AMSTAR2',
+      key: 'q11b',
+      data: { critical: newCritical },
+    });
   };
-
-  const critical = useAnswer<boolean>(studyId, checklistId, 'q11a.critical') ?? false;
-
-  const noteYText = useMemo(
-    () => resolveYText(ydoc, studyId, checklistId, 'q11.note'),
-    [ydoc, studyId, checklistId],
-  );
 
   return (
     <div className='bg-card relative rounded-lg p-7 pb-3 text-sm shadow-md'>
@@ -537,7 +584,12 @@ function Question11({
         handleChange={handleChangeB}
         width='w-48'
       />
-      <NoteEditor yText={noteYText} readOnly={readOnly} collapsed={true} />
+      <NoteEditor
+        value={noteValue}
+        onChange={text => writers.setText('q11.note', text)}
+        readOnly={readOnly}
+        collapsed={true}
+      />
     </div>
   );
 }
@@ -579,7 +631,9 @@ interface AMSTAR2ChecklistProps {
 }
 
 export function AMSTAR2Checklist({ studyId, checklistId, readOnly }: AMSTAR2ChecklistProps) {
-  const checklistName = useChecklistField<string>(studyId, checklistId, 'name');
+  const projectId = useWorkspaceProjectId();
+  const study = useStudy(projectId, studyId);
+  const checklistName = study?.checklists.find(c => c.id === checklistId)?.title ?? null;
 
   return (
     <div className='bg-blue-50'>

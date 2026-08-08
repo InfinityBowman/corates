@@ -1,8 +1,4 @@
-import {
-  createExecutionContext,
-  waitOnExecutionContext,
-  runInDurableObject,
-} from 'cloudflare:test';
+import { createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
 import { env } from 'cloudflare:workers';
 import { createDb } from '@corates/db/client';
 import {
@@ -81,40 +77,6 @@ function parseSqlStatements(sqlContent: string): string[] {
   }
 
   return statements.filter(stmt => stmt.length > 0);
-}
-
-export function getProjectDocName(projectId: string): string {
-  return `project:${projectId}`;
-}
-
-export async function clearProjectDOs(projectIds: string[] = []): Promise<void> {
-  const defaultProjectIds = ['project-1', 'project-2', 'p1', 'p2'];
-  const allProjectIds = [...defaultProjectIds, ...projectIds];
-
-  for (const projectId of allProjectIds) {
-    try {
-      const doName = getProjectDocName(projectId);
-      const doId = env.PROJECT_DOC.idFromName(doName);
-      const stub = env.PROJECT_DOC.get(doId);
-      await runInDurableObject(stub, async (_instance, state) => {
-        const keys = await state.storage.list();
-        for (const [key] of keys) {
-          await state.storage.delete(key);
-        }
-      });
-    } catch (err: unknown) {
-      // Ignore DO invalidation errors between test runs
-      const error = err as { message?: string; remote?: boolean; durableObjectReset?: boolean };
-      const isInvalidationError =
-        error?.message?.includes('invalidating this Durable Object') ||
-        error?.message?.includes('inputGateBroken') ||
-        error?.remote === true ||
-        error?.durableObjectReset === true;
-      if (!isInvalidationError) {
-        console.warn(`Failed to clear ProjectDoc DO for ${projectId}:`, error?.message);
-      }
-    }
-  }
 }
 
 export async function resetTestDatabase(): Promise<void> {
@@ -389,7 +351,6 @@ export function createTestEnv(overrides: Record<string, unknown> = {}): Record<s
   return {
     DB: env.DB,
     PDF_BUCKET: mockR2,
-    PROJECT_DOC: mockDO,
     USER_SESSION: mockDO,
     EMAIL_QUEUE: mockQueue,
     RATE_LIMIT_KV: {

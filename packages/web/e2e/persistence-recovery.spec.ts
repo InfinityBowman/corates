@@ -3,11 +3,9 @@
  *
  * This test reproduces the user-reported "I refresh and my studies disappear"
  * scenario end-to-end against the dev server. It covers the entire stack:
- * client edits -> WebSocket -> ProjectDoc DO -> SQLite persistence -> reload ->
- * cold load from SQL -> render.
- *
- * It is the user-facing complement to the unit tests in
- * packages/workers/src/durable-objects/__tests__/ProjectDoc.persistence.test.ts.
+ * client edits -> WebSocket -> workspace DO -> SQLite persistence -> reload ->
+ * cold load -> render (plus the offline path: the engine's IndexedDB
+ * snapshot rendering through the cached phase when the socket is dead).
  *
  * Prerequisites:
  *   pnpm --filter web dev  (localhost:3010, DEV_MODE=true)
@@ -210,7 +208,7 @@ test('Checklist answers survive reload with sync unavailable (local IndexedDB on
     await yesRadios.nth(i).click();
     await expect(yesRadios.nth(i)).toBeChecked({ timeout: 5_000 });
   }
-  // Let y-dexie flush the updates to IndexedDB before we reload
+  // Let the engine's store flush its snapshot to IndexedDB before we reload
   await page.waitForTimeout(1000);
   const checkedBeforeOffline = await countCheckedYesRadios(page);
   expect(checkedBeforeOffline).toBeGreaterThan(0);
@@ -221,7 +219,7 @@ test('Checklist answers survive reload with sync unavailable (local IndexedDB on
   // the final assertion fails instead of the test silently running with a
   // live server connection.
   let interceptedSyncSockets = 0;
-  await page.routeWebSocket(/\/api\/project-doc/, () => {
+  await page.routeWebSocket(/\/api\/sync\//, () => {
     interceptedSyncSockets++;
   });
 
@@ -301,15 +299,10 @@ test('Concurrent server-side change merges correctly on revisit', async ({ conte
   // While User A is away, add a second study via the server-side API.
   // This simulates another user (or a migration) modifying the project
   // while the first user's Dexie cache has stale data.
-  await seedStudies(
-    scenario.orgId,
-    projectId,
-    scenario.cookiesA,
-    scenario.userA.id,
-    scenario.userB.id,
-    1,
-    { type: 'AMSTAR2', fillMode: 'random' },
-  );
+  await seedStudies(page, projectId, scenario.userA.id, scenario.userB.id, 1, {
+    type: 'AMSTAR2',
+    fillMode: 'random',
+  });
 
   // Navigate back -- Dexie cache may briefly show 1 study,
   // but after WebSocket sync, both studies should appear

@@ -12,10 +12,11 @@ import { createPortal } from 'react-dom';
 import { XIcon, ChevronDownIcon, ChevronUpIcon, BugIcon, BracesIcon } from 'lucide-react';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import {
-  useAllStudiesById,
-  useProjectMembersById,
-  useProjectMetaById,
-} from '@/primitives/useProject/reactor';
+  useAllStudies,
+  useProjectMembers,
+  useProjectMeta,
+  useProjectOutcomes,
+} from '@/project/workspace-data';
 import { useProjectOrgId } from '@/hooks/useProjectOrgId';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -56,9 +57,11 @@ export function DevPanel() {
 
   const orgId = useProjectOrgId(projectId);
 
-  const studies = useAllStudiesById(projectId || '');
-  const members = useProjectMembersById(projectId || '');
-  const meta = useProjectMetaById(projectId || '');
+  const studies = useAllStudies(projectId || '');
+  const members = useProjectMembers(projectId || '');
+  const projectMeta = useProjectMeta(projectId || '');
+  const outcomes = useProjectOutcomes(projectId || '');
+  const meta = { ...projectMeta, outcomes };
   const projectData = projectId ? { studies, members, meta } : null;
 
   const connectionState = useProjectStore(s =>
@@ -203,11 +206,11 @@ export function DevPanel() {
                 <Badge variant='warning'>Connecting...</Badge>
               )}
               {isProjectContext &&
-                (connectionState?.phase === 'connected' || connectionState?.phase === 'synced') && (
+                (connectionState?.phase === 'cached' || connectionState?.phase === 'synced') && (
                   <Badge variant='success'>Connected</Badge>
                 )}
               {isProjectContext &&
-                connectionState?.phase !== 'connected' &&
+                connectionState?.phase !== 'cached' &&
                 connectionState?.phase !== 'synced' &&
                 connectionState?.phase !== 'connecting' && (
                   <Badge variant='destructive'>Disconnected</Badge>
@@ -270,7 +273,7 @@ export function DevPanel() {
 
                   {activeTab === 'generate' && isProjectContext && (
                     <div className='flex flex-col gap-4 p-3'>
-                      <DevStudyGenerator projectId={projectId} orgId={orgId} />
+                      <DevStudyGenerator projectId={projectId} />
                       <DevQuickActions projectId={projectId} orgId={orgId} />
                     </div>
                   )}

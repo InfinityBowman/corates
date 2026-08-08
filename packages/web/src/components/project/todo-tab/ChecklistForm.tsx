@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useProjectMetaById } from '@/primitives/useProject/reactor';
+import { useProjectOutcomes } from '@/project/workspace-data';
 import { useProjectContext } from '../ProjectContext';
 
 interface ChecklistFormProps {
@@ -43,8 +43,7 @@ export function ChecklistForm({
 
   const typeOptions = useMemo(() => getChecklistTypeOptions(), []);
 
-  const meta = useProjectMetaById(projectId);
-  const outcomes = useMemo(() => meta?.outcomes ?? [], [meta?.outcomes]);
+  const outcomes = useProjectOutcomes(projectId);
 
   const requiresOutcome = type === CHECKLIST_TYPES.ROB2 || type === CHECKLIST_TYPES.ROBINS_I;
 

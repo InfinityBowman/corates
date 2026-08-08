@@ -3,6 +3,8 @@
 declare namespace Cloudflare {
   interface Env {
     AUTH_SECRET: string;
+    /** Bearer token for /api/sync-admin (wrangler secret put SYNC_ADMIN_TOKEN). */
+    SYNC_ADMIN_TOKEN?: string;
     EMAIL_FROM: string;
     POSTMARK_SERVER_TOKEN: string;
     SEND_EMAILS_IN_DEV?: string;

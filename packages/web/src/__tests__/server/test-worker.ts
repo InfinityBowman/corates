@@ -9,7 +9,7 @@
 // without the tanstackStart vite plugin running in the test pool.
 import { createStartHandler, defaultStreamHandler } from '@tanstack/react-start/server';
 
-export { UserSession, ProjectDoc } from '@corates/workers/durable-objects';
+export { UserSession, WorkspaceDO } from '@corates/workers/durable-objects';
 
 const startFetch = createStartHandler(defaultStreamHandler);
 

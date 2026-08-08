@@ -1,44 +1,63 @@
 /**
- * NoteEditor - Y.Text-bound textarea for editing notes
+ * NoteEditor - controlled textarea for editing notes
  *
- * Binds directly to a Y.Text instance for real-time collaborative editing.
- * Changes sync automatically via Yjs.
+ * Reads a plain string value and reports edits via onChange; the caller wires
+ * it to the sync engine (answer rows). Keeps a local draft while focused so
+ * remote updates don't clobber in-progress typing.
  * Supports two modes: collapsible (AMSTAR2 per-question notes) and inline (ROB2/ROBINS-I comments).
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ChevronRightIcon, BookOpenIcon } from 'lucide-react';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
-import type * as Y from 'yjs';
-import { useYText, applyYTextDiff } from '@/hooks/useYText';
 
 const MAX_HEIGHT = 300;
 
 interface NoteEditorProps {
-  yText: Y.Text | null;
+  value: string;
+  onChange: (text: string) => void;
   placeholder?: string;
   readOnly?: boolean;
+  disabled?: boolean;
   collapsed?: boolean;
   maxLength?: number;
   label?: string;
   inline?: boolean;
   focusRingColor?: string;
+  /**
+   * Live mode: the value is a collaborative text binding (a Yjs field) that
+   * must be followed even while focused — remote co-edits merge into the
+   * textarea instead of being held off by the local draft. Row-backed
+   * callers keep the default draft-hold so LWW echoes don't clobber typing.
+   */
+  live?: boolean;
 }
 
 export function NoteEditor({
-  yText,
+  value,
+  onChange,
   placeholder,
   readOnly = false,
+  disabled = false,
   collapsed = true,
   maxLength = 2000,
   label,
   inline = false,
   focusRingColor,
+  live = false,
 }: NoteEditorProps) {
   const initialExpanded = readOnly ? true : !collapsed;
   const [expanded, setExpanded] = useState(initialExpanded);
-  const localValue = useYText(yText);
+  const [localValue, setLocalValue] = useState(value);
+  const [focused, setFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Follow remote/prop updates when not actively editing (always, in live mode)
+  useEffect(() => {
+    if (live || !focused) {
+      setLocalValue(value);
+    }
+  }, [value, focused, live]);
 
   // Auto-resize textarea when value or expanded state changes
   useEffect(() => {
@@ -53,20 +72,17 @@ export function NoteEditor({
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       const newValue = e.target.value;
 
-      if (newValue.length > maxLength) {
-        e.target.value = newValue.slice(0, maxLength);
-        return;
-      }
-
       // Immediate resize
       e.target.style.height = 'auto';
       e.target.style.height = `${Math.min(e.target.scrollHeight, MAX_HEIGHT)}px`;
 
-      if (!yText || readOnly) return;
+      setLocalValue(newValue);
 
-      applyYTextDiff(yText, yText.toString(), newValue);
+      if (readOnly || disabled) return;
+
+      onChange(newValue);
     },
-    [yText, readOnly, maxLength],
+    [onChange, readOnly, disabled],
   );
 
   const hasContent = localValue.trim().length > 0;
@@ -81,9 +97,11 @@ export function NoteEditor({
         ref={textareaRef}
         value={localValue}
         onChange={handleInput}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
         placeholder={placeholder || 'Add a note for this question...'}
-        disabled={readOnly || !yText}
-        className={`w-full resize-none overflow-hidden rounded-lg border px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:outline-none ${focusRingClass} ${readOnly ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-card text-foreground'} ${!yText ? 'bg-secondary cursor-not-allowed' : ''}`}
+        disabled={readOnly || disabled}
+        className={`w-full resize-none overflow-hidden rounded-lg border px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:outline-none ${focusRingClass} ${readOnly ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-card text-foreground'} ${disabled ? 'bg-secondary cursor-not-allowed' : ''}`}
         style={{ minHeight: '60px' }}
         maxLength={maxLength}
       />

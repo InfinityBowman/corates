@@ -14,6 +14,7 @@ import type { ProjectRow } from '../db.js';
 let db: typeof DbModule.db;
 let deleteProjectData: typeof DbModule.deleteProjectData;
 let clearAllData: typeof DbModule.clearAllData;
+let trackSyncCache: typeof DbModule.trackSyncCache;
 
 // ProjectRow requires a ydoc; tests only care about id/orgId/updatedAt,
 // so stub a fresh Y.Doc for each fixture.
@@ -35,6 +36,7 @@ describe('db.js - Unified Dexie Database', () => {
     db = module.db;
     deleteProjectData = module.deleteProjectData;
     clearAllData = module.clearAllData;
+    trackSyncCache = module.trackSyncCache;
 
     // Ensure database is open
     if (!db.isOpen()) {
@@ -71,8 +73,10 @@ describe('db.js - Unified Dexie Database', () => {
         'formStates',
         'localChecklistPdfs',
         'localChecklists',
+        'localProjects',
         'pdfs',
         'projects',
+        'syncCaches',
       ]);
     });
   });
@@ -276,6 +280,51 @@ describe('db.js - Unified Dexie Database', () => {
       await clearAllData();
 
       expect(await db.localChecklists.count()).toBe(1);
+    });
+  });
+
+  describe('engine sync cache cleanup', () => {
+    function createSyncDb(projectId: string): Promise<void> {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(`cf-sync:${projectId}`, 1);
+        request.onupgradeneeded = () => request.result.createObjectStore('kv');
+        request.onsuccess = () => {
+          request.result.close();
+          resolve();
+        };
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    async function syncDbNames(): Promise<string[]> {
+      const databases = await indexedDB.databases();
+      return databases
+        .map(entry => entry.name)
+        .filter((name): name is string => !!name?.startsWith('cf-sync:'));
+    }
+
+    it('deleteProjectData wipes the tracked engine cache for that project', async () => {
+      await createSyncDb('proj-a');
+      await createSyncDb('proj-b');
+      await trackSyncCache('proj-a');
+      await trackSyncCache('proj-b');
+
+      await deleteProjectData('proj-a');
+
+      expect(await syncDbNames()).toEqual(['cf-sync:proj-b']);
+      expect((await db.syncCaches.toArray()).map(row => row.id)).toEqual(['proj-b']);
+    });
+
+    it('clearAllData wipes every tracked engine cache', async () => {
+      await createSyncDb('proj-a');
+      await createSyncDb('proj-b');
+      await trackSyncCache('proj-a');
+      await trackSyncCache('proj-b');
+
+      await clearAllData();
+
+      expect(await syncDbNames()).toEqual([]);
+      expect(await db.syncCaches.count()).toBe(0);
     });
   });
 });

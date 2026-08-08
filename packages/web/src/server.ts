@@ -1,28 +1,17 @@
 import * as Sentry from '@sentry/cloudflare';
 import { createStartHandler, defaultStreamHandler } from '@tanstack/react-start/server';
 import { handleEmailQueue } from '@corates/workers/queue';
-import { getProjectDocStub } from '@corates/workers/project-doc-id';
+import { handleSyncFetch } from '@corates/workers/sync';
 
 // Re-export DOs so wrangler DO bindings in wrangler.jsonc resolve against this
 // worker's main module. The class implementations live in @corates/workers.
-export { UserSession, ProjectDoc } from '@corates/workers/durable-objects';
+export { UserSession, WorkspaceDO } from '@corates/workers/durable-objects';
 
 const startFetch = createStartHandler(defaultStreamHandler);
-
-// `/api/project-doc/<projectId>(/<...>)?` — y-websocket appends the room as
-// the trailing segment; we route by path prefix and forward the original
-// Request (including upgrade headers) to the project-scoped DO.
-const PROJECT_DOC_PATH = /^\/api\/project-doc\/([^/]+)(?:\/.*)?$/;
 
 // `/api/sessions/<sessionId>(/<...>)?` — UserSession DO for per-user
 // notification fan-out. WebSocket upgrades only.
 const SESSION_PATH = /^\/api\/sessions\/([^/]+)(?:\/.*)?$/;
-
-// `/api/migration/export/<projectId>` — one-time sync-engine cutover export,
-// bearer-gated by SYNC_ADMIN_TOKEN. Calls the devExport() RPC directly:
-// ProjectDoc.fetch serves only WebSocket upgrades and the MIGRATION_FREEZE
-// guard 503s it, but the export has to run during the freeze.
-const MIGRATION_EXPORT_PATH = /^\/api\/migration\/export\/([^/]+)$/;
 
 interface DOEnv {
   USER_SESSION: {
@@ -41,27 +30,9 @@ const workerHandler = {
   async fetch(request: Request, env: unknown, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
-    const migrationMatch = url.pathname.match(MIGRATION_EXPORT_PATH);
-    if (migrationMatch) {
-      const token = request.headers.get('Authorization')?.replace(/^Bearer /, '');
-      const expected = (env as { SYNC_ADMIN_TOKEN?: string }).SYNC_ADMIN_TOKEN;
-      if (!expected || token !== expected) {
-        return new Response('forbidden', { status: 403 });
-      }
-      const stub = getProjectDocStub(env as never, migrationMatch[1]);
-      return Response.json(await stub.devExport());
-    }
-
     // DO routes must be handled before TanStack Start (which can't pass
     // WebSocket upgrades through). Same Request is forwarded as-is so the
     // upgrade handshake reaches the DO.
-    const projectMatch = url.pathname.match(PROJECT_DOC_PATH);
-    if (projectMatch) {
-      const projectId = projectMatch[1];
-      const stub = getProjectDocStub(env as never, projectId);
-      return stub.fetch(request);
-    }
-
     const sessionMatch = url.pathname.match(SESSION_PATH);
     if (sessionMatch) {
       const sessionId = sessionMatch[1];
@@ -70,6 +41,11 @@ const workerHandler = {
       const stub = ns.get(id);
       return stub.fetch(request);
     }
+
+    // Sync-engine routes (`/api/sync/<projectId>` upgrades and
+    // `/api/sync-admin/...`): resolves null for anything else.
+    const syncResponse = await handleSyncFetch(request, env);
+    if (syncResponse) return syncResponse;
 
     // Forward the Worker's ExecutionContext through TanStack Start so file
     // routes can pass it into route handlers (waitUntil for fire-and-forget

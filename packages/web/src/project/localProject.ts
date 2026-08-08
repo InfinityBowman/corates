@@ -1,22 +1,25 @@
 /**
- * Local-only "practice" project.
+ * Local-only "practice" project: legacy-data migration.
  *
- * Before: local appraisals lived in the `localChecklists` Dexie table as flat
- * JSON blobs, with a separate Zustand store and view.
- *
- * Now: they live in a single project-shaped Y.Doc (acquired via ConnectionPool
- * like any other project, minus the WebSocket provider). Each appraisal is a
- * study with one checklist inside. Study/checklist IDs preserve the old local
- * IDs so existing URLs (`/checklist/:id`) keep working.
+ * Live local-practice data is rows in local-only collections (see
+ * ConnectionPool + localWrites); writes go through `applyLocalMutation`. This
+ * module is the one-time bridge from the two legacy stores — the
+ * `localChecklists` Dexie table of flat JSON blobs, and the Dexie-persisted
+ * project-shaped Y.Doc that replaced it — into those rows. Study/checklist
+ * IDs preserve the old local IDs so existing URLs (`/checklist/:id`) keep
+ * working.
  */
 
 import * as Y from 'yjs';
-import { createChecklistOfType, CHECKLIST_TYPES } from '@/checklist-registry';
+import { DexieYProvider } from 'y-dexie';
+import { migrateYDocToFlatKeys } from '@/primitives/useProject/flatKeyMigration';
+import { rowsFromLocalDoc, type LocalRows } from './localCollections';
+import { CHECKLIST_TYPES } from '@/checklist-registry';
 import { CHECKLIST_STATUS } from '@corates/shared/checklists';
-import { AMSTAR2Handler } from '@/primitives/useProject/checklists/handlers/amstar2';
-import { ROBINSIHandler } from '@/primitives/useProject/checklists/handlers/robins-i';
-import { ROB2Handler } from '@/primitives/useProject/checklists/handlers/rob2';
-import type { ChecklistHandler } from '@/primitives/useProject/checklists/handlers/base';
+import { AMSTAR2Handler } from '@/primitives/useProject/handlers/amstar2';
+import { ROBINSIHandler } from '@/primitives/useProject/handlers/robins-i';
+import { ROB2Handler } from '@/primitives/useProject/handlers/rob2';
+import type { ChecklistHandler } from '@/primitives/useProject/handlers/base';
 import { db } from '@/primitives/db';
 
 export const LOCAL_PROJECT_ID = 'local-practice';
@@ -107,38 +110,6 @@ function resolveExistingChecklistType(
   const checklistYMap = checklistsMap.get(checklistId);
   if (!(checklistYMap instanceof Y.Map)) return null;
   return (checklistYMap.get('type') as string) || null;
-}
-
-/**
- * Create a new local appraisal inside the local project Y.Doc. Study and
- * checklist share a single id so the existing `/checklist/:id` URL can serve
- * as both studyId and checklistId.
- */
-export function createLocalAppraisal(
-  ydoc: Y.Doc,
-  opts: { name: string; type: string },
-): string | null {
-  const id = crypto.randomUUID();
-  const now = Date.now();
-  const template = createChecklistOfType(opts.type, {
-    id,
-    name: opts.name,
-    createdAt: now,
-  }) as Record<string, unknown>;
-  const row: LocalChecklistRow = {
-    ...template,
-    id,
-    name: opts.name,
-    checklistType: opts.type,
-    createdAt: now,
-    updatedAt: now,
-  };
-  const studyYMap = buildStudyForLocalRow(row);
-  if (!studyYMap) return null;
-  ydoc.transact(() => {
-    attachAndSeedStudy(ydoc.getMap('reviews'), studyYMap, row);
-  });
-  return id;
 }
 
 export function buildStudyForLocalRow(row: LocalChecklistRow): Y.Map<unknown> | null {
@@ -287,5 +258,33 @@ function seedRob2(answersYMap: Y.Map<unknown>, source: Record<string, unknown>):
     for (const [qKey, qVal] of Object.entries(srcAnswers)) {
       seedIfEmpty(answersYMap, `${qKey}.comment`, qVal?.comment);
     }
+  }
+}
+
+/**
+ * One-time load of legacy local-practice data: the Dexie-persisted Y.Doc
+ * (including its own legacy migrations) converted to plain rows. The doc is
+ * released afterwards and left in Dexie untouched as a rollback source until
+ * the cleanup migration drops the `projects` ydoc table.
+ */
+export async function loadLegacyLocalRows(projectId: string): Promise<LocalRows> {
+  const existing = await (
+    db.projects as unknown as {
+      get: (id: string) => Promise<{ ydoc: Y.Doc } | undefined>;
+      put: (row: { id: string; updatedAt: number }) => Promise<unknown>;
+    }
+  ).get(projectId);
+  if (!existing) {
+    return { studies: [], checklists: [], answers: [] };
+  }
+
+  const provider = DexieYProvider.load(existing.ydoc);
+  try {
+    await provider.whenLoaded;
+    migrateYDocToFlatKeys(existing.ydoc);
+    await migrateLocalChecklistsToYDoc(existing.ydoc);
+    return rowsFromLocalDoc(existing.ydoc);
+  } finally {
+    DexieYProvider.release(existing.ydoc);
   }
 }

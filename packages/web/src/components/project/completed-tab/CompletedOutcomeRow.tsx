@@ -17,7 +17,7 @@ import { PreviousReviewersView } from './PreviousReviewersView';
 import { ReopenReconciliationButton } from './ReopenReconciliationButton';
 import type { StudyInfo } from '@/stores/projectStore';
 import type { ChecklistGroup } from '@corates/shared/checklists';
-import type { ReconciliationProgressEntry } from '@/primitives/useProject/reconciliation';
+import type { ReconciliationProgressEntry } from '@/project/workspace-data';
 
 interface CompletedOutcomeRowProps {
   study: StudyInfo;

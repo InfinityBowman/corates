@@ -11,9 +11,9 @@ import { projectMembers, projects, member } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS } from '@corates/shared';
 import type { OrgId, ProjectId, UserId } from '@corates/shared/ids';
-import { syncMemberWithRetry } from '../../lib/syncWithRetry';
 import { notifyUser, NotificationTypes } from '../lib/notifications';
 import { insertWithQuotaCheck, type InsertRollbackMeta } from '../../lib/quotaTransaction';
+import { refreshWorkspaceSessions } from '../../sync/admin';
 import type { Env } from '../../types';
 import type { ProjectRole } from '../../policies/lib/roles';
 
@@ -127,6 +127,9 @@ export async function addMember(
     await db.batch(insertOperations as unknown as Parameters<typeof db.batch>[0]);
   }
 
+  // Poke live sessions so other clients refetch the members list.
+  await refreshWorkspaceSessions(env, projectId);
+
   // Get project name for notification
   const project = await db
     .select({ name: projects.name })
@@ -149,18 +152,6 @@ export async function addMember(
       extra: { projectId },
     });
   }
-
-  // Sync member to DO with automatic retry
-  await syncMemberWithRetry(env, projectId, 'add', {
-    userId: userToAdd.id,
-    role,
-    joinedAt: now.getTime(),
-    name: userToAdd.name,
-    email: userToAdd.email,
-    givenName: userToAdd.givenName,
-    familyName: userToAdd.familyName,
-    image: userToAdd.image,
-  });
 
   return {
     member: {

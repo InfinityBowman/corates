@@ -9,7 +9,7 @@ import { CHECKLIST_STATUS } from '@corates/shared/checklists';
 import { ROB2_CHART_CONFIG, ROBINS_I_CHART_CONFIG } from '@/components/charts/chartConfigs';
 import type { ChecklistChartConfig } from '@/components/charts/chartConfigs';
 import { useProjectContext } from '../ProjectContext';
-import { useProjectMetaById } from '@/primitives/useProject/reactor';
+import { useProjectOutcomes } from '@/project/workspace-data';
 import { AMSTAR2ResultsTable } from './AMSTAR2ResultsTable';
 import type { StudyInfo } from '@/stores/projectStore';
 
@@ -61,8 +61,7 @@ interface ResultsTablesProps {
 
 export function ResultsTables({ studies }: ResultsTablesProps) {
   const { projectId } = useProjectContext();
-  const meta = useProjectMetaById(projectId);
-  const outcomes = meta.outcomes;
+  const outcomes = useProjectOutcomes(projectId);
 
   const hasAmstarData = useMemo(
     () =>

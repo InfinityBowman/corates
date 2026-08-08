@@ -20,6 +20,8 @@ export const queryKeys = {
     all: ['projects'] as const,
     /** Projects for a specific user (legacy) */
     list: (userId: string | null | undefined) => ['projects', userId] as const,
+    /** Members of a project (D1 projectMembers joined with user) */
+    members: (projectId: string) => ['projects', 'members', projectId] as const,
     /** Projects within an organization (legacy, kept for backward compatibility) */
     byOrg: (orgId: string | null | undefined) => ['projects', 'org', orgId] as const,
   },
@@ -64,8 +66,8 @@ export const queryKeys = {
       ['adminProjects', page, limit, search, orgId] as const,
     projectDetails: (projectId: string | null | undefined) =>
       ['adminProjectDetails', projectId] as const,
-    projectDocStats: (projectId: string | null | undefined) =>
-      ['adminProjectDocStats', projectId] as const,
+    workspaceStats: (projectId: string | null | undefined) =>
+      ['adminWorkspaceStats', projectId] as const,
     storageDocuments: (cursor: string | null, limit: number, prefix: string, search: string) =>
       ['storageDocuments', cursor, limit, prefix, search] as const,
     storageStats: ['storageStats'] as const,

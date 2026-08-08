@@ -1,22 +1,24 @@
 /**
- * ProjectGate - Declarative connection lifecycle for a project.
+ * ProjectGate - Declarative session lifecycle for a project.
  *
- * Owns the connection lifecycle (acquire/release via ConnectionPool),
- * active project tracking, and access denied handling.
- * Renders fallback while connecting, children + ProjectProvider when synced.
+ * Owns the session lifecycle (acquire/release via ConnectionPool), active
+ * project tracking, and access denied handling. Renders fallback until the
+ * engine reports the project renderable — `synced` (socket caught up) or
+ * `cached` (locally persisted rows hydrated; offline-first paint) — then
+ * children + ProjectProvider. Reconnection, backoff, and online/visibility
+ * wake-ups are the sync client's job now; there is nothing to drive here.
  */
 
-import { useEffect, useLayoutEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import { useProjectOrgId } from '@/hooks/useProjectOrgId';
-import { useOnlineStatus } from '@/hooks/useOnlineStatus';
-import { ACCESS_DENIED_ERRORS } from '@/constants/errors';
+import { ACCESS_DENIED_ERRORS, RECOVERABLE_FATAL_ERRORS } from '@/constants/errors';
 import { showToast } from '@/lib/toast';
 import { connectionPool } from './ConnectionPool';
+import { WorkspaceProjectContext } from './workspace-data';
 
 import { ProjectProvider } from '@/components/project/ProjectContext';
-import { ProjectReactorContext } from '@/primitives/useProject/reactor/context';
 
 interface ProjectGateProps {
   projectId: string;
@@ -28,18 +30,15 @@ export function ProjectGate({ projectId, fallback, children }: ProjectGateProps)
   const navigate = useNavigate();
   const orgId = useProjectOrgId(projectId);
   const isLocalProject = projectId ? projectId.startsWith('local-') : false;
-  const isOnline = useOnlineStatus();
-  const connectionEntryRef = useRef<ReturnType<typeof connectionPool.acquire>>(null);
 
   const connectionState = useProjectStore(s => selectConnectionPhase(s, projectId));
 
-  // Connection lifecycle -- acquire on mount, release on unmount
+  // Session lifecycle -- acquire on mount, release on unmount
   useLayoutEffect(() => {
     if (!projectId) return;
     let cancelled = false;
 
     const entry = connectionPool.acquire(projectId);
-    connectionEntryRef.current = entry;
 
     if (entry && !entry.initialized) {
       connectionPool.initializeConnection(projectId, entry, {
@@ -54,35 +53,37 @@ export function ProjectGate({ projectId, fallback, children }: ProjectGateProps)
     };
   }, [projectId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Set active project for the pool (used by project.* action modules)
+  // Set active project for the pool (used by project.* action modules).
+  // Not gated on orgId: the mutation actions only need the projectId, and on
+  // a cold hard-refresh the gate opens at `cached` before the projects query
+  // resolves — waiting for orgId here made every action throw in that window.
+  // orgId is re-stamped by the same effect when it lands.
   useEffect(() => {
-    if (projectId && orgId) {
-      connectionPool.setActiveProject(projectId, orgId);
+    if (projectId) {
+      connectionPool.setActiveProject(projectId, orgId ?? null);
     }
     return () => {
       connectionPool.clearActiveProject();
     };
   }, [projectId, orgId]);
 
-  // Reconnect on online transition
-  const wasOnlineRef = useRef(isOnline);
+  // Fatal-error redirect. Both kinds leave the project unrenderable and send
+  // the user back to the dashboard (an expired session bounces on from there
+  // to sign-in), but only one of them is their access being taken away --
+  // saying "Access Denied" for a dropped socket reads as an account problem.
   useEffect(() => {
-    const wasOffline = !wasOnlineRef.current;
-    wasOnlineRef.current = isOnline;
-    if (isOnline && wasOffline) {
-      connectionPool.reconnectIfNeeded(projectId);
-    }
-  }, [isOnline, projectId]);
-
-  // Access denied redirect
-  useEffect(() => {
-    if (connectionState.error && ACCESS_DENIED_ERRORS.includes(connectionState.error)) {
-      showToast.error('Access Denied', connectionState.error);
+    const error = connectionState.error;
+    if (!error) return;
+    if (ACCESS_DENIED_ERRORS.includes(error)) {
+      showToast.error('Access Denied', error);
+      navigate({ to: '/dashboard', replace: true });
+    } else if (RECOVERABLE_FATAL_ERRORS.includes(error)) {
+      showToast.info('Disconnected', error);
       navigate({ to: '/dashboard', replace: true });
     }
   }, [connectionState.error, navigate]);
 
-  // Show fallback while connecting (cached = Dexie data available, render immediately)
+  // Show fallback while connecting (cached = hydrated local rows, render immediately)
   if (
     connectionState.phase !== 'synced' &&
     connectionState.phase !== 'cached' &&
@@ -96,11 +97,9 @@ export function ProjectGate({ projectId, fallback, children }: ProjectGateProps)
     return null;
   }
 
-  const reactor = connectionPool.getReactor(projectId);
-
   return (
-    <ProjectReactorContext.Provider value={reactor}>
+    <WorkspaceProjectContext.Provider value={projectId}>
       <ProjectProvider projectId={projectId}>{children}</ProjectProvider>
-    </ProjectReactorContext.Provider>
+    </WorkspaceProjectContext.Provider>
   );
 }

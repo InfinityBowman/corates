@@ -4,12 +4,22 @@
 
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
-import {
-  connectionReducer,
-  INITIAL_STATE as INITIAL_CONNECTION,
-  type ConnectionEvent,
-  type ConnectionMachineState,
-} from '@/project/connectionReducer';
+
+/**
+ * The per-project session phase, projected from the sync engine's client by
+ * the ConnectionPool: `synced` when the socket has caught up, `cached` when
+ * locally persisted rows are hydrated but the socket has not (offline or
+ * still connecting — renderable either way), `connecting` before either,
+ * `error` on a permanent rejection (access denied / kicked).
+ */
+export type ConnectionPhase = 'idle' | 'connecting' | 'cached' | 'synced' | 'error';
+
+export interface ConnectionMachineState {
+  phase: ConnectionPhase;
+  error: string | null;
+}
+
+const INITIAL_CONNECTION: ConnectionMachineState = { phase: 'idle', error: null };
 
 export interface PdfEntry {
   id: string;
@@ -125,7 +135,7 @@ interface ProjectStoreState {
 
 interface ProjectStoreActions {
   setActiveProject: (projectId: string | null) => void;
-  dispatchConnectionEvent: (projectId: string, event: ConnectionEvent) => void;
+  setConnectionState: (projectId: string, phase: ConnectionPhase, error?: string | null) => void;
   clearProject: (projectId: string) => void;
 }
 
@@ -139,10 +149,9 @@ export const useProjectStore = create<ProjectStoreState & ProjectStoreActions>()
         state.activeProjectId = projectId;
       }),
 
-    dispatchConnectionEvent: (projectId, event) =>
+    setConnectionState: (projectId, phase, error = null) =>
       set(state => {
-        const current = state.connections[projectId] || { ...INITIAL_CONNECTION };
-        state.connections[projectId] = connectionReducer(current, event);
+        state.connections[projectId] = { phase, error };
       }),
 
     clearProject: projectId =>

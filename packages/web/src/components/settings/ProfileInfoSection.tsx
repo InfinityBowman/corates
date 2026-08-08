@@ -13,7 +13,6 @@ import { showToast } from '@/lib/toast';
 import { InlineEdit } from '@/components/ui/inline-edit';
 import { API_BASE } from '@/config/api';
 import { compressImageFile } from '@/lib/imageUtils.js';
-import { syncProfileToProjects } from '@/lib/syncUtils';
 import { Spinner } from '@/components/ui/spinner';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
@@ -72,7 +71,6 @@ export function ProfileInfoSection() {
           givenName: givenName || null,
           familyName: familyName || null,
         });
-        syncProfileToProjects();
       } catch (err) {
         const { handleError } = await import('@/lib/error-utils');
         await handleError(err, { toastTitle: 'Update Failed' });
@@ -94,7 +92,6 @@ export function ProfileInfoSection() {
           givenName: givenName || null,
           familyName: familyName || null,
         });
-        syncProfileToProjects();
       } catch (err) {
         const { handleError } = await import('@/lib/error-utils');
         await handleError(err, { toastTitle: 'Update Failed' });
@@ -141,7 +138,6 @@ export function ProfileInfoSection() {
 
         const { url } = await response.json();
         await updateProfile({ image: url });
-        syncProfileToProjects();
         setOptimisticImage(null);
         showToast.success('Photo Updated', 'Your profile photo has been updated.');
       } catch (err) {

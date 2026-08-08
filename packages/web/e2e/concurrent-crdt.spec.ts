@@ -161,8 +161,8 @@ async function runConcurrentEditCycle(
     await pageA.goto(`${BASE_URL}${checklistUrlA}`);
     await pageB.goto(`${BASE_URL}${checklistUrlB}`);
 
-    await expect(pageA.getByText(opts.loadedSelector)).toBeVisible({ timeout: 15_000 });
-    await expect(pageB.getByText(opts.loadedSelector)).toBeVisible({ timeout: 15_000 });
+    await expect(pageA.getByText(opts.loadedSelector).first()).toBeVisible({ timeout: 15_000 });
+    await expect(pageB.getByText(opts.loadedSelector).first()).toBeVisible({ timeout: 15_000 });
 
     // ---- Round 1: concurrent edits ----
     await Promise.all([opts.clickA(pageA, opts.round1Count), opts.clickB(pageB, opts.round1Count)]);
@@ -249,6 +249,9 @@ test.describe('Concurrent CRDT: AMSTAR2', () => {
 
     const projectId = await createProject(setupPage, 'AMSTAR2 CRDT Test');
     await addProjectMember(scenario.orgId, projectId, scenario.userB.id, scenario.cookiesA);
+    // No reload: the worker refresh-disconnects the project's live sessions on
+    // membership changes and the client refetches members on re-sync, so the
+    // assign dialog below sees the new member (assignReviewers waits for it).
     await addStudyViaPdf(setupPage);
     await assignReviewers(setupPage);
 
@@ -290,7 +293,7 @@ test.describe('Concurrent CRDT: AMSTAR2', () => {
     // Wait for the checklist to fully load before closing the setup context.
     // Without this, setupCtx.close() can kill the WebSocket before the Y.Doc
     // update (Bob's checklist creation) reaches the Durable Object.
-    await expect(setupPage.getByText('AMSTAR2 Checklist')).toBeVisible({ timeout: 15_000 });
+    await expect(setupPage.getByText('AMSTAR2 Checklist').first()).toBeVisible({ timeout: 15_000 });
     await setupPage.goto(`${BASE_URL}/projects/${projectId}`);
     await expect(setupPage.getByRole('tab', { name: /To Do/i })).toBeVisible({ timeout: 15_000 });
 
@@ -333,6 +336,9 @@ test.describe('Concurrent CRDT: ROB2', () => {
 
     const projectId = await createProject(setupPage, 'ROB2 CRDT Test');
     await addProjectMember(scenario.orgId, projectId, scenario.userB.id, scenario.cookiesA);
+    // No reload: the worker refresh-disconnects the project's live sessions on
+    // membership changes and the client refetches members on re-sync, so the
+    // assign dialog below sees the new member (assignReviewers waits for it).
     await addStudyViaPdf(setupPage);
     await assignReviewers(setupPage);
 

@@ -5,7 +5,7 @@
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { type ProjectMember } from '@/components/project/ProjectContext';
 import type { StudyInfo } from '@/stores/projectStore';
-import { useStudyById } from '@/primitives/useProject/reactor';
+import { useStudy } from '@/project/workspace-data';
 import { StudyCardHeader } from './StudyCardHeader';
 import { StudyPdfSection } from './StudyPdfSection';
 
@@ -30,7 +30,7 @@ export function StudyCard({
   onOpenGoogleDrive,
   readOnly,
 }: StudyCardProps) {
-  const study = useStudyById(projectId, studyId);
+  const study = useStudy(projectId, studyId);
   if (!study) return null;
 
   return (

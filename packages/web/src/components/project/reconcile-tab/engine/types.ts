@@ -1,9 +1,49 @@
 import type { ReactNode } from 'react';
-import type * as Y from 'yjs';
+import { isAmstar2Key } from '@corates/shared/checklists/amstar2';
+import { isRobinsIKey } from '@corates/shared/checklists/robins-i';
+import { isRob2Key } from '@corates/shared/checklists/rob2';
+import type { ChecklistAnswerInput } from '@corates/shared/sync';
 import type { getUserColor } from '@/lib/userColors.js';
-import type { TextRef } from '@/primitives/useProject/checklists';
 import type { PdfEntry } from '@/stores/projectStore';
+import type { ProjectWorkspace } from '@/project/ConnectionPool';
 import type { ChecklistResources } from '@/components/checklist/ResourcesPopover';
+
+// ---------------------------------------------------------------------------
+// Text field references
+// ---------------------------------------------------------------------------
+
+/** Reference to a free-text field, resolved to its flat answer key by `textFieldKey`. */
+export type TextRef =
+  | { type: 'AMSTAR2'; questionKey: string }
+  | { type: 'ROBINS_I'; sectionKey: string; fieldKey: string; questionKey?: string | null }
+  | { type: 'ROB2'; sectionKey: string; fieldKey: string; questionKey?: string | null };
+
+/**
+ * Narrow a (checklistType, key, data) triple coming from a dynamic patch into
+ * a typed `ChecklistAnswerInput`. Returns null when the key is not valid for
+ * the given checklist type. Data is asserted via `as` because patches arrive
+ * as `unknown` from React event handlers; the mutator's Zod parse catches any
+ * shape mismatch at runtime.
+ */
+export function buildChecklistAnswerInput(
+  checklistType: string,
+  key: string,
+  data: unknown,
+): ChecklistAnswerInput | null {
+  switch (checklistType) {
+    case 'AMSTAR2':
+      if (!isAmstar2Key(key)) return null;
+      return { type: 'AMSTAR2', key, data } as ChecklistAnswerInput;
+    case 'ROBINS_I':
+      if (!isRobinsIKey(key)) return null;
+      return { type: 'ROBINS_I', key, data } as ChecklistAnswerInput;
+    case 'ROB2':
+      if (!isRob2Key(key)) return null;
+      return { type: 'ROB2', key, data } as ChecklistAnswerInput;
+    default:
+      return null;
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Presence types (mirrored from useReconciliationPresence to avoid
@@ -17,7 +57,7 @@ export interface PresenceUser {
 }
 
 export interface RemoteUser {
-  clientId: number;
+  clientId: string;
   userId: string;
   name: string;
   image: string | null;
@@ -70,6 +110,8 @@ export interface EngineContext<
   navItems: TNavItem[];
   checklist1: TChecklist | null;
   checklist2: TChecklist | null;
+  /** Serialized reconciled checklist data (nested shape from answer rows) */
+  reconciledChecklist: TChecklist | null;
   /** Derived via adapter.deriveFinalAnswers */
   finalAnswers: TFinalAnswers;
   /** From adapter.compare */
@@ -78,11 +120,9 @@ export interface EngineContext<
   reviewer2Name: string;
   /** Pre-computed by engine via adapter.isAgreement for current item */
   isAgreement: boolean;
-  /** Raw Yjs write callback - adapter formats args for its data model */
+  /** Raw write callback - adapter formats args for its data model */
   updateChecklistAnswer: (sectionKey: string, data: unknown) => void;
-  /** Y.Text accessor for collaborative comment/note fields */
-  getTextRef: (ref: TextRef) => Y.Text | null;
-  /** Set a Y.Text field value (equality-checked, transacted) */
+  /** Set a text field value (the ref resolves to its flat answer key) */
   setTextValue: (ref: TextRef, text: string) => void;
 }
 
@@ -312,7 +352,6 @@ export interface ReconciliationEngineProps {
   onSaveReconciled: (name?: string) => void;
   onCancel: () => void;
   updateChecklistAnswer: (sectionKey: string, data: unknown) => void;
-  getTextRef: (ref: TextRef) => Y.Text | null;
   setTextValue: (ref: TextRef, text: string) => void;
 
   // PDF
@@ -324,7 +363,8 @@ export interface ReconciliationEngineProps {
   selectedPdfId: string | null;
   onPdfSelect: (pdfId: string) => void;
 
-  // Presence
-  getAwareness?: () => unknown;
+  // Presence + collaborative text: the project's engine client, null in
+  // local practice (empty presence, note editors fall back to row writes).
+  client: ProjectWorkspace['client'] | null;
   currentUser: PresenceUser | null;
 }

@@ -33,8 +33,13 @@ describe('Amstar2 answer-payload schemas', () => {
     ).toThrow();
   });
 
-  it('rejects missing answers field', () => {
-    expect(() => Amstar2QuestionAnswerSchema.parse({ critical: false } as unknown)).toThrow();
+  it('accepts partial updates carrying only one field', () => {
+    // Updates send only what changed so concurrent answer/critical writes on
+    // the same question never clobber each other's row.
+    expect(Amstar2QuestionAnswerSchema.parse({ critical: false })).toEqual({ critical: false });
+    expect(Amstar2QuestionAnswerSchema.parse({ answers: [[true]] })).toEqual({
+      answers: [[true]],
+    });
   });
 
   it('isAmstar2Key narrows known and rejects unknown keys', () => {

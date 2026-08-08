@@ -10,6 +10,17 @@ import type { PluginOption } from 'vite';
 export default defineConfig({
   build: {
     sourcemap: true,
+    rollupOptions: {
+      output: {
+        // drizzle-orm has internal circular imports that are benign at module
+        // granularity but break when rolldown splits them across chunks in
+        // the worker bundle (class-extends hits an uninitialized import from
+        // the sibling chunk). Pin the whole package into one chunk.
+        advancedChunks: {
+          groups: [{ name: 'drizzle-orm', test: /node_modules\/.*drizzle-orm/ }],
+        },
+      },
+    },
   },
   resolve: {
     tsconfigPaths: true,

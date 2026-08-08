@@ -14,7 +14,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { connectionPool } from '@/project/ConnectionPool';
-import { LOCAL_PROJECT_ID, createLocalAppraisal } from '@/project/localProject';
+import { applyLocalMutation } from '@/project/localWrites';
+import { LOCAL_PROJECT_ID } from '@/project/localProject';
 import { db } from '@/primitives/db';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -67,18 +68,49 @@ export function CreateLocalChecklist({ type: typeParam }: { type?: string }) {
       setCreating(true);
 
       try {
-        const entry = connectionPool.getEntry(LOCAL_PROJECT_ID);
-        if (!entry) {
+        if (!connectionPool.getCollections(LOCAL_PROJECT_ID)) {
           throw new Error('Local project not ready — reload the page and try again.');
         }
-        const checklistName = name.trim() || 'Untitled Checklist';
-        const id = createLocalAppraisal(entry.ydoc, {
-          name: checklistName,
-          type: checklistType,
-        });
-        if (!id) {
+        if (
+          checklistType !== 'AMSTAR2' &&
+          checklistType !== 'ROB2' &&
+          checklistType !== 'ROBINS_I'
+        ) {
           throw new Error(`Unsupported checklist type: ${checklistType}`);
         }
+        const checklistName = name.trim() || 'Untitled Checklist';
+        // Local convention: study id === checklist id, so the /checklist/:id
+        // route can serve as both.
+        const id = crypto.randomUUID();
+        const now = Date.now();
+
+        applyLocalMutation(LOCAL_PROJECT_ID, 'study.create', {
+          id,
+          name: checklistName,
+          description: '',
+          now,
+        });
+
+        // ROB2/ROBINS-I require an outcome; local practice gets a placeholder.
+        let outcomeId: string | null = null;
+        if (checklistType === 'ROB2' || checklistType === 'ROBINS_I') {
+          outcomeId = `${id}-outcome`;
+          applyLocalMutation(LOCAL_PROJECT_ID, 'outcome.create', {
+            id: outcomeId,
+            name: 'Practice outcome',
+            createdBy: 'local',
+            now,
+          });
+        }
+
+        applyLocalMutation(LOCAL_PROJECT_ID, 'checklist.create', {
+          id,
+          studyId: id,
+          type: checklistType,
+          assignedTo: null,
+          outcomeId,
+          now,
+        });
 
         track('LocalAppraisal', { type: checklistType });
 

@@ -1,6 +1,4 @@
-import { useMemo, useEffect, useEffectEvent, useId, useCallback } from 'react';
-import type * as Y from 'yjs';
-import { useYText } from '@/hooks/useYText';
+import { useMemo, useId, useCallback } from 'react';
 import { CheckIcon, XIcon, AlertTriangleIcon } from 'lucide-react';
 import {
   PRELIMINARY_SECTION,
@@ -9,9 +7,10 @@ import {
   DEVIATION_OPTIONS,
   INFORMATION_SOURCES,
 } from '@corates/shared/checklists/rob2';
+import { textFieldKey } from '@corates/shared/sync';
 import { Button } from '@/components/ui/button';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
-import type { TextRef } from '@/primitives/useProject/checklists';
+import { useReconciledText } from '../../fields';
 
 const PRELIMINARY_TEXT_FIELDS = ['experimental', 'comparator', 'numericalResult'];
 
@@ -248,6 +247,28 @@ function MultiSelectField({
   );
 }
 
+/**
+ * Editable preliminary text field for the final panel — a live collaborative
+ * field (`useReconciledText` — a Yjs field online, the answer row in local
+ * practice).
+ */
+function FinalTextField({ fieldKey, placeholder }: { fieldKey: string; placeholder?: string }) {
+  const text = useReconciledText(
+    textFieldKey({ type: 'ROB2', sectionKey: 'preliminary', fieldKey }),
+  );
+  return (
+    <NoteEditor
+      value={text.value}
+      onChange={text.setValue}
+      live={true}
+      disabled={!text.canWrite}
+      placeholder={placeholder}
+      inline={true}
+      focusRingColor='green-500'
+    />
+  );
+}
+
 interface PreliminaryPageProps {
   fieldKey: string;
   reviewer1Value: any;
@@ -258,7 +279,6 @@ interface PreliminaryPageProps {
   isAgreement: boolean;
   isAimMismatch: boolean;
   onFinalChange: (_value: any) => void;
-  getTextRef: (_ref: TextRef) => Y.Text | null;
   onUseReviewer1: () => void;
   onUseReviewer2: () => void;
 }
@@ -297,30 +317,12 @@ export function PreliminaryPage({
   isAgreement,
   isAimMismatch,
   onFinalChange,
-  getTextRef,
   onUseReviewer1,
   onUseReviewer2,
 }: PreliminaryPageProps) {
   const fieldDef = (PRELIMINARY_SECTION as Record<string, any>)[fieldKey];
   const fieldLabel = fieldDef?.label || fieldKey;
   const isTextField = PRELIMINARY_TEXT_FIELDS.includes(fieldKey);
-
-  const preliminaryYText =
-    isTextField ? getTextRef({ type: 'ROB2', sectionKey: 'preliminary', fieldKey }) : null;
-  const preliminaryText = useYText(preliminaryYText);
-
-  // Sync Y.Text changes back to finalAnswers so hasNavItemAnswer detects
-  // the field as answered. useEffectEvent captures the latest onFinalChange
-  // without making it a dependency, so the effect only fires when the
-  // Y.Text content actually changes -- not when navigation swaps the closure.
-  const syncToFinalAnswers = useEffectEvent((text: string) => {
-    onFinalChange(text);
-  });
-
-  useEffect(() => {
-    if (!preliminaryYText) return;
-    syncToFinalAnswers(preliminaryText);
-  }, [preliminaryText, preliminaryYText]);
 
   const fieldType = getFieldType(fieldKey);
   const options = useMemo(() => getOptions(fieldKey), [fieldKey]);
@@ -369,17 +371,8 @@ export function PreliminaryPage({
           />
         );
       default:
-        // Text fields use NoteEditor with Y.Text
         if (isTextField) {
-          return (
-            <NoteEditor
-              yText={getTextRef({ type: 'ROB2', sectionKey: 'preliminary', fieldKey })}
-              placeholder={fieldDef?.placeholder}
-              readOnly={false}
-              inline={true}
-              focusRingColor='green-500'
-            />
-          );
+          return <FinalTextField fieldKey={fieldKey} placeholder={fieldDef?.placeholder} />;
         }
         return <ReadOnlyTextField value={finalValue} />;
     }

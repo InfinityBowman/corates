@@ -157,49 +157,60 @@ export async function addProjectMember(
 }
 
 /**
- * Bulk-populate a project with studies via the dev/add-study endpoint.
- * Each call creates one study with 2 filled checklists (one per reviewer).
- * Requires DEV_MODE=true on the workers backend.
+ * Bulk-populate a project with studies through the in-page dev seeding seam
+ * (`window.__devSeed`, exposed behind VITE_DEV_PANEL). Each study gets two
+ * filled reviewer checklists; seeding runs the real client path — short-lived
+ * engine sessions issuing the shared mutators — so it exercises the sync
+ * engine exactly like a user would. The page must be signed in as a project
+ * member with the app loaded.
  */
 export async function seedStudies(
-  orgId: string,
+  page: Page,
   projectId: string,
-  sessionCookies: SessionCookie[],
   reviewer1Id: string,
   reviewer2Id: string,
   count: number,
   opts: { type?: string; fillMode?: string; reconcile?: boolean } = {},
 ) {
-  const cookieHeader = sessionCookies.map(c => `${c.name}=${c.value}`).join('; ');
   const type = opts.type ?? 'AMSTAR2';
   const fillMode = opts.fillMode ?? 'random';
   const reconcile = opts.reconcile ?? false;
 
-  const addStudy = async (i: number) => {
-    const res = await fetch(`${API_BASE}/api/orgs/${orgId}/projects/${projectId}/dev/add-study`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Cookie: cookieHeader },
-      body: JSON.stringify({
-        type,
-        fillMode,
-        reconcile,
-        reviewer1: reviewer1Id,
-        reviewer2: reviewer2Id,
-      }),
-    });
-    if (!res.ok) {
-      throw new Error(`seedStudies failed on study ${i + 1}: ${res.status} ${await res.text()}`);
-    }
-  };
+  await page.waitForFunction(
+    () => typeof (window as { __devSeed?: unknown }).__devSeed !== 'undefined',
+    undefined,
+    { timeout: 20_000 },
+  );
 
-  // The project's Durable Object serializes writes, so concurrent requests are
-  // safe. Batch them to avoid opening `count` sockets at once.
-  const CONCURRENCY = 10;
+  // Each addStudy opens its own short-lived socket; batch to keep the
+  // concurrent socket count bounded.
+  const CONCURRENCY = 5;
   for (let start = 0; start < count; start += CONCURRENCY) {
-    const batch = Array.from({ length: Math.min(CONCURRENCY, count - start) }, (_, j) =>
-      addStudy(start + j),
+    const batch = Math.min(CONCURRENCY, count - start);
+    await page.evaluate(
+      async args => {
+        const seed = (
+          window as unknown as {
+            __devSeed: {
+              addStudy: (projectId: string, opts: Record<string, unknown>) => Promise<unknown>;
+            };
+          }
+        ).__devSeed;
+        await Promise.all(
+          Array.from({ length: args.batch }, (_, j) =>
+            seed.addStudy(args.projectId, {
+              type: args.type,
+              fillMode: args.fillMode,
+              reconcile: args.reconcile,
+              reviewer1: args.reviewer1Id,
+              reviewer2: args.reviewer2Id,
+              studyNum: args.start + j + 1,
+            }),
+          ),
+        );
+      },
+      { projectId, type, fillMode, reconcile, reviewer1Id, reviewer2Id, start, batch },
     );
-    await Promise.all(batch);
   }
 }
 

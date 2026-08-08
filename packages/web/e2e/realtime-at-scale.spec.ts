@@ -2,8 +2,8 @@
  * E2E Test: Realtime Collaboration at Scale
  *
  * Prepopulates a project with 50 ROB2 studies (100 filled checklists) via
- * the dev/add-study API, then measures what a user would actually feel:
- *   - Project page load time (Y.Doc sync + render)
+ * the in-page dev seeding seam, then measures what a user would actually feel:
+ *   - Project page load time (workspace sync + render)
  *   - Reconciliation page load time
  *   - Presence sync latency
  *   - Text editing sync latency between two users
@@ -61,15 +61,10 @@ test(`Realtime reconciliation with ${STUDY_COUNT} ROB2 studies`, async ({ browse
   await addProjectMember(scenario.orgId, projectId, scenario.userB.id, scenario.cookiesA);
 
   const seedStart = Date.now();
-  await seedStudies(
-    scenario.orgId,
-    projectId,
-    scenario.cookiesA,
-    scenario.userA.id,
-    scenario.userB.id,
-    STUDY_COUNT,
-    { type: 'ROB2', fillMode: 'random' },
-  );
+  await seedStudies(page, projectId, scenario.userA.id, scenario.userB.id, STUDY_COUNT, {
+    type: 'ROB2',
+    fillMode: 'random',
+  });
   timings.seedStudies = Date.now() - seedStart;
 
   // ================================================================

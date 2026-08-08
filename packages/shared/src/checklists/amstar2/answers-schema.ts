@@ -9,8 +9,11 @@
 
 import { z } from 'zod';
 
+// Both fields optional: an update carries only what actually changed, so a
+// concurrent answer click and critical toggle on the same question never
+// clobber each other's row (rows are last-writer-wins upserts, not merges).
 export const Amstar2QuestionAnswerSchema = z.object({
-  answers: z.array(z.array(z.boolean())),
+  answers: z.array(z.array(z.boolean())).optional(),
   critical: z.boolean().optional(),
 });
 

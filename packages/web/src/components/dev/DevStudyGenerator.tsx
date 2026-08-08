@@ -1,14 +1,14 @@
 /**
  * DevStudyGenerator - Add studies with auto-filled checklists and optional reconciliation
  *
- * Reads project members and outcomes from the project store to populate dropdowns.
- * Calls POST /dev/add-study on the backend to generate the study directly in the Y.Doc.
+ * Reads project members and outcomes from workspace data to populate dropdowns.
+ * Seeds through the sync engine via `@/dev/seed`, which must stay lazy-imported
+ * so fixture data stays out of the main bundle.
  */
 
 import { useId, useState } from 'react';
 import { PlusIcon, CheckIcon, AlertCircleIcon } from 'lucide-react';
-import { useProjectMembersById, useProjectMetaById } from '@/primitives/useProject/reactor';
-import { addStudy } from '@/server/functions/dev-tools.functions';
+import { useAllStudies, useProjectMembers, useProjectOutcomes } from '@/project/workspace-data';
 import {
   Select,
   SelectContent,
@@ -26,25 +26,16 @@ interface ActionResult {
   message: string;
 }
 
-interface MemberEntry {
-  userId: string;
-  name?: string;
-  email?: string;
-  role?: string;
-}
+type ChecklistType = 'AMSTAR2' | 'ROB2' | 'ROBINS_I';
+type FillMode = 'random' | 'all-yes' | 'mixed';
 
-interface OutcomeEntry {
-  id: string;
-  name?: string;
-}
-
-const CHECKLIST_TYPES = [
+const CHECKLIST_TYPES: Array<{ value: ChecklistType; label: string }> = [
   { value: 'AMSTAR2', label: 'AMSTAR2' },
   { value: 'ROB2', label: 'ROB2' },
   { value: 'ROBINS_I', label: 'ROBINS-I' },
 ];
 
-const FILL_MODES = [
+const FILL_MODES: Array<{ value: FillMode; label: string }> = [
   { value: 'random', label: 'Random' },
   { value: 'all-yes', label: 'All Yes' },
   { value: 'mixed', label: 'Mixed' },
@@ -52,18 +43,15 @@ const FILL_MODES = [
 
 interface DevStudyGeneratorProps {
   projectId: string | null;
-  orgId: string | null;
 }
 
-export function DevStudyGenerator({ projectId, orgId }: DevStudyGeneratorProps) {
-  const atomMembers = useProjectMembersById(projectId || '');
-  const meta = useProjectMetaById(projectId || '');
+export function DevStudyGenerator({ projectId }: DevStudyGeneratorProps) {
+  const members = useProjectMembers(projectId || '');
+  const outcomes = useProjectOutcomes(projectId || '');
+  const studies = useAllStudies(projectId || '');
 
-  const members: MemberEntry[] = (atomMembers as MemberEntry[]) || [];
-  const outcomes: OutcomeEntry[] = meta?.outcomes ?? [];
-
-  const [type, setType] = useState('AMSTAR2');
-  const [fillMode, setFillMode] = useState('random');
+  const [type, setType] = useState<ChecklistType>('AMSTAR2');
+  const [fillMode, setFillMode] = useState<FillMode>('random');
   const [reviewer1, setReviewer1] = useState('');
   const [reviewer2, setReviewer2] = useState('');
   const [outcomeId, setOutcomeId] = useState('__auto__');
@@ -76,32 +64,30 @@ export function DevStudyGenerator({ projectId, orgId }: DevStudyGeneratorProps) 
   const requiresOutcome = type === 'ROB2' || type === 'ROBINS_I';
   const canSubmit = reviewer1 && reviewer2 && reviewer1 !== reviewer2 && !isAdding;
 
-  const getMemberLabel = (m: MemberEntry) => {
+  const getMemberLabel = (m: { userId: string; name: string; email: string; role: string }) => {
     if (m.name) return `${m.name} (${m.role || 'member'})`;
     if (m.email) return `${m.email} (${m.role || 'member'})`;
     return m.userId.slice(0, 12) + '...';
   };
 
   const handleAdd = async () => {
-    if (!projectId || !orgId || !canSubmit) return;
+    if (!projectId || !canSubmit) return;
 
     setIsAdding(true);
     setResult(null);
 
     try {
-      const data = (await addStudy({
-        data: {
-          orgId,
-          projectId,
-          type,
-          fillMode,
-          reviewer1,
-          reviewer2,
-          reconcile,
-          ...(requiresOutcome ? { outcomeId: outcomeId === '__auto__' ? null : outcomeId } : {}),
-        },
-      })) as { checklistIds?: string[]; outcomeId?: string };
-      const checklistCount = data.checklistIds?.length || 0;
+      const { devAddStudy } = await import('@/dev/seed');
+      const data = await devAddStudy(projectId, {
+        type,
+        fillMode,
+        reviewer1,
+        reviewer2,
+        reconcile,
+        ...(requiresOutcome ? { outcomeId: outcomeId === '__auto__' ? null : outcomeId } : {}),
+        studyNum: studies.length + 1,
+      });
+      const checklistCount = data.checklistIds.length;
       setResult({
         success: true,
         message: `Added study with ${checklistCount} checklists${data.outcomeId ? ` (outcome: ${data.outcomeId.slice(0, 12)}...)` : ''}`,
@@ -133,7 +119,11 @@ export function DevStudyGenerator({ projectId, orgId }: DevStudyGeneratorProps) 
       <div className='flex gap-2'>
         <div className='flex flex-1 flex-col gap-1'>
           <label className={labelClass}>Type</label>
-          <Select value={type} onValueChange={setType} disabled={isAdding}>
+          <Select
+            value={type}
+            onValueChange={value => setType(value as ChecklistType)}
+            disabled={isAdding}
+          >
             <SelectTrigger size='sm' className={triggerClass}>
               <SelectValue />
             </SelectTrigger>
@@ -148,7 +138,11 @@ export function DevStudyGenerator({ projectId, orgId }: DevStudyGeneratorProps) 
         </div>
         <div className='flex flex-1 flex-col gap-1'>
           <label className={labelClass}>Fill Mode</label>
-          <Select value={fillMode} onValueChange={setFillMode} disabled={isAdding}>
+          <Select
+            value={fillMode}
+            onValueChange={value => setFillMode(value as FillMode)}
+            disabled={isAdding}
+          >
             <SelectTrigger size='sm' className={triggerClass}>
               <SelectValue />
             </SelectTrigger>

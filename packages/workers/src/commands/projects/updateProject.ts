@@ -4,12 +4,10 @@
  * @throws DomainError DB_ERROR on database error
  */
 
-import { captureError } from '../../lib/logger';
 import { createDb } from '@corates/db/client';
 import { projects } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
-import { syncProjectToDO } from '../lib/doSync';
 import type { Env } from '../../types';
 
 interface UpdateProjectActor {
@@ -52,21 +50,6 @@ export async function updateProject(
       { operation: 'update_project', projectId, originalError: (err as Error).message },
       'Failed to update project',
     );
-  }
-
-  const metaUpdate: { updatedAt: number; name?: string; description?: string | null } = {
-    updatedAt: now.getTime(),
-  };
-  if (trimmedName !== undefined) metaUpdate.name = trimmedName;
-  if (trimmedDescription !== undefined) metaUpdate.description = trimmedDescription || null;
-
-  try {
-    await syncProjectToDO(env, projectId, metaUpdate, null);
-  } catch (err) {
-    captureError(err, {
-      tags: { component: 'project', action: 'update-do-sync' },
-      extra: { projectId },
-    });
   }
 
   return { projectId, updated: true };

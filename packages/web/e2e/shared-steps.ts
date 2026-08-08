@@ -241,6 +241,10 @@ export async function assignReviewers(page: Page) {
   // without this the first selection can be lost.
   await expect(page.getByRole('listbox')).toBeHidden({ timeout: 5_000 });
   await triggers.nth(1).click();
+  // Members added out-of-band propagate via the membership poke (session
+  // refresh -> members refetch); the open dropdown re-renders when the list
+  // lands, so wait for the option rather than requiring a page reload.
+  await expect(page.getByRole('option', { name: /Bob/i })).toBeVisible({ timeout: 15_000 });
   await page.getByRole('option', { name: /Bob/i }).click();
 
   await dialog.getByRole('button', { name: 'Save' }).click();

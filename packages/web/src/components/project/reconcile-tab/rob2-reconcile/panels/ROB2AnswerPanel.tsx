@@ -1,6 +1,7 @@
 import { useId } from 'react';
 import { RESPONSE_LABELS } from '@corates/shared/checklists/rob2';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
+import { useReconciledText } from '../../fields';
 
 /**
  * Get badge color for ROB-2 answer type
@@ -31,12 +32,33 @@ function getSelectedAnswerStyle(): string {
   return 'border-blue-400 bg-blue-50 text-blue-800';
 }
 
+/**
+ * Edits the final comment as a live collaborative field (`useReconciledText`
+ * — a Yjs field online, the answer row in local practice).
+ */
+function FinalCommentEditor({ fieldKey }: { fieldKey: string }) {
+  const comment = useReconciledText(fieldKey);
+  return (
+    <NoteEditor
+      value={comment.value}
+      onChange={comment.setValue}
+      live={true}
+      disabled={!comment.canWrite}
+      placeholder='Add the final reconciled comment...'
+      inline={true}
+      focusRingColor='blue-400'
+    />
+  );
+}
+
 interface ROB2AnswerPanelProps {
   title: string;
   panelType: 'reviewer1' | 'reviewer2' | 'final';
   answer: string | null;
+  /** Reviewer panels only: the reviewer's comment from their answer row. */
   comment?: string | null;
-  commentYText?: any;
+  /** Final panel only: the comment's flat answer key on the reconciled checklist. */
+  finalCommentKey?: string;
   responseOptions: string[];
   readOnly: boolean;
   isSelected?: boolean;
@@ -52,7 +74,7 @@ export function ROB2AnswerPanel({
   panelType,
   answer,
   comment,
-  commentYText,
+  finalCommentKey,
   responseOptions,
   readOnly,
   isSelected,
@@ -149,20 +171,13 @@ export function ROB2AnswerPanel({
         <label className='text-secondary-foreground mb-1 block text-xs font-medium'>
           {isFinal ? 'Final Comment' : 'Comment'}
         </label>
-        {readOnly ?
+        {readOnly || finalCommentKey == null ?
           <div className='border-border bg-muted rounded-lg border p-3'>
             <p className='text-secondary-foreground text-sm whitespace-pre-wrap'>
               {comment || <span className='text-muted-foreground/70 italic'>No comment</span>}
             </p>
           </div>
-        : <NoteEditor
-            yText={commentYText}
-            placeholder='Add the final reconciled comment...'
-            readOnly={false}
-            inline={true}
-            focusRingColor='blue-400'
-          />
-        }
+        : <FinalCommentEditor fieldKey={finalCommentKey} />}
       </div>
     </div>
   );

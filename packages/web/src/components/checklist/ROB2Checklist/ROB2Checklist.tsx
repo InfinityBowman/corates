@@ -5,7 +5,7 @@ import { DomainSection } from './DomainSection';
 import { OverallSection } from './OverallSection';
 import { ResponseLegend } from './SignallingQuestion';
 import { ScoringSummary } from './ScoringSummary';
-import { useAnswer, useChecklistField } from '@/primitives/useProject/reactor/hooks';
+import { useWorkspaceProjectId, useAnswerValue, useStudy } from '@/project/workspace-data';
 
 interface ROB2ChecklistProps {
   studyId: string;
@@ -34,8 +34,10 @@ export function ROB2Checklist({
     };
   }, []);
 
-  const aim = useAnswer<string>(studyId, checklistId, 'preliminary.aim');
-  const checklistName = useChecklistField<string>(studyId, checklistId, 'name');
+  const projectId = useWorkspaceProjectId();
+  const aim = useAnswerValue<string>(projectId, checklistId, 'preliminary.aim');
+  const study = useStudy(projectId, studyId);
+  const checklistName = study?.checklists.find(c => c.id === checklistId)?.title ?? null;
   const isAdhering = aim === 'ADHERING';
   const activeDomains = useMemo(() => getActiveDomainKeys(isAdhering), [isAdhering]);
   const hasAimSelected = !!aim;

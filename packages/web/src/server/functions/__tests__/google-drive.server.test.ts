@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { env } from 'cloudflare:workers';
 import { createDb } from '@corates/db/client';
-import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
+import { resetTestDatabase } from '@/__tests__/server/helpers';
 import { buildUser, buildProject, resetCounter } from '@/__tests__/server/factories';
 import {
   getStatus,
@@ -53,7 +53,6 @@ async function seedGoogleAccount(
 beforeEach(async () => {
   await resetTestDatabase();
   resetCounter();
-  await clearProjectDOs(['project-1']);
   await clearR2('projects/');
   currentUser = { id: 'user-1', email: 'user1@example.com' };
 

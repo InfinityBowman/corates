@@ -22,7 +22,7 @@ import { PreviousReviewersView } from './PreviousReviewersView';
 import { CompletedOutcomeRow } from './CompletedOutcomeRow';
 import { ReopenReconciliationButton } from './ReopenReconciliationButton';
 import type { StudyInfo, PdfEntry } from '@/stores/projectStore';
-import type { ReconciliationProgressEntry } from '@/primitives/useProject/reconciliation';
+import type { ReconciliationProgressEntry } from '@/project/workspace-data';
 
 interface CompletedStudyRowProps {
   study: StudyInfo;

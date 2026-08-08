@@ -1,6 +1,7 @@
 import { useId } from 'react';
 import { RESPONSE_LABELS } from '@/components/checklist/ROBINSIChecklist/checklist-map';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
+import { useReconciledText } from '../../fields';
 
 /**
  * Get badge color for Robins-I answer type
@@ -33,12 +34,32 @@ function getSelectedAnswerStyle(): string {
   return 'border-blue-400 bg-blue-50 text-blue-800';
 }
 
+/**
+ * The final comment, edited as a live collaborative field (`useReconciledText`
+ * — a Yjs field online, the answer row in local practice).
+ */
+function FinalCommentEditor({ commentKey }: { commentKey: string }) {
+  const comment = useReconciledText(commentKey);
+  return (
+    <NoteEditor
+      value={comment.value}
+      onChange={comment.setValue}
+      live={true}
+      disabled={!comment.canWrite}
+      placeholder='Add the final reconciled comment...'
+      inline={true}
+      focusRingColor='blue-400'
+    />
+  );
+}
+
 interface RobinsAnswerPanelProps {
   title: string;
   panelType: 'reviewer1' | 'reviewer2' | 'final';
   answer?: string | null;
   comment?: string | null;
-  commentYText?: any;
+  /** The final comment's flat answer key on the reconciled checklist (final panel only). */
+  commentKey?: string;
   responseOptions: readonly string[];
   readOnly?: boolean;
   isSelected?: boolean;
@@ -51,7 +72,7 @@ export function RobinsAnswerPanel({
   panelType,
   answer,
   comment,
-  commentYText,
+  commentKey,
   responseOptions,
   readOnly = false,
   isSelected = false,
@@ -142,14 +163,8 @@ export function RobinsAnswerPanel({
         <label className='text-secondary-foreground mb-1 block text-xs font-medium'>
           {isFinal ? 'Final Comment' : 'Comment'}
         </label>
-        {!readOnly ?
-          <NoteEditor
-            yText={commentYText}
-            placeholder='Add the final reconciled comment...'
-            readOnly={false}
-            inline={true}
-            focusRingColor='blue-400'
-          />
+        {!readOnly && commentKey ?
+          <FinalCommentEditor commentKey={commentKey} />
         : <div className='border-border bg-muted rounded-lg border p-3'>
             <p className='text-secondary-foreground text-sm whitespace-pre-wrap'>
               {comment || <span className='text-muted-foreground/70 italic'>No comment</span>}

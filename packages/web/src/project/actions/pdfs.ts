@@ -7,12 +7,39 @@ import { cachePdf, removeCachedPdf, getCachedPdf } from '@/primitives/pdfCache.j
 import { bestEffort } from '@/lib/errorLogger.js';
 import { extractPdfDoi, extractPdfTitle } from '@/lib/pdfUtils.js';
 import { fetchFromDOI } from '@/lib/referenceLookup.js';
-import * as Y from 'yjs';
+import type { PdfCitationMetadata, PdfRow, PdfTag } from '@corates/shared/sync';
 import type { PdfEntry } from '@/stores/projectStore';
 import { usePdfPreviewStore } from '@/stores/pdfPreviewStore';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { connectionPool } from '../ConnectionPool';
-import type { PdfInfo, PdfTag } from '@/primitives/useProject/pdfs';
+
+type SyncClient = NonNullable<ReturnType<typeof connectionPool.getActiveClient>>;
+
+function requireClient(): SyncClient {
+  const client = connectionPool.getActiveClient();
+  if (!client) throw new Error('No active project connection');
+  return client;
+}
+
+/** The study's current PDF rows, from the active project's collections. */
+function studyPdfRows(projectId: string, studyId: string): PdfRow[] {
+  const collections = connectionPool.getCollections(projectId);
+  return (collections?.pdfs.toArray ?? []).filter(pdf => pdf.studyId === studyId);
+}
+
+/**
+ * Shape extracted citation metadata for `pdf.attach`/`pdf.updateMetadata`:
+ * strings only, `publicationYear` coerced (reference lookups return numbers).
+ */
+function toCitationMetadata(metadata: Record<string, unknown>): PdfCitationMetadata {
+  const shaped: Record<string, string> = {};
+  for (const field of ['title', 'firstAuthor', 'publicationYear', 'journal', 'doi'] as const) {
+    const value = metadata[field];
+    if (value === undefined || value === null) continue;
+    shaped[field] = String(value);
+  }
+  return shaped as PdfCitationMetadata;
+}
 
 async function extractPdfMetadata(
   arrayBuffer: ArrayBuffer | null,
@@ -109,33 +136,22 @@ export const pdfActions = {
     const orgId = connectionPool.getActiveOrgId();
     const user = selectUser(useAuthStore.getState());
     const userId = user?.id || null;
-    const ops = connectionPool.getActiveOps();
+    const client = connectionPool.getActiveClient();
 
-    if (!projectId || !orgId || !ops) {
+    if (!projectId || !orgId || !client) {
       throw new Error('No active project connection');
     }
 
-    const entry = connectionPool.getEntry(projectId);
-    const studyYMap = entry?.ydoc.getMap('reviews').get(studyId) as Y.Map<unknown> | undefined;
-    const pdfsYMap = studyYMap?.get('pdfs') as Y.Map<unknown> | undefined;
-
-    if (pdfsYMap) {
-      for (const [, pdfYMap] of pdfsYMap.entries()) {
-        const p = pdfYMap as Y.Map<unknown>;
-        if (p.get('fileName') === file.name) {
-          throw new Error(
-            `File "${file.name}" already exists. Rename or remove the existing copy.`,
-          );
-        }
-      }
+    const existingPdfs = studyPdfRows(projectId, studyId);
+    if (existingPdfs.some(pdf => pdf.fileName === file.name)) {
+      throw new Error(`File "${file.name}" already exists. Rename or remove the existing copy.`);
     }
 
     let uploadResult: { success: boolean; key: string; fileName: string; size: number } | null =
       null;
 
     try {
-      const hasPdfs = (pdfsYMap?.size ?? 0) > 0;
-      const effectiveTag = !hasPdfs ? 'primary' : tag;
+      const effectiveTag = existingPdfs.length === 0 ? 'primary' : tag;
 
       uploadResult = await uploadPdf(orgId, projectId, studyId, file, file.name);
 
@@ -156,24 +172,23 @@ export const pdfActions = {
 
       const pdfMetadata = await extractPdfMetadata(arrayBuffer);
 
-      const pdfId = ops.pdf.addPdfToStudy(
+      const pdfId = crypto.randomUUID();
+      void client.mutate.pdf.attach({
         studyId,
-        {
+        pdf: {
+          id: pdfId,
           key: uploadResult.key,
           fileName: uploadResult.fileName,
           size: uploadResult.size,
           uploadedBy: userId ?? '',
           uploadedAt: Date.now(),
-          title: (pdfMetadata.title as string) || undefined,
-          firstAuthor: (pdfMetadata.firstAuthor as string) || undefined,
-          publicationYear: (pdfMetadata.publicationYear as string) || undefined,
-          journal: (pdfMetadata.journal as string) || undefined,
-          doi: (pdfMetadata.doi as string) || undefined,
+          ...toCitationMetadata(pdfMetadata),
         },
-        effectiveTag as PdfTag,
-      );
+        tag: effectiveTag as PdfTag,
+        now: Date.now(),
+      });
 
-      return pdfId!;
+      return pdfId;
     } catch (err) {
       console.error('Error uploading PDF:', err);
       if (uploadResult?.fileName) {
@@ -191,15 +206,14 @@ export const pdfActions = {
   async delete(studyId: string, pdf: PdfEntry): Promise<void> {
     const projectId = connectionPool.getActiveProjectId();
     const orgId = connectionPool.getActiveOrgId();
-    const ops = connectionPool.getActiveOps();
+    const client = connectionPool.getActiveClient();
 
-    if (!projectId || !orgId || !ops) {
+    if (!projectId || !orgId || !client) {
       throw new Error('No active project connection');
     }
 
-    let r2Deleted = false;
-
     try {
+      let r2Deleted = false;
       try {
         await deletePdf(orgId, projectId, studyId, pdf.fileName);
         r2Deleted = true;
@@ -213,34 +227,36 @@ export const pdfActions = {
         console.warn('Failed to remove PDF from IndexedDB cache:', cacheErr);
       }
 
-      if (r2Deleted) {
-        try {
-          ops.pdf.removePdfFromStudy(studyId, pdf.id);
-        } catch (yjsErr) {
-          console.error('Failed to remove PDF from Y.js:', yjsErr);
-          throw new Error('PDF deleted from R2 but failed to remove from study');
-        }
-      }
-
       if (!r2Deleted) {
         throw new Error('Failed to delete PDF from R2 storage');
       }
+
+      void client.mutate.pdf.remove({ pdfId: pdf.id, now: Date.now() });
     } catch (err) {
       console.error('Error deleting PDF:', err);
       throw err;
     }
   },
 
-  updateTag(studyId: string, pdfId: string, newTag: string): void {
-    const ops = connectionPool.getActiveOps();
-    if (!ops) throw new Error('No active project connection');
-    ops.pdf.updatePdfTag(studyId, pdfId, newTag as PdfTag);
+  updateTag(_studyId: string, pdfId: string, newTag: string): void {
+    const client = requireClient();
+    void client.mutate.pdf.updateTag({ pdfId, tag: newTag as PdfTag, now: Date.now() });
   },
 
-  updateMetadata(studyId: string, pdfId: string, metadata: Record<string, unknown>): void {
-    const ops = connectionPool.getActiveOps();
-    if (!ops) throw new Error('No active project connection');
-    ops.pdf.updatePdfMetadata(studyId, pdfId, metadata);
+  updateMetadata(_studyId: string, pdfId: string, metadata: Record<string, unknown>): void {
+    const client = requireClient();
+    // Empty strings pass through: `pdf.updateMetadata` deletes fields set to ''.
+    const shaped: Record<string, string> = {};
+    for (const field of ['title', 'firstAuthor', 'publicationYear', 'journal', 'doi'] as const) {
+      if (field in metadata && metadata[field] !== undefined) {
+        shaped[field] = metadata[field] === null ? '' : String(metadata[field]);
+      }
+    }
+    void client.mutate.pdf.updateMetadata({
+      pdfId,
+      metadata: shaped as PdfCitationMetadata,
+      now: Date.now(),
+    });
   },
 
   async handleGoogleDriveImport(
@@ -252,15 +268,12 @@ export const pdfActions = {
     const orgId = connectionPool.getActiveOrgId();
     const user = selectUser(useAuthStore.getState());
     const userId = user?.id || null;
-    const ops = connectionPool.getActiveOps();
+    const client = connectionPool.getActiveClient();
 
     if (!studyId || !file) return;
-    if (!projectId || !orgId || !ops) throw new Error('No active project connection');
+    if (!projectId || !orgId || !client) throw new Error('No active project connection');
 
-    const entry = connectionPool.getEntry(projectId);
-    const studyYMap = entry?.ydoc.getMap('reviews').get(studyId) as Y.Map<unknown> | undefined;
-    const pdfsYMap = studyYMap?.get('pdfs') as Y.Map<unknown> | undefined;
-    const hasPdfs = (pdfsYMap?.size ?? 0) > 0;
+    const hasPdfs = studyPdfRows(projectId, studyId).length > 0;
     const effectiveTag = !hasPdfs ? 'primary' : tag;
 
     try {
@@ -279,22 +292,20 @@ export const pdfActions = {
 
       const pdfMetadata = await extractPdfMetadata(arrayBuffer);
 
-      ops.pdf.addPdfToStudy(
+      void client.mutate.pdf.attach({
         studyId,
-        {
+        pdf: {
+          id: crypto.randomUUID(),
           key: file.key,
           fileName: file.fileName,
           size: file.size,
           uploadedBy: userId ?? '',
           uploadedAt: Date.now(),
-          title: (pdfMetadata.title as string) || undefined,
-          firstAuthor: (pdfMetadata.firstAuthor as string) || undefined,
-          publicationYear: (pdfMetadata.publicationYear as string) || undefined,
-          journal: (pdfMetadata.journal as string) || undefined,
-          doi: (pdfMetadata.doi as string) || undefined,
-        } as PdfInfo,
-        effectiveTag as PdfTag,
-      );
+          ...toCitationMetadata(pdfMetadata),
+        },
+        tag: effectiveTag as PdfTag,
+        now: Date.now(),
+      });
     } catch (err) {
       console.error('Failed to add Google Drive PDF metadata:', err);
       bestEffort(deletePdf(orgId, projectId, studyId, file.fileName), {
@@ -308,8 +319,20 @@ export const pdfActions = {
   },
 
   addToStudy(studyId: string, pdfMeta: Record<string, unknown>, tag?: string): void {
-    const ops = connectionPool.getActiveOps();
-    if (!ops) throw new Error('No active project connection');
-    ops.pdf.addPdfToStudy(studyId, pdfMeta as unknown as PdfInfo, tag as PdfTag);
+    const client = requireClient();
+    void client.mutate.pdf.attach({
+      studyId,
+      pdf: {
+        id: crypto.randomUUID(),
+        key: String(pdfMeta.key ?? ''),
+        fileName: String(pdfMeta.fileName ?? ''),
+        size: Number(pdfMeta.size ?? 0),
+        uploadedBy: String(pdfMeta.uploadedBy ?? ''),
+        uploadedAt: typeof pdfMeta.uploadedAt === 'number' ? pdfMeta.uploadedAt : undefined,
+        ...toCitationMetadata(pdfMeta),
+      },
+      tag: (tag ?? 'secondary') as PdfTag,
+      now: Date.now(),
+    });
   },
 };

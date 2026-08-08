@@ -3,7 +3,13 @@ import { InfoIcon } from 'lucide-react';
 import { ROB2_CHECKLIST, getActiveDomainKeys } from './checklist-map';
 import { ResourcesPopover } from '../ResourcesPopover';
 import { ROB2_RESOURCES } from './resources';
-import { useAnswer, useROB2Score, useROB2DomainScore } from '@/primitives/useProject/reactor/hooks';
+import {
+  useWorkspaceProjectId,
+  useAnswerValue,
+  useChecklistAnswerMap,
+  useRob2DomainScore,
+} from '@/project/workspace-data';
+import { scoreChecklistRows } from '@corates/shared/sync';
 
 interface ScoringSummaryProps {
   studyId: string;
@@ -11,9 +17,11 @@ interface ScoringSummaryProps {
   onDomainClick?: (_domainKey: string) => void;
 }
 
-export function ScoringSummary({ studyId, checklistId, onDomainClick }: ScoringSummaryProps) {
-  const overallScore = useROB2Score(studyId, checklistId);
-  const aim = useAnswer<string>(studyId, checklistId, 'preliminary.aim');
+export function ScoringSummary({ checklistId, onDomainClick }: ScoringSummaryProps) {
+  const projectId = useWorkspaceProjectId();
+  const flat = useChecklistAnswerMap(projectId, checklistId);
+  const overallScore = useMemo(() => scoreChecklistRows('ROB2', flat), [flat]);
+  const aim = useAnswerValue<string>(projectId, checklistId, 'preliminary.aim');
   const isAdhering = aim === 'ADHERING';
   const activeDomains = useMemo(() => getActiveDomainKeys(isAdhering), [isAdhering]);
 
@@ -61,7 +69,6 @@ export function ScoringSummary({ studyId, checklistId, onDomainClick }: ScoringS
           {activeDomains.map((domainKey: string) => (
             <DomainChip
               key={domainKey}
-              studyId={studyId}
               checklistId={checklistId}
               domainKey={domainKey}
               shortName={getDomainShortName(domainKey)}
@@ -85,19 +92,18 @@ export function ScoringSummary({ studyId, checklistId, onDomainClick }: ScoringS
 }
 
 function DomainChip({
-  studyId,
   checklistId,
   domainKey,
   shortName,
   onClick,
 }: {
-  studyId: string;
   checklistId: string;
   domainKey: string;
   shortName: string;
   onClick: () => void;
 }) {
-  const { judgement } = useROB2DomainScore(studyId, checklistId, domainKey);
+  const projectId = useWorkspaceProjectId();
+  const { judgement } = useRob2DomainScore(projectId, checklistId, domainKey);
 
   const chipColor = (() => {
     if (!judgement) return 'bg-secondary text-muted-foreground border-border';

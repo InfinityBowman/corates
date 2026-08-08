@@ -1,32 +1,7 @@
 /**
- * useProjectOrgId - Get orgId for a project from store or query cache
+ * useProjectOrgId - Get orgId for a project, reactively: the D1 projects
+ * query, with the Dexie-stamped value covering cold hard-refreshes.
+ * Implementation lives with the other D1-fact hooks in workspace-data.
  */
 
-import { useMemo } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { useProjectMetaById } from '@/primitives/useProject/reactor';
-import { queryKeys } from '@/lib/queryKeys';
-
-export function useProjectOrgId(projectId: string | null | undefined): string | null {
-  const queryClient = useQueryClient();
-  const meta = useProjectMetaById(projectId || '');
-
-  return useMemo(() => {
-    if (!projectId) return null;
-
-    if (meta?.orgId) {
-      return meta.orgId;
-    }
-
-    // Try project list query cache
-    const projectsList = queryClient.getQueryData<Array<{ id: string; orgId?: string }>>(
-      queryKeys.projects.all,
-    );
-    if (Array.isArray(projectsList)) {
-      const found = projectsList.find(p => p.id === projectId);
-      if (found?.orgId) return found.orgId;
-    }
-
-    return null;
-  }, [projectId, meta, queryClient]);
-}
+export { useProjectOrgId } from '@/project/workspace-data';

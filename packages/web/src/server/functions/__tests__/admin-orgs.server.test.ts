@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
+import { resetTestDatabase } from '@/__tests__/server/helpers';
 import { buildOrg, buildOrgMember, resetCounter } from '@/__tests__/server/factories';
 import { createDb } from '@corates/db/client';
 import { DomainErrorException } from '@corates/shared';
@@ -11,7 +11,6 @@ import { listAdminOrgs, getAdminOrgDetails } from '@/server/functions/admin-orgs
 
 beforeEach(async () => {
   await resetTestDatabase();
-  await clearProjectDOs([]);
   vi.clearAllMocks();
   resetCounter();
 });

@@ -12,7 +12,7 @@ import {
   ArrowRightLeftIcon,
   CheckCircleIcon,
 } from 'lucide-react';
-import { useAllStudiesById, useProjectMembersById } from '@/primitives/useProject/reactor';
+import { useAllStudies, useProjectMembers } from '@/project/workspace-data';
 import { project } from '@/project';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { useProjectContext, type ProjectMember } from '../ProjectContext';
@@ -71,8 +71,8 @@ export function OverviewTab() {
   const { hasQuota, quotas } = useSubscription();
   const { members: orgMembers } = useMembers();
 
-  const studies = useAllStudiesById(projectId);
-  const members = useProjectMembersById(projectId);
+  const studies = useAllStudies(projectId);
+  const members = useProjectMembers(projectId);
 
   const nonOwnerOrgMemberCount = useMemo(
     () => orgMembers.filter(m => m.role !== 'owner').length,
@@ -176,8 +176,17 @@ export function OverviewTab() {
   }, [pendingRemoveMember, navigate]);
 
   const interRaterMetrics: InterRaterMetrics = useMemo(() => {
-    const getChecklistData = (studyId: string, checklistId: string) =>
-      project.checklist.getData(studyId, checklistId);
+    // getData throws while the pool has no active connection (a cold refresh
+    // renders this tab from cached rows before the gate's effects run) —
+    // treat that window as "no data" rather than crashing into the section
+    // error boundary.
+    const getChecklistData = (studyId: string, checklistId: string) => {
+      try {
+        return project.checklist.getData(studyId, checklistId);
+      } catch {
+        return null;
+      }
+    };
     return calculateInterRaterReliability(studies, getChecklistData);
   }, [studies]);
 

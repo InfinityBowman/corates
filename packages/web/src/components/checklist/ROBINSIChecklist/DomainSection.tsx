@@ -3,10 +3,13 @@ import { ROBINS_I_CHECKLIST, getDomainQuestions } from './checklist-map';
 import { SignallingQuestion } from './SignallingQuestion';
 import { DomainJudgement, JudgementBadge } from './DomainJudgement';
 import {
-  useAnswer,
-  useAnswersYMap,
-  useROBINSIDomainScore,
-} from '@/primitives/useProject/reactor/hooks';
+  useWorkspaceProjectId,
+  useAnswerValue,
+  useAnswerWriters,
+  useChecklistAnswerMap,
+  useRobinsIDomainScore,
+} from '@/project/workspace-data';
+import type { ChecklistAnswerInput } from '@corates/shared/sync';
 
 interface DomainSectionProps {
   studyId: string;
@@ -32,25 +35,31 @@ export function DomainSection({
   const questionKeys = useMemo(() => Object.keys(questions), [questions]);
   const hasSubsections = !!domain?.subsections;
 
-  const { judgement: autoJudgement, isComplete: autoComplete } = useROBINSIDomainScore(
-    studyId,
+  const projectId = useWorkspaceProjectId();
+  const { judgement: autoJudgement, isComplete: autoComplete } = useRobinsIDomainScore(
+    projectId,
     checklistId,
     domainKey,
   );
 
-  const direction = useAnswer<string>(studyId, checklistId, `${domainKey}.direction`);
-  const answersYMap = useAnswersYMap(studyId, checklistId);
+  const direction = useAnswerValue<string>(projectId, checklistId, `${domainKey}.direction`);
+  const flat = useChecklistAnswerMap(projectId, checklistId);
+  const writers = useAnswerWriters(projectId, studyId, checklistId);
 
   const isEarlyComplete = autoComplete && autoJudgement !== null;
-  const isQuestionSkippable = (qKey: string) => isEarlyComplete && answersYMap?.get(qKey) == null;
+  const isQuestionSkippable = (qKey: string) => isEarlyComplete && flat[qKey] == null;
 
   const completionStatus = {
-    answered: answersYMap ? questionKeys.filter(k => answersYMap.get(k) != null).length : 0,
+    answered: questionKeys.filter(k => flat[k] != null).length,
     total: questionKeys.length,
   };
 
   const handleDirectionChange = (dir: string | null) => {
-    answersYMap?.set(`${domainKey}.direction`, dir);
+    writers.updateAnswer({
+      type: 'ROBINS_I',
+      key: domainKey,
+      data: { direction: dir },
+    } as ChecklistAnswerInput);
   };
 
   const renderQuestions = (qs: Record<string, any>) =>
@@ -59,6 +68,7 @@ export function DomainSection({
         key={qKey}
         studyId={studyId}
         checklistId={checklistId}
+        domainKey={domainKey}
         questionKey={qKey}
         question={qDef}
         disabled={disabled}

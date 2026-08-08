@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { env } from 'cloudflare:workers';
-import { resetTestDatabase, clearProjectDOs, seedSubscription } from '@/__tests__/server/helpers';
+import { resetTestDatabase, seedSubscription } from '@/__tests__/server/helpers';
 import {
   buildProject,
   buildProjectWithMembers,
@@ -46,7 +46,6 @@ function mockSession(overrides?: { userId?: string; email?: string }): Session {
 beforeEach(async () => {
   await resetTestDatabase();
   resetCounter();
-  await clearProjectDOs(['project-1', 'project-2']);
   currentUser = { id: 'user-1', email: 'user1@example.com' };
 });
 

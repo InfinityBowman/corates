@@ -7,7 +7,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation, Outlet } from '@tanstack/react-router';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
-import { useAllStudiesById, useProjectMetaById } from '@/primitives/useProject/reactor';
+import { useAllStudies, useProjectMeta } from '@/project/workspace-data';
 import { useProjectOrgId } from '@/hooks/useProjectOrgId';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { ProjectGate } from '@/project';
@@ -118,22 +118,13 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
     return path.includes('/checklists/') || path.includes('/reconcile/');
   }, [location.pathname]);
 
-  const studies = useAllStudiesById(projectId);
-  const meta = useProjectMetaById(projectId);
+  const studies = useAllStudies(projectId);
+  const meta = useProjectMeta(projectId);
   const connectionState = useProjectStore(s => selectConnectionPhase(s, projectId));
 
-  // Read pending data exactly once via lazy initializer (safe for StrictMode)
-  const [pendingState] = useState(() => {
-    const d = (useProjectStore.getState() as any).getPendingProjectData?.(projectId);
-    return {
-      pdfs: d?.pendingPdfs || null,
-      refs: d?.pendingRefs || null,
-      drive: d?.driveFiles || null,
-    };
-  });
-  const [pendingPdfs, setPendingPdfs] = useState<any[] | null>(pendingState.pdfs);
-  const [pendingRefs, setPendingRefs] = useState<any[] | null>(pendingState.refs);
-  const [pendingDriveFiles, setPendingDriveFiles] = useState<any[] | null>(pendingState.drive);
+  const [pendingPdfs, setPendingPdfs] = useState<any[] | null>(null);
+  const [pendingRefs, setPendingRefs] = useState<any[] | null>(null);
+  const [pendingDriveFiles, setPendingDriveFiles] = useState<any[] | null>(null);
 
   useEffect(() => {
     if (
@@ -328,8 +319,8 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
             <header className='border-border bg-card sticky top-0 z-20 border-b'>
               <div className='mx-auto max-w-7xl px-6'>
                 <ProjectHeader
-                  name={meta?.name as string}
-                  description={meta?.description as string}
+                  name={meta.name ?? undefined}
+                  description={meta.description ?? undefined}
                   onRename={newName => project.project.rename(newName)}
                   onUpdateDescription={desc => project.project.updateDescription(desc)}
                   onBack={() => navigate({ to: '/dashboard' })}

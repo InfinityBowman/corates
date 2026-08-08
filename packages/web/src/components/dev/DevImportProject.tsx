@@ -1,9 +1,14 @@
 /**
- * DevImportProject - Create dev projects from templates or JSON
+ * DevImportProject - Create dev projects from templates or snapshot JSON
  *
  * Two creation modes:
- * 1. From Template - pick template, assign real users to roles, creates project
- * 2. From JSON - paste/upload exported JSON, creates project
+ * 1. From Template - pick a mock template, map template users to real users,
+ *    create the project, then seed it through the sync engine.
+ * 2. From JSON - create a project and import an exported workspace snapshot
+ *    (the engine's opaque JSON, as produced by the JSON tab's Export).
+ *
+ * Templates and seeding live in `@/dev/mock-templates` and `@/dev/seed`,
+ * which must stay lazy-imported so fixture data stays out of the main bundle.
  */
 
 import { useState, useEffect, useCallback, useRef, type ChangeEvent } from 'react';
@@ -20,11 +25,8 @@ import {
 import { useNavigate } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { createProject, addMemberToProject } from '@/server/functions/org-projects.functions';
-import { importState, applyTemplate } from '@/server/functions/dev-tools.functions';
+import { importState } from '@/server/functions/dev-tools.functions';
 import { searchUsers } from '@/server/functions/users.functions';
-import { fetchReferenceByIdentifier } from '@/lib/referenceLookup';
-import { uploadPdf } from '@/api/pdf-api';
-import { loadDevPdfPool, takeDevPdf } from '@/lib/devPdfPool';
 import { useOrgs } from '@/hooks/useOrgs';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
@@ -47,62 +49,41 @@ interface ActionResult {
   message: string;
 }
 
-interface StudyIdentifier {
-  id: string;
-  doi: string | null;
-}
-
 type CreationMode = 'template' | 'json';
 
-const TEMPLATES = [
-  { name: 'empty', description: 'Empty project with no studies' },
-  { name: 'studies-only', description: 'Studies but no checklists' },
-  { name: 'amstar2-complete', description: 'Completed AMSTAR2 checklist' },
-  { name: 'robins-i-progress', description: 'Partially completed ROBINS-I' },
-  { name: 'reconciliation-ready', description: 'Two AMSTAR2 checklists ready for reconciliation' },
-  {
-    name: 'reconciliation-ready-rob2',
-    description: 'Two ROB2 checklists ready for reconciliation',
-  },
-  {
-    name: 'reconciliation-ready-robins-i',
-    description: 'Two ROBINS-I checklists ready for reconciliation',
-  },
-  { name: 'full-workflow', description: 'Studies in various workflow states' },
-] as const;
-
-interface TemplateRole {
-  id: string;
-  label: string;
+interface TemplateOption {
+  name: string;
+  description: string;
 }
-
-const TEMPLATE_ROLES: Record<string, TemplateRole[]> = {
-  empty: [],
-  'studies-only': [],
-  'amstar2-complete': [{ id: 'user_reviewer1', label: 'Reviewer' }],
-  'robins-i-progress': [{ id: 'user_reviewer1', label: 'Reviewer' }],
-  'reconciliation-ready': [
-    { id: 'user_reviewer1', label: 'Reviewer 1' },
-    { id: 'user_reviewer2', label: 'Reviewer 2' },
-  ],
-  'reconciliation-ready-rob2': [
-    { id: 'user_reviewer1', label: 'Reviewer 1' },
-    { id: 'user_reviewer2', label: 'Reviewer 2' },
-  ],
-  'reconciliation-ready-robins-i': [
-    { id: 'user_reviewer1', label: 'Reviewer 1' },
-    { id: 'user_reviewer2', label: 'Reviewer 2' },
-  ],
-  'full-workflow': [
-    { id: 'user_reviewer1', label: 'Reviewer 1' },
-    { id: 'user_reviewer2', label: 'Reviewer 2' },
-  ],
-};
 
 interface SearchResult {
   id: string;
   name: string | null;
   email: string;
+}
+
+/** Distinct template-user ids referenced by a template's studies, in
+ * appearance order — each becomes a mapping row in the Assign Users UI. */
+function collectTemplateUserIds(data: {
+  studies: Array<{
+    reviewer1: string | null;
+    reviewer2: string | null;
+    checklists: Array<{ assignedTo: string | null }>;
+    pdfs: Array<{ uploadedBy: string }>;
+  }>;
+}): string[] {
+  const ids = new Set<string>();
+  for (const study of data.studies) {
+    if (study.reviewer1) ids.add(study.reviewer1);
+    if (study.reviewer2) ids.add(study.reviewer2);
+    for (const checklist of study.checklists) {
+      if (checklist.assignedTo) ids.add(checklist.assignedTo);
+    }
+    for (const pdf of study.pdfs) {
+      if (pdf.uploadedBy) ids.add(pdf.uploadedBy);
+    }
+  }
+  return [...ids];
 }
 
 export function DevImportProject() {
@@ -117,11 +98,16 @@ export function DevImportProject() {
   const [result, setResult] = useState<ActionResult | null>(null);
 
   // Template state
+  const [templates, setTemplates] = useState<TemplateOption[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState('');
+  // Null while the selected template's user ids are still loading, so Create
+  // cannot enable on a vacuous `.every` and let ids pass through unmapped.
+  const [templateUserIds, setTemplateUserIds] = useState<string[] | null>([]);
   const [projectName, setProjectName] = useState('');
   const [roleAssignments, setRoleAssignments] = useState<Record<string, string>>({});
 
   // JSON state
+  const [jsonProjectName, setJsonProjectName] = useState('Imported Project');
   const [jsonText, setJsonText] = useState('');
 
   useEffect(() => {
@@ -132,15 +118,40 @@ export function DevImportProject() {
 
   const resolvedOrgId = orgs.length === 1 ? orgs[0].id : selectedOrgId;
 
-  const roles = TEMPLATE_ROLES[selectedTemplate] || [];
-
-  // Pre-fill project name when template changes
   useEffect(() => {
-    if (selectedTemplate) {
-      const tmpl = TEMPLATES.find(t => t.name === selectedTemplate);
-      if (tmpl) setProjectName(tmpl.description);
+    let cancelled = false;
+    void import('@/dev/mock-templates').then(({ getTemplateNames, getTemplateDescriptions }) => {
+      if (cancelled) return;
+      const descriptions = getTemplateDescriptions();
+      setTemplates(
+        getTemplateNames().map(name => ({ name, description: descriptions[name] ?? '' })),
+      );
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Pre-fill project name + derive user-mapping rows when template changes
+  useEffect(() => {
+    if (!selectedTemplate) {
+      setTemplateUserIds([]);
+      return;
     }
-  }, [selectedTemplate]);
+    const tmpl = templates.find(t => t.name === selectedTemplate);
+    if (tmpl) setProjectName(tmpl.description);
+
+    let cancelled = false;
+    setTemplateUserIds(null);
+    void import('@/dev/mock-templates').then(({ getTemplate }) => {
+      if (cancelled) return;
+      const data = getTemplate(selectedTemplate);
+      setTemplateUserIds(data ? collectTemplateUserIds(data) : []);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedTemplate, templates]);
 
   const handleAssignRole = useCallback((roleId: string, userId: string) => {
     setRoleAssignments(prev => ({ ...prev, [roleId]: userId }));
@@ -156,14 +167,16 @@ export function DevImportProject() {
 
   const canCreateFromTemplate =
     resolvedOrgId &&
+    currentUser &&
     selectedTemplate &&
     projectName.trim() &&
-    roles.every(r => roleAssignments[r.id]);
+    templateUserIds !== null &&
+    templateUserIds.every(id => roleAssignments[id]);
 
-  const canCreateFromJson = resolvedOrgId && jsonText.trim();
+  const canCreateFromJson = resolvedOrgId && jsonProjectName.trim() && jsonText.trim();
 
   const handleCreateFromTemplate = async () => {
-    if (!resolvedOrgId || !selectedTemplate || !projectName.trim()) return;
+    if (!resolvedOrgId || !currentUser || !selectedTemplate || !projectName.trim()) return;
 
     setIsCreating(true);
     setResult(null);
@@ -173,22 +186,11 @@ export function DevImportProject() {
         data: { orgId: resolvedOrgId, name: projectName.trim() },
       })) as { id: string };
 
-      const userMapping = Object.keys(roleAssignments).length > 0 ? roleAssignments : undefined;
-
-      const templateResult = (await applyTemplate({
-        data: {
-          orgId: resolvedOrgId,
-          projectId: newProject.id,
-          template: selectedTemplate,
-          mode: 'replace',
-          userMapping,
-        },
-      })) as { success: boolean; studies?: StudyIdentifier[] };
-
-      // Add assigned users as project members (skip creator, they're already a member)
+      // Add mapped users as project members first (skip creator, they're
+      // already a member) so the seeded reviewer ids resolve in member UIs.
       const assignedUserIds = [...new Set(Object.values(roleAssignments))];
       for (const userId of assignedUserIds) {
-        if (currentUser && userId === currentUser.id) continue;
+        if (userId === currentUser.id) continue;
         try {
           await addMemberToProject({
             data: { orgId: resolvedOrgId, projectId: newProject.id, userId, role: 'member' },
@@ -198,112 +200,17 @@ export function DevImportProject() {
         }
       }
 
-      // Fetch real metadata + PDFs for studies with identifiers
-      const studies = templateResult.studies || [];
-      const studiesWithIds = studies.filter(s => s.doi);
+      const { devApplyTemplate } = await import('@/dev/seed');
+      const { studies } = await devApplyTemplate(newProject.id, selectedTemplate, {
+        mode: 'replace',
+        userMapping: roleAssignments,
+        actorId: currentUser.id,
+      });
 
-      if (studiesWithIds.length > 0) {
-        setResult({
-          success: true,
-          message: `Fetching references (0/${studiesWithIds.length})...`,
-        });
-
-        let fetched = 0;
-        let pdfCount = 0;
-
-        // Publisher PDFs block automated fetches, so attach from the local dev
-        // pool (populated by `pnpm --filter web dev:pdfs`) round-robin instead.
-        const pdfPool = await loadDevPdfPool();
-        let pdfIndex = 0;
-
-        for (const study of studiesWithIds) {
-          const identifier = study.doi!;
-          try {
-            const ref = await fetchReferenceByIdentifier(identifier);
-            fetched++;
-            setResult({
-              success: true,
-              message: `Fetching references (${fetched}/${studiesWithIds.length})...`,
-            });
-
-            // Build study metadata merge payload
-            const studyUpdate: Record<string, unknown> = {
-              id: study.id,
-              originalTitle: ref.title,
-              firstAuthor: ref.firstAuthor,
-              publicationYear: ref.publicationYear ? String(ref.publicationYear) : undefined,
-              authors: ref.authors,
-              journal: ref.journal,
-              doi: ref.doi,
-              abstract: ref.abstract,
-              pdfUrl: ref.pdfUrl,
-              pdfSource: ref.pdfSource,
-              pdfAccessible: ref.pdfAccessible,
-            };
-
-            // Generate a readable study name
-            if (ref.firstAuthor && ref.publicationYear) {
-              studyUpdate.name = `${ref.firstAuthor} et al. ${ref.publicationYear}`;
-            } else if (ref.title) {
-              studyUpdate.name = ref.title.length > 60 ? ref.title.slice(0, 57) + '...' : ref.title;
-            }
-
-            const pdfs: Array<Record<string, unknown>> = [];
-
-            // Attach a PDF from the local dev pool (skips silently if not downloaded)
-            const poolPdf = await takeDevPdf(pdfPool, pdfIndex);
-            if (poolPdf) {
-              pdfIndex++;
-              try {
-                const uploadResult = await uploadPdf(
-                  resolvedOrgId,
-                  newProject.id,
-                  study.id,
-                  poolPdf.data,
-                  poolPdf.fileName,
-                );
-
-                pdfs.push({
-                  fileName: uploadResult.fileName,
-                  key: uploadResult.key,
-                  size: uploadResult.size,
-                  uploadedBy: currentUser?.id || '',
-                  uploadedAt: new Date().toISOString(),
-                });
-                pdfCount++;
-              } catch (pdfErr) {
-                console.warn('Failed to attach dev-pool PDF for', identifier, pdfErr);
-              }
-            }
-
-            // Merge real metadata + PDF info back into Y.Doc
-            await importState({
-              data: {
-                orgId: resolvedOrgId,
-                projectId: newProject.id,
-                data: {
-                  studies: [{ ...studyUpdate, pdfs }],
-                },
-                mode: 'merge',
-              },
-            });
-          } catch (err) {
-            console.warn('Failed to look up', identifier, err);
-            fetched++;
-          }
-        }
-
-        const pdfMsg =
-          pdfCount > 0 ? `, ${pdfCount} PDF${pdfCount > 1 ? 's' : ''} attached`
-          : pdfPool.length === 0 ? ' (no PDFs - run `pnpm --filter web dev:pdfs`)'
-          : '';
-        setResult({
-          success: true,
-          message: `Project created${pdfMsg}`,
-        });
-      } else {
-        setResult({ success: true, message: 'Project created from template' });
-      }
+      setResult({
+        success: true,
+        message: `Project created with ${studies} ${studies === 1 ? 'study' : 'studies'}`,
+      });
 
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
 
@@ -318,13 +225,17 @@ export function DevImportProject() {
   };
 
   const handleCreateFromJson = async () => {
-    if (!resolvedOrgId || !jsonText.trim()) return;
+    if (!resolvedOrgId || !jsonProjectName.trim() || !jsonText.trim()) return;
 
-    let parsed: Record<string, unknown>;
+    let snapshot: Record<string, unknown>;
     try {
-      parsed = JSON.parse(jsonText);
-    } catch {
-      setResult({ success: false, message: 'Invalid JSON' });
+      const parsed: unknown = JSON.parse(jsonText);
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        throw new Error('snapshot must be a JSON object');
+      }
+      snapshot = parsed as Record<string, unknown>;
+    } catch (err) {
+      setResult({ success: false, message: `Invalid JSON: ${(err as Error).message}` });
       return;
     }
 
@@ -332,21 +243,12 @@ export function DevImportProject() {
     setResult(null);
 
     try {
-      const name = (parsed.meta as Record<string, unknown>)?.name || 'Imported Project';
-      const description =
-        ((parsed.meta as Record<string, unknown>)?.description as string) || undefined;
-
       const newProject = (await createProject({
-        data: { orgId: resolvedOrgId, name: name as string, description },
+        data: { orgId: resolvedOrgId, name: jsonProjectName.trim() },
       })) as { id: string };
 
       await importState({
-        data: {
-          orgId: resolvedOrgId,
-          projectId: newProject.id,
-          data: parsed,
-          mode: 'replace',
-        },
+        data: { orgId: resolvedOrgId, projectId: newProject.id, snapshot },
       });
 
       setResult({ success: true, message: 'Project imported' });
@@ -439,13 +341,13 @@ export function DevImportProject() {
                 setSelectedTemplate(value);
                 setRoleAssignments({});
               }}
-              disabled={isCreating}
+              disabled={isCreating || templates.length === 0}
             >
               <SelectTrigger size='sm' className='w-full text-xs'>
                 <SelectValue placeholder='Select a template...' />
               </SelectTrigger>
               <SelectContent className='z-10000'>
-                {TEMPLATES.map(t => (
+                {templates.map(t => (
                   <SelectItem key={t.name} value={t.name}>
                     {t.name} - {t.description}
                   </SelectItem>
@@ -469,22 +371,22 @@ export function DevImportProject() {
                 />
               </div>
 
-              {roles.length > 0 && (
+              {templateUserIds !== null && templateUserIds.length > 0 && (
                 <div className='flex flex-col gap-2'>
                   <label className='text-2xs text-muted-foreground font-medium tracking-wide uppercase'>
                     Assign Users
                   </label>
-                  {roles.map(role => (
+                  {templateUserIds.map(templateUserId => (
                     <UserSearchField
-                      key={role.id}
-                      label={role.label}
-                      selectedUserId={roleAssignments[role.id] || null}
+                      key={templateUserId}
+                      label={templateUserId}
+                      selectedUserId={roleAssignments[templateUserId] || null}
                       currentUser={currentUser}
                       excludeUserIds={Object.entries(roleAssignments)
-                        .filter(([k]) => k !== role.id)
+                        .filter(([k]) => k !== templateUserId)
                         .map(([, v]) => v)}
-                      onSelect={userId => handleAssignRole(role.id, userId)}
-                      onClear={() => handleClearRole(role.id)}
+                      onSelect={userId => handleAssignRole(templateUserId, userId)}
+                      onClear={() => handleClearRole(templateUserId)}
                       disabled={isCreating}
                     />
                   ))}
@@ -512,7 +414,20 @@ export function DevImportProject() {
         <>
           <div>
             <label className='text-2xs text-muted-foreground mb-1 block font-medium tracking-wide uppercase'>
-              JSON File
+              Project Name
+            </label>
+            <Input
+              type='text'
+              className='h-7 text-xs'
+              value={jsonProjectName}
+              onChange={e => setJsonProjectName(e.target.value)}
+              disabled={isCreating}
+            />
+          </div>
+
+          <div>
+            <label className='text-2xs text-muted-foreground mb-1 block font-medium tracking-wide uppercase'>
+              Snapshot File
             </label>
             <input
               type='file'
@@ -524,11 +439,11 @@ export function DevImportProject() {
 
           <div className='min-h-0 flex-1'>
             <label className='text-2xs text-muted-foreground mb-1 block font-medium tracking-wide uppercase'>
-              Or paste JSON
+              Or paste snapshot JSON
             </label>
             <textarea
               className='border-border bg-muted h-[calc(100%-1.25rem)] w-full resize-none rounded border p-2 font-mono text-xs focus:border-purple-500 focus:ring-1 focus:ring-purple-500 focus:outline-none'
-              placeholder='Paste exported project JSON here...'
+              placeholder='Paste an exported workspace snapshot here...'
               value={jsonText}
               onChange={e => setJsonText(e.target.value)}
             />

@@ -1,8 +1,7 @@
-import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { env } from 'cloudflare:workers';
-import { createDb } from '@corates/db/client';
-import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
-import { buildUser, buildProject, resetCounter } from '@/__tests__/server/factories';
+import { resetTestDatabase } from '@/__tests__/server/helpers';
+import { buildUser, resetCounter } from '@/__tests__/server/factories';
 import { handlePost, handleDelete } from '../avatar';
 import { handler as getHandler } from '../avatar/$userId';
 
@@ -18,14 +17,6 @@ function mockSession() {
   };
 }
 
-vi.mock('@corates/workers/project-doc-id', () => ({
-  getProjectDocStub: vi.fn(() => ({
-    syncMember: vi.fn(async () => {}),
-  })),
-}));
-
-let mockGetProjectDocStub: Mock;
-
 async function clearR2(prefix: string) {
   const listed = await env.PDF_BUCKET.list({ prefix });
   for (const obj of listed.objects) {
@@ -36,16 +27,9 @@ async function clearR2(prefix: string) {
 beforeEach(async () => {
   await resetTestDatabase();
   resetCounter();
-  await clearProjectDOs(['project-1']);
   await clearR2('avatars/');
   vi.clearAllMocks();
   currentUser = { id: 'user-1', email: 'user1@example.com' };
-
-  const mod = await import('@corates/workers/project-doc-id');
-  mockGetProjectDocStub = mod.getProjectDocStub as unknown as Mock;
-  mockGetProjectDocStub.mockImplementation(() => ({
-    syncMember: vi.fn(async () => {}),
-  }));
 });
 
 function req(path: string, init: RequestInit = {}): Request {
@@ -64,7 +48,7 @@ describe('POST /api/users/avatar', () => {
 
     const res = await handlePost({
       request: req('/api/users/avatar', { method: 'POST', body: formData }),
-      context: { db: createDb(env.DB), session: mockSession() },
+      context: { session: mockSession() },
     });
 
     expect(res.status).toBe(200);
@@ -90,7 +74,7 @@ describe('POST /api/users/avatar', () => {
         headers: { 'Content-Length': String(3 * 1024 * 1024) },
         body: formData,
       }),
-      context: { db: createDb(env.DB), session: mockSession() },
+      context: { session: mockSession() },
     });
 
     expect(res.status).toBe(413);
@@ -108,7 +92,7 @@ describe('POST /api/users/avatar', () => {
 
     const res = await handlePost({
       request: req('/api/users/avatar', { method: 'POST', body: formData }),
-      context: { db: createDb(env.DB), session: mockSession() },
+      context: { session: mockSession() },
     });
 
     expect(res.status).toBe(400);
@@ -127,7 +111,7 @@ describe('POST /api/users/avatar', () => {
 
     const res1 = await handlePost({
       request: req('/api/users/avatar', { method: 'POST', body: formData1 }),
-      context: { db: createDb(env.DB), session: mockSession() },
+      context: { session: mockSession() },
     });
     expect(res1.status).toBe(200);
     const body1 = (await res1.json()) as { key: string };
@@ -143,7 +127,7 @@ describe('POST /api/users/avatar', () => {
 
     const res2 = await handlePost({
       request: req('/api/users/avatar', { method: 'POST', body: formData2 }),
-      context: { db: createDb(env.DB), session: mockSession() },
+      context: { session: mockSession() },
     });
     expect(res2.status).toBe(200);
 
@@ -153,34 +137,6 @@ describe('POST /api/users/avatar', () => {
     const body2 = (await res2.json()) as { key: string };
     const newObj = await env.PDF_BUCKET.get(body2.key);
     expect(newObj).not.toBeNull();
-  });
-
-  it('syncs avatar to project memberships', async () => {
-    const { project, owner } = await buildProject();
-    currentUser = { id: owner.id, email: owner.email };
-
-    const syncMember = vi.fn(async () => {});
-    mockGetProjectDocStub.mockImplementation(() => ({ syncMember }));
-
-    const imageData = new Uint8Array([0xff, 0xd8, 0xff, 0xe0]);
-    const file = new File([imageData], 'avatar.jpg', { type: 'image/jpeg' });
-    const formData = new FormData();
-    formData.append('avatar', file);
-
-    const res = await handlePost({
-      request: req('/api/users/avatar', { method: 'POST', body: formData }),
-      context: { db: createDb(env.DB), session: mockSession() },
-    });
-
-    expect(res.status).toBe(200);
-    expect(mockGetProjectDocStub).toHaveBeenCalledWith(expect.any(Object), project.id);
-    expect(syncMember).toHaveBeenCalledWith(
-      'update',
-      expect.objectContaining({
-        userId: owner.id,
-        image: expect.stringMatching(new RegExp(`^/api/users/avatar/${owner.id}\\?t=\\d+$`)),
-      }),
-    );
   });
 });
 

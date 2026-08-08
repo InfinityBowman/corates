@@ -4,8 +4,8 @@ import { ChevronLeftIcon } from 'lucide-react';
 import { ChecklistWithPdf } from '@/components/checklist/ChecklistWithPdf';
 import { useProjectContext } from '@/components/project/ProjectContext';
 import { connectionPool } from '@/project/ConnectionPool';
-import { useChecklistViewModel } from '@/primitives/useProject/checklists/useChecklistViewModel';
-import { useChecklistScore } from '@/primitives/useProject/reactor/hooks';
+import { useChecklistViewModel } from '@/primitives/useProject/useChecklistViewModel';
+import { useChecklistScore } from '@/project/workspace-data';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { useStudyAnnotations } from '@/primitives/useProject/useStudyAnnotations';
@@ -14,11 +14,11 @@ import {
   CHECKLIST_STATUS,
   isEditable,
   getNextStatusForCompletion,
+  type ChecklistStatus,
 } from '@corates/shared/checklists';
 import { downloadPdf, uploadPdf, deletePdf, getPdfUrl } from '@/api/pdf-api';
 import type { PdfUploadResponse } from '@/api/pdf-api';
 import { getCachedPdf, cachePdf } from '@/primitives/pdfCache.js';
-import type { AnnotationData } from '@/primitives/useProject/annotations';
 import { showToast } from '@/lib/toast';
 import { Button } from '@/components/ui/button';
 import {
@@ -38,6 +38,16 @@ interface ChecklistYjsWrapperProps {
   checklistId: string;
 }
 
+/** The EmbedPDF payload shape the viewer hands back for annotation writes. */
+interface AnnotationData {
+  id?: string;
+  type?: string;
+  pageIndex?: number;
+  pdfId?: string;
+  embedPdfData?: string;
+  [key: string]: unknown;
+}
+
 export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: ChecklistYjsWrapperProps) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -51,11 +61,9 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
   const [selectedPdfId, setSelectedPdfId] = useState<string | null>(null);
   const [attemptedPdfFile, setAttemptedPdfFile] = useState<string | null>(null);
 
-  const ops = connectionPool.getOps(projectId);
-  if (!ops) throw new Error(`No connection for project ${projectId}`);
-  const { updateChecklist } = ops.checklist;
-  const { addPdfToStudy } = ops.pdf;
-  const { addAnnotation, updateAnnotation, deleteAnnotation } = ops.annotation;
+  // Fire-and-forget mutations: optimistic apply is immediate, and rejections
+  // surface through the pool's global onMutationRejected toast.
+  const client = connectionPool.getClient(projectId);
 
   const connectionState = useProjectStore(s => selectConnectionPhase(s, projectId));
 
@@ -72,7 +80,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
     studyId,
     checklistId,
   );
-  const currentScore = useChecklistScore(studyId, checklistId, checklistType);
+  const currentScore = useChecklistScore(projectId, checklistId, checklistType);
 
   const isReadOnly = currentChecklist?.status ? !isEditable(currentChecklist.status) : false;
 
@@ -151,9 +159,11 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
       try {
         const tag = studyPdfs.length > 0 ? 'secondary' : 'primary';
         uploadResult = await uploadPdf(orgId, projectId, studyId, data, fileName);
-        const pdfId = addPdfToStudy(
+        const pdfId = crypto.randomUUID();
+        void client?.mutate.pdf.attach({
           studyId,
-          {
+          pdf: {
+            id: pdfId,
             key: uploadResult.key,
             fileName: uploadResult.fileName,
             size: uploadResult.size,
@@ -161,7 +171,8 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
             uploadedAt: Date.now(),
           },
           tag,
-        );
+          now: Date.now(),
+        });
 
         setPdfData(data);
         setPdfFileName(fileName);
@@ -178,7 +189,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
         await handleError(err, { toastTitle: 'Upload Failed' });
       }
     },
-    [orgId, projectId, studyId, studyPdfs, user?.id, addPdfToStudy],
+    [orgId, projectId, studyId, studyPdfs, user?.id, client],
   );
 
   const isChecklistValid = currentScore !== null && currentScore !== 'Incomplete';
@@ -202,7 +213,11 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
 
   const confirmMarkComplete = useCallback(() => {
     const nextStatus = getNextStatusForCompletion(currentStudy);
-    updateChecklist(studyId, checklistId, { status: nextStatus });
+    void client?.mutate.checklist.update({
+      checklistId,
+      updates: { status: nextStatus as ChecklistStatus },
+      now: Date.now(),
+    });
     const statusLabel =
       nextStatus === CHECKLIST_STATUS.FINALIZED ? 'completed' : 'awaiting reconciliation';
     showToast.success(
@@ -210,7 +225,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
       `This appraisal has been marked as ${statusLabel} and is now locked.`,
     );
     setCompleteDialogOpen(false);
-  }, [currentStudy, updateChecklist, studyId, checklistId]);
+  }, [currentStudy, client, checklistId]);
 
   const pdfUrl = useMemo(() => {
     if (!pdfFileName || !orgId) return null;
@@ -222,25 +237,45 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
   const handleAnnotationAdd = useCallback(
     (annotation: AnnotationData) => {
       if (isReadOnly || !selectedPdfId) return;
-      addAnnotation(studyId, selectedPdfId, checklistId, annotation, user?.id);
+      const id = annotation.id || crypto.randomUUID();
+      void client?.mutate.annotation.add({
+        id,
+        studyId,
+        checklistId,
+        pdfId: selectedPdfId,
+        type: annotation.type ?? '',
+        pageIndex: annotation.pageIndex ?? 0,
+        // The serialized EmbedPDF payload must carry the row's id.
+        embedPdfData: JSON.stringify({ ...annotation, id }),
+        createdBy: user?.id,
+        now: Date.now(),
+      });
     },
-    [isReadOnly, selectedPdfId, addAnnotation, studyId, checklistId, user?.id],
+    [isReadOnly, selectedPdfId, client, studyId, checklistId, user?.id],
   );
 
   const handleAnnotationUpdate = useCallback(
     (annotation: AnnotationData & { id: string }) => {
       if (isReadOnly) return;
-      updateAnnotation(studyId, checklistId, annotation.id, annotation);
+      void client?.mutate.annotation.update({
+        id: annotation.id,
+        updates: {
+          type: annotation.type,
+          pageIndex: annotation.pageIndex,
+          embedPdfData: JSON.stringify(annotation),
+        },
+        now: Date.now(),
+      });
     },
-    [isReadOnly, updateAnnotation, studyId, checklistId],
+    [isReadOnly, client],
   );
 
   const handleAnnotationDelete = useCallback(
     (annotationId: string) => {
       if (isReadOnly) return;
-      deleteAnnotation(studyId, checklistId, annotationId);
+      void client?.mutate.annotation.delete({ id: annotationId });
     },
-    [isReadOnly, deleteAnnotation, studyId, checklistId],
+    [isReadOnly, client],
   );
 
   const getBackTab = () => {

@@ -6,8 +6,12 @@ import { useMemo, useCallback } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { CheckCircleIcon } from 'lucide-react';
 import { useProjectContext } from '../ProjectContext';
-import { useAllStudiesById, useProjectMetaById } from '@/primitives/useProject/reactor';
-import { connectionPool } from '@/project/ConnectionPool';
+import {
+  useAllReconciliationProgress,
+  useAllStudies,
+  useProjectOutcomes,
+  type ReconciliationProgressEntry,
+} from '@/project/workspace-data';
 import {
   getStudiesForTab,
   isDualReviewerStudy,
@@ -17,23 +21,20 @@ import {
 import { showToast } from '@/lib/toast';
 import { CompletedStudyRow } from './CompletedStudyRow';
 import { project } from '@/project';
-import type { ReconciliationProgressEntry } from '@/primitives/useProject/reconciliation';
 
 export function CompletedTab() {
   const { projectId, getAssigneeName, getChecklistPath } = useProjectContext();
   const navigate = useNavigate();
-  const conn = connectionPool.getOps(projectId);
-  const getAllReconciliationProgress = conn?.reconciliation.getAllReconciliationProgress;
+  const allProgress = useAllReconciliationProgress(projectId);
 
-  const studies = useAllStudiesById(projectId);
-  const meta = useProjectMetaById(projectId);
+  const studies = useAllStudies(projectId);
+  const outcomes = useProjectOutcomes(projectId);
 
   const getOutcomeName = useCallback(
     (outcomeId: string) => {
-      const outcomes = meta?.outcomes ?? [];
       return outcomes.find(o => o.id === outcomeId)?.name || null;
     },
-    [meta],
+    [outcomes],
   );
 
   const completedStudies = useMemo(() => getStudiesForTab(studies, 'completed', null), [studies]);
@@ -59,12 +60,10 @@ export function CompletedTab() {
       const study = studies.find(s => s.id === studyId);
       if (!study || !isDualReviewerStudy(study)) return null;
 
-      if (!getAllReconciliationProgress) return null;
-      const allProgress = getAllReconciliationProgress(studyId);
       const outcomeKey = getOutcomeKey(outcomeId, type);
-      return allProgress.find(p => p.outcomeKey === outcomeKey) || null;
+      return allProgress.find(p => p.studyId === studyId && p.outcomeKey === outcomeKey) || null;
     },
-    [studies, getAllReconciliationProgress],
+    [studies, allProgress],
   );
 
   return (

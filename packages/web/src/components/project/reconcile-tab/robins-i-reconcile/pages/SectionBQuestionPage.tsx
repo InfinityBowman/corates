@@ -6,7 +6,8 @@ interface SectionBQuestionPageProps {
   reviewer1Data?: { answer?: string | null; comment?: string } | null;
   reviewer2Data?: { answer?: string | null; comment?: string } | null;
   finalData?: { answer?: string | null } | null;
-  finalCommentYText?: any;
+  /** The final comment's flat answer key on the reconciled checklist. */
+  finalCommentKey: string;
   reviewer1Name: string;
   reviewer2Name: string;
   isAgreement: boolean;
@@ -21,7 +22,7 @@ export function SectionBQuestionPage({
   reviewer1Data,
   reviewer2Data,
   finalData,
-  finalCommentYText,
+  finalCommentKey,
   reviewer1Name,
   reviewer2Name,
   isAgreement,
@@ -86,7 +87,7 @@ export function SectionBQuestionPage({
           title='Final Answer'
           panelType='final'
           answer={finalData?.answer}
-          commentYText={finalCommentYText}
+          commentKey={finalCommentKey}
           responseOptions={responseOptions}
           readOnly={false}
           onAnswerChange={onFinalAnswerChange}

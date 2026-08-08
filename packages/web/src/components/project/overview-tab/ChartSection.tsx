@@ -19,7 +19,7 @@ import {
 import type { ChartPalette, ChecklistChartConfig } from '@/components/charts/chartConfigs';
 import { CHECKLIST_STATUS } from '@corates/shared/checklists';
 import { useProjectContext } from '../ProjectContext';
-import { useProjectMetaById } from '@/primitives/useProject/reactor';
+import { useProjectOutcomes } from '@/project/workspace-data';
 import type { StudyInfo } from '@/stores/projectStore';
 
 /**
@@ -126,8 +126,7 @@ interface ChartSectionProps {
 
 export function ChartSection({ studies }: ChartSectionProps) {
   const { projectId } = useProjectContext();
-  const meta = useProjectMetaById(projectId);
-  const outcomes = meta.outcomes;
+  const outcomes = useProjectOutcomes(projectId);
 
   const groups = useMemo<ChartGroupSpec[]>(() => {
     const result: ChartGroupSpec[] = [];

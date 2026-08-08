@@ -1,6 +1,12 @@
 packages:
   - packages/*
 
+# Our own packages skip the release-age hold (owner-published; protocol 0.1.1
+# would otherwise be held until 2026-08-06). Everything else keeps the global
+# minimumReleaseAge protection.
+minimumReleaseAgeExclude:
+  - '@cf-sync/*'
+
 onlyBuiltDependencies:
   - '@parcel/watcher'
   - '@prisma/engines'

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { env } from 'cloudflare:workers';
 import { createDb } from '@corates/db/client';
-import { resetTestDatabase, clearProjectDOs } from '@/__tests__/server/helpers';
+import { resetTestDatabase } from '@/__tests__/server/helpers';
 import { buildOrg, buildOrgMember, resetCounter } from '@/__tests__/server/factories';
 import { beginTrial } from '@/server/functions/billing.server';
 import type { Session } from '@/server/middleware/auth';
@@ -25,7 +25,6 @@ function mockSession(overrides: {
 
 beforeEach(async () => {
   await resetTestDatabase();
-  await clearProjectDOs([]);
   resetCounter();
 });
 

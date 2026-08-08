@@ -20,6 +20,9 @@ export const memberActions = {
 
     await removeMember({ data: { orgId, projectId, userId: memberId } });
 
+    // The member directory is a D1 fact read through React Query — nothing
+    // pushes it to this client, so refetch after the write.
+    queryClient.invalidateQueries({ queryKey: queryKeys.projects.members(projectId) });
     if (isSelf) {
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.byOrg(orgId) });
     }
