@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isEditable, getStatusLabel, canTransitionTo } from '../status.js';
+import { isEditable, getStatusLabel } from '../status.js';
 
 describe('Checklist Status', () => {
   describe('isEditable', () => {
@@ -39,46 +39,6 @@ describe('Checklist Status', () => {
 
     it('should return Pending for undefined status', () => {
       expect(getStatusLabel(undefined)).toBe('Pending');
-    });
-  });
-
-  describe('canTransitionTo', () => {
-    it('should allow pending to transition to in-progress', () => {
-      expect(canTransitionTo('pending', 'in-progress')).toBe(true);
-    });
-
-    it('should allow in-progress to transition to reviewer-completed', () => {
-      expect(canTransitionTo('in-progress', 'reviewer-completed')).toBe(true);
-    });
-
-    it('should allow in-progress to transition to finalized', () => {
-      expect(canTransitionTo('in-progress', 'finalized')).toBe(true);
-    });
-
-    it('should allow reconciling to transition to finalized', () => {
-      expect(canTransitionTo('reconciling', 'finalized')).toBe(true);
-    });
-
-    it('should allow finalized to transition back to reconciling', () => {
-      expect(canTransitionTo('finalized', 'reconciling')).toBe(true);
-    });
-
-    it('should not allow finalized to transition anywhere else', () => {
-      expect(canTransitionTo('finalized', 'pending')).toBe(false);
-      expect(canTransitionTo('finalized', 'in-progress')).toBe(false);
-    });
-
-    it('should not allow reviewer-completed to transition', () => {
-      expect(canTransitionTo('reviewer-completed', 'in-progress')).toBe(false);
-    });
-
-    it('should allow staying in the same state', () => {
-      expect(canTransitionTo('pending', 'pending')).toBe(true);
-      expect(canTransitionTo('in-progress', 'in-progress')).toBe(true);
-    });
-
-    it('should not allow skipping states', () => {
-      expect(canTransitionTo('pending', 'finalized')).toBe(false);
     });
   });
 });

@@ -51,52 +51,6 @@ export function getStatusLabel(status: ChecklistStatus | string | undefined): st
 }
 
 /**
- * Validates if a status transition is allowed
- * @param currentStatus - The current status
- * @param newStatus - The desired new status
- * @returns True if the transition is valid
- */
-export function canTransitionTo(
-  currentStatus: ChecklistStatus | string,
-  newStatus: ChecklistStatus | string,
-): boolean {
-  // Can always stay in the same state
-  if (currentStatus === newStatus) return true;
-
-  // Can transition from pending to in-progress (automatic on first edit)
-  if (currentStatus === CHECKLIST_STATUS.PENDING && newStatus === CHECKLIST_STATUS.IN_PROGRESS) {
-    return true;
-  }
-
-  // Can transition from in-progress to reviewer-completed or finalized
-  if (currentStatus === CHECKLIST_STATUS.IN_PROGRESS) {
-    return (
-      newStatus === CHECKLIST_STATUS.REVIEWER_COMPLETED || newStatus === CHECKLIST_STATUS.FINALIZED
-    );
-  }
-
-  // Can transition from reconciling to finalized (after reconciliation is complete)
-  if (currentStatus === CHECKLIST_STATUS.RECONCILING && newStatus === CHECKLIST_STATUS.FINALIZED) {
-    return true;
-  }
-
-  // Can reopen a finalized reconciled checklist back into reconciliation
-  if (currentStatus === CHECKLIST_STATUS.FINALIZED && newStatus === CHECKLIST_STATUS.RECONCILING) {
-    return true;
-  }
-
-  // Cannot otherwise transition from finalized or reviewer-completed (locked)
-  if (
-    currentStatus === CHECKLIST_STATUS.FINALIZED ||
-    currentStatus === CHECKLIST_STATUS.REVIEWER_COMPLETED
-  ) {
-    return false;
-  }
-
-  return false;
-}
-
-/**
  * Gets Tailwind CSS classes for status badge styling.
  * Note: This is UI-specific but kept here for convenience.
  * Consider moving to web package if shared package should be pure logic.

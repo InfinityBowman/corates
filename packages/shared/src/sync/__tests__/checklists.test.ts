@@ -636,3 +636,211 @@ describe('checklist.delete', () => {
     ).toBeUndefined();
   });
 });
+
+describe('checklist.sendBackToTodo', () => {
+  function seedPair(
+    engine: Engine,
+    status: 'reviewer-completed' | 'in-progress' = 'reviewer-completed',
+  ) {
+    seedStudy(engine);
+    for (const [id, assignedTo] of [
+      ['chk-1', 'user-1'],
+      ['chk-2', 'user-2'],
+    ] as const) {
+      engine.mutate('checklist.create', {
+        id,
+        studyId: 'study-1',
+        type: 'AMSTAR2',
+        assignedTo,
+        outcomeId: null,
+        now: NOW,
+      });
+      engine.mutate('checklist.update', { checklistId: id, updates: { status }, now: NOW });
+    }
+  }
+
+  function seedConsensus(engine: Engine, status: 'reconciling' | 'finalized' = 'reconciling') {
+    engine.mutate('checklist.create', {
+      id: 'chk-consensus',
+      studyId: 'study-1',
+      type: 'AMSTAR2',
+      assignedTo: null,
+      outcomeId: null,
+      now: NOW,
+    });
+    engine.mutate('checklist.update', {
+      checklistId: 'chk-consensus',
+      updates: { status },
+      now: NOW,
+    });
+    engine.mutate('reconciliation.saveProgress', {
+      studyId: 'study-1',
+      outcomeId: null,
+      type: 'AMSTAR2',
+      data: {
+        checklist1Id: 'chk-1',
+        checklist2Id: 'chk-2',
+        reconciledChecklistId: 'chk-consensus',
+      },
+      now: NOW,
+    });
+  }
+
+  it('returns both reviewer checklists to in-progress and drops the progress row', () => {
+    const engine = newEngine();
+    seedPair(engine);
+    engine.mutate('reconciliation.saveProgress', {
+      studyId: 'study-1',
+      outcomeId: null,
+      type: 'AMSTAR2',
+      data: { checklist1Id: 'chk-1', checklist2Id: 'chk-2' },
+      now: NOW,
+    });
+
+    const result = engine.mutate('checklist.sendBackToTodo', {
+      studyId: 'study-1',
+      outcomeId: null,
+      type: 'AMSTAR2',
+      now: LATER,
+    });
+    expect(result.error).toBeUndefined();
+
+    expect(engine.get('checklists', 'chk-1')).toMatchObject({
+      status: 'in-progress',
+      updatedAt: LATER,
+    });
+    expect(engine.get('checklists', 'chk-2')?.status).toBe('in-progress');
+    expect(
+      engine.get('reconciliations', reconciliationRowId('study-1', 'type:AMSTAR2')),
+    ).toBeNull();
+    expect(engine.get('studies', 'study-1')?.updatedAt).toBe(LATER);
+  });
+
+  it('discards the in-progress consensus checklist and its answer rows', () => {
+    const engine = newEngine();
+    seedPair(engine);
+    seedConsensus(engine);
+    expect(answersFor(engine, 'chk-consensus').size).toBeGreaterThan(0);
+
+    const result = engine.mutate('checklist.sendBackToTodo', {
+      studyId: 'study-1',
+      outcomeId: null,
+      type: 'AMSTAR2',
+      now: LATER,
+    });
+    expect(result.error).toBeUndefined();
+
+    expect(engine.get('checklists', 'chk-consensus')).toBeNull();
+    expect(answersFor(engine, 'chk-consensus').size).toBe(0);
+    // The reviewers' own answers survive: they are what becomes editable again.
+    expect(answersFor(engine, 'chk-1').size).toBeGreaterThan(0);
+  });
+
+  it('reverts a lone completed reviewer, leaving the partner mid-appraisal untouched', () => {
+    const engine = newEngine();
+    seedPair(engine);
+    engine.mutate('checklist.update', {
+      checklistId: 'chk-2',
+      updates: { status: 'in-progress' },
+      now: NOW,
+    });
+
+    const result = engine.mutate('checklist.sendBackToTodo', {
+      studyId: 'study-1',
+      outcomeId: null,
+      type: 'AMSTAR2',
+      now: LATER,
+    });
+    expect(result.error).toBeUndefined();
+
+    expect(engine.get('checklists', 'chk-1')).toMatchObject({
+      status: 'in-progress',
+      updatedAt: LATER,
+    });
+    expect(engine.get('checklists', 'chk-2')?.updatedAt).toBe(NOW);
+  });
+
+  it('rejects a group whose reconciliation is already finalized', () => {
+    const engine = newEngine();
+    seedPair(engine);
+    seedConsensus(engine, 'finalized');
+
+    const result = engine.mutate('checklist.sendBackToTodo', {
+      studyId: 'study-1',
+      outcomeId: null,
+      type: 'AMSTAR2',
+      now: LATER,
+    });
+    expect(result.error?.code).toBe('ReconciliationFinalized');
+    expect(engine.get('checklists', 'chk-1')?.status).toBe('reviewer-completed');
+    expect(engine.get('checklists', 'chk-consensus')).not.toBeNull();
+  });
+
+  it('guards: unknown study, and a group with nothing awaiting reconciliation', () => {
+    const engine = newEngine();
+    seedPair(engine, 'in-progress');
+
+    expect(
+      engine.mutate('checklist.sendBackToTodo', {
+        studyId: 'study-missing',
+        outcomeId: null,
+        type: 'AMSTAR2',
+        now: LATER,
+      }).error?.code,
+    ).toBe('NotFound');
+    expect(
+      engine.mutate('checklist.sendBackToTodo', {
+        studyId: 'study-1',
+        outcomeId: null,
+        type: 'AMSTAR2',
+        now: LATER,
+      }).error?.code,
+    ).toBe('NotFound');
+  });
+
+  it('only touches the addressed outcome group', () => {
+    const engine = newEngine();
+    seedStudy(engine);
+    for (const outcomeId of ['out-1', 'out-2']) {
+      engine.mutate('outcome.create', {
+        id: outcomeId,
+        name: outcomeId,
+        createdBy: 'user-1',
+        now: NOW,
+      });
+    }
+    for (const [id, assignedTo, outcomeId] of [
+      ['chk-1', 'user-1', 'out-1'],
+      ['chk-2', 'user-2', 'out-1'],
+      ['chk-3', 'user-1', 'out-2'],
+      ['chk-4', 'user-2', 'out-2'],
+    ] as const) {
+      engine.mutate('checklist.create', {
+        id,
+        studyId: 'study-1',
+        type: 'ROBINS_I',
+        assignedTo,
+        outcomeId,
+        now: NOW,
+      });
+      engine.mutate('checklist.update', {
+        checklistId: id,
+        updates: { status: 'reviewer-completed' },
+        now: NOW,
+      });
+    }
+
+    const result = engine.mutate('checklist.sendBackToTodo', {
+      studyId: 'study-1',
+      outcomeId: 'out-1',
+      type: 'ROBINS_I',
+      now: LATER,
+    });
+    expect(result.error).toBeUndefined();
+
+    expect(engine.get('checklists', 'chk-1')?.status).toBe('in-progress');
+    expect(engine.get('checklists', 'chk-2')?.status).toBe('in-progress');
+    expect(engine.get('checklists', 'chk-3')?.status).toBe('reviewer-completed');
+    expect(engine.get('checklists', 'chk-4')?.status).toBe('reviewer-completed');
+  });
+});

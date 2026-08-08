@@ -21,6 +21,7 @@ import {
   getReconciliationChecklistsByOutcome,
   getReadyReconciliationPairs,
   getReopenableReconciledChecklist,
+  getSendBackToTodoPlan,
   CHECKLIST_STATUS,
 } from '@corates/shared/checklists';
 
@@ -779,6 +780,114 @@ describe('checklist-domain', () => {
       expect(result?.id).toBe('cl-reconciled-1');
       // outcome-2 has a finalized reconciled checklist but no reviewer pair
       expect(getReopenableReconciledChecklist(study, 'outcome-2', 'ROB2')).toBe(null);
+    });
+  });
+
+  describe('getSendBackToTodoPlan', () => {
+    const awaitingPair = () => [
+      createChecklist({
+        id: 'cl-1',
+        assignedTo: 'user-1',
+        status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+      }),
+      createChecklist({
+        id: 'cl-2',
+        assignedTo: 'user-2',
+        status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+      }),
+    ];
+
+    it('plans both reviewer checklists when no reconciliation was started', () => {
+      const study = createStudy({ reviewer2: 'user-2', checklists: awaitingPair() });
+      const plan = getSendBackToTodoPlan(study, null, 'AMSTAR2');
+      expect(plan?.reviewerChecklists.map(c => c.id)).toEqual(['cl-1', 'cl-2']);
+      expect(plan?.reconciledChecklist).toBe(null);
+    });
+
+    it('includes the in-progress consensus checklist that would be discarded', () => {
+      const study = createStudy({
+        reviewer2: 'user-2',
+        checklists: [
+          ...awaitingPair(),
+          createChecklist({
+            id: 'cl-reconciled',
+            assignedTo: null,
+            status: CHECKLIST_STATUS.RECONCILING,
+          }),
+        ],
+      });
+      const plan = getSendBackToTodoPlan(study, null, 'AMSTAR2');
+      expect(plan?.reconciledChecklist?.id).toBe('cl-reconciled');
+    });
+
+    it('plans a single reviewer still waiting on their partner', () => {
+      const study = createStudy({
+        reviewer2: 'user-2',
+        checklists: [
+          awaitingPair()[0],
+          createChecklist({
+            id: 'cl-2',
+            assignedTo: 'user-2',
+            status: CHECKLIST_STATUS.IN_PROGRESS,
+          }),
+        ],
+      });
+      const plan = getSendBackToTodoPlan(study, null, 'AMSTAR2');
+      expect(plan?.reviewerChecklists.map(c => c.id)).toEqual(['cl-1']);
+    });
+
+    it('returns null when nothing is awaiting reconciliation', () => {
+      const study = createStudy({
+        reviewer2: 'user-2',
+        checklists: [
+          createChecklist({ id: 'cl-1', status: CHECKLIST_STATUS.IN_PROGRESS }),
+          createChecklist({
+            id: 'cl-2',
+            assignedTo: 'user-2',
+            status: CHECKLIST_STATUS.IN_PROGRESS,
+          }),
+        ],
+      });
+      expect(getSendBackToTodoPlan(study, null, 'AMSTAR2')).toBe(null);
+    });
+
+    it('returns null once the group is reconciled -- Reopen owns that state', () => {
+      const study = createStudy({
+        reviewer2: 'user-2',
+        checklists: [
+          ...awaitingPair(),
+          createChecklist({
+            id: 'cl-reconciled',
+            assignedTo: null,
+            status: CHECKLIST_STATUS.FINALIZED,
+          }),
+        ],
+      });
+      expect(getSendBackToTodoPlan(study, null, 'AMSTAR2')).toBe(null);
+    });
+
+    it('scopes to the requested outcome for outcome-based types', () => {
+      const study = createStudy({
+        reviewer2: 'user-2',
+        checklists: [
+          createChecklist({
+            id: 'cl-1',
+            type: 'ROB2',
+            outcomeId: 'outcome-1',
+            assignedTo: 'user-1',
+            status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+          }),
+          createChecklist({
+            id: 'cl-2',
+            type: 'ROB2',
+            outcomeId: 'outcome-2',
+            assignedTo: 'user-2',
+            status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+          }),
+        ],
+      });
+      expect(getSendBackToTodoPlan(study, 'outcome-1', 'ROB2')?.reviewerChecklists).toHaveLength(1);
+      expect(getSendBackToTodoPlan(study, 'outcome-3', 'ROB2')).toBe(null);
     });
   });
 });

@@ -13,12 +13,15 @@ import {
   CHECKLIST_STATUS,
   isReconciledChecklist,
   getReconciliationChecklistsByOutcome,
+  getSendBackToTodoPlan,
 } from '@corates/shared/checklists';
 import type { ChecklistGroup } from '@corates/shared/checklists';
 import { getChecklistMetadata } from '@/checklist-registry';
 import { PdfListItem } from '@/components/pdf/PdfListItem';
+import { project } from '@/project';
 import { ChangeOutcomeDialog } from '../ChangeOutcomeDialog';
 import { ReconcileStatusTag } from './ReconcileStatusTag';
+import { SendBackToTodoButton } from './SendBackToTodoButton';
 import type { StudyInfo, PdfEntry } from '@/stores/projectStore';
 
 interface ReconcileStudyRowProps {
@@ -84,6 +87,18 @@ export function ReconcileStudyRow({
     },
     [onReconcile],
   );
+
+  const renderSendBack = (group: ChecklistGroup | null) => {
+    if (!group) return null;
+    const plan = getSendBackToTodoPlan(study, group.outcomeId, group.type);
+    if (!plan) return null;
+    return (
+      <SendBackToTodoButton
+        discardsReconciliation={!!plan.reconciledChecklist}
+        onSendBack={() => project.checklist.sendBackToTodo(study.id, group.type, group.outcomeId)}
+      />
+    );
+  };
 
   const handleRowClick = useCallback(
     (e: React.MouseEvent) => {
@@ -162,6 +177,8 @@ export function ReconcileStudyRow({
                 </div>
               )}
 
+              {renderSendBack(firstReadyGroup || waitingGroups[0] || null)}
+
               <Button
                 onClick={e => {
                   e.stopPropagation();
@@ -227,10 +244,13 @@ export function ReconcileStudyRow({
                           {getReviewerName(group.checklists[1])}
                         </span>
                       </div>
-                      <Button onClick={() => startReconciliation(group)}>
-                        <GitCompareArrowsIcon className='size-4' />
-                        Reconcile
-                      </Button>
+                      <div className='flex items-center gap-2'>
+                        {renderSendBack(group)}
+                        <Button onClick={() => startReconciliation(group)}>
+                          <GitCompareArrowsIcon className='size-4' />
+                          Reconcile
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -273,9 +293,12 @@ export function ReconcileStudyRow({
                           {getReviewerName(group.checklists[0])} -- waiting for second reviewer
                         </span>
                       </div>
-                      <span className='bg-secondary text-muted-foreground shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium'>
-                        Waiting
-                      </span>
+                      <div className='flex items-center gap-2'>
+                        {renderSendBack(group)}
+                        <span className='bg-secondary text-muted-foreground shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium'>
+                          Waiting
+                        </span>
+                      </div>
                     </div>
                   ))}
                 </div>
