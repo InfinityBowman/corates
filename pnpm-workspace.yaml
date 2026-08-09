@@ -7,6 +7,14 @@ packages:
 minimumReleaseAgeExclude:
   - '@cf-sync/*'
 
+# better-auth's peer range still allows only better-sqlite3 ^12 while workers
+# ships ^13, which made pnpm keep two peer-variants of drizzle-orm. Two
+# variants split drizzle's SQL type identity between @corates/db and web and
+# break typecheck, so force a single resolution until better-auth widens its
+# peer range.
+overrides:
+  better-sqlite3: ^13.0.2
+
 onlyBuiltDependencies:
   - '@parcel/watcher'
   - '@prisma/engines'
