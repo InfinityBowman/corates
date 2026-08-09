@@ -326,8 +326,9 @@ function CompleteProfilePage() {
                   {stepInfo.title}
                 </span>
               </StepsTrigger>
+              {/* size-8 indicator: mt-[15px] puts the 2px line's center at the circle's 16px midline */}
               {index < STEPS_CONFIG.length - 1 && (
-                <StepsSeparator className='data-complete:bg-primary data-current:bg-secondary data-incomplete:bg-secondary mx-2 h-0.5 w-8 transition-colors sm:w-12' />
+                <StepsSeparator className='data-complete:bg-primary data-current:bg-secondary data-incomplete:bg-secondary mx-2 mt-[15px] h-0.5 w-8 self-start transition-colors sm:w-12' />
               )}
             </StepsItem>
           ))}
@@ -529,7 +530,12 @@ function CompleteProfilePage() {
                   Back
                 </Button>
               </StepsPrevTrigger>
-              <PrimaryButton loading={loading} loadingText='Finishing...' disabled={!persona}>
+              <PrimaryButton
+                loading={loading}
+                loadingText='Finishing...'
+                disabled={!persona}
+                className='flex-[3]'
+              >
                 Finish Setup
               </PrimaryButton>
             </div>
