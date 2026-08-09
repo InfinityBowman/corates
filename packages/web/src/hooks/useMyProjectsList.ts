@@ -7,13 +7,11 @@ import { queryKeys } from '@/lib/queryKeys';
 import { QUERY_STABLE } from '@/lib/queryPresets';
 import { useAuthStore, selectIsLoggedIn, selectIsAuthLoading } from '@/stores/authStore';
 import { getMyProjects } from '@/server/functions/users.functions';
-import type { UserProject } from '@/server/functions/users.server';
+import type { UserProjectWithMemberCount } from '@/server/functions/users.server';
 
-export type Project = UserProject & {
+export type Project = UserProjectWithMemberCount & {
   studyCount?: number;
   completedCount?: number;
-  memberCount?: number;
-  members?: unknown[];
 };
 
 export function useMyProjectsList(options: { enabled?: boolean } = {}) {

@@ -21,7 +21,6 @@ export function ProjectCard({ project, onOpen, onDelete, style }: ProjectCardPro
   const colors = useMemo(() => getAccentColors(project.id), [project.id]);
 
   const relativeTime = formatRelativeTime(project.updatedAt || project.createdAt);
-  const memberCount = project.memberCount || project.members?.length || 1;
   const isOwner = project.role === 'owner';
 
   return (
@@ -74,7 +73,7 @@ export function ProjectCard({ project, onOpen, onDelete, style }: ProjectCardPro
           <div className='text-muted-foreground flex items-center gap-1.5 text-xs'>
             <UsersIcon className='size-3.5' />
             <span>
-              {memberCount} member{memberCount !== 1 ? 's' : ''}
+              {project.memberCount} member{project.memberCount !== 1 ? 's' : ''}
             </span>
           </div>
           <Button
