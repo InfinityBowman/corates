@@ -263,7 +263,9 @@ export async function listProjectMembers(
       .from(projectMembers)
       .innerJoin(user, eq(projectMembers.userId, user.id))
       .where(eq(projectMembers.projectId, projectId))
-      .orderBy(projectMembers.joinedAt);
+      // userId tie-break keeps ordering stable when members join in the same
+      // second; without it SQLite's plan choice decides tie order.
+      .orderBy(projectMembers.joinedAt, projectMembers.userId);
 
     return results;
   } catch (err) {

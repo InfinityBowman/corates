@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX `project_members_projectId_userId_uidx` ON `project_members` (`projectId`,`userId`);

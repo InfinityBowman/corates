@@ -273,4 +273,6 @@ CREATE TABLE \`feedback\` (
 	FOREIGN KEY (\`userId\`) REFERENCES \`user\`(\`id\`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE INDEX \`feedback_userId_createdAt_idx\` ON \`feedback\` (\`userId\`,\`createdAt\`);`;
+CREATE INDEX \`feedback_userId_createdAt_idx\` ON \`feedback\` (\`userId\`,\`createdAt\`);
+
+CREATE UNIQUE INDEX \`project_members_projectId_userId_uidx\` ON \`project_members\` (\`projectId\`,\`userId\`);`;

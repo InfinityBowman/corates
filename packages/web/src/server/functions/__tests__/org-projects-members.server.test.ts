@@ -81,10 +81,12 @@ describe('listProjectMembers', () => {
 
     const result = await listProjectMembers(mockSession(), createDb(env.DB), org.id, project.id);
     expect(result).toHaveLength(2);
-    expect(result[0].userId).toBe(owner.id);
-    expect(result[0].role).toBe('owner');
-    expect(result[1].userId).toBe(members[1].user.id);
-    expect(result[1].role).toBe('member');
+    // Both members join within the same second, so assert by identity
+    // rather than position.
+    const ownerRow = result.find(m => m.userId === owner.id);
+    const memberRow = result.find(m => m.userId === members[1].user.id);
+    expect(ownerRow?.role).toBe('owner');
+    expect(memberRow?.role).toBe('member');
   });
 
   it('returns 403 for org-only member trying to view project members', async () => {

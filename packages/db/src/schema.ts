@@ -206,6 +206,10 @@ export const projectMembers = sqliteTable(
   t => [
     index('project_members_projectId_idx').on(t.projectId),
     index('project_members_userId_idx').on(t.userId),
+    // Concurrent accepts of the same invitation (e.g. two tabs) pass the
+    // membership pre-check and would both insert; the constraint makes the
+    // second insert fail instead of duplicating the membership.
+    uniqueIndex('project_members_projectId_userId_uidx').on(t.projectId, t.userId),
   ],
 );
 
