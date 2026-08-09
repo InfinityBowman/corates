@@ -8,6 +8,7 @@ import { useProjectContext } from './ProjectContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { InlineEdit } from '@/components/ui/inline-edit';
+import { ProjectHeaderActions } from './ProjectHeaderActions';
 
 interface ProjectHeaderProps {
   name?: string;
@@ -123,6 +124,8 @@ export function ProjectHeader({
           </div>
         </div>
       </div>
+
+      <ProjectHeaderActions />
     </div>
   );
 }
