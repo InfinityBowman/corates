@@ -16,7 +16,9 @@ Workers (production) -> OTLP export -> loki.jacobmaynard.dev/otlp/v1/logs -> Lok
 - `config/` - Loki config and Grafana datasource provisioning; rsynced to
   `/home/jacob/corates/observability/` on the box by deploy.sh (bind mounts resolve
   remotely when using a docker context)
-- `dashboards/` - Grafana dashboard JSON, imported by hand via Dashboards > New > Import
+- `dashboards/` - Grafana dashboard JSON, imported by hand via Dashboards > New > Import.
+  `corates-logs.json` is scoped to `deployment_environment_name="production"` throughout;
+  staging is deliberately excluded, so importing it will not show staging traffic
 - `.env` (gitignored) - R2 S3 credentials, Loki basic-auth htpasswd, Grafana admin password
 - `deploy.sh` - rsync config, then `docker --context homelab compose up -d`
 
@@ -44,8 +46,21 @@ Grafana talks to Loki internally over the docker network without auth.
 
 ## Useful LogQL
 
+Only a small share of ingested lines are `@corates/shared/logger` JSON (roughly 3% - the rest
+are Cloudflare invocation logs and raw library `console` output). Filter on Loki's
+`detected_level` rather than `| json | level=`, or errors from Better Auth, Drizzle and other
+libraries are silently excluded.
+
 ```logql
-{service_name="corates-workers-prod"}                          # all web worker logs
-{service_name=~"corates-.*"} |= "error"                        # errors across services
-{service_name="corates-workers-prod"} | json | level="warn"    # structured fields
+{deployment_environment_name="production"}                       # everything in prod
+{deployment_environment_name="production"} | detected_level="error"
+{service_name="corates-workers-prod"} | cloudflare_handler_type="hibernatableWebSocket"
+{deployment_environment_name="production"} | trace_id="<id>"     # one whole invocation
+{service_name="corates-workers-prod"} | json | level="warn"      # logger JSON only
 ```
+
+Cloudflare attaches ~50 OTLP attributes per line as structured metadata (`url_path`,
+`http_request_method`, `cloudflare_handler_type`, `cloudflare_entrypoint`,
+`cloudflare_script_version_id`, `trace_id`, `cloudflare_ray_id`, `geo_*`, `user_agent_*`).
+Only `service_name` and `deployment_environment_name` are stream labels. Response status
+codes and request durations are **not** exported - use the Cloudflare dashboard for those.
