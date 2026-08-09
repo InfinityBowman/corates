@@ -3,14 +3,12 @@
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { ArrowLeftIcon, TargetIcon } from 'lucide-react';
+import { ArrowLeftIcon } from 'lucide-react';
 import { useProjectContext } from './ProjectContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { InlineEdit } from '@/components/ui/inline-edit';
 import { ProjectHeaderActions } from './ProjectHeaderActions';
-import { OutcomesSheet } from './outcomes/OutcomesSheet';
-import { useSortedStudyIds, useProjectOutcomes } from '@/project/workspace-data';
 
 interface ProjectHeaderProps {
   name?: string;
@@ -27,16 +25,12 @@ export function ProjectHeader({
   onUpdateDescription,
   onBack,
 }: ProjectHeaderProps) {
-  const { projectId, userRole } = useProjectContext();
+  const { userRole } = useProjectContext();
 
   const canEdit = useMemo(() => userRole === 'owner' || userRole === 'collaborator', [userRole]);
 
   const [localName, setLocalName] = useState(name || '');
   const [localDescription, setLocalDescription] = useState(description || '');
-  const [outcomesOpen, setOutcomesOpen] = useState(false);
-
-  const studyIds = useSortedStudyIds(projectId);
-  const outcomes = useProjectOutcomes(projectId);
 
   // Sync local state when external data loads
   useEffect(() => {
@@ -128,28 +122,10 @@ export function ProjectHeader({
               className='text-muted-foreground text-sm'
             />
           </div>
-
-          {/* Metadata line */}
-          <div className='text-muted-foreground mt-1 flex items-center gap-1.5 text-xs'>
-            <span className='tabular-nums'>
-              {studyIds.length} {studyIds.length === 1 ? 'study' : 'studies'}
-            </span>
-            <span aria-hidden='true'>&middot;</span>
-            <button
-              type='button'
-              onClick={() => setOutcomesOpen(true)}
-              className='hover:text-foreground flex items-center gap-1 tabular-nums underline-offset-2 hover:underline'
-            >
-              <TargetIcon className='size-3' />
-              {outcomes.length} {outcomes.length === 1 ? 'outcome' : 'outcomes'}
-            </button>
-          </div>
         </div>
       </div>
 
       <ProjectHeaderActions />
-
-      <OutcomesSheet open={outcomesOpen} onOpenChange={setOutcomesOpen} />
     </div>
   );
 }

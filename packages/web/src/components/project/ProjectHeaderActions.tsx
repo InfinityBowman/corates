@@ -4,13 +4,14 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
-import { PlusIcon, UsersIcon } from 'lucide-react';
+import { PlusIcon, UsersIcon, TargetIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AddStudiesSheet } from './add-studies/AddStudiesSheet';
 import { AssignReviewersSheet } from './assign-reviewers/AssignReviewersSheet';
-import { useAllStudies, useProjectMembers } from '@/project/workspace-data';
+import { OutcomesSheet } from './outcomes/OutcomesSheet';
+import { useAllStudies, useProjectMembers, useProjectOutcomes } from '@/project/workspace-data';
 import { useProjectContext } from './ProjectContext';
 
 export function ProjectHeaderActions() {
@@ -18,9 +19,11 @@ export function ProjectHeaderActions() {
 
   const [addOpen, setAddOpen] = useState(false);
   const [assignOpen, setAssignOpen] = useState(false);
+  const [outcomesOpen, setOutcomesOpen] = useState(false);
 
   const studies = useAllStudies(projectId);
   const members = useProjectMembers(projectId);
+  const outcomes = useProjectOutcomes(projectId);
 
   const unassignedCount = useMemo(
     () => studies.filter(s => !s.reviewer1 && !s.reviewer2).length,
@@ -45,6 +48,20 @@ export function ProjectHeaderActions() {
 
   return (
     <div className='flex shrink-0 items-center gap-2'>
+      <Button
+        variant='ghost'
+        onClick={() => setOutcomesOpen(true)}
+        className='text-muted-foreground'
+      >
+        <TargetIcon className='size-4' />
+        Outcomes
+        {outcomes.length > 0 && (
+          <Badge variant='secondary' className='min-w-5 px-1.5 tabular-nums'>
+            {outcomes.length}
+          </Badge>
+        )}
+      </Button>
+
       {isOwner && studies.length > 0 && (
         <Button variant='outline' onClick={() => setAssignOpen(true)}>
           <UsersIcon className='size-4' />
@@ -64,6 +81,7 @@ export function ProjectHeaderActions() {
 
       <AddStudiesSheet open={addOpen} onOpenChange={setAddOpen} onAdded={handleAdded} />
       {isOwner && <AssignReviewersSheet open={assignOpen} onOpenChange={setAssignOpen} />}
+      <OutcomesSheet open={outcomesOpen} onOpenChange={setOutcomesOpen} />
     </div>
   );
 }
