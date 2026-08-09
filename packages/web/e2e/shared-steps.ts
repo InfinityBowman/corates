@@ -298,16 +298,23 @@ export async function assignReviewers(page: Page) {
 }
 
 /**
- * Adds an outcome in the All Studies tab.
+ * Adds an outcome through the Outcomes sheet in the project header.
  */
 export async function addOutcome(page: Page, name: string) {
   await page.getByRole('tab', { name: /All Studies/i }).click();
   await page.getByText('Outcomes').click();
-  await expect(page.getByRole('button', { name: /Add/i }).last()).toBeVisible({ timeout: 5_000 });
-  await page.getByRole('button', { name: /Add/i }).last().click();
+
+  const sheet = page.getByRole('dialog');
+  await expect(sheet.getByRole('button', { name: /Add/i }).last()).toBeVisible({ timeout: 5_000 });
+  await sheet.getByRole('button', { name: /Add/i }).last().click();
   await page.getByPlaceholder(/outcome/i).fill(name);
   await page.keyboard.press('Enter');
-  await expect(page.getByText(name)).toBeVisible({ timeout: 5_000 });
+  await expect(sheet.getByText(name)).toBeVisible({ timeout: 5_000 });
+
+  // The sheet is modal and nothing else closes it, so its overlay would swallow
+  // every later click on the tabs behind it.
+  await sheet.getByRole('button', { name: 'Close' }).click();
+  await expect(sheet).toBeHidden({ timeout: 5_000 });
 }
 
 /**
