@@ -36,18 +36,25 @@ export class WorkspaceDO extends createWorkspaceDO({
   // Without this the engine's diagnostics go straight to console as plain
   // interpolated strings, which reach Loki unparseable by field. These are
   // the sync engine's init failures, schema-drift warnings and internal
-  // errors, so they are the ones worth querying.
-  logger: (level, message, ...detail) => {
+  // errors, so they are the ones worth querying. The workspace id IS the
+  // projectId, so logging it under that name joins these against the rest of
+  // the project's logs — the engine's own logs carry no requestId, because
+  // they fire at DO construction and on live sockets, never inside a request.
+  logger: (level, message, { workspaceId }, ...detail) => {
     const error = detail.find((d): d is Error => d instanceof Error);
     const extra = detail.filter(d => !(d instanceof Error));
     if (level === 'error') {
       captureError(error ?? new Error(message), {
-        tags: { component: 'cf-sync' },
+        tags: { component: 'cf-sync', projectId: workspaceId },
         extra: { engineMessage: message, ...(extra.length > 0 && { detail: extra }) },
       });
       return;
     }
-    warn(message, { component: 'cf-sync', ...(detail.length > 0 && { detail }) });
+    warn(message, {
+      component: 'cf-sync',
+      projectId: workspaceId,
+      ...(detail.length > 0 && { detail }),
+    });
   },
 }) {}
 

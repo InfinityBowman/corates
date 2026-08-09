@@ -111,10 +111,11 @@ Two things still log unscoped:
 
 - **`WorkspaceDO`** (the sync engine). `createWorkspaceDO` takes a `logger`, which
   `sync/workspace.ts` supplies, so the engine's init failures, schema-drift warnings and
-  internal errors go through the shared logger and reach Loki as structured JSON. They carry
-  no `requestId` though: the DO class comes from `@cf-sync/server`, so there is no `fetch` of
-  ours to open a scope in. (The sync route does forward all original request headers, so the
-  missing piece is scope, not transport.)
+  internal errors go through the shared logger and reach Loki as structured JSON. These join
+  on `projectId`, not `requestId` - the engine stamps every diagnostic with the workspace it
+  came from (`@cf-sync/server` 0.2.0), and a workspace id _is_ a projectId here. A requestId
+  would be meaningless on them: init failures fire at DO construction and internal errors on
+  a live socket, both outside any request.
 - **Module-init and test code**, which has no request to attach to.
 
 Hibernated WebSocket callbacks (`webSocketMessage`, `webSocketError`) also fall outside: they

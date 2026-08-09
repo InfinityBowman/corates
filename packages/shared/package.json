@@ -75,7 +75,7 @@
     "test:watch": "vitest"
   },
   "devDependencies": {
-    "@cf-sync/server": "^0.1.0",
+    "@cf-sync/server": "^0.2.0",
     "typescript": "^5.9.3",
     "vitest": "^4.1.10"
   },
