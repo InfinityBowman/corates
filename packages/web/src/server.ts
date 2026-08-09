@@ -27,13 +27,24 @@ interface SentryEnv {
   CF_VERSION_METADATA?: { id?: string };
 }
 
+// This worker is public, so an inbound x-request-id is attacker-controlled: a
+// value reused across requests collapses correlation, and an oversized one is
+// copied into every log line of the request and shipped onward. Adopt one only
+// if it looks like an id we would have minted ourselves.
+const SAFE_REQUEST_ID = /^[A-Za-z0-9_-]{1,64}$/;
+
+function inboundRequestId(request: Request): string | null {
+  const id = request.headers.get('x-request-id');
+  return id && SAFE_REQUEST_ID.test(id) ? id : null;
+}
+
 const workerHandler = {
   async fetch(request: Request, env: unknown, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
     // Scope every log emitted while handling this request to one requestId.
-    // An inbound x-request-id wins so a caller's id survives across hops.
-    const requestId = request.headers.get('x-request-id') ?? crypto.randomUUID();
+    // A well-formed inbound x-request-id wins so a caller's id survives hops.
+    const requestId = inboundRequestId(request) ?? crypto.randomUUID();
 
     return runWithLogger(
       {

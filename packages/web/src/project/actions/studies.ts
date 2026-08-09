@@ -310,6 +310,7 @@ export const studyActions = {
       if (pdfFileNames.length > 0) {
         const deletePromises = pdfFileNames.map(fileName => {
           return bestEffort(deletePdf(orgId, projectId, studyId, fileName), {
+            capture: true,
             operation: 'deletePdf (study cleanup)',
             projectId,
             studyId,

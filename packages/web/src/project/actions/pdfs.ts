@@ -216,6 +216,7 @@ export const pdfActions = {
       });
       if (uploadResult?.fileName) {
         bestEffort(deletePdf(orgId, projectId, studyId, uploadResult.fileName), {
+          capture: true,
           operation: 'deletePdf (upload rollback)',
           projectId,
           studyId,
@@ -348,6 +349,7 @@ export const pdfActions = {
         fileName: file.fileName,
       });
       bestEffort(deletePdf(orgId, projectId, studyId, file.fileName), {
+        capture: true,
         operation: 'deletePdf (Google Drive rollback)',
         projectId,
         studyId,

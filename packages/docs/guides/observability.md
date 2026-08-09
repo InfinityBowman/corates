@@ -51,7 +51,7 @@ from the request scope; anything else is per-call data or scope context.
 
 | Package            | Import                          | Notes                                                                                    |
 | ------------------ | ------------------------------- | ---------------------------------------------------------------------------------------- |
-| `workers`          | `@corates/workers/logger`       | `debug` / `info` / `warn` / `captureError`. The default for all server code.             |
+| `workers`          | `@corates/workers/logger`       | `info` / `warn` / `captureError`. The default for all server code.                       |
 | sync engine        | `createWorkspaceDO({ logger })` | Engine diagnostics; the hook in `sync/workspace.ts` forwards them to the same logger.    |
 | `stripe-purchases` | `src/lib/observability/logger`  | Hono-request-scoped wrapper adding `.stripe(action, data)` with a typed field whitelist. |
 | `web` (server)     | `@corates/workers/logger`       | Same as workers - server functions, route handlers, middleware.                          |
@@ -65,10 +65,15 @@ Stripe webhook route does.
 Every log emitted while handling a request carries the same `requestId`, so one query returns
 the whole story of a failure.
 
-The scope is opened in `packages/web/src/server.ts`, which reads an inbound `x-request-id`
-(falling back to a fresh UUID) and captures `cf-ray`, `env`, `route`, and `method`. It is
-carried by `AsyncLocalStorage` rather than a threaded parameter, which is why command
-signatures stay `(env, actor, params)` while their logs still correlate.
+The scope is opened in `packages/web/src/server.ts`, which captures `cf-ray`, `env`, `route`,
+and `method`. It is carried by `AsyncLocalStorage` rather than a threaded parameter, which is
+why command signatures stay `(env, actor, params)` while their logs still correlate.
+
+The id itself comes from an inbound `x-request-id` when there is one, so a caller's id survives
+across hops - but only if it matches `^[A-Za-z0-9_-]{1,64}$`, otherwise a fresh UUID is minted.
+The header is attacker-controlled on a public worker: a client that sends one fixed value
+collapses correlation for everything it touches, and a multi-kilobyte value would be copied
+into every log line of the request and shipped onward.
 
 `authMiddleware` narrows the scope with `userId` once the caller is known, so anything
 downstream of auth logs the user too.
@@ -125,7 +130,6 @@ fire long after the originating request, so there is no scope left to inherit.
 
 ## Levels
 
-- `debug` - diagnostic detail, not expected to be read routinely
 - `info` - a thing happened that you would want to see when reconstructing a request
 - `warn` - degraded but handled; the operation still succeeded
 - `error` - the operation failed. Prefer `captureError`, which logs _and_ reports to Sentry.
@@ -154,6 +158,11 @@ user attempted and that did not complete gets `captureException` with `component
 tags. A tolerated degradation - a metadata lookup that fell back, a cache write that missed -
 stays a `console.warn` and rides along as a Sentry breadcrumb if a real error follows.
 
+`bestEffort` in `@/lib/errorLogger` follows the same split: it warns by default and only reports
+when the call site passes `capture: true`. IndexedDB cache writes fail routinely under Safari
+private browsing and quota pressure, so they stay on the console; the rollback deletes do pass
+it, because a rollback that did not run leaves an orphaned object in R2.
+
 The Worker entries do not set `enableLogs`; nothing calls `Sentry.logger.*`.
 
 ## Querying
@@ -161,8 +170,8 @@ The Worker entries do not set `enableLogs`; nothing calls `Sentry.logger.*`.
 Grafana lives at `grafana.jacobmaynard.dev` with one dashboard, `CoRATES Logs`.
 
 ```logql
-{service_name="corates-workers-prod"}                          # all prod logs
-{service_name=~"corates-workers.*"} |= "error"                 # errors, both envs
+{service_name="corates-workers-prod"}                          # all web worker logs
+{service_name=~"corates-.*"} |= "error"                        # errors across services
 {service_name="corates-workers-prod"} | json | level="warn"    # structured fields
 {service_name="corates-workers-prod"} | json | requestId="3f2b..."   # one request
 ```

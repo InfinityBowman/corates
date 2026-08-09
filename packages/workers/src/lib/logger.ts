@@ -51,7 +51,7 @@ export function runWithContext<T>(context: Record<string, unknown>, fn: () => T)
   return scopeStore.run(current().child(context), fn);
 }
 
-/** The active request's id, for echoing back as a response header. */
+/** The active request's id, for code that builds a logger of its own. */
 export function getRequestId(): string | undefined {
   return current().requestId;
 }
@@ -65,11 +65,6 @@ export function captureError(error: unknown, context?: ErrorContext): void {
     ...context?.extra,
   });
   Sentry.captureException(error, context);
-}
-
-export function debug(message: string, params?: LogParams): void {
-  const [msg, data] = normalize(message, params);
-  current().debug(msg, data);
 }
 
 export function info(message: string, params?: LogParams): void {

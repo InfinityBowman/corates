@@ -3,7 +3,7 @@
  * worker (`packages/web/src/server.ts`) wires this into its Cloudflare
  * Workers `queue()` handler.
  */
-import { captureError, info } from './lib/logger';
+import { captureError, info, runWithContext } from './lib/logger';
 import { createEmailService } from './auth/email';
 import type { EmailPayload } from '@corates/shared/email';
 import type { Env } from './types';
@@ -33,39 +33,43 @@ export async function handleEmailQueue(batch: MessageBatch<unknown>, env: Env): 
   const emailService = createEmailService(env);
   const messages = batch.messages as Message<EmailPayload>[];
 
+  // The batch's scope is shared by every message in it, so without this a
+  // failed send cannot be told apart from its neighbours in the same batch.
   await Promise.allSettled(
-    messages.map(async msg => {
-      try {
-        if (await isAlreadyProcessed(env.DB, msg.id)) {
-          msg.ack();
-          return;
-        }
+    messages.map(msg =>
+      runWithContext({ messageId: msg.id }, async () => {
+        try {
+          if (await isAlreadyProcessed(env.DB, msg.id)) {
+            msg.ack();
+            return;
+          }
 
-        const result = await emailService.sendEmail(
-          msg.body as Parameters<typeof emailService.sendEmail>[0],
-        );
+          const result = await emailService.sendEmail(
+            msg.body as Parameters<typeof emailService.sendEmail>[0],
+          );
 
-        const masked = msg.body.to?.replace(/^(..).*@/, '$1***@');
-        if (result.success) {
-          await markProcessed(env.DB, msg.id);
-          info('email.sent', { to: masked, subject: msg.body.subject, attempt: msg.attempts });
-          msg.ack();
-        } else {
-          captureError(new Error(`Email send failed for ${masked}: ${result.error}`), {
+          const masked = msg.body.to?.replace(/^(..).*@/, '$1***@');
+          if (result.success) {
+            await markProcessed(env.DB, msg.id);
+            info('email.sent', { to: masked, subject: msg.body.subject, attempt: msg.attempts });
+            msg.ack();
+          } else {
+            captureError(new Error(`Email send failed for ${masked}: ${result.error}`), {
+              tags: { component: 'email-queue' },
+              extra: { attempt: msg.attempts },
+            });
+            const delay = Math.min(30 * 2 ** msg.attempts, 1800);
+            msg.retry({ delaySeconds: delay });
+          }
+        } catch (error) {
+          captureError(error, {
             tags: { component: 'email-queue' },
             extra: { attempt: msg.attempts },
           });
           const delay = Math.min(30 * 2 ** msg.attempts, 1800);
           msg.retry({ delaySeconds: delay });
         }
-      } catch (error) {
-        captureError(error, {
-          tags: { component: 'email-queue' },
-          extra: { attempt: msg.attempts },
-        });
-        const delay = Math.min(30 * 2 ** msg.attempts, 1800);
-        msg.retry({ delaySeconds: delay });
-      }
-    }),
+      }),
+    ),
   );
 }
