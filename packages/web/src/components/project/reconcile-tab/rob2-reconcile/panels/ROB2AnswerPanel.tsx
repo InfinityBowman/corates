@@ -62,6 +62,8 @@ interface ROB2AnswerPanelProps {
   responseOptions: string[];
   readOnly: boolean;
   isSelected?: boolean;
+  /** The question was skipped: no stored answer because it sits off the scoring path. */
+  skipped?: boolean;
   onAnswerChange?: (_answer: string) => void;
   onUseThis?: () => void;
 }
@@ -78,6 +80,7 @@ export function ROB2AnswerPanel({
   responseOptions,
   readOnly,
   isSelected,
+  skipped = false,
   onAnswerChange,
   onUseThis,
 }: ROB2AnswerPanelProps) {
@@ -153,6 +156,18 @@ export function ROB2AnswerPanel({
           );
         })}
       </div>
+
+      {/* Skipped badge: a null answer here is deliberate, not missing work */}
+      {skipped && !answer && (
+        <div className='mb-4 flex flex-wrap items-center gap-2'>
+          <span
+            className='inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600'
+            title='The judgement was already determined by the other answers, so this question was not required.'
+          >
+            Skipped - Not applicable
+          </span>
+        </div>
+      )}
 
       {/* Result Badge (for reviewer panels) */}
       {!isFinal && answer && (

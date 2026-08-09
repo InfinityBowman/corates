@@ -3,6 +3,7 @@ import { CheckIcon, ArrowLeftIcon, ArrowRightIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { RESPONSE_LABELS } from '@/components/checklist/ROBINSIChecklist/checklist-map';
 import {
+  getSkippedQuestionsCached,
   hasNavItemValue,
   isNavItemAgreement,
   getGroupedNavigationItems,
@@ -189,6 +190,10 @@ export function RobinsISummaryView({
                 const agreement = isNavItemAgreement(item, comparison);
                 const answered = hasNavItemValue(item, finalAnswers);
                 const value = getItemValue(item, finalAnswers);
+                const skipped =
+                  !value &&
+                  item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION &&
+                  getSkippedQuestionsCached(finalAnswers).has(item.key);
 
                 return (
                   <div
@@ -225,6 +230,10 @@ export function RobinsISummaryView({
                           {value.type === 'answer' ?
                             `${value.value} - ${(RESPONSE_LABELS as Record<string, string>)[value.value]}`
                           : value.value}
+                        </span>
+                      : skipped ?
+                        <span className='rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600'>
+                          Skipped - Not applicable
                         </span>
                       : <span className='text-muted-foreground/70 text-xs'>Not set</span>}
                       {answered && (

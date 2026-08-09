@@ -3,6 +3,7 @@ import { CheckIcon, ChevronRightIcon } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import {
   getSectionLabel,
+  getSkippedQuestionsCached,
   hasNavItemValue,
   isNavItemAgreement,
   getNavItemPillStyle,
@@ -160,9 +161,12 @@ function QuestionPill({
   const isCurrentPage = currentPage === globalIndex;
   const isAgreement = isNavItemAgreement(item, comparison);
   const hasValue = hasNavItemValue(item, finalAnswers);
+  const isSkipped =
+    item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION &&
+    getSkippedQuestionsCached(finalAnswers).has(item.key);
 
   const pillStyle = getNavItemPillStyle(isCurrentPage, hasValue, isAgreement);
-  const tooltip = getNavItemTooltip(item, hasValue, isAgreement);
+  const tooltip = getNavItemTooltip(item, hasValue, isAgreement, isSkipped);
 
   const displayLabel = (() => {
     switch (item.type) {

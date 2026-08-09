@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { CheckIcon, XIcon, ChevronRightIcon, ArrowLeftIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
+  getSkippedQuestionsCached,
   hasNavItemValue,
   isNavItemAgreement,
   getGroupedNavigationItems,
@@ -37,7 +38,8 @@ function getDomainQuestionDisplayValue(
   finalAnswers: any,
 ): string {
   const answer = finalAnswers?.[domainKey]?.answers?.[questionKey]?.answer;
-  return answer || 'Not set';
+  if (answer) return answer;
+  return getSkippedQuestionsCached(finalAnswers).has(questionKey) ? 'Skipped' : 'Not set';
 }
 
 /**

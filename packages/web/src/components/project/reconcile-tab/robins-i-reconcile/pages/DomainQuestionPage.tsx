@@ -1,3 +1,4 @@
+import { InfoIcon } from 'lucide-react';
 import {
   getDomainQuestions,
   RESPONSE_TYPES,
@@ -16,6 +17,10 @@ interface DomainQuestionPageProps {
   reviewer1Name: string;
   reviewer2Name: string;
   isAgreement: boolean;
+  /** Derived skip state per checklist: null answer while off the scoring path. */
+  reviewer1Skipped?: boolean;
+  reviewer2Skipped?: boolean;
+  finalSkipped?: boolean;
   onFinalAnswerChange: (_answer: string) => void;
   onUseReviewer1: () => void;
   onUseReviewer2: () => void;
@@ -32,6 +37,9 @@ export function DomainQuestionPage({
   reviewer1Name,
   reviewer2Name,
   isAgreement,
+  reviewer1Skipped = false,
+  reviewer2Skipped = false,
+  finalSkipped = false,
   onFinalAnswerChange,
   onUseReviewer1,
   onUseReviewer2,
@@ -73,8 +81,23 @@ export function DomainQuestionPage({
         </div>
       </div>
 
+      {/* Skipped banner */}
+      {finalSkipped && (
+        <div className='border-border bg-muted border-b px-4 py-3'>
+          <div className='flex items-center gap-2'>
+            <InfoIcon className='text-muted-foreground size-4 shrink-0' />
+            <p className='text-muted-foreground text-sm'>
+              The reconciled answers already determine this domain's judgement, so this question is
+              not required. You can still record an answer if needed.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Three Column Layout */}
-      <div className='divide-border grid grid-cols-3 divide-x'>
+      <div
+        className={`divide-border grid grid-cols-3 divide-x ${finalSkipped ? 'opacity-60' : ''}`}
+      >
         <RobinsAnswerPanel
           title={reviewer1Name}
           panelType='reviewer1'
@@ -83,6 +106,7 @@ export function DomainQuestionPage({
           responseOptions={responseOptions}
           readOnly={true}
           isSelected={selectedSource === 'reviewer1'}
+          skipped={reviewer1Skipped}
           onUseThis={onUseReviewer1}
         />
 
@@ -94,6 +118,7 @@ export function DomainQuestionPage({
           responseOptions={responseOptions}
           readOnly={true}
           isSelected={selectedSource === 'reviewer2'}
+          skipped={reviewer2Skipped}
           onUseThis={onUseReviewer2}
         />
 
@@ -104,6 +129,7 @@ export function DomainQuestionPage({
           commentKey={finalCommentKey}
           responseOptions={responseOptions}
           readOnly={false}
+          skipped={finalSkipped}
           onAnswerChange={onFinalAnswerChange}
         />
       </div>

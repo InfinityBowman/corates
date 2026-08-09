@@ -19,3 +19,6 @@ export * from './answers.js';
 
 // Answer-payload schemas (Zod runtime validation for updateAnswer data)
 export * from './answers-schema.js';
+
+// Skipped-question derivation
+export * from './skipped.js';
