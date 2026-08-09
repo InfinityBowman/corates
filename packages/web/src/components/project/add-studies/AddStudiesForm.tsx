@@ -3,22 +3,22 @@
  * Supports four methods: PDF uploads, reference file imports, DOI/PMID lookups, and Google Drive.
  * Can be used both during project creation and when adding studies to existing projects.
  *
- * Three UI modes:
- * 1. Collapsible card (hasExistingStudies && !alwaysExpanded) - toggle between collapsed header and expanded form
- * 2. Always expanded (!hasExistingStudies && !alwaysExpanded) - dashed dropzone or expanded form
- * 3. Always expanded (alwaysExpanded) - standalone card, optionally bare in collectMode
+ * The host owns the useAddStudies instance and passes it in, so staged studies
+ * survive this component unmounting (e.g. the Add studies sheet closing).
+ *
+ * Two UI modes:
+ * 1. Inline card (!alwaysExpanded) - empty-project form with its own submit/cancel
+ * 2. Always expanded (alwaysExpanded) - standalone card, bare when hosted in a
+ *    sheet (bare) or during project creation (collectMode)
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { PlusIcon, XIcon, UploadIcon, FileTextIcon, LinkIcon, FolderIcon } from 'lucide-react';
+import { UploadIcon, FileTextIcon, LinkIcon, FolderIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { Tabs, TabsList, TabsTrigger, TabsIndicator, TabsContent } from '@/components/ui/tabs';
 import { showToast } from '@/lib/toast';
 import { Spinner } from '@/components/ui/spinner';
-import { useSortedStudyIds } from '@/project/workspace-data';
 import { useAddStudies } from '@/hooks/useAddStudies';
-import type { CollectedStudies } from '@/hooks/useAddStudies';
 import type { MergedStudy } from '@/hooks/useAddStudies/deduplication';
 
 import { PdfUploadSection } from './PdfUploadSection';
@@ -33,11 +33,12 @@ export interface AddStudiesFormState {
 }
 
 interface AddStudiesFormProps {
+  studies: ReturnType<typeof useAddStudies>;
   projectId?: string;
   onAddStudies?: (studies: MergedStudy[]) => Promise<void>;
   alwaysExpanded?: boolean;
   collectMode?: boolean;
-  onStudiesChange?: (data: CollectedStudies) => void;
+  bare?: boolean;
   formType?: 'createProject' | 'addStudies';
   initialState?: AddStudiesFormState | null;
   getExternalState?: () => Record<string, unknown>;
@@ -45,51 +46,26 @@ interface AddStudiesFormProps {
 }
 
 export function AddStudiesForm({
+  studies,
   projectId,
   onAddStudies,
   alwaysExpanded = false,
   collectMode = false,
-  onStudiesChange,
+  bare = false,
   formType,
   initialState,
   getExternalState,
   onSaveState,
 }: AddStudiesFormProps) {
-  const [expanded, setExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState('pdfs');
-  const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
   const hasRestoredRef = useRef(false);
 
-  const studies = useAddStudies({
-    collectMode,
-    onStudiesChange,
-  });
-
-  const studyIds = useSortedStudyIds(projectId || '');
-  const existingStudyCount = projectId ? studyIds.length : 0;
-  const hasExistingStudies = !collectMode && !!projectId && existingStudyCount > 0;
-
-  const isExpanded = alwaysExpanded || expanded || studies.hasAnyStudies();
-
-  const hasExistingStudiesRef = useRef(hasExistingStudies);
-  hasExistingStudiesRef.current = hasExistingStudies;
-  const isExpandedRef = useRef(isExpanded);
-  isExpandedRef.current = isExpanded;
-  const isDraggingOverRef = useRef(isDraggingOver);
-  isDraggingOverRef.current = isDraggingOver;
-  const handlePdfSelectRef = useRef(studies.handlePdfSelect);
-  handlePdfSelectRef.current = studies.handlePdfSelect;
-
-  // Restore state from OAuth redirect.
-  // Expand unconditionally since restoreState enqueues React state updates
-  // that haven't committed yet - hasAnyStudies() would read stale (empty) state.
+  // Restore state from OAuth redirect
   useEffect(() => {
     if (!initialState?.studiesState || hasRestoredRef.current) return;
     hasRestoredRef.current = true;
     studies.restoreState(initialState.studiesState);
-    setExpanded(true);
     setActiveTab('drive');
   }, [initialState]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -99,62 +75,6 @@ export function AddStudiesForm({
     const externalState = getExternalState?.() || {};
     await onSaveState?.({ studiesState, ...externalState });
   }, [studies, getExternalState, onSaveState]);
-
-  // Global drag-and-drop for collapsed state.
-  // Uses refs to read current values inside handlers, registered once to avoid
-  // listener churn that causes stale closures during rapid state changes.
-  useEffect(() => {
-    if (alwaysExpanded) return;
-
-    const handleDragEnter = (e: Event) => {
-      const de = e as globalThis.DragEvent;
-      if (
-        hasExistingStudiesRef.current &&
-        !isExpandedRef.current &&
-        de.dataTransfer?.types?.includes('Files')
-      ) {
-        setIsDraggingOver(true);
-      }
-    };
-
-    const handleDragLeave = (e: Event) => {
-      if (containerRef.current && !containerRef.current.contains((e as any).relatedTarget)) {
-        setIsDraggingOver(false);
-      }
-    };
-
-    const handleDragOver = (e: Event) => {
-      if (hasExistingStudiesRef.current && !isExpandedRef.current && isDraggingOverRef.current) {
-        e.preventDefault();
-      }
-    };
-
-    const handleDrop = async (e: Event) => {
-      if (hasExistingStudiesRef.current && !isExpandedRef.current && isDraggingOverRef.current) {
-        e.preventDefault();
-        setIsDraggingOver(false);
-        const de = e as globalThis.DragEvent;
-        const files = Array.from(de.dataTransfer?.files || []);
-        if (files.length > 0) {
-          setExpanded(true);
-          setActiveTab('pdfs');
-          await handlePdfSelectRef.current(files);
-        }
-      }
-    };
-
-    document.addEventListener('dragenter', handleDragEnter);
-    document.addEventListener('dragleave', handleDragLeave);
-    document.addEventListener('dragover', handleDragOver);
-    document.addEventListener('drop', handleDrop);
-
-    return () => {
-      document.removeEventListener('dragenter', handleDragEnter);
-      document.removeEventListener('dragleave', handleDragLeave);
-      document.removeEventListener('dragover', handleDragOver);
-      document.removeEventListener('drop', handleDrop);
-    };
-  }, [alwaysExpanded]);
 
   const handleSubmit = useCallback(async () => {
     const studiesToAdd = studies.getStudiesToSubmit();
@@ -167,7 +87,6 @@ export function AddStudiesForm({
     try {
       await onAddStudies?.(studiesToAdd);
       studies.clearAll();
-      setExpanded(false);
     } finally {
       setIsSubmitting(false);
     }
@@ -175,7 +94,6 @@ export function AddStudiesForm({
 
   const handleCancel = useCallback(() => {
     studies.clearAll();
-    setExpanded(false);
   }, [studies]);
 
   // Shared tab content rendered in all three UI modes
@@ -253,61 +171,20 @@ export function AddStudiesForm({
   );
 
   return (
-    <div ref={containerRef} className='relative'>
-      {/* Drag overlay */}
-      {isDraggingOver && hasExistingStudies && !isExpanded && (
-        <div className='pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-blue-500/10'>
-          <div className='bg-card rounded-xl border-2 border-dashed border-blue-500 p-8'>
-            <p className='text-lg font-medium text-blue-600'>Drop PDFs to add studies</p>
-          </div>
-        </div>
-      )}
-
-      {/* Mode 1: Collapsible card (has existing studies) */}
-      {hasExistingStudies && !alwaysExpanded && (
-        <div className='border-border bg-card overflow-hidden rounded-lg border'>
-          <div className='flex items-center justify-between px-4 py-4'>
-            <div className='flex items-center gap-3'>
-              <div className='bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg'>
-                <PlusIcon className='size-5' />
-              </div>
-              <div>
-                <h3 className='text-foreground text-base font-semibold'>Add Studies</h3>
-                <p className='text-muted-foreground text-sm'>
-                  {studies.totalStudyCount > 0 ?
-                    `${studies.totalStudyCount} staged`
-                  : 'Upload PDFs, import references, or look up by DOI'}
-                </p>
-              </div>
-            </div>
-            <Button
-              variant={isExpanded ? 'secondary' : 'default'}
-              onClick={() => setExpanded(!expanded)}
-            >
-              {isExpanded ?
-                <XIcon className='size-4' />
-              : <PlusIcon className='size-4' />}
-              {isExpanded ? 'Close' : 'Add'}
-            </Button>
-          </div>
-
-          <Collapsible open={isExpanded} onOpenChange={setExpanded}>
-            <CollapsibleContent>
-              <div className='border-border border-t px-6 pt-4 pb-6'>{tabContent}</div>
-            </CollapsibleContent>
-          </Collapsible>
-        </div>
-      )}
-
-      {/* Mode 2: Always expanded standalone card */}
+    <div className='relative'>
+      {/* Mode 1: Always expanded standalone card, bare inside sheets / project creation */}
       {alwaysExpanded && (
-        <div className={collectMode ? '' : 'border-border bg-card rounded-lg border p-6 shadow-sm'}>
+        <div
+          className={
+            collectMode || bare ? '' : 'border-border bg-card rounded-lg border p-6 shadow-sm'
+          }
+        >
           {tabContent}
         </div>
       )}
 
-      {/* Mode 3: Empty project - show form directly */}
-      {!hasExistingStudies && !alwaysExpanded && (
+      {/* Mode 2: Empty project - show form directly */}
+      {!alwaysExpanded && (
         <div className='border-border bg-card overflow-hidden rounded-lg border shadow-sm'>
           <div className='p-6'>{tabContent}</div>
         </div>
