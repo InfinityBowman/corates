@@ -49,31 +49,31 @@
     "localflare": "localflare"
   },
   "dependencies": {
-    "@better-auth/stripe": "^1.6.22",
+    "@better-auth/stripe": "^1.6.26",
     "@cf-sync/server": "^0.1.0",
     "@cf-sync/yjs": "^0.1.0",
     "@corates/db": "workspace:*",
     "@corates/shared": "workspace:*",
-    "@sentry/cloudflare": "^10.62.0",
-    "better-auth": "^1.6.22",
+    "@sentry/cloudflare": "^10.69.0",
+    "better-auth": "^1.6.26",
     "drizzle-orm": "^0.45.2",
     "lib0": "^0.2.117",
     "postmark": "^4.0.7",
     "y-protocols": "^1.0.7",
-    "yjs": "^13.6.31",
+    "yjs": "^13.6.32",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@cf-sync/protocol": "^0.1.1",
-    "@cloudflare/vitest-pool-workers": "^0.18.4",
-    "@cloudflare/workers-types": "^4.20260628.1",
-    "@vitest/runner": "^4.1.9",
-    "@vitest/snapshot": "^4.1.9",
+    "@cloudflare/vitest-pool-workers": "^0.18.8",
+    "@cloudflare/workers-types": "^5.20260808.1",
+    "@vitest/runner": "^4.1.10",
+    "@vitest/snapshot": "^4.1.10",
     "better-sqlite3": "^12.11.1",
     "dotenv": "^17.4.2",
     "localflare": "^0.5.0",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.9",
-    "wrangler": "^4.110.0"
+    "vitest": "^4.1.10",
+    "wrangler": "^4.120.0"
   }
 }
