@@ -5,6 +5,7 @@
 import { uploadPdf, downloadPdf, deletePdf } from '@/api/pdf-api';
 import { cachePdf, removeCachedPdf, getCachedPdf } from '@/primitives/pdfCache.js';
 import { bestEffort } from '@/lib/errorLogger.js';
+import { captureException } from '@/config/sentry';
 import { extractPdfDoi, extractPdfTitle } from '@/lib/pdfUtils.js';
 import { fetchFromDOI } from '@/lib/referenceLookup.js';
 import type { PdfCitationMetadata, PdfRow, PdfTag } from '@corates/shared/sync';
@@ -100,6 +101,13 @@ export const pdfActions = {
       usePdfPreviewStore.getState().setData(data);
     } catch (err) {
       console.error('Error loading PDF:', err);
+      captureException(err, {
+        component: 'pdfActions',
+        action: 'view',
+        projectId,
+        studyId,
+        fileName: pdf.fileName,
+      });
       usePdfPreviewStore.getState().setError((err as Error).message || 'Failed to load PDF');
     }
   },
@@ -127,6 +135,13 @@ export const pdfActions = {
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Error downloading PDF:', err);
+      captureException(err, {
+        component: 'pdfActions',
+        action: 'download',
+        projectId,
+        studyId,
+        fileName: pdf.fileName,
+      });
       throw err;
     }
   },
@@ -191,8 +206,17 @@ export const pdfActions = {
       return pdfId;
     } catch (err) {
       console.error('Error uploading PDF:', err);
+      captureException(err, {
+        component: 'pdfActions',
+        action: 'upload',
+        projectId,
+        studyId,
+        fileName: file.name,
+        size: file.size,
+      });
       if (uploadResult?.fileName) {
         bestEffort(deletePdf(orgId, projectId, studyId, uploadResult.fileName), {
+          capture: true,
           operation: 'deletePdf (upload rollback)',
           projectId,
           studyId,
@@ -219,6 +243,15 @@ export const pdfActions = {
         r2Deleted = true;
       } catch (r2Err) {
         console.error('Failed to delete PDF from R2:', r2Err);
+        // Captured here rather than in the outer catch: the rethrow below
+        // synthesizes a generic Error that would lose this cause.
+        captureException(r2Err, {
+          component: 'pdfActions',
+          action: 'delete.r2',
+          projectId,
+          studyId,
+          fileName: pdf.fileName,
+        });
       }
 
       try {
@@ -308,7 +341,15 @@ export const pdfActions = {
       });
     } catch (err) {
       console.error('Failed to add Google Drive PDF metadata:', err);
+      captureException(err, {
+        component: 'pdfActions',
+        action: 'handleGoogleDriveImport',
+        projectId,
+        studyId,
+        fileName: file.fileName,
+      });
       bestEffort(deletePdf(orgId, projectId, studyId, file.fileName), {
+        capture: true,
         operation: 'deletePdf (Google Drive rollback)',
         projectId,
         studyId,

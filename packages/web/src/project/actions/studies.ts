@@ -5,6 +5,7 @@
 import { uploadPdf, fetchPdfViaProxy, downloadPdf, deletePdf } from '@/api/pdf-api';
 import { cachePdf, clearStudyCache } from '@/primitives/pdfCache.js';
 import { bestEffort } from '@/lib/errorLogger.js';
+import { captureException } from '@/config/sentry';
 import { showToast } from '@/lib/toast';
 import { importFromGoogleDrive } from '@/api/google-drive';
 import { extractPdfDoi, extractPdfTitle } from '@/lib/pdfUtils.js';
@@ -176,6 +177,7 @@ async function handleGoogleDrivePdf(
     return true;
   } catch (err) {
     console.error('Error importing PDF from Google Drive:', err);
+    captureException(err, { component: 'studyActions', action: 'importPdfFromGoogleDrive' });
     return false;
   }
 }
@@ -244,6 +246,7 @@ async function uploadAndAttachPdf(
     return true;
   } catch (err) {
     console.error('Error uploading PDF:', err);
+    captureException(err, { component: 'studyActions', action: 'uploadAndAttachPdf' });
     return false;
   }
 }
@@ -307,6 +310,7 @@ export const studyActions = {
       if (pdfFileNames.length > 0) {
         const deletePromises = pdfFileNames.map(fileName => {
           return bestEffort(deletePdf(orgId, projectId, studyId, fileName), {
+            capture: true,
             operation: 'deletePdf (study cleanup)',
             projectId,
             studyId,
@@ -326,6 +330,12 @@ export const studyActions = {
       void client.mutate.study.delete({ id: studyId });
     } catch (err) {
       console.error('Error deleting study:', err);
+      captureException(err, {
+        component: 'studyActions',
+        action: 'delete',
+        projectId,
+        studyId,
+      });
       showToast.error('Delete Failed', 'Failed to delete study');
     }
   },
@@ -417,6 +427,7 @@ export const studyActions = {
           successCount++;
         } catch (err) {
           console.error('Error adding study:', err);
+          captureException(err, { component: 'studyActions', action: 'addBatch.study' });
         }
       }
 
@@ -424,6 +435,7 @@ export const studyActions = {
       return { successCount, manualPdfCount };
     } catch (err) {
       console.error('Error adding studies:', err);
+      captureException(err, { component: 'studyActions', action: 'addBatch' });
       showToast.error('Addition Failed', 'Failed to add studies');
       throw err;
     }

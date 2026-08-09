@@ -24,4 +24,5 @@ Practical guides for common development tasks and patterns in CoRATES.
 - [Testing](/guides/testing) - Testing philosophy, patterns, and best practices for frontend and backend
 - [Development Workflow](/guides/development-workflow) - Getting started, development commands, and common tasks
 - [Error Handling](/guides/error-handling) - How to handle errors consistently across the application
+- [Observability](/guides/observability) - Structured logging, request correlation, Loki queries, and Sentry
 - [Style Guide](/guides/style-guide) - UI/UX guidelines and design system

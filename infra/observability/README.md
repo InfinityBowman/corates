@@ -5,7 +5,7 @@ chunks stored in the `corates-loki` R2 bucket. Cloudflare Workers Observability 
 OTLP JSON logs directly to Loki's native OTLP endpoint - no collector or tail worker.
 
 ```
-Workers (prod/staging) -> OTLP export -> loki.jacobmaynard.dev/otlp/v1/logs -> Loki -> R2
+Workers (production) -> OTLP export -> loki.jacobmaynard.dev/otlp/v1/logs -> Loki -> R2
                                                      Grafana (grafana.jacobmaynard.dev) queries Loki
 ```
 
@@ -37,13 +37,15 @@ Grafana talks to Loki internally over the docker network without auth.
 - Workers Observability > destinations: type Logs, endpoint
   `https://loki.jacobmaynard.dev/otlp/v1/logs`, header `Authorization: Basic <see .env>`
 - Worker configs reference the destination by name in `observability.logs.destinations`
-  (see `packages/web/wrangler.jsonc` and `packages/stripe-purchases/wrangler.jsonc`)
+  (see `packages/web/wrangler.jsonc` and `packages/stripe-purchases/wrangler.jsonc`).
+  Only the `production` envs export; staging logs stay in Cloudflare Workers Logs so the
+  Grafana views are production-only.
 - Retention is 90d (`limits_config.retention_period` in `config/loki/loki-config.yaml`)
 
 ## Useful LogQL
 
 ```logql
-{service_name="corates-workers-prod"}                          # all prod logs
-{service_name=~"corates-workers.*"} |= "error"                 # errors, both envs
+{service_name="corates-workers-prod"}                          # all web worker logs
+{service_name=~"corates-.*"} |= "error"                        # errors across services
 {service_name="corates-workers-prod"} | json | level="warn"    # structured fields
 ```

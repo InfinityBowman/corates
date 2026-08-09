@@ -1,5 +1,5 @@
 import { DurableObject } from 'cloudflare:workers';
-import { captureError } from '../lib/logger';
+import { captureError, info, runWithLogger } from '../lib/logger';
 import { instrumentDurableObjectWithSentry } from '@sentry/cloudflare';
 import { verifyAuth } from '../auth/config';
 import { getAccessControlOrigin } from '../config/origins';
@@ -16,7 +16,26 @@ interface WebSocketAttachment {
 }
 
 class UserSessionBase extends DurableObject<Env> {
+  // The calling worker's scope cannot follow the request across the isolate
+  // boundary, so it forwards its id as a header and we reopen a scope here.
+  // Requests that arrive without one still get a scope, just an unlinked one.
   async fetch(request: Request): Promise<Response> {
+    const forwardedId = request.headers.get('x-request-id');
+    return runWithLogger(
+      {
+        requestId: forwardedId ?? crypto.randomUUID(),
+        cfRay: request.headers.get('cf-ray'),
+        env: this.env.ENVIRONMENT,
+        // requestIdForwarded separates a log that joins back to a worker
+        // request from one carrying only a locally minted id, which are
+        // otherwise indistinguishable since both are UUIDs.
+        context: { durableObject: 'UserSession', requestIdForwarded: forwardedId !== null },
+      },
+      () => this.handleFetch(request),
+    );
+  }
+
+  private async handleFetch(request: Request): Promise<Response> {
     const requestOrigin = request.headers.get('Origin');
     const corsHeaders: Record<string, string> = {
       'Access-Control-Allow-Origin': getAccessControlOrigin(requestOrigin),
@@ -80,6 +99,12 @@ class UserSessionBase extends DurableObject<Env> {
         }
         await this.ctx.storage.put('pendingNotifications', []);
       }
+
+      info('user-session websocket connected', {
+        action: 'websocket-upgrade',
+        userId: user.id,
+        pendingDelivered: pending.length,
+      });
 
       return new Response(null, { status: 101, webSocket: client });
     } catch (err) {

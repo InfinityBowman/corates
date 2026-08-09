@@ -1,6 +1,7 @@
 import { createMiddleware } from '@tanstack/react-start';
 import { env } from 'cloudflare:workers';
 import { getSession } from '@corates/workers/auth';
+import { runWithContext } from '@corates/workers/logger';
 import { throwDomainError, AUTH_ERRORS } from '@corates/shared';
 import { dbMiddleware } from './db';
 
@@ -14,5 +15,9 @@ export const authMiddleware = createMiddleware()
     if (!session) {
       throwDomainError(AUTH_ERRORS.REQUIRED);
     }
-    return next({ context: { session, request } });
+    // Narrow the request scope opened in src/server.ts now that the caller is
+    // known, so downstream command logs carry userId alongside requestId.
+    return runWithContext({ userId: session.user.id }, () =>
+      next({ context: { session, request } }),
+    );
   });

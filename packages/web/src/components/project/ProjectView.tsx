@@ -174,6 +174,7 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
             } catch (metaErr) {
               console.error('Failed to add PDF metadata:', metaErr);
               bestEffort(deletePdf(orgId, projectId, studyId, result.fileName), {
+                capture: true,
                 operation: 'deletePdf (pending upload rollback)',
                 projectId,
                 studyId,
@@ -234,6 +235,7 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
             } catch (metaErr) {
               console.error('Failed to add PDF metadata:', metaErr);
               bestEffort(deletePdf(orgId, projectId, studyId, result.file.fileName), {
+                capture: true,
                 operation: 'deletePdf (Google Drive rollback)',
                 projectId,
                 studyId,

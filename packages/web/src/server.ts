@@ -1,6 +1,7 @@
 import * as Sentry from '@sentry/cloudflare';
 import { createStartHandler, defaultStreamHandler } from '@tanstack/react-start/server';
 import { handleEmailQueue } from '@corates/workers/queue';
+import { runWithLogger } from '@corates/workers/logger';
 import { handleSyncFetch } from '@corates/workers/sync';
 
 // Re-export DOs so wrangler DO bindings in wrangler.jsonc resolve against this
@@ -26,37 +27,74 @@ interface SentryEnv {
   CF_VERSION_METADATA?: { id?: string };
 }
 
+// This worker is public, so an inbound x-request-id is attacker-controlled: a
+// value reused across requests collapses correlation, and an oversized one is
+// copied into every log line of the request and shipped onward. Adopt one only
+// if it looks like an id we would have minted ourselves.
+const SAFE_REQUEST_ID = /^[A-Za-z0-9_-]{1,64}$/;
+
+function inboundRequestId(request: Request): string | null {
+  const id = request.headers.get('x-request-id');
+  return id && SAFE_REQUEST_ID.test(id) ? id : null;
+}
+
 const workerHandler = {
   async fetch(request: Request, env: unknown, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
-    // DO routes must be handled before TanStack Start (which can't pass
-    // WebSocket upgrades through). Same Request is forwarded as-is so the
-    // upgrade handshake reaches the DO.
-    const sessionMatch = url.pathname.match(SESSION_PATH);
-    if (sessionMatch) {
-      const sessionId = sessionMatch[1];
-      const ns = (env as DOEnv).USER_SESSION;
-      const id = ns.idFromName(sessionId);
-      const stub = ns.get(id);
-      return stub.fetch(request);
-    }
+    // Scope every log emitted while handling this request to one requestId.
+    // A well-formed inbound x-request-id wins so a caller's id survives hops.
+    const requestId = inboundRequestId(request) ?? crypto.randomUUID();
 
-    // Sync-engine routes (`/api/sync/<projectId>` upgrades and
-    // `/api/sync-admin/...`): resolves null for anything else.
-    const syncResponse = await handleSyncFetch(request, env);
-    if (syncResponse) return syncResponse;
+    return runWithLogger(
+      {
+        requestId,
+        cfRay: request.headers.get('cf-ray'),
+        env: (env as SentryEnv).ENVIRONMENT,
+        context: { route: url.pathname, method: request.method },
+      },
+      async () => {
+        // DO routes must be handled before TanStack Start (which can't pass
+        // WebSocket upgrades through).
+        const sessionMatch = url.pathname.match(SESSION_PATH);
+        if (sessionMatch) {
+          const sessionId = sessionMatch[1];
+          const ns = (env as DOEnv).USER_SESSION;
+          const id = ns.idFromName(sessionId);
+          const stub = ns.get(id);
+          // AsyncLocalStorage does not cross the isolate boundary, so the id
+          // rides as a header instead and the DO reopens its own scope.
+          // Rebuilding the Request preserves the upgrade handshake (covered by
+          // durable-objects/__tests__/do-correlation).
+          const headers = new Headers(request.headers);
+          headers.set('x-request-id', requestId);
+          return stub.fetch(new Request(request, { headers }));
+        }
 
-    // Forward the Worker's ExecutionContext through TanStack Start so file
-    // routes can pass it into route handlers (waitUntil for fire-and-forget
-    // work like Stripe webhook ledger updates and notification fan-out).
-    // Cast: createStartHandler's RequestOptions.context defaults to a narrow
-    // BaseContext until we register a project-wide requestContext type.
-    return startFetch(request, { context: { cloudflareCtx: ctx } } as never);
+        // Sync-engine routes (`/api/sync/<projectId>` upgrades and
+        // `/api/sync-admin/...`): resolves null for anything else.
+        const syncResponse = await handleSyncFetch(request, env);
+        if (syncResponse) return syncResponse;
+
+        // Forward the Worker's ExecutionContext through TanStack Start so file
+        // routes can pass it into route handlers (waitUntil for fire-and-forget
+        // work like Stripe webhook ledger updates and notification fan-out).
+        // Cast: createStartHandler's RequestOptions.context defaults to a narrow
+        // BaseContext until we register a project-wide requestContext type.
+        return startFetch(request, { context: { cloudflareCtx: ctx } } as never);
+      },
+    );
   },
 
   async queue(batch: MessageBatch<unknown>, env: unknown): Promise<void> {
-    return handleEmailQueue(batch, env as never);
+    return runWithLogger(
+      {
+        requestId: crypto.randomUUID(),
+        env: (env as SentryEnv).ENVIRONMENT,
+        context: { queue: 'email', batchSize: batch.messages.length },
+      },
+      () => handleEmailQueue(batch, env as never),
+    );
   },
 };
 
@@ -73,6 +111,5 @@ export default Sentry.withSentry((env: SentryEnv) => {
     enabled: !!env.SENTRY_DSN,
     tracesSampleRate: env.ENVIRONMENT === 'production' ? 0.1 : 1.0,
     sendDefaultPii: true,
-    enableLogs: true,
   };
 }, workerHandler);
