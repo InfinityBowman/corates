@@ -3,7 +3,6 @@
  */
 
 import { useState, useCallback } from 'react';
-import { BookOpenIcon } from 'lucide-react';
 import { AddStudiesForm, type AddStudiesFormState } from '../add-studies/AddStudiesForm';
 import type { MergedStudy } from '@/hooks/useAddStudies/deduplication';
 import { GoogleDrivePickerModal } from '../google-drive/GoogleDrivePickerModal';
@@ -85,7 +84,7 @@ export function AllStudiesTab() {
         </div>
       )}
 
-      {studyIds.length > 0 ?
+      {studyIds.length > 0 && (
         <div className='flex flex-col gap-2'>
           {studyIds.map(studyId => (
             <StudyCard
@@ -103,15 +102,7 @@ export function AllStudiesTab() {
             />
           ))}
         </div>
-      : hasData && (
-          <div className='bg-muted mt-4 rounded-lg py-12 text-center'>
-            <BookOpenIcon className='text-muted-foreground mx-auto mb-4 size-12 opacity-50' />
-            <p className='text-muted-foreground'>
-              No studies added yet. Add your first study above.
-            </p>
-          </div>
-        )
-      }
+      )}
 
       <GoogleDrivePickerModal
         open={showGoogleDriveModal}
