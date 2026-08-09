@@ -1,0 +1,102 @@
+name: E2E Staging (manual)
+
+# Runs the Playwright suite against the live staging deployment. Two entry
+# points:
+#   - workflow_dispatch: test whatever is already deployed to staging, using
+#     the spec files from the dispatched ref.
+#   - workflow_call: chained from deploy-staging.yml when its run_e2e input is
+#     set, so one dispatch can deploy a branch and then test it.
+#
+# This never deploys. If the specs on this ref expect code that is not on
+# staging yet, deploy first (deploy-staging.yml).
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+# Staging is a single shared environment and the suite seeds data into it, so
+# concurrent runs would interfere. Queue rather than cancel: a cancelled run
+# can leave half-seeded state behind.
+concurrency:
+  group: e2e-staging
+  cancel-in-progress: false
+
+jobs:
+  # The e2e job's container tag has to be a literal at job level, so resolve
+  # the Playwright version first and feed it in. Same trick ci.yml uses, which
+  # keeps the image from drifting out of sync with @playwright/test.
+  resolve:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      playwright-version: ${{ steps.pw-version.outputs.version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Resolve Playwright version
+        id: pw-version
+        run: echo "version=$(pnpm --filter web exec playwright --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
+
+  e2e:
+    needs: resolve
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v${{ needs.resolve.outputs.playwright-version }}-noble
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # The Playwright image ships no C toolchain, so native modules
+      # (better-sqlite3) hard-fail when their prebuilt-binary download flakes
+      # and prebuild-install falls back to compiling from source.
+      - name: Install native build tools
+        run: apt-get update && apt-get install -y --no-install-recommends make g++
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run e2e tests
+        env:
+          PLAYWRIGHT_BASE_URL: 'https://staging.corates.org'
+        working-directory: packages/web
+        run: pnpm test:e2e
+
+      - name: Upload test artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: packages/web/test-results/
+          retention-days: 7
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "E2E on staging for \`${{ github.ref_name }}\` (${GITHUB_SHA:0:8}): ${{ job.status }}." >> "$GITHUB_STEP_SUMMARY"

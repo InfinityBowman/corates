@@ -11,6 +11,11 @@ name: Deploy Staging (manual)
 
 on:
   workflow_dispatch:
+    inputs:
+      run_e2e:
+        description: 'Run e2e tests against staging after deploying'
+        type: boolean
+        default: false
 
 # One staging deploy at a time; a second dispatch waits rather than racing the
 # first to the same worker.
@@ -94,3 +99,10 @@ jobs:
           echo "Deployed \`${{ github.ref_name }}\` (${GITHUB_SHA:0:8}) to staging." >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "https://staging.corates.org" >> "$GITHUB_STEP_SUMMARY"
+
+  # Opt-in only. Nothing is downstream of this, so a failure reports the e2e
+  # result without touching the deploy that already happened.
+  e2e:
+    if: inputs.run_e2e
+    needs: deploy-staging
+    uses: ./.github/workflows/e2e-staging.yml
