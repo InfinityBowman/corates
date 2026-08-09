@@ -236,6 +236,17 @@ export async function createProject(page: Page, name: string, description = ''):
 }
 
 /**
+ * Locates a study card by its title in the All Studies list.
+ *
+ * The card titles a PDF-added study with the filename stem, and renders it as
+ * the inline-edit button. Matching on the button role keeps this off the same
+ * title text in the staged-import preview, which is plain text.
+ */
+export function studyCardTitle(page: Page, studyName = 'Petrie2019') {
+  return page.getByRole('button', { name: studyName, exact: true });
+}
+
+/**
  * Adds a study to the current project by uploading a PDF fixture.
  * No external API calls -- metadata is extracted locally from the PDF.
  */
@@ -249,7 +260,9 @@ export async function addStudyViaPdf(page: Page, fixture = 'Petrie2019.pdf') {
   await expect(page.getByRole('button', { name: /Add 1 Stud/i })).toBeVisible({ timeout: 30_000 });
   await page.getByRole('button', { name: /Add 1 Stud/i }).click();
 
-  await expect(page.getByText(/1 study in this project/i)).toBeVisible({ timeout: 15_000 });
+  await expect(studyCardTitle(page, fixture.replace(/\.pdf$/i, ''))).toBeVisible({
+    timeout: 15_000,
+  });
 }
 
 /**

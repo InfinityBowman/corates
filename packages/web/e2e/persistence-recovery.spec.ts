@@ -21,7 +21,7 @@ import {
   updateSubscription,
   type DualReviewerScenario,
 } from './helpers';
-import { setupProjectWithStudy } from './shared-steps';
+import { setupProjectWithStudy, studyCardTitle } from './shared-steps';
 
 let scenario: DualReviewerScenario;
 
@@ -67,7 +67,7 @@ test('Project state survives page refresh', async ({ context, page }) => {
   // Step 1: After project setup, verify the study is visible
   // ================================================================
   await page.getByRole('tab', { name: /All Studies/i }).click();
-  await expect(page.getByText(/1 study in this project/i)).toBeVisible({
+  await expect(studyCardTitle(page)).toBeVisible({
     timeout: 10_000,
   });
 
@@ -127,7 +127,7 @@ test('Project state survives page refresh', async ({ context, page }) => {
   await page.goto(`/projects/${projectId}`);
 
   await page.getByRole('tab', { name: /All Studies/i }).click();
-  await expect(page.getByText(/1 study in this project/i)).toBeVisible({
+  await expect(studyCardTitle(page)).toBeVisible({
     timeout: 15_000,
   });
 
@@ -173,7 +173,7 @@ test('Project state survives page refresh', async ({ context, page }) => {
   // And the study should still be in the project list
   await page.goto(`/projects/${projectId}`);
   await page.getByRole('tab', { name: /All Studies/i }).click();
-  await expect(page.getByText(/1 study in this project/i)).toBeVisible({
+  await expect(studyCardTitle(page)).toBeVisible({
     timeout: 10_000,
   });
 });
@@ -259,7 +259,7 @@ test('Project data survives navigate-away and navigate-back (cached phase)', asy
 
   // Verify study is present after initial setup
   await page.getByRole('tab', { name: /All Studies/i }).click();
-  await expect(page.getByText(/1 study in this project/i)).toBeVisible({ timeout: 10_000 });
+  await expect(studyCardTitle(page)).toBeVisible({ timeout: 10_000 });
 
   // Navigate away to dashboard (releases the connection, destroys Y.Doc in memory)
   await page.goto('/dashboard');
@@ -269,7 +269,7 @@ test('Project data survives navigate-away and navigate-back (cached phase)', asy
   // before the WebSocket finishes syncing
   await page.goto(`/projects/${projectId}`);
   await page.getByRole('tab', { name: /All Studies/i }).click();
-  await expect(page.getByText(/1 study in this project/i)).toBeVisible({ timeout: 15_000 });
+  await expect(studyCardTitle(page)).toBeVisible({ timeout: 15_000 });
 
   // Navigate away and back a second time to confirm the cache + sync pipeline
   // leaves Dexie in a consistent state across multiple visits
@@ -278,7 +278,7 @@ test('Project data survives navigate-away and navigate-back (cached phase)', asy
 
   await page.goto(`/projects/${projectId}`);
   await page.getByRole('tab', { name: /All Studies/i }).click();
-  await expect(page.getByText(/1 study in this project/i)).toBeVisible({ timeout: 15_000 });
+  await expect(studyCardTitle(page)).toBeVisible({ timeout: 15_000 });
 });
 
 test('Concurrent server-side change merges correctly on revisit', async ({ context, page }) => {
@@ -290,7 +290,7 @@ test('Concurrent server-side change merges correctly on revisit', async ({ conte
   );
 
   await page.getByRole('tab', { name: /All Studies/i }).click();
-  await expect(page.getByText(/1 study in this project/i)).toBeVisible({ timeout: 10_000 });
+  await expect(studyCardTitle(page)).toBeVisible({ timeout: 10_000 });
 
   // Navigate away so the connection is released
   await page.goto('/dashboard');
@@ -304,18 +304,20 @@ test('Concurrent server-side change merges correctly on revisit', async ({ conte
     fillMode: 'random',
   });
 
-  // Navigate back -- Dexie cache may briefly show 1 study,
-  // but after WebSocket sync, both studies should appear
+  // Navigate back -- Dexie cache may briefly show only the PDF-added study,
+  // but after WebSocket sync, both studies should appear. seedStudies names
+  // its studies "Generated Study <n>", numbered from 1.
   await page.goto(`/projects/${projectId}`);
   await page.getByRole('tab', { name: /All Studies/i }).click();
-  await expect(page.getByText(/2 studies in this project/i)).toBeVisible({ timeout: 30_000 });
+  await expect(studyCardTitle(page)).toBeVisible({ timeout: 30_000 });
+  await expect(studyCardTitle(page, 'Generated Study 1')).toBeVisible({ timeout: 30_000 });
 });
 
 test('Project actions work after cold reload (no warm query cache)', async ({ context, page }) => {
   await setupProjectWithStudy(context, page, scenario, 'Cold Reload Actions E2E');
 
   await page.getByRole('tab', { name: /All Studies/i }).click();
-  await expect(page.getByText(/1 study in this project/i)).toBeVisible({ timeout: 10_000 });
+  await expect(studyCardTitle(page)).toBeVisible({ timeout: 10_000 });
 
   const pageErrors: Error[] = [];
   page.on('pageerror', err => pageErrors.push(err));
@@ -327,7 +329,7 @@ test('Project actions work after cold reload (no warm query cache)', async ({ co
   await page.reload();
 
   await page.getByRole('tab', { name: /All Studies/i }).click();
-  await expect(page.getByText(/1 study in this project/i)).toBeVisible({ timeout: 15_000 });
+  await expect(studyCardTitle(page)).toBeVisible({ timeout: 15_000 });
 
   // Wait well past any sync window to prove this is not a race condition.
   await page.waitForTimeout(5_000);
@@ -348,7 +350,7 @@ test('Rapid navigation does not corrupt state or crash', async ({ context, page 
   const projectId = await setupProjectWithStudy(context, page, scenario, 'Rapid Nav E2E');
 
   await page.getByRole('tab', { name: /All Studies/i }).click();
-  await expect(page.getByText(/1 study in this project/i)).toBeVisible({ timeout: 10_000 });
+  await expect(studyCardTitle(page)).toBeVisible({ timeout: 10_000 });
 
   // Rapid-fire navigate: project -> dashboard -> project -> dashboard -> project
   // Each transition acquires/releases the connection. Tests ref-counting cleanup
@@ -359,6 +361,6 @@ test('Rapid navigation does not corrupt state or crash', async ({ context, page 
 
     await page.goto(`/projects/${projectId}`);
     await page.getByRole('tab', { name: /All Studies/i }).click();
-    await expect(page.getByText(/1 study in this project/i)).toBeVisible({ timeout: 15_000 });
+    await expect(studyCardTitle(page)).toBeVisible({ timeout: 15_000 });
   }
 });
