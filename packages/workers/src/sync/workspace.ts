@@ -20,6 +20,7 @@ import { yjsFields } from '@cf-sync/yjs/server';
 import { syncApp } from '@corates/shared/sync';
 import { createDb } from '@corates/db/client';
 import { verifyAuth } from '../auth/config';
+import { captureError, warn } from '../lib/logger';
 import type { Env } from '../types';
 import { buildSyncVerdict } from './authorize';
 
@@ -32,6 +33,22 @@ export class WorkspaceDO extends createWorkspaceDO({
     app: syncApp,
     authorizeWrite: ({ auth }) => auth?.writeAllowed === true,
   }),
+  // Without this the engine's diagnostics go straight to console as plain
+  // interpolated strings, which reach Loki unparseable by field. These are
+  // the sync engine's init failures, schema-drift warnings and internal
+  // errors, so they are the ones worth querying.
+  logger: (level, message, ...detail) => {
+    const error = detail.find((d): d is Error => d instanceof Error);
+    const extra = detail.filter(d => !(d instanceof Error));
+    if (level === 'error') {
+      captureError(error ?? new Error(message), {
+        tags: { component: 'cf-sync' },
+        extra: { engineMessage: message, ...(extra.length > 0 && { detail: extra }) },
+      });
+      return;
+    }
+    warn(message, { component: 'cf-sync', ...(detail.length > 0 && { detail }) });
+  },
 }) {}
 
 export const SYNC_PATH_PREFIX = '/api/sync';

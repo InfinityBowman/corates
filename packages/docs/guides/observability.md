@@ -47,12 +47,13 @@ from the request scope; anything else is per-call data or scope context.
 
 ## Which logger to use
 
-| Package            | Import                         | Notes                                                                                    |
-| ------------------ | ------------------------------ | ---------------------------------------------------------------------------------------- |
-| `workers`          | `@corates/workers/logger`      | `debug` / `info` / `warn` / `captureError`. The default for all server code.             |
-| `stripe-purchases` | `src/lib/observability/logger` | Hono-request-scoped wrapper adding `.stripe(action, data)` with a typed field whitelist. |
-| `web` (server)     | `@corates/workers/logger`      | Same as workers - server functions, route handlers, middleware.                          |
-| `web` (browser)    | `@/config/sentry`              | No Loki path exists from the browser; use `captureException`.                            |
+| Package            | Import                          | Notes                                                                                    |
+| ------------------ | ------------------------------- | ---------------------------------------------------------------------------------------- |
+| `workers`          | `@corates/workers/logger`       | `debug` / `info` / `warn` / `captureError`. The default for all server code.             |
+| sync engine        | `createWorkspaceDO({ logger })` | Engine diagnostics; the hook in `sync/workspace.ts` forwards them to the same logger.    |
+| `stripe-purchases` | `src/lib/observability/logger`  | Hono-request-scoped wrapper adding `.stripe(action, data)` with a typed field whitelist. |
+| `web` (server)     | `@corates/workers/logger`       | Same as workers - server functions, route handlers, middleware.                          |
+| `web` (browser)    | `@/config/sentry`               | No Loki path exists from the browser; use `captureException`.                            |
 
 Only reach for `createLogger` directly when you need a distinct `service` name, as the web
 Stripe webhook route does.
@@ -102,10 +103,18 @@ Rebuilding the Request this way preserves the WebSocket upgrade handshake, which
 `durable-objects/__tests__/do-correlation.test.ts` - the same test also asserts the ALS scope
 does _not_ cross, since that is the whole reason the header exists.
 
+`UserSession` logs also carry `requestIdForwarded`, which separates an entry that joins back
+to a worker request from one holding only a locally minted id - both are UUIDs, so they are
+otherwise indistinguishable.
+
 Two things still log unscoped:
 
-- **`WorkspaceDO`** (the sync engine). Its stub forwarding happens inside `@cf-sync/server`,
-  so propagating an id there needs a change in that package. It emits no CoRATES logs today.
+- **`WorkspaceDO`** (the sync engine). `createWorkspaceDO` takes a `logger`, which
+  `sync/workspace.ts` supplies, so the engine's init failures, schema-drift warnings and
+  internal errors go through the shared logger and reach Loki as structured JSON. They carry
+  no `requestId` though: the DO class comes from `@cf-sync/server`, so there is no `fetch` of
+  ours to open a scope in. (The sync route does forward all original request headers, so the
+  missing piece is scope, not transport.)
 - **Module-init and test code**, which has no request to attach to.
 
 Hibernated WebSocket callbacks (`webSocketMessage`, `webSocketError`) also fall outside: they
