@@ -6,6 +6,7 @@
  */
 
 import { showToast } from '@/lib/toast';
+import { captureException } from '@/config/sentry';
 import { queryClient } from '@/lib/queryClient';
 import { queryKeys } from '@/lib/queryKeys';
 import { deleteProject, updateProject } from '@/server/functions/org-projects.functions';
@@ -25,6 +26,7 @@ export const projectActions = {
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
     } catch (err) {
       console.error('Error renaming project:', err);
+      captureException(err, { component: 'projectActions', action: 'rename' });
       showToast.error('Rename Failed', (err as Error).message || 'Failed to rename project');
     }
   },
@@ -44,6 +46,7 @@ export const projectActions = {
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
     } catch (err) {
       console.error('Error updating description:', err);
+      captureException(err, { component: 'projectActions', action: 'updateDescription' });
       showToast.error('Update Failed', (err as Error).message || 'Failed to update description');
     }
   },

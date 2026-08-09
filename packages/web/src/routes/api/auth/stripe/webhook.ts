@@ -14,6 +14,7 @@ import { env } from 'cloudflare:workers';
 import { createAuth } from '@corates/workers/auth-config';
 import { sha256, truncateError } from '@corates/shared/crypto';
 import { createLogger } from '@corates/shared/logger';
+import { getRequestId } from '@corates/workers/logger';
 import type { Database } from '@corates/db/client';
 import {
   insertLedgerEntry,
@@ -51,7 +52,9 @@ const ROUTE = '/api/auth/stripe/webhook';
 
 export const handlePost = async ({ request, context }: HandlerArgs) => {
   const { db } = context;
-  const requestId = request.headers.get('x-request-id') ?? crypto.randomUUID();
+  // Reuse the id from the ambient request scope so these entries correlate
+  // with the rest of the request rather than opening a second trace.
+  const requestId = getRequestId() ?? request.headers.get('x-request-id') ?? crypto.randomUUID();
   const log = createLogger({
     service: 'corates-web',
     env: env.ENVIRONMENT,

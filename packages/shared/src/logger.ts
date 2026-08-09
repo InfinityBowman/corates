@@ -36,8 +36,6 @@ export interface LoggerOptions {
   cfRay?: string | null;
   /** Static fields merged into every entry (e.g. route, method, component) */
   context?: Record<string, unknown>;
-  /** Extra sink invoked with each entry (e.g. Sentry log forwarding) */
-  onEntry?: (entry: LogEntry) => void;
 }
 
 const consoleFor: Record<LogLevelType, (line: string) => void> = {
@@ -48,7 +46,7 @@ const consoleFor: Record<LogLevelType, (line: string) => void> = {
 };
 
 export function createLogger(options: LoggerOptions): Logger {
-  const { service, env, requestId, cfRay, context, onEntry } = options;
+  const { service, env, requestId, cfRay, context } = options;
 
   function emit(level: LogLevelType, message: string, data?: Record<string, unknown>): LogEntry {
     const entry: LogEntry = {
@@ -63,7 +61,6 @@ export function createLogger(options: LoggerOptions): Logger {
       ...data,
     };
     consoleFor[level](JSON.stringify(entry));
-    onEntry?.(entry);
     return entry;
   }
 

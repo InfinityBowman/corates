@@ -2,6 +2,7 @@ import { useMemo, useRef, useState, useEffect } from 'react';
 import { EmbedPDF } from '@embedpdf/core/react';
 import { usePdfiumEngine } from '@embedpdf/engines/react';
 import { PDFIUM_WASM_URL } from '@/lib/pdfiumWasmUrl';
+import { captureException } from '@/config/sentry';
 import { createPluginRegistration } from '@embedpdf/core';
 import { ViewportPluginPackage, Viewport } from '@embedpdf/plugin-viewport/react';
 import { ScrollPluginPackage, ScrollStrategy, Scroller } from '@embedpdf/plugin-scroll/react';
@@ -160,6 +161,11 @@ function AnnotationSyncManager({
         console.log('[AnnotationSync] importAnnotations completed');
       } catch (err) {
         console.error('[AnnotationSync] Failed to import annotations:', err);
+        captureException(err, {
+          component: 'EmbedPdfViewer',
+          action: 'importAnnotations',
+          count: importItems.length,
+        });
       } finally {
         if (!cancelled) {
           isApplyingRef.current = false;
@@ -446,6 +452,12 @@ export function ViewerPage({
           .toPromise();
       } catch (err) {
         console.error('Error loading document:', err);
+        captureException(err, {
+          component: 'EmbedPdfViewer',
+          action: 'openDocumentBuffer',
+          pdfFileName,
+          selectedPdfId,
+        });
         // Reset the ref on error so we can retry
         previousSelectedPdfIdRef.current = previousPdfId;
       } finally {

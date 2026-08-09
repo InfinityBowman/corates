@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { usePrint } from '@embedpdf/plugin-print/react';
 import { useScroll } from '@embedpdf/plugin-scroll/react';
 import type { PdfPrintOptions } from '@embedpdf/models';
+import { captureException } from '@/config/sentry';
 import { Dialog, DialogContent, DialogFooter, Button } from './ui';
 
 type PageSelection = 'all' | 'current' | 'custom';
@@ -65,12 +66,14 @@ export function PrintDialog({ documentId, isOpen, onClose }: PrintDialogProps) {
           },
           error => {
             console.error('Print failed:', error);
+            captureException(error, { component: 'PrintDialog', action: 'print.task' });
             setIsLoading(false);
           },
         );
       }
     } catch (err) {
       console.error('Print failed:', err);
+      captureException(err, { component: 'PrintDialog', action: 'print' });
       setIsLoading(false);
     }
   };
