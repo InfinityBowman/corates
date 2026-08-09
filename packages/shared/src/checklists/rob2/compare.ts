@@ -13,6 +13,7 @@ import {
   type ROB2Domain,
 } from './schema.js';
 import { scoreRob2Domain, scoreAllDomains, type ChecklistState } from './scoring.js';
+import { getSkippedDomainQuestions, isEffectivelyNotApplicable } from './skipped.js';
 import type { ROB2Checklist, ROB2DomainState } from '../types.js';
 
 // Re-export ROB2Checklist for convenience
@@ -171,12 +172,22 @@ function compareDomain(
   const agreements: QuestionComparison[] = [];
   const disagreements: QuestionComparison[] = [];
 
+  // Skipped questions are derived per reviewer so that an explicit NA on one
+  // side agrees with a derived skip (null while off the scoring path) on the
+  // other -- both mean "not applicable".
+  const skipped1 = getSkippedDomainQuestions(domainKey, domain1?.answers);
+  const skipped2 = getSkippedDomainQuestions(domainKey, domain2?.answers);
+
   for (const qKey of questionKeys) {
     const ans1 = domain1?.answers?.[qKey]?.answer ?? null;
     const ans2 = domain2?.answers?.[qKey]?.answer ?? null;
 
-    // Only count as agreement when both answers are present and equal
-    const isAgreement = ans1 != null && ans2 != null && ans1 === ans2;
+    // Agreement requires both answers present and equal, or both sides
+    // effectively not applicable (explicit NA or derived skip)
+    const bothNotApplicable =
+      isEffectivelyNotApplicable(qKey, ans1, skipped1) &&
+      isEffectivelyNotApplicable(qKey, ans2, skipped2);
+    const isAgreement = (ans1 != null && ans2 != null && ans1 === ans2) || bothNotApplicable;
 
     const comparison: QuestionComparison = {
       key: qKey,

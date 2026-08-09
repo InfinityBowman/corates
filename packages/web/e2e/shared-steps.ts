@@ -39,21 +39,50 @@ export async function fillROB2Preliminary(
   await page.getByPlaceholder(/e\.g\. RR/i).fill(numericalResult);
 }
 
-/** Answer every ROB2 domain signalling question with a given response (Y, N, PY, PN, NI). */
-export async function answerAllROB2Domains(page: Page, answer: string) {
-  for (const domain of ['D1', 'D2', 'D3', 'D4', 'D5']) {
-    await page.getByRole('button', { name: domain, exact: true }).click();
-    await expect(page.getByRole('button', { name: answer, exact: true }).first()).toBeVisible({
-      timeout: 5_000,
-    });
+/**
+ * Answer every signalling question of the given ROB2 domains with one response
+ * (Y, N, PY, PN, NI). Scoped to each domain's `#domain-section-*` container so
+ * every button is clicked exactly once -- answer buttons are toggles, so a
+ * second click on an already-selected option would clear it.
+ */
+export async function answerAllROB2Domains(
+  page: Page,
+  answer: string,
+  domainKeys: string[] = ['domain1', 'domain2a', 'domain3', 'domain4', 'domain5'],
+) {
+  for (const domainKey of domainKeys) {
+    const pill = `D${domainKey.replace('domain', '').replace(/[ab]$/, '')}`;
+    await page.getByRole('button', { name: pill, exact: true }).click();
 
-    const buttons = page.getByRole('button', { name: answer, exact: true });
+    const section = page.locator(`#domain-section-${domainKey}`);
+    const buttons = section.getByRole('button', { name: answer, exact: true });
+    await expect(buttons.first()).toBeVisible({ timeout: 5_000 });
+
     const count = await buttons.count();
     for (let i = 0; i < count; i++) {
       await buttons.nth(i).click();
       await page.waitForTimeout(50);
     }
   }
+}
+
+/**
+ * Answer a single signalling question, scoped to its domain section and the
+ * question row matched by text. Works for both ROB2 and ROBINS-I editors
+ * (both render rows as bordered divs with toggle buttons inside
+ * `#domain-section-*` containers).
+ */
+export async function answerSignallingQuestion(
+  page: Page,
+  domainKey: string,
+  questionText: string | RegExp,
+  answer: string,
+) {
+  const section = page.locator(`#domain-section-${domainKey}`);
+  await section.scrollIntoViewIfNeeded();
+  const row = section.locator('div.border-b').filter({ hasText: questionText });
+  await expect(row).toHaveCount(1, { timeout: 5_000 });
+  await row.getByRole('button', { name: answer, exact: true }).click();
 }
 
 /**
@@ -95,7 +124,11 @@ const ROBINSI_NO_CODES = ['N', 'SN', 'WN', 'PN'];
  * which is unique to signalling questions (judgement/direction buttons use other layouts),
  * so iterating those groups yields exactly one answer per question.
  */
-export async function answerAllROBINSIDomains(page: Page, reviewer: 'A' | 'B') {
+export async function answerAllROBINSIDomains(
+  page: Page,
+  reviewer: 'A' | 'B',
+  domainPills: string[] = ['D1', 'D2', 'D3', 'D4', 'D5', 'D6'],
+) {
   const preferred = reviewer === 'A' ? ROBINSI_YES_CODES : ROBINSI_NO_CODES;
   const domains: Array<{ pill: string; key: string }> = [
     { pill: 'D1', key: 'domain1a' },
@@ -104,7 +137,7 @@ export async function answerAllROBINSIDomains(page: Page, reviewer: 'A' | 'B') {
     { pill: 'D4', key: 'domain4' },
     { pill: 'D5', key: 'domain5' },
     { pill: 'D6', key: 'domain6' },
-  ];
+  ].filter(d => domainPills.includes(d.pill));
 
   for (const { pill, key } of domains) {
     await page.getByRole('button', { name: pill, exact: true }).first().click();

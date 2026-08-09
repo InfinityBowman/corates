@@ -4,6 +4,10 @@
  */
 
 import { ROBINS_I_CHECKLIST, getDomainQuestions, getActiveDomainKeys } from './checklist-map';
+import {
+  getSkippedDomainQuestions,
+  isEffectivelyNotApplicable,
+} from '@corates/shared/checklists/robins-i';
 import type {
   ROBINSIChecklist,
   ROBINSIDomainState,
@@ -161,8 +165,8 @@ function compareSectionB(
   for (const key of keys) {
     const qa1 = sectionB1?.[key as keyof typeof sectionB1] as ROBINSIQuestionAnswer | undefined;
     const qa2 = sectionB2?.[key as keyof typeof sectionB2] as ROBINSIQuestionAnswer | undefined;
-    const ans1 = qa1?.answer;
-    const ans2 = qa2?.answer;
+    const ans1 = qa1?.answer ?? null;
+    const ans2 = qa2?.answer ?? null;
 
     const comparison: Omit<QuestionComparison, 'isAgreement'> = {
       key,
@@ -194,9 +198,15 @@ function compareDomain(
   const agreementList: QuestionComparison[] = [];
   const disagreementList: QuestionComparison[] = [];
 
+  // Skipped questions are derived per reviewer so that an explicit NA on one
+  // side agrees with a derived skip (null while off the scoring path) on the
+  // other -- both mean "not applicable".
+  const skipped1 = getSkippedDomainQuestions(domainKey, domain1?.answers);
+  const skipped2 = getSkippedDomainQuestions(domainKey, domain2?.answers);
+
   for (const qKey of questionKeys) {
-    const ans1 = domain1?.answers?.[qKey]?.answer;
-    const ans2 = domain2?.answers?.[qKey]?.answer;
+    const ans1 = domain1?.answers?.[qKey]?.answer ?? null;
+    const ans2 = domain2?.answers?.[qKey]?.answer ?? null;
 
     const comparison: Omit<QuestionComparison, 'isAgreement'> = {
       key: qKey,
@@ -211,7 +221,11 @@ function compareDomain(
       },
     };
 
-    if (ans1 === ans2) {
+    const bothNotApplicable =
+      isEffectivelyNotApplicable(qKey, ans1, skipped1) &&
+      isEffectivelyNotApplicable(qKey, ans2, skipped2);
+
+    if (ans1 === ans2 || bothNotApplicable) {
       agreementList.push({ ...comparison, isAgreement: true });
     } else {
       disagreementList.push({ ...comparison, isAgreement: false });

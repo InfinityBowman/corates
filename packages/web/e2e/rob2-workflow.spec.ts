@@ -22,7 +22,36 @@ import {
   markChecklistComplete,
   fillROB2Preliminary,
   answerAllROB2Domains,
+  answerSignallingQuestion,
 } from './shared-steps';
+
+/**
+ * Answer the domains so two skip states arise for both reviewers:
+ * - Domain 1 early-exits at 1.2=N (forces High); 1.1 and 1.3 have no NA on
+ *   the official scale, so they stay unanswered and read as skipped.
+ * - Domain 3 early-exits at 3.1=Y (forces Low); 3.2-3.4 are WITH_NA
+ *   conditionals that get stamped NA when the checklist is marked complete.
+ * Remaining domains are answered in full with the reviewer's answer.
+ */
+async function answerROB2DomainsWithSkips(page: import('@playwright/test').Page, answer: string) {
+  await answerSignallingQuestion(page, 'domain1', /allocation sequence concealed/i, 'N');
+  // exact: the direction label renders its own lowercase "(optional)"
+  await expect(
+    page.locator('#domain-section-domain1').getByText('(Optional)', { exact: true }),
+  ).toHaveCount(2, { timeout: 5_000 });
+
+  await answerSignallingQuestion(
+    page,
+    'domain3',
+    /available for all, or nearly all, participants randomized/i,
+    'Y',
+  );
+  await expect(
+    page.locator('#domain-section-domain3').getByText('(Optional)', { exact: true }),
+  ).toHaveCount(3, { timeout: 5_000 });
+
+  await answerAllROB2Domains(page, answer, ['domain2a', 'domain4', 'domain5']);
+}
 
 let scenario: DualReviewerScenario;
 
@@ -65,7 +94,7 @@ test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
   });
 
   await fillROB2Preliminary(page, 'Drug X', 'Placebo');
-  await answerAllROB2Domains(page, 'Y');
+  await answerROB2DomainsWithSkips(page, 'Y');
   await markChecklistComplete(page);
   await page.goto(`/projects/${projectId}`);
   await expect(page.getByRole('tab', { name: /To Do/i })).toBeVisible({ timeout: 15_000 });
@@ -109,7 +138,7 @@ test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
     timeout: 10_000,
   });
   await fillROB2Preliminary(page, 'Drug Y', 'Standard care');
-  await answerAllROB2Domains(page, 'N');
+  await answerROB2DomainsWithSkips(page, 'N');
   await markChecklistComplete(page);
   await page.goto(`/projects/${projectId}`);
   await expect(page.getByRole('tab', { name: /To Do/i })).toBeVisible({ timeout: 15_000 });
@@ -137,8 +166,47 @@ test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
   const nextBtn = page.getByRole('button', { name: /Next|Review Summary/i });
 
   let safety = 0;
+  let sawSkippedReviewerPanels = false;
+  let sawNotRequiredBanner = false;
+  let sawStampedNA = false;
   while (safety < 80) {
     safety++;
+
+    // 1.1: both reviewers derived-skipped it, so both panels carry the badge
+    // and the page reads as agreement despite two null answers.
+    if (
+      await page
+        .getByRole('heading', { name: /Was the allocation sequence random/i })
+        .isVisible()
+        .catch(() => false)
+    ) {
+      await expect(page.getByText('Skipped - Not applicable')).toHaveCount(2);
+      sawSkippedReviewerPanels = true;
+    }
+
+    // 1.3: by now the reconciled 1.2=N determines Domain 1, so the page
+    // banner marks the question as not required.
+    if (
+      await page
+        .getByRole('heading', { name: /baseline differences/i })
+        .isVisible()
+        .catch(() => false)
+    ) {
+      await expect(page.getByText(/this question is not required/i)).toBeVisible();
+      sawNotRequiredBanner = true;
+    }
+
+    // 3.2: WITH_NA conditional -- completion stamped the official NA into
+    // both reviewers' records, so both panels show a selected NA.
+    if (
+      await page
+        .getByRole('heading', { name: /not biased by missing outcome data/i })
+        .isVisible()
+        .catch(() => false)
+    ) {
+      await expect(page.getByText('NA - Not Applicable')).toHaveCount(2);
+      sawStampedNA = true;
+    }
 
     // Try clicking "Use This" (Reviewer 1's panel)
     const useThisBtn = page.getByRole('button', { name: 'Use This' }).first();
@@ -167,11 +235,19 @@ test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
     if (btnText?.includes('Review Summary')) break;
   }
 
+  // The walk must have passed through all three skip states.
+  expect(sawSkippedReviewerPanels).toBe(true);
+  expect(sawNotRequiredBanner).toBe(true);
+  expect(sawStampedNA).toBe(true);
+
   // ================================================================
   // Summary view - verify and save
   // ================================================================
   await expect(page.getByText('Reconciliation Summary')).toBeVisible({ timeout: 5_000 });
   await page.screenshot({ path: 'test-results/debug-summary.png' });
+  // Skipped questions surface as "Skipped" rather than "Not set" and do not
+  // block saving.
+  await expect(page.getByText('Skipped', { exact: true }).first()).toBeVisible({ timeout: 5_000 });
   const saveBtn = page.getByRole('button', { name: /Save Reconciled Checklist/i });
   await expect(saveBtn).toBeEnabled({ timeout: 10_000 });
   await saveBtn.click();

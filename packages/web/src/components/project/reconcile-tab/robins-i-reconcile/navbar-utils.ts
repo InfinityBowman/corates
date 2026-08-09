@@ -8,6 +8,7 @@ import {
   getActiveDomainKeys,
   ROBINS_I_CHECKLIST,
 } from '@/components/checklist/ROBINSIChecklist/checklist-map';
+import { getSkippedQuestions } from '@corates/shared/checklists/robins-i';
 
 type ROBINSQuestion = ReturnType<typeof getDomainQuestions>[string];
 
@@ -176,6 +177,23 @@ export function getGroupedNavigationItems(navItems: NavItem[]): NavGroup[] {
   return groups;
 }
 
+const skippedQuestionsCache = new WeakMap<object, Set<string>>();
+
+/**
+ * Derived skipped questions for a checklist (early-complete domains and
+ * Section B Critical), cached per checklist object because answer checks run
+ * inside render loops.
+ */
+export function getSkippedQuestionsCached(checklist: FinalAnswers | null | undefined): Set<string> {
+  if (!checklist || typeof checklist !== 'object') return new Set();
+  let cached = skippedQuestionsCache.get(checklist);
+  if (!cached) {
+    cached = getSkippedQuestions(checklist as Parameters<typeof getSkippedQuestions>[0]);
+    skippedQuestionsCache.set(checklist, cached);
+  }
+  return cached;
+}
+
 /**
  * Check if a Section B question has been answered in the final answers
  */
@@ -202,13 +220,19 @@ function hasDomainQuestionAnswer(
  *
  * Predicted direction of bias is optional (there is no "not applicable" option),
  * so direction items never block completion -- they are reconcilable but not required.
+ * Domain questions that are derived-skipped (off the scoring path of a completed
+ * domain, or behind a Section B Critical rating) are satisfied without a stored
+ * answer -- the official response scales have no NA option for many of them.
  */
 export function hasNavItemAnswer(navItem: NavItem, finalAnswers: FinalAnswers): boolean {
   switch (navItem.type) {
     case NAV_ITEM_TYPES.SECTION_B:
       return hasSectionBAnswer(navItem.key, finalAnswers);
     case NAV_ITEM_TYPES.DOMAIN_QUESTION:
-      return hasDomainQuestionAnswer(navItem.domainKey, navItem.key, finalAnswers);
+      return (
+        hasDomainQuestionAnswer(navItem.domainKey, navItem.key, finalAnswers) ||
+        getSkippedQuestionsCached(finalAnswers).has(navItem.key)
+      );
     case NAV_ITEM_TYPES.DOMAIN_DIRECTION:
     case NAV_ITEM_TYPES.OVERALL_DIRECTION:
       return true;
@@ -227,7 +251,10 @@ export function hasNavItemValue(navItem: NavItem, finalAnswers: FinalAnswers): b
     case NAV_ITEM_TYPES.SECTION_B:
       return hasSectionBAnswer(navItem.key, finalAnswers);
     case NAV_ITEM_TYPES.DOMAIN_QUESTION:
-      return hasDomainQuestionAnswer(navItem.domainKey, navItem.key, finalAnswers);
+      return (
+        hasDomainQuestionAnswer(navItem.domainKey, navItem.key, finalAnswers) ||
+        getSkippedQuestionsCached(finalAnswers).has(navItem.key)
+      );
     case NAV_ITEM_TYPES.DOMAIN_DIRECTION: {
       const domain = finalAnswers?.[navItem.domainKey] as Record<string, unknown> | undefined;
       return domain?.direction != null && domain.direction !== '';
@@ -289,9 +316,13 @@ export function getNavItemTooltip(
   navItem: NavItem,
   hasAnswer: boolean,
   isAgreement: boolean,
+  isSkipped = false,
 ): string {
   const label = navItem.label;
 
+  if (isSkipped) {
+    return `${label} - Skipped (not applicable)`;
+  }
   if (hasAnswer) {
     return `${label} - Reconciled`;
   }

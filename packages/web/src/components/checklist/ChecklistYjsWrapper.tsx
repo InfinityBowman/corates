@@ -5,7 +5,9 @@ import { ChecklistWithPdf } from '@/components/checklist/ChecklistWithPdf';
 import { useProjectContext } from '@/components/project/ProjectContext';
 import { connectionPool } from '@/project/ConnectionPool';
 import { useChecklistViewModel } from '@/primitives/useProject/useChecklistViewModel';
-import { useChecklistScore } from '@/project/workspace-data';
+import { useChecklistScore, useAnswerWriters, getAnswerValue } from '@/project/workspace-data';
+import { getCompletionNaStamps } from '@/components/checklist/completion-na';
+import type { ChecklistAnswerInput } from '@corates/shared/sync';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { useStudyAnnotations } from '@/primitives/useProject/useStudyAnnotations';
@@ -81,6 +83,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
     checklistId,
   );
   const currentScore = useChecklistScore(projectId, checklistId, checklistType);
+  const writers = useAnswerWriters(projectId, studyId, checklistId);
 
   const isReadOnly = currentChecklist?.status ? !isEditable(currentChecklist.status) : false;
 
@@ -212,6 +215,19 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
   }, [isReadOnly, currentChecklist, isChecklistValid, checklistType]);
 
   const confirmMarkComplete = useCallback(() => {
+    // Off-path conditional questions get their official 'NA' response stamped
+    // into the record before it locks, matching what the Cochrane tools store.
+    const stamps = getCompletionNaStamps(checklistType, key =>
+      getAnswerValue(projectId, checklistId, key),
+    );
+    for (const stamp of stamps) {
+      writers.updateAnswer({
+        type: checklistType,
+        key: stamp.domainKey,
+        data: { answers: { [stamp.questionKey]: { answer: 'NA' } } },
+      } as ChecklistAnswerInput);
+    }
+
     const nextStatus = getNextStatusForCompletion(currentStudy);
     void client?.mutate.checklist.update({
       checklistId,
@@ -225,7 +241,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
       `This appraisal has been marked as ${statusLabel} and is now locked.`,
     );
     setCompleteDialogOpen(false);
-  }, [currentStudy, client, checklistId]);
+  }, [currentStudy, client, checklistId, checklistType, projectId, writers]);
 
   const pdfUrl = useMemo(() => {
     if (!pdfFileName || !orgId) return null;

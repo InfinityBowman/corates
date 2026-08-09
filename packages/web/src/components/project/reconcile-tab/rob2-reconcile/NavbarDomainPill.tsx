@@ -191,7 +191,7 @@ function QuestionPill({
   const tooltip = useMemo(() => {
     let status = '';
     if (isSkipped) {
-      status = 'Skipped (auto-set to NA)';
+      status = 'Skipped (not applicable)';
     } else if (hasValue) {
       status = 'Reconciled';
     } else if (isDirection) {

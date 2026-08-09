@@ -23,8 +23,22 @@ import {
   markChecklistComplete,
   answerROBINSISectionB,
   answerAllROBINSIDomains,
+  answerSignallingQuestion,
   setROBINSIDomainDirection,
 } from './shared-steps';
+
+/**
+ * Answer Domain 6 so it early-exits for both reviewers: 6.1=Y forces Low, so
+ * 6.2-6.4 become optional skips. Their scales have no NA option, so they stay
+ * unanswered and must read as skipped (not missing) during reconciliation.
+ */
+async function answerROBINSIDomain6WithSkips(page: import('@playwright/test').Page) {
+  await answerSignallingQuestion(page, 'domain6', /pre-determined analysis plan/i, 'Y');
+  // exact: the direction label renders its own lowercase "(optional)"
+  await expect(
+    page.locator('#domain-section-domain6').getByText('(Optional)', { exact: true }),
+  ).toHaveCount(3, { timeout: 5_000 });
+}
 
 let scenario: DualReviewerScenario;
 
@@ -73,7 +87,8 @@ test('Dual-Reviewer ROBINS-I Workflow', async ({ context, page }) => {
   });
 
   await answerROBINSISectionB(page, 'N');
-  await answerAllROBINSIDomains(page, 'A');
+  await answerAllROBINSIDomains(page, 'A', ['D1', 'D2', 'D3', 'D4', 'D5']);
+  await answerROBINSIDomain6WithSkips(page);
   // Set a domain direction so reconciliation has a real direction to resolve.
   await setROBINSIDomainDirection(page, 'D2', 'domain2', 'Favours intervention');
   // Capture the editor: judgement is read-only ("Calculated"), direction is editable.
@@ -124,7 +139,8 @@ test('Dual-Reviewer ROBINS-I Workflow', async ({ context, page }) => {
   });
 
   await answerROBINSISectionB(page, 'N');
-  await answerAllROBINSIDomains(page, 'B');
+  await answerAllROBINSIDomains(page, 'B', ['D1', 'D2', 'D3', 'D4', 'D5']);
+  await answerROBINSIDomain6WithSkips(page);
   // Different direction than Reviewer A -> a direction conflict to reconcile.
   await setROBINSIDomainDirection(page, 'D2', 'domain2', 'Favours comparator');
   await markChecklistComplete(page);
@@ -152,6 +168,7 @@ test('Dual-Reviewer ROBINS-I Workflow', async ({ context, page }) => {
 
   let safety = 0;
   let capturedDirectionPage = false;
+  let sawSkippedQuestionPage = false;
   while (safety < 100) {
     safety++;
 
@@ -168,6 +185,20 @@ test('Dual-Reviewer ROBINS-I Workflow', async ({ context, page }) => {
       capturedDirectionPage = true;
     }
 
+    // 6.2: skipped by both reviewers, and the reconciled 6.1=Y already
+    // determines Domain 6 -- so both reviewer panels and the final panel
+    // carry the Skipped badge and the page banner marks it not required.
+    if (
+      await page
+        .getByRole('heading', { name: /multiple outcome measurements/i })
+        .isVisible()
+        .catch(() => false)
+    ) {
+      await expect(page.getByText('Skipped - Not applicable')).toHaveCount(3);
+      await expect(page.getByText(/this question is not required/i)).toBeVisible();
+      sawSkippedQuestionPage = true;
+    }
+
     const useThisBtn = page.getByRole('button', { name: 'Use This' }).first();
     if (await useThisBtn.isVisible().catch(() => false)) {
       await useThisBtn.click();
@@ -179,6 +210,9 @@ test('Dual-Reviewer ROBINS-I Workflow', async ({ context, page }) => {
     if (btnText?.includes('Review Summary')) break;
   }
 
+  // The walk must have passed through the skipped Domain 6 question.
+  expect(sawSkippedQuestionPage).toBe(true);
+
   // ================================================================
   // Summary view - verify and save
   // ================================================================
@@ -187,6 +221,9 @@ test('Dual-Reviewer ROBINS-I Workflow', async ({ context, page }) => {
   await expect(page.getByText(/Favours (intervention|comparator)/).first()).toBeVisible({
     timeout: 5_000,
   });
+  // Skipped Domain 6 questions surface as skipped rather than unanswered and
+  // do not block saving.
+  await expect(page.getByText('Skipped - Not applicable').first()).toBeVisible({ timeout: 5_000 });
   const saveBtn = page.getByRole('button', { name: /Save Reconciled Checklist/i });
   await expect(saveBtn).toBeEnabled({ timeout: 10_000 });
   await saveBtn.click();

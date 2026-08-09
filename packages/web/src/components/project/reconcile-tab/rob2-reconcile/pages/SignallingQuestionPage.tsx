@@ -19,6 +19,9 @@ interface SignallingQuestionPageProps {
   reviewer2Name: string;
   isAgreement: boolean;
   isSkipped: boolean;
+  /** Derived skip state per reviewer: null answer while off the scoring path. */
+  reviewer1Skipped?: boolean;
+  reviewer2Skipped?: boolean;
   onFinalAnswerChange: (_answer: string) => void;
   onUseReviewer1: () => void;
   onUseReviewer2: () => void;
@@ -38,6 +41,8 @@ export function SignallingQuestionPage({
   reviewer2Name,
   isAgreement,
   isSkipped,
+  reviewer1Skipped = false,
+  reviewer2Skipped = false,
   onFinalAnswerChange,
   onUseReviewer1,
   onUseReviewer2,
@@ -92,8 +97,8 @@ export function SignallingQuestionPage({
           <div className='flex items-center gap-2'>
             <InfoIcon className='size-4 shrink-0 text-slate-500' />
             <p className='text-sm text-slate-600'>
-              This question was auto-set to NA because the domain judgement is already determined by
-              earlier answers. You can still change it if needed.
+              The reconciled answers already determine this domain's judgement, so this question is
+              not required. You can still record an answer if needed.
             </p>
           </div>
         </div>
@@ -109,6 +114,7 @@ export function SignallingQuestionPage({
           comment={reviewer1Data?.comment}
           responseOptions={responseOptions}
           readOnly={true}
+          skipped={reviewer1Skipped}
           onUseThis={onUseReviewer1}
         />
 
@@ -120,6 +126,7 @@ export function SignallingQuestionPage({
           comment={reviewer2Data?.comment}
           responseOptions={responseOptions}
           readOnly={true}
+          skipped={reviewer2Skipped}
           onUseThis={onUseReviewer2}
         />
 

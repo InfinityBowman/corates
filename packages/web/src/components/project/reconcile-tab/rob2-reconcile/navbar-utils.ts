@@ -6,6 +6,7 @@ import {
   ROB2_CHECKLIST,
   PRELIMINARY_SECTION,
   getActiveDomainKeys,
+  getSkippedQuestions,
 } from '@corates/shared/checklists/rob2';
 import type { ROB2Domain } from '@corates/shared/checklists/rob2';
 
@@ -192,6 +193,23 @@ export function getGroupedNavigationItems(navItems: NavItem[]): NavGroup[] {
   return groups;
 }
 
+const skippedQuestionsCache = new WeakMap<object, Set<string>>();
+
+/**
+ * Derived skipped questions for a checklist (off the scoring path of a
+ * completed domain), cached per checklist object because answer checks run
+ * inside render loops.
+ */
+export function getSkippedQuestionsCached(checklist: FinalAnswers | null | undefined): Set<string> {
+  if (!checklist || typeof checklist !== 'object') return new Set();
+  let cached = skippedQuestionsCache.get(checklist);
+  if (!cached) {
+    cached = getSkippedQuestions(checklist as Parameters<typeof getSkippedQuestions>[0]);
+    skippedQuestionsCache.set(checklist, cached);
+  }
+  return cached;
+}
+
 /**
  * Check if a preliminary field has been answered in the final answers
  */
@@ -228,13 +246,19 @@ function hasDomainQuestionAnswer(
  *
  * Predicted direction of bias is optional, so direction items never block
  * completion -- they are reconcilable but not required.
+ * Domain questions that are derived-skipped (off the scoring path of a
+ * completed domain) are satisfied without a stored answer -- the official
+ * response scales have no NA option for the non-conditional questions.
  */
 export function hasNavItemAnswer(navItem: NavItem, finalAnswers: FinalAnswers): boolean {
   switch (navItem.type) {
     case NAV_ITEM_TYPES.PRELIMINARY:
       return hasPreliminaryAnswer(navItem.key, finalAnswers);
     case NAV_ITEM_TYPES.DOMAIN_QUESTION:
-      return hasDomainQuestionAnswer(navItem.domainKey, navItem.key, finalAnswers);
+      return (
+        hasDomainQuestionAnswer(navItem.domainKey, navItem.key, finalAnswers) ||
+        getSkippedQuestionsCached(finalAnswers).has(navItem.key)
+      );
     case NAV_ITEM_TYPES.DOMAIN_DIRECTION:
     case NAV_ITEM_TYPES.OVERALL_DIRECTION:
       return true;
@@ -253,7 +277,10 @@ export function hasNavItemValue(navItem: NavItem, finalAnswers: FinalAnswers): b
     case NAV_ITEM_TYPES.PRELIMINARY:
       return hasPreliminaryAnswer(navItem.key, finalAnswers);
     case NAV_ITEM_TYPES.DOMAIN_QUESTION:
-      return hasDomainQuestionAnswer(navItem.domainKey, navItem.key, finalAnswers);
+      return (
+        hasDomainQuestionAnswer(navItem.domainKey, navItem.key, finalAnswers) ||
+        getSkippedQuestionsCached(finalAnswers).has(navItem.key)
+      );
     case NAV_ITEM_TYPES.DOMAIN_DIRECTION: {
       const domain = finalAnswers?.[navItem.domainKey] as Record<string, unknown> | undefined;
       return domain?.direction != null && domain.direction !== '';
