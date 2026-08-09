@@ -85,14 +85,8 @@ export function AllStudiesTab() {
         </div>
       )}
 
-      <div className='mt-6 mb-3 flex items-center justify-between'>
-        <p className='text-muted-foreground text-sm'>
-          {studyIds.length} {studyIds.length === 1 ? 'study' : 'studies'} in this project
-        </p>
-      </div>
-
       {studyIds.length > 0 ?
-        <div className='flex flex-col gap-3'>
+        <div className='flex flex-col gap-2'>
           {studyIds.map(studyId => (
             <StudyCard
               key={studyId}
@@ -110,7 +104,7 @@ export function AllStudiesTab() {
           ))}
         </div>
       : hasData && (
-          <div className='bg-muted rounded-lg py-12 text-center'>
+          <div className='bg-muted mt-4 rounded-lg py-12 text-center'>
             <BookOpenIcon className='text-muted-foreground mx-auto mb-4 size-12 opacity-50' />
             <p className='text-muted-foreground'>
               No studies added yet. Add your first study above.
