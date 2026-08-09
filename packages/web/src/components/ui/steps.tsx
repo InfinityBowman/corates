@@ -53,7 +53,7 @@ function StepsSeparator({
 }: React.ComponentProps<typeof StepsPrimitive.Separator>) {
   return (
     <StepsPrimitive.Separator
-      className={cn('bg-secondary data-[complete]:bg-primary h-0.5 flex-1', className)}
+      className={cn('bg-secondary data-[complete]:bg-primary h-0.5 flex-1 rounded-full', className)}
       {...props}
     />
   );
