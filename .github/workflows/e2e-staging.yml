@@ -96,7 +96,11 @@ jobs:
           path: packages/web/test-results/
           retention-days: 7
 
+      # Explicit bash: this job runs in the Playwright container, where the
+      # default shell is dash and the ${GITHUB_SHA:0:8} substring expansion
+      # fails, turning a green suite into a red job.
       - name: Summary
         if: always()
+        shell: bash
         run: |
           echo "E2E on staging for \`${{ github.ref_name }}\` (${GITHUB_SHA:0:8}): ${{ job.status }}." >> "$GITHUB_STEP_SUMMARY"
