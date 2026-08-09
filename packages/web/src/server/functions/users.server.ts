@@ -11,7 +11,8 @@ import {
   twoFactor,
   mediaFiles,
 } from '@corates/db/schema';
-import { eq, or, desc } from 'drizzle-orm';
+import { eq, or, desc, count } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/sqlite-core';
 import { containsInsensitive } from '@/server/lib/sqlSearch';
 import { kickWorkspaceUser } from '@corates/workers/sync';
 import {
@@ -32,6 +33,10 @@ export interface UserProject {
   role: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface UserProjectWithMemberCount extends UserProject {
+  memberCount: number;
 }
 
 export interface UserSearchResult {
@@ -82,6 +87,11 @@ export async function deleteAccount(db: Database, session: Session) {
 }
 
 export async function fetchMyProjects(db: Database, session: Session) {
+  // Second join over the same table: the first is filtered to the caller's own
+  // membership (for `role`), this one stays unfiltered so the count covers every
+  // member. The (projectId, userId) unique index keeps the count exact.
+  const allMembers = alias(projectMembers, 'all_members');
+
   const results = await db
     .select({
       id: projects.id,
@@ -91,13 +101,16 @@ export async function fetchMyProjects(db: Database, session: Session) {
       role: projectMembers.role,
       createdAt: projects.createdAt,
       updatedAt: projects.updatedAt,
+      memberCount: count(allMembers.id),
     })
     .from(projects)
     .innerJoin(projectMembers, eq(projects.id, projectMembers.projectId))
+    .innerJoin(allMembers, eq(projects.id, allMembers.projectId))
     .where(eq(projectMembers.userId, session.user.id))
+    .groupBy(projects.id, projectMembers.role)
     .orderBy(desc(projects.updatedAt));
 
-  return results as unknown as UserProject[];
+  return results as unknown as UserProjectWithMemberCount[];
 }
 
 export async function fetchUserProjects(db: Database, session: Session, userId: string) {
