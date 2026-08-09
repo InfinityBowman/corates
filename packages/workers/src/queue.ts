@@ -9,13 +9,24 @@ import type { EmailPayload } from '@corates/shared/email';
 import type { Env } from './types';
 
 async function isAlreadyProcessed(db: D1Database, messageId: string): Promise<boolean> {
-  const result = await db
+  const row = await db
+    .prepare(`SELECT 1 FROM processed_emails WHERE queueMessageId = ?`)
+    .bind(messageId)
+    .first();
+  return row !== null;
+}
+
+// The marker must only be written after a successful send. Writing it up front
+// meant a failed send's retry saw the marker and was ack'd without ever
+// sending. Worst case now is a duplicate email if we die between the send and
+// the marker write, which is preferable to silently dropping mail.
+async function markProcessed(db: D1Database, messageId: string): Promise<void> {
+  await db
     .prepare(
       `INSERT INTO processed_emails (queueMessageId, processedAt) VALUES (?, unixepoch()) ON CONFLICT (queueMessageId) DO NOTHING`,
     )
     .bind(messageId)
     .run();
-  return result.meta.changes === 0;
 }
 
 export async function handleEmailQueue(batch: MessageBatch<unknown>, env: Env): Promise<void> {
@@ -36,6 +47,7 @@ export async function handleEmailQueue(batch: MessageBatch<unknown>, env: Env): 
 
         const masked = msg.body.to?.replace(/^(..).*@/, '$1***@');
         if (result.success) {
+          await markProcessed(env.DB, msg.id);
           info('email.sent', { to: masked, subject: msg.body.subject, attempt: msg.attempts });
           msg.ack();
         } else {
