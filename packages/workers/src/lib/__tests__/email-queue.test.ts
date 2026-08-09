@@ -35,11 +35,19 @@ function createMockMessage(payload: EmailPayload, attempts = 0) {
   };
 }
 
+// In-memory stand-in for the processed_emails table so tests exercise the
+// real dedup behavior: SELECT reads the set, INSERT adds to it.
 function createMockDb() {
+  const processed = new Set<string>();
   return {
-    prepare: () => ({
-      bind: () => ({
-        run: () => Promise.resolve({ meta: { changes: 1 } }),
+    prepare: (sql: string) => ({
+      bind: (id: string) => ({
+        first: () => Promise.resolve(processed.has(id) ? { 1: 1 } : null),
+        run: () => {
+          const changes = sql.startsWith('INSERT') && !processed.has(id) ? 1 : 0;
+          if (sql.startsWith('INSERT')) processed.add(id);
+          return Promise.resolve({ meta: { changes } });
+        },
       }),
     }),
   };
@@ -146,6 +154,53 @@ describe('Email Queue Consumer', () => {
 
     expect(msg.ack).not.toHaveBeenCalled();
     expect(msg.retry).toHaveBeenCalledTimes(1);
+  });
+
+  it('should send again on redelivery after a failed send', async () => {
+    const env = {
+      ENVIRONMENT: 'test',
+      POSTMARK_SERVER_TOKEN: 'test-token',
+      EMAIL_FROM: 'noreply@test.com',
+      DB: createMockDb(),
+    } as never;
+
+    mockSendEmail.mockResolvedValueOnce({ success: false, error: 'Transient failure' });
+    const msg = createMockMessage(makePayload(1));
+    await workerHandler.queue(createMockBatch([msg]), env);
+
+    expect(msg.ack).not.toHaveBeenCalled();
+    expect(msg.retry).toHaveBeenCalledTimes(1);
+
+    // Redelivery of the same message id must not be suppressed by the
+    // dedup marker, since the send never succeeded.
+    mockSendEmail.mockResolvedValueOnce({ success: true, id: 'mock-id' });
+    const redelivery = { ...createMockMessage(makePayload(1), 1), id: msg.id };
+    await workerHandler.queue(createMockBatch([redelivery]), env);
+
+    expect(mockSendEmail).toHaveBeenCalledTimes(2);
+    expect(redelivery.ack).toHaveBeenCalledTimes(1);
+    expect(redelivery.retry).not.toHaveBeenCalled();
+  });
+
+  it('should ack a duplicate delivery of an already-sent message without resending', async () => {
+    const env = {
+      ENVIRONMENT: 'test',
+      POSTMARK_SERVER_TOKEN: 'test-token',
+      EMAIL_FROM: 'noreply@test.com',
+      DB: createMockDb(),
+    } as never;
+
+    const msg = createMockMessage(makePayload(1));
+    await workerHandler.queue(createMockBatch([msg]), env);
+    expect(mockSendEmail).toHaveBeenCalledTimes(1);
+    expect(msg.ack).toHaveBeenCalledTimes(1);
+
+    const duplicate = { ...createMockMessage(makePayload(1)), id: msg.id };
+    await workerHandler.queue(createMockBatch([duplicate]), env);
+
+    expect(mockSendEmail).toHaveBeenCalledTimes(1);
+    expect(duplicate.ack).toHaveBeenCalledTimes(1);
+    expect(duplicate.retry).not.toHaveBeenCalled();
   });
 });
 
