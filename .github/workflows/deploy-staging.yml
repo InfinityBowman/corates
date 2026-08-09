@@ -1,0 +1,96 @@
+name: Deploy Staging (manual)
+
+# Manual staging deploy for any branch. Deliberately a separate workflow from
+# ci.yml rather than a workflow_dispatch on it: ci.yml chains
+# deploy-staging -> e2e -> deploy-production via `needs`, so a dispatch there
+# would need guards on both downstream jobs to avoid shipping a feature branch
+# to production. Here there is nothing downstream to cascade into.
+#
+# This does NOT run lint/typecheck/tests - it only updates staging. Open a PR
+# for the full `checks` job.
+
+on:
+  workflow_dispatch:
+
+# One staging deploy at a time; a second dispatch waits rather than racing the
+# first to the same worker.
+concurrency:
+  group: deploy-staging-manual
+  cancel-in-progress: false
+
+jobs:
+  deploy-staging:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build workspace dependencies
+        run: pnpm --filter @corates/shared --filter @corates/db build
+
+      # Same env as ci.yml's deploy-staging. These override the VITE_* values
+      # that .env files would otherwise supply, which is what makes a staging
+      # build point at staging; building locally without them produces a
+      # production-configured bundle.
+      - name: Build web for staging
+        env:
+          CLOUDFLARE_ENV: staging
+          VITE_API_URL: 'https://staging.corates.org'
+          VITE_PUBLIC_APP_URL: 'https://staging.corates.org'
+          VITE_BASEPATH: '/'
+          VITE_DEV_PANEL: 'true'
+          VITE_GOOGLE_PICKER_API_KEY: ${{ vars.VITE_GOOGLE_PICKER_API_KEY }}
+          VITE_GOOGLE_PICKER_APP_ID: ${{ vars.VITE_GOOGLE_PICKER_APP_ID }}
+        run: pnpm --filter web build
+
+      - name: Migrate staging database
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: 2ab59c3eb44887bfa2bac00afd32290a
+        run: pnpm --filter web db:migrate:staging
+
+      - name: Deploy web to staging
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        working-directory: packages/web
+        run: pnpm exec wrangler deploy
+
+      - name: Deploy stripe-purchases to staging
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        working-directory: packages/stripe-purchases
+        run: pnpm exec wrangler deploy --env staging
+
+      - name: Wait for staging to be ready
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf https://staging.corates.org/api/test/health > /dev/null 2>&1; then
+              echo "Staging is ready"
+              exit 0
+            fi
+            echo "Waiting for staging... (attempt $i/30)"
+            sleep 5
+          done
+          echo "Staging did not become ready in time"
+          exit 1
+
+      - name: Summary
+        run: |
+          echo "Deployed \`${{ github.ref_name }}\` (${GITHUB_SHA:0:8}) to staging." >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "https://staging.corates.org" >> "$GITHUB_STEP_SUMMARY"
