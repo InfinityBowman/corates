@@ -20,12 +20,16 @@ class UserSessionBase extends DurableObject<Env> {
   // boundary, so it forwards its id as a header and we reopen a scope here.
   // Requests that arrive without one still get a scope, just an unlinked one.
   async fetch(request: Request): Promise<Response> {
+    const forwardedId = request.headers.get('x-request-id');
     return runWithLogger(
       {
-        requestId: request.headers.get('x-request-id') ?? crypto.randomUUID(),
+        requestId: forwardedId ?? crypto.randomUUID(),
         cfRay: request.headers.get('cf-ray'),
         env: this.env.ENVIRONMENT,
-        context: { durableObject: 'UserSession' },
+        // requestIdForwarded separates a log that joins back to a worker
+        // request from one carrying only a locally minted id, which are
+        // otherwise indistinguishable since both are UUIDs.
+        context: { durableObject: 'UserSession', requestIdForwarded: forwardedId !== null },
       },
       () => this.handleFetch(request),
     );
