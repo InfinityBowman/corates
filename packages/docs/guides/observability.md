@@ -13,14 +13,16 @@ Informational logs are not mirrored into Sentry. Loki already holds 100% of them
 copy would be duplicated volume against a separately metered quota.
 
 ```
-Workers (prod/staging) -> OTLP -> loki.jacobmaynard.dev -> Loki -> R2 (corates-loki)
+Workers (production) -> OTLP -> loki.jacobmaynard.dev -> Loki -> R2 (corates-loki)
                                           Grafana queries Loki
 
 Exceptions (all envs with a DSN) -> Sentry
 ```
 
-Staging deliberately has **no `SENTRY_DSN`**. Loki is the only signal there, which is why the
-structured fields below matter.
+Only production exports to Loki. Staging keeps `persist: true`, so its logs stay in Cloudflare
+Workers Logs (shorter retention, queried in the dashboard or with `wrangler tail`) and never
+mix into the Grafana views. Staging also deliberately has **no `SENTRY_DSN`**, so Workers Logs
+is the only staging signal - the structured fields below are what make it searchable there too.
 
 ## The entry shape
 
