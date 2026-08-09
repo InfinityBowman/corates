@@ -361,6 +361,7 @@ export default [
       'reference/**',
       '**/.localflare/**',
       '.claude/skills/**/examples/**',
+      '.claude/worktrees/**',
       'packages/ai/**',
       '**/worker-configuration.d.ts',
     ],
