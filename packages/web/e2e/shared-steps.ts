@@ -318,6 +318,22 @@ export async function addOutcome(page: Page, name: string) {
 }
 
 /**
+ * Waits until the project's sync outbox is empty: every mutation issued on
+ * this page (including entries restored from IndexedDB) is durably on the
+ * server. `data-sync-pending` carries the raw outbox count -- rendered by
+ * SyncStatusIndicator in the project header, and by an invisible marker on
+ * checklist/reconcile routes, which have no project header.
+ *
+ * This covers mutations only. Yjs binary updates (reconciliation notes) have
+ * no acknowledgement, so this cannot wait on them.
+ */
+export async function waitForSynced(page: Page, timeout = 15_000) {
+  await expect(page.locator('[data-sync-pending]')).toHaveAttribute('data-sync-pending', '0', {
+    timeout,
+  });
+}
+
+/**
  * Marks the current checklist as complete and handles the confirmation dialog.
  * The dialog says "Mark Appraisal as Complete?" with a "Mark Complete" action button.
  */

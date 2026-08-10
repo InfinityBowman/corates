@@ -224,6 +224,16 @@ class ConnectionPool {
       workspace.client.subscribeHydrated(() => applyStatus(workspace.client.status)),
     );
     applyStatus(workspace.client.status);
+
+    entry._cleanupHandlers.push(
+      workspace.client.subscribePending(pending => {
+        if (cancelled()) return;
+        useProjectStore.getState().setPending(projectId, pending);
+        this.updateUnloadGuard();
+      }),
+    );
+    useProjectStore.getState().setPending(projectId, workspace.client.pending);
+    this.updateUnloadGuard();
   }
 
   /**
@@ -455,12 +465,42 @@ class ConnectionPool {
     if (entry.workspace) void entry.workspace.destroy();
 
     this.registry.delete(projectId);
+    this.updateUnloadGuard();
     // Keep the error phase visible through the redirect effect; a fresh mount
     // starts from a clean record either way.
     if (!options.keepErrorState) {
       useProjectStore.getState().clearProject(projectId);
     }
   }
+
+  /**
+   * Unconfirmed work in any session's outbox survives a reload but not a
+   * profile the user never returns on, so closing the tab over it deserves
+   * the browser's leave-site prompt.
+   */
+  private updateUnloadGuard(): void {
+    let total = 0;
+    for (const entry of this.registry.values()) {
+      total += entry.workspace?.client.pending ?? 0;
+    }
+    setUnloadGuard(total > 0);
+  }
+}
+
+// The guard is registered only while unsent work exists: a standing
+// beforeunload handler makes the page ineligible for back/forward cache in
+// Safari and Firefox. Browsers ignore custom wording, so preventDefault is
+// the whole message.
+const unloadGuard = (event: Event) => {
+  event.preventDefault();
+};
+let unloadGuardActive = false;
+
+function setUnloadGuard(active: boolean): void {
+  if (typeof window === 'undefined' || active === unloadGuardActive) return;
+  unloadGuardActive = active;
+  if (active) window.addEventListener('beforeunload', unloadGuard);
+  else window.removeEventListener('beforeunload', unloadGuard);
 }
 
 export const connectionPool = new ConnectionPool();

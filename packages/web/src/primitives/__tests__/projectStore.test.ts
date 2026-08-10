@@ -14,7 +14,7 @@ describe('projectStore connection state', () => {
 
   it('starts idle for unknown projects', () => {
     const state = selectConnectionPhase(useProjectStore.getState(), PROJECT);
-    expect(state).toEqual({ phase: 'idle', error: null });
+    expect(state).toEqual({ phase: 'idle', error: null, pending: 0 });
   });
 
   it('stores phase transitions from the pool', () => {
@@ -45,7 +45,27 @@ describe('projectStore connection state', () => {
     expect(selectConnectionPhase(useProjectStore.getState(), PROJECT)).toEqual({
       phase: 'connecting',
       error: null,
+      pending: 0,
     });
+  });
+
+  it('setPending creates the record and survives phase changes', () => {
+    const store = useProjectStore.getState();
+    store.setPending(PROJECT, 2);
+    expect(selectConnectionPhase(useProjectStore.getState(), PROJECT)).toEqual({
+      phase: 'idle',
+      error: null,
+      pending: 2,
+    });
+
+    // Phase and pending change on different events; neither clobbers the other.
+    store.setConnectionState(PROJECT, 'synced');
+    expect(selectConnectionPhase(useProjectStore.getState(), PROJECT).pending).toBe(2);
+
+    store.setPending(PROJECT, 0);
+    const state = selectConnectionPhase(useProjectStore.getState(), PROJECT);
+    expect(state.phase).toBe('synced');
+    expect(state.pending).toBe(0);
   });
 
   it('clearProject removes the record and active pointer', () => {

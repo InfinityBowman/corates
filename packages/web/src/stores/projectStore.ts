@@ -17,9 +17,11 @@ export type ConnectionPhase = 'idle' | 'connecting' | 'cached' | 'synced' | 'err
 export interface ConnectionMachineState {
   phase: ConnectionPhase;
   error: string | null;
+  /** Mutations applied locally but not yet confirmed durable by the server. */
+  pending: number;
 }
 
-const INITIAL_CONNECTION: ConnectionMachineState = { phase: 'idle', error: null };
+const INITIAL_CONNECTION: ConnectionMachineState = { phase: 'idle', error: null, pending: 0 };
 
 export interface PdfEntry {
   id: string;
@@ -136,6 +138,7 @@ interface ProjectStoreState {
 interface ProjectStoreActions {
   setActiveProject: (projectId: string | null) => void;
   setConnectionState: (projectId: string, phase: ConnectionPhase, error?: string | null) => void;
+  setPending: (projectId: string, pending: number) => void;
   clearProject: (projectId: string) => void;
 }
 
@@ -151,7 +154,19 @@ export const useProjectStore = create<ProjectStoreState & ProjectStoreActions>()
 
     setConnectionState: (projectId, phase, error = null) =>
       set(state => {
-        state.connections[projectId] = { phase, error };
+        // Phase and pending change on different events; keep the count.
+        const pending = state.connections[projectId]?.pending ?? 0;
+        state.connections[projectId] = { phase, error, pending };
+      }),
+
+    setPending: (projectId, pending) =>
+      set(state => {
+        const current = state.connections[projectId];
+        if (current) {
+          current.pending = pending;
+        } else {
+          state.connections[projectId] = { ...INITIAL_CONNECTION, pending };
+        }
       }),
 
     clearProject: projectId =>

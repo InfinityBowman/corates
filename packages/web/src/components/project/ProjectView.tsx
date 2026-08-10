@@ -310,8 +310,14 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
 
   return (
     <>
-      {/* Child routes */}
-      {isChildRoute && <Outlet />}
+      {/* Child routes render no project header, so the sync-pending marker the
+          e2e suite waits on (see shared-steps waitForSynced) lives here. */}
+      {isChildRoute && (
+        <>
+          <div data-sync-pending={connectionState.pending} hidden />
+          <Outlet />
+        </>
+      )}
 
       {/* Main project view */}
       {!isChildRoute && (

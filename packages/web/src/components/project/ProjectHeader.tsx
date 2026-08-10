@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { InlineEdit } from '@/components/ui/inline-edit';
 import { ProjectHeaderActions } from './ProjectHeaderActions';
+import { SyncStatusIndicator } from './SyncStatusIndicator';
 
 interface ProjectHeaderProps {
   name?: string;
@@ -125,7 +126,10 @@ export function ProjectHeader({
         </div>
       </div>
 
-      <ProjectHeaderActions />
+      <div className='flex items-center gap-3'>
+        <SyncStatusIndicator />
+        <ProjectHeaderActions />
+      </div>
     </div>
   );
 }
