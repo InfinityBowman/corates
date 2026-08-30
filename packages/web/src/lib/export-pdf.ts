@@ -471,7 +471,12 @@ function renderRobinsiSections(doc: jsPDF, answers: ROBINSIAnswers, y: number): 
       body: bRows,
       styles: { fontSize: 7, cellPadding: 2 },
       headStyles: { fillColor: COLORS.sectionBg, textColor: [60, 60, 60], fontSize: 7 },
-      columnStyles: { 0: { cellWidth: 12 }, 1: { cellWidth: 'auto' }, 2: { cellWidth: 35 }, 3: { cellWidth: 45 } },
+      columnStyles: {
+        0: { cellWidth: 12 },
+        1: { cellWidth: 'auto' },
+        2: { cellWidth: 35 },
+        3: { cellWidth: 45 },
+      },
       margin: { left: MARGIN, right: MARGIN },
     });
     y = (doc as any).lastAutoTable.finalY + 2;
@@ -660,8 +665,7 @@ export function buildProjectPdf({ studies, projectName, members, meta }: ExportO
   }
 
   let y = 35;
-  const ctx: ExportContext | undefined =
-    members || meta ? { members, meta } : undefined;
+  const ctx: ExportContext | undefined = members || meta ? { members, meta } : undefined;
 
   for (let i = 0; i < checklistsWithStudies.length; i++) {
     const { study, cl } = checklistsWithStudies[i];

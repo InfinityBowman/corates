@@ -4,7 +4,13 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
-import { ChevronRightIcon, PencilIcon, MoreVerticalIcon, FileSpreadsheetIcon, FileIcon } from 'lucide-react';
+import {
+  ChevronRightIcon,
+  PencilIcon,
+  MoreVerticalIcon,
+  FileSpreadsheetIcon,
+  FileIcon,
+} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
