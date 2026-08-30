@@ -1,16 +1,24 @@
 /**
  * ChartSection - Displays appraisal figures for a project's checklists.
- * Renders one figure group (traffic light + distribution + settings) per
- * checklist type; ROB2 figures follow the robvis convention of one figure
- * pair per assessed outcome.
+ * Renders one figure group (traffic light + distribution) per checklist type;
+ * ROB2 figures follow the robvis convention of one figure pair per assessed outcome.
  */
 
-import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import { SettingsIcon } from 'lucide-react';
+import { useState, useMemo, useEffect, useCallback, useRef, type ReactNode } from 'react';
+import { DownloadIcon, PencilIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { TrafficLightChart } from '@/components/charts/TrafficLightChart';
 import { DistributionChart } from '@/components/charts/DistributionChart';
-import { ChartSettingsModal } from '@/components/charts/ChartSettingsModal';
+import { ChartEditSheet, type FigureId } from '@/components/charts/ChartEditSheet';
+import { CiteCoratesMenuItems, CiteCoratesPopover } from '@/components/charts/CiteCorates';
 import {
   AMSTAR2_CHART_CONFIG,
   ROB2_CHART_CONFIG,
@@ -177,8 +185,7 @@ export function ChartSection({ studies }: ChartSectionProps) {
         key: 'amstar2',
         heading: 'AMSTAR-2',
         description:
-          'Visual representation of AMSTAR-2 quality assessment ratings across completed ' +
-          'checklists. Use the settings to customize chart appearance, labels, and export options.',
+          'Visual representation of AMSTAR-2 quality assessment ratings across completed checklists.',
         config: AMSTAR2_CHART_CONFIG,
         data: amstarData,
         defaultTrafficLightTitle: 'AMSTAR 2 Item-Level Judgments by Review',
@@ -242,9 +249,10 @@ interface ChartGroupProps {
 }
 
 function ChartGroup({ group, showHeading }: ChartGroupProps) {
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [editingFigure, setEditingFigure] = useState<FigureId | null>(null);
   const [customLabels, setCustomLabels] = useState<Array<{ id: string; label: string }>>([]);
   const [palette, setPalette] = useState<ChartPalette>('default');
+  const [showSymbols, setShowSymbols] = useState(true);
   const [trafficLightTitle, setTrafficLightTitle] = useState(group.defaultTrafficLightTitle);
   const [distributionTitle, setDistributionTitle] = useState(group.defaultDistributionTitle);
   const [transparentExport, setTransparentExport] = useState(false);
@@ -333,7 +341,6 @@ function ChartGroup({ group, showHeading }: ChartGroupProps) {
 
   return (
     <div className='flex flex-col gap-6'>
-      {/* Header */}
       <div className='flex items-start justify-between gap-4'>
         <div className='flex-1'>
           {showHeading && (
@@ -341,49 +348,141 @@ function ChartGroup({ group, showHeading }: ChartGroupProps) {
           )}
           <p className='text-secondary-foreground text-sm'>{group.description}</p>
         </div>
-        <Button
-          variant='ghost'
-          onClick={() => setShowSettingsModal(true)}
-          className='shrink-0'
-          title='Chart Settings'
-        >
-          <SettingsIcon className='size-4' />
-          Settings
-        </Button>
+        <CiteCoratesPopover />
       </div>
 
-      <TrafficLightChart
-        ref={trafficLightSvgRef}
-        data={chartData}
-        config={group.config}
-        palette={palette}
-        title={trafficLightTitle}
-      />
-      <DistributionChart
-        ref={distributionSvgRef}
-        data={chartData}
-        config={group.config}
-        palette={palette}
-        title={distributionTitle}
-      />
+      <FigureFrame
+        actions={
+          <FigureActions
+            editLabel='Edit traffic light chart'
+            editing={editingFigure === 'trafficLight'}
+            onEdit={() => setEditingFigure('trafficLight')}
+            onExport={handleExportTrafficLight}
+            transparentExport={transparentExport}
+            onTransparentExportChange={setTransparentExport}
+          />
+        }
+      >
+        <TrafficLightChart
+          ref={trafficLightSvgRef}
+          data={chartData}
+          config={group.config}
+          palette={palette}
+          showSymbols={showSymbols}
+          title={trafficLightTitle}
+        />
+      </FigureFrame>
+      <FigureFrame
+        actions={
+          <FigureActions
+            editLabel='Edit distribution chart'
+            editing={editingFigure === 'distribution'}
+            onEdit={() => setEditingFigure('distribution')}
+            onExport={handleExportDistribution}
+            transparentExport={transparentExport}
+            onTransparentExportChange={setTransparentExport}
+          />
+        }
+      >
+        <DistributionChart
+          ref={distributionSvgRef}
+          data={chartData}
+          config={group.config}
+          palette={palette}
+          title={distributionTitle}
+        />
+      </FigureFrame>
 
-      <ChartSettingsModal
-        isOpen={showSettingsModal}
-        onClose={() => setShowSettingsModal(false)}
+      <ChartEditSheet
+        open={editingFigure !== null}
+        onOpenChange={open => {
+          if (!open) setEditingFigure(null);
+        }}
+        figureId={editingFigure ?? 'trafficLight'}
         labels={customLabels}
         onLabelChange={handleLabelChange}
         onReorder={handleReorder}
         palette={palette}
-        onPaletteChange={setPalette}
-        robvisTitle={trafficLightTitle}
-        onRobvisTitleChange={setTrafficLightTitle}
-        distributionTitle={distributionTitle}
-        onDistributionTitleChange={setDistributionTitle}
-        onExportRobvis={handleExportTrafficLight}
-        onExportDistribution={handleExportDistribution}
-        transparentExport={transparentExport}
-        onTransparentExportChange={setTransparentExport}
+        onPaletteChange={value => {
+          setPalette(value);
+          if (value === 'greyscale') setShowSymbols(true);
+        }}
+        showSymbols={showSymbols}
+        onShowSymbolsChange={setShowSymbols}
+        title={editingFigure === 'distribution' ? distributionTitle : trafficLightTitle}
+        onTitleChange={
+          editingFigure === 'distribution' ? setDistributionTitle : setTrafficLightTitle
+        }
       />
     </div>
+  );
+}
+
+interface FigureFrameProps {
+  actions: ReactNode;
+  children: ReactNode;
+}
+
+function FigureFrame({ actions, children }: FigureFrameProps) {
+  return (
+    <div className='mx-auto flex w-full max-w-[880px] flex-col gap-1'>
+      <div className='flex justify-end gap-1'>{actions}</div>
+      {children}
+    </div>
+  );
+}
+
+interface FigureActionsProps {
+  editLabel: string;
+  editing?: boolean;
+  onEdit: () => void;
+  onExport: (_format: 'svg' | 'png') => void;
+  transparentExport: boolean;
+  onTransparentExportChange: (_value: boolean) => void;
+}
+
+function FigureActions({
+  editLabel,
+  editing = false,
+  onEdit,
+  onExport,
+  transparentExport,
+  onTransparentExportChange,
+}: FigureActionsProps) {
+  return (
+    <>
+      <Button
+        variant={editing ? 'secondary' : 'ghost'}
+        size='sm'
+        onClick={onEdit}
+        aria-label={editLabel}
+        aria-pressed={editing}
+      >
+        <PencilIcon data-icon='inline-start' />
+        Edit
+      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant='ghost' size='sm' aria-label='Export figure'>
+            <DownloadIcon data-icon='inline-start' />
+            Export
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align='end'>
+          <DropdownMenuItem onClick={() => onExport('svg')}>Export SVG</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onExport('png')}>Export PNG</DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuCheckboxItem
+            checked={transparentExport}
+            onCheckedChange={checked => onTransparentExportChange(checked === true)}
+            onSelect={event => event.preventDefault()}
+          >
+            Transparent background
+          </DropdownMenuCheckboxItem>
+          <DropdownMenuSeparator />
+          <CiteCoratesMenuItems />
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </>
   );
 }
