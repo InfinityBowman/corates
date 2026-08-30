@@ -9,6 +9,7 @@
 
 import { captureError, info } from './logger';
 import { maskEmail } from '../auth/auth-events';
+import { buildAppUrl } from './app-url';
 import type { Env } from '../types';
 import { queueEmail } from '@corates/shared/email';
 
@@ -36,12 +37,7 @@ export async function sendInvitationEmail(
 ): Promise<SendInvitationEmailResult> {
   const { env, email, token, projectName, inviterName, role } = params;
 
-  const appUrl = env.APP_URL || 'https://corates.org';
-  const envRecord = env as unknown as Record<string, string | undefined>;
-  const basepath = envRecord.BASEPATH || '';
-  const basepathNormalized = basepath ? basepath.replace(/\/$/, '') : '';
-
-  const invitationUrl = `${appUrl}${basepathNormalized}/invite/${token}`;
+  const invitationUrl = buildAppUrl(env, `/invite/${token}`);
 
   if (env.ENVIRONMENT !== 'production') {
     console.log('[Email] Project invitation URL:', invitationUrl);

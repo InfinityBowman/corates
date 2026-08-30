@@ -7,7 +7,7 @@
 
 import { captureError, info } from '../../lib/logger';
 import { createDb } from '@corates/db/client';
-import { projectMembers, projects, member } from '@corates/db/schema';
+import { projectMembers, projects, member, user } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS } from '@corates/shared';
 import type { OrgId, ProjectId, UserId } from '@corates/shared/ids';
@@ -54,7 +54,7 @@ interface AddMemberResult {
 
 export async function addMember(
   env: Env,
-  _actor: AddMemberActor,
+  actor: AddMemberActor,
   { orgId, projectId, userToAdd, role }: AddMemberParams,
 ): Promise<AddMemberResult> {
   const db = createDb(env.DB);
@@ -137,13 +137,15 @@ export async function addMember(
     .where(eq(projects.id, projectId))
     .get();
 
+  const projectName = project?.name || 'Unknown Project';
+
   // Send notification to the added user
   try {
     await notifyUser(env, userToAdd.id, {
       type: NotificationTypes.PROJECT_MEMBERSHIP_ADDED,
       orgId,
       projectId,
-      projectName: project?.name || 'Unknown Project',
+      projectName,
       role,
     });
   } catch (err) {
@@ -151,6 +153,33 @@ export async function addMember(
       tags: { component: 'member', action: 'add-notify' },
       extra: { projectId },
     });
+  }
+
+  if (userToAdd.email) {
+    try {
+      const inviter = await db
+        .select({ name: user.name, givenName: user.givenName, email: user.email })
+        .from(user)
+        .where(eq(user.id, actor.id))
+        .get();
+
+      const inviterName = inviter?.givenName || inviter?.name || inviter?.email || 'Someone';
+      const { sendProjectMemberAddedEmail } =
+        await import('../../lib/send-project-member-added-email.js');
+      await sendProjectMemberAddedEmail({
+        env,
+        email: userToAdd.email,
+        projectId,
+        projectName,
+        inviterName,
+        role,
+      });
+    } catch (err) {
+      captureError(err, {
+        tags: { component: 'member', action: 'send-email' },
+        extra: { projectId },
+      });
+    }
   }
 
   info('member.added', { orgId, projectId, userId: userToAdd.id, role });

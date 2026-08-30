@@ -48,6 +48,13 @@ interface ProjectInvitationEmailParams {
   expiryDays?: number;
 }
 
+interface ProjectMemberAddedEmailParams {
+  projectName: string;
+  inviterName: string;
+  projectUrl: string;
+  role: string;
+}
+
 export function getVerificationEmailHtml({
   name,
   subject,
@@ -327,6 +334,68 @@ export function getProjectInvitationEmailText({
     ${invitationUrl}
 
     This invitation will expire in ${expiryDays} days. If you don't want to join this project, you can safely ignore this email.
+
+    Best regards,
+    The CoRATES Team
+  `;
+}
+
+export function getProjectMemberAddedEmailHtml({
+  projectName,
+  inviterName,
+  projectUrl,
+  role,
+}: ProjectMemberAddedEmailParams): string {
+  const roleText = role === 'owner' ? 'Owner' : 'Member';
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Added to Project - CoRATES</title>
+    </head>
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #374151; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #eff6ff;">
+      <div style="background: #2563eb; color: white; padding: 32px; text-align: center; border-radius: 12px 12px 0 0;">
+        <h1 style="margin: 0; font-size: 28px; font-weight: 700;">You've Been Added to a Project</h1>
+      </div>
+      <div style="background: #ffffff; padding: 32px; border-radius: 0 0 12px 12px; border: 1px solid #e5e7eb; border-top: none;">
+        <p style="font-size: 18px; margin-bottom: 20px; color: #1f2937;">Hi there,</p>
+        <p style="color: #4b5563; margin-bottom: 20px;">
+          <strong>${escapeHtml(inviterName)}</strong> added you to the project <strong>"${escapeHtml(projectName)}"</strong> as a <strong>${escapeHtml(roleText)}</strong>.
+        </p>
+        <p style="color: #4b5563; margin-bottom: 32px;">
+          You can open the project now from your CoRATES dashboard:
+        </p>
+        <div style="text-align: center; margin: 32px 0;">
+          <a href="${projectUrl}" style="background: #2563eb; color: white; padding: 16px 32px; text-decoration: none; border-radius: 12px; font-weight: 600; display: inline-block; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">Open Project</a>
+        </div>
+        <p style="color: #4b5563;">If the button doesn't work, you can copy and paste this link into your browser:</p>
+        <p style="word-break: break-all; color: #6b7280; background: #f3f4f6; padding: 12px; border-radius: 8px; font-size: 14px;">${projectUrl}</p>
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 32px 0;">
+        <p style="color: #6b7280; font-size: 14px;">Best regards,<br>The CoRATES Team</p>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+export function getProjectMemberAddedEmailText({
+  projectName,
+  inviterName,
+  projectUrl,
+  role,
+}: ProjectMemberAddedEmailParams): string {
+  const roleText = role === 'owner' ? 'Owner' : 'Member';
+
+  return `
+    Hi there,
+
+    ${inviterName} added you to the project "${projectName}" as a ${roleText}.
+
+    Open the project here:
+
+    ${projectUrl}
 
     Best regards,
     The CoRATES Team
