@@ -253,28 +253,60 @@ function ChartGroup({ group, showHeading }: ChartGroupProps) {
 
   const distributionSvgRef = useRef<SVGSVGElement>(null);
 
-  // Sync custom labels when raw data changes
+  // Merge custom labels when raw data changes: keep order and edited text, append new rows
   useEffect(() => {
     setCustomLabels(prev => {
-      const currentIds = prev.map(l => l.id).join(',');
-      const newIds = group.data.map(d => d.id).join(',');
-      if (currentIds === newIds) return prev;
-      return group.data.map(d => ({ id: d.id, label: d.label }));
+      if (prev.length === 0) {
+        return group.data.map(d => ({ id: d.id, label: d.label }));
+      }
+
+      const dataIds = new Set(group.data.map(d => d.id));
+      const prevIds = new Set(prev.map(l => l.id));
+      const merged: Array<{ id: string; label: string }> = [];
+
+      for (const item of prev) {
+        if (dataIds.has(item.id)) merged.push(item);
+      }
+
+      for (const d of group.data) {
+        if (!prevIds.has(d.id)) merged.push({ id: d.id, label: d.label });
+      }
+
+      if (
+        merged.length === prev.length &&
+        merged.every((item, i) => item.id === prev[i]?.id && item.label === prev[i]?.label)
+      ) {
+        return prev;
+      }
+
+      return merged;
     });
   }, [group.data]);
 
-  // Merge custom labels with raw data
   const chartData = useMemo(() => {
-    return group.data.map(item => {
-      const custom = customLabels.find(l => l.id === item.id);
-      return { ...item, label: custom?.label ?? item.label };
-    });
+    const dataById = new Map(group.data.map(item => [item.id, item]));
+    return customLabels
+      .map(labelItem => {
+        const item = dataById.get(labelItem.id);
+        if (!item) return null;
+        return { ...item, label: labelItem.label };
+      })
+      .filter((item): item is ChartItem => item !== null);
   }, [group.data, customLabels]);
 
   const handleLabelChange = useCallback((index: number, newValue: string) => {
     setCustomLabels(prev =>
       prev.map((item, i) => (i === index ? { ...item, label: newValue } : item)),
     );
+  }, []);
+
+  const handleReorder = useCallback((fromIndex: number, toIndex: number) => {
+    setCustomLabels(prev => {
+      const next = [...prev];
+      const [removed] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, removed);
+      return next;
+    });
   }, []);
 
   const handleExportTrafficLight = useCallback(
@@ -340,6 +372,7 @@ function ChartGroup({ group, showHeading }: ChartGroupProps) {
         onClose={() => setShowSettingsModal(false)}
         labels={customLabels}
         onLabelChange={handleLabelChange}
+        onReorder={handleReorder}
         palette={palette}
         onPaletteChange={setPalette}
         robvisTitle={trafficLightTitle}
