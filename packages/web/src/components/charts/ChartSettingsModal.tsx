@@ -168,7 +168,8 @@ export function ChartSettingsModal({
           <div>
             <h3 className='text-foreground mb-3 text-sm font-medium'>Chart Labels</h3>
             <p className='text-muted-foreground mb-4 text-xs'>
-              Drag to reorder rows or edit labels directly. Changes are temporary and won't be saved.
+              Drag to reorder rows or edit labels directly. Changes are temporary and won't be
+              saved.
             </p>
             <DndContext
               sensors={sensors}
