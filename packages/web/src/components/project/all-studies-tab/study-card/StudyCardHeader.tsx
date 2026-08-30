@@ -3,7 +3,14 @@
  */
 
 import { useMemo, useCallback } from 'react';
-import { ChevronRightIcon, UsersIcon, Trash2Icon, MoreVerticalIcon } from 'lucide-react';
+import {
+  ChevronRightIcon,
+  UsersIcon,
+  Trash2Icon,
+  MoreVerticalIcon,
+  FileSpreadsheetIcon,
+  FileIcon,
+} from 'lucide-react';
 import { InlineEdit } from '@/components/ui/inline-edit';
 import {
   DropdownMenu,
@@ -37,6 +44,8 @@ interface StudyCardHeaderProps {
   expanded: boolean;
   onToggle: () => void;
   onAssignReviewers?: () => void;
+  onExportCsv?: () => void;
+  onExportPdf?: () => void;
   getMember?: (userId: string) => ProjectMember | null;
 }
 
@@ -45,8 +54,11 @@ export function StudyCardHeader({
   expanded,
   onToggle,
   onAssignReviewers,
+  onExportCsv,
+  onExportPdf,
   getMember,
 }: StudyCardHeaderProps) {
+  const hasChecklists = study.checklists.length > 0;
   const primaryPdf = useMemo(() => {
     const pdfs = study.pdfs || [];
     return pdfs.find(p => p.tag === 'primary') || pdfs[0];
@@ -165,6 +177,23 @@ export function StudyCardHeader({
             <UsersIcon className='mr-2 size-4' />
             Assign Reviewers
           </DropdownMenuItem>
+          {hasChecklists && (onExportCsv || onExportPdf) && (
+            <>
+              <DropdownMenuSeparator />
+              {onExportCsv && (
+                <DropdownMenuItem onClick={onExportCsv}>
+                  <FileSpreadsheetIcon className='mr-2 size-4' />
+                  Export as CSV
+                </DropdownMenuItem>
+              )}
+              {onExportPdf && (
+                <DropdownMenuItem onClick={onExportPdf}>
+                  <FileIcon className='mr-2 size-4' />
+                  Export as PDF
+                </DropdownMenuItem>
+              )}
+            </>
+          )}
           <DropdownMenuSeparator />
           <DropdownMenuItem
             className='text-destructive focus:text-destructive'

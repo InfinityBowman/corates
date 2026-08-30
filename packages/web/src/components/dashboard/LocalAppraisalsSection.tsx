@@ -22,12 +22,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { buildProjectCsv, downloadCsv } from '@/lib/export-csv';
 import { buildProjectPdf, downloadPdf } from '@/lib/export-pdf';
+import { enrichStudiesForExport } from '@/lib/enrich-studies-for-export';
 import { useAllStudies } from '@/project/workspace-data';
 import type { StudyInfo } from '@/stores/projectStore';
-import { serializeAnswerRows, scoreChecklistRows, type ChecklistType } from '@corates/shared/sync';
-import { amstar2 } from '@corates/shared';
-import type { AMSTAR2Checklist } from '@corates/shared/checklists';
-import { connectionPool } from '@/project/ConnectionPool';
 import { applyLocalMutation } from '@/project/localWrites';
 import { LOCAL_PROJECT_ID } from '@/project/localProject';
 import { db } from '@/primitives/db';
@@ -126,44 +123,17 @@ export function LocalAppraisalsSection({
     navigate({ to: '/checklist' as string });
   };
 
-  const enrichStudiesForExport = (toExport: StudyInfo[]): StudyInfo[] => {
-    const collections = connectionPool.getCollections(LOCAL_PROJECT_ID);
-    if (!collections) return toExport;
-
-    const answerRows = collections.answers.toArray;
-    return toExport.map(study => {
-      const enrichedChecklists = study.checklists.map(cl => {
-        if (cl.answers) return cl;
-
-        const flat: Record<string, unknown> = {};
-        for (const row of answerRows) {
-          if (row.checklistId === cl.id) flat[row.key] = row.value;
-        }
-
-        const type = cl.type as ChecklistType;
-        const answers = serializeAnswerRows(type, flat);
-        const score = scoreChecklistRows(type, flat);
-        const enriched = { ...cl, answers, score: score !== 'Error' ? score : null };
-
-        if (cl.type === 'AMSTAR2') {
-          enriched.consolidatedAnswers = amstar2.getAnswers(answers as unknown as AMSTAR2Checklist);
-        }
-
-        return enriched;
-      });
-
-      return { ...study, checklists: enrichedChecklists };
-    });
-  };
+  const enrichStudies = (toExport: StudyInfo[]) =>
+    enrichStudiesForExport(LOCAL_PROJECT_ID, toExport);
 
   const handleExportAllCsv = () => {
-    const csv = buildProjectCsv({ studies: enrichStudiesForExport(studies) });
+    const csv = buildProjectCsv({ studies: enrichStudies(studies) });
     const date = new Date().toISOString().slice(0, 10);
     downloadCsv(csv, `corates-local-appraisals-${date}.csv`);
   };
 
   const handleExportAllPdf = () => {
-    const enriched = enrichStudiesForExport(studies);
+    const enriched = enrichStudies(studies);
     const doc = buildProjectPdf({ studies: enriched });
     const date = new Date().toISOString().slice(0, 10);
     downloadPdf(doc, `corates-local-appraisals-${date}.pdf`);
@@ -172,7 +142,7 @@ export function LocalAppraisalsSection({
   const handleExportOneCsv = (studyId: string) => {
     const study = studies.find(s => s.id === studyId);
     if (!study) return;
-    const csv = buildProjectCsv({ studies: enrichStudiesForExport([study]) });
+    const csv = buildProjectCsv({ studies: enrichStudies([study]) });
     const safeName = (study.name || 'appraisal').replace(/[^a-zA-Z0-9-_ ]/g, '').trim();
     downloadCsv(csv, `${safeName}.csv`);
   };
@@ -180,7 +150,7 @@ export function LocalAppraisalsSection({
   const handleExportOnePdf = (studyId: string) => {
     const study = studies.find(s => s.id === studyId);
     if (!study) return;
-    const enriched = enrichStudiesForExport([study]);
+    const enriched = enrichStudies([study]);
     const name = study.name || 'appraisal';
     const doc = buildProjectPdf({ studies: enriched, projectName: name });
     const safeName = name.replace(/[^a-zA-Z0-9-_ ]/g, '').trim();

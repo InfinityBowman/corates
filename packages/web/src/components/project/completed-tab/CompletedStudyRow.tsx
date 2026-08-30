@@ -4,10 +4,16 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
-import { ChevronRightIcon, PencilIcon } from 'lucide-react';
+import { ChevronRightIcon, PencilIcon, MoreVerticalIcon, FileSpreadsheetIcon, FileIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { sortStudyPdfs, getCitationLine } from '../study-utils';
 import { getChecklistMetadata } from '@/checklist-registry';
 import { PdfListItem } from '@/components/pdf/PdfListItem';
@@ -30,6 +36,8 @@ interface CompletedStudyRowProps {
   onReopenReconciliation: (checklistId: string) => void;
   onViewPdf: (pdf: PdfEntry) => void;
   onDownloadPdf: (pdf: PdfEntry) => void;
+  onExportCsv?: () => void;
+  onExportPdf?: () => void;
   getReconciliationProgress: (
     outcomeId: string | null,
     type: string,
@@ -44,6 +52,8 @@ export function CompletedStudyRow({
   onReopenReconciliation,
   onViewPdf,
   onDownloadPdf,
+  onExportCsv,
+  onExportPdf,
   getReconciliationProgress,
   getAssigneeName,
   getOutcomeName,
@@ -173,6 +183,45 @@ export function CompletedStudyRow({
                   Open
                 </Button>
               </>
+            )}
+
+            {(onExportCsv || onExportPdf) && study.checklists.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant='outline'
+                    size='icon'
+                    onClick={e => e.stopPropagation()}
+                    aria-label='Export study'
+                  >
+                    <MoreVerticalIcon className='size-4' />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align='end'>
+                  {onExportCsv && (
+                    <DropdownMenuItem
+                      onClick={e => {
+                        e.stopPropagation();
+                        onExportCsv();
+                      }}
+                    >
+                      <FileSpreadsheetIcon className='mr-2 size-4' />
+                      Export as CSV
+                    </DropdownMenuItem>
+                  )}
+                  {onExportPdf && (
+                    <DropdownMenuItem
+                      onClick={e => {
+                        e.stopPropagation();
+                        onExportPdf();
+                      }}
+                    >
+                      <FileIcon className='mr-2 size-4' />
+                      Export as PDF
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </div>
 
