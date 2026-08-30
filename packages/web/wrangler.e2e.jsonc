@@ -42,7 +42,8 @@
     "ENVIRONMENT": "development",
     "DEV_MODE": true,
     "APP_URL": "http://localhost:3010",
-    "AUTH_BASE_URL": "http://localhost:3010"
+    "AUTH_BASE_URL": "http://localhost:3010",
+    "BASEPATH": "/"
   },
 
   "observability": {

@@ -87,7 +87,8 @@
     "ENVIRONMENT": "development",
     "DEV_MODE": true,
     "APP_URL": "https://corates.localhost",
-    "AUTH_BASE_URL": "https://corates.localhost"
+    "AUTH_BASE_URL": "https://corates.localhost",
+    "BASEPATH": "/"
   },
 
   "env": {
@@ -164,6 +165,7 @@
         "DEV_MODE": false,
         "APP_URL": "https://corates.org",
         "AUTH_BASE_URL": "https://corates.org",
+        "BASEPATH": "/",
         "SENTRY_DSN": "https://3ddf61abb06680bffc1ebc7f540f05de@o4510738063818752.ingest.us.sentry.io/4510738126274560"
       }
     },
@@ -231,7 +233,8 @@
         "ENVIRONMENT": "staging",
         "DEV_MODE": true,
         "APP_URL": "https://staging.corates.org",
-        "AUTH_BASE_URL": "https://staging.corates.org"
+        "AUTH_BASE_URL": "https://staging.corates.org",
+        "BASEPATH": "/"
       }
     }
   }
