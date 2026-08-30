@@ -55,6 +55,45 @@ export function CiteCoratesMenuItems() {
   );
 }
 
+export function CiteCoratesButton() {
+  const [copied, setCopied] = useState<CitationStyle | null>(null);
+  const citations = getCoratesCitations();
+
+  const copy = (style: CitationStyle) => {
+    copyCoratesCitation(style, { toast: false });
+    setCopied(style);
+    setTimeout(() => setCopied(null), 2000);
+  };
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant='outline'>Cite CoRATES</Button>
+      </PopoverTrigger>
+      <PopoverContent align='end' className='w-96'>
+        <PopoverHeader>
+          <PopoverTitle>How to cite CoRATES</PopoverTitle>
+          <PopoverDescription className='text-xs'>
+            Use this citation when you reference CoRATES as the software used for study appraisal.
+          </PopoverDescription>
+        </PopoverHeader>
+        <CitationBlock
+          styleLabel='APA'
+          text={citations.apa}
+          copied={copied === 'apa'}
+          onCopy={() => copy('apa')}
+        />
+        <CitationBlock
+          styleLabel='AMA'
+          text={citations.ama}
+          copied={copied === 'ama'}
+          onCopy={() => copy('ama')}
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export function CiteCoratesPopover() {
   const [copied, setCopied] = useState<CitationStyle | null>(null);
   const citations = getCoratesCitations();

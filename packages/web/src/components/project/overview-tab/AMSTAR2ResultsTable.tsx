@@ -6,12 +6,24 @@ import { useMemo } from 'react';
 import { CHECKLIST_STATUS } from '@corates/shared/checklists';
 import { ScoreTag, ScoreTooltip } from '@/components/checklist/ScoreTag';
 import type { StudyInfo } from '@/stores/projectStore';
+import { OutputCard, OutputCardHeader, OutputCardPlate } from './OutputCard';
 
 interface AMSTAR2ResultsTableProps {
   studies: StudyInfo[];
+  tableNumber: number;
 }
 
-export function AMSTAR2ResultsTable({ studies }: AMSTAR2ResultsTableProps) {
+const CONFIDENCE_LEVELS = ['High', 'Moderate', 'Low', 'Critically Low'] as const;
+
+function summaryValueColor(level: (typeof CONFIDENCE_LEVELS)[number], percentage: number): string {
+  if (percentage === 0) return 'text-[#d0d5dd]';
+  if (level === 'High') return 'text-[#067647]';
+  if (level === 'Critically Low') return 'text-[#b42318]';
+  if (level === 'Moderate') return 'text-[#a15c07]';
+  return 'text-[#344054]';
+}
+
+export function AMSTAR2ResultsTable({ studies, tableNumber }: AMSTAR2ResultsTableProps) {
   const studyScores = useMemo(() => {
     if (studies.length === 0) return [];
 
@@ -79,68 +91,76 @@ export function AMSTAR2ResultsTable({ studies }: AMSTAR2ResultsTableProps) {
   }, [studyScores]);
 
   if (studyScores.length === 0) {
-    return (
-      <div className='border-border bg-card rounded-lg border px-4 py-8 text-center'>
-        <p className='text-muted-foreground'>
-          Once appraisals are completed, this section will display tables summarizing the
-          distribution of overall confidence ratings and the overall confidence rating for each
-          included review.
-        </p>
-      </div>
-    );
+    return null;
   }
 
+  const reviewLabel = studyScores.length === 1 ? 'review' : 'reviews';
+
   return (
-    <div className='flex flex-col gap-6'>
-      {/* Summary */}
-      {summary && (
-        <div className='border-border bg-muted rounded-lg border p-4'>
-          <h3 className='text-foreground mb-3 text-sm font-semibold'>Summary</h3>
-          <div className='grid grid-cols-2 gap-3 md:grid-cols-4'>
-            {(['High', 'Moderate', 'Low', 'Critically Low'] as const).map(level => (
-              <div key={level} className='text-center'>
-                <p className='text-foreground text-lg font-semibold'>
+    <OutputCard>
+      <OutputCardHeader
+        number={tableNumber}
+        numberPrefix='TBL'
+        name='Overall confidence by review'
+        instrumentLabel='AMSTAR-2'
+        instrumentKind='amstar'
+        description='Algorithm-derived confidence rating for each completed checklist.'
+      />
+      <OutputCardPlate className='px-[18px] pt-[18px] pb-[18px]'>
+        {summary && (
+          <div className='bg-card mb-4 flex overflow-hidden rounded-xl border border-[#eaecf0]'>
+            {CONFIDENCE_LEVELS.map((level, index) => (
+              <div
+                key={level}
+                className={`flex flex-1 flex-col gap-[3px] px-[18px] py-3.5 ${
+                  index < CONFIDENCE_LEVELS.length - 1 ? 'border-r border-[#f2f4f7]' : ''
+                }`}
+              >
+                <span
+                  className={`text-2xl leading-none font-semibold tracking-[-0.02em] tabular-nums ${summaryValueColor(level, summary.percentages[level])}`}
+                >
                   {summary.percentages[level]}%
-                </p>
-                <p className='text-secondary-foreground text-xs'>{level}</p>
-                <p className='text-muted-foreground text-xs'>
-                  ({summary.counts[level]} of {summary.total})
-                </p>
+                </span>
+                <span className='text-[12.5px] leading-snug font-medium text-[#344054]'>
+                  {level === 'Critically Low' ? 'Critically low' : level}
+                </span>
+                <span className='text-[11.5px] leading-snug text-[#98a2b3]'>
+                  {summary.counts[level]} of {summary.total} {reviewLabel}
+                </span>
               </div>
             ))}
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Table */}
-      <div className='border-border overflow-x-auto rounded-lg border'>
-        <table className='divide-border min-w-full divide-y'>
-          <thead className='bg-muted'>
-            <tr>
-              <th className='text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase'>
-                Study
-              </th>
-              <th className='text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase'>
-                <div className='flex items-center gap-1'>
-                  Rating <ScoreTooltip checklistType='AMSTAR2' />
-                </div>
-              </th>
-            </tr>
-          </thead>
-          <tbody className='divide-border bg-card divide-y'>
-            {studyScores.map(item => (
-              <tr key={item.studyId} className='hover:bg-muted'>
-                <td className='text-foreground px-6 py-4 text-sm font-medium whitespace-nowrap'>
-                  {item.studyName}
-                </td>
-                <td className='text-muted-foreground px-6 py-4 text-sm whitespace-nowrap'>
-                  <ScoreTag currentScore={item.score} checklistType='AMSTAR2' showRatingOnly />
-                </td>
+        <div className='bg-card overflow-x-auto rounded-xl border border-[#eaecf0]'>
+          <table className='min-w-full'>
+            <thead className='bg-[#fafbfc]'>
+              <tr>
+                <th className='px-4 py-[11px] text-left text-[10.5px] font-semibold tracking-[0.07em] text-[#98a2b3] uppercase'>
+                  Study
+                </th>
+                <th className='px-4 py-[11px] text-left text-[10.5px] font-semibold tracking-[0.07em] text-[#98a2b3] uppercase'>
+                  <div className='flex items-center gap-1'>
+                    Overall confidence <ScoreTooltip checklistType='AMSTAR2' />
+                  </div>
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+            </thead>
+            <tbody>
+              {studyScores.map(item => (
+                <tr key={item.studyId} className='border-t border-[#f2f4f7] hover:bg-[#fcfcfd]'>
+                  <td className='px-4 py-3 text-[13.5px] font-normal whitespace-nowrap text-[#101828]'>
+                    {item.studyName}
+                  </td>
+                  <td className='px-4 py-3 text-[13.5px] whitespace-nowrap'>
+                    <ScoreTag currentScore={item.score} checklistType='AMSTAR2' showRatingOnly />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </OutputCardPlate>
+    </OutputCard>
   );
 }

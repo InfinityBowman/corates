@@ -11,36 +11,10 @@ import type { ChecklistChartConfig } from '@/components/charts/chartConfigs';
 import { useProjectContext } from '../ProjectContext';
 import { useProjectOutcomes } from '@/project/workspace-data';
 import { AMSTAR2ResultsTable } from './AMSTAR2ResultsTable';
+import { OutputCard, OutputCardHeader, OutputCardPlate } from './OutputCard';
+import { ResultsTable } from './ResultsTable';
+import type { InstrumentKind } from './OutputCard';
 import type { StudyInfo } from '@/stores/projectStore';
-
-// Pill styling per judgement, keyed by lowercased consolidatedAnswers value.
-// Mirrors the checklist-registry scoreColors, extended with the two values
-// that only appear at domain level.
-const JUDGEMENT_PILLS: Record<string, { label: string; className: string }> = {
-  low: { label: 'Low', className: 'bg-green-100 text-green-800' },
-  'low (except for concerns about uncontrolled confounding)': {
-    label: 'Low (confounding concerns)',
-    className: 'bg-lime-100 text-lime-800',
-  },
-  'some concerns': { label: 'Some concerns', className: 'bg-yellow-100 text-yellow-800' },
-  moderate: { label: 'Moderate', className: 'bg-yellow-100 text-yellow-800' },
-  serious: { label: 'Serious', className: 'bg-orange-100 text-orange-800' },
-  high: { label: 'High', className: 'bg-red-100 text-red-800' },
-  critical: { label: 'Critical', className: 'bg-red-100 text-red-800' },
-  'no information': { label: 'No information', className: 'bg-blue-100 text-blue-800' },
-};
-
-function JudgementPill({ value }: { value: string }) {
-  const pill = JUDGEMENT_PILLS[value.toLowerCase()];
-  if (!pill) return <span className='text-muted-foreground text-sm'>-</span>;
-  return (
-    <span
-      className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap ${pill.className}`}
-    >
-      {pill.label}
-    </span>
-  );
-}
 
 interface TableRow {
   id: string;
@@ -50,7 +24,10 @@ interface TableRow {
 
 interface TableGroup {
   key: string;
-  heading: string;
+  name: string;
+  description: string;
+  instrumentLabel: string;
+  instrumentKind: InstrumentKind;
   config: ChecklistChartConfig;
   rows: TableRow[];
 }
@@ -100,8 +77,6 @@ export function ResultsTables({ studies }: ResultsTablesProps) {
         }
       }
 
-      // Project outcome order first; any checklists without a matching
-      // outcome entry go last.
       const orderedKeys = [
         ...outcomes.map(o => o.id).filter(id => byOutcome.has(id)),
         ...[...byOutcome.keys()].filter(key => !outcomes.some(o => o.id === key)),
@@ -110,7 +85,10 @@ export function ResultsTables({ studies }: ResultsTablesProps) {
         const outcomeName = outcomes.find(o => o.id === outcomeKey)?.name ?? 'Unspecified outcome';
         result.push({
           key: `${tool.type}-${outcomeKey || 'none'}`,
-          heading: `${tool.name} - ${outcomeName}`,
+          name: `Domain judgments — ${outcomeName}`,
+          description: `Per-domain and overall judgments derived from the ${tool.name} algorithm.`,
+          instrumentLabel: tool.name,
+          instrumentKind: 'rob',
           config: tool.config,
           rows: byOutcome.get(outcomeKey) ?? [],
         });
@@ -121,7 +99,7 @@ export function ResultsTables({ studies }: ResultsTablesProps) {
 
   if (!hasAmstarData && groups.length === 0) {
     return (
-      <div className='border-border bg-card rounded-lg border px-4 py-8 text-center'>
+      <div className='bg-card rounded-[14px] border border-dashed border-[#d0d5dd] px-4 py-8 text-center'>
         <p className='text-muted-foreground'>
           Once appraisals are completed, this section will display tables summarizing the ratings
           for each included study.
@@ -130,49 +108,30 @@ export function ResultsTables({ studies }: ResultsTablesProps) {
     );
   }
 
-  return (
-    <div className='flex flex-col gap-8'>
-      {hasAmstarData && <AMSTAR2ResultsTable studies={studies} />}
+  let tableNumber = 0;
 
-      {groups.map(group => (
-        <div key={group.key} className='flex flex-col gap-3'>
-          <h3 className='text-foreground text-sm font-semibold'>{group.heading}</h3>
-          <div className='border-border overflow-x-auto rounded-lg border'>
-            <table className='divide-border min-w-full divide-y'>
-              <thead className='bg-muted'>
-                <tr>
-                  <th className='text-muted-foreground px-6 py-3 text-left text-xs font-medium tracking-wider uppercase'>
-                    Study
-                  </th>
-                  {group.config.columns.map(column => (
-                    <th
-                      key={column.id}
-                      className='text-muted-foreground px-4 py-3 text-left text-xs font-medium tracking-wider uppercase'
-                      title={column.distributionLabel ?? column.label}
-                    >
-                      {column.label}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className='divide-border bg-card divide-y'>
-                {group.rows.map(row => (
-                  <tr key={row.id} className='hover:bg-muted'>
-                    <td className='text-foreground px-6 py-4 text-sm font-medium whitespace-nowrap'>
-                      {row.studyName}
-                    </td>
-                    {group.config.columns.map(column => (
-                      <td key={column.id} className='px-4 py-4 text-sm'>
-                        <JudgementPill value={row.values[column.id]} />
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      ))}
+  return (
+    <div className='flex flex-col gap-[18px]'>
+      {hasAmstarData && <AMSTAR2ResultsTable studies={studies} tableNumber={++tableNumber} />}
+
+      {groups.map(group => {
+        tableNumber += 1;
+        return (
+          <OutputCard key={group.key}>
+            <OutputCardHeader
+              number={tableNumber}
+              numberPrefix='TBL'
+              name={group.name}
+              instrumentLabel={group.instrumentLabel}
+              instrumentKind={group.instrumentKind}
+              description={group.description}
+            />
+            <OutputCardPlate className='px-[18px] pt-[18px] pb-[18px]'>
+              <ResultsTable columns={group.config.columns} rows={group.rows} />
+            </OutputCardPlate>
+          </OutputCard>
+        );
+      })}
     </div>
   );
 }

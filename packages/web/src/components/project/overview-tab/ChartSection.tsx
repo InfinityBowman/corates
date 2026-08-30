@@ -1,6 +1,6 @@
 /**
  * ChartSection - Displays appraisal figures for a project's checklists.
- * Renders one figure group (traffic light + distribution) per checklist type;
+ * Renders one figure card per chart (traffic light or distribution);
  * ROB2 figures follow the robvis convention of one figure pair per assessed outcome.
  */
 
@@ -18,7 +18,7 @@ import {
 import { TrafficLightChart } from '@/components/charts/TrafficLightChart';
 import { DistributionChart } from '@/components/charts/DistributionChart';
 import { ChartEditSheet, type FigureId } from '@/components/charts/ChartEditSheet';
-import { CiteCoratesMenuItems, CiteCoratesPopover } from '@/components/charts/CiteCorates';
+import { CiteCoratesButton } from '@/components/charts/CiteCorates';
 import {
   AMSTAR2_CHART_CONFIG,
   ROB2_CHART_CONFIG,
@@ -29,10 +29,7 @@ import { CHECKLIST_STATUS } from '@corates/shared/checklists';
 import { useProjectContext } from '../ProjectContext';
 import { useProjectOutcomes } from '@/project/workspace-data';
 import type { StudyInfo } from '@/stores/projectStore';
-
-/**
- * Export an SVG element as a file (framework-agnostic utility)
- */
+import { OutputCard, OutputCardHeader, OutputCardPlate, type InstrumentKind } from './OutputCard';
 
 function exportChart(
   svgElement: SVGSVGElement | null,
@@ -44,7 +41,7 @@ function exportChart(
 
   const clonedSvg = svgElement.cloneNode(true) as SVGSVGElement;
   clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-  if (transparent) clonedSvg.style.background = 'transparent';
+  clonedSvg.style.background = transparent ? 'transparent' : '#ffffff';
 
   const svgData = new XMLSerializer().serializeToString(clonedSvg);
 
@@ -125,8 +122,12 @@ function sortChartItems(items: ChartItem[]): ChartItem[] {
 
 interface ChartGroupSpec {
   key: string;
-  heading: string;
-  description: string;
+  instrumentLabel: string;
+  instrumentKind: InstrumentKind;
+  trafficLightName: string;
+  distributionName: string;
+  trafficLightDescription: string;
+  distributionDescription: string;
   config: ChecklistChartConfig;
   data: ChartItem[];
   defaultTrafficLightTitle: string;
@@ -145,8 +146,6 @@ export function ChartSection({ studies }: ChartSectionProps) {
   const groups = useMemo<ChartGroupSpec[]>(() => {
     const result: ChartGroupSpec[] = [];
 
-    // Risk-of-bias tools are assessed per outcome, so each gets one figure
-    // pair per outcome (the robvis convention)
     const outcomeTools = [
       { type: 'ROB2', name: 'RoB 2', config: ROB2_CHART_CONFIG, slug: 'rob2' },
       { type: 'ROBINS_I', name: 'ROBINS-I', config: ROBINS_I_CHART_CONFIG, slug: 'robins-i' },
@@ -189,9 +188,13 @@ export function ChartSection({ studies }: ChartSectionProps) {
     if (amstarData.length) {
       result.push({
         key: 'amstar2',
-        heading: 'AMSTAR-2',
-        description:
+        instrumentLabel: 'AMSTAR-2',
+        instrumentKind: 'amstar',
+        trafficLightName: 'Item-level judgments by review',
+        distributionName: 'Judgment distribution by item',
+        trafficLightDescription:
           'Visual representation of AMSTAR-2 quality assessment ratings across completed checklists.',
+        distributionDescription: 'Percentage of reviews at each judgment level, by checklist item.',
         config: AMSTAR2_CHART_CONFIG,
         data: sortChartItems(amstarData),
         defaultTrafficLightTitle: 'AMSTAR 2 Item-Level Judgments by Review',
@@ -202,8 +205,6 @@ export function ChartSection({ studies }: ChartSectionProps) {
 
     for (const tool of outcomeTools) {
       const byOutcome = byToolAndOutcome.get(tool.type)!;
-      // Project outcome order first; any checklists without a matching
-      // outcome entry go last.
       const orderedKeys = [
         ...outcomes.map(o => o.id).filter(id => byOutcome.has(id)),
         ...[...byOutcome.keys()].filter(key => !outcomes.some(o => o.id === key)),
@@ -212,10 +213,14 @@ export function ChartSection({ studies }: ChartSectionProps) {
         const outcomeName = outcomes.find(o => o.id === outcomeKey)?.name ?? 'Unspecified outcome';
         result.push({
           key: `${tool.slug}-${outcomeKey || 'none'}`,
-          heading: `${tool.name} - ${outcomeName}`,
-          description:
+          instrumentLabel: tool.name,
+          instrumentKind: 'rob',
+          trafficLightName: `${tool.name} traffic light`,
+          distributionName: `${tool.name} distribution`,
+          trafficLightDescription:
             `Risk of bias judgments for the outcome "${outcomeName}", derived from the ` +
             `${tool.name} algorithm across completed checklists.`,
+          distributionDescription: `Distribution of ${tool.name} judgments by domain for the outcome "${outcomeName}".`,
           config: tool.config,
           data: sortChartItems(byOutcome.get(outcomeKey) ?? []),
           defaultTrafficLightTitle: `Risk of Bias (${tool.name}): ${outcomeName}`,
@@ -230,7 +235,7 @@ export function ChartSection({ studies }: ChartSectionProps) {
 
   if (groups.length === 0) {
     return (
-      <div className='border-border bg-card rounded-lg border px-4 py-8 text-center'>
+      <div className='bg-card rounded-[14px] border border-dashed border-[#d0d5dd] px-4 py-8 text-center'>
         <p className='text-muted-foreground'>
           Once appraisals are completed, this section will display item-level judgments by study and
           across studies, along with a figure summarizing the distribution of ratings for the
@@ -240,21 +245,25 @@ export function ChartSection({ studies }: ChartSectionProps) {
     );
   }
 
+  let figureOffset = 0;
+
   return (
-    <div className='flex flex-col gap-10'>
-      {groups.map(group => (
-        <ChartGroup key={group.key} group={group} showHeading={groups.length > 1} />
-      ))}
+    <div className='flex flex-col gap-[18px]'>
+      {groups.map(group => {
+        const startNumber = figureOffset + 1;
+        figureOffset += 2;
+        return <ChartGroup key={group.key} group={group} startFigureNumber={startNumber} />;
+      })}
     </div>
   );
 }
 
 interface ChartGroupProps {
   group: ChartGroupSpec;
-  showHeading: boolean;
+  startFigureNumber: number;
 }
 
-function ChartGroup({ group, showHeading }: ChartGroupProps) {
+function ChartGroup({ group, startFigureNumber }: ChartGroupProps) {
   const [editingFigure, setEditingFigure] = useState<FigureId | null>(null);
   const [customLabels, setCustomLabels] = useState<Array<{ id: string; label: string }>>([]);
   const [palette, setPalette] = useState<ChartPalette>('default');
@@ -264,10 +273,8 @@ function ChartGroup({ group, showHeading }: ChartGroupProps) {
   const [transparentExport, setTransparentExport] = useState(false);
 
   const trafficLightSvgRef = useRef<SVGSVGElement>(null);
-
   const distributionSvgRef = useRef<SVGSVGElement>(null);
 
-  // Merge custom labels when raw data changes: keep order and edited text, append new rows
   useEffect(() => {
     setCustomLabels(prev => {
       if (prev.length === 0) {
@@ -346,28 +353,19 @@ function ChartGroup({ group, showHeading }: ChartGroupProps) {
   );
 
   return (
-    <div className='flex flex-col gap-6'>
-      <div className='flex items-start justify-between gap-4'>
-        <div className='flex-1'>
-          {showHeading && (
-            <h3 className='text-foreground mb-1 text-sm font-semibold'>{group.heading}</h3>
-          )}
-          <p className='text-secondary-foreground text-sm'>{group.description}</p>
-        </div>
-        <CiteCoratesPopover />
-      </div>
-
-      <FigureFrame
-        actions={
-          <FigureActions
-            editLabel='Edit traffic light chart'
-            editing={editingFigure === 'trafficLight'}
-            onEdit={() => setEditingFigure('trafficLight')}
-            onExport={handleExportTrafficLight}
-            transparentExport={transparentExport}
-            onTransparentExportChange={setTransparentExport}
-          />
-        }
+    <>
+      <FigureCard
+        figureNumber={startFigureNumber}
+        name={group.trafficLightName}
+        instrumentLabel={group.instrumentLabel}
+        instrumentKind={group.instrumentKind}
+        description={group.trafficLightDescription}
+        editLabel='Edit traffic light chart'
+        editing={editingFigure === 'trafficLight'}
+        onEdit={() => setEditingFigure('trafficLight')}
+        onExport={handleExportTrafficLight}
+        transparentExport={transparentExport}
+        onTransparentExportChange={setTransparentExport}
       >
         <TrafficLightChart
           ref={trafficLightSvgRef}
@@ -377,18 +375,20 @@ function ChartGroup({ group, showHeading }: ChartGroupProps) {
           showSymbols={showSymbols}
           title={trafficLightTitle}
         />
-      </FigureFrame>
-      <FigureFrame
-        actions={
-          <FigureActions
-            editLabel='Edit distribution chart'
-            editing={editingFigure === 'distribution'}
-            onEdit={() => setEditingFigure('distribution')}
-            onExport={handleExportDistribution}
-            transparentExport={transparentExport}
-            onTransparentExportChange={setTransparentExport}
-          />
-        }
+      </FigureCard>
+
+      <FigureCard
+        figureNumber={startFigureNumber + 1}
+        name={group.distributionName}
+        instrumentLabel={group.instrumentLabel}
+        instrumentKind={group.instrumentKind}
+        description={group.distributionDescription}
+        editLabel='Edit distribution chart'
+        editing={editingFigure === 'distribution'}
+        onEdit={() => setEditingFigure('distribution')}
+        onExport={handleExportDistribution}
+        transparentExport={transparentExport}
+        onTransparentExportChange={setTransparentExport}
       >
         <DistributionChart
           ref={distributionSvgRef}
@@ -397,7 +397,7 @@ function ChartGroup({ group, showHeading }: ChartGroupProps) {
           palette={palette}
           title={distributionTitle}
         />
-      </FigureFrame>
+      </FigureCard>
 
       <ChartEditSheet
         open={editingFigure !== null}
@@ -420,21 +420,63 @@ function ChartGroup({ group, showHeading }: ChartGroupProps) {
           editingFigure === 'distribution' ? setDistributionTitle : setTrafficLightTitle
         }
       />
-    </div>
+    </>
   );
 }
 
-interface FigureFrameProps {
-  actions: ReactNode;
+interface FigureCardProps {
+  figureNumber: number;
+  name: string;
+  instrumentLabel: string;
+  instrumentKind: InstrumentKind;
+  description: string;
+  editLabel: string;
+  editing?: boolean;
+  onEdit: () => void;
+  onExport: (_format: 'svg' | 'png') => void;
+  transparentExport: boolean;
+  onTransparentExportChange: (_value: boolean) => void;
   children: ReactNode;
 }
 
-function FigureFrame({ actions, children }: FigureFrameProps) {
+function FigureCard({
+  figureNumber,
+  name,
+  instrumentLabel,
+  instrumentKind,
+  description,
+  editLabel,
+  editing = false,
+  onEdit,
+  onExport,
+  transparentExport,
+  onTransparentExportChange,
+  children,
+}: FigureCardProps) {
   return (
-    <div className='mx-auto flex w-full max-w-[880px] flex-col gap-1'>
-      <div className='flex justify-end gap-1'>{actions}</div>
-      {children}
-    </div>
+    <OutputCard>
+      <OutputCardHeader
+        number={figureNumber}
+        numberPrefix='FIG'
+        name={name}
+        instrumentLabel={instrumentLabel}
+        instrumentKind={instrumentKind}
+        description={description}
+        actions={
+          <FigureActions
+            editLabel={editLabel}
+            editing={editing}
+            onEdit={onEdit}
+            onExport={onExport}
+            transparentExport={transparentExport}
+            onTransparentExportChange={onTransparentExportChange}
+          />
+        }
+      />
+      <OutputCardPlate>
+        <div className='mx-auto flex w-full max-w-[880px] justify-center'>{children}</div>
+      </OutputCardPlate>
+    </OutputCard>
   );
 }
 
@@ -457,20 +499,20 @@ function FigureActions({
 }: FigureActionsProps) {
   return (
     <>
+      <CiteCoratesButton />
       <Button
-        variant={editing ? 'secondary' : 'ghost'}
-        size='sm'
+        variant={editing ? 'secondary' : 'outline'}
         onClick={onEdit}
         aria-label={editLabel}
         aria-pressed={editing}
       >
-        <PencilIcon data-icon='inline-start' />
+        <PencilIcon data-icon='inline-start' className='size-[13px]' />
         Edit
       </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant='ghost' size='sm' aria-label='Export figure'>
-            <DownloadIcon data-icon='inline-start' />
+          <Button variant='outline' aria-label='Export figure'>
+            <DownloadIcon data-icon='inline-start' className='size-[13px]' />
             Export
           </Button>
         </DropdownMenuTrigger>
@@ -485,8 +527,6 @@ function FigureActions({
           >
             Transparent background
           </DropdownMenuCheckboxItem>
-          <DropdownMenuSeparator />
-          <CiteCoratesMenuItems />
         </DropdownMenuContent>
       </DropdownMenu>
     </>

@@ -119,7 +119,7 @@ export function DistributionChart({
       .select(svgRef.current)
       .attr('width', width)
       .attr('height', height)
-      .style('background', '#ffffff')
+      .style('background', 'transparent')
       .style('font-family', '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif');
 
     svg.selectAll('*').remove();
@@ -311,10 +311,6 @@ export function DistributionChart({
     <div
       ref={containerRef}
       style={{
-        background: '#ffffff',
-        borderRadius: '8px',
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-        padding: '16px',
         margin: '0 auto',
         maxWidth: '880px',
         width: '100%',
