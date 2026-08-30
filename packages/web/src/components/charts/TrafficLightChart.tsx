@@ -9,7 +9,7 @@
 import { useState, useEffect, useLayoutEffect, useMemo, useRef, useImperativeHandle } from 'react';
 // @ts-expect-error -- d3 has no type declarations in this project
 import * as d3 from 'd3';
-import { contrastColor, legendMarginRight } from './chartConfigs';
+import { contrastColor, legendCategories, legendMarginRight } from './chartConfigs';
 import type { ChartCategory, ChartPalette, ChecklistChartConfig } from './chartConfigs';
 
 interface TrafficLightDataItem {
@@ -96,7 +96,10 @@ export function TrafficLightChart({
   const chartWidth = Math.max(0, cellSize * nColumns);
   const chartHeight = Math.max(0, cellSize * Math.max(data.length, 1));
   const svgWidth = Math.max(0, margin.left + chartWidth + margin.right);
-  const svgHeight = Math.max(0, margin.top + chartHeight + margin.bottom);
+  const legendData = useMemo(() => legendCategories(config, data), [config, data]);
+  // Full legend can be taller than the heatmap when few rows are present
+  const legendHeight = 20 + legendData.length * 25;
+  const svgHeight = Math.max(0, margin.top + Math.max(chartHeight, legendHeight) + margin.bottom);
 
   // Measure label text widths synchronously before paint to avoid margin flash
   useLayoutEffect(() => {
@@ -235,15 +238,7 @@ export function TrafficLightChart({
       }
     });
 
-    // Legend - only categories present in the data (robvis drop=TRUE behavior)
-    const presentKeys = new Set<string>();
-    data.forEach(row => {
-      for (let colIdx = 0; colIdx < nColumns; colIdx++) {
-        const value = row.values[colIdx]?.toLowerCase?.() ?? '';
-        presentKeys.add(categoryMap.has(value) ? value : config.fallbackCategory);
-      }
-    });
-    const legendData = config.categories.filter(c => presentKeys.has(c.key));
+    // Complete key for every judgment, except "No information" unless present.
     const legend = svg
       .append('g')
       .attr('transform', `translate(${svgWidth - m.right + 20}, ${m.top + 20})`);
@@ -316,6 +311,7 @@ export function TrafficLightChart({
     chartHeight,
     margin,
     title,
+    legendData,
   ]);
 
   return (
