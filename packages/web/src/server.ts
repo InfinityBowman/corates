@@ -3,6 +3,7 @@ import { createStartHandler, defaultStreamHandler } from '@tanstack/react-start/
 import { handleEmailQueue } from '@corates/workers/queue';
 import { runWithLogger } from '@corates/workers/logger';
 import { handleSyncFetch } from '@corates/workers/sync';
+import { withRequestCompletionLog } from '@/server/requestCompletion';
 
 // Re-export DOs so wrangler DO bindings in wrangler.jsonc resolve against this
 // worker's main module. The class implementations live in @corates/workers.
@@ -53,36 +54,37 @@ const workerHandler = {
         env: (env as SentryEnv).ENVIRONMENT,
         context: { route: url.pathname, method: request.method },
       },
-      async () => {
-        // DO routes must be handled before TanStack Start (which can't pass
-        // WebSocket upgrades through).
-        const sessionMatch = url.pathname.match(SESSION_PATH);
-        if (sessionMatch) {
-          const sessionId = sessionMatch[1];
-          const ns = (env as DOEnv).USER_SESSION;
-          const id = ns.idFromName(sessionId);
-          const stub = ns.get(id);
-          // AsyncLocalStorage does not cross the isolate boundary, so the id
-          // rides as a header instead and the DO reopens its own scope.
-          // Rebuilding the Request preserves the upgrade handshake (covered by
-          // durable-objects/__tests__/do-correlation).
-          const headers = new Headers(request.headers);
-          headers.set('x-request-id', requestId);
-          return stub.fetch(new Request(request, { headers }));
-        }
+      () =>
+        withRequestCompletionLog(url.pathname, async () => {
+          // DO routes must be handled before TanStack Start (which can't pass
+          // WebSocket upgrades through).
+          const sessionMatch = url.pathname.match(SESSION_PATH);
+          if (sessionMatch) {
+            const sessionId = sessionMatch[1];
+            const ns = (env as DOEnv).USER_SESSION;
+            const id = ns.idFromName(sessionId);
+            const stub = ns.get(id);
+            // AsyncLocalStorage does not cross the isolate boundary, so the id
+            // rides as a header instead and the DO reopens its own scope.
+            // Rebuilding the Request preserves the upgrade handshake (covered by
+            // durable-objects/__tests__/do-correlation).
+            const headers = new Headers(request.headers);
+            headers.set('x-request-id', requestId);
+            return stub.fetch(new Request(request, { headers }));
+          }
 
-        // Sync-engine routes (`/api/sync/<projectId>` upgrades and
-        // `/api/sync-admin/...`): resolves null for anything else.
-        const syncResponse = await handleSyncFetch(request, env);
-        if (syncResponse) return syncResponse;
+          // Sync-engine routes (`/api/sync/<projectId>` upgrades and
+          // `/api/sync-admin/...`): resolves null for anything else.
+          const syncResponse = await handleSyncFetch(request, env);
+          if (syncResponse) return syncResponse;
 
-        // Forward the Worker's ExecutionContext through TanStack Start so file
-        // routes can pass it into route handlers (waitUntil for fire-and-forget
-        // work like Stripe webhook ledger updates and notification fan-out).
-        // Cast: createStartHandler's RequestOptions.context defaults to a narrow
-        // BaseContext until we register a project-wide requestContext type.
-        return startFetch(request, { context: { cloudflareCtx: ctx } } as never);
-      },
+          // Forward the Worker's ExecutionContext through TanStack Start so file
+          // routes can pass it into route handlers (waitUntil for fire-and-forget
+          // work like Stripe webhook ledger updates and notification fan-out).
+          // Cast: createStartHandler's RequestOptions.context defaults to a narrow
+          // BaseContext until we register a project-wide requestContext type.
+          return startFetch(request, { context: { cloudflareCtx: ctx } } as never);
+        }),
     );
   },
 

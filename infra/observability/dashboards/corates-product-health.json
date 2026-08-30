@@ -1,0 +1,391 @@
+{
+  "title": "CoRATES Product Health",
+  "uid": "corates-product-health",
+  "description": "Browser-reported product events relayed through POST /api/client-logs into Loki as service=corates-web-client. Production only; OTLP export latency is roughly 2-4 minutes.",
+  "tags": ["corates", "loki", "production", "product"],
+  "editable": true,
+  "graphTooltip": 1,
+  "time": { "from": "now-24h", "to": "now" },
+  "refresh": "5m",
+  "schemaVersion": 39,
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "label": "Data source",
+        "type": "datasource",
+        "query": "loki",
+        "current": {},
+        "options": [],
+        "refresh": 1,
+        "regex": "",
+        "hide": 0
+      },
+      {
+        "name": "event",
+        "label": "Event",
+        "description": "client.* message names emitted from the browser logger.",
+        "type": "query",
+        "datasource": { "type": "loki", "uid": "${datasource}" },
+        "query": "label_values({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | service=\"corates-web-client\" | message=~`client\\\\..*`, message)",
+        "refresh": 2,
+        "multi": true,
+        "includeAll": true,
+        "allValue": "client\\..*",
+        "sort": 1,
+        "current": { "selected": true, "text": ["All"], "value": ["$__all"] },
+        "options": []
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Sync fatals",
+      "description": "client.sync.fatal — real-time collaboration failed for a project.",
+      "datasource": { "type": "loki", "uid": "${datasource}" },
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | service=\"corates-web-client\" | message=\"client.sync.fatal\" [$__range]))",
+          "legendFormat": "fatals"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "0",
+          "color": { "mode": "fixed", "fixedColor": "#F2495C" },
+          "custom": { "fillOpacity": 25, "lineWidth": 1 }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "PDF failures",
+      "description": "client.pdf.load_failed and client.pdf.upload_failed combined.",
+      "datasource": { "type": "loki", "uid": "${datasource}" },
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | service=\"corates-web-client\" | message=~`client\\\\.pdf\\\\.(load|upload)_failed` [$__range]))",
+          "legendFormat": "pdf failures"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "0",
+          "color": { "mode": "fixed", "fixedColor": "#FF9830" },
+          "custom": { "fillOpacity": 25, "lineWidth": 1 }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Sign-in failures",
+      "description": "client.auth.sign_in_failed — logged at info level from the browser.",
+      "datasource": { "type": "loki", "uid": "${datasource}" },
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | service=\"corates-web-client\" | message=\"client.auth.sign_in_failed\" [$__range]))",
+          "legendFormat": "sign-in failures"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "0",
+          "color": { "mode": "fixed", "fixedColor": "#5794F2" },
+          "custom": { "fillOpacity": 25, "lineWidth": 1 }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Drive failures",
+      "description": "client.drive.connect_failed and client.drive.picker_failed combined.",
+      "datasource": { "type": "loki", "uid": "${datasource}" },
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | service=\"corates-web-client\" | message=~`client\\\\.drive\\\\.(connect|picker)_failed` [$__range]))",
+          "legendFormat": "drive failures"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "0",
+          "color": { "mode": "fixed", "fixedColor": "#B877D9" },
+          "custom": { "fillOpacity": 25, "lineWidth": 1 }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Client events over time",
+      "description": "Volume by client.* message. Filter with the Event variable above.",
+      "datasource": { "type": "loki", "uid": "${datasource}" },
+      "gridPos": { "h": 9, "w": 14, "x": 0, "y": 4 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (message) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | service=\"corates-web-client\" | message=~`$event` [$__auto]))",
+          "legendFormat": "{{message}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 85,
+            "lineWidth": 0,
+            "stacking": { "mode": "normal", "group": "A" },
+            "gradientMode": "none",
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "showLegend": true, "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Sync problems",
+      "description": "Fatal disconnects vs rejected mutations — the two main collaboration failure modes.",
+      "datasource": { "type": "loki", "uid": "${datasource}" },
+      "gridPos": { "h": 9, "w": 10, "x": 14, "y": 4 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | service=\"corates-web-client\" | message=\"client.sync.fatal\" [$__auto]))",
+          "legendFormat": "sync.fatal"
+        },
+        {
+          "refId": "B",
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | service=\"corates-web-client\" | message=\"client.sync.mutation_rejected\" [$__auto]))",
+          "legendFormat": "sync.mutation_rejected"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "sync.fatal" },
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#F2495C" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "sync.mutation_rejected" },
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#FF9830" } }]
+          }
+        ]
+      },
+      "options": {
+        "legend": { "showLegend": true, "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      }
+    },
+    {
+      "id": 7,
+      "type": "table",
+      "title": "Top client events",
+      "datasource": { "type": "loki", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 13 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(15, sum by (message) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | service=\"corates-web-client\" | message=~`client\\\\..*` [$__range])))",
+          "queryType": "instant",
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": { "Time": true },
+            "renameByName": { "message": "Event", "Value": "Count" },
+            "indexByName": { "message": 0, "Value": 1 }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "align": "auto", "filterable": false },
+          "noValue": "no client events in range"
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Count" },
+            "properties": [{ "id": "custom.width", "value": 90 }]
+          }
+        ]
+      },
+      "options": { "sortBy": [{ "displayName": "Count", "desc": true }], "showHeader": true }
+    },
+    {
+      "id": 8,
+      "type": "table",
+      "title": "Sign-in failures by code",
+      "description": "Error codes from client.auth.sign_in_failed.",
+      "datasource": { "type": "loki", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 13 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(10, sum by (code) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | service=\"corates-web-client\" | message=\"client.auth.sign_in_failed\" | code!=`` [$__range])))",
+          "queryType": "instant",
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": { "Time": true },
+            "renameByName": { "code": "Code", "Value": "Count" },
+            "indexByName": { "code": 0, "Value": 1 }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "align": "auto", "filterable": false },
+          "noValue": "no sign-in failures in range"
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Count" },
+            "properties": [{ "id": "custom.width", "value": 90 }]
+          }
+        ]
+      },
+      "options": { "sortBy": [{ "displayName": "Count", "desc": true }], "showHeader": true }
+    },
+    {
+      "id": 9,
+      "type": "table",
+      "title": "Failures by page",
+      "description": "Browser route when warn/error client events fired.",
+      "datasource": { "type": "loki", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 21 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(15, sum by (route, message) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | service=\"corates-web-client\" | level=~`warn|error` | route!=`` [$__range])))",
+          "queryType": "instant",
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": { "Time": true },
+            "renameByName": { "route": "Route", "message": "Event", "Value": "Count" },
+            "indexByName": { "route": 0, "message": 1, "Value": 2 }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "align": "auto", "filterable": false },
+          "noValue": "no warn/error client events in range"
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Count" },
+            "properties": [{ "id": "custom.width", "value": 90 }]
+          }
+        ]
+      },
+      "options": { "sortBy": [{ "displayName": "Count", "desc": true }], "showHeader": true }
+    },
+    {
+      "id": 10,
+      "type": "logs",
+      "title": "Recent client warnings and errors",
+      "datasource": { "type": "loki", "uid": "${datasource}" },
+      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 29 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "{service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | service=\"corates-web-client\" | level=~`warn|error` | message=~`$event`",
+          "maxLines": 200
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "sortOrder": "Descending"
+      }
+    }
+  ]
+}

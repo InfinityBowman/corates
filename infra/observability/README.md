@@ -18,7 +18,9 @@ Workers (production) -> OTLP export -> loki.jacobmaynard.dev/otlp/v1/logs -> Lok
   remotely when using a docker context)
 - `dashboards/` - Grafana dashboard JSON, imported by hand via Dashboards > New > Import.
   `corates-logs.json` is scoped to `deployment_environment_name="production"` throughout;
-  staging is deliberately excluded, so importing it will not show staging traffic
+  staging is deliberately excluded, so importing it will not show staging traffic.
+  `corates-product-health.json` tracks browser `client.*` events relayed through
+  `/api/client-logs`.
 - `.env` (gitignored) - R2 S3 credentials, Loki basic-auth htpasswd, Grafana admin password
 - `deploy.sh` - rsync config, then `docker --context homelab compose up -d`
 
@@ -57,6 +59,8 @@ libraries are silently excluded.
 {service_name="corates-workers-prod"} | cloudflare_handler_type="hibernatableWebSocket"
 {deployment_environment_name="production"} | trace_id="<id>"     # one whole invocation
 {service_name="corates-workers-prod"} | json | level="warn"      # logger JSON only
+{service_name="corates-workers-prod"} | json | message="request.completed"  # latency SLI
+{service_name="corates-workers-prod"} | json | service="corates-web-client"   # browser events
 ```
 
 Cloudflare attaches ~50 OTLP attributes per line as structured metadata (`url_path`,
