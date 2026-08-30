@@ -13,6 +13,7 @@ import type {
   SubscriptionId,
   OrgAccessGrantId,
   FeedbackId,
+  ContactSubmissionId,
 } from '@corates/shared/ids';
 
 // Users table
@@ -370,6 +371,23 @@ export const projectInvitations = sqliteTable(
   t => [index('project_invitations_projectId_idx').on(t.projectId)],
 );
 
+// Public contact form submissions. The row is written before the notification
+// email is queued so double-submits and retries dedupe via D1, not in-memory
+// state that Workers cannot share across isolates.
+export const contactSubmissions = sqliteTable(
+  'contact_submissions',
+  {
+    id: text('id').primaryKey().$type<ContactSubmissionId>(),
+    name: text('name').notNull(),
+    email: text('email').notNull(),
+    subject: text('subject').notNull().default(''),
+    message: text('message').notNull(),
+    dedupKey: text('dedupKey').notNull().unique(),
+    createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
+  },
+  t => [index('contact_submissions_email_createdAt_idx').on(t.email, t.createdAt)],
+);
+
 // In-app user feedback (bug reports, ideas). Status is unused until an admin
 // triage view exists; having it now avoids a migration later.
 export const feedback = sqliteTable(
@@ -413,6 +431,7 @@ export const dbSchema = {
   stripeEventLedger,
   projectInvitations,
   processedEmails,
+  contactSubmissions,
   feedback,
 };
 

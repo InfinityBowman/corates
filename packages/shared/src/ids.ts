@@ -64,3 +64,6 @@ export type OrgAccessGrantId = z.infer<typeof OrgAccessGrantId>;
 
 export const FeedbackId = z.string().brand<'FeedbackId'>();
 export type FeedbackId = z.infer<typeof FeedbackId>;
+
+export const ContactSubmissionId = z.string().brand<'ContactSubmissionId'>();
+export type ContactSubmissionId = z.infer<typeof ContactSubmissionId>;

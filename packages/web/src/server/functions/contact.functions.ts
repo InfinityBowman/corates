@@ -1,14 +1,10 @@
 import { createServerFn } from '@tanstack/react-start';
-import { createMiddleware } from '@tanstack/react-start';
 import { z } from 'zod';
-import { sendContactEmail } from './contact.server';
-
-const requestMiddleware = createMiddleware().server(async ({ next, request }) => {
-  return next({ context: { request } });
-});
+import { dbMiddleware } from '@/server/middleware/db';
+import { submitContact } from './contact.server';
 
 export const submitContactForm = createServerFn({ method: 'POST' })
-  .middleware([requestMiddleware])
+  .middleware([dbMiddleware])
   .validator(
     z.object({
       name: z.string().trim().min(1).max(100),
@@ -17,4 +13,4 @@ export const submitContactForm = createServerFn({ method: 'POST' })
       message: z.string().trim().min(1).max(2000),
     }),
   )
-  .handler(async ({ data, context: { request } }) => sendContactEmail(request, data));
+  .handler(async ({ data, context: { db } }) => submitContact(db, data));

@@ -85,6 +85,7 @@ export async function resetTestDatabase(): Promise<void> {
   await run('PRAGMA foreign_keys = OFF');
 
   const tablesToDrop = [
+    'contact_submissions',
     'feedback',
     'project_invitations',
     'org_access_grants',
