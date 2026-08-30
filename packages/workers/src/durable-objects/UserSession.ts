@@ -1,4 +1,5 @@
 import { DurableObject } from 'cloudflare:workers';
+import { createLogger } from '@corates/shared/logger';
 import { captureError, info, runWithLogger } from '../lib/logger';
 import { instrumentDurableObjectWithSentry } from '@sentry/cloudflare';
 import { verifyAuth } from '../auth/config';
@@ -168,21 +169,17 @@ class UserSessionBase extends DurableObject<Env> {
   ): Promise<void> {
     const attachment = ws.deserializeAttachment() as WebSocketAttachment | null;
     const userId = attachment?.user?.id;
-    runWithLogger(
-      {
-        requestId: crypto.randomUUID(),
-        env: this.env.ENVIRONMENT,
-        context: { durableObject: 'UserSession', requestIdForwarded: false },
-      },
-      () => {
-        info('user-session websocket disconnected', {
-          ...(userId && { userId }),
-          code,
-          wasClean,
-          ...(reason && { reason }),
-        });
-      },
-    );
+    // Hibernated callbacks have no AsyncLocalStorage scope; use an explicit logger.
+    createLogger({
+      service: 'corates-workers',
+      env: this.env.ENVIRONMENT,
+      context: { durableObject: 'UserSession', requestIdForwarded: false },
+    }).info('user-session websocket disconnected', {
+      ...(userId && { userId }),
+      code,
+      wasClean,
+      ...(reason && { reason }),
+    });
   }
 
   /**
