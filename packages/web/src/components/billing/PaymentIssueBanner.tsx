@@ -1,6 +1,4 @@
-/**
- * PaymentIssueBanner - Prominent banner for payment issues
- */
+/** Banner shown while a subscription payment needs attention. */
 
 import { TriangleAlertIcon, CreditCardIcon } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
@@ -22,9 +20,9 @@ export function PaymentIssueBanner({ status, onUpdatePayment, loading }: Payment
   if (!hasIssue) return null;
 
   const title =
-    isPastDue ? 'Payment Failed'
-    : isIncomplete ? 'Payment Required'
-    : 'Subscription Unpaid';
+    isPastDue ? 'Payment failed'
+    : isIncomplete ? 'Payment required'
+    : 'Subscription unpaid';
 
   const message =
     isPastDue ?
@@ -34,11 +32,11 @@ export function PaymentIssueBanner({ status, onUpdatePayment, loading }: Payment
     : 'Your subscription is unpaid. Please update your payment method to restore access.';
 
   return (
-    <Alert variant='destructive' className='mb-6 border-2 shadow-sm'>
+    <Alert variant='destructive'>
       <TriangleAlertIcon />
       <div className='flex flex-1 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <div>
-          <AlertTitle className='text-lg'>{title}</AlertTitle>
+          <AlertTitle>{title}</AlertTitle>
           <AlertDescription>{message}</AlertDescription>
           {isPastDue && (
             <AlertDescription className='mt-2 text-xs'>
@@ -49,7 +47,6 @@ export function PaymentIssueBanner({ status, onUpdatePayment, loading }: Payment
         </div>
         <Button
           variant='destructive'
-          size='lg'
           className='shrink-0'
           onClick={onUpdatePayment}
           disabled={loading}
@@ -57,7 +54,7 @@ export function PaymentIssueBanner({ status, onUpdatePayment, loading }: Payment
           {loading ?
             <Spinner size='sm' variant='white' data-icon='inline-start' />
           : <CreditCardIcon data-icon='inline-start' />}
-          {loading ? 'Loading...' : 'Update Payment Method'}
+          {loading ? 'Opening...' : 'Update payment method'}
         </Button>
       </div>
     </Alert>

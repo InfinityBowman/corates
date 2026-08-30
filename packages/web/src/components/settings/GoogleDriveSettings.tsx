@@ -1,11 +1,11 @@
-/**
- * GoogleDriveSettings - Component for managing Google Drive connection
- */
+/** The Google Drive row of the integrations list. */
 
 import { useState, useEffect, useCallback } from 'react';
 import { XIcon } from 'lucide-react';
 import { showToast } from '@/lib/toast';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { SettingsRow } from './primitives';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -60,7 +60,7 @@ export function GoogleDriveSettings() {
       if (isAccountConflict) {
         showToast.error(
           'Account Conflict',
-          'This Google account is already connected to a different user. Please use a different Google account or contact support.',
+          'That Google account belongs to a different CoRATES user. Use another Google account, or contact support.',
         );
       } else {
         const { handleError } = await import('@/lib/error-utils');
@@ -75,7 +75,7 @@ export function GoogleDriveSettings() {
     try {
       await disconnectGoogleDrive();
       setConnected(false);
-      showToast.success('Disconnected', 'Google account has been disconnected.');
+      showToast.success('Disconnected', 'Google Drive is no longer connected.');
     } catch (err) {
       const { handleError } = await import('@/lib/error-utils');
       await handleError(err, { toastTitle: 'Error' });
@@ -87,46 +87,47 @@ export function GoogleDriveSettings() {
 
   return (
     <>
-      <div className='flex items-center justify-between'>
-        <div className='flex items-center gap-3'>
-          <div className='bg-secondary rounded-lg p-2'>
-            <img src='/logos/drive.svg' alt='Google Drive' className='size-5' />
+      <SettingsRow
+        media={
+          <div className='border-border bg-card flex size-9 items-center justify-center rounded-lg border'>
+            <img src='/logos/drive.svg' alt='' className='size-4.5' />
           </div>
-          <div>
-            <p className='text-foreground font-medium'>Google Drive</p>
-            <p className='text-muted-foreground text-sm'>
-              {loading ?
-                'Checking connection...'
-              : connected ?
-                'Connected - You can import PDFs from your Drive'
-              : 'Connect to import PDFs from Google Drive'}
-            </p>
-          </div>
-        </div>
-
+        }
+        label={
+          <span className='flex items-center gap-2'>
+            Google Drive
+            {connected && <Badge variant='success'>Connected</Badge>}
+          </span>
+        }
+        description={
+          loading ? 'Checking connection...'
+          : connected ?
+            'Drive files are available in the PDF picker.'
+          : 'Not connected.'
+        }
+      >
         {!loading &&
           (connected ?
             <Button
               variant='ghost'
               onClick={() => setConfirmOpen(true)}
               disabled={disconnecting}
-              className='bg-destructive/10 text-destructive hover:bg-destructive/10 hover:text-destructive'
+              className='text-muted-foreground hover:text-destructive hover:bg-destructive/10'
             >
               <XIcon className='size-4' />
               {disconnecting ? 'Disconnecting...' : 'Disconnect'}
             </Button>
-          : <Button onClick={handleConnect} disabled={connecting}>
-              <img src='/logos/drive.svg' alt='Google Drive' className='size-4' />
+          : <Button variant='outline' onClick={handleConnect} disabled={connecting}>
               {connecting ? 'Connecting...' : 'Connect'}
             </Button>)}
-      </div>
+      </SettingsRow>
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Disconnect Google Drive?</AlertDialogTitle>
             <AlertDialogDescription>
-              You won&apos;t be able to import PDFs from Google Drive until you reconnect.
+              You won&apos;t be able to import PDFs from Drive until you connect it again.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

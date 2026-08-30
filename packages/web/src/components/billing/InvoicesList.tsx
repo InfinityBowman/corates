@@ -1,16 +1,14 @@
-/**
- * InvoicesList - Invoices with status badges and empty state
- */
+/** The Invoices section of the billing page. */
 
 import { useQuery } from '@tanstack/react-query';
-import { DownloadIcon, FileTextIcon, ExternalLinkIcon } from 'lucide-react';
+import { DownloadIcon, ExternalLinkIcon, FileTextIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { queryKeys } from '@/lib/queryKeys';
 import { getInvoices } from '@/server/functions/billing.functions';
 import type { Invoice, InvoicesResponse } from '@/server/functions/billing.server';
+import { SettingsSection, SettingsRow } from '@/components/settings/primitives';
 
 async function fetchInvoices(): Promise<InvoicesResponse> {
   try {
@@ -63,96 +61,58 @@ export function InvoicesList() {
   const invoices = data?.invoices ?? [];
 
   return (
-    <Card>
-      <CardHeader className='border-b'>
-        <CardTitle className='flex items-center gap-2'>
-          <FileTextIcon className='text-muted-foreground size-5' />
-          Invoices
-        </CardTitle>
-      </CardHeader>
-
-      <CardContent className='p-0'>
-        {isFetching ?
-          <div className='divide-border divide-y'>
-            {[1, 2, 3].map(i => (
-              <div key={i} className='flex items-center justify-between px-6 py-4'>
-                <div className='flex items-center gap-4'>
-                  <Skeleton className='size-10 rounded-lg' />
-                  <div className='flex flex-col gap-2'>
-                    <Skeleton className='h-4 w-32' />
-                    <Skeleton className='h-3 w-24' />
-                  </div>
-                </div>
-                <div className='flex items-center gap-4'>
-                  <Skeleton className='h-4 w-16' />
-                  <Skeleton className='h-6 w-14 rounded-full' />
-                </div>
-              </div>
-            ))}
-          </div>
-        : invoices.length > 0 ?
-          <div className='divide-border divide-y'>
-            {invoices.map((invoice: Invoice) => (
-              <div
-                key={invoice.id}
-                className='hover:bg-muted/50 flex items-center justify-between px-6 py-4 transition-colors'
-              >
-                <div className='flex items-center gap-4'>
-                  <div className='bg-muted flex size-10 items-center justify-center rounded-lg'>
-                    <FileTextIcon className='text-muted-foreground size-5' />
-                  </div>
-                  <div>
-                    <p className='text-foreground font-medium'>
-                      {`Invoice #${invoice.number || invoice.id}`}
-                    </p>
-                    <p className='text-muted-foreground text-sm'>{formatDate(invoice.created)}</p>
-                  </div>
-                </div>
-                <div className='flex items-center gap-4'>
-                  <span className='text-foreground text-sm font-semibold'>
-                    {formatAmount(invoice.amount)}
-                  </span>
-                  <Badge variant={STATUS_VARIANTS[invoice.status ?? ''] || 'success'}>
-                    {STATUS_LABELS[invoice.status ?? ''] || 'Paid'}
-                  </Badge>
-                  {invoice.pdfUrl && (
-                    <Button
-                      variant='ghost'
-                      size='icon-sm'
-                      className='text-muted-foreground'
-                      onClick={() => window.open(invoice.pdfUrl!, '_blank')}
-                      title='Download invoice'
-                      aria-label='Download invoice'
-                    >
-                      <DownloadIcon className='size-4' />
-                    </Button>
-                  )}
-                  {invoice.hostedUrl && (
-                    <a
-                      href={invoice.hostedUrl}
-                      target='_blank'
-                      rel='noopener noreferrer'
-                      className='text-muted-foreground hover:bg-muted hover:text-foreground rounded-lg p-2 transition-colors'
-                      title='View invoice'
-                    >
-                      <ExternalLinkIcon className='size-4' />
-                    </a>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        : <div className='px-6 py-12 text-center'>
-            <div className='bg-muted mx-auto mb-4 flex size-14 items-center justify-center rounded-full'>
-              <FileTextIcon className='text-muted-foreground size-7' />
+    <SettingsSection title='Invoices' icon={FileTextIcon}>
+      {isFetching ?
+        [1, 2, 3].map(i => (
+          <div key={i} className='flex items-center justify-between gap-4 px-4 py-3.5'>
+            <div className='flex flex-col gap-2'>
+              <Skeleton className='h-3.5 w-36' />
+              <Skeleton className='h-3 w-24' />
             </div>
-            <h3 className='text-foreground text-sm font-medium'>No invoices yet</h3>
-            <p className='text-muted-foreground mt-1 text-sm'>
-              Invoices will appear here once you have an active subscription.
-            </p>
+            <Skeleton className='h-5 w-20' />
           </div>
-        }
-      </CardContent>
-    </Card>
+        ))
+      : invoices.length > 0 ?
+        invoices.map((invoice: Invoice) => (
+          <SettingsRow
+            key={invoice.id}
+            label={`Invoice ${invoice.number || invoice.id}`}
+            description={formatDate(invoice.created)}
+          >
+            <span className='text-foreground text-sm tabular-nums'>
+              {formatAmount(invoice.amount)}
+            </span>
+            <Badge variant={STATUS_VARIANTS[invoice.status ?? ''] || 'success'}>
+              {STATUS_LABELS[invoice.status ?? ''] || 'Paid'}
+            </Badge>
+            {invoice.pdfUrl && (
+              <Button
+                variant='ghost'
+                size='icon-sm'
+                className='text-muted-foreground'
+                onClick={() => window.open(invoice.pdfUrl!, '_blank')}
+                aria-label='Download invoice'
+              >
+                <DownloadIcon className='size-4' />
+              </Button>
+            )}
+            {invoice.hostedUrl && (
+              <a
+                href={invoice.hostedUrl}
+                target='_blank'
+                rel='noopener noreferrer'
+                className='text-muted-foreground hover:bg-muted hover:text-foreground rounded-md p-1.5 transition-colors'
+                aria-label='View invoice'
+              >
+                <ExternalLinkIcon className='size-4' />
+              </a>
+            )}
+          </SettingsRow>
+        ))
+      : <p className='text-muted-foreground px-4 py-6 text-center text-[13px]'>
+          Invoices appear here once you have a paid subscription.
+        </p>
+      }
+    </SettingsSection>
   );
 }
