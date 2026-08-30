@@ -35,7 +35,7 @@ interface ResultsTableProps {
 
 export function ResultsTable({ columns, rows }: ResultsTableProps) {
   return (
-    <div className='overflow-x-auto rounded-xl border border-[#eaecf0] bg-card'>
+    <div className='bg-card overflow-x-auto rounded-xl border border-[#eaecf0]'>
       <table className='min-w-full'>
         <thead className='bg-[#fafbfc]'>
           <tr>

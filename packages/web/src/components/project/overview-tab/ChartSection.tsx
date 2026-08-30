@@ -29,12 +29,7 @@ import { CHECKLIST_STATUS } from '@corates/shared/checklists';
 import { useProjectContext } from '../ProjectContext';
 import { useProjectOutcomes } from '@/project/workspace-data';
 import type { StudyInfo } from '@/stores/projectStore';
-import {
-  OutputCard,
-  OutputCardHeader,
-  OutputCardPlate,
-  type InstrumentKind,
-} from './OutputCard';
+import { OutputCard, OutputCardHeader, OutputCardPlate, type InstrumentKind } from './OutputCard';
 
 function exportChart(
   svgElement: SVGSVGElement | null,
@@ -199,8 +194,7 @@ export function ChartSection({ studies }: ChartSectionProps) {
         distributionName: 'Judgment distribution by item',
         trafficLightDescription:
           'Visual representation of AMSTAR-2 quality assessment ratings across completed checklists.',
-        distributionDescription:
-          'Percentage of reviews at each judgment level, by checklist item.',
+        distributionDescription: 'Percentage of reviews at each judgment level, by checklist item.',
         config: AMSTAR2_CHART_CONFIG,
         data: sortChartItems(amstarData),
         defaultTrafficLightTitle: 'AMSTAR 2 Item-Level Judgments by Review',
@@ -226,8 +220,7 @@ export function ChartSection({ studies }: ChartSectionProps) {
           trafficLightDescription:
             `Risk of bias judgments for the outcome "${outcomeName}", derived from the ` +
             `${tool.name} algorithm across completed checklists.`,
-          distributionDescription:
-            `Distribution of ${tool.name} judgments by domain for the outcome "${outcomeName}".`,
+          distributionDescription: `Distribution of ${tool.name} judgments by domain for the outcome "${outcomeName}".`,
           config: tool.config,
           data: sortChartItems(byOutcome.get(outcomeKey) ?? []),
           defaultTrafficLightTitle: `Risk of Bias (${tool.name}): ${outcomeName}`,
@@ -242,7 +235,7 @@ export function ChartSection({ studies }: ChartSectionProps) {
 
   if (groups.length === 0) {
     return (
-      <div className='rounded-[14px] border border-dashed border-[#d0d5dd] bg-card px-4 py-8 text-center'>
+      <div className='bg-card rounded-[14px] border border-dashed border-[#d0d5dd] px-4 py-8 text-center'>
         <p className='text-muted-foreground'>
           Once appraisals are completed, this section will display item-level judgments by study and
           across studies, along with a figure summarizing the distribution of ratings for the

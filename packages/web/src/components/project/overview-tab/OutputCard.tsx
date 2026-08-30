@@ -16,7 +16,7 @@ export function OutputCard({ children, className }: OutputCardProps) {
   return (
     <article
       className={cn(
-        'overflow-hidden rounded-[14px] border border-[#e9ebf0] bg-card',
+        'bg-card overflow-hidden rounded-[14px] border border-[#e9ebf0]',
         'shadow-[0_1px_2px_rgba(16,24,40,0.04),0_14px_32px_-24px_rgba(16,24,40,0.45)]',
         className,
       )}
@@ -105,10 +105,7 @@ interface OutputCardPlateProps {
 export function OutputCardPlate({ children, className }: OutputCardPlateProps) {
   return (
     <div
-      className={cn(
-        'border-t border-[#f2f4f7] bg-[#fcfcfd] px-5 pt-[26px] pb-[22px]',
-        className,
-      )}
+      className={cn('border-t border-[#f2f4f7] bg-[#fcfcfd] px-5 pt-[26px] pb-[22px]', className)}
     >
       {children}
     </div>

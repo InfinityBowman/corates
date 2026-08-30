@@ -108,7 +108,7 @@ export function AMSTAR2ResultsTable({ studies, tableNumber }: AMSTAR2ResultsTabl
       />
       <OutputCardPlate className='px-[18px] pt-[18px] pb-[18px]'>
         {summary && (
-          <div className='mb-4 flex overflow-hidden rounded-xl border border-[#eaecf0] bg-card'>
+          <div className='bg-card mb-4 flex overflow-hidden rounded-xl border border-[#eaecf0]'>
             {CONFIDENCE_LEVELS.map((level, index) => (
               <div
                 key={level}
@@ -132,7 +132,7 @@ export function AMSTAR2ResultsTable({ studies, tableNumber }: AMSTAR2ResultsTabl
           </div>
         )}
 
-        <div className='overflow-x-auto rounded-xl border border-[#eaecf0] bg-card'>
+        <div className='bg-card overflow-x-auto rounded-xl border border-[#eaecf0]'>
           <table className='min-w-full'>
             <thead className='bg-[#fafbfc]'>
               <tr>

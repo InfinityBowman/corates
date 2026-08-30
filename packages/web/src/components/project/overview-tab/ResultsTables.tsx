@@ -99,7 +99,7 @@ export function ResultsTables({ studies }: ResultsTablesProps) {
 
   if (!hasAmstarData && groups.length === 0) {
     return (
-      <div className='rounded-[14px] border border-dashed border-[#d0d5dd] bg-card px-4 py-8 text-center'>
+      <div className='bg-card rounded-[14px] border border-dashed border-[#d0d5dd] px-4 py-8 text-center'>
         <p className='text-muted-foreground'>
           Once appraisals are completed, this section will display tables summarizing the ratings
           for each included study.
@@ -112,9 +112,7 @@ export function ResultsTables({ studies }: ResultsTablesProps) {
 
   return (
     <div className='flex flex-col gap-[18px]'>
-      {hasAmstarData && (
-        <AMSTAR2ResultsTable studies={studies} tableNumber={++tableNumber} />
-      )}
+      {hasAmstarData && <AMSTAR2ResultsTable studies={studies} tableNumber={++tableNumber} />}
 
       {groups.map(group => {
         tableNumber += 1;
