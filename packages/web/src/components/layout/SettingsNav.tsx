@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { APP_NAME, APP_VERSION } from '@/config/app';
+import { NAV_GROUP_LABEL, NAV_FOOTER, navRowClass } from './navStyles';
 
 interface NavItem {
   label: string;
@@ -69,9 +70,7 @@ export function SettingsNavRail() {
       <div className='flex-1 overflow-y-auto px-3 pb-4'>
         {NAV_GROUPS.map(group => (
           <div key={group.label} className='mb-5 last:mb-0'>
-            <div className='text-muted-foreground/80 px-2.5 pb-1.5 text-[11px] font-semibold tracking-wider uppercase'>
-              {group.label}
-            </div>
+            <div className={NAV_GROUP_LABEL}>{group.label}</div>
             <div className='flex flex-col gap-0.5'>
               {group.items.map(item => {
                 const Icon = item.icon;
@@ -81,11 +80,7 @@ export function SettingsNavRail() {
                     key={item.path}
                     to={item.path}
                     aria-current={isActive ? 'page' : undefined}
-                    className={
-                      isActive ?
-                        'bg-primary/10 text-primary flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm font-medium'
-                      : 'text-muted-foreground hover:bg-muted hover:text-foreground flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm font-medium transition-colors'
-                    }
+                    className={navRowClass(isActive)}
                   >
                     <Icon
                       className={isActive ? 'text-primary size-4 shrink-0' : 'size-4 shrink-0'}
@@ -99,7 +94,7 @@ export function SettingsNavRail() {
         ))}
       </div>
 
-      <div className='border-border text-muted-foreground/70 border-t px-5 py-3 text-xs'>
+      <div className={NAV_FOOTER}>
         {APP_NAME} {APP_VERSION}
       </div>
     </nav>

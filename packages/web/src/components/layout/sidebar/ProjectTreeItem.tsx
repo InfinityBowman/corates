@@ -7,6 +7,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { ChevronRightIcon, FolderIcon, FolderOpenIcon } from 'lucide-react';
 import { useProjectData } from '@/hooks/useProjectData';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
+import { navRowClass } from '../navStyles';
 import { StudyTreeItem } from './StudyTreeItem';
 import { MarqueeLabel } from './MarqueeLabel';
 
@@ -48,15 +49,10 @@ export function ProjectTreeItem({
 
   return (
     <Collapsible open={canExpand && isExpanded}>
-      <div
-        className={`group flex cursor-pointer items-center rounded-lg px-2 py-1.5 transition-colors ${
-          isSelected ? 'bg-primary/10 text-primary' : 'text-secondary-foreground hover:bg-muted'
-        }`}
-        onClick={handleRowClick}
-      >
+      <div className={`group cursor-pointer ${navRowClass(isSelected)}`} onClick={handleRowClick}>
         {canExpand && (
           <ChevronRightIcon
-            className={`text-muted-foreground mr-1 size-3 shrink-0 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+            className={`-ml-1 size-3 shrink-0 opacity-60 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
           />
         )}
         <button
@@ -64,15 +60,12 @@ export function ProjectTreeItem({
             e.stopPropagation();
             navigate({ to: projectPath as string });
           }}
-          className='flex min-w-0 flex-1 items-center gap-2 text-left'
+          className='flex min-w-0 flex-1 items-center gap-2.5 text-left'
         >
           {canExpand && isExpanded ?
             <FolderOpenIcon className='text-primary size-4 shrink-0' />
-          : <FolderIcon
-              className={`size-4 shrink-0 ${isInProject ? 'text-primary' : 'text-muted-foreground'}`}
-            />
-          }
-          <MarqueeLabel text={project.name} className='flex-1 text-sm font-medium' />
+          : <FolderIcon className={`size-4 shrink-0 ${isInProject ? 'text-primary' : ''}`} />}
+          <MarqueeLabel text={project.name} className='flex-1' />
         </button>
       </div>
       <CollapsibleContent>

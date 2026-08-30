@@ -28,8 +28,10 @@ export function ChecklistTreeItem({
   return (
     <button
       onClick={() => navigate({ to: checklistPath as string })}
-      className={`flex w-full items-center gap-1.5 rounded px-2 py-1 text-left transition-colors ${
-        isSelected ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted'
+      className={`flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left transition-colors ${
+        isSelected ?
+          'bg-primary/10 text-primary'
+        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
       }`}
     >
       <FileCheck2Icon className='size-3 shrink-0' />

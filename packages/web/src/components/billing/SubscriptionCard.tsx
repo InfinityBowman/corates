@@ -130,7 +130,7 @@ export function SubscriptionCard({ subscription, onManage, manageLoading }: Subs
       {hasAlert && <div className='flex flex-col gap-3 p-4'>{alerts}</div>}
 
       <SettingsRow
-        label={<span className='text-base font-semibold'>{tierInfo.name}</span>}
+        label={<h3 className='text-base font-semibold'>{tierInfo.name}</h3>}
         description={tierInfo.description}
       >
         {isFree ?
