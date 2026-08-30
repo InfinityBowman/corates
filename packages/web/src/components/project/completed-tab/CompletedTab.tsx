@@ -21,6 +21,7 @@ import {
 import { showToast } from '@/lib/toast';
 import { CompletedStudyRow } from './CompletedStudyRow';
 import { project } from '@/project';
+import { useProjectExport } from '@/hooks/useProjectExport';
 
 export function CompletedTab() {
   const { projectId, getAssigneeName, getChecklistPath } = useProjectContext();
@@ -29,6 +30,7 @@ export function CompletedTab() {
 
   const studies = useAllStudies(projectId);
   const outcomes = useProjectOutcomes(projectId);
+  const { exportStudyCsv, exportStudyPdf } = useProjectExport(projectId);
 
   const getOutcomeName = useCallback(
     (outcomeId: string) => {
@@ -77,6 +79,8 @@ export function CompletedTab() {
             onReopenReconciliation={checklistId => reopenReconciliation(study.id, checklistId)}
             onViewPdf={pdf => project.pdf.view(study.id, pdf)}
             onDownloadPdf={pdf => project.pdf.download(study.id, pdf)}
+            onExportCsv={() => exportStudyCsv(study.id)}
+            onExportPdf={() => exportStudyPdf(study.id)}
             getReconciliationProgress={(outcomeId, type) =>
               getReconciliationProgress(study.id, outcomeId, type)
             }

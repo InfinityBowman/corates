@@ -4,14 +4,28 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
-import { PlusIcon, UsersIcon, TargetIcon } from 'lucide-react';
+import {
+  PlusIcon,
+  UsersIcon,
+  TargetIcon,
+  DownloadIcon,
+  FileSpreadsheetIcon,
+  FileIcon,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { AddStudiesSheet } from './add-studies/AddStudiesSheet';
 import { AssignReviewersSheet } from './assign-reviewers/AssignReviewersSheet';
 import { OutcomesSheet } from './outcomes/OutcomesSheet';
 import { useAllStudies, useProjectMembers, useProjectOutcomes } from '@/project/workspace-data';
+import { useProjectExport } from '@/hooks/useProjectExport';
 import { useProjectContext } from './ProjectContext';
 
 export function ProjectHeaderActions() {
@@ -24,6 +38,7 @@ export function ProjectHeaderActions() {
   const studies = useAllStudies(projectId);
   const members = useProjectMembers(projectId);
   const outcomes = useProjectOutcomes(projectId);
+  const { hasExportableData, exportAllCsv, exportAllPdf } = useProjectExport(projectId);
 
   const unassignedCount = useMemo(
     () => studies.filter(s => !s.reviewer1 && !s.reviewer2).length,
@@ -72,6 +87,27 @@ export function ProjectHeaderActions() {
             </Badge>
           )}
         </Button>
+      )}
+
+      {hasExportableData && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant='outline'>
+              <DownloadIcon className='size-4' />
+              Export
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align='end'>
+            <DropdownMenuItem onClick={exportAllCsv}>
+              <FileSpreadsheetIcon />
+              Export as CSV
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={exportAllPdf}>
+              <FileIcon />
+              Export as PDF
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       )}
 
       <Button onClick={() => setAddOpen(true)}>

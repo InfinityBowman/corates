@@ -1,5 +1,7 @@
 import type { StudyInfo, MemberEntry, ProjectMeta, ChecklistEntry } from '@/stores/projectStore';
 import { amstar2 } from '@corates/shared';
+import { collectChecklistTextNotes, getAmstar2QuestionNote } from '@/lib/export-notes';
+import { resolveExportOutcome, resolveExportReviewer } from '@/lib/export-context';
 
 interface ExportOptions {
   studies: StudyInfo[];
@@ -15,6 +17,7 @@ const ROB2_HEADERS = [
   'D5 Judgment',
   'Overall Judgment',
   'Overall Direction',
+  'Notes',
 ];
 
 const ROBINSI_HEADERS = [
@@ -26,6 +29,7 @@ const ROBINSI_HEADERS = [
   'D6 Judgment',
   'Overall Judgment',
   'Overall Direction',
+  'Notes',
 ];
 
 const TYPE_LABELS: Record<string, string> = {
@@ -41,20 +45,6 @@ function escapeField(value: string | null | undefined): string {
     return `"${str.replace(/"/g, '""')}"`;
   }
   return str;
-}
-
-function resolveReviewer(assignedTo: string | null, members: MemberEntry[]): string {
-  if (!assignedTo) return 'Reconciled';
-  const member = members.find(m => m.userId === assignedTo);
-  if (!member) return assignedTo;
-  const name = [member.givenName, member.familyName].filter(Boolean).join(' ');
-  return name || member.email;
-}
-
-function resolveOutcome(outcomeId: string | null, meta?: ProjectMeta): string {
-  if (!outcomeId || !meta) return '';
-  const outcome = meta.outcomes?.find(o => o.id === outcomeId);
-  return outcome?.name || '';
 }
 
 type DomainData = {
@@ -115,6 +105,7 @@ function buildAmstar2Headers(): string[] {
       }
     }
     headers.push(label);
+    headers.push(`${label} - Notes`);
   }
 
   return headers;
@@ -143,6 +134,8 @@ function getAmstar2Values(cl: ChecklistEntry): string[] {
       const answerOptions = columns[columns.length - 1].options;
       values.push(selectedIdx >= 0 ? answerOptions[selectedIdx]?.trim() || '' : '');
     }
+
+    values.push(getAmstar2QuestionNote(raw, dataKey));
   }
 
   return values;
@@ -164,7 +157,12 @@ function getRob2Values(answers: Record<string, unknown> | null): string[] {
   });
 
   const overall = answers.overall as DomainData | undefined;
-  return [...judgments, overall?.judgement ?? '', overall?.direction ?? ''];
+  return [
+    ...judgments,
+    overall?.judgement ?? '',
+    overall?.direction ?? '',
+    collectChecklistTextNotes(answers, 'ROB2'),
+  ];
 }
 
 // --- ROBINS-I ---
@@ -183,10 +181,13 @@ function getRobinsiValues(answers: Record<string, unknown> | null): string[] {
   });
 
   const overall = answers.overall as DomainData | undefined;
-  return [...judgments, overall?.judgement ?? '', overall?.direction ?? ''];
+  return [
+    ...judgments,
+    overall?.judgement ?? '',
+    overall?.direction ?? '',
+    collectChecklistTextNotes(answers, 'ROBINS_I'),
+  ];
 }
-
-// --- Generic ---
 
 function getTypeValues(cl: ChecklistEntry): string[] {
   switch (cl.type) {
@@ -273,8 +274,8 @@ export function buildProjectCsv({ studies, members, meta }: ExportOptions): stri
         TYPE_LABELS[cl.type] || cl.type,
       ];
 
-      if (showReviewer) row.push(resolveReviewer(cl.assignedTo, members || []));
-      if (showOutcome) row.push(resolveOutcome(cl.outcomeId, meta));
+      if (showReviewer) row.push(resolveExportReviewer(cl.assignedTo, members || []));
+      if (showOutcome) row.push(resolveExportOutcome(cl.outcomeId, meta));
       row.push(cl.status, cl.score ?? '');
 
       for (const type of typesPresent) {

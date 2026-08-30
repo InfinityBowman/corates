@@ -6,6 +6,7 @@ import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { type ProjectMember } from '@/components/project/ProjectContext';
 import type { StudyInfo } from '@/stores/projectStore';
 import { useStudy } from '@/project/workspace-data';
+import { useProjectExport } from '@/hooks/useProjectExport';
 import { StudyCardHeader } from './StudyCardHeader';
 import { StudyPdfSection } from './StudyPdfSection';
 
@@ -31,6 +32,7 @@ export function StudyCard({
   readOnly,
 }: StudyCardProps) {
   const study = useStudy(projectId, studyId);
+  const { exportStudyCsv, exportStudyPdf } = useProjectExport(projectId);
   if (!study) return null;
 
   return (
@@ -41,6 +43,8 @@ export function StudyCard({
           expanded={expanded}
           onToggle={onToggleExpanded}
           onAssignReviewers={() => onAssignReviewers?.(study)}
+          onExportCsv={() => exportStudyCsv(studyId)}
+          onExportPdf={() => exportStudyPdf(studyId)}
           getMember={getMember}
         />
         <CollapsibleContent>
