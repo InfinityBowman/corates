@@ -117,6 +117,12 @@ interface ChartItem {
   values: string[];
 }
 
+function sortChartItems(items: ChartItem[]): ChartItem[] {
+  return items.sort((a, b) =>
+    a.label.localeCompare(b.label, undefined, { numeric: true, sensitivity: 'base' }),
+  );
+}
+
 interface ChartGroupSpec {
   key: string;
   heading: string;
@@ -187,7 +193,7 @@ export function ChartSection({ studies }: ChartSectionProps) {
         description:
           'Visual representation of AMSTAR-2 quality assessment ratings across completed checklists.',
         config: AMSTAR2_CHART_CONFIG,
-        data: amstarData,
+        data: sortChartItems(amstarData),
         defaultTrafficLightTitle: 'AMSTAR 2 Item-Level Judgments by Review',
         defaultDistributionTitle: 'Level Judgments Across Included Reviews',
         exportBaseName: 'amstar',
@@ -211,7 +217,7 @@ export function ChartSection({ studies }: ChartSectionProps) {
             `Risk of bias judgments for the outcome "${outcomeName}", derived from the ` +
             `${tool.name} algorithm across completed checklists.`,
           config: tool.config,
-          data: byOutcome.get(outcomeKey) ?? [],
+          data: sortChartItems(byOutcome.get(outcomeKey) ?? []),
           defaultTrafficLightTitle: `Risk of Bias (${tool.name}): ${outcomeName}`,
           defaultDistributionTitle: `Risk of Bias Distribution (${tool.name}): ${outcomeName}`,
           exportBaseName: `${tool.slug}-${slugify(outcomeName)}`,

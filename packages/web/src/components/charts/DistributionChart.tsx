@@ -4,10 +4,10 @@
  * config (AMSTAR-2 questions, RoB 2 domains, ...).
  */
 
-import { useState, useEffect, useRef, useImperativeHandle } from 'react';
+import { useState, useEffect, useRef, useImperativeHandle, useMemo } from 'react';
 // @ts-expect-error -- d3 has no type declarations in this project
 import * as d3 from 'd3';
-import { contrastColor, legendMarginRight } from './chartConfigs';
+import { contrastColor, legendCategories, legendMarginRight } from './chartConfigs';
 import type { ChartCategory, ChartPalette, ChecklistChartConfig } from './chartConfigs';
 
 interface DistributionDataItem {
@@ -103,7 +103,10 @@ export function DistributionChart({
   const nRows = config.columns.length;
   const chartWidth = Math.max(0, width - marginLeft - marginRight);
   const chartHeight = nRows * rowHeight;
-  const height = MARGIN.top + chartHeight + MARGIN.bottom;
+  const legendData = useMemo(() => legendCategories(config, data), [config, data]);
+  // Full legend can be taller than the bars when few rows are present
+  const legendHeight = 20 + legendData.length * 25;
+  const height = MARGIN.top + Math.max(chartHeight, legendHeight) + MARGIN.bottom;
 
   // D3 imperative draw
   useEffect(() => {
@@ -259,14 +262,7 @@ export function DistributionChart({
         .text(config.distributionYAxisLabel);
     }
 
-    // Legend - only categories present in the data (robvis drop=TRUE behavior)
-    const presentKeys = new Set<string>();
-    processedData.forEach(d => {
-      Object.keys(d.counts).forEach(key => {
-        if (d.counts[key] > 0) presentKeys.add(key);
-      });
-    });
-    const legendData = config.categories.filter(c => presentKeys.has(c.key));
+    // Complete key for every judgment, except "No information" unless present.
     const legend = svg
       .append('g')
       .attr('transform', `translate(${width - marginRight + 20}, ${MARGIN.top + 20})`);
@@ -308,6 +304,7 @@ export function DistributionChart({
     marginLeft,
     marginRight,
     title,
+    legendData,
   ]);
 
   return (

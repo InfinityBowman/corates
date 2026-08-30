@@ -247,6 +247,28 @@ export function legendMarginRight(config: ChecklistChartConfig): number {
   return Math.max(120, Math.ceil(maxLabelChars * 7.5) + 70);
 }
 
+const NO_INFORMATION_KEY = 'no information';
+
+/**
+ * Legend entries for a figure. Every configured judgment is included so the
+ * key stays complete, except "No information", which is omitted unless it
+ * actually appears in the data.
+ */
+export function legendCategories(
+  config: ChecklistChartConfig,
+  data: Array<{ values: string[] }>,
+): ChartCategory[] {
+  const knownKeys = new Set(config.categories.map(c => c.key));
+  const presentKeys = new Set<string>();
+  for (const row of data) {
+    for (let i = 0; i < config.columns.length; i++) {
+      const value = row.values[i]?.toLowerCase?.() ?? '';
+      presentKeys.add(knownKeys.has(value) ? value : config.fallbackCategory);
+    }
+  }
+  return config.categories.filter(c => c.key !== NO_INFORMATION_KEY || presentKeys.has(c.key));
+}
+
 /**
  * Pick the higher-contrast symbol/text color (black or white) for a given
  * fill, based on perceived luminance.
