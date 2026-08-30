@@ -386,7 +386,7 @@ export function OverviewTab() {
               </div>
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <div className='border-border border-t px-5 py-5'>
+              <div className='border-border border-t bg-[#fbfbfc] px-5 pt-[18px] pb-[22px]'>
                 <ChartSection studies={studies} />
               </div>
             </CollapsibleContent>
@@ -404,7 +404,7 @@ export function OverviewTab() {
               </div>
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <div className='border-border border-t px-5 py-5'>
+              <div className='border-border border-t bg-[#fbfbfc] px-5 pt-[18px] pb-[22px]'>
                 <ResultsTables studies={studies} />
               </div>
             </CollapsibleContent>
