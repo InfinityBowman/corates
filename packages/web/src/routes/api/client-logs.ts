@@ -9,10 +9,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
 import { getSession } from '@corates/workers/auth';
 import { runWithContext } from '@corates/workers/logger';
-import {
-  clientLogBodySchema,
-  emitClientLogEntry,
-} from '@/server/client-logs';
+import { clientLogBodySchema, emitClientLogEntry } from '@/server/client-logs';
 
 type HandlerArgs = {
   request: Request;

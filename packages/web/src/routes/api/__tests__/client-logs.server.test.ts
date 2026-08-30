@@ -57,7 +57,10 @@ describe('POST /api/client-logs', () => {
   });
 
   it('scopes authenticated entries with userId from the session', async () => {
-    mockGetSession.mockResolvedValueOnce({ user: { id: 'usr_1' }, session: { id: 's1', userId: 'usr_1' } });
+    mockGetSession.mockResolvedValueOnce({
+      user: { id: 'usr_1' },
+      session: { id: 's1', userId: 'usr_1' },
+    });
 
     const res = await handlePost({
       request: new Request('http://localhost/api/client-logs', {
