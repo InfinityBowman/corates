@@ -7,6 +7,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
 import { createAuth } from '@corates/workers/auth-config';
+import { logAuthHandlerSuccess } from '@corates/workers/auth-events';
 import { captureError } from '@corates/workers/logger';
 
 type HandlerArgs = {
@@ -27,7 +28,9 @@ export const handle = async ({ request, context }: HandlerArgs) => {
       headers: request.headers,
       body: request.body,
     });
-    return await auth.handler(authRequest);
+    const response = await auth.handler(authRequest);
+    logAuthHandlerSuccess(path, response.status);
+    return response;
   } catch (error) {
     const err = error as Error;
     captureError(error, { tags: { component: 'auth-routes', action: 'handler' } });

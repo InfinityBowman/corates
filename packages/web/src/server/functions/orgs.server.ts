@@ -187,6 +187,7 @@ export async function updateOrganization(
       },
     });
 
+    info('org.updated', { orgId });
     return { success: true as const, orgId, ...result };
   } catch (err) {
     if (err instanceof DomainErrorException) throw err;
@@ -284,6 +285,7 @@ export async function addOrgMember(
       },
     });
 
+    info('org.member_added', { orgId, userId: data.userId, role: data.role ?? 'member' });
     return { success: true as const, ...result };
   } catch (err) {
     if (err instanceof DomainErrorException) throw err;
@@ -324,6 +326,7 @@ export async function updateMemberRole(
       },
     });
 
+    info('org.member_role_updated', { orgId, memberId, role: data.role });
     return { success: true as const, memberId, role: data.role };
   } catch (err) {
     if (err instanceof DomainErrorException) throw err;
@@ -382,6 +385,7 @@ export async function removeMember(
       });
     }
 
+    info('org.member_removed', { orgId, memberId, isSelf });
     return { success: true as const, removed: memberId, isSelf };
   } catch (err) {
     if (err instanceof DomainErrorException) throw err;

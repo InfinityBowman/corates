@@ -16,6 +16,8 @@ import { Spinner } from '@/components/ui/spinner';
 import { GOOGLE_PICKER_API_KEY, GOOGLE_PICKER_APP_ID } from '@/config/google';
 import { pickGooglePdfFiles } from '@/lib/googlePicker.js';
 import { buildRestoreCallbackUrl } from '@/lib/formStatePersistence.js';
+import { clientLogger } from '@/lib/clientLogger';
+import { parseError } from '@/lib/error-utils';
 
 interface GoogleDrivePickerLauncherProps {
   active?: boolean;
@@ -144,6 +146,7 @@ export function GoogleDrivePickerLauncher({
       await connect();
     } catch (err: unknown) {
       console.warn('Google Drive connect failed:', err);
+      clientLogger.warn('client.drive.connect_failed', { code: parseError(err).code });
     }
   }, [connect]);
 
@@ -159,6 +162,7 @@ export function GoogleDrivePickerLauncher({
       await onPick?.(picked, studyIdRef.current);
     } catch (err: unknown) {
       console.warn('Google Drive picker failed:', err);
+      clientLogger.warn('client.drive.picker_failed', { code: parseError(err).code });
     }
   }, [disabled, busy, onBeforeOpenPicker, openPicker, multiselect, onPick]);
 

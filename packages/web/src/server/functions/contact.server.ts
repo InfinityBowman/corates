@@ -1,7 +1,7 @@
 import { env } from 'cloudflare:workers';
 import { createDomainError, DomainErrorException, SYSTEM_ERRORS } from '@corates/shared';
 import { escapeHtml } from '@corates/shared/html';
-import { captureError } from '@corates/workers/logger';
+import { captureError, info } from '@corates/workers/logger';
 
 interface ContactData {
   name: string;
@@ -50,6 +50,7 @@ export async function sendContactEmail(
       `,
     });
 
+    info('contact.sent', { subject: subject || 'New Inquiry' });
     return { success: true, messageId: crypto.randomUUID() };
   } catch (err) {
     captureError(err, { tags: { component: 'contact', action: 'queue-email' } });

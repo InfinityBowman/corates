@@ -1,7 +1,7 @@
 import { env } from 'cloudflare:workers';
 import { throwDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { escapeHtml } from '@corates/shared/html';
-import { captureError } from '@corates/workers/logger';
+import { captureError, info } from '@corates/workers/logger';
 import type { Database } from '@corates/db/client';
 import { feedback } from '@corates/db/schema';
 import type { FeedbackId } from '@corates/shared/ids';
@@ -58,6 +58,8 @@ export async function submitFeedback(
   } catch (err) {
     captureError(err, { tags: { component: 'feedback', action: 'queue-email' } });
   }
+
+  info('feedback.submitted', { userId, feedbackId: id, category: data.category });
 
   return { success: true, id };
 }

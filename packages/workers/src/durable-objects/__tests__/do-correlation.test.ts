@@ -45,13 +45,6 @@ function sessionStub() {
   return ns.get(ns.idFromName(USER));
 }
 
-function closeQuietly(response: Response) {
-  const socket = response.webSocket;
-  if (!socket) return;
-  socket.accept();
-  socket.close(1000, 'test-done');
-}
-
 describe('UserSession request correlation', () => {
   beforeEach(() => {
     seen.length = 0;
@@ -71,7 +64,8 @@ describe('UserSession request correlation', () => {
     expect(seen).toHaveLength(1);
     expect(seen[0].header).toBe('req-abc-123');
     expect(seen[0].scopedRequestId).toBe('req-abc-123');
-    closeQuietly(response);
+    // Intentionally leave the upgrade open: closing the client socket triggers
+    // UserSession.webSocketClose console logging, which hangs the vitest DO pool.
   });
 
   it('still opens a scope when no requestId is forwarded', async () => {
@@ -81,7 +75,6 @@ describe('UserSession request correlation', () => {
     expect(seen).toHaveLength(1);
     expect(seen[0].header).toBeNull();
     expect(seen[0].scopedRequestId).toEqual(expect.any(String));
-    closeQuietly(response);
   });
 
   it('does not inherit the caller scope implicitly - the header is what carries it', async () => {
@@ -94,6 +87,5 @@ describe('UserSession request correlation', () => {
     expect(response.status).toBe(101);
     expect(seen).toHaveLength(1);
     expect(seen[0].scopedRequestId).not.toBe('req-als-999');
-    closeQuietly(response);
   });
 });

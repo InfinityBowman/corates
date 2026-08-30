@@ -1,4 +1,4 @@
-import { captureError } from '@corates/workers/logger';
+import { captureError, info } from '@corates/workers/logger';
 import { env } from 'cloudflare:workers';
 import type { Database } from '@corates/db/client';
 import {
@@ -229,6 +229,12 @@ export async function initiateMergeRequest(
     console.log('[AccountMerge] DEV MODE - Verification code:', verificationCode);
   }
 
+  info('account_merge.initiated', {
+    initiatorId: currentUser.id,
+    targetUserId: targetUser.id,
+    lookupMethod,
+  });
+
   let formattedOrcidId: string | null = null;
   if (lookupMethod === 'orcid' && targetOrcidAccount) {
     formattedOrcidId = formatOrcidId(targetOrcidAccount.accountId);
@@ -329,6 +335,11 @@ export async function verifyMerge(
       updatedAt: new Date(),
     })
     .where(eq(verification.id, mergeRequest.id));
+
+  info('account_merge.verified', {
+    initiatorId: currentUser.id,
+    targetUserId: mergeData.targetId,
+  });
 
   const [currentAccounts, targetAccounts] = await Promise.all([
     db
@@ -490,6 +501,12 @@ export async function completeMergeRequest(
 
     await db.batch(batchOps as [(typeof batchOps)[0], ...typeof batchOps]);
 
+    info('account_merge.completed', {
+      primaryUserId,
+      secondaryUserId,
+      mergedProviderCount: mergedProviders.length,
+    });
+
     return {
       success: true as const,
       message: 'Accounts merged successfully',
@@ -532,6 +549,8 @@ export async function cancelMergeRequest(db: Database, session: Session, mergeTo
   }
 
   await db.delete(verification).where(eq(verification.id, mergeRequest.id));
+
+  info('account_merge.cancelled', { initiatorId: currentUser.id });
 
   return { success: true as const };
 }

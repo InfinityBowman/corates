@@ -1,4 +1,4 @@
-import { captureError } from '@corates/workers/logger';
+import { captureError, info } from '@corates/workers/logger';
 import { env } from 'cloudflare:workers';
 import type { Database } from '@corates/db/client';
 import { projects, projectMembers, projectInvitations, user } from '@corates/db/schema';
@@ -605,6 +605,8 @@ export async function cancelProjectInvitation(
     }
 
     await db.delete(projectInvitations).where(eq(projectInvitations.id, invitationId));
+
+    info('invitation.cancelled', { orgId, projectId, invitationId });
 
     return { success: true as const, cancelled: invitationId };
   } catch (err) {

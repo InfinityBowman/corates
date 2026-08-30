@@ -49,13 +49,14 @@ from the request scope; anything else is per-call data or scope context.
 
 ## Which logger to use
 
-| Package            | Import                          | Notes                                                                                    |
-| ------------------ | ------------------------------- | ---------------------------------------------------------------------------------------- |
-| `workers`          | `@corates/workers/logger`       | `info` / `warn` / `captureError`. The default for all server code.                       |
-| sync engine        | `createWorkspaceDO({ logger })` | Engine diagnostics; the hook in `sync/workspace.ts` forwards them to the same logger.    |
-| `stripe-purchases` | `src/lib/observability/logger`  | Hono-request-scoped wrapper adding `.stripe(action, data)` with a typed field whitelist. |
-| `web` (server)     | `@corates/workers/logger`       | Same as workers - server functions, route handlers, middleware.                          |
-| `web` (browser)    | `@/config/sentry`               | No Loki path exists from the browser; use `captureException`.                            |
+| Package                     | Import                          | Notes                                                                                    |
+| --------------------------- | ------------------------------- | ---------------------------------------------------------------------------------------- |
+| `workers`                   | `@corates/workers/logger`       | `info` / `warn` / `captureError`. The default for all server code.                       |
+| sync engine                 | `createWorkspaceDO({ logger })` | Engine diagnostics; the hook in `sync/workspace.ts` forwards them to the same logger.    |
+| `stripe-purchases`          | `src/lib/observability/logger`  | Hono-request-scoped wrapper adding `.stripe(action, data)` with a typed field whitelist. |
+| `web` (server)              | `@corates/workers/logger`       | Same as workers - server functions, route handlers, middleware.                          |
+| `web` (browser)             | `@/lib/clientLogger`            | Named events batched to `POST /api/client-logs`, relayed into Loki. Production only.     |
+| `web` (browser, exceptions) | `@/config/sentry`               | Uncaught errors and existing `captureException` call sites only.                         |
 
 Only reach for `createLogger` directly when you need a distinct `service` name, as the web
 Stripe webhook route does.
@@ -153,10 +154,17 @@ info('Created personal org %s for user %s', [orgId, userId]);
 
 Every browser-side helper no-ops without a DSN, so local development stays quiet.
 
-In the browser, the rule of thumb is **error means capture, warn means console**. A failure the
-user attempted and that did not complete gets `captureException` with `component` and `action`
-tags. A tolerated degradation - a metadata lookup that fell back, a cache write that missed -
-stays a `console.warn` and rides along as a Sentry breadcrumb if a real error follows.
+In the browser, use `clientLogger` from `@/lib/clientLogger` for named product events
+(sync fatals, PDF failures, sign-in failures). Entries batch to `POST /api/client-logs`,
+which re-emits them through the worker logger into Loki. Production only; dev stays on
+the console.
+
+Sentry stays for uncaught exceptions and existing `captureException` call sites — do not
+expand it for structured flow logging.
+
+The rule of thumb for tolerated degradations is still **warn means console** (metadata
+lookups that fell back, cache writes that missed). A failure the user attempted and that
+did not complete gets a `clientLogger` event at the call site.
 
 `bestEffort` in `@/lib/errorLogger` follows the same split: it warns by default and only reports
 when the call site passes `capture: true`. IndexedDB cache writes fail routinely under Safari
@@ -174,6 +182,8 @@ Grafana lives at `grafana.jacobmaynard.dev` with one dashboard, `CoRATES Logs`.
 {service_name=~"corates-.*"} |= "error"                        # errors across services
 {service_name="corates-workers-prod"} | json | level="warn"    # structured fields
 {service_name="corates-workers-prod"} | json | requestId="3f2b..."   # one request
+{service_name="corates-workers-prod"} | json | service="corates-web-client"   # browser events
+{service_name="corates-workers-prod"} | json | message="client.sync.fatal"
 ```
 
 Retention is 90 days (`limits_config.retention_period`). Deploying and operating the stack

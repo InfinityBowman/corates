@@ -19,6 +19,7 @@ import { queryClient } from '@/lib/queryClient';
 import { queryKeys } from '@/lib/queryKeys';
 import { getWsBaseUrl } from '@/config/api';
 import { showToast } from '@/lib/toast';
+import { clientLogger } from '@/lib/clientLogger';
 import { PROJECT_SUPERSEDED_ERROR, SESSION_EXPIRED_ERROR } from '@/constants/errors';
 import { db, deleteProjectData, trackSyncCache } from '@/primitives/db.js';
 import { loadLegacyLocalRows } from './localProject';
@@ -53,6 +54,11 @@ function createProjectWorkspace(
       // codes are noise (Stopped on teardown, Timeout offline), not verdicts.
       if (error.code === 'Stopped' || error.code === 'Timeout') return;
       console.error('[sync] mutation rejected:', mutation.name, error.code, error.message);
+      clientLogger.info('client.sync.mutation_rejected', {
+        projectId,
+        mutation: mutation.name,
+        code: error.code,
+      });
       showToast.error('Change rejected', rejectionMessage(error.code, mutation.name));
     },
   });
@@ -430,6 +436,7 @@ class ConnectionPool {
     }
 
     const message = (reason && FATAL_REASON_MESSAGES[reason]) || GENERIC_FATAL_MESSAGE;
+    clientLogger.info('client.sync.fatal', { projectId, code: String(code), reason });
     useProjectStore.getState().setConnectionState(projectId, 'error', message);
     if (reason && ACCESS_REVOKED_REASONS.has(reason)) {
       void this.cleanupProjectLocalData(projectId);

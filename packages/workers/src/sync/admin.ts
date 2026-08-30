@@ -9,7 +9,7 @@ import { workspaceAdmin } from '@cf-sync/server';
 import { eq } from 'drizzle-orm';
 import type { Database } from '@corates/db/client';
 import { projects } from '@corates/db/schema';
-import { captureError } from '../lib/logger';
+import { captureError, info } from '../lib/logger';
 import type { Env } from '../types';
 
 /** Typed admin surface over one project's workspace, for same-worker callers. */
@@ -31,6 +31,7 @@ export async function kickWorkspaceUser(
 ): Promise<void> {
   try {
     await projectWorkspace(env, projectId).disconnect({ principal: userId, reason });
+    info('sync.kicked', { projectId, userId, reason });
   } catch (err) {
     captureError(err, {
       tags: { component: 'workspace-sync', action: 'kick-user' },
@@ -48,6 +49,7 @@ export async function kickWorkspaceUser(
 export async function refreshWorkspaceSessions(env: Env, projectId: string): Promise<void> {
   try {
     await projectWorkspace(env, projectId).disconnect({ mode: 'refresh' });
+    info('sync.sessions_refreshed', { projectId });
   } catch (err) {
     captureError(err, {
       tags: { component: 'workspace-sync', action: 'refresh-sessions' },
@@ -75,6 +77,7 @@ export async function refreshOrgWorkspaceSessions(
   for (const project of orgProjects) {
     try {
       await projectWorkspace(env, project.id).disconnect({ mode: 'refresh' });
+      info('sync.sessions_refreshed', { orgId, projectId: project.id });
     } catch (err) {
       captureError(err, {
         tags: { component: 'workspace-sync', action: 'refresh-org-sessions' },

@@ -6,6 +6,8 @@ import { uploadPdf, downloadPdf, deletePdf } from '@/api/pdf-api';
 import { cachePdf, removeCachedPdf, getCachedPdf } from '@/primitives/pdfCache.js';
 import { bestEffort } from '@/lib/errorLogger.js';
 import { captureException } from '@/config/sentry';
+import { clientLogger } from '@/lib/clientLogger';
+import { parseError } from '@/lib/error-utils';
 import { extractPdfDoi, extractPdfTitle } from '@/lib/pdfUtils.js';
 import { fetchFromDOI } from '@/lib/referenceLookup.js';
 import type { PdfCitationMetadata, PdfRow, PdfTag } from '@corates/shared/sync';
@@ -101,6 +103,12 @@ export const pdfActions = {
       usePdfPreviewStore.getState().setData(data);
     } catch (err) {
       console.error('Error loading PDF:', err);
+      clientLogger.warn('client.pdf.load_failed', {
+        projectId,
+        studyId,
+        fileName: pdf.fileName,
+        code: parseError(err).code,
+      });
       captureException(err, {
         component: 'pdfActions',
         action: 'view',
@@ -206,6 +214,13 @@ export const pdfActions = {
       return pdfId;
     } catch (err) {
       console.error('Error uploading PDF:', err);
+      clientLogger.warn('client.pdf.upload_failed', {
+        projectId,
+        studyId,
+        fileName: file.name,
+        size: file.size,
+        code: parseError(err).code,
+      });
       captureException(err, {
         component: 'pdfActions',
         action: 'upload',

@@ -24,6 +24,7 @@
     },
     "./email-templates": "./src/auth/emailTemplates.ts",
     "./auth-config": "./src/auth/config.ts",
+    "./auth-events": "./src/auth/auth-events.ts",
     "./auth-admin": "./src/auth/admin.ts",
     "./commands/invitations": "./src/commands/invitations/index.ts",
     "./commands/projects": "./src/commands/projects/index.ts",

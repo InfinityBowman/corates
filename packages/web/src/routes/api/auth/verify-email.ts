@@ -14,7 +14,7 @@ import {
   getEmailVerificationFailurePage,
   getEmailVerificationErrorPage,
 } from '@/server/lib/authHtmlPages';
-import { captureError } from '@corates/workers/logger';
+import { captureError, info } from '@corates/workers/logger';
 
 type HandlerArgs = {
   request: Request;
@@ -36,6 +36,7 @@ export const handleGet = async ({ request, context }: HandlerArgs) => {
     const response = await auth.handler(authRequest);
 
     if (response.status >= 200 && response.status < 400) {
+      info('auth.email_verified', { outcome: 'success' });
       const setCookieHeaders = response.headers.getSetCookie?.() ?? [];
 
       const headers = new Headers();
@@ -47,6 +48,7 @@ export const handleGet = async ({ request, context }: HandlerArgs) => {
       return new Response(getEmailVerificationSuccessPage(), { status: 200, headers });
     }
 
+    info('auth.email_verified', { outcome: 'failure', status: response.status });
     return new Response(getEmailVerificationFailurePage(), {
       status: response.status,
       headers: { 'Content-Type': 'text/html; charset=utf-8' },

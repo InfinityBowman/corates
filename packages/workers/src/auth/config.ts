@@ -1,4 +1,5 @@
 import { captureError, warn, info } from '../lib/logger';
+import { maskEmail } from './auth-events';
 import { betterAuth } from 'better-auth';
 import { createAuthMiddleware } from 'better-auth/api';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
@@ -183,7 +184,9 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
   plugins.push(
     magicLink({
       sendMagicLink: async ({ email, url }: { email: string; url: string }) => {
-        if (env.ENVIRONMENT !== 'production') {
+        if (env.ENVIRONMENT === 'production') {
+          info('auth.magic_link_requested', { email: maskEmail(email) });
+        } else {
           console.log('[Auth] Magic link URL:', url);
         }
 
@@ -504,6 +507,7 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
         const html = getPasswordResetEmailHtml({ name, subject, resetUrl: url });
         const text = getPasswordResetEmailText({ name, resetUrl: url });
 
+        info('auth.password_reset_requested', { userId: user.id, email: maskEmail(user.email) });
         await queueEmail(env.EMAIL_QUEUE, { to: user.email, subject, html, text });
       },
     },
@@ -542,6 +546,10 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
         const html = getVerificationEmailHtml({ name, subject, verificationUrl: url });
         const text = getVerificationEmailText({ name, verificationUrl: url });
 
+        info('auth.verification_email_queued', {
+          userId: user.id,
+          email: maskEmail(user.email),
+        });
         await queueEmail(env.EMAIL_QUEUE, { to: user.email, subject, html, text });
       },
     },
@@ -643,6 +651,7 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
         if (!newSession) return;
 
         const userId = newSession.user.id;
+        info('auth.session_created', { userId, sessionId: newSession.session.id });
         const userImage = newSession.user.image;
         const userName =
           newSession.user.givenName ||

@@ -1,7 +1,8 @@
 import { useState, useRef, useCallback, useEffect, useLayoutEffect } from 'react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useAuthStore } from '@/stores/authStore';
-import { handleError } from '@/lib/error-utils';
+import { handleError, parseError } from '@/lib/error-utils';
+import { clientLogger } from '@/lib/clientLogger';
 import { useOAuthError } from '@/hooks/useOAuthError';
 import { useBfcacheReset } from '@/hooks/useBfcacheReset';
 import { getLastLoginMethod } from '@/lib/lastLoginMethod';
@@ -94,6 +95,10 @@ function SignInPage() {
       await signinWithGoogle('/complete-profile');
     } catch (err) {
       console.error('Google sign-in error:', err);
+      clientLogger.info('client.auth.sign_in_failed', {
+        provider: 'google',
+        code: parseError(err).code,
+      });
       setError('Failed to sign in with Google. Please try again.');
       localStorage.removeItem('oauthSignup');
       setGoogleLoading(false);
@@ -108,6 +113,10 @@ function SignInPage() {
       await signinWithOrcid('/complete-profile');
     } catch (err) {
       console.error('ORCID sign-in error:', err);
+      clientLogger.info('client.auth.sign_in_failed', {
+        provider: 'orcid',
+        code: parseError(err).code,
+      });
       setError('Failed to sign in with ORCID. Please try again.');
       localStorage.removeItem('oauthSignup');
       setOrcidLoading(false);
@@ -145,6 +154,10 @@ function SignInPage() {
 
       navigate({ to: '/dashboard', replace: true });
     } catch (err) {
+      clientLogger.info('client.auth.sign_in_failed', {
+        provider: 'password',
+        code: parseError(err).code,
+      });
       await handleError(err, { setError, showToast: false, navigate });
     } finally {
       setLoading(false);
