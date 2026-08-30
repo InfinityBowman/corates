@@ -286,5 +286,6 @@ CREATE TABLE \`contact_submissions\` (
 	\`dedupKey\` text NOT NULL,
 	\`createdAt\` integer DEFAULT (unixepoch())
 );
-CREATE UNIQUE INDEX \`contact_submissions_dedupKey_unique\` ON \`contact_submissions\` (\`dedupKey\`);
+--> statement-breakpoint
+CREATE UNIQUE INDEX \`contact_submissions_dedupKey_unique\` ON \`contact_submissions\` (\`dedupKey\`);--> statement-breakpoint
 CREATE INDEX \`contact_submissions_email_createdAt_idx\` ON \`contact_submissions\` (\`email\`,\`createdAt\`);`;

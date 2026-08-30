@@ -166,6 +166,13 @@ The rule of thumb for tolerated degradations is still **warn means console** (me
 lookups that fell back, cache writes that missed). A failure the user attempted and that
 did not complete gets a `clientLogger` event at the call site.
 
+Product usage events go through `track` in `@/lib/analytics`, which sends to Plausible and
+mirrors the same event to `clientLogger` as `client.<object>.<action>` (`Checklist:Created`
+becomes `client.checklist.created`). Plausible is the system of record for counts: the Loki
+copy is production-only, batched and sanitized, so it undercounts. Prop keys matching
+`/email|password|token|secret|authorization|cookie|userid/i` are dropped from the Loki copy
+while still reaching Plausible, so name props to avoid the divergence.
+
 `bestEffort` in `@/lib/errorLogger` follows the same split: it warns by default and only reports
 when the call site passes `capture: true`. IndexedDB cache writes fail routinely under Safari
 private browsing and quota pressure, so they stay on the console; the rollback deletes do pass
@@ -184,6 +191,7 @@ Grafana lives at `grafana.jacobmaynard.dev` with one dashboard, `CoRATES Logs`.
 {service_name="corates-workers-prod"} | json | requestId="3f2b..."   # one request
 {service_name="corates-workers-prod"} | json | service="corates-web-client"   # browser events
 {service_name="corates-workers-prod"} | json | message="client.sync.fatal"
+{service_name="corates-workers-prod"} | json | message="client.checklist.created"   # usage events
 ```
 
 Retention is 90 days (`limits_config.retention_period`). Deploying and operating the stack
