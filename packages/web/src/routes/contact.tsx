@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { MailIcon, SendIcon, UserIcon, MessageSquareIcon, AlertCircleIcon } from 'lucide-react';
 import Navbar from '../components/Navbar';
@@ -40,9 +40,12 @@ type FormState = 'idle' | 'sending' | 'sent' | 'error';
 function ContactPage() {
   const [formState, setFormState] = useState<FormState>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const isSubmittingRef = useRef(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
     setFormState('sending');
     setErrorMessage('');
 
@@ -72,6 +75,8 @@ function ContactPage() {
         err instanceof Error ? err.message : 'Something went wrong. Please try again.',
       );
       setFormState('error');
+    } finally {
+      isSubmittingRef.current = false;
     }
   };
 
