@@ -22,6 +22,8 @@ import { downloadPdf, uploadPdf, deletePdf, getPdfUrl } from '@/api/pdf-api';
 import type { PdfUploadResponse } from '@/api/pdf-api';
 import { getCachedPdf, cachePdf } from '@/primitives/pdfCache.js';
 import { showToast } from '@/lib/toast';
+import { clientLogger } from '@/lib/clientLogger';
+import { parseError } from '@/lib/error-utils';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -134,7 +136,15 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
           cachePdf(projectId, studyId, fileName, cloudData);
         }
       })
-      .catch((err: unknown) => console.error('Failed to load PDF:', err))
+      .catch((err: unknown) => {
+        console.error('Failed to load PDF:', err);
+        clientLogger.warn('client.pdf.load_failed', {
+          projectId,
+          studyId,
+          fileName,
+          code: parseError(err).code,
+        });
+      })
       .finally(() => setPdfLoading(false));
   }, [
     currentPdf?.fileName,
@@ -183,6 +193,12 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
         cachePdf(projectId, studyId, fileName, data);
       } catch (err) {
         console.error('Failed to upload PDF:', err);
+        clientLogger.warn('client.pdf.upload_failed', {
+          projectId,
+          studyId,
+          fileName,
+          code: parseError(err).code,
+        });
         if (uploadResult?.fileName) {
           deletePdf(orgId, projectId, studyId, uploadResult.fileName).catch((e: unknown) =>
             console.warn('Failed to clean up orphaned PDF:', e),
