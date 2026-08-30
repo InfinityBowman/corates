@@ -130,11 +130,7 @@ export function getBillingPlanCatalog(): BillingCatalogResponse {
         price: getPlanPricing('unlimited_team'),
         isPopular: false,
         cta: 'subscribe',
-        features: [
-          'Everything in Team',
-          'Unlimited projects',
-          'Unlimited collaborators',
-        ],
+        features: ['Everything in Team', 'Unlimited projects', 'Unlimited collaborators'],
       },
     ],
   };
