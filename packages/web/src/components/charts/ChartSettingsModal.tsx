@@ -3,7 +3,23 @@
  */
 
 import { useId, useState } from 'react';
-import { CopyIcon, CheckIcon } from 'lucide-react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { CopyIcon, CheckIcon, GripVerticalIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -16,6 +32,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { cn } from '@/lib/utils';
 import { CHART_PALETTES } from './chartConfigs';
 import type { ChartPalette } from './chartConfigs';
 
@@ -29,6 +46,7 @@ interface ChartSettingsModalProps {
   onClose: () => void;
   labels: LabelItem[];
   onLabelChange: (_index: number, _newValue: string) => void;
+  onReorder: (_fromIndex: number, _toIndex: number) => void;
   palette: ChartPalette;
   onPaletteChange: (_value: ChartPalette) => void;
   robvisTitle: string;
@@ -41,11 +59,61 @@ interface ChartSettingsModalProps {
   onTransparentExportChange: (_value: boolean) => void;
 }
 
+interface SortableLabelRowProps {
+  item: LabelItem;
+  index: number;
+  onLabelChange: (_index: number, _newValue: string) => void;
+}
+
+function SortableLabelRow({ item, index, onLabelChange }: SortableLabelRowProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn('flex items-center gap-2', isDragging && 'opacity-50')}
+    >
+      <button
+        ref={setActivatorNodeRef}
+        type='button'
+        className='text-muted-foreground hover:text-foreground shrink-0 cursor-grab touch-none rounded p-1 active:cursor-grabbing'
+        aria-label={`Reorder chart label ${index + 1}`}
+        {...attributes}
+        {...listeners}
+      >
+        <GripVerticalIcon className='size-4' />
+      </button>
+      <Input
+        type='text'
+        value={item.label}
+        onChange={e => onLabelChange(index, e.target.value)}
+        aria-label={`Chart label ${index + 1}`}
+        className='flex-1'
+      />
+    </div>
+  );
+}
+
 export function ChartSettingsModal({
   isOpen,
   onClose,
   labels,
   onLabelChange,
+  onReorder,
   palette,
   onPaletteChange,
   robvisTitle,
@@ -60,6 +128,11 @@ export function ChartSettingsModal({
   const [copiedCitation, setCopiedCitation] = useState<string | null>(null);
   const fieldId = useId();
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
   const currentYear = new Date().getFullYear();
 
   const apaCitation = `Maynard, J. A., & Maynard, B. R. (${currentYear}). CoRATES (Collaborative Risk-of-Bias and Appraisal Tracking for Evidence Synthesis) [Software]. https://corates.org`;
@@ -69,6 +142,17 @@ export function ChartSettingsModal({
     navigator.clipboard.writeText(text);
     setCopiedCitation(id);
     setTimeout(() => setCopiedCitation(null), 2000);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = labels.findIndex(l => l.id === active.id);
+    const newIndex = labels.findIndex(l => l.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    onReorder(oldIndex, newIndex);
   };
 
   return (
@@ -84,19 +168,26 @@ export function ChartSettingsModal({
           <div>
             <h3 className='text-foreground mb-3 text-sm font-medium'>Chart Labels</h3>
             <p className='text-muted-foreground mb-4 text-xs'>
-              Edit labels directly. Changes are temporary and won't be saved.
+              Drag to reorder rows or edit labels directly. Changes are temporary and won't be saved.
             </p>
-            <div className='flex flex-col gap-2'>
-              {labels.map((item, index) => (
-                <Input
-                  key={item.id}
-                  type='text'
-                  value={item.label}
-                  onChange={e => onLabelChange(index, e.target.value)}
-                  aria-label={`Chart label ${index + 1}`}
-                />
-              ))}
-            </div>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext items={labels.map(l => l.id)} strategy={verticalListSortingStrategy}>
+                <div className='flex flex-col gap-2'>
+                  {labels.map((item, index) => (
+                    <SortableLabelRow
+                      key={item.id}
+                      item={item}
+                      index={index}
+                      onLabelChange={onLabelChange}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
             {labels.length === 0 && (
               <p className='text-muted-foreground py-4 text-center text-sm'>
                 No chart data available to edit.
