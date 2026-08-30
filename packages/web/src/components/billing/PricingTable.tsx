@@ -239,11 +239,7 @@ export function PricingTable({
   };
 
   const renderBillingToggle = () => (
-    <div className='mb-10 flex flex-col items-center gap-4'>
-      <Badge variant='success' className='h-auto gap-2 px-4 py-2 text-sm [&>svg]:size-4!'>
-        <StarIcon />
-        Save 2 months with annual billing
-      </Badge>
+    <div className='mb-6 flex flex-col items-center gap-2'>
       <div className='bg-muted relative inline-flex rounded-xl p-1.5'>
         <div
           className='bg-card absolute top-1.5 h-[calc(100%-12px)] w-[calc(50%-6px)] rounded-lg shadow-sm transition-transform duration-200 ease-out'
@@ -266,6 +262,10 @@ export function PricingTable({
           Annual
         </button>
       </div>
+      <Badge variant='success' className='h-auto gap-1.5 px-3 py-1 text-xs [&>svg]:size-3!'>
+        <StarIcon />
+        Save 2 months with annual billing
+      </Badge>
     </div>
   );
 

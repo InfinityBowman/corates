@@ -69,6 +69,7 @@ This avoids:
 - Clear conversion path at day 14
 - Required for project creation (free tier only allows single-study appraisal)
 - One project during trial (to focus evaluation)
+- Up to 10 collaborators
 
 **Rationale:**
 
@@ -140,7 +141,7 @@ Includes:
 Includes:
 
 - 1 project
-- Up to 3 reviewers
+- Up to 25 reviewers
 - Unlimited PDFs
 - Automated AMSTAR-2, ROBINS-I, RoB-2
 - PDF markup & consensus workflows
@@ -173,7 +174,7 @@ This is your low-friction entry point.
 Includes:
 
 - Up to 3 projects
-- Up to 5 collaborators
+- Up to 10 collaborators
 - All automation features
 - Consensus & disagreement views
 - Exports & figures
@@ -201,9 +202,7 @@ Includes:
 Includes:
 
 - Up to 10 projects
-- Up to 15 collaborators
-- Full audit trails
-- Version history
+- Up to 25 collaborators
 - Priority support
 
 **Target:**
@@ -250,12 +249,10 @@ Includes:
 | --------------------------- | ---------- | -------------------------- | -------------------------- | -------------------------- | -------------------------- |
 | Project creation            | -          | Yes (1 project)            | Yes (up to 3)              | Yes (up to 10)             | Yes (unlimited)            |
 | Projects                    | N/A        | 1 (6 months)               | Up to 3                    | Up to 10                   | Unlimited                  |
-| Collaborators               | N/A        | Up to 3                    | Up to 5                    | Up to 15                   | Unlimited                  |
+| Collaborators               | N/A        | Up to 25                   | Up to 10                   | Up to 25                   | Unlimited                  |
 | Automation (AMSTAR-2, etc.) | ❌         | ✅                         | ✅                         | ✅                         | ✅                         |
 | Consensus workflows         | ❌         | ✅                         | ✅                         | ✅                         | ✅                         |
 | PDF markup                  | Local only | ✅                         | ✅                         | ✅                         | ✅                         |
-| Audit trails                | ❌         | ❌                         | ❌                         | ✅                         | ✅                         |
-| Version history             | ❌         | ❌                         | ❌                         | ✅                         | ✅                         |
 | Visualizations              | Basic      | ✅                         | ✅                         | ✅                         | ✅                         |
 | Support                     | Community  | Email                      | Email                      | Priority                   | Priority                   |
 | Trial required              | N/A        | Yes (for project creation) | Yes (for project creation) | Yes (for project creation) | Yes (for project creation) |

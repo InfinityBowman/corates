@@ -12,13 +12,28 @@ interface FAQItemData {
 
 const FAQ_ITEMS_BASE: FAQItemData[] = [
   {
-    question: 'Can I switch plans at any time?',
+    question: 'Do collaborators need their own subscription?',
     answer:
-      "Yes! You can upgrade or downgrade your plan at any time. When you upgrade, you'll be charged a prorated amount for the remainder of your billing cycle. When you downgrade, your new plan will take effect at the start of your next billing cycle.",
+      "No. Only the project owner needs a paid plan (or trial). Collaborators you invite can create a free CoRATES account, accept your invitation, and work on the projects you add them to. They don't need to subscribe or pay anything. Your plan's collaborator limit applies to your workspace, not to each person you invite.",
   },
   {
     question: 'What happens when my trial ends?',
     answer: '', // filled per-context below
+  },
+  {
+    question: "What's the Single Project option?",
+    answer:
+      "The Single Project option is perfect if you have a one-time systematic review. It's a one-time payment that gives you 6 months of access for a single project with up to 25 collaborators. No recurring charges.",
+  },
+  {
+    question: 'Is there a discount for annual billing?',
+    answer:
+      "Yes! When you choose annual billing, you get 2 months free compared to monthly billing. That's a savings of up to 17% depending on your plan.",
+  },
+  {
+    question: 'Can I switch plans at any time?',
+    answer:
+      "Yes! You can upgrade or downgrade your plan at any time. When you upgrade, you'll be charged a prorated amount for the remainder of your billing cycle. When you downgrade, your new plan will take effect at the start of your next billing cycle.",
   },
   {
     question: 'Can I cancel my subscription?',
@@ -29,16 +44,6 @@ const FAQ_ITEMS_BASE: FAQItemData[] = [
     question: 'What payment methods do you accept?',
     answer:
       'We accept all major credit cards (Visa, Mastercard, American Express) through our secure payment processor, Stripe. All payments are encrypted and secure.',
-  },
-  {
-    question: 'Is there a discount for annual billing?',
-    answer:
-      "Yes! When you choose annual billing, you get 2 months free compared to monthly billing. That's a savings of up to 17% depending on your plan.",
-  },
-  {
-    question: "What's the Single Project option?",
-    answer:
-      "The Single Project option is perfect if you have a one-time systematic review. It's a one-time payment that gives you 6 months of access for a single project with up to 3 collaborators. No recurring charges.",
   },
 ];
 
