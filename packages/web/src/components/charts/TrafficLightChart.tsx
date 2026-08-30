@@ -24,6 +24,7 @@ interface TrafficLightChartProps {
   width?: number;
   title?: string;
   palette?: ChartPalette;
+  showSymbols?: boolean;
 }
 
 // Cap cell size so the heatmap stays compact on wide screens; width-driven
@@ -38,6 +39,7 @@ export function TrafficLightChart({
   width: widthProp,
   title = '',
   palette = 'default',
+  showSymbols = true,
   ref,
 }: TrafficLightChartProps) {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -129,6 +131,7 @@ export function TrafficLightChart({
     const categoryMap = new Map<string, ChartCategory>(config.categories.map(c => [c.key, c]));
     const fillFor = (c: ChartCategory) => c.colors[palette];
     const symbolColorFor = (c: ChartCategory) => contrastColor(fillFor(c));
+    const symbolsOn = palette === 'greyscale' || showSymbols;
 
     // Draw a lucide icon (24x24 viewBox path data) centered in a size*size box
     const drawIcon = (
@@ -219,7 +222,15 @@ export function TrafficLightChart({
             .attr('rx', Math.max(2, cellSize * 0.12))
             .style('filter', 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.1))');
           const iconSize = cw * 0.7;
-          drawIcon(cellGroup, category, x + (cw - iconSize) / 2, y + (cw - iconSize) / 2, iconSize);
+          if (symbolsOn) {
+            drawIcon(
+              cellGroup,
+              category,
+              x + (cw - iconSize) / 2,
+              y + (cw - iconSize) / 2,
+              iconSize,
+            );
+          }
         }
       }
     });
@@ -252,7 +263,7 @@ export function TrafficLightChart({
       .attr('stroke', '#ffffff')
       .attr('stroke-width', 1);
     items.each(function (this: SVGGElement, d: ChartCategory) {
-      drawIcon(d3.select(this), d, 2, -6, 12);
+      if (symbolsOn) drawIcon(d3.select(this), d, 2, -6, 12);
     });
     items
       .append('text')
@@ -296,6 +307,7 @@ export function TrafficLightChart({
     data,
     config,
     palette,
+    showSymbols,
     nColumns,
     cellSize,
     svgWidth,
@@ -314,7 +326,7 @@ export function TrafficLightChart({
         borderRadius: '8px',
         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
         padding: '16px',
-        margin: '16px auto',
+        margin: '0 auto',
         maxWidth: '880px',
         width: '100%',
       }}
