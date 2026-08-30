@@ -49,7 +49,9 @@ function ContactPage() {
     setFormState('sending');
     setErrorMessage('');
 
-    const formData = new FormData(e.currentTarget);
+    // React nullifies currentTarget after this handler yields at await.
+    const form = e.currentTarget;
+    const formData = new FormData(form);
     const data = {
       name: formData.get('name'),
       email: formData.get('email'),
@@ -68,7 +70,7 @@ function ContactPage() {
       });
 
       setFormState('sent');
-      e.currentTarget.reset();
+      form.reset();
     } catch (err) {
       console.error('Contact form error:', err);
       setErrorMessage(
