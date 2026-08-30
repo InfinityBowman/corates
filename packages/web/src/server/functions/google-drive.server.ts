@@ -1,4 +1,4 @@
-import { captureError } from '@corates/workers/logger';
+import { captureError, info } from '@corates/workers/logger';
 import { env } from 'cloudflare:workers';
 import type { Database } from '@corates/db/client';
 import { account, projects, mediaFiles } from '@corates/db/schema';
@@ -41,6 +41,7 @@ export async function disconnectGoogle(db: Database, session: Session) {
     .delete(account)
     .where(and(eq(account.userId, session.user.id), eq(account.providerId, 'google')));
 
+  info('google.disconnected', { userId: session.user.id });
   return { success: true as const, message: 'Google account disconnected' };
 }
 
@@ -247,6 +248,15 @@ export async function importFromDrive(
     } catch (dbError) {
       captureError(dbError, { tags: { component: 'google-drive', action: 'import-insert-media' } });
     }
+
+    info('pdf.drive_imported', {
+      userId: session.user.id,
+      projectId,
+      studyId,
+      mediaFileId,
+      fileName: uniqueFileName,
+      size: fileSize,
+    });
 
     return {
       success: true as const,

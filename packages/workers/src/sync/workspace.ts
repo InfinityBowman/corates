@@ -20,7 +20,7 @@ import { yjsFields } from '@cf-sync/yjs/server';
 import { syncApp } from '@corates/shared/sync';
 import { createDb } from '@corates/db/client';
 import { verifyAuth } from '../auth/config';
-import { captureError, warn } from '../lib/logger';
+import { captureError, warn, info } from '../lib/logger';
 import type { Env } from '../types';
 import { buildSyncVerdict } from './authorize';
 
@@ -66,9 +66,24 @@ const syncRoute = createSyncRoute<Env>({
   pathPrefix: SYNC_PATH_PREFIX,
   authorize: async (request, { workspaceId, env }) => {
     const { user } = await verifyAuth(request, env);
-    if (!user) return { ok: false, reason: 'auth-required' };
+    if (!user) {
+      info('sync.authorize_denied', { projectId: workspaceId, reason: 'auth-required' });
+      return { ok: false, reason: 'auth-required' };
+    }
     const verdict = await buildSyncVerdict(createDb(env.DB), user.id, workspaceId);
-    if (!verdict.ok) return { ok: false, reason: verdict.reason };
+    if (!verdict.ok) {
+      info('sync.authorize_denied', {
+        projectId: workspaceId,
+        userId: user.id,
+        reason: verdict.reason,
+      });
+      return { ok: false, reason: verdict.reason };
+    }
+    info('sync.authorize_ok', {
+      projectId: workspaceId,
+      userId: user.id,
+      writeAllowed: verdict.context.writeAllowed,
+    });
     return { ok: true, principal: verdict.principal, context: verdict.context };
   },
 });

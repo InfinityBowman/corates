@@ -152,6 +152,7 @@ export async function validateCoupon(code: string) {
       return { valid: false as const, error: 'This promo code is no longer available' };
     }
 
+    info('billing.coupon_validated', { code: promo.code, promoCodeId: promo.id });
     return {
       valid: true as const,
       promoCodeId: promo.id,
@@ -349,13 +350,15 @@ export async function createPortalSession(db: Database, session: Session, reques
 
   const auth = createAuth(env);
   const billingApi = auth.api as unknown as PortalApi;
-  return billingApi.createBillingPortal({
+  const result = await billingApi.createBillingPortal({
     headers: request.headers,
     body: {
       referenceId: orgId as string,
       returnUrl: `${env.APP_URL || 'https://corates.org'}/settings/billing`,
     },
   });
+  info('billing.portal_opened', { orgId, userId: session.user.id });
+  return result;
 }
 
 // --- Single-project checkout ---
@@ -417,6 +420,8 @@ export async function beginTrial(db: Database, session: Session) {
     startsAt: now,
     expiresAt,
   });
+
+  info('billing.trial_started', { orgId, userId: session.user.id, grantId });
 
   return {
     success: true as const,

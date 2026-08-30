@@ -7,7 +7,8 @@
  * magic link is embedded in the email.
  */
 
-import { captureError } from './logger';
+import { captureError, info } from './logger';
+import { maskEmail } from '../auth/auth-events';
 import type { Env } from '../types';
 import { queueEmail } from '@corates/shared/email';
 
@@ -89,6 +90,7 @@ export async function sendInvitationEmail(
       html: emailHtml,
       text: emailText,
     });
+    info('invitation.email_queued', { email: maskEmail(email), projectName });
     return { emailQueued: true };
   } catch (err) {
     captureError(err, { tags: { component: 'invitation', action: 'queue-email' } });

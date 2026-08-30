@@ -225,7 +225,7 @@ export default [
       // Prevent accidental table-wide deletes/updates without a where clause
       'drizzle/enforce-delete-with-where': ['error', { drizzleObjectName: 'db' }],
       'drizzle/enforce-update-with-where': ['error', { drizzleObjectName: 'db' }],
-      // Use @corates/workers/logger instead of raw console calls
+      // Use @corates/workers/logger instead of raw console calls (console.log kept for local dev)
       'no-console': ['error', { allow: ['log'] }],
       // Use @corates/workers/logger instead of direct Sentry imports
       'no-restricted-imports': [
