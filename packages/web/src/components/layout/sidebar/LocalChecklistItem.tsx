@@ -23,21 +23,23 @@ export function LocalChecklistItem({ checklist, isSelected, onDelete }: LocalChe
 
   return (
     <div
-      className={`group flex items-center rounded-lg transition-colors ${
-        isSelected ? 'bg-primary/10 text-primary' : 'text-secondary-foreground hover:bg-muted'
+      className={`group flex items-center rounded-md transition-colors ${
+        isSelected ?
+          'bg-primary/10 text-primary'
+        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
       }`}
     >
       <button
         onClick={() => navigate({ to: `/checklist/${checklist.id}` as string })}
-        className='flex min-w-0 flex-1 items-center gap-2 px-3 py-2 text-left focus:outline-none'
+        className='flex min-w-0 flex-1 items-center gap-2.5 px-2.5 py-2 text-left focus:outline-none'
       >
-        <FileCheck2Icon className='text-muted-foreground size-4 shrink-0' />
+        <FileCheck2Icon className='size-4 shrink-0' />
         <div className='min-w-0 flex-1'>
           <MarqueeLabel
             text={checklist.name || 'Untitled Checklist'}
             className='text-sm font-medium'
           />
-          <div className='text-2xs text-muted-foreground mt-0.5'>
+          <div className='text-2xs text-muted-foreground/80 mt-0.5'>
             {formatDate(checklist.updatedAt || checklist.createdAt)}
           </div>
         </div>

@@ -39,12 +39,12 @@ export function StudyTreeItem({
         if (open !== isExpanded) onToggle();
       }}
     >
-      <CollapsibleTrigger className='group text-muted-foreground hover:bg-muted flex w-full items-center rounded px-2 py-1.5 transition-colors'>
+      <CollapsibleTrigger className='group text-muted-foreground hover:bg-muted hover:text-foreground flex w-full items-center rounded-md px-2 py-1.5 transition-colors'>
         <ChevronRightIcon
-          className={`text-muted-foreground/70 mr-1 size-2.5 shrink-0 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+          className={`mr-1 size-2.5 shrink-0 opacity-60 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
         />
         <div className='flex min-w-0 flex-1 items-center gap-1.5 text-left'>
-          <BookOpenIcon className='text-muted-foreground/70 size-3.5 shrink-0' />
+          <BookOpenIcon className='size-3.5 shrink-0 opacity-70' />
           <MarqueeLabel text={study.name} className='flex-1 text-xs font-medium' />
         </div>
       </CollapsibleTrigger>

@@ -19,12 +19,14 @@ import {
   FolderIcon,
   TriangleAlertIcon,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useAuthStore, selectUser, selectIsLoggedIn } from '@/stores/authStore';
 import { useAllStudies } from '@/project/workspace-data';
 import { applyLocalMutation } from '@/project/localWrites';
 import { LOCAL_PROJECT_ID } from '@/project/localProject';
 import { db } from '@/primitives/db';
 import { useMyProjectsList } from '@/hooks/useMyProjectsList';
+import { APP_NAME, APP_VERSION } from '@/config/app';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import {
@@ -40,6 +42,28 @@ import {
 } from '@/components/ui/alert-dialog';
 import { ProjectTreeItem } from './sidebar/ProjectTreeItem';
 import { LocalChecklistItem } from './sidebar/LocalChecklistItem';
+import { NAV_GROUP_LABEL, NAV_FOOTER, navRowClass } from './navStyles';
+
+interface EmptyGroupProps {
+  icon: LucideIcon;
+  message: string;
+  actionLabel: string;
+  onAction: () => void;
+}
+
+function EmptyGroup({ icon: Icon, message, actionLabel, onAction }: EmptyGroupProps) {
+  return (
+    <div className='flex flex-col items-start gap-0.5 px-2.5 py-2'>
+      <span className='text-muted-foreground flex items-center gap-2.5 text-sm'>
+        <Icon className='size-4 shrink-0 opacity-60' />
+        {message}
+      </span>
+      <Button variant='link' size='xs' onClick={onAction} className='px-0'>
+        {actionLabel}
+      </Button>
+    </div>
+  );
+}
 
 interface SidebarProps {
   desktopMode: 'expanded' | 'collapsed';
@@ -190,32 +214,21 @@ export function Sidebar({
   // --- Shared sidebar content (lowercase to avoid lint "component during render" error) ---
   function renderSidebarContent() {
     return (
-      <div className='sidebar-scrollbar flex-1 overflow-x-hidden overflow-y-auto'>
-        {/* Projects home link */}
-        <div className='p-2'>
+      <div className='sidebar-scrollbar flex-1 overflow-x-hidden overflow-y-auto px-3 pt-3 pb-4'>
+        <div className='mb-5'>
           <button
             onClick={() => navigate({ to: '/dashboard' })}
-            className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-              isCurrentPath('/') || isCurrentPath('/dashboard') ?
-                'bg-primary/10 text-primary'
-              : 'text-secondary-foreground hover:bg-secondary'
-            }`}
+            className={`w-full ${navRowClass(isCurrentPath('/') || isCurrentPath('/dashboard'))}`}
           >
             <HomeIcon className='size-4 shrink-0' />
-            <span className='truncate'>Projects</span>
+            <span className='truncate'>Dashboard</span>
           </button>
         </div>
 
-        {/* Cloud Projects */}
         {isLoggedIn && (
-          <>
-            <div className='px-3 pt-4 pb-2'>
-              <h3 className='text-muted-foreground flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase'>
-                <CloudIcon className='size-3' />
-                Projects
-              </h3>
-            </div>
-            <div className='flex flex-col gap-0.5 px-2'>
+          <div className='mb-5'>
+            <div className={NAV_GROUP_LABEL}>Projects</div>
+            <div className='flex flex-col gap-0.5'>
               {cloudProjects?.length > 0 ?
                 cloudProjects.map((project: { id: string; name: string }) => (
                   <ProjectTreeItem
@@ -230,60 +243,38 @@ export function Sidebar({
                   />
                 ))
               : !isProjectsLoading ?
-                <div className='px-2 py-4 text-center'>
-                  <div className='bg-secondary mx-auto mb-2 flex size-8 items-center justify-center rounded-lg'>
-                    <FolderIcon className='text-muted-foreground/70 size-4' />
-                  </div>
-                  <p className='text-muted-foreground text-xs font-medium'>No projects yet</p>
-                  <Button
-                    variant='link'
-                    size='xs'
-                    onClick={() => navigate({ to: '/dashboard' })}
-                    className='mt-1'
-                  >
-                    Create a project
-                  </Button>
-                </div>
+                <EmptyGroup
+                  icon={FolderIcon}
+                  message='No projects yet'
+                  actionLabel='Create a project'
+                  onAction={() => navigate({ to: '/dashboard' })}
+                />
               : null}
             </div>
-          </>
+          </div>
         )}
 
-        {/* Local Checklists */}
-        <div className='px-3 pt-6 pb-2'>
-          <h3 className='text-muted-foreground flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase'>
-            <FileCheck2Icon className='size-3' />
-            Appraisals
-          </h3>
-        </div>
-        <div className='flex flex-col gap-0.5 px-2'>
-          {checklists.length > 0 ?
-            checklists.map(checklist => (
-              <LocalChecklistItem
-                key={checklist.id}
-                checklist={checklist}
-                isSelected={currentPath === `/checklist/${checklist.id}`}
-                onDelete={handleDeleteLocalChecklist}
+        <div className='mb-5'>
+          <div className={NAV_GROUP_LABEL}>Appraisals</div>
+          <div className='flex flex-col gap-0.5'>
+            {checklists.length > 0 ?
+              checklists.map(checklist => (
+                <LocalChecklistItem
+                  key={checklist.id}
+                  checklist={checklist}
+                  isSelected={currentPath === `/checklist/${checklist.id}`}
+                  onDelete={handleDeleteLocalChecklist}
+                />
+              ))
+            : <EmptyGroup
+                icon={FileCheck2Icon}
+                message='No appraisals'
+                actionLabel='Create one'
+                onAction={() => navigate({ to: '/checklist' as string })}
               />
-            ))
-          : <div className='px-2 py-4 text-center'>
-              <div className='bg-secondary mx-auto mb-2 flex size-8 items-center justify-center rounded-lg'>
-                <FileCheck2Icon className='text-muted-foreground/70 size-4' />
-              </div>
-              <p className='text-muted-foreground text-xs font-medium'>No appraisals</p>
-              <Button
-                variant='link'
-                size='xs'
-                onClick={() => navigate({ to: '/checklist' as string })}
-                className='mt-1'
-              >
-                Create one
-              </Button>
-            </div>
-          }
+            }
+          </div>
         </div>
-
-        <div className='h-8' />
       </div>
     );
   }
@@ -302,10 +293,10 @@ export function Sidebar({
       >
         <div className='flex h-full flex-col'>
           {/* Header -- both states always rendered, cross-fade */}
-          <div className='border-border relative shrink-0 border-b'>
+          <div className='relative shrink-0'>
             {/* Collapsed header (bottom layer) */}
             <div
-              className={`flex items-center justify-center p-2 transition-opacity duration-200 ${
+              className={`flex items-center justify-center px-1 py-2 transition-opacity duration-200 ${
                 isExpanded ? 'pointer-events-none opacity-0' : 'opacity-100'
               }`}
               aria-hidden={isExpanded}
@@ -328,13 +319,13 @@ export function Sidebar({
 
             {/* Expanded header (top layer) */}
             <div
-              className={`absolute inset-0 flex items-center p-2 transition-opacity duration-200 ${
+              className={`absolute inset-0 flex items-center px-3 py-2 transition-opacity duration-200 ${
                 isExpanded ? 'opacity-100' : 'pointer-events-none opacity-0'
               }`}
               aria-hidden={!isExpanded}
             >
-              <span className='text-secondary-foreground flex-1 truncate px-2 text-sm font-semibold'>
-                CoRATES
+              <span className='text-foreground flex-1 truncate px-2.5 text-sm font-semibold'>
+                {APP_NAME}
               </span>
               <Tooltip delayDuration={500}>
                 <TooltipTrigger asChild>
@@ -370,14 +361,14 @@ export function Sidebar({
                     className={`flex size-8 items-center justify-center rounded-md transition-colors ${
                       isCurrentPath('/dashboard') || isCurrentPath('/') ?
                         'bg-primary/10 text-primary'
-                      : 'text-muted-foreground hover:bg-secondary hover:text-secondary-foreground'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                     }`}
-                    aria-label='Projects'
+                    aria-label='Dashboard'
                   >
                     <HomeIcon className='size-4' />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent side='right'>Projects</TooltipContent>
+                <TooltipContent side='right'>Dashboard</TooltipContent>
               </Tooltip>
 
               {isLoggedIn && (
@@ -385,7 +376,7 @@ export function Sidebar({
                   <TooltipTrigger asChild>
                     <button
                       onClick={onToggleDesktop}
-                      className='text-muted-foreground hover:bg-secondary hover:text-secondary-foreground flex size-8 items-center justify-center rounded-md transition-colors'
+                      className='text-muted-foreground hover:bg-muted hover:text-foreground flex size-8 items-center justify-center rounded-md transition-colors'
                       aria-label='Projects'
                     >
                       <CloudIcon className='size-4' />
@@ -399,7 +390,7 @@ export function Sidebar({
                 <TooltipTrigger asChild>
                   <button
                     onClick={onToggleDesktop}
-                    className='text-muted-foreground hover:bg-secondary hover:text-secondary-foreground flex size-8 items-center justify-center rounded-md transition-colors'
+                    className='text-muted-foreground hover:bg-muted hover:text-foreground flex size-8 items-center justify-center rounded-md transition-colors'
                     aria-label='Appraisals'
                   >
                     <FileCheck2Icon className='size-4' />
@@ -411,13 +402,24 @@ export function Sidebar({
 
             {/* Expanded content (top layer) -- overlays rail icons */}
             <div
-              className={`absolute inset-0 transition-opacity duration-200 ${
+              className={`absolute inset-0 flex flex-col transition-opacity duration-200 ${
                 isExpanded ? 'opacity-100' : 'pointer-events-none opacity-0'
               }`}
               aria-hidden={!isExpanded}
               inert={!isExpanded ? true : undefined}
             >
               {renderSidebarContent()}
+            </div>
+          </div>
+
+          <div
+            className={`shrink-0 transition-opacity duration-200 ${
+              isExpanded ? 'opacity-100' : 'pointer-events-none opacity-0'
+            }`}
+            aria-hidden={!isExpanded}
+          >
+            <div className={NAV_FOOTER}>
+              {APP_NAME} {APP_VERSION}
             </div>
           </div>
         </div>
@@ -475,9 +477,9 @@ export function Sidebar({
             style={{ transitionTimingFunction: 'cubic-bezier(0.32, 0.72, 0, 1)' }}
           >
             <div className='flex h-full flex-col'>
-              <div className='border-border bg-card flex shrink-0 items-center border-b p-2'>
-                <span className='text-secondary-foreground flex-1 truncate px-2 text-sm font-semibold'>
-                  CoRATES
+              <div className='bg-card flex shrink-0 items-center px-3 py-2'>
+                <span className='text-foreground flex-1 truncate px-2.5 text-sm font-semibold'>
+                  {APP_NAME}
                 </span>
                 <Button
                   variant='ghost'
@@ -490,6 +492,9 @@ export function Sidebar({
                 </Button>
               </div>
               {renderSidebarContent()}
+              <div className={NAV_FOOTER}>
+                {APP_NAME} {APP_VERSION}
+              </div>
             </div>
           </div>
         </div>,
