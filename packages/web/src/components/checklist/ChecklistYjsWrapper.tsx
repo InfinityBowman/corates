@@ -89,6 +89,8 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
 
   const isReadOnly = currentChecklist?.status ? !isEditable(currentChecklist.status) : false;
 
+  const isDualReviewerStudy = Boolean(currentStudy?.reviewer1 && currentStudy?.reviewer2);
+
   const studyPdfs = useMemo(() => currentStudy?.pdfs || [], [currentStudy]);
 
   const defaultPdf = useMemo(() => {
@@ -250,12 +252,14 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
       updates: { status: nextStatus as ChecklistStatus },
       now: Date.now(),
     });
-    const statusLabel =
-      nextStatus === CHECKLIST_STATUS.FINALIZED ? 'completed' : 'awaiting reconciliation';
-    showToast.success(
-      'Appraisal Completed',
-      `This appraisal has been marked as ${statusLabel} and is now locked.`,
-    );
+    if (nextStatus === CHECKLIST_STATUS.FINALIZED) {
+      showToast.success('Appraisal Completed', 'This appraisal has been marked as completed.');
+    } else {
+      showToast.success(
+        'Appraisal Completed',
+        'This appraisal is awaiting reconciliation. Send it back to To-Do from the Reconcile tab if you need to edit your answers.',
+      );
+    }
     setCompleteDialogOpen(false);
   }, [currentStudy, client, checklistId, checklistType, projectId, writers]);
 
@@ -328,8 +332,10 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
           <AlertDialogHeader>
             <AlertDialogTitle>Mark Appraisal as Complete?</AlertDialogTitle>
             <AlertDialogDescription>
-              Once marked complete, this appraisal will be locked and cannot be edited. Are you sure
-              you want to proceed?
+              {isDualReviewerStudy ?
+                'Your answers will be read-only here while awaiting reconciliation. You can send this appraisal back to To-Do from the Reconcile tab if you need to make changes. Are you sure you want to proceed?'
+              : 'Once marked complete, this appraisal will be finalized and cannot be edited. Are you sure you want to proceed?'
+              }
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
