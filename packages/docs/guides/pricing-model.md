@@ -69,6 +69,7 @@ This avoids:
 - Clear conversion path at day 14
 - Required for project creation (free tier only allows single-study appraisal)
 - One project during trial (to focus evaluation)
+- Up to 10 collaborators
 
 **Rationale:**
 

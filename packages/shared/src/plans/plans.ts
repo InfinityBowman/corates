@@ -97,7 +97,7 @@ export function getGrantPlan(grantType: GrantType): Plan {
         },
         quotas: {
           'projects.max': 1,
-          'collaborators.org.max': 3,
+          'collaborators.org.max': 10,
         },
       };
     case 'single_project':
