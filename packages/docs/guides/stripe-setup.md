@@ -21,13 +21,13 @@ For each product, configure:
 **Starter Team**
 
 - Name: `CoRATES Starter Team`
-- Description: `For small teams running a few projects. Up to 3 projects and 5 collaborators.`
+- Description: `For small teams running a few projects. Up to 3 projects and 10 collaborators.`
 - Image: Your logo or a plan-specific icon
 
 **Team**
 
 - Name: `CoRATES Team`
-- Description: `For active labs and review groups. Up to 10 projects and 15 collaborators.`
+- Description: `For active labs and review groups. Up to 10 projects and 25 collaborators.`
 
 **Unlimited Team**
 
@@ -37,7 +37,7 @@ For each product, configure:
 **Single Project**
 
 - Name: `CoRATES Single Project`
-- Description: `One-time purchase for a single project. 1 project and up to 3 collaborators for 6 months.`
+- Description: `One-time purchase for a single project. 1 project and up to 25 collaborators for 6 months.`
 
 ### Price IDs
 

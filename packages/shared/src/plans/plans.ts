@@ -27,7 +27,7 @@ export const PLANS: Plans = {
     },
     quotas: {
       'projects.max': 3,
-      'collaborators.org.max': 5,
+      'collaborators.org.max': 10,
     },
   },
   team: {
@@ -37,7 +37,7 @@ export const PLANS: Plans = {
     },
     quotas: {
       'projects.max': 10,
-      'collaborators.org.max': 15,
+      'collaborators.org.max': 25,
     },
   },
   unlimited_team: {
@@ -108,7 +108,7 @@ export function getGrantPlan(grantType: GrantType): Plan {
         },
         quotas: {
           'projects.max': 1,
-          'collaborators.org.max': 3,
+          'collaborators.org.max': 25,
         },
       };
     default:

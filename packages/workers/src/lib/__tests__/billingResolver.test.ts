@@ -569,8 +569,8 @@ describe('validatePlanChange', () => {
     const { nowSec, orgId } = await createTestOrg('org-1' as OrgId, 'owner-1' as UserId);
     const db = createDb(env.DB);
 
-    // Add 6 members (exceeds starter_team limit of 5 collaborators)
-    for (let i = 1; i <= 6; i++) {
+    // Add 11 members (exceeds starter_team limit of 10 collaborators)
+    for (let i = 1; i <= 11; i++) {
       await seedUser({
         id: `member-${i}`,
         name: `Member ${i}`,
@@ -594,8 +594,8 @@ describe('validatePlanChange', () => {
     expect(result.violations.some(v => v.quotaKey === 'collaborators.org.max')).toBe(true);
 
     const collabViolation = result.violations.find(v => v.quotaKey === 'collaborators.org.max')!;
-    expect(collabViolation.used).toBe(6);
-    expect(collabViolation.limit).toBe(5);
+    expect(collabViolation.used).toBe(11);
+    expect(collabViolation.limit).toBe(10);
   });
 
   it('should report multiple violations when both quotas exceeded', async () => {
@@ -614,8 +614,8 @@ describe('validatePlanChange', () => {
       });
     }
 
-    // Add 7 collaborators (exceeds starter_team limit of 5)
-    for (let i = 1; i <= 7; i++) {
+    // Add 11 collaborators (exceeds starter_team limit of 10)
+    for (let i = 1; i <= 11; i++) {
       await seedUser({
         id: `member-${i}`,
         name: `Member ${i}`,
@@ -711,6 +711,6 @@ describe('validatePlanChange', () => {
     expect(result.targetPlan.id).toBe('team');
     expect(result.targetPlan.name).toBe('Team');
     expect(result.targetPlan.quotas['projects.max']).toBe(10);
-    expect(result.targetPlan.quotas['collaborators.org.max']).toBe(15);
+    expect(result.targetPlan.quotas['collaborators.org.max']).toBe(25);
   });
 });

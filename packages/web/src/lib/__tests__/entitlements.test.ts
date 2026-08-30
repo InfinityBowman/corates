@@ -174,7 +174,7 @@ describe('entitlements', () => {
         currentPeriodEnd: futureEnd,
       });
       expect(quotas['projects.max']).toBe(10);
-      expect(quotas['collaborators.org.max']).toBe(15);
+      expect(quotas['collaborators.org.max']).toBe(25);
     });
 
     it('returns unlimited quotas for unlimited_team plan', () => {
