@@ -1,11 +1,8 @@
-/**
- * UsageCard - Displays quota usage with progress bars
- */
+/** The Usage section of the billing page. */
 
-import { useMemo } from 'react';
 import { UsersIcon, FolderIcon, TrendingUpIcon } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { SettingsSection } from '@/components/settings/primitives';
 
 interface UsageMetricProps {
   label: string;
@@ -19,20 +16,23 @@ function UsageMetric({ label, icon, used, max }: UsageMetricProps) {
   const percentage = isUnlimited || max === 0 ? 0 : Math.min(100, Math.round((used / max) * 100));
 
   return (
-    <div className='flex flex-col gap-2'>
-      <div className='flex items-center justify-between'>
-        <div className='flex items-center gap-2'>
-          <div className='bg-muted flex size-8 items-center justify-center rounded-lg'>{icon}</div>
-          <span className='text-secondary-foreground text-sm font-medium'>{label}</span>
-        </div>
-        <span className='text-foreground text-sm font-semibold'>
+    <div className='flex flex-col gap-2 px-4 py-3.5'>
+      <div className='flex items-center justify-between gap-4'>
+        <span className='text-foreground flex items-center gap-2 text-sm font-medium'>
+          {icon}
+          {label}
+        </span>
+        <span className='text-sm font-medium tabular-nums'>
           {isUnlimited ?
             <span className='text-success'>Unlimited</span>
-          : `${used} / ${max}`}
+          : <span className='text-foreground'>
+              {used} <span className='text-muted-foreground font-normal'>of {max}</span>
+            </span>
+          }
         </span>
       </div>
       {isUnlimited ?
-        <div className='from-success/10 to-success/20 h-2 w-full rounded-full bg-gradient-to-r' />
+        <div className='from-success/20 to-success/40 h-2 w-full rounded-full bg-gradient-to-r' />
       : <Progress value={percentage} />}
     </div>
   );
@@ -44,61 +44,45 @@ interface UsageCardProps {
 }
 
 export function UsageCard({ quotas, usage }: UsageCardProps) {
-  const metrics = useMemo(
-    () => [
-      {
-        key: 'projects',
-        label: 'Projects',
-        icon: <FolderIcon className='text-muted-foreground size-4' />,
-        used: usage?.projects ?? 0,
-        max: quotas?.['projects.max'] ?? 0,
-      },
-      {
-        key: 'collaborators',
-        label: 'Team Members',
-        icon: <UsersIcon className='text-muted-foreground size-4' />,
-        used: usage?.collaborators ?? 0,
-        max: quotas?.['collaborators.org.max'] ?? 0,
-      },
-    ],
-    [quotas, usage],
-  );
+  const metrics = [
+    {
+      key: 'projects',
+      label: 'Projects',
+      icon: <FolderIcon className='text-primary size-4' />,
+      used: usage?.projects ?? 0,
+      max: quotas?.['projects.max'] ?? 0,
+    },
+    {
+      key: 'collaborators',
+      label: 'Team members',
+      icon: <UsersIcon className='text-primary size-4' />,
+      used: usage?.collaborators ?? 0,
+      max: quotas?.['collaborators.org.max'] ?? 0,
+    },
+  ];
 
   const hasAnyQuota =
     quotas && (quotas['projects.max'] !== 0 || quotas['collaborators.org.max'] !== 0);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className='flex items-center gap-2 text-lg'>
-          <TrendingUpIcon className='text-muted-foreground size-5' />
-          Usage
-        </CardTitle>
-      </CardHeader>
-
-      <CardContent>
-        {hasAnyQuota ?
-          <div className='flex flex-col gap-5'>
-            {metrics.map(
-              metric =>
-                (metric.max !== 0 || metric.used > 0) && (
-                  <UsageMetric
-                    key={metric.key}
-                    label={metric.label}
-                    icon={metric.icon}
-                    used={metric.used}
-                    max={metric.max}
-                  />
-                ),
-            )}
-          </div>
-        : <div className='py-6 text-center'>
-            <p className='text-muted-foreground text-sm'>
-              Upgrade to a paid plan to create projects and collaborate with your team.
-            </p>
-          </div>
-        }
-      </CardContent>
-    </Card>
+    <SettingsSection title='Usage' icon={TrendingUpIcon}>
+      {hasAnyQuota ?
+        metrics.map(
+          metric =>
+            (metric.max !== 0 || metric.used > 0) && (
+              <UsageMetric
+                key={metric.key}
+                label={metric.label}
+                icon={metric.icon}
+                used={metric.used}
+                max={metric.max}
+              />
+            ),
+        )
+      : <p className='text-muted-foreground px-4 py-6 text-center text-[13px]'>
+          The Free plan has no project or team allowance. Upgrade to start a project.
+        </p>
+      }
+    </SettingsSection>
   );
 }

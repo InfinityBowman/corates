@@ -1,23 +1,14 @@
-/**
- * SubscriptionCard - Subscription status with trial/alerts
- */
+/** The Plan section of the billing page. */
 
 import { useMemo, type ComponentProps } from 'react';
 import { Link } from '@tanstack/react-router';
-import {
-  CreditCardIcon,
-  CalendarIcon,
-  AlertCircleIcon,
-  ClockIcon,
-  ArrowRightIcon,
-  ZapIcon,
-} from 'lucide-react';
+import { CreditCardIcon, AlertCircleIcon, ClockIcon, ArrowRightIcon, ZapIcon } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { useMembers } from '@/hooks/useMembers';
+import { SettingsSection, SettingsRow } from '@/components/settings/primitives';
 
 function getDaysRemaining(endTimestamp: number | undefined) {
   if (!endTimestamp) return null;
@@ -75,139 +66,108 @@ export function SubscriptionCard({ subscription, onManage, manageLoading }: Subs
 
   const { memberCount } = useMembers();
 
-  return (
-    <Card className='py-0'>
-      {/* Header */}
-      <div className='from-primary to-primary/90 relative bg-linear-to-r px-6 py-5'>
-        <div className='flex items-start justify-between'>
-          <div className='flex items-center gap-3'>
-            <h2 className='text-xl font-bold text-white'>{tierInfo.name}</h2>
-            <Badge variant={STATUS_VARIANTS[status] || STATUS_VARIANTS.active}>
-              {STATUS_LABELS[status] || 'Active'}
-            </Badge>
+  const alerts = (
+    <>
+      {status === 'past_due' && (
+        <Alert variant='destructive'>
+          <AlertCircleIcon />
+          <div>
+            <AlertTitle>Payment failed</AlertTitle>
+            <AlertDescription>
+              Update your payment method to keep your paid features.
+            </AlertDescription>
           </div>
-        </div>
-        {isTrial && daysRemaining !== null && (
-          <div
-            className={`mt-4 flex items-center gap-2 rounded-lg px-3 py-2 backdrop-blur-sm ${daysRemaining <= 3 ? 'bg-amber-500/20' : 'bg-white/10'}`}
-          >
-            <ClockIcon
-              className={`size-4 ${daysRemaining <= 3 ? 'text-amber-200' : 'text-blue-200'}`}
-            />
-            <span className='text-sm font-medium text-white'>
-              {daysRemaining} days remaining in trial
-              {daysRemaining <= 3 && ' - upgrade soon!'}
-            </span>
+        </Alert>
+      )}
+      {willCancel && (
+        <Alert variant='warning'>
+          <AlertCircleIcon />
+          <div>
+            <AlertTitle>Subscription ending</AlertTitle>
+            <AlertDescription>
+              Your subscription ends on {periodEndDate}, after which you move to the Free plan.
+            </AlertDescription>
           </div>
-        )}
-      </div>
-
-      {/* Content */}
-      <CardContent className='p-6'>
-        {/* Alerts */}
-        {status === 'past_due' && (
-          <Alert variant='destructive' className='mb-4'>
-            <AlertCircleIcon />
-            <div>
-              <AlertTitle>Payment failed</AlertTitle>
-              <AlertDescription>
-                Please update your payment method to continue using premium features.
-              </AlertDescription>
-            </div>
-          </Alert>
-        )}
-        {willCancel && (
-          <Alert variant='warning' className='mb-4'>
-            <AlertCircleIcon />
-            <div>
-              <AlertTitle>Subscription ending</AlertTitle>
-              <AlertDescription>
-                Your subscription will end on {periodEndDate}. You&apos;ll be downgraded to the Free
-                plan.
-              </AlertDescription>
-            </div>
-          </Alert>
-        )}
-        {isTrial && daysRemaining !== null && daysRemaining <= 3 && (
-          <Alert variant='warning' className='mb-4'>
-            <ClockIcon />
-            <div>
-              <AlertTitle>Trial ending soon</AlertTitle>
-              <AlertDescription>
-                Your trial ends in {daysRemaining} day{daysRemaining !== 1 ? 's' : ''}. Upgrade now
-                to keep your projects and data.
-              </AlertDescription>
-              <Link
-                to='/settings/plans'
-                className='mt-2 inline-flex items-center gap-1 text-sm font-medium text-amber-700 hover:text-amber-800'
-              >
-                View upgrade options
-                <ArrowRightIcon className='size-4' />
-              </Link>
-            </div>
-          </Alert>
-        )}
-
-        {/* Details */}
-        {!isFree && (
-          <div className='mb-6 flex flex-col gap-3'>
-            {sub.currentPeriodEnd && !willCancel && (
-              <div className='flex items-center justify-between text-sm'>
-                <span className='text-muted-foreground flex items-center gap-2'>
-                  <CalendarIcon className='size-4' />
-                  {isTrial ? 'Trial ends' : 'Next billing date'}
-                </span>
-                <span className='text-foreground font-medium'>{periodEndDate}</span>
-              </div>
-            )}
-            {memberCount > 0 && (
-              <div className='flex items-center justify-between text-sm'>
-                <span className='text-muted-foreground'>Team members</span>
-                <span className='text-foreground font-medium'>{memberCount}</span>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Actions */}
-        <div className='flex flex-wrap gap-3'>
-          {isFree ?
+        </Alert>
+      )}
+      {isTrial && daysRemaining !== null && daysRemaining <= 3 && (
+        <Alert variant='warning'>
+          <ClockIcon />
+          <div>
+            <AlertTitle>Trial ending soon</AlertTitle>
+            <AlertDescription>
+              Your trial ends in {daysRemaining} day{daysRemaining !== 1 ? 's' : ''}. Upgrade to
+              keep your projects and data.
+            </AlertDescription>
             <Link
               to='/settings/plans'
-              className='bg-primary text-primary-foreground hover:bg-primary/90 inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold shadow-sm transition-all hover:shadow-md'
+              className='text-warning-foreground mt-2 inline-flex items-center gap-1 text-sm font-medium hover:underline'
             >
-              <ZapIcon className='size-4' />
-              Upgrade Now
+              See upgrade options
+              <ArrowRightIcon className='size-4' />
             </Link>
-          : <>
-              <Button
-                variant='outline'
-                className='flex-1'
-                onClick={onManage}
-                disabled={manageLoading}
-              >
-                {manageLoading ?
-                  <>
-                    <Spinner size='sm' variant='current' />
-                    Loading...
-                  </>
-                : <>
-                    <CreditCardIcon className='size-4' />
-                    Manage Billing
-                  </>
-                }
-              </Button>
-              <Link
-                to='/settings/plans'
-                className='text-primary hover:bg-primary/5 inline-flex items-center gap-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors'
-              >
-                Change Plan
-                <ArrowRightIcon className='size-4' />
-              </Link>
-            </>
-          }
-        </div>
-      </CardContent>
-    </Card>
+          </div>
+        </Alert>
+      )}
+    </>
+  );
+
+  const hasAlert =
+    status === 'past_due' ||
+    willCancel ||
+    (isTrial && daysRemaining !== null && daysRemaining <= 3);
+
+  return (
+    <SettingsSection
+      title='Plan'
+      icon={CreditCardIcon}
+      action={
+        <Badge variant={STATUS_VARIANTS[status] || STATUS_VARIANTS.active}>
+          {STATUS_LABELS[status] || 'Active'}
+        </Badge>
+      }
+    >
+      {hasAlert && <div className='flex flex-col gap-3 p-4'>{alerts}</div>}
+
+      <SettingsRow
+        label={<span className='text-base font-semibold'>{tierInfo.name}</span>}
+        description={tierInfo.description}
+      >
+        {isFree ?
+          <Button asChild>
+            <Link to='/settings/plans'>
+              <ZapIcon className='size-4' />
+              Upgrade
+            </Link>
+          </Button>
+        : <Button variant='outline' onClick={onManage} disabled={manageLoading}>
+            {manageLoading ?
+              <Spinner size='sm' variant='current' />
+            : <CreditCardIcon className='size-4' />}
+            {manageLoading ? 'Opening...' : 'Manage billing'}
+          </Button>
+        }
+      </SettingsRow>
+
+      {!isFree && sub.currentPeriodEnd && !willCancel && (
+        <SettingsRow label={isTrial ? 'Trial ends' : 'Next billing date'}>
+          <span className='text-foreground text-sm'>{periodEndDate}</span>
+        </SettingsRow>
+      )}
+
+      {!isFree && isTrial && daysRemaining !== null && daysRemaining > 3 && (
+        <SettingsRow label='Trial remaining'>
+          <span className='text-foreground text-sm'>
+            {daysRemaining} day{daysRemaining !== 1 ? 's' : ''}
+          </span>
+        </SettingsRow>
+      )}
+
+      {!isFree && memberCount > 0 && (
+        <SettingsRow label='Team members'>
+          <span className='text-foreground text-sm'>{memberCount}</span>
+        </SettingsRow>
+      )}
+    </SettingsSection>
   );
 }

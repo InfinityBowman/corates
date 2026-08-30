@@ -1,6 +1,4 @@
-/**
- * SessionManagement - Active sessions list and revocation controls
- */
+/** Devices this account is signed in on. */
 
 import { useState, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -10,18 +8,8 @@ import { showToast } from '@/lib/toast';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { SettingsSection, SettingsRow } from './primitives';
 
 function parseUserAgent(userAgent?: string) {
   if (!userAgent) return { browser: 'Unknown', os: 'Unknown', device: 'desktop' as const };
@@ -92,54 +80,56 @@ function SessionCard({ session, isCurrent, revoking, onRevoke }: SessionCardProp
   const DeviceIcon = deviceInfo.device === 'mobile' ? SmartphoneIcon : MonitorIcon;
 
   return (
-    <div
-      className={`rounded-lg border p-4 ${
-        isCurrent ? 'border-primary/30 bg-primary/5' : 'border-border bg-muted'
-      }`}
-    >
-      <div className='flex items-start justify-between'>
-        <div className='flex items-start gap-3'>
-          <div className={`rounded-full p-2 ${isCurrent ? 'bg-primary/10' : 'bg-secondary'}`}>
-            <DeviceIcon
-              className={`size-5 ${isCurrent ? 'text-primary' : 'text-secondary-foreground'}`}
-            />
-          </div>
-          <div>
-            <div className='flex items-center gap-2'>
-              <p className='text-foreground font-medium'>
-                {deviceInfo.browser} on {deviceInfo.os}
-              </p>
-              {isCurrent && <Badge variant='default'>Current</Badge>}
-            </div>
-            <div className='text-muted-foreground mt-1 flex items-center gap-3 text-sm'>
-              <span className='flex items-center'>
-                <GlobeIcon className='mr-1 size-3.5' />
-                {maskIp(session.ipAddress)}
-              </span>
-              <span>
-                {isCurrent ?
-                  'Active now'
-                : formatRelativeTime(session.updatedAt || session.createdAt)}
-              </span>
-            </div>
-          </div>
+    <SettingsRow
+      media={
+        <div
+          className={
+            isCurrent ?
+              'border-primary/30 bg-primary/10 flex size-9 items-center justify-center rounded-lg border'
+            : 'border-border bg-muted flex size-9 items-center justify-center rounded-lg border'
+          }
+        >
+          <DeviceIcon
+            className={isCurrent ? 'text-primary size-4.5' : 'text-muted-foreground size-4.5'}
+          />
         </div>
-        {!isCurrent && (
-          <Button
-            variant='ghost'
-            size='sm'
-            onClick={() => onRevoke(session.token)}
-            disabled={revoking}
-            className='text-destructive hover:text-destructive hover:bg-destructive/5'
-          >
-            {revoking ?
-              <Spinner size='sm' variant='current' />
-            : <Trash2Icon className='size-4' />}
-            <span>Revoke</span>
-          </Button>
-        )}
-      </div>
-    </div>
+      }
+      label={
+        <span className='flex items-center gap-2'>
+          {deviceInfo.browser} on {deviceInfo.os}
+          {isCurrent && <Badge variant='info'>This device</Badge>}
+        </span>
+      }
+      description={
+        <span className='flex flex-wrap items-center gap-x-2'>
+          <span className='inline-flex items-center gap-1'>
+            <GlobeIcon className='size-3.5' />
+            {maskIp(session.ipAddress)}
+          </span>
+          <span aria-hidden className='text-border'>
+            /
+          </span>
+          <span>
+            {isCurrent ? 'Active now' : formatRelativeTime(session.updatedAt || session.createdAt)}
+          </span>
+        </span>
+      }
+    >
+      {!isCurrent && (
+        <Button
+          variant='ghost'
+          size='sm'
+          onClick={() => onRevoke(session.token)}
+          disabled={revoking}
+          className='text-muted-foreground hover:text-destructive hover:bg-destructive/10'
+        >
+          {revoking ?
+            <Spinner size='sm' variant='current' />
+          : <Trash2Icon className='size-3.5' />}
+          Sign out
+        </Button>
+      )}
+    </SettingsRow>
   );
 }
 
@@ -147,10 +137,8 @@ export function SessionManagement() {
   const listActiveSessions = useAuthStore(s => s.listActiveSessions);
   const revokeSessionByToken = useAuthStore(s => s.revokeSessionByToken);
   const revokeAllOtherSessions = useAuthStore(s => s.revokeAllOtherSessions);
-  const revokeAllSessions = useAuthStore(s => s.revokeAllSessions);
 
   const [revokingToken, setRevokingToken] = useState<string | null>(null);
-  const [showRevokeAllDialog, setShowRevokeAllDialog] = useState(false);
   const [revokingAll, setRevokingAll] = useState(false);
 
   const {
@@ -217,11 +205,11 @@ export function SessionManagement() {
       setRevokingToken(token);
       try {
         await revokeSessionByToken(token);
-        showToast.success('Session revoked successfully');
+        showToast.success('Signed out', 'That device has been signed out.');
         refetch();
       } catch (err) {
         const { handleError } = await import('@/lib/error-utils');
-        await handleError(err, { showToast: true, toastTitle: 'Failed to revoke session' });
+        await handleError(err, { showToast: true, toastTitle: 'Sign out failed' });
       } finally {
         setRevokingToken(null);
       }
@@ -233,114 +221,54 @@ export function SessionManagement() {
     setRevokingAll(true);
     try {
       await revokeAllOtherSessions();
-      showToast.success('All other sessions revoked');
+      showToast.success('Signed out', 'Every other device has been signed out.');
       refetch();
     } catch (err) {
       const { handleError } = await import('@/lib/error-utils');
-      await handleError(err, { showToast: true, toastTitle: 'Failed to revoke sessions' });
+      await handleError(err, { showToast: true, toastTitle: 'Sign out failed' });
     } finally {
       setRevokingAll(false);
     }
   }, [revokeAllOtherSessions, refetch]);
 
-  const handleRevokeAll = useCallback(async () => {
-    setRevokingAll(true);
-    try {
-      await revokeAllSessions();
-      showToast.success('Logged out from all devices');
-    } catch (err) {
-      const { handleError } = await import('@/lib/error-utils');
-      await handleError(err, { showToast: true, toastTitle: 'Failed to logout from all devices' });
-      setRevokingAll(false);
-    }
-    setShowRevokeAllDialog(false);
-  }, [revokeAllSessions]);
-
   return (
-    <div className='flex flex-col gap-4'>
-      <div className='flex items-center justify-between'>
-        <div>
-          <p className='text-foreground font-medium'>Active Sessions</p>
-          <p className='text-muted-foreground text-sm'>
-            Manage devices where you&apos;re currently signed in.
-          </p>
-        </div>
-      </div>
-
+    <SettingsSection
+      icon={MonitorIcon}
+      title='Devices'
+      description="Where you're signed in right now. Sign out anything you don't recognize."
+      action={
+        dedupedSessions.length > 1 ?
+          <Button variant='ghost' size='sm' onClick={handleRevokeOther} disabled={revokingAll}>
+            <LogOutIcon className='size-3.5' />
+            {revokingAll ? 'Signing out...' : 'Sign out other devices'}
+          </Button>
+        : null
+      }
+    >
       {isLoading && (
-        <div className='text-muted-foreground flex items-center justify-center py-8'>
-          <Spinner size='sm' variant='current' className='mr-2 size-5' />
-          <span>Loading sessions...</span>
+        <div className='text-muted-foreground flex items-center justify-center gap-2 py-8 text-[13px]'>
+          <Spinner size='sm' variant='current' />
+          Loading devices
         </div>
       )}
 
       {sessionsError && (
-        <Alert variant='destructive'>Failed to load sessions. Please try again.</Alert>
+        <div className='p-4'>
+          <Alert variant='destructive'>Could not load your devices. Try again in a moment.</Alert>
+        </div>
       )}
 
-      {!isLoading && !sessionsError && (
-        <>
-          <div className='flex flex-col gap-3'>
-            {dedupedSessions.map(sessionItem => (
-              <SessionCard
-                key={sessionItem.token}
-                session={sessionItem}
-                isCurrent={sessionItem.token === currentToken}
-                revoking={revokingToken === sessionItem.token}
-                onRevoke={handleRevokeSession}
-              />
-            ))}
-          </div>
-
-          {dedupedSessions.length > 1 && (
-            <>
-              <Separator className='mt-4' />
-              <div className='mt-4 flex flex-wrap gap-3'>
-                <Button variant='secondary' onClick={handleRevokeOther} disabled={revokingAll}>
-                  <LogOutIcon className='size-4' />
-                  <span>{revokingAll ? 'Revoking...' : 'Sign out other sessions'}</span>
-                </Button>
-
-                <Button
-                  variant='ghost'
-                  onClick={() => setShowRevokeAllDialog(true)}
-                  disabled={revokingAll}
-                  className='bg-destructive/10 text-destructive hover:bg-destructive/10 hover:text-destructive'
-                >
-                  <Trash2Icon className='size-4' />
-                  <span>Sign out everywhere</span>
-                </Button>
-              </div>
-            </>
-          )}
-
-          {dedupedSessions.length === 1 && (
-            <p className='text-muted-foreground mt-2 text-sm'>This is your only active session.</p>
-          )}
-        </>
-      )}
-
-      <AlertDialog open={showRevokeAllDialog} onOpenChange={setShowRevokeAllDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Sign out everywhere?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will sign you out from all devices, including this one. You&apos;ll need to sign
-              in again to continue.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={revokingAll}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              variant='destructive'
-              disabled={revokingAll}
-              onClick={handleRevokeAll}
-            >
-              {revokingAll ? 'Signing out...' : 'Sign out everywhere'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+      {!isLoading &&
+        !sessionsError &&
+        dedupedSessions.map(sessionItem => (
+          <SessionCard
+            key={sessionItem.token}
+            session={sessionItem}
+            isCurrent={sessionItem.token === currentToken}
+            revoking={revokingToken === sessionItem.token}
+            onRevoke={handleRevokeSession}
+          />
+        ))}
+    </SettingsSection>
   );
 }

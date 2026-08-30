@@ -61,8 +61,8 @@ import { Route as AppProtectedProjectsProjectIdRouteImport } from './routes/_app
 import { Route as AppProtectedSettingsIndexRouteImport } from './routes/_app/_protected/settings/index'
 import { Route as AppProtectedSettingsBillingRouteImport } from './routes/_app/_protected/settings/billing'
 import { Route as AppProtectedSettingsIntegrationsRouteImport } from './routes/_app/_protected/settings/integrations'
-import { Route as AppProtectedSettingsNotificationsRouteImport } from './routes/_app/_protected/settings/notifications'
 import { Route as AppProtectedSettingsPlansRouteImport } from './routes/_app/_protected/settings/plans'
+import { Route as AppProtectedSettingsPreferencesRouteImport } from './routes/_app/_protected/settings/preferences'
 import { Route as AppProtectedSettingsProfileRouteImport } from './routes/_app/_protected/settings/profile'
 import { Route as AppProtectedSettingsSecurityRouteImport } from './routes/_app/_protected/settings/security'
 import { Route as ApiAuthStripeWebhookRouteImport } from './routes/api/auth/stripe/webhook'
@@ -345,16 +345,16 @@ const AppProtectedSettingsIntegrationsRoute =
     path: '/integrations',
     getParentRoute: () => AppProtectedSettingsRoute,
   } as any)
-const AppProtectedSettingsNotificationsRoute =
-  AppProtectedSettingsNotificationsRouteImport.update({
-    id: '/notifications',
-    path: '/notifications',
-    getParentRoute: () => AppProtectedSettingsRoute,
-  } as any)
 const AppProtectedSettingsPlansRoute =
   AppProtectedSettingsPlansRouteImport.update({
     id: '/plans',
     path: '/plans',
+    getParentRoute: () => AppProtectedSettingsRoute,
+  } as any)
+const AppProtectedSettingsPreferencesRoute =
+  AppProtectedSettingsPreferencesRouteImport.update({
+    id: '/preferences',
+    path: '/preferences',
     getParentRoute: () => AppProtectedSettingsRoute,
   } as any)
 const AppProtectedSettingsProfileRoute =
@@ -504,8 +504,8 @@ export interface FileRoutesByFullPath {
   '/projects/$projectId': typeof AppProtectedProjectsProjectIdRouteWithChildren
   '/settings/billing': typeof AppProtectedSettingsBillingRoute
   '/settings/integrations': typeof AppProtectedSettingsIntegrationsRoute
-  '/settings/notifications': typeof AppProtectedSettingsNotificationsRoute
   '/settings/plans': typeof AppProtectedSettingsPlansRoute
+  '/settings/preferences': typeof AppProtectedSettingsPreferencesRoute
   '/settings/profile': typeof AppProtectedSettingsProfileRoute
   '/settings/security': typeof AppProtectedSettingsSecurityRoute
   '/api/auth/stripe/webhook': typeof ApiAuthStripeWebhookRoute
@@ -570,8 +570,8 @@ export interface FileRoutesByTo {
   '/projects/$projectId': typeof AppProtectedProjectsProjectIdRouteWithChildren
   '/settings/billing': typeof AppProtectedSettingsBillingRoute
   '/settings/integrations': typeof AppProtectedSettingsIntegrationsRoute
-  '/settings/notifications': typeof AppProtectedSettingsNotificationsRoute
   '/settings/plans': typeof AppProtectedSettingsPlansRoute
+  '/settings/preferences': typeof AppProtectedSettingsPreferencesRoute
   '/settings/profile': typeof AppProtectedSettingsProfileRoute
   '/settings/security': typeof AppProtectedSettingsSecurityRoute
   '/api/auth/stripe/webhook': typeof ApiAuthStripeWebhookRoute
@@ -643,8 +643,8 @@ export interface FileRoutesById {
   '/_app/_protected/projects/$projectId': typeof AppProtectedProjectsProjectIdRouteWithChildren
   '/_app/_protected/settings/billing': typeof AppProtectedSettingsBillingRoute
   '/_app/_protected/settings/integrations': typeof AppProtectedSettingsIntegrationsRoute
-  '/_app/_protected/settings/notifications': typeof AppProtectedSettingsNotificationsRoute
   '/_app/_protected/settings/plans': typeof AppProtectedSettingsPlansRoute
+  '/_app/_protected/settings/preferences': typeof AppProtectedSettingsPreferencesRoute
   '/_app/_protected/settings/profile': typeof AppProtectedSettingsProfileRoute
   '/_app/_protected/settings/security': typeof AppProtectedSettingsSecurityRoute
   '/api/auth/stripe/webhook': typeof ApiAuthStripeWebhookRoute
@@ -714,8 +714,8 @@ export interface FileRouteTypes {
     | '/projects/$projectId'
     | '/settings/billing'
     | '/settings/integrations'
-    | '/settings/notifications'
     | '/settings/plans'
+    | '/settings/preferences'
     | '/settings/profile'
     | '/settings/security'
     | '/api/auth/stripe/webhook'
@@ -780,8 +780,8 @@ export interface FileRouteTypes {
     | '/projects/$projectId'
     | '/settings/billing'
     | '/settings/integrations'
-    | '/settings/notifications'
     | '/settings/plans'
+    | '/settings/preferences'
     | '/settings/profile'
     | '/settings/security'
     | '/api/auth/stripe/webhook'
@@ -852,8 +852,8 @@ export interface FileRouteTypes {
     | '/_app/_protected/projects/$projectId'
     | '/_app/_protected/settings/billing'
     | '/_app/_protected/settings/integrations'
-    | '/_app/_protected/settings/notifications'
     | '/_app/_protected/settings/plans'
+    | '/_app/_protected/settings/preferences'
     | '/_app/_protected/settings/profile'
     | '/_app/_protected/settings/security'
     | '/api/auth/stripe/webhook'
@@ -1277,18 +1277,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProtectedSettingsIntegrationsRouteImport
       parentRoute: typeof AppProtectedSettingsRoute
     }
-    '/_app/_protected/settings/notifications': {
-      id: '/_app/_protected/settings/notifications'
-      path: '/notifications'
-      fullPath: '/settings/notifications'
-      preLoaderRoute: typeof AppProtectedSettingsNotificationsRouteImport
-      parentRoute: typeof AppProtectedSettingsRoute
-    }
     '/_app/_protected/settings/plans': {
       id: '/_app/_protected/settings/plans'
       path: '/plans'
       fullPath: '/settings/plans'
       preLoaderRoute: typeof AppProtectedSettingsPlansRouteImport
+      parentRoute: typeof AppProtectedSettingsRoute
+    }
+    '/_app/_protected/settings/preferences': {
+      id: '/_app/_protected/settings/preferences'
+      path: '/preferences'
+      fullPath: '/settings/preferences'
+      preLoaderRoute: typeof AppProtectedSettingsPreferencesRouteImport
       parentRoute: typeof AppProtectedSettingsRoute
     }
     '/_app/_protected/settings/profile': {
@@ -1443,8 +1443,8 @@ const AppProtectedAdminRouteWithChildren =
 interface AppProtectedSettingsRouteChildren {
   AppProtectedSettingsBillingRoute: typeof AppProtectedSettingsBillingRoute
   AppProtectedSettingsIntegrationsRoute: typeof AppProtectedSettingsIntegrationsRoute
-  AppProtectedSettingsNotificationsRoute: typeof AppProtectedSettingsNotificationsRoute
   AppProtectedSettingsPlansRoute: typeof AppProtectedSettingsPlansRoute
+  AppProtectedSettingsPreferencesRoute: typeof AppProtectedSettingsPreferencesRoute
   AppProtectedSettingsProfileRoute: typeof AppProtectedSettingsProfileRoute
   AppProtectedSettingsSecurityRoute: typeof AppProtectedSettingsSecurityRoute
   AppProtectedSettingsIndexRoute: typeof AppProtectedSettingsIndexRoute
@@ -1453,9 +1453,8 @@ interface AppProtectedSettingsRouteChildren {
 const AppProtectedSettingsRouteChildren: AppProtectedSettingsRouteChildren = {
   AppProtectedSettingsBillingRoute: AppProtectedSettingsBillingRoute,
   AppProtectedSettingsIntegrationsRoute: AppProtectedSettingsIntegrationsRoute,
-  AppProtectedSettingsNotificationsRoute:
-    AppProtectedSettingsNotificationsRoute,
   AppProtectedSettingsPlansRoute: AppProtectedSettingsPlansRoute,
+  AppProtectedSettingsPreferencesRoute: AppProtectedSettingsPreferencesRoute,
   AppProtectedSettingsProfileRoute: AppProtectedSettingsProfileRoute,
   AppProtectedSettingsSecurityRoute: AppProtectedSettingsSecurityRoute,
   AppProtectedSettingsIndexRoute: AppProtectedSettingsIndexRoute,

@@ -19,8 +19,10 @@ function Progress({
     >
       <ProgressPrimitive.Indicator
         data-slot='progress-indicator'
-        className='bg-primary size-full flex-1 transition-all'
-        style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
+        // Sized by width rather than translated, so the leading edge of a
+        // partial fill is rounded instead of cut square.
+        className='bg-primary h-full rounded-full transition-all'
+        style={{ width: `${Math.min(100, Math.max(0, value || 0))}%` }}
       />
     </ProgressPrimitive.Root>
   );
