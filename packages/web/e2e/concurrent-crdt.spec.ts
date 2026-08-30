@@ -32,6 +32,7 @@ import {
   assignReviewers,
   addOutcome,
   fillROB2Preliminary,
+  waitForSynced,
 } from './shared-steps';
 import { BASE_URL } from './constants';
 
@@ -271,6 +272,8 @@ test.describe('Concurrent CRDT: AMSTAR2', () => {
     const checklistUrlA = new URL(setupPage.url()).pathname;
     await setupPage.goto(`${BASE_URL}/projects/${projectId}`);
     await expect(setupPage.getByRole('tab', { name: /To Do/i })).toBeVisible({ timeout: 15_000 });
+    // User A's checklist creation must be durable before the login switch.
+    await waitForSynced(setupPage);
 
     // Switch to User B
     await setupCtx.clearCookies();
@@ -294,24 +297,21 @@ test.describe('Concurrent CRDT: AMSTAR2', () => {
     await setupPage.goto(`${BASE_URL}/projects/${projectId}`);
     await expect(setupPage.getByRole('tab', { name: /To Do/i })).toBeVisible({ timeout: 15_000 });
 
-    // Hold the setup context open through the cycle. Checklist creation is a
-    // fire-and-forget mutation, so a rendered checklist only proves the local
-    // optimistic apply happened -- the outbox entry may still be unsent, and
-    // closing the context destroys the only copy of it. Keeping the client
-    // connected lets the outbox drain while the cycle's own contexts start up.
-    try {
-      await runConcurrentEditCycle(browser, scenario, projectId, checklistUrlA, checklistUrlB, {
-        loadedSelector: 'AMSTAR2 Checklist',
-        clickA: (page, count) => clickUncheckedCheckboxes(page, count),
-        clickB: (page, count) => clickUncheckedCheckboxes(page, count),
-        countA: page => countCheckedCheckboxes(page),
-        countB: page => countCheckedCheckboxes(page),
-        round1Count: 5,
-        round2Count: 3,
-      });
-    } finally {
-      await setupCtx.close();
-    }
+    // Checklist creation is a fire-and-forget mutation; a rendered checklist
+    // only proves the local optimistic apply. Wait for the outbox to drain
+    // before closing the context that holds it.
+    await waitForSynced(setupPage);
+    await setupCtx.close();
+
+    await runConcurrentEditCycle(browser, scenario, projectId, checklistUrlA, checklistUrlB, {
+      loadedSelector: 'AMSTAR2 Checklist',
+      clickA: (page, count) => clickUncheckedCheckboxes(page, count),
+      clickB: (page, count) => clickUncheckedCheckboxes(page, count),
+      countA: page => countCheckedCheckboxes(page),
+      countB: page => countCheckedCheckboxes(page),
+      round1Count: 5,
+      round2Count: 3,
+    });
   });
 });
 
@@ -376,6 +376,8 @@ test.describe('Concurrent CRDT: ROB2', () => {
     const checklistUrlA = new URL(setupPage.url()).pathname;
     await setupPage.goto(`${BASE_URL}/projects/${projectId}`);
     await expect(setupPage.getByRole('tab', { name: /To Do/i })).toBeVisible({ timeout: 15_000 });
+    // User A's checklist creation must be durable before the login switch.
+    await waitForSynced(setupPage);
 
     // Switch to User B
     await setupCtx.clearCookies();
@@ -405,38 +407,36 @@ test.describe('Concurrent CRDT: ROB2', () => {
     });
     await fillROB2Preliminary(setupPage, 'Drug B', 'Standard care');
 
+    // Checklist creation and the preliminary answers are fire-and-forget
+    // mutations; wait for the outbox to drain before closing the context
+    // that holds it.
+    await waitForSynced(setupPage);
+    await setupCtx.close();
+
     // ROB2 uses toggle buttons (Y/PY/PN/N/NI) instead of radios.
     // Expand D1 on both pages before clicking, since domain sections
     // are collapsible. The concurrent cycle will click within D1's
     // visible signalling questions.
-    //
-    // The setup context stays open through the cycle for the same reason as
-    // the AMSTAR2 test: closing it would destroy an outbox that may still hold
-    // the unsent checklist-creation mutation.
-    try {
-      await runConcurrentEditCycle(browser, scenario, projectId, checklistUrlA, checklistUrlB, {
-        loadedSelector: 'D1',
-        clickA: async (page, count) => {
-          await page.getByRole('button', { name: 'D1', exact: true }).click();
-          await expect(page.getByRole('button', { name: 'Y', exact: true }).first()).toBeVisible({
-            timeout: 5_000,
-          });
-          return clickROB2Buttons(page, 'Y', count);
-        },
-        clickB: async (page, count) => {
-          await page.getByRole('button', { name: 'D1', exact: true }).click();
-          await expect(page.getByRole('button', { name: 'N', exact: true }).first()).toBeVisible({
-            timeout: 5_000,
-          });
-          return clickROB2Buttons(page, 'N', count);
-        },
-        countA: page => countSelectedROB2Buttons(page, 'Y'),
-        countB: page => countSelectedROB2Buttons(page, 'N'),
-        round1Count: 3,
-        round2Count: 2,
-      });
-    } finally {
-      await setupCtx.close();
-    }
+    await runConcurrentEditCycle(browser, scenario, projectId, checklistUrlA, checklistUrlB, {
+      loadedSelector: 'D1',
+      clickA: async (page, count) => {
+        await page.getByRole('button', { name: 'D1', exact: true }).click();
+        await expect(page.getByRole('button', { name: 'Y', exact: true }).first()).toBeVisible({
+          timeout: 5_000,
+        });
+        return clickROB2Buttons(page, 'Y', count);
+      },
+      clickB: async (page, count) => {
+        await page.getByRole('button', { name: 'D1', exact: true }).click();
+        await expect(page.getByRole('button', { name: 'N', exact: true }).first()).toBeVisible({
+          timeout: 5_000,
+        });
+        return clickROB2Buttons(page, 'N', count);
+      },
+      countA: page => countSelectedROB2Buttons(page, 'Y'),
+      countB: page => countSelectedROB2Buttons(page, 'N'),
+      round1Count: 3,
+      round2Count: 2,
+    });
   });
 });

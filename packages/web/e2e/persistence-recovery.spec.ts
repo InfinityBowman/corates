@@ -21,7 +21,7 @@ import {
   updateSubscription,
   type DualReviewerScenario,
 } from './helpers';
-import { setupProjectWithStudy, studyCardTitle } from './shared-steps';
+import { setupProjectWithStudy, studyCardTitle, waitForSynced } from './shared-steps';
 
 let scenario: DualReviewerScenario;
 
@@ -100,8 +100,8 @@ test('Project state survives page refresh', async ({ context, page }) => {
     await yesRadios.nth(i).click();
     await expect(yesRadios.nth(i)).toBeChecked({ timeout: 5_000 });
   }
-  // Give the WebSocket time to flush updates to the server
-  await page.waitForTimeout(1000);
+  // Every answer is durably on the server once the outbox drains.
+  await waitForSynced(page);
 
   const checkedAfterRound1 = await countCheckedYesRadios(page);
   expect(checkedAfterRound1).toBeGreaterThan(0);
@@ -155,7 +155,7 @@ test('Project state survives page refresh', async ({ context, page }) => {
     await yesRadiosRound2.nth(i).click();
     await expect(yesRadiosRound2.nth(i)).toBeChecked({ timeout: 5_000 });
   }
-  await page.waitForTimeout(1000);
+  await waitForSynced(page);
 
   const checkedAfterRound2 = await countCheckedYesRadios(page);
   expect(checkedAfterRound2).toBeGreaterThan(checkedAfterReload1);
