@@ -99,7 +99,7 @@ export function getBillingPlanCatalog(): BillingCatalogResponse {
         name: starter.name,
         description: 'For small teams running a few projects',
         price: getPlanPricing('starter_team'),
-        isPopular: true,
+        isPopular: false,
         cta: 'subscribe',
         features: [
           `Up to ${quotaLabel(starter.quotas['projects.max'])} projects`,
@@ -114,7 +114,7 @@ export function getBillingPlanCatalog(): BillingCatalogResponse {
         name: team.name,
         description: 'For active labs and review groups',
         price: getPlanPricing('team'),
-        isPopular: false,
+        isPopular: true,
         cta: 'subscribe',
         features: [
           'Everything in Starter',
