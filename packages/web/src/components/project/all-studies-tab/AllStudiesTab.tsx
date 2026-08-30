@@ -10,8 +10,9 @@ import { StudyCard } from './study-card/StudyCard';
 import { AssignReviewersModal } from './AssignReviewersModal';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import type { StudyInfo } from '@/stores/projectStore';
-import { useSortedStudyIds } from '@/project/workspace-data';
+import { useAllStudies } from '@/project/workspace-data';
 import { useAddStudies } from '@/hooks/useAddStudies';
+import { useProjectExport } from '@/hooks/useProjectExport';
 import { project } from '@/project';
 import { useProjectContext } from '../ProjectContext';
 import { saveFormState } from '@/lib/formStatePersistence.js';
@@ -26,9 +27,10 @@ export function AllStudiesTab() {
   const [editingStudy, setEditingStudy] = useState<StudyInfo | null>(null);
 
   const addStudies = useAddStudies({});
-  const studyIds = useSortedStudyIds(projectId);
+  const studies = useAllStudies(projectId);
+  const { exportStudyCsv, exportStudyPdf } = useProjectExport(projectId);
   const connectionState = useProjectStore(s => selectConnectionPhase(s, projectId));
-  const hasData = connectionState.phase === 'synced' || studyIds.length > 0;
+  const hasData = connectionState.phase === 'synced' || studies.length > 0;
 
   const handleSaveState = useCallback(
     async (state: AddStudiesFormState) => {
@@ -68,7 +70,7 @@ export function AllStudiesTab() {
     <div>
       {/* Empty project: the add form is the centerpiece. Once studies exist it
           moves to the Add studies sheet in the project header. */}
-      {hasData && studyIds.length === 0 && (
+      {hasData && studies.length === 0 && (
         <AddStudiesForm
           studies={addStudies}
           projectId={projectId}
@@ -84,15 +86,16 @@ export function AllStudiesTab() {
         </div>
       )}
 
-      {studyIds.length > 0 && (
+      {studies.length > 0 && (
         <div className='flex flex-col gap-2'>
-          {studyIds.map(studyId => (
+          {studies.map(study => (
             <StudyCard
-              key={studyId}
-              projectId={projectId}
-              studyId={studyId}
-              expanded={expandedStudies.has(studyId)}
-              onToggleExpanded={() => toggleStudyExpanded(studyId)}
+              key={study.id}
+              study={study}
+              expanded={expandedStudies.has(study.id)}
+              onToggleExpanded={() => toggleStudyExpanded(study.id)}
+              onExportCsv={() => exportStudyCsv(study.id)}
+              onExportPdf={() => exportStudyPdf(study.id)}
               getMember={getMember}
               onAssignReviewers={s => {
                 setEditingStudy(s);
