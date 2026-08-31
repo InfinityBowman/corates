@@ -71,6 +71,14 @@ interface SubscriptionData {
   canceledAt?: Date | number | null;
 }
 
+// Stripe hands these fields back as epoch seconds on some events and as Date on
+// others (depending on whether the value came off the raw payload or the DB
+// row). Normalize so the log field has one type to query on.
+function toIsoTimestamp(value: Date | number | null | undefined): string | null {
+  if (value === null || value === undefined) return null;
+  return (value instanceof Date ? value : new Date(value * 1000)).toISOString();
+}
+
 interface AuthorizeReferenceParams {
   user: BetterAuthUser;
   session: BetterAuthSession;
@@ -300,6 +308,15 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
           ],
           // Real-time notifications for subscription changes
           onSubscriptionComplete: async ({ subscription }: { subscription: SubscriptionData }) => {
+            // Logged outside the waitUntil block so the transition is recorded
+            // even when the notification side effects cannot be scheduled.
+            info('billing.subscription_completed', {
+              orgId: subscription.referenceId,
+              plan: subscription.plan,
+              status: subscription.status,
+              periodEnd: toIsoTimestamp(subscription.periodEnd),
+            });
+
             if (ctx && ctx.waitUntil) {
               ctx.waitUntil(
                 (async () => {
@@ -334,6 +351,14 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
             }
           },
           onSubscriptionUpdate: async ({ subscription }: { subscription: SubscriptionData }) => {
+            info('billing.subscription_updated', {
+              orgId: subscription.referenceId,
+              plan: subscription.plan,
+              status: subscription.status,
+              periodEnd: toIsoTimestamp(subscription.periodEnd),
+              cancelAtPeriodEnd: subscription.cancelAtPeriodEnd ?? false,
+            });
+
             if (ctx && ctx.waitUntil) {
               ctx.waitUntil(
                 (async () => {
@@ -369,6 +394,14 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
             }
           },
           onSubscriptionCancel: async ({ subscription }: { subscription: SubscriptionData }) => {
+            info('billing.subscription_canceled', {
+              orgId: subscription.referenceId,
+              plan: subscription.plan,
+              status: subscription.status,
+              cancelAt: toIsoTimestamp(subscription.cancelAt),
+              canceledAt: toIsoTimestamp(subscription.canceledAt),
+            });
+
             if (ctx && ctx.waitUntil) {
               ctx.waitUntil(
                 (async () => {
@@ -426,7 +459,16 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
                 )
                 .get();
 
-              return membership?.role === 'owner';
+              if (membership?.role !== 'owner') {
+                warn('billing.subscription_action_denied', {
+                  orgId: referenceId,
+                  userId: user.id,
+                  action,
+                  role: membership?.role ?? null,
+                });
+                return false;
+              }
+              return true;
             }
             return true;
           },

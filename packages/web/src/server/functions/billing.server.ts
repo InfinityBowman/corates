@@ -1,4 +1,4 @@
-import { captureError, info } from '@corates/workers/logger';
+import { captureError, info, warn } from '@corates/workers/logger';
 import { env } from 'cloudflare:workers';
 import type Stripe from 'stripe';
 import type { Database } from '@corates/db/client';
@@ -31,9 +31,7 @@ export async function fetchUsage(db: Database, session: Session) {
     userId: session.user.id,
   });
 
-  if (!orgId) {
-    throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'no_org_found' });
-  }
+  requireOrg(orgId, 'usage', session.user.id);
 
   const usage = await getOrgResourceUsage(db, orgId);
   return { projects: usage.projects, collaborators: usage.collaborators };
@@ -46,9 +44,7 @@ export async function fetchSubscription(db: Database, session: Session) {
     userId: session.user.id,
   });
 
-  if (!orgId) {
-    throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'no_org_found' });
-  }
+  requireOrg(orgId, 'subscription', session.user.id);
 
   const orgBilling = await resolveOrgAccess(db, orgId);
 
@@ -107,9 +103,7 @@ export async function fetchMembers(db: Database, session: Session, headers: Head
     userId: session.user.id,
   });
 
-  if (!orgId) {
-    throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'no_org_found' });
-  }
+  requireOrg(orgId, 'members', session.user.id);
 
   const auth = createAuth(env);
   const api = auth.api as unknown as ListMembersApi;
@@ -177,20 +171,32 @@ export async function fetchPlanValidation(db: Database, session: Session, target
     userId: session.user.id,
   });
 
-  if (!orgId) {
-    throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'no_org_found' });
-  }
+  requireOrg(orgId, 'plan_validation', session.user.id);
 
   return validatePlanChange(db, orgId, targetPlan);
 }
 
 // --- Helpers ---
 
-function requireOwnerOrg(orgId: OrgId | null, role: string | null): asserts orgId is OrgId {
+function requireOrg(orgId: OrgId | null, action: string, userId: string): asserts orgId is OrgId {
   if (!orgId) {
+    warn('billing.denied', { action, userId, reason: 'no_org_found' });
+    throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'no_org_found' });
+  }
+}
+
+function requireOwnerOrg(
+  orgId: OrgId | null,
+  role: string | null,
+  action: string,
+  userId: string,
+): asserts orgId is OrgId {
+  if (!orgId) {
+    warn('billing.denied', { action, userId, reason: 'no_org_found' });
     throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'no_org_found' });
   }
   if (role !== 'owner') {
+    warn('billing.denied', { action, userId, orgId, role, reason: 'org_owner_required' });
     throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'org_owner_required' });
   }
 }
@@ -216,14 +222,28 @@ export async function createCheckout(
     session: session.session,
     userId: session.user.id,
   });
-  requireOwnerOrg(orgId, role);
+  requireOwnerOrg(orgId, role, 'checkout', session.user.id);
 
   if (tier === DEFAULT_PLAN) {
+    warn('billing.checkout_rejected', {
+      orgId,
+      userId: session.user.id,
+      plan: tier,
+      interval,
+      reason: 'invalid_tier',
+    });
     throwDomainError(VALIDATION_ERRORS.INVALID_INPUT, { field: 'tier', value: tier });
   }
 
   const currentBilling = await resolveOrgAccess(db, orgId);
   if (currentBilling.source === 'subscription' && currentBilling.effectivePlanId === tier) {
+    warn('billing.checkout_rejected', {
+      orgId,
+      userId: session.user.id,
+      plan: tier,
+      interval,
+      reason: 'already_on_plan',
+    });
     throwDomainError(
       VALIDATION_ERRORS.INVALID_INPUT,
       { reason: 'already_on_plan', currentPlan: tier },
@@ -233,6 +253,14 @@ export async function createCheckout(
 
   const validationResult = await validatePlanChange(db, orgId, tier);
   if (!validationResult.valid) {
+    warn('billing.checkout_rejected', {
+      orgId,
+      userId: session.user.id,
+      plan: tier,
+      interval,
+      reason: 'downgrade_exceeds_quotas',
+      violations: validationResult.violations.map((v: { quotaKey: string }) => v.quotaKey),
+    });
     throwDomainError(
       VALIDATION_ERRORS.INVALID_INPUT,
       {
@@ -245,21 +273,29 @@ export async function createCheckout(
     );
   }
 
-  info('checkout_initiated', { orgId, userId: session.user.id, plan: tier, interval });
+  info('billing.checkout_initiated', { orgId, userId: session.user.id, plan: tier, interval });
 
   const auth = createAuth(env);
   const api = auth.api as unknown as UpgradeApi;
-  return api.upgradeSubscription({
-    headers: request.headers,
-    body: {
-      plan: tier,
-      annual: interval === 'yearly',
-      referenceId: orgId,
-      successUrl: `${env.APP_URL || 'https://corates.org'}/settings/billing?success=true`,
-      cancelUrl: `${env.APP_URL || 'https://corates.org'}/settings/billing?canceled=true`,
-      returnUrl: `${env.APP_URL || 'https://corates.org'}/settings/billing?success=true`,
-    },
-  });
+  try {
+    return await api.upgradeSubscription({
+      headers: request.headers,
+      body: {
+        plan: tier,
+        annual: interval === 'yearly',
+        referenceId: orgId,
+        successUrl: `${env.APP_URL || 'https://corates.org'}/settings/billing?success=true`,
+        cancelUrl: `${env.APP_URL || 'https://corates.org'}/settings/billing?canceled=true`,
+        returnUrl: `${env.APP_URL || 'https://corates.org'}/settings/billing?success=true`,
+      },
+    });
+  } catch (err) {
+    captureError(err, {
+      tags: { component: 'billing', action: 'checkout' },
+      extra: { orgId, userId: session.user.id, plan: tier, interval },
+    });
+    throw err;
+  }
 }
 
 // --- Invoices ---
@@ -286,9 +322,7 @@ export async function fetchInvoices(db: Database, session: Session): Promise<Inv
     userId: session.user.id,
   });
 
-  if (!orgId) {
-    throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'no_org_found' });
-  }
+  requireOrg(orgId, 'invoices', session.user.id);
 
   const [orgSubscription] = await db
     .select({
@@ -310,10 +344,23 @@ export async function fetchInvoices(db: Database, session: Session): Promise<Inv
   }
 
   const stripe = createStripeClient(env.STRIPE_SECRET_KEY);
-  const stripeInvoices = await stripe.invoices.list({
-    customer: orgSubscription.stripeCustomerId,
-    limit: 10,
-  });
+  let stripeInvoices;
+  try {
+    stripeInvoices = await stripe.invoices.list({
+      customer: orgSubscription.stripeCustomerId,
+      limit: 10,
+    });
+  } catch (err) {
+    captureError(err, {
+      tags: { component: 'billing', action: 'invoices' },
+      extra: {
+        orgId,
+        userId: session.user.id,
+        stripeCustomerId: orgSubscription.stripeCustomerId,
+      },
+    });
+    throw err;
+  }
 
   const invoices: Invoice[] = stripeInvoices.data.map(invoice => ({
     id: invoice.id,
@@ -346,17 +393,26 @@ export async function createPortalSession(db: Database, session: Session, reques
     session: session.session,
     userId: session.user.id,
   });
-  requireOwnerOrg(orgId, role);
+  requireOwnerOrg(orgId, role, 'portal', session.user.id);
 
   const auth = createAuth(env);
   const billingApi = auth.api as unknown as PortalApi;
-  const result = await billingApi.createBillingPortal({
-    headers: request.headers,
-    body: {
-      referenceId: orgId as string,
-      returnUrl: `${env.APP_URL || 'https://corates.org'}/settings/billing`,
-    },
-  });
+  let result;
+  try {
+    result = await billingApi.createBillingPortal({
+      headers: request.headers,
+      body: {
+        referenceId: orgId as string,
+        returnUrl: `${env.APP_URL || 'https://corates.org'}/settings/billing`,
+      },
+    });
+  } catch (err) {
+    captureError(err, {
+      tags: { component: 'billing', action: 'portal' },
+      extra: { orgId, userId: session.user.id },
+    });
+    throw err;
+  }
   info('billing.portal_opened', { orgId, userId: session.user.id });
   return result;
 }
@@ -369,9 +425,9 @@ export async function createSPCheckout(db: Database, session: Session, _request:
     session: session.session,
     userId: session.user.id,
   });
-  requireOwnerOrg(orgId, role);
+  requireOwnerOrg(orgId, role, 'single_project_checkout', session.user.id);
 
-  info('single_project_checkout_initiated', { orgId, userId: session.user.id });
+  info('billing.single_project_checkout_initiated', { orgId, userId: session.user.id });
 
   const userRecord = await db
     .select({ stripeCustomerId: userTable.stripeCustomerId })
@@ -379,14 +435,22 @@ export async function createSPCheckout(db: Database, session: Session, _request:
     .where(eq(userTable.id, session.user.id))
     .get();
 
-  return createSPCheckoutCmd(
-    env,
-    {
-      id: session.user.id,
-      stripeCustomerId: userRecord?.stripeCustomerId || null,
-    },
-    { orgId: orgId as string },
-  );
+  try {
+    return await createSPCheckoutCmd(
+      env,
+      {
+        id: session.user.id,
+        stripeCustomerId: userRecord?.stripeCustomerId || null,
+      },
+      { orgId: orgId as string },
+    );
+  } catch (err) {
+    captureError(err, {
+      tags: { component: 'billing', action: 'single-project-checkout' },
+      extra: { orgId, userId: session.user.id },
+    });
+    throw err;
+  }
 }
 
 // --- Trial ---
@@ -397,10 +461,16 @@ export async function beginTrial(db: Database, session: Session) {
     session: session.session,
     userId: session.user.id,
   });
-  requireOwnerOrg(orgId, role);
+  requireOwnerOrg(orgId, role, 'trial', session.user.id);
 
   const existingTrial = await getGrantByOrgIdAndType(db, orgId as OrgId, 'trial');
   if (existingTrial) {
+    warn('billing.trial_rejected', {
+      orgId,
+      userId: session.user.id,
+      reason: 'trial_already_exists',
+      existingGrantId: existingTrial.id,
+    });
     throwDomainError(
       VALIDATION_ERRORS.INVALID_INPUT,
       { field: 'trial', value: 'already_exists' },
@@ -436,8 +506,20 @@ export async function syncAfterCheckout(db: Database, session: Session) {
   const stripeCustomerId = (session.user as Record<string, unknown>).stripeCustomerId as
     string | null | undefined;
   if (!stripeCustomerId) {
+    warn('billing.sync_after_checkout_skipped', {
+      userId: session.user.id,
+      reason: 'no_stripe_customer',
+    });
     return { status: 'none', stripeSubscriptionId: null };
   }
 
-  return syncStripeSubscription(env, db, stripeCustomerId);
+  try {
+    return await syncStripeSubscription(env, db, stripeCustomerId);
+  } catch (err) {
+    captureError(err, {
+      tags: { component: 'billing', action: 'sync-after-checkout' },
+      extra: { userId: session.user.id, stripeCustomerId },
+    });
+    throw err;
+  }
 }
