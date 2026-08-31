@@ -29,6 +29,7 @@ export function PdfUploadSection({ studies }: PdfUploadSectionProps) {
       <FileUpload
         accept={['application/pdf', '.pdf']}
         maxFiles={Infinity}
+        resetOnAccept
         onFileAccept={(details: any) => studies.handlePdfSelect(details.files)}
       >
         <FileUploadDropzone className='min-h-24 p-4'>

@@ -183,6 +183,7 @@ export function ReferenceImportSection({ studies }: ReferenceImportSectionProps)
       <FileUpload
         accept={(MIXED_IMPORT_ACCEPT as string).split(',').map((t: string) => t.trim())}
         maxFiles={Infinity}
+        resetOnAccept
         onFileAccept={(details: any) => studies.handleRefFileSelect(details.files)}
       >
         <FileUploadDropzone className='min-h-24 p-4'>
