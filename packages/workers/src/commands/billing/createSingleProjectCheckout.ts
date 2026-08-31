@@ -10,7 +10,7 @@
  */
 
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
-import { info } from '../../lib/logger';
+import { info, warn } from '../../lib/logger';
 import { createStripeClient } from '@corates/shared/stripe';
 import type { Env } from '../../types';
 
@@ -37,6 +37,11 @@ export async function createSingleProjectCheckout(
 
   // Validate Stripe configuration
   if (!env.STRIPE_SECRET_KEY) {
+    warn('billing.checkout_failed', {
+      orgId,
+      userId: actor.id,
+      reason: 'stripe_not_configured',
+    });
     throw createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
       operation: 'stripe_not_configured',
     });
@@ -44,6 +49,11 @@ export async function createSingleProjectCheckout(
 
   const priceId = env.STRIPE_PRICE_ID_SINGLE_PROJECT;
   if (!priceId) {
+    warn('billing.checkout_failed', {
+      orgId,
+      userId: actor.id,
+      reason: 'stripe_price_not_configured',
+    });
     throw createDomainError(
       SYSTEM_ERRORS.INTERNAL_ERROR,
       { operation: 'stripe_price_not_configured' },
@@ -53,6 +63,11 @@ export async function createSingleProjectCheckout(
 
   // Validate actor has Stripe customer ID
   if (!actor.stripeCustomerId) {
+    warn('billing.checkout_failed', {
+      orgId,
+      userId: actor.id,
+      reason: 'stripe_customer_not_found',
+    });
     throw createDomainError(
       SYSTEM_ERRORS.INTERNAL_ERROR,
       { operation: 'stripe_customer_not_found' },
@@ -93,6 +108,12 @@ export async function createSingleProjectCheckout(
   );
 
   if (!checkoutSession.url) {
+    warn('billing.checkout_failed', {
+      orgId,
+      userId: actor.id,
+      sessionId: checkoutSession.id,
+      reason: 'checkout_session_no_url',
+    });
     throw createDomainError(
       SYSTEM_ERRORS.INTERNAL_ERROR,
       { operation: 'checkout_session_no_url' },

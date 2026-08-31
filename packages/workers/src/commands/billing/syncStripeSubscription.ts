@@ -13,7 +13,7 @@
 import { eq } from 'drizzle-orm';
 import { subscription } from '@corates/db/schema';
 import { createStripeClient } from '@corates/shared/stripe';
-import { info } from '../../lib/logger';
+import { info, warn } from '../../lib/logger';
 import type { createDb } from '@corates/db/client';
 import type { Env } from '../../types';
 
@@ -29,6 +29,10 @@ function resolvePlanFromPriceId(env: Env, priceId: string | null | undefined): s
   };
   return mapping[priceId] ?? null;
 }
+
+// Written to the plan column when no price mapping matches, so the bad row is
+// findable in the DB as well as the logs.
+const UNRESOLVED_PLAN = 'UNRESOLVED_PLAN_CHECK_STRIPE_PRICE_CONFIG';
 
 type Database = ReturnType<typeof createDb>;
 
@@ -63,6 +67,12 @@ export async function syncStripeSubscription(
         .update(subscription)
         .set({ status: 'canceled', endedAt: new Date(), updatedAt: new Date() })
         .where(eq(subscription.id, existing.id));
+      info('billing.subscription_canceled_by_sync', {
+        orgId: existing.referenceId,
+        stripeCustomerId: customerId,
+        stripeSubscriptionId: existing.stripeSubscriptionId,
+        previousStatus: existing.status,
+      });
     }
     return { status: 'none', stripeSubscriptionId: null };
   }
@@ -71,7 +81,15 @@ export async function syncStripeSubscription(
   const item = sub.items.data[0];
   const orgId = sub.metadata?.orgId ?? sub.metadata?.referenceId ?? existing?.referenceId;
 
+  // No orgId means there is nothing to key the local row on, so the sync is a
+  // no-op and the DB stays stale until a webhook arrives with better metadata.
   if (!orgId) {
+    warn('billing.subscription_sync_skipped', {
+      stripeCustomerId: customerId,
+      stripeSubscriptionId: sub.id,
+      status: sub.status,
+      reason: 'no_org_reference',
+    });
     return { status: sub.status, stripeSubscriptionId: sub.id };
   }
 
@@ -81,7 +99,7 @@ export async function syncStripeSubscription(
       resolvePlanFromPriceId(env, item?.price?.id) ??
       (sub.metadata as Record<string, string> | undefined)?.plan ??
       existing?.plan ??
-      'UNRESOLVED_PLAN_CHECK_STRIPE_PRICE_CONFIG',
+      UNRESOLVED_PLAN,
     referenceId: orgId,
     stripeCustomerId: customerId,
     stripeSubscriptionId: sub.id,
@@ -104,6 +122,16 @@ export async function syncStripeSubscription(
       id: crypto.randomUUID(),
       createdAt: new Date(),
       ...values,
+    });
+  }
+
+  if (values.plan === UNRESOLVED_PLAN) {
+    warn('billing.subscription_plan_unresolved', {
+      orgId,
+      stripeCustomerId: customerId,
+      stripeSubscriptionId: sub.id,
+      priceId: item?.price?.id ?? null,
+      lookupKey: item?.price?.lookup_key ?? null,
     });
   }
 
