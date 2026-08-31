@@ -22,9 +22,29 @@ const FileUploadItemPreviewImage = FileUploadPrimitive.ItemPreviewImage;
 
 function FileUpload({
   className,
+  resetOnAccept = false,
+  onFileAccept,
   ...props
-}: React.ComponentProps<typeof FileUploadPrimitive.Root>) {
-  return <FileUploadPrimitive.Root className={cn('w-full', className)} {...props} />;
+}: React.ComponentProps<typeof FileUploadPrimitive.Root> & {
+  // Ark UI accumulates accepted files and re-emits the full list on every pick.
+  // Staging UIs that trash items out-of-band need a fresh picker after each handoff
+  // or the removed file comes back on the next add.
+  resetOnAccept?: boolean;
+}) {
+  const [resetKey, setResetKey] = React.useState(0);
+  return (
+    <FileUploadPrimitive.Root
+      key={resetOnAccept ? resetKey : undefined}
+      {...props}
+      className={cn('w-full', className)}
+      onFileAccept={details => {
+        onFileAccept?.(details);
+        if (resetOnAccept && details.files.length > 0) {
+          setResetKey(k => k + 1);
+        }
+      }}
+    />
+  );
 }
 
 function FileUploadDropzone({
