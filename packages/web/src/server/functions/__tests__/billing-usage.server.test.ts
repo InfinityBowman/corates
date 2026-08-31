@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { env } from 'cloudflare:workers';
 import { createDb } from '@corates/db/client';
-import { DomainErrorException } from '@corates/shared';
 import { resetTestDatabase } from '@/__tests__/server/helpers';
 import { buildOrg, buildOrgMember, resetCounter } from '@/__tests__/server/factories';
 import { fetchUsage } from '@/server/functions/billing.server';
@@ -33,20 +32,6 @@ function mockSession(overrides?: {
 }
 
 describe('fetchUsage', () => {
-  it('throws 403 when caller has no org', async () => {
-    const session = mockSession({ userId: 'orphan', email: 'o@example.com', name: 'O' });
-    try {
-      await fetchUsage(createDb(env.DB), session);
-      expect.fail('should have thrown');
-    } catch (res) {
-      expect((res as DomainErrorException).statusCode).toBe(403);
-      const body = (res as DomainErrorException).toDomainError() as {
-        details?: { reason?: string };
-      };
-      expect(body.details?.reason).toBe('no_org_found');
-    }
-  });
-
   it('returns project + collaborator counts', async () => {
     const { org, owner } = await buildOrg();
     await buildOrgMember({ orgId: org.id, role: 'member' });

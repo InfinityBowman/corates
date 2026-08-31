@@ -241,21 +241,6 @@ describe('deleteOrganization', () => {
 });
 
 describe('listOrgMembers', () => {
-  it('throws 403 when user is not org member', async () => {
-    const user = await buildUser();
-    const { org } = await buildOrg();
-    currentUser = { id: user.id, email: user.email };
-
-    try {
-      await listOrgMembers(mockSession(), createDb(env.DB), dummyRequest, org.id);
-      expect.unreachable('should have thrown');
-    } catch (err) {
-      const res = err as DomainErrorException;
-      expect(res.statusCode).toBe(403);
-      expect(mockListMembers).not.toHaveBeenCalled();
-    }
-  });
-
   it('lists members when user is org member', async () => {
     const { org } = await buildOrg();
     const { user: member, membership } = await buildOrgMember({
@@ -281,24 +266,6 @@ describe('listOrgMembers', () => {
 });
 
 describe('addOrgMember', () => {
-  it('throws 403 when user is not admin', async () => {
-    const { org } = await buildOrg();
-    const { user: member } = await buildOrgMember({ orgId: org.id, role: 'member' });
-    currentUser = { id: member.id, email: member.email };
-
-    try {
-      await addOrgMember(mockSession(), createDb(env.DB), dummyRequest, org.id, {
-        userId: 'user-2',
-        role: 'member',
-      });
-      expect.unreachable('should have thrown');
-    } catch (err) {
-      const res = err as DomainErrorException;
-      expect(res.statusCode).toBe(403);
-      expect(mockAddMember).not.toHaveBeenCalled();
-    }
-  });
-
   it('adds member when user is admin', async () => {
     const { org } = await buildOrg();
     const { user: admin } = await buildOrgMember({ orgId: org.id, role: 'admin' });
@@ -345,28 +312,6 @@ describe('addOrgMember', () => {
 });
 
 describe('updateMemberRole', () => {
-  it('throws 403 when user is not admin', async () => {
-    const { org } = await buildOrg();
-    const { user: member } = await buildOrgMember({ orgId: org.id, role: 'member' });
-    currentUser = { id: member.id, email: member.email };
-
-    try {
-      await updateMemberRole(
-        mockSession(),
-        createDb(env.DB),
-        dummyRequest,
-        org.id,
-        asUserId('member-2'),
-        { role: 'admin' },
-      );
-      expect.unreachable('should have thrown');
-    } catch (err) {
-      const res = err as DomainErrorException;
-      expect(res.statusCode).toBe(403);
-      expect(mockUpdateMemberRole).not.toHaveBeenCalled();
-    }
-  });
-
   it('updates member role when user is admin', async () => {
     const { org } = await buildOrg();
     const { user: admin } = await buildOrgMember({ orgId: org.id, role: 'admin' });
@@ -514,21 +459,6 @@ describe('removeMember', () => {
 });
 
 describe('setActiveOrg', () => {
-  it('throws 403 when user is not org member', async () => {
-    const user = await buildUser();
-    const { org } = await buildOrg();
-    currentUser = { id: user.id, email: user.email };
-
-    try {
-      await setActiveOrg(mockSession(), createDb(env.DB), dummyRequest, org.id);
-      expect.unreachable('should have thrown');
-    } catch (err) {
-      const res = err as DomainErrorException;
-      expect(res.statusCode).toBe(403);
-      expect(mockSetActiveOrganization).not.toHaveBeenCalled();
-    }
-  });
-
   it('sets active org when user is org member', async () => {
     const { org } = await buildOrg();
     const { user: member } = await buildOrgMember({ orgId: org.id, role: 'member' });

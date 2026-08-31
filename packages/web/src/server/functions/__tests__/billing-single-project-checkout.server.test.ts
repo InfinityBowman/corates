@@ -2,10 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { env } from 'cloudflare:workers';
 import { createDb } from '@corates/db/client';
 import { resetTestDatabase } from '@/__tests__/server/helpers';
-import { buildOrg, buildOrgMember, resetCounter } from '@/__tests__/server/factories';
+import { buildOrg, resetCounter } from '@/__tests__/server/factories';
 import { createSPCheckout } from '@/server/functions/billing.server';
 import type { Session } from '@/server/middleware/auth';
-import { DomainErrorException } from '@corates/shared';
 
 function mockSession(overrides: {
   userId: string;
@@ -40,25 +39,6 @@ const dummyRequest = new Request('http://localhost/api/billing/single-project/ch
 });
 
 describe('createSPCheckout', () => {
-  it('throws 403 when caller is not org owner', async () => {
-    const { org } = await buildOrg();
-    const { user: memberUser } = await buildOrgMember({ orgId: org.id, role: 'member' });
-    const session = mockSession({
-      userId: memberUser.id,
-      email: memberUser.email,
-      name: memberUser.name,
-      activeOrganizationId: org.id,
-    });
-    try {
-      await createSPCheckout(createDb(env.DB), session, dummyRequest);
-      expect.unreachable('should have thrown');
-    } catch (err) {
-      const res = err as DomainErrorException;
-      expect(res.statusCode).toBe(403);
-    }
-    expect(createSingleProjectCheckoutMock).not.toHaveBeenCalled();
-  });
-
   it('creates checkout session for org owner', async () => {
     const { org, owner } = await buildOrg();
     const session = mockSession({

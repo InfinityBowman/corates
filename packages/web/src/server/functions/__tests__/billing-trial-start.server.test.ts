@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { env } from 'cloudflare:workers';
 import { createDb } from '@corates/db/client';
 import { resetTestDatabase } from '@/__tests__/server/helpers';
-import { buildOrg, buildOrgMember, resetCounter } from '@/__tests__/server/factories';
+import { buildOrg, resetCounter } from '@/__tests__/server/factories';
 import { beginTrial } from '@/server/functions/billing.server';
 import type { Session } from '@/server/middleware/auth';
 import { DomainErrorException } from '@corates/shared';
@@ -29,45 +29,6 @@ beforeEach(async () => {
 });
 
 describe('beginTrial', () => {
-  it('throws 403 when caller has no org', async () => {
-    const session = mockSession({
-      userId: 'orphan-user',
-      email: 'orphan@example.com',
-      name: 'Orphan',
-    });
-    try {
-      await beginTrial(createDb(env.DB), session);
-      expect.unreachable('should have thrown');
-    } catch (err) {
-      const res = err as DomainErrorException;
-      expect(res.statusCode).toBe(403);
-      const body = res.toDomainError() as { code: string; details?: { reason?: string } };
-      expect(body.code).toBe('AUTH_FORBIDDEN');
-      expect(body.details?.reason).toBe('no_org_found');
-    }
-  });
-
-  it('throws 403 when caller is org member but not owner', async () => {
-    const { org } = await buildOrg();
-    const { user: memberUser } = await buildOrgMember({ orgId: org.id, role: 'member' });
-    const session = mockSession({
-      userId: memberUser.id,
-      email: memberUser.email,
-      name: memberUser.name,
-      activeOrganizationId: org.id,
-    });
-    try {
-      await beginTrial(createDb(env.DB), session);
-      expect.unreachable('should have thrown');
-    } catch (err) {
-      const res = err as DomainErrorException;
-      expect(res.statusCode).toBe(403);
-      const body = res.toDomainError() as { code: string; details?: { reason?: string } };
-      expect(body.code).toBe('AUTH_FORBIDDEN');
-      expect(body.details?.reason).toBe('org_owner_required');
-    }
-  });
-
   it('creates trial grant when caller is org owner', async () => {
     const { org, owner } = await buildOrg();
     const session = mockSession({

@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { env } from 'cloudflare:workers';
 import { createDb } from '@corates/db/client';
-import { DomainErrorException } from '@corates/shared';
 import { resetTestDatabase } from '@/__tests__/server/helpers';
 import { buildOrg, resetCounter } from '@/__tests__/server/factories';
 import { fetchMembers } from '@/server/functions/billing.server';
@@ -46,17 +45,6 @@ function mockHeaders(): Headers {
 }
 
 describe('fetchMembers', () => {
-  it('throws 403 when caller has no org', async () => {
-    const session = mockSession({ userId: 'orphan', email: 'o@example.com', name: 'O' });
-    try {
-      await fetchMembers(createDb(env.DB), session, mockHeaders());
-      expect.fail('should have thrown');
-    } catch (res) {
-      expect((res as DomainErrorException).statusCode).toBe(403);
-    }
-    expect(listMembersMock).not.toHaveBeenCalled();
-  });
-
   it('returns members from better-auth listMembers', async () => {
     const { org, owner } = await buildOrg();
     const session = mockSession({

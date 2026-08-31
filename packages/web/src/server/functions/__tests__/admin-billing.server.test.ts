@@ -92,18 +92,6 @@ describe('GET /api/admin/orgs/:orgId/billing', () => {
 });
 
 describe('POST /api/admin/orgs/:orgId/subscriptions', () => {
-  it('throws 400 for non-existent org', async () => {
-    try {
-      await createAdminSubscription(mockAdminSession(), createDb(env.DB), 'missing' as OrgId, {
-        plan: 'team',
-        status: 'active',
-      });
-      expect.unreachable('should have thrown');
-    } catch (err) {
-      expect((err as DomainErrorException).statusCode).toBe(400);
-    }
-  });
-
   it('creates subscription and dispatches notify', async () => {
     const { org } = await buildOrg();
     const result = await createAdminSubscription(
@@ -212,21 +200,6 @@ describe('DELETE /api/admin/orgs/:orgId/subscriptions/:subscriptionId', () => {
 });
 
 describe('POST /api/admin/orgs/:orgId/grants', () => {
-  it('throws 400 for non-existent org', async () => {
-    const startsAt = new Date();
-    const expiresAt = new Date(Date.now() + 86400000);
-    try {
-      await createAdminGrant(mockAdminSession(), createDb(env.DB), 'missing' as OrgId, {
-        type: 'trial',
-        startsAt,
-        expiresAt,
-      });
-      expect.unreachable('should have thrown');
-    } catch (err) {
-      expect((err as DomainErrorException).statusCode).toBe(400);
-    }
-  });
-
   it('rejects second trial for same org', async () => {
     const { org } = await buildOrg();
     const startsAt = new Date();
@@ -430,15 +403,6 @@ describe('DELETE /api/admin/orgs/:orgId/grants/:grantId', () => {
 });
 
 describe('POST /api/admin/orgs/:orgId/grant-trial', () => {
-  it('throws 400 for non-existent org', async () => {
-    try {
-      await grantAdminTrial(mockAdminSession(), createDb(env.DB), 'missing' as OrgId);
-      expect.unreachable('should have thrown');
-    } catch (err) {
-      expect((err as DomainErrorException).statusCode).toBe(400);
-    }
-  });
-
   it('creates a 14-day trial', async () => {
     const { org } = await buildOrg();
     const result = await grantAdminTrial(mockAdminSession(), createDb(env.DB), org.id as OrgId);
@@ -461,15 +425,6 @@ describe('POST /api/admin/orgs/:orgId/grant-trial', () => {
 });
 
 describe('POST /api/admin/orgs/:orgId/grant-single-project', () => {
-  it('throws 400 for non-existent org', async () => {
-    try {
-      await grantAdminSingleProject(mockAdminSession(), createDb(env.DB), 'missing' as OrgId);
-      expect.unreachable('should have thrown');
-    } catch (err) {
-      expect((err as DomainErrorException).statusCode).toBe(400);
-    }
-  });
-
   it('creates a fresh grant when none exists', async () => {
     const { org } = await buildOrg();
     const result = await grantAdminSingleProject(

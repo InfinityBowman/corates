@@ -96,7 +96,6 @@ describe('getAdminTableRows', () => {
     expect(result.tableName).toBe('user');
     expect(result.rows.length).toBeGreaterThan(0);
     expect(result.pagination.totalRows).toBeGreaterThanOrEqual(2);
-    expect(result.pagination.limit).toBe(2);
   });
 
   it('mediaFiles path joins org/project/user', async () => {

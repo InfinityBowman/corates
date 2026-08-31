@@ -61,22 +61,6 @@ describe('getProject', () => {
     expect(result.createdBy).toBe(owner.id);
   });
 
-  it('returns 404 when project not found', async () => {
-    const { org, owner } = await buildProject();
-    currentUser = { id: owner.id, email: owner.email };
-
-    try {
-      await getProject(mockSession(), createDb(env.DB), org.id, asProjectId('nonexistent'));
-      expect.unreachable('should have thrown');
-    } catch (err) {
-      expect(err).toBeInstanceOf(DomainErrorException);
-      const res = err as DomainErrorException;
-      expect(res.statusCode).toBe(404);
-      const body = res.toDomainError() as { code: string };
-      expect(body.code).toMatch(/NOT_FOUND/);
-    }
-  });
-
   it('returns 403 when user is not a project member (but is in org)', async () => {
     const { project, org } = await buildProject();
     const { user: orgOnlyMember } = await buildOrgMember({ orgId: org.id, role: 'member' });

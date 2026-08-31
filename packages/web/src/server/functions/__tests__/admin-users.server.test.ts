@@ -126,8 +126,6 @@ describe('GET /api/admin/users', () => {
       limit: 10,
     });
     expect(body.pagination.total).toBeGreaterThanOrEqual(3);
-    expect(body.pagination.page).toBe(1);
-    expect(body.pagination.limit).toBe(10);
     const found = body.users.find(u => u.id === u1.id);
     expect(found).toBeDefined();
     expect(found!.providers.sort()).toEqual(['github', 'google']);

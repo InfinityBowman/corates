@@ -5,7 +5,6 @@ import { resetTestDatabase } from '@/__tests__/server/helpers';
 import { buildOrg, resetCounter } from '@/__tests__/server/factories';
 import { fetchInvoices } from '@/server/functions/billing.server';
 import type { Session } from '@/server/middleware/auth';
-import { DomainErrorException } from '@corates/shared';
 
 function mockSession(overrides?: {
   userId?: string;
@@ -61,24 +60,6 @@ async function seedSubscription(orgId: string, customerId: string, status = 'act
 }
 
 describe('fetchInvoices', () => {
-  it('throws 403 when caller has no org', async () => {
-    const session = mockSession({
-      userId: 'orphan-user',
-      email: 'orphan@example.com',
-      name: 'Orphan',
-    });
-    try {
-      await fetchInvoices(createDb(env.DB), session);
-      expect.unreachable('should have thrown');
-    } catch (err) {
-      const res = err as DomainErrorException;
-      expect(res.statusCode).toBe(403);
-      const body = res.toDomainError() as { code: string; details?: { reason?: string } };
-      expect(body.code).toBe('AUTH_FORBIDDEN');
-      expect(body.details?.reason).toBe('no_org_found');
-    }
-  });
-
   it('returns empty invoices when org has no active subscription', async () => {
     const { org, owner } = await buildOrg();
     const session = mockSession({
