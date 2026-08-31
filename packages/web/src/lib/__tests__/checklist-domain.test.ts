@@ -862,4 +862,3 @@ describe('checklist-domain', () => {
     });
   });
 });
-
