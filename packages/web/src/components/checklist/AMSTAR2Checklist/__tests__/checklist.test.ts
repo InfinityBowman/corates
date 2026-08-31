@@ -36,9 +36,9 @@ describe('createChecklist', () => {
     ] as Array<[Record<string, unknown>, string]>)(
       'throws for invalid input %j',
       (input, message) => {
-        expect(() => createChecklist(input as Parameters<typeof createChecklist>[0])).toThrow(
-          message,
-        );
+        expect(() =>
+          createChecklist(input as unknown as Parameters<typeof createChecklist>[0]),
+        ).toThrow(message);
       },
     );
   });
