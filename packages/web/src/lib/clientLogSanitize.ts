@@ -1,4 +1,4 @@
-const BLOCKED_KEY = /email|password|token|secret|authorization|cookie|userid/i;
+const BLOCKED_KEY = /password|token|secret|authorization|cookie|userid/i;
 
 const MAX_DATA_KEYS = 20;
 const MAX_STRING = 500;

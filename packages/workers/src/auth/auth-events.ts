@@ -5,11 +5,6 @@
 
 import { info } from '../lib/logger';
 
-/** Mask an email for log fields (never log full addresses). */
-export function maskEmail(email: string): string {
-  return email.replace(/^(..).*@/, '$1***@');
-}
-
 const AUTH_MUTATION_EVENTS: Record<string, string> = {
   '/api/auth/sign-out': 'auth.sign_out',
   '/api/auth/two-factor/enable': 'auth.2fa_enabled',

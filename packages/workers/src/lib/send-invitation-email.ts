@@ -8,7 +8,6 @@
  */
 
 import { captureError, info } from './logger';
-import { maskEmail } from '../auth/auth-events';
 import { buildAppUrl } from './app-url';
 import type { Env } from '../types';
 import { queueEmail } from '@corates/shared/email';
@@ -86,7 +85,7 @@ export async function sendInvitationEmail(
       html: emailHtml,
       text: emailText,
     });
-    info('invitation.email_queued', { email: maskEmail(email), projectName });
+    info('invitation.email_queued', { email, projectName });
     return { emailQueued: true };
   } catch (err) {
     captureError(err, { tags: { component: 'invitation', action: 'queue-email' } });
