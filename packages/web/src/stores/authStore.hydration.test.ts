@@ -61,9 +61,24 @@ describe('authStore protected-route guard invariant (CORATES-WEB-C follow-up)', 
     expect(mod.selectIsLoggedIn(state)).toBe(true);
   });
 
-  it('reports logged-out at init when there is no cached user', async () => {
+  it('reports loading, not logged-out, at init when there is no cached user', async () => {
     localStorage.clear();
     const mod = await loadStoreFresh();
-    expect(mod.selectIsLoggedIn(mod.useAuthStore.getState())).toBe(false);
+    const state = mod.useAuthStore.getState();
+
+    // A fresh device with a valid cookie has no cache yet; the guard must wait
+    // for the session fetch instead of redirecting to /signin.
+    expect(mod.selectIsLoggedIn(state)).toBe(false);
+    expect(mod.selectIsAuthLoading(state)).toBe(true);
+  });
+
+  it('reports logged-out once the session settles with no user', async () => {
+    localStorage.clear();
+    const mod = await loadStoreFresh();
+    mod.useAuthStore.getState().setSessionData(null, false, null);
+    const state = mod.useAuthStore.getState();
+
+    expect(mod.selectIsAuthLoading(state)).toBe(false);
+    expect(mod.selectIsLoggedIn(state)).toBe(false);
   });
 });

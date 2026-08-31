@@ -4,9 +4,9 @@
  * All children (settings, projects, admin, orgs) require login.
  * Redirects to /signin if user is not authenticated.
  *
- * The beforeLoad guard checks synchronous store state (including cached auth).
- * The component-level guard handles the case where auth is still loading
- * by showing a loading spinner until the session resolves.
+ * The beforeLoad guard only redirects once auth has settled as logged out.
+ * While the session is still resolving (including a first load with no cached
+ * user) the component shows a spinner and redirects after it settles.
  */
 
 import { useEffect } from 'react';
@@ -18,11 +18,11 @@ import { RouteError } from '@/components/RouteError';
 export const Route = createFileRoute('/_app/_protected')({
   beforeLoad: () => {
     const state = useAuthStore.getState();
-    const isLoggedIn = selectIsLoggedIn(state);
-
-    // selectIsLoggedIn returns true if there's a cached user (even while loading),
-    // so this only redirects when we're definitively not logged in
-    if (!isLoggedIn) {
+    // A valid cookie with an empty localStorage cache (fresh device, cleared
+    // storage) looks identical to logged-out until the session fetch returns;
+    // redirecting here would bounce a deep link to /signin.
+    if (selectIsAuthLoading(state)) return;
+    if (!selectIsLoggedIn(state)) {
       throw redirect({ to: '/signin' });
     }
   },
