@@ -90,8 +90,8 @@ jobs:
 
       # always(), not failure(): a test that fails then passes on retry leaves a
       # trace behind but keeps the job green, and that is exactly the run worth
-      # diagnosing. Playwright only writes test-results/ for failed attempts, so
-      # a clean run uploads nothing.
+      # diagnosing. A clean run still uploads the handful of debug screenshots
+      # the rob2/robins specs write into test-results/ unconditionally.
       - name: Upload test artifacts
         if: always()
         uses: actions/upload-artifact@v4
