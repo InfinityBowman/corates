@@ -273,7 +273,7 @@ export async function createCheckout(
     );
   }
 
-  info('checkout_initiated', { orgId, userId: session.user.id, plan: tier, interval });
+  info('billing.checkout_initiated', { orgId, userId: session.user.id, plan: tier, interval });
 
   const auth = createAuth(env);
   const api = auth.api as unknown as UpgradeApi;
@@ -427,7 +427,7 @@ export async function createSPCheckout(db: Database, session: Session, _request:
   });
   requireOwnerOrg(orgId, role, 'single_project_checkout', session.user.id);
 
-  info('single_project_checkout_initiated', { orgId, userId: session.user.id });
+  info('billing.single_project_checkout_initiated', { orgId, userId: session.user.id });
 
   const userRecord = await db
     .select({ stripeCustomerId: userTable.stripeCustomerId })
