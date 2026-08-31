@@ -934,27 +934,13 @@ describe('scoreAllDomains', () => {
 });
 
 describe('mapOverallJudgementToDisplay', () => {
-  it('maps Low to confounding display string (ROBINS-I overall cannot be plain Low)', () => {
-    expect(mapOverallJudgementToDisplay(JUDGEMENTS.LOW)).toBe(
-      'Low risk of bias except for concerns about uncontrolled confounding',
-    );
-  });
-
-  it('maps Low except confounding to display string', () => {
-    expect(mapOverallJudgementToDisplay(JUDGEMENTS.LOW_EXCEPT_CONFOUNDING)).toBe(
-      'Low risk of bias except for concerns about uncontrolled confounding',
-    );
-  });
-
-  it('maps Moderate to display string', () => {
+  it('maps each judgement to its overall display string', () => {
+    // ROBINS-I overall cannot be plain Low; both Low variants share this label
+    const confounding = 'Low risk of bias except for concerns about uncontrolled confounding';
+    expect(mapOverallJudgementToDisplay(JUDGEMENTS.LOW)).toBe(confounding);
+    expect(mapOverallJudgementToDisplay(JUDGEMENTS.LOW_EXCEPT_CONFOUNDING)).toBe(confounding);
     expect(mapOverallJudgementToDisplay(JUDGEMENTS.MODERATE)).toBe('Moderate risk');
-  });
-
-  it('maps Serious to display string', () => {
     expect(mapOverallJudgementToDisplay(JUDGEMENTS.SERIOUS)).toBe('Serious risk');
-  });
-
-  it('maps Critical to display string', () => {
     expect(mapOverallJudgementToDisplay(JUDGEMENTS.CRITICAL)).toBe('Critical risk');
   });
 });
