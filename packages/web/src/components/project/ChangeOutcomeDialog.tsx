@@ -46,7 +46,7 @@ export function ChangeOutcomeDialog({
   open,
   onOpenChange,
 }: ChangeOutcomeDialogProps) {
-  const { projectId } = useProjectContext();
+  const { projectId, setOutcomesSheetOpen } = useProjectContext();
   const outcomes = useProjectOutcomes(projectId);
 
   const [selectedOutcomeId, setSelectedOutcomeId] = useState<string | null>(null);
@@ -131,7 +131,19 @@ export function ChangeOutcomeDialog({
             <p className='text-warning-foreground text-sm font-medium'>No available outcomes</p>
             <p className='text-warning mt-1 text-xs'>
               Every other outcome already has a checklist for one of these reviewers. Add a new
-              outcome in the All Studies tab first.
+              outcome from{' '}
+              <Button
+                variant='link'
+                size='xs'
+                className='text-warning h-auto p-0 text-xs underline'
+                onClick={() => {
+                  handleOpenChange(false);
+                  setOutcomesSheetOpen(true);
+                }}
+              >
+                Outcomes
+              </Button>{' '}
+              in the project header.
             </p>
           </div>
         }

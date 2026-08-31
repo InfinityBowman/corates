@@ -52,6 +52,26 @@ import { AddMemberModal } from './AddMemberModal';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useMembers } from '@/hooks/useMembers';
 
+function DisabledInviteButton({ reason }: { reason: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          className={cn(
+            buttonVariants({ variant: 'secondary' }),
+            'text-muted-foreground/70 hover:bg-secondary cursor-not-allowed opacity-50',
+          )}
+          aria-disabled='true'
+        >
+          <PlusIcon className='size-4' />
+          Invite
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>{reason}</TooltipContent>
+    </Tooltip>
+  );
+}
+
 export function OverviewTab() {
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
   const [chartsExpanded, setChartsExpanded] = useState(false);
@@ -277,28 +297,15 @@ export function OverviewTab() {
           <h3 className='text-foreground text-base font-semibold'>
             Team Members ({members.length})
           </h3>
-          {isOwner &&
-            (canAddMember ?
-              <Button onClick={() => setShowAddMemberModal(true)}>
-                <PlusIcon className='size-4' />
-                Invite
-              </Button>
-            : <Tooltip>
-                <TooltipTrigger asChild>
-                  <span
-                    className={cn(
-                      buttonVariants({ variant: 'secondary' }),
-                      'text-muted-foreground/70 hover:bg-secondary cursor-not-allowed opacity-50',
-                    )}
-                  >
-                    <PlusIcon className='size-4' />
-                    Invite
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  Collaborator limit reached. Upgrade your plan to add more team members.
-                </TooltipContent>
-              </Tooltip>)}
+          {!isOwner ?
+            <DisabledInviteButton reason='Only the project owner can invite.' />
+          : canAddMember ?
+            <Button onClick={() => setShowAddMemberModal(true)}>
+              <PlusIcon className='size-4' />
+              Invite
+            </Button>
+          : <DisabledInviteButton reason='Collaborator limit reached. Upgrade your plan to add more team members.' />
+          }
         </div>
         {members.length > 0 && (
           <div className='flex flex-col gap-2'>

@@ -4,7 +4,7 @@
  * For actions (mutations), import { project } from '@/project'.
  */
 
-import { createContext, useContext, useMemo, useCallback } from 'react';
+import { createContext, useContext, useMemo, useCallback, useState } from 'react';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { useProjectOrgId } from '@/hooks/useProjectOrgId';
 import { useProjectMembers } from '@/project/workspace-data';
@@ -27,6 +27,8 @@ interface ProjectContextValue {
   getMember: (userId: string | null) => ProjectMember | null;
   getChecklistPath: (studyId: string, checklistId: string, tab?: string) => string;
   getReconcilePath: (studyId: string, checklist1Id: string, checklist2Id: string) => string;
+  outcomesSheetOpen: boolean;
+  setOutcomesSheetOpen: (open: boolean) => void;
 }
 
 const ProjectCtx = createContext<ProjectContextValue | null>(null);
@@ -48,6 +50,7 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
   }, [user, members]);
 
   const isOwner = userRole === 'owner';
+  const [outcomesSheetOpen, setOutcomesSheetOpen] = useState(false);
 
   // Stable path helpers that only depend on projectId
   const getChecklistPath = useCallback(
@@ -88,6 +91,8 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
       getMember,
       getChecklistPath,
       getReconcilePath,
+      outcomesSheetOpen,
+      setOutcomesSheetOpen,
     }),
     [
       projectId,
@@ -98,6 +103,7 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
       getMember,
       getChecklistPath,
       getReconcilePath,
+      outcomesSheetOpen,
     ],
   );
 

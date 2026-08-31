@@ -48,11 +48,10 @@ function DisabledActionButton({ reason, children }: { reason: string; children: 
 }
 
 export function ProjectHeaderActions() {
-  const { projectId, isOwner } = useProjectContext();
+  const { projectId, isOwner, outcomesSheetOpen, setOutcomesSheetOpen } = useProjectContext();
 
   const [addOpen, setAddOpen] = useState(false);
   const [assignOpen, setAssignOpen] = useState(false);
-  const [outcomesOpen, setOutcomesOpen] = useState(false);
 
   const studies = useAllStudies(projectId);
   const members = useProjectMembers(projectId);
@@ -102,7 +101,7 @@ export function ProjectHeaderActions() {
     <div className='flex shrink-0 items-center gap-2'>
       <Button
         variant='ghost'
-        onClick={() => setOutcomesOpen(true)}
+        onClick={() => setOutcomesSheetOpen(true)}
         className='text-muted-foreground'
       >
         <TargetIcon className='size-4' />
@@ -153,7 +152,7 @@ export function ProjectHeaderActions() {
 
       <AddStudiesSheet open={addOpen} onOpenChange={setAddOpen} onAdded={handleAdded} />
       {isOwner && <AssignReviewersSheet open={assignOpen} onOpenChange={setAssignOpen} />}
-      <OutcomesSheet open={outcomesOpen} onOpenChange={setOutcomesOpen} />
+      <OutcomesSheet open={outcomesSheetOpen} onOpenChange={setOutcomesSheetOpen} />
     </div>
   );
 }
