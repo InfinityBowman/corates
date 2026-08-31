@@ -10,11 +10,11 @@ adding parallel jobs costs nothing.
 
 Main push, critical path (serial):
 
-| Job               | Wall   | Inside                                                                                                   |
-| ----------------- | ------ | -------------------------------------------------------------------------------------------------------- |
-| checks            | 4m43s  | setup+install+build-deps 31s, lint 23s, typecheck 32s, tests 191s                                        |
+| Job               | Wall   | Inside                                                                                                  |
+| ----------------- | ------ | ------------------------------------------------------------------------------------------------------- |
+| checks            | 4m43s  | setup+install+build-deps 31s, lint 23s, typecheck 32s, tests 191s                                       |
 | deploy-staging    | 1m20s  | setup+install+build-deps 25s, web build 14s, migrate 2s, deploy web 28s, deploy stripe 7s               |
-| e2e               | 11m32s | container pull 27s, apt 10s, install 19s, **tests 568s**, post-step cache save 60s (one-off cache miss)  |
+| e2e               | 11m32s | container pull 27s, apt 10s, install 19s, **tests 568s**, post-step cache save 60s (one-off cache miss) |
 | deploy-production | 1m31s  | setup+install+build-deps 25s, web build 28s, migrate 2s, deploy web 22s, deploy stripe 8s               |
 
 The 191s of `pnpm test` breaks down as: shared 3s, workers 25s, web unit
@@ -57,16 +57,16 @@ Recommendation:
 
 Measurements (all 43 files, 317 tests):
 
-| Variant                                                       | Wall   | Cumulative import | Result                             |
-| ------------------------------------------------------------- | ------ | ----------------- | ---------------------------------- |
-| CI baseline (4 vCPU)                                          | 145s   | 363s              | pass                               |
-| Local, default 18 workers                                     | 35s    | 509s              | pass                               |
-| Local, minimal `test-worker.ts` main (no createStartHandler)  | 35s    | 523s              | pass, identical to baseline        |
-| Local, `--maxWorkers=4`                                       | 29s    | 90s               | pass                               |
-| Local 4w, `deps.optimizer.ssr.enabled`                        | 40s    | 136s              | slower, plus module errors         |
-| Local 4w, `test.isolate: false`                               | **6s** | 18s               | 8 tests fail in 5 files (see note) |
-| Local 4w, two projects: 22 non-mock files `isolate:false`, 21 `vi.mock` files isolated | 22s | 67s | pass                     |
-| Single file alone: `health.server.test.ts` / `billing-members.server.test.ts` | 0.6s / 3.0s | 0.3s / 2.8s | pass                    |
+| Variant                                                                                | Wall        | Cumulative import | Result                             |
+| -------------------------------------------------------------------------------------- | ----------- | ----------------- | ---------------------------------- |
+| CI baseline (4 vCPU)                                                                   | 145s        | 363s              | pass                               |
+| Local, default 18 workers                                                              | 35s         | 509s              | pass                               |
+| Local, minimal `test-worker.ts` main (no createStartHandler)                           | 35s         | 523s              | pass, identical to baseline        |
+| Local, `--maxWorkers=4`                                                                | 29s         | 90s               | pass                               |
+| Local 4w, `deps.optimizer.ssr.enabled`                                                 | 40s         | 136s              | slower, plus module errors         |
+| Local 4w, `test.isolate: false`                                                        | **6s**      | 18s               | 8 tests fail in 5 files (see note) |
+| Local 4w, two projects: 22 non-mock files `isolate:false`, 21 `vi.mock` files isolated | 22s         | 67s               | pass                               |
+| Single file alone: `health.server.test.ts` / `billing-members.server.test.ts`          | 0.6s / 3.0s | 0.3s / 2.8s       | pass                               |
 
 What this says:
 
@@ -84,7 +84,7 @@ What this says:
 - `isolate: false` (one module graph shared across files) is the lever: 29s to
   6s locally, which extrapolates to roughly 145s to 30s on CI. The 8 failures
   are `vi.mock` registrations leaking between files (`api.listMembers is not a
-  function`, checkout mock URLs bleeding into the wrong file). 21 of 43 files
+function`, checkout mock URLs bleeding into the wrong file). 21 of 43 files
   call `vi.mock`, mostly on the same four modules:
   `@corates/workers/auth-config` (8), `@corates/workers/billing-resolver` (5),
   `@corates/shared/stripe` (5), `@corates/workers/commands/billing` (2).
@@ -178,7 +178,7 @@ This is the smallest of the four line items.
   are not generated for Workers with Durable Objects, which rules out the web
   worker. Not recommended.
 - **Versions cannot be promoted across environments.** `wrangler versions
-  upload` then `versions deploy` works within one Worker, but `env.staging` is
+upload` then `versions deploy` works within one Worker, but `env.staging` is
   a separate Worker (`corates-workers-staging`) and a version bundles code,
   assets, bindings and vars. There is no staging-to-production promote
   primitive, and no Vite pattern for runtime `VITE_*` injection. Two builds is
@@ -194,7 +194,7 @@ This is the smallest of the four line items.
   already incremental by content hash, so deploy time will not drop by shipping
   the artifact.
 - `cloudflare/wrangler-action@v4` adds nothing over `pnpm exec wrangler
-  deploy` when wrangler is a devDependency (it detects and reuses the installed
+deploy` when wrangler is a devDependency (it detects and reuses the installed
   binary), other than `deployment-url` output and GitHub Deployments records.
 - Aside: `@cloudflare/vitest-pool-workers` was renamed `@cloudflare/vitest-plugin`
   v1 on 2026-08-19 with an unchanged config API and a codemod. Not urgent.
