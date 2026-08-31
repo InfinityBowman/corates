@@ -24,49 +24,23 @@ type KeyedChecklist = AMSTAR2Checklist & Record<string, AMSTAR2Question>;
 
 describe('createChecklist', () => {
   describe('validation', () => {
-    it('should throw error when id is missing', () => {
-      expect(() => createChecklist({ name: 'Test' } as any)).toThrow(
-        'AMSTAR2Checklist requires a non-empty string id.',
-      );
-    });
-
-    it('should throw error when id is empty string', () => {
-      expect(() => createChecklist({ id: '', name: 'Test' })).toThrow(
-        'AMSTAR2Checklist requires a non-empty string id.',
-      );
-    });
-
-    it('should throw error when id is whitespace only', () => {
-      expect(() => createChecklist({ id: '   ', name: 'Test' })).toThrow(
-        'AMSTAR2Checklist requires a non-empty string id.',
-      );
-    });
-
-    it('should throw error when name is missing', () => {
-      expect(() => createChecklist({ id: 'test-id' } as any)).toThrow(
-        'AMSTAR2Checklist requires a non-empty string name.',
-      );
-    });
-
-    it('should throw error when name is empty string', () => {
-      expect(() => createChecklist({ id: 'test-id', name: '' })).toThrow(
-        'AMSTAR2Checklist requires a non-empty string name.',
-      );
-    });
-
-    it('should throw error when name is whitespace only', () => {
-      expect(() => createChecklist({ id: 'test-id', name: '   ' })).toThrow(
-        'AMSTAR2Checklist requires a non-empty string name.',
-      );
-    });
-
-    it('should throw error when id is not a string', () => {
-      expect(() => createChecklist({ id: 123 as any, name: 'Test' })).toThrow();
-    });
-
-    it('should throw error when name is not a string', () => {
-      expect(() => createChecklist({ id: 'test-id', name: 123 as any })).toThrow();
-    });
+    it.each([
+      [{ name: 'Test' }, 'AMSTAR2Checklist requires a non-empty string id.'],
+      [{ id: '', name: 'Test' }, 'AMSTAR2Checklist requires a non-empty string id.'],
+      [{ id: '   ', name: 'Test' }, 'AMSTAR2Checklist requires a non-empty string id.'],
+      [{ id: 123, name: 'Test' }, 'AMSTAR2Checklist requires a non-empty string id.'],
+      [{ id: 'test-id' }, 'AMSTAR2Checklist requires a non-empty string name.'],
+      [{ id: 'test-id', name: '' }, 'AMSTAR2Checklist requires a non-empty string name.'],
+      [{ id: 'test-id', name: '   ' }, 'AMSTAR2Checklist requires a non-empty string name.'],
+      [{ id: 'test-id', name: 123 }, 'AMSTAR2Checklist requires a non-empty string name.'],
+    ] as Array<[Record<string, unknown>, string]>)(
+      'throws for invalid input %j',
+      (input, message) => {
+        expect(() =>
+          createChecklist(input as unknown as Parameters<typeof createChecklist>[0]),
+        ).toThrow(message);
+      },
+    );
   });
 
   describe('checklist structure', () => {
@@ -132,30 +106,28 @@ describe('createChecklist', () => {
       'q16',
     ];
 
-    expectedQuestions.forEach(q => {
-      it(`should include question ${q}`, () => {
-        const cl = checklist as KeyedChecklist;
+    it('includes every expected question with answers and a critical flag', () => {
+      const cl = checklist as KeyedChecklist;
+      for (const q of expectedQuestions) {
         expect(cl[q]).toBeDefined();
         expect(cl[q]).toHaveProperty('answers');
         expect(cl[q]).toHaveProperty('critical');
         expect(Array.isArray(cl[q].answers)).toBe(true);
-      });
+      }
     });
 
     // Critical questions per AMSTAR2: 2, 4, 7, 9, 11, 13, 15
     const criticalQuestions = ['q2', 'q4', 'q7', 'q9a', 'q9b', 'q11a', 'q11b', 'q13', 'q15'];
     const nonCriticalQuestions = ['q1', 'q3', 'q5', 'q6', 'q8', 'q10', 'q12', 'q14', 'q16'];
 
-    criticalQuestions.forEach(q => {
-      it(`should mark ${q} as critical`, () => {
-        expect((checklist as KeyedChecklist)[q].critical).toBe(true);
-      });
-    });
-
-    nonCriticalQuestions.forEach(q => {
-      it(`should mark ${q} as non-critical`, () => {
-        expect((checklist as KeyedChecklist)[q].critical).toBe(false);
-      });
+    it('marks critical and non-critical questions', () => {
+      const cl = checklist as KeyedChecklist;
+      for (const q of criticalQuestions) {
+        expect(cl[q].critical).toBe(true);
+      }
+      for (const q of nonCriticalQuestions) {
+        expect(cl[q].critical).toBe(false);
+      }
     });
 
     it('should initialize all answers to false (no selection)', () => {
@@ -210,17 +182,12 @@ describe('scoreChecklist', () => {
     return checklist;
   }
 
-  it('should return "Error" for null input', () => {
-    expect(scoreChecklist(null as unknown as AMSTAR2Checklist)).toBe('Error');
-  });
-
-  it('should return "Error" for undefined input', () => {
-    expect(scoreChecklist(undefined as unknown as AMSTAR2Checklist)).toBe('Error');
-  });
-
-  it('should return "Error" for non-object input', () => {
-    expect(scoreChecklist('not an object' as unknown as AMSTAR2Checklist)).toBe('Error');
-  });
+  it.each([null, undefined, 'not an object'])(
+    'should return "Error" for invalid input %j',
+    input => {
+      expect(scoreChecklist(input as unknown as AMSTAR2Checklist)).toBe('Error');
+    },
+  );
 
   it('should return "High" when all questions are Yes or Partial Yes', () => {
     const checklist = createScoredChecklist({
@@ -481,12 +448,8 @@ describe('scoreChecklist', () => {
 });
 
 describe('getAnswers', () => {
-  it('should return null for null input', () => {
-    expect(getAnswers(null as unknown as AMSTAR2Checklist)).toBe(null);
-  });
-
-  it('should return null for non-object input', () => {
-    expect(getAnswers('string' as unknown as AMSTAR2Checklist)).toBe(null);
+  it.each([null, 'string'])('should return null for invalid input %j', input => {
+    expect(getAnswers(input as unknown as AMSTAR2Checklist)).toBe(null);
   });
 
   it('should extract selected answers from all questions', () => {
