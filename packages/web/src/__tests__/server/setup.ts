@@ -41,3 +41,10 @@ vi.mock('stripe', () => ({
     };
   }),
 }));
+
+// better-auth costs ~3s to instantiate per isolate. Hollow on purpose: specs that
+// need auth mock this module themselves; anything else touching it should fail loudly.
+vi.mock('@corates/workers/auth-config', () => ({
+  createAuth: vi.fn(() => ({ api: {} })),
+  verifyAuth: vi.fn(async () => null),
+}));
