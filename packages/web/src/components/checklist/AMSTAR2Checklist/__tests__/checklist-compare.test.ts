@@ -70,27 +70,8 @@ describe('getQuestionKeys', () => {
 });
 
 describe('getFinalAnswer', () => {
-  it('should return Yes for first selected option in 2-option column', () => {
-    const answers = [[false], [true, false]];
-    expect(getFinalAnswer(answers, 'q1')).toBe('Yes');
-  });
-
-  it('should return No for second selected option in 2-option column', () => {
-    const answers = [[false], [false, true]];
-    expect(getFinalAnswer(answers, 'q1')).toBe('No');
-  });
-
-  it('should return Partial Yes for second option in 3-option column', () => {
-    const answers = [[false], [false, true, false]];
-    expect(getFinalAnswer(answers, 'q2')).toBe('Partial Yes');
-  });
-
-  it('should return null if no answer is selected', () => {
-    const answers = [[false], [false, false]];
-    expect(getFinalAnswer(answers, 'q1')).toBe(null);
-  });
-
-  it('should return null for invalid input', () => {
+  it('delegates to getSelectedAnswer and returns null for invalid input', () => {
+    expect(getFinalAnswer([[false], [true, false]], 'q1')).toBe('Yes');
     expect(getFinalAnswer(null, 'q1')).toBe(null);
     expect(getFinalAnswer([], 'q1')).toBe(null);
   });
