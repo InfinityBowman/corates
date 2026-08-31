@@ -3,23 +3,11 @@ import { isEditable, getStatusLabel } from '../status.js';
 
 describe('Checklist Status', () => {
   describe('isEditable', () => {
-    it('should return true for pending status', () => {
+    it('is true for pending and in-progress, false for later statuses', () => {
       expect(isEditable('pending')).toBe(true);
-    });
-
-    it('should return true for in-progress status', () => {
       expect(isEditable('in-progress')).toBe(true);
-    });
-
-    it('should return false for reviewer-completed status', () => {
       expect(isEditable('reviewer-completed')).toBe(false);
-    });
-
-    it('should return false for reconciling status', () => {
       expect(isEditable('reconciling')).toBe(false);
-    });
-
-    it('should return false for finalized status', () => {
       expect(isEditable('finalized')).toBe(false);
     });
   });

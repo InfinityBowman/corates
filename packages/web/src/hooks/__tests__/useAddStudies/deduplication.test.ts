@@ -145,43 +145,31 @@ describe('deduplication', () => {
     });
 
     describe('DOI-based deduplication', () => {
-      it('merges entries with matching DOIs', () => {
-        const result = buildDeduplicatedStudies({
-          uploadedPdfs: [
-            { title: 'PDF Title', doi: '10.1234/test', data: 'pdf-data', extracting: false },
-          ],
-          selectedRefs: [
-            {
-              title: 'Reference Title',
-              doi: '10.1234/test',
-              firstAuthor: 'Smith',
-              publicationYear: 2024,
-            },
-          ],
-          selectedLookups: [],
-          driveFiles: [],
-        });
-        expect(result).toHaveLength(1);
-        expect(result[0].pdfData).toBe('pdf-data');
-        expect(result[0].firstAuthor).toBe('Smith');
-      });
-
-      it('merges DOIs with different URL prefixes', () => {
-        const result = buildDeduplicatedStudies({
-          uploadedPdfs: [
-            { title: 'PDF Title', doi: '10.1234/test', data: 'pdf-data', extracting: false },
-          ],
-          selectedRefs: [
-            {
-              title: 'Reference Title',
-              doi: 'https://doi.org/10.1234/test',
-              firstAuthor: 'Smith',
-            },
-          ],
-          selectedLookups: [],
-          driveFiles: [],
-        });
-        expect(result).toHaveLength(1);
+      it('merges entries whose DOIs normalize to the same value', () => {
+        const doiPairs = [
+          ['10.1234/test', '10.1234/test'],
+          ['10.1234/test', 'https://doi.org/10.1234/test'],
+        ] as const;
+        for (const [pdfDoi, refDoi] of doiPairs) {
+          const result = buildDeduplicatedStudies({
+            uploadedPdfs: [
+              { title: 'PDF Title', doi: pdfDoi, data: 'pdf-data', extracting: false },
+            ],
+            selectedRefs: [
+              {
+                title: 'Reference Title',
+                doi: refDoi,
+                firstAuthor: 'Smith',
+                publicationYear: 2024,
+              },
+            ],
+            selectedLookups: [],
+            driveFiles: [],
+          });
+          expect(result).toHaveLength(1);
+          expect(result[0].pdfData).toBe('pdf-data');
+          expect(result[0].firstAuthor).toBe('Smith');
+        }
       });
 
       it('keeps entries with different DOIs separate', () => {
@@ -199,34 +187,22 @@ describe('deduplication', () => {
     });
 
     describe('title-based deduplication', () => {
-      it('merges entries with matching normalized titles', () => {
-        const result = buildDeduplicatedStudies({
-          uploadedPdfs: [
-            { title: 'Test Study Title', doi: null, data: 'pdf-data', extracting: false },
-          ],
-          selectedRefs: [
-            {
-              title: 'Test Study Title',
-              doi: null,
-              firstAuthor: 'Smith',
-            },
-          ],
-          selectedLookups: [],
-          driveFiles: [],
-        });
-        expect(result).toHaveLength(1);
-        expect(result[0].pdfData).toBe('pdf-data');
-        expect(result[0].firstAuthor).toBe('Smith');
-      });
-
-      it('merges case-insensitive title matches', () => {
-        const result = buildDeduplicatedStudies({
-          uploadedPdfs: [{ title: 'TEST STUDY', doi: null, data: 'pdf-data', extracting: false }],
-          selectedRefs: [{ title: 'test study', doi: null, firstAuthor: 'Smith' }],
-          selectedLookups: [],
-          driveFiles: [],
-        });
-        expect(result).toHaveLength(1);
+      it('merges entries whose normalized titles match', () => {
+        const titlePairs = [
+          ['Test Study Title', 'Test Study Title'],
+          ['TEST STUDY', 'test study'],
+        ] as const;
+        for (const [pdfTitle, refTitle] of titlePairs) {
+          const result = buildDeduplicatedStudies({
+            uploadedPdfs: [{ title: pdfTitle, doi: null, data: 'pdf-data', extracting: false }],
+            selectedRefs: [{ title: refTitle, doi: null, firstAuthor: 'Smith' }],
+            selectedLookups: [],
+            driveFiles: [],
+          });
+          expect(result).toHaveLength(1);
+          expect(result[0].pdfData).toBe('pdf-data');
+          expect(result[0].firstAuthor).toBe('Smith');
+        }
       });
 
       it('keeps entries with different titles separate', () => {

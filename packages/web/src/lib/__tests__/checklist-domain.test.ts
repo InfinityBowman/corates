@@ -44,6 +44,22 @@ const createStudy = (overrides = {}) => ({
 });
 
 describe('checklist-domain', () => {
+  describe('null input guards', () => {
+    it('returns empty, false, or null rather than throwing', () => {
+      expect(isReconciledChecklist(null)).toBe(false);
+      expect(isReconciledChecklist(undefined)).toBe(false);
+      expect(getTodoChecklists(null, 'user-1')).toEqual([]);
+      expect(getTodoChecklists(createStudy(), null)).toEqual([]);
+      expect(getCompletedChecklists(null)).toEqual([]);
+      expect(getFinalizedChecklist(null)).toBeNull();
+      expect(getReconciliationChecklists(null)).toEqual([]);
+      expect(getStudiesForTab(null, 'todo', 'user-1')).toEqual([]);
+      expect(getStudiesForTab([], 'todo', 'user-1')).toEqual([]);
+      expect(isDualReviewerStudy(null)).toBe(false);
+      expect(getChecklistCount([], 'todo', 'user-1')).toBe(0);
+    });
+  });
+
   describe('isReconciledChecklist', () => {
     it('returns true for checklist with assignedTo null', () => {
       const checklist = createChecklist({ assignedTo: null });
@@ -53,14 +69,6 @@ describe('checklist-domain', () => {
     it('returns false for checklist assigned to a user', () => {
       const checklist = createChecklist({ assignedTo: 'user-1' });
       expect(isReconciledChecklist(checklist)).toBe(false);
-    });
-
-    it('returns false for null checklist', () => {
-      expect(isReconciledChecklist(null)).toBe(false);
-    });
-
-    it('returns false for undefined checklist', () => {
-      expect(isReconciledChecklist(undefined)).toBe(false);
     });
   });
 
@@ -113,15 +121,6 @@ describe('checklist-domain', () => {
       const result = getTodoChecklists(study, userId);
       expect(result).toHaveLength(0);
     });
-
-    it('returns empty array for null study', () => {
-      expect(getTodoChecklists(null, userId)).toEqual([]);
-    });
-
-    it('returns empty array for null userId', () => {
-      const study = createStudy();
-      expect(getTodoChecklists(study, null)).toEqual([]);
-    });
   });
 
   describe('getCompletedChecklists', () => {
@@ -136,10 +135,6 @@ describe('checklist-domain', () => {
       const result = getCompletedChecklists(study);
       expect(result).toHaveLength(2);
       expect(result.map(c => c.id)).toEqual(['cl-1', 'cl-3']);
-    });
-
-    it('returns empty array for null study', () => {
-      expect(getCompletedChecklists(null)).toEqual([]);
     });
   });
 
@@ -183,10 +178,6 @@ describe('checklist-domain', () => {
       });
       expect(getFinalizedChecklist(study)).toBeNull();
     });
-
-    it('returns null for null study', () => {
-      expect(getFinalizedChecklist(null)).toBeNull();
-    });
   });
 
   describe('getReconciliationChecklists', () => {
@@ -228,10 +219,6 @@ describe('checklist-domain', () => {
       });
       const result = getReconciliationChecklists(study);
       expect(result).toHaveLength(0);
-    });
-
-    it('returns empty array for null study', () => {
-      expect(getReconciliationChecklists(null)).toEqual([]);
     });
   });
 
@@ -395,14 +382,6 @@ describe('checklist-domain', () => {
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe('study-1');
     });
-
-    it('returns empty array for empty input', () => {
-      expect(getStudiesForTab([], 'todo', userId)).toEqual([]);
-    });
-
-    it('returns empty array for null input', () => {
-      expect(getStudiesForTab(null, 'todo', userId)).toEqual([]);
-    });
   });
 
   describe('isDualReviewerStudy', () => {
@@ -420,10 +399,6 @@ describe('checklist-domain', () => {
         reviewer2: null,
       });
       expect(isDualReviewerStudy(study)).toBe(false);
-    });
-
-    it('returns false for null study', () => {
-      expect(isDualReviewerStudy(null)).toBe(false);
     });
   });
 
@@ -494,10 +469,6 @@ describe('checklist-domain', () => {
       ];
       const count = getChecklistCount(studies, 'todo', userId);
       expect(count).toBe(2);
-    });
-
-    it('returns 0 for empty array', () => {
-      expect(getChecklistCount([], 'todo', userId)).toBe(0);
     });
   });
 
@@ -889,54 +860,5 @@ describe('checklist-domain', () => {
       expect(getSendBackToTodoPlan(study, 'outcome-1', 'ROB2')?.reviewerChecklists).toHaveLength(1);
       expect(getSendBackToTodoPlan(study, 'outcome-3', 'ROB2')).toBe(null);
     });
-  });
-});
-
-describe('computeProjectStats - status matching', () => {
-  it('should count studies with finalized checklists as completed', () => {
-    const studies = [
-      {
-        id: 'study-1',
-        name: 'Test Study',
-        checklists: [{ id: 'cl-1', type: 'AMSTAR2', status: CHECKLIST_STATUS.FINALIZED }],
-      },
-    ];
-
-    // Mirrors the logic in projectStore.ts computeProjectStats
-    let completedCount = 0;
-    for (const study of studies) {
-      const hasCompletedChecklist = study.checklists?.some(
-        c => c.status === CHECKLIST_STATUS.FINALIZED,
-      );
-      if (hasCompletedChecklist) {
-        completedCount++;
-      }
-    }
-
-    expect(completedCount).toBe(1);
-  });
-
-  it('should not count non-finalized studies as completed', () => {
-    const studies = [
-      {
-        id: 'study-1',
-        name: 'Test Study',
-        checklists: [
-          { id: 'cl-1', type: 'AMSTAR2', status: CHECKLIST_STATUS.IN_PROGRESS as string },
-        ],
-      },
-    ];
-
-    let completedCount = 0;
-    for (const study of studies) {
-      const hasCompletedChecklist = study.checklists?.some(
-        c => c.status === CHECKLIST_STATUS.FINALIZED,
-      );
-      if (hasCompletedChecklist) {
-        completedCount++;
-      }
-    }
-
-    expect(completedCount).toBe(0);
   });
 });

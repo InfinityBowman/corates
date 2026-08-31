@@ -2,14 +2,13 @@
  * Tests for PDF Utility Functions
  *
  * INTENDED BEHAVIOR:
- * - cleanTitle: Removes excessive whitespace and common article prefixes
  * - readFileAsArrayBuffer: Converts File to ArrayBuffer
  * - extractPdfTitle: Extracts title from metadata or first page text
  * - extractPdfDoi: Extracts DOI from metadata or first page text
  *
  * NOTES:
  * - extractPdfTitle and extractPdfDoi require EmbedPDF engine and are tested with mocks
- * - cleanTitle is internal but tested for correctness
+ * - Title prefix/whitespace cleanup is exercised through extractPdfTitle (cleanTitle is not exported)
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -27,88 +26,6 @@ vi.mock('../embedPdfEngine.js', () => ({
 }));
 
 import { readFileAsArrayBuffer, extractPdfTitle, extractPdfDoi } from '../pdfUtils';
-
-// Recreate internal function for testing since it's not exported
-function cleanTitle(title: string): string {
-  return (
-    title
-      // Remove excessive whitespace
-      .replace(/\s+/g, ' ')
-      // Remove common prefixes (with optional : or -)
-      .replace(/^(original\s+article|research\s+article|review|article)\s*[:|-]?\s*/i, '')
-      .trim()
-  );
-}
-
-describe('cleanTitle', () => {
-  describe('whitespace normalization', () => {
-    it('should collapse multiple spaces into single space', () => {
-      expect(cleanTitle('Hello    World')).toBe('Hello World');
-    });
-
-    it('should normalize tabs and newlines to spaces', () => {
-      expect(cleanTitle('Hello\t\tWorld')).toBe('Hello World');
-      expect(cleanTitle('Hello\n\nWorld')).toBe('Hello World');
-    });
-
-    it('should trim leading and trailing whitespace', () => {
-      expect(cleanTitle('  Hello World  ')).toBe('Hello World');
-    });
-  });
-
-  describe('prefix removal', () => {
-    it('should remove "Original Article:" prefix', () => {
-      expect(cleanTitle('Original Article: Study on Effects')).toBe('Study on Effects');
-    });
-
-    it('should remove "Research Article -" prefix', () => {
-      expect(cleanTitle('Research Article - Study on Effects')).toBe('Study on Effects');
-    });
-
-    it('should remove "Review" prefix', () => {
-      expect(cleanTitle('Review: Systematic Analysis')).toBe('Systematic Analysis');
-    });
-
-    it('should remove "Article" prefix', () => {
-      expect(cleanTitle('Article: New Findings')).toBe('New Findings');
-    });
-
-    it('should be case-insensitive for prefix removal', () => {
-      expect(cleanTitle('ORIGINAL ARTICLE: Study')).toBe('Study');
-      expect(cleanTitle('research article: Study')).toBe('Study');
-      expect(cleanTitle('REVIEW: Analysis')).toBe('Analysis');
-    });
-
-    it('should handle prefix without separator', () => {
-      expect(cleanTitle('Original Article Study')).toBe('Study');
-    });
-
-    it('should handle multiple spaces after prefix', () => {
-      expect(cleanTitle('Research Article:    Study')).toBe('Study');
-    });
-  });
-
-  describe('edge cases', () => {
-    it('should return empty string for empty input', () => {
-      expect(cleanTitle('')).toBe('');
-    });
-
-    it('should return empty string for whitespace-only input', () => {
-      expect(cleanTitle('   ')).toBe('');
-    });
-
-    it('should preserve title that does not start with known prefix', () => {
-      expect(cleanTitle('Systematic Review of Clinical Trials')).toBe(
-        'Systematic Review of Clinical Trials',
-      );
-    });
-
-    it('should not remove "review" when it appears in the middle of title', () => {
-      // BUG?: Current regex only removes prefix at the start
-      expect(cleanTitle('A Systematic Review')).toBe('A Systematic Review');
-    });
-  });
-});
 
 describe('readFileAsArrayBuffer', () => {
   beforeEach(() => {
@@ -173,22 +90,35 @@ describe('readFileAsArrayBuffer', () => {
 
 describe('extractPdfTitle', () => {
   const mockDoc = { id: 'test-doc' };
+  const pdfData = new ArrayBuffer(100);
+
+  function mockOpenDocument() {
+    mockEngine.openDocumentBuffer.mockReturnValue({
+      toPromise: () => Promise.resolve(mockDoc),
+    });
+    mockEngine.closeDocument.mockReturnValue({
+      toPromise: () => Promise.resolve(),
+    });
+  }
+
+  function mockFirstPageText(text: string) {
+    mockOpenDocument();
+    mockEngine.getMetadata.mockReturnValue({
+      toPromise: () => Promise.resolve({ title: null }),
+    });
+    mockEngine.extractText.mockReturnValue({
+      toPromise: () => Promise.resolve(text),
+    });
+  }
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it('should return title from PDF metadata when available', async () => {
-    const pdfData = new ArrayBuffer(100);
-
-    mockEngine.openDocumentBuffer.mockReturnValue({
-      toPromise: () => Promise.resolve(mockDoc),
-    });
+    mockOpenDocument();
     mockEngine.getMetadata.mockReturnValue({
       toPromise: () => Promise.resolve({ title: 'Test PDF Title' }),
-    });
-    mockEngine.closeDocument.mockReturnValue({
-      toPromise: () => Promise.resolve(),
     });
 
     const title = await extractPdfTitle(pdfData);
@@ -200,20 +130,7 @@ describe('extractPdfTitle', () => {
   });
 
   it('should fall back to first page text when metadata has no title', async () => {
-    const pdfData = new ArrayBuffer(100);
-
-    mockEngine.openDocumentBuffer.mockReturnValue({
-      toPromise: () => Promise.resolve(mockDoc),
-    });
-    mockEngine.getMetadata.mockReturnValue({
-      toPromise: () => Promise.resolve({ title: null }),
-    });
-    mockEngine.extractText.mockReturnValue({
-      toPromise: () => Promise.resolve('Important Study About Cats\nAbstract text here...'),
-    });
-    mockEngine.closeDocument.mockReturnValue({
-      toPromise: () => Promise.resolve(),
-    });
+    mockFirstPageText('Important Study About Cats\nAbstract text here...');
 
     const title = await extractPdfTitle(pdfData);
 
@@ -221,42 +138,28 @@ describe('extractPdfTitle', () => {
     expect(mockEngine.extractText).toHaveBeenCalledWith(mockDoc, [0]);
   });
 
-  it('should clean extracted title of prefixes', async () => {
-    const pdfData = new ArrayBuffer(100);
-
-    mockEngine.openDocumentBuffer.mockReturnValue({
-      toPromise: () => Promise.resolve(mockDoc),
-    });
-    mockEngine.getMetadata.mockReturnValue({
-      toPromise: () => Promise.resolve({ title: null }),
-    });
-    mockEngine.extractText.mockReturnValue({
-      toPromise: () => Promise.resolve('Original Article: Machine Learning Study'),
-    });
-    mockEngine.closeDocument.mockReturnValue({
-      toPromise: () => Promise.resolve(),
-    });
-
-    const title = await extractPdfTitle(pdfData);
-
-    expect(title).toBe('Machine Learning Study');
+  it('cleans whitespace and article prefixes on first-page titles', async () => {
+    // cleanTitle is not exported; cases must survive extractPdfTitle's length > 5 filter
+    const cases: Array<[string, string]> = [
+      ['Original Article: Machine Learning Study', 'Machine Learning Study'],
+      ['Research Article - Study on Effects of Treatment', 'Study on Effects of Treatment'],
+      ['Review: Systematic Analysis of Trials', 'Systematic Analysis of Trials'],
+      ['Article: New Findings About Widgets', 'New Findings About Widgets'],
+      ['ORIGINAL ARTICLE: Machine Learning Study', 'Machine Learning Study'],
+      ['Original Article Machine Learning Study', 'Machine Learning Study'],
+      ['Hello    World About Science', 'Hello World About Science'],
+      ['  Hello World About Science  ', 'Hello World About Science'],
+      ['Systematic Review of Clinical Trials', 'Systematic Review of Clinical Trials'],
+      ['A Systematic Review of Trials', 'A Systematic Review of Trials'],
+    ];
+    for (const [raw, expected] of cases) {
+      mockFirstPageText(raw);
+      expect(await extractPdfTitle(pdfData)).toBe(expected);
+    }
   });
 
   it('should return null when no text can be extracted', async () => {
-    const pdfData = new ArrayBuffer(100);
-
-    mockEngine.openDocumentBuffer.mockReturnValue({
-      toPromise: () => Promise.resolve(mockDoc),
-    });
-    mockEngine.getMetadata.mockReturnValue({
-      toPromise: () => Promise.resolve({ title: null }),
-    });
-    mockEngine.extractText.mockReturnValue({
-      toPromise: () => Promise.resolve(''),
-    });
-    mockEngine.closeDocument.mockReturnValue({
-      toPromise: () => Promise.resolve(),
-    });
+    mockFirstPageText('');
 
     const title = await extractPdfTitle(pdfData);
 
@@ -264,20 +167,7 @@ describe('extractPdfTitle', () => {
   });
 
   it('should reject titles that are too short', async () => {
-    const pdfData = new ArrayBuffer(100);
-
-    mockEngine.openDocumentBuffer.mockReturnValue({
-      toPromise: () => Promise.resolve(mockDoc),
-    });
-    mockEngine.getMetadata.mockReturnValue({
-      toPromise: () => Promise.resolve({ title: null }),
-    });
-    mockEngine.extractText.mockReturnValue({
-      toPromise: () => Promise.resolve('Hi\nThis is a longer line'),
-    });
-    mockEngine.closeDocument.mockReturnValue({
-      toPromise: () => Promise.resolve(),
-    });
+    mockFirstPageText('Hi\nThis is a longer line');
 
     const title = await extractPdfTitle(pdfData);
 
@@ -286,8 +176,6 @@ describe('extractPdfTitle', () => {
   });
 
   it('should handle PDF parsing errors gracefully', async () => {
-    const pdfData = new ArrayBuffer(100);
-
     mockEngine.openDocumentBuffer.mockReturnValue({
       toPromise: () => Promise.reject(new Error('Invalid PDF')),
     });
