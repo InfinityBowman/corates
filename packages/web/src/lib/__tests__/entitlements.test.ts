@@ -115,6 +115,18 @@ describe('entitlements', () => {
         false,
       );
     });
+
+    it('returns true for far-future expiration timestamps', () => {
+      expect(isSubscriptionActive({ status: 'active', currentPeriodEnd: 4102444800 })).toBe(true);
+    });
+
+    it('returns false for far-past expiration timestamps', () => {
+      expect(isSubscriptionActive({ status: 'active', currentPeriodEnd: 946684800 })).toBe(false);
+    });
+
+    it('returns false for a subscription object with no status', () => {
+      expect(isSubscriptionActive({})).toBe(false);
+    });
   });
 
   describe('getEffectiveEntitlements', () => {
