@@ -7,8 +7,10 @@
 import { useState, useMemo, useCallback } from 'react';
 import { ChevronRightIcon, PlusIcon, Trash2Icon, XIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 import { sortStudyPdfs, getCitationLine } from '../study-utils';
 import {
   AlertDialog,
@@ -28,6 +30,25 @@ import { getStatusLabel, getStatusStyle } from '@corates/shared/checklists';
 import { useProjectOutcomes } from '@/project/workspace-data';
 import type { StudyInfo, PdfEntry, MemberEntry } from '@/stores/projectStore';
 import { useProjectContext } from '../ProjectContext';
+
+function DisabledAddButton({ reason }: { reason: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          className={cn(buttonVariants(), 'cursor-not-allowed opacity-50')}
+          role='button'
+          aria-disabled='true'
+          onClick={e => e.stopPropagation()}
+        >
+          <PlusIcon className='size-4' />
+          Add
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>{reason}</TooltipContent>
+    </Tooltip>
+  );
+}
 
 interface TodoStudyRowProps {
   study: StudyInfo;
@@ -114,23 +135,36 @@ export function TodoStudyRow({
     }
   }, [deleteChecklistId, onDeleteChecklist]);
 
+  const addBlockedReason =
+    !hasChecklists || canAddMore ? null
+    : outcomes.length === 0 ? 'Add an outcome first.'
+    : 'All outcomes covered.';
+
   const addCancelButton =
-    (hasChecklists && canAddMore) || showChecklistForm ?
+    showChecklistForm ?
       <Button
-        variant={showChecklistForm ? 'ghost' : 'default'}
+        variant='ghost'
         onClick={e => {
           e.stopPropagation();
           onToggleChecklistForm();
         }}
-        className={
-          showChecklistForm ? 'text-destructive hover:bg-destructive/5 hover:text-destructive' : ''
-        }
-        title={showChecklistForm ? 'Cancel' : 'Add another checklist'}
+        className='text-destructive hover:bg-destructive/5 hover:text-destructive'
+        title='Cancel'
       >
-        {showChecklistForm ?
-          <XIcon className='size-4' />
-        : <PlusIcon className='size-4' />}
-        {showChecklistForm ? 'Cancel' : 'Add'}
+        <XIcon className='size-4' />
+        Cancel
+      </Button>
+    : hasChecklists && addBlockedReason ? <DisabledAddButton reason={addBlockedReason} />
+    : hasChecklists ?
+      <Button
+        onClick={e => {
+          e.stopPropagation();
+          onToggleChecklistForm();
+        }}
+        title='Add another checklist'
+      >
+        <PlusIcon className='size-4' />
+        Add
       </Button>
     : null;
 
