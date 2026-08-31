@@ -3,8 +3,8 @@
  *
  * Moves the reviewer checklists and, when the group is already reconciled,
  * the finalized consensus checklist along with them. Outcomes that would
- * collide with an existing checklist for one of the same reviewers are not
- * offered as targets.
+ * collide with an existing checklist for one of the same reviewers stay in
+ * the list, disabled.
  */
 
 import { useMemo, useState } from 'react';
@@ -53,23 +53,33 @@ export function ChangeOutcomeDialog({
 
   const currentOutcomeName = outcomes.find(o => o.id === outcomeId)?.name || 'Unknown Outcome';
 
-  const availableOutcomes = useMemo(() => {
-    const moverAssignees = new Set(
-      study.checklists
-        .filter(c => c.type === checklistType && c.outcomeId === outcomeId)
-        .map(c => c.assignedTo ?? null),
-    );
-    return outcomes.filter(outcome => {
-      if (outcome.id === outcomeId) return false;
-      const collides = study.checklists.some(
-        c =>
-          c.type === checklistType &&
-          c.outcomeId === outcome.id &&
-          moverAssignees.has(c.assignedTo ?? null),
-      );
-      return !collides;
-    });
-  }, [outcomes, study.checklists, checklistType, outcomeId]);
+  const moverAssignees = useMemo(
+    () =>
+      new Set(
+        study.checklists
+          .filter(c => c.type === checklistType && c.outcomeId === outcomeId)
+          .map(c => c.assignedTo ?? null),
+      ),
+    [study.checklists, checklistType, outcomeId],
+  );
+
+  const otherOutcomes = useMemo(
+    () =>
+      outcomes
+        .filter(outcome => outcome.id !== outcomeId)
+        .map(outcome => {
+          const collides = study.checklists.some(
+            c =>
+              c.type === checklistType &&
+              c.outcomeId === outcome.id &&
+              moverAssignees.has(c.assignedTo ?? null),
+          );
+          return { ...outcome, collides };
+        }),
+    [outcomes, study.checklists, checklistType, outcomeId, moverAssignees],
+  );
+
+  const hasSelectableTarget = otherOutcomes.some(o => !o.collides);
 
   const hasFinalizedConsensus = study.checklists.some(
     c =>
@@ -111,7 +121,7 @@ export function ChangeOutcomeDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {availableOutcomes.length > 0 ?
+        {otherOutcomes.length > 0 ?
           <Select
             value={selectedOutcomeId || ''}
             onValueChange={v => setSelectedOutcomeId(v || null)}
@@ -120,9 +130,11 @@ export function ChangeOutcomeDialog({
               <SelectValue placeholder='Select new outcome...' />
             </SelectTrigger>
             <SelectContent>
-              {availableOutcomes.map(outcome => (
-                <SelectItem key={outcome.id} value={outcome.id}>
-                  {outcome.name}
+              {otherOutcomes.map(outcome => (
+                <SelectItem key={outcome.id} value={outcome.id} disabled={outcome.collides}>
+                  {outcome.collides ?
+                    `${outcome.name} -- This reviewer already has this checklist for that outcome.`
+                  : outcome.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -130,8 +142,7 @@ export function ChangeOutcomeDialog({
         : <div className='border-warning-border bg-warning-bg rounded-lg border p-3'>
             <p className='text-warning-foreground text-sm font-medium'>No available outcomes</p>
             <p className='text-warning mt-1 text-xs'>
-              Every other outcome already has a checklist for one of these reviewers. Add a new
-              outcome from{' '}
+              Add a new outcome from{' '}
               <Button
                 variant='link'
                 size='xs'
@@ -147,6 +158,12 @@ export function ChangeOutcomeDialog({
             </p>
           </div>
         }
+
+        {otherOutcomes.length > 0 && !hasSelectableTarget && (
+          <p className='text-muted-foreground text-xs'>
+            Every other outcome already has this checklist for one of these reviewers.
+          </p>
+        )}
 
         <DialogFooter>
           <Button variant='secondary' onClick={() => handleOpenChange(false)}>

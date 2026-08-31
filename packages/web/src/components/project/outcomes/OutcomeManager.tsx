@@ -23,7 +23,7 @@ import { useProjectOutcomes } from '@/project/workspace-data';
 import { showToast } from '@/lib/toast';
 
 export function OutcomeManager() {
-  const { projectId, isOwner } = useProjectContext();
+  const { projectId } = useProjectContext();
 
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -112,7 +112,7 @@ export function OutcomeManager() {
 
   return (
     <div className='flex flex-col gap-2'>
-      {isOwner && !isAdding && (
+      {!isAdding && (
         <Button
           variant='outline'
           size='sm'
@@ -235,33 +235,29 @@ export function OutcomeManager() {
           </div>
         : <div key={outcome.id} className='flex items-center gap-2'>
             <span className='text-foreground min-w-0 flex-1 truncate text-sm'>{outcome.name}</span>
-            {isOwner && (
-              <>
-                <Button
-                  variant='ghost'
-                  size='icon-sm'
-                  onClick={() => {
-                    setEditingId(outcome.id);
-                    setNewName(outcome.name);
-                  }}
-                  className='text-muted-foreground'
-                  title='Edit'
-                  aria-label='Edit'
-                >
-                  <PencilIcon className='size-3.5' />
-                </Button>
-                <Button
-                  variant='ghost'
-                  size='icon-sm'
-                  onClick={() => setDeleteTarget(outcome.id)}
-                  className='text-muted-foreground hover:text-red-600'
-                  title='Delete'
-                  aria-label='Delete'
-                >
-                  <Trash2Icon className='size-3.5' />
-                </Button>
-              </>
-            )}
+            <Button
+              variant='ghost'
+              size='icon-sm'
+              onClick={() => {
+                setEditingId(outcome.id);
+                setNewName(outcome.name);
+              }}
+              className='text-muted-foreground'
+              title='Edit'
+              aria-label='Edit'
+            >
+              <PencilIcon className='size-3.5' />
+            </Button>
+            <Button
+              variant='ghost'
+              size='icon-sm'
+              onClick={() => setDeleteTarget(outcome.id)}
+              className='text-muted-foreground hover:text-red-600'
+              title='Delete'
+              aria-label='Delete'
+            >
+              <Trash2Icon className='size-3.5' />
+            </Button>
           </div>,
       )}
 

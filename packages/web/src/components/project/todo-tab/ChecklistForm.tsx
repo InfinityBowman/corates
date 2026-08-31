@@ -46,6 +46,7 @@ export function ChecklistForm({
   const outcomes = useProjectOutcomes(projectId);
 
   const requiresOutcome = type === CHECKLIST_TYPES.ROB2 || type === CHECKLIST_TYPES.ROBINS_I;
+  const typeName = getChecklistMetadata(type).shortName;
 
   const usedOutcomeIds = useMemo(() => {
     if (!studyChecklists || !requiresOutcome) return new Set<string>();
@@ -62,19 +63,13 @@ export function ChecklistForm({
     return used;
   }, [studyChecklists, type, currentUserId, requiresOutcome]);
 
-  const availableOutcomes = useMemo(
-    () => outcomes.filter(o => !usedOutcomeIds.has(o.id)),
-    [outcomes, usedOutcomeIds],
-  );
+  const unusedCount = outcomes.filter(o => !usedOutcomeIds.has(o.id)).length;
 
   // Derive effective outcomeId -- clear if the selected one is no longer available
   const outcomeId =
     selectedOutcomeId && !usedOutcomeIds.has(selectedOutcomeId) ? selectedOutcomeId : null;
 
-  const canSubmit = requiresOutcome ? outcomeId !== null && availableOutcomes.length > 0 : true;
-
-  const hasOutcomeIssue =
-    requiresOutcome && (outcomes.length === 0 || availableOutcomes.length === 0);
+  const canSubmit = requiresOutcome ? outcomeId !== null : true;
 
   const handleTypeChange = useCallback((value: string) => {
     setType(value);
@@ -106,18 +101,23 @@ export function ChecklistForm({
           </Select>
         </div>
 
-        {requiresOutcome && !hasOutcomeIssue && (
+        {requiresOutcome && outcomes.length > 0 && (
           <div className='min-w-45 flex-1'>
             <Select value={outcomeId || ''} onValueChange={v => setSelectedOutcomeId(v || null)}>
               <SelectTrigger>
                 <SelectValue placeholder='Select outcome...' />
               </SelectTrigger>
               <SelectContent>
-                {availableOutcomes.map((outcome: any) => (
-                  <SelectItem key={outcome.id} value={outcome.id}>
-                    {outcome.name}
-                  </SelectItem>
-                ))}
+                {outcomes.map((outcome: any) => {
+                  const used = usedOutcomeIds.has(outcome.id);
+                  return (
+                    <SelectItem key={outcome.id} value={outcome.id} disabled={used}>
+                      {used ?
+                        `${outcome.name} -- Already has a ${typeName} checklist`
+                      : outcome.name}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>
@@ -128,11 +128,11 @@ export function ChecklistForm({
         </Button>
       </div>
 
-      {requiresOutcome && hasOutcomeIssue && outcomes.length === 0 && (
+      {requiresOutcome && outcomes.length === 0 && (
         <div className='border-warning-border bg-warning-bg mt-2 rounded-lg border p-3'>
           <p className='text-warning-foreground text-sm font-medium'>No outcomes defined</p>
           <p className='text-warning mt-1 text-xs'>
-            {(getChecklistMetadata(type) as any)?.name || type} requires an outcome. Add them from{' '}
+            {getChecklistMetadata(type).name} requires an outcome. Add them from{' '}
             <Button
               variant='link'
               size='xs'
@@ -146,12 +146,12 @@ export function ChecklistForm({
         </div>
       )}
 
-      {requiresOutcome && hasOutcomeIssue && outcomes.length > 0 && (
+      {requiresOutcome && outcomes.length > 0 && unusedCount === 0 && (
         <div className='border-info-border bg-info-bg mt-2 rounded-lg border p-3'>
           <p className='text-info-foreground text-sm font-medium'>All outcomes covered</p>
           <p className='text-info mt-1 text-xs'>
-            You already have a {(getChecklistMetadata(type) as any)?.name || type} checklist for
-            each available outcome.
+            You already have a {getChecklistMetadata(type).name} checklist for each available
+            outcome.
           </p>
         </div>
       )}
