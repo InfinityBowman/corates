@@ -28,22 +28,17 @@ describe('matching', () => {
 
   describe('entriesMatch', () => {
     describe('DOI matching', () => {
-      it('returns true for matching DOIs', () => {
-        const entry1 = { doi: '10.1234/test', title: 'Title A' };
-        const entry2 = { doi: '10.1234/test', title: 'Title B' };
-        expect(entriesMatch(entry1, entry2)).toBe(true);
-      });
-
-      it('returns true for matching DOIs with different URL prefixes', () => {
-        const entry1 = { doi: '10.1234/test' };
-        const entry2 = { doi: 'https://doi.org/10.1234/test' };
-        expect(entriesMatch(entry1, entry2)).toBe(true);
-      });
-
-      it('returns true for matching DOIs case insensitively', () => {
-        const entry1 = { doi: '10.1234/TEST' };
-        const entry2 = { doi: '10.1234/test' };
-        expect(entriesMatch(entry1, entry2)).toBe(true);
+      it('matches when both DOIs normalize to the same value', () => {
+        expect(
+          entriesMatch(
+            { doi: '10.1234/test', title: 'Title A' },
+            { doi: '10.1234/test', title: 'Title B' },
+          ),
+        ).toBe(true);
+        expect(entriesMatch({ doi: '10.1234/test' }, { doi: 'https://doi.org/10.1234/test' })).toBe(
+          true,
+        );
+        expect(entriesMatch({ doi: '10.1234/TEST' }, { doi: '10.1234/test' })).toBe(true);
       });
 
       it('returns false for different DOIs', () => {
@@ -54,16 +49,19 @@ describe('matching', () => {
     });
 
     describe('title matching', () => {
-      it('returns true for matching titles when no DOI', () => {
-        const entry1 = { title: 'Test Study Title', doi: null };
-        const entry2 = { title: 'Test Study Title', doi: null };
-        expect(entriesMatch(entry1, entry2)).toBe(true);
-      });
-
-      it('returns true for matching titles case insensitively', () => {
-        const entry1 = { title: 'TEST STUDY TITLE', doi: null };
-        const entry2 = { title: 'test study title', doi: null };
-        expect(entriesMatch(entry1, entry2)).toBe(true);
+      it('matches titles case-insensitively when neither has a DOI', () => {
+        expect(
+          entriesMatch(
+            { title: 'Test Study Title', doi: null },
+            { title: 'Test Study Title', doi: null },
+          ),
+        ).toBe(true);
+        expect(
+          entriesMatch(
+            { title: 'TEST STUDY TITLE', doi: null },
+            { title: 'test study title', doi: null },
+          ),
+        ).toBe(true);
       });
 
       it('returns false for different titles when no DOI', () => {
@@ -74,18 +72,6 @@ describe('matching', () => {
     });
 
     describe('priority rules', () => {
-      it('DOI match takes priority over title mismatch', () => {
-        const entry1 = { doi: '10.1234/test', title: 'Title A' };
-        const entry2 = { doi: '10.1234/test', title: 'Title B' };
-        expect(entriesMatch(entry1, entry2)).toBe(true);
-      });
-
-      it('falls back to title when neither has DOI', () => {
-        const entry1 = { doi: null, title: 'Test Title' };
-        const entry2 = { doi: null, title: 'Test Title' };
-        expect(entriesMatch(entry1, entry2)).toBe(true);
-      });
-
       it('returns false when one has DOI and other does not (no title match)', () => {
         const entry1 = { doi: '10.1234/test', title: 'Title A' };
         const entry2 = { doi: null, title: 'Title B' };
@@ -103,18 +89,11 @@ describe('matching', () => {
     ];
 
     describe('DOI-based matching', () => {
-      it('finds reference with matching DOI', () => {
-        const entry = { doi: '10.1234/test2' };
-        const result = findMatchingRef(entry, references);
-        expect(result).toBeDefined();
-        expect(result!.id).toBe('ref-2');
-      });
-
-      it('finds reference with matching DOI URL', () => {
-        const entry = { doi: 'https://doi.org/10.1234/test1' };
-        const result = findMatchingRef(entry, references);
-        expect(result).toBeDefined();
-        expect(result!.id).toBe('ref-1');
+      it('finds reference with matching DOI, including URL-prefixed forms', () => {
+        expect(findMatchingRef({ doi: '10.1234/test2' }, references)!.id).toBe('ref-2');
+        expect(findMatchingRef({ doi: 'https://doi.org/10.1234/test1' }, references)!.id).toBe(
+          'ref-1',
+        );
       });
 
       it('returns null when no DOI matches', () => {
@@ -125,18 +104,9 @@ describe('matching', () => {
     });
 
     describe('title-based matching', () => {
-      it('finds reference with matching title when no DOI', () => {
-        const entry = { title: 'Title Three' };
-        const result = findMatchingRef(entry, references);
-        expect(result).toBeDefined();
-        expect(result!.id).toBe('ref-3');
-      });
-
-      it('finds reference with case-insensitive title match', () => {
-        const entry = { title: 'TITLE ONE' };
-        const result = findMatchingRef(entry, references);
-        expect(result).toBeDefined();
-        expect(result!.id).toBe('ref-1');
+      it('finds reference with matching title when no DOI, case-insensitively', () => {
+        expect(findMatchingRef({ title: 'Title Three' }, references)!.id).toBe('ref-3');
+        expect(findMatchingRef({ title: 'TITLE ONE' }, references)!.id).toBe('ref-1');
       });
 
       it('returns null when no title matches', () => {
