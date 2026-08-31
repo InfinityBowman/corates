@@ -45,6 +45,27 @@ Grafana talks to Loki internally over the docker network without auth.
   Only the `production` envs export; staging logs stay in Cloudflare Workers Logs so the
   Grafana views are production-only.
 - Retention is 90d (`limits_config.retention_period` in `config/loki/loki-config.yaml`)
+- Cloudflare re-delivers failed export batches hours later (up to ~6h seen). Loki only
+  accepts entries within `max_chunk_age / 2` of the newest entry in the stream, so
+  `ingester.max_chunk_age` is 24h (12h window); `querier.query_ingesters_within: 0` keeps
+  that unflushed data queryable. Lost lines show up as `loki_discarded_samples_total`:
+
+  ```bash
+  LOKI_IP=$(docker --context homelab inspect corates-loki -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')
+  ssh jacob@homelab curl -s http://$LOKI_IP:3100/metrics | grep -E 'loki_discarded_samples_total|route="otlp_v1_logs"'
+  ```
+
+  Any non-zero `reason=` or `status_code="400"` on `otlp_v1_logs` means Cloudflare is
+  being told to retry (it does, but the batch ages out and is dropped for good).
+
+## Traefik
+
+Both routers deliberately skip the box-wide `secure-chain@file` (see `compose.yaml`): its
+`rate-limit` middleware has no `sourceCriterion`, so behind the tunnel every service shares
+one 100 req/s bucket keyed on the cloudflared container's IP. Cloudflare's push batches and
+Grafana's parallel panel queries were both getting 429s from it. Traefik runs without an
+access log, so those never appeared anywhere. Loki gets basic auth only; Grafana gets
+`security-headers@file` only.
 
 ## Useful LogQL
 
