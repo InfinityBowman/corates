@@ -89,9 +89,15 @@ test.describe('Local-practice checklists', () => {
     const dropzone = page.getByText('Click to upload');
     await expect(dropzone).toBeVisible({ timeout: 10_000 });
 
-    const fileInput = page.locator('input[type="file"][accept*="pdf"]');
-    await fileInput.setInputFiles(path.join(FIXTURES_DIR, 'Petrie2019.pdf'));
-
-    await expect(dropzone).toBeHidden({ timeout: 15_000 });
+    // The upload panel can remount while the checklist view is still settling,
+    // which detaches the input the files were set on and drops the selection
+    // with no error. Re-resolve the input each attempt and retry until the
+    // panel actually swaps to the viewer.
+    await expect(async () => {
+      await page
+        .locator('input[type="file"][accept*="pdf"]')
+        .setInputFiles(path.join(FIXTURES_DIR, 'Petrie2019.pdf'));
+      await expect(dropzone).toBeHidden({ timeout: 5_000 });
+    }).toPass({ timeout: 30_000 });
   });
 });
