@@ -3,7 +3,7 @@
  * project header, with the sheets they open.
  */
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, type ReactNode } from 'react';
 import {
   PlusIcon,
   UsersIcon,
@@ -13,7 +13,7 @@ import {
   FileIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
@@ -21,6 +21,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 import { AddStudiesSheet } from './add-studies/AddStudiesSheet';
 import { AssignReviewersSheet } from './assign-reviewers/AssignReviewersSheet';
 import { OutcomesSheet } from './outcomes/OutcomesSheet';
@@ -28,12 +30,28 @@ import { useAllStudies, useProjectMembers, useProjectOutcomes } from '@/project/
 import { useProjectExport } from '@/hooks/useProjectExport';
 import { useProjectContext } from './ProjectContext';
 
+// Native disabled buttons drop pointer events, so the tooltip would never fire.
+function DisabledActionButton({ reason, children }: { reason: string; children: ReactNode }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          className={cn(buttonVariants({ variant: 'outline' }), 'cursor-not-allowed opacity-50')}
+          aria-disabled='true'
+        >
+          {children}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>{reason}</TooltipContent>
+    </Tooltip>
+  );
+}
+
 export function ProjectHeaderActions() {
-  const { projectId, isOwner } = useProjectContext();
+  const { projectId, isOwner, outcomesSheetOpen, setOutcomesSheetOpen } = useProjectContext();
 
   const [addOpen, setAddOpen] = useState(false);
   const [assignOpen, setAssignOpen] = useState(false);
-  const [outcomesOpen, setOutcomesOpen] = useState(false);
 
   const studies = useAllStudies(projectId);
   const members = useProjectMembers(projectId);
@@ -61,11 +79,29 @@ export function ProjectHeaderActions() {
     [isOwner, members.length],
   );
 
+  const assignBlockedReason =
+    !isOwner ? 'Only the project owner can assign reviewers.'
+    : studies.length === 0 ? 'Add studies first.'
+    : null;
+  const exportBlockedReason = hasExportableData ? null : 'Complete a checklist first.';
+
+  const assignButton = (
+    <>
+      <UsersIcon className='size-4' />
+      Assign reviewers
+      {unassignedCount > 0 && (
+        <Badge variant='info' className='min-w-5 px-1.5 tabular-nums'>
+          {unassignedCount}
+        </Badge>
+      )}
+    </>
+  );
+
   return (
     <div className='flex shrink-0 items-center gap-2'>
       <Button
         variant='ghost'
-        onClick={() => setOutcomesOpen(true)}
+        onClick={() => setOutcomesSheetOpen(true)}
         className='text-muted-foreground'
       >
         <TargetIcon className='size-4' />
@@ -77,20 +113,19 @@ export function ProjectHeaderActions() {
         )}
       </Button>
 
-      {isOwner && studies.length > 0 && (
-        <Button variant='outline' onClick={() => setAssignOpen(true)}>
-          <UsersIcon className='size-4' />
-          Assign reviewers
-          {unassignedCount > 0 && (
-            <Badge variant='info' className='min-w-5 px-1.5 tabular-nums'>
-              {unassignedCount}
-            </Badge>
-          )}
+      {assignBlockedReason ?
+        <DisabledActionButton reason={assignBlockedReason}>{assignButton}</DisabledActionButton>
+      : <Button variant='outline' onClick={() => setAssignOpen(true)}>
+          {assignButton}
         </Button>
-      )}
+      }
 
-      {hasExportableData && (
-        <DropdownMenu>
+      {exportBlockedReason ?
+        <DisabledActionButton reason={exportBlockedReason}>
+          <DownloadIcon className='size-4' />
+          Export
+        </DisabledActionButton>
+      : <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant='outline'>
               <DownloadIcon className='size-4' />
@@ -108,7 +143,7 @@ export function ProjectHeaderActions() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      )}
+      }
 
       <Button onClick={() => setAddOpen(true)}>
         <PlusIcon className='size-4' />
@@ -117,7 +152,7 @@ export function ProjectHeaderActions() {
 
       <AddStudiesSheet open={addOpen} onOpenChange={setAddOpen} onAdded={handleAdded} />
       {isOwner && <AssignReviewersSheet open={assignOpen} onOpenChange={setAssignOpen} />}
-      <OutcomesSheet open={outcomesOpen} onOpenChange={setOutcomesOpen} />
+      <OutcomesSheet open={outcomesSheetOpen} onOpenChange={setOutcomesSheetOpen} />
     </div>
   );
 }

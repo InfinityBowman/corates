@@ -36,7 +36,7 @@ export function ChecklistForm({
   onSubmit,
   loading,
 }: ChecklistFormProps) {
-  const { projectId } = useProjectContext();
+  const { projectId, setOutcomesSheetOpen } = useProjectContext();
 
   const [type, setType] = useState<string>(DEFAULT_CHECKLIST_TYPE);
   const [selectedOutcomeId, setSelectedOutcomeId] = useState<string | null>(null);
@@ -132,8 +132,16 @@ export function ChecklistForm({
         <div className='border-warning-border bg-warning-bg mt-2 rounded-lg border p-3'>
           <p className='text-warning-foreground text-sm font-medium'>No outcomes defined</p>
           <p className='text-warning mt-1 text-xs'>
-            {(getChecklistMetadata(type) as any)?.name || type} requires an outcome. Add outcomes in
-            the All Studies tab first.
+            {(getChecklistMetadata(type) as any)?.name || type} requires an outcome. Add them from{' '}
+            <Button
+              variant='link'
+              size='xs'
+              className='text-warning h-auto p-0 text-xs underline'
+              onClick={() => setOutcomesSheetOpen(true)}
+            >
+              Outcomes
+            </Button>{' '}
+            in the project header.
           </p>
         </div>
       )}
