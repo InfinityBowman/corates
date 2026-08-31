@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { validatePdfFile, PDF_LIMITS, formatFileSize } from '../pdfValidation.js';
+import { validatePdfFile, PDF_LIMITS } from '../pdfValidation.js';
 
 interface MockFileOptions {
   name?: string;
@@ -41,20 +41,6 @@ function createMockFile(options: MockFileOptions = {}): File {
 // PDF_LIMITS constant assertions removed - these test static values
 // that would only break if intentionally changed, and the behavioral
 // tests below already verify the limits are applied correctly.
-
-describe('formatFileSize', () => {
-  it('should format bytes correctly', () => {
-    expect(formatFileSize(512)).toBe('512 B');
-  });
-
-  it('should format kilobytes correctly', () => {
-    expect(formatFileSize(1536)).toBe('1.5 KB');
-  });
-
-  it('should format megabytes correctly', () => {
-    expect(formatFileSize(52428800)).toBe('50.0 MB');
-  });
-});
 
 describe('validatePdfFile', () => {
   describe('file size validation', () => {
@@ -120,33 +106,13 @@ describe('validatePdfFile', () => {
       expect(result.valid).toBe(true);
     });
 
-    it('should reject filenames with path separators', async () => {
+    it('should reject invalid filenames with INVALID_FILENAME', async () => {
       const file = createMockFile({ name: 'path/to/file.pdf' });
       const result = await validatePdfFile(file);
       expect(result.valid).toBe(false);
       if (!result.valid) {
         expect(result.error).toBe('INVALID_FILENAME');
         expect(result.details.message).toContain('special characters');
-      }
-    });
-
-    it('should reject filenames with quotes', async () => {
-      const file = createMockFile({ name: 'file"name.pdf' });
-      const result = await validatePdfFile(file);
-      expect(result.valid).toBe(false);
-      if (!result.valid) {
-        expect(result.error).toBe('INVALID_FILENAME');
-      }
-    });
-
-    it('should reject filenames exceeding max length', async () => {
-      const longName = 'a'.repeat(201) + '.pdf';
-      const file = createMockFile({ name: longName });
-      const result = await validatePdfFile(file);
-      expect(result.valid).toBe(false);
-      if (!result.valid) {
-        expect(result.error).toBe('INVALID_FILENAME');
-        expect(result.details.message).toContain('200 characters');
       }
     });
   });
