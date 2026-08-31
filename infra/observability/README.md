@@ -17,10 +17,13 @@ Workers (production) -> OTLP export -> loki.jacobmaynard.dev/otlp/v1/logs -> Lok
   `/home/jacob/corates/observability/` on the box by deploy.sh (bind mounts resolve
   remotely when using a docker context)
 - `dashboards/` - Grafana dashboard JSON, imported by hand via Dashboards > New > Import.
-  `corates-logs.json` is scoped to `deployment_environment_name="production"` throughout;
-  staging is deliberately excluded, so importing it will not show staging traffic.
-  `corates-product-health.json` tracks browser `client.*` events relayed through
-  `/api/client-logs`.
+  All are scoped to `deployment_environment_name="production"`; staging is deliberately
+  excluded, so importing them will not show staging traffic.
+  - `corates-logs.json` - volume, levels, handler types, top paths
+  - `corates-product-health.json` - browser `client.*` events via `/api/client-logs`
+  - `corates-product-usage.json` - active users, project work, invitations, appraisals
+  - `corates-request-performance.json` - RED metrics off `request.completed`
+  - `corates-billing.json` - checkout funnels, subscriptions, Stripe webhook ingress
 - `.env` (gitignored) - R2 S3 credentials, Loki basic-auth htpasswd, Grafana admin password
 - `deploy.sh` - rsync config, then `docker --context homelab compose up -d`
 
@@ -44,7 +47,12 @@ Grafana talks to Loki internally over the docker network without auth.
   (see `packages/web/wrangler.jsonc` and `packages/stripe-purchases/wrangler.jsonc`).
   Only the `production` envs export; staging logs stay in Cloudflare Workers Logs so the
   Grafana views are production-only.
-- Retention is 90d (`limits_config.retention_period` in `config/loki/loki-config.yaml`)
+- Retention is 90d (`limits_config.retention_period` in `config/loki/loki-config.yaml`).
+  `max_query_length` is 7 months: Loki's default is 721h, which rejected anything past
+  a month with "the query time range exceeds the limit" even though the data was still
+  on disk. A query's range and its range-vector window are both charged against that
+  limit, so a 90d panel with a `[24h]` window asks for 91d. The ceiling sits well above
+  retention, so raising `retention_period` needs no matching change here.
 - Cloudflare re-delivers failed export batches hours later (up to ~6h seen). Loki only
   accepts entries within `max_chunk_age / 2` of the newest entry in the stream, so
   `ingester.max_chunk_age` is 24h (12h window); `querier.query_ingesters_within: 0` keeps
@@ -87,5 +95,9 @@ libraries are silently excluded.
 Cloudflare attaches ~50 OTLP attributes per line as structured metadata (`url_path`,
 `http_request_method`, `cloudflare_handler_type`, `cloudflare_entrypoint`,
 `cloudflare_script_version_id`, `trace_id`, `cloudflare_ray_id`, `geo_*`, `user_agent_*`).
-Only `service_name` and `deployment_environment_name` are stream labels. Response status
-codes and request durations are **not** exported - use the Cloudflare dashboard for those.
+Only `service_name` and `deployment_environment_name` are stream labels. Cloudflare does not
+export response status or duration, but the app logs its own: `request.completed` carries
+`status`, `durationMs`, `route` and `method` (`packages/web/src/server/requestCompletion.ts`),
+which is what `corates-request-performance.json` charts. Two gotchas there - `route` holds raw
+ids so collapse them in the query, and `| json` makes `requestId` a label, so any `unwrap`
+needs a `| keep` first or it trips the series cap.

@@ -104,7 +104,7 @@ describe('POST /api/client-logs', () => {
 });
 
 describe('emitClientLogEntry', () => {
-  it('strips sensitive keys from nested data', () => {
+  it('strips credentials but keeps identifying fields', () => {
     emitClientLogEntry(
       {
         level: 'info',
@@ -123,6 +123,7 @@ describe('emitClientLogEntry', () => {
       service: 'corates-web-client',
       userId: 'usr_2',
       provider: 'google',
+      email: 'secret@example.com',
       nested: { code: 'AUTH_INVALID' },
     });
   });

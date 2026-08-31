@@ -24,15 +24,12 @@
       {
         "name": "event",
         "label": "Event",
-        "description": "client.* message names emitted from the browser logger.",
-        "type": "query",
-        "datasource": { "type": "loki", "uid": "${datasource}" },
-        "query": "label_values({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | service=\"corates-web-client\" | message=~`client\\\\..*`, message)",
-        "refresh": 2,
+        "description": "client.* events from packages/web (track() in src/lib/analytics.ts plus direct clientLogger calls). Static list because Loki's label_values() cannot take a | json pipeline; All still matches new events.",
+        "type": "custom",
+        "query": "client.auth.sign_in_failed,client.checklist.completed,client.checklist.created,client.checklist.outcome_changed,client.checklist.sent_back_to_todo,client.collaborator.invited,client.drive.connect_failed,client.drive.picker_failed,client.feedback.submitted,client.local_appraisal,client.local_appraisal.pdf,client.pdf.load_failed,client.pdf.upload_failed,client.presence,client.project.created,client.sync.fatal,client.sync.mutation_rejected",
         "multi": true,
         "includeAll": true,
         "allValue": "client\\..*",
-        "sort": 1,
         "current": { "selected": true, "text": ["All"], "value": ["$__all"] },
         "options": []
       }
@@ -80,7 +77,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | service=\"corates-web-client\" | message=~`client\\\\.pdf\\\\.(load|upload)_failed` [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | service=\"corates-web-client\" | message=~`client\\.pdf\\.(load|upload)_failed` [$__range]))",
           "legendFormat": "pdf failures"
         }
       ],
@@ -142,7 +139,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | service=\"corates-web-client\" | message=~`client\\\\.drive\\\\.(connect|picker)_failed` [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | service=\"corates-web-client\" | message=~`client\\.drive\\.(connect|picker)_failed` [$__range]))",
           "legendFormat": "drive failures"
         }
       ],
@@ -253,7 +250,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "topk(15, sum by (message) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | service=\"corates-web-client\" | message=~`client\\\\..*` [$__range])))",
+          "expr": "topk(15, sum by (message) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | service=\"corates-web-client\" | message=~`client\\..*` [$__range])))",
           "queryType": "instant",
           "instant": true,
           "format": "table"

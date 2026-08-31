@@ -3,7 +3,6 @@
  */
 
 import { captureError, info } from './logger';
-import { maskEmail } from '../auth/auth-events';
 import { buildAppUrl } from './app-url';
 import type { Env } from '../types';
 import { queueEmail } from '@corates/shared/email';
@@ -58,7 +57,7 @@ export async function sendProjectMemberAddedEmail(
       html: emailHtml,
       text: emailText,
     });
-    info('member.email_queued', { email: maskEmail(email), projectName });
+    info('member.email_queued', { email, projectName });
     return { emailQueued: true };
   } catch (err) {
     captureError(err, { tags: { component: 'member', action: 'queue-email' } });

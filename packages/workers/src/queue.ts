@@ -48,13 +48,16 @@ export async function handleEmailQueue(batch: MessageBatch<unknown>, env: Env): 
             msg.body as Parameters<typeof emailService.sendEmail>[0],
           );
 
-          const masked = msg.body.to?.replace(/^(..).*@/, '$1***@');
           if (result.success) {
             await markProcessed(env.DB, msg.id);
-            info('email.sent', { to: masked, subject: msg.body.subject, attempt: msg.attempts });
+            info('email.sent', {
+              to: msg.body.to,
+              subject: msg.body.subject,
+              attempt: msg.attempts,
+            });
             msg.ack();
           } else {
-            captureError(new Error(`Email send failed for ${masked}: ${result.error}`), {
+            captureError(new Error(`Email send failed for ${msg.body.to}: ${result.error}`), {
               tags: { component: 'email-queue' },
               extra: { attempt: msg.attempts },
             });

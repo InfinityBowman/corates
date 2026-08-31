@@ -1,5 +1,4 @@
 import { captureError, warn, info } from '../lib/logger';
-import { maskEmail } from './auth-events';
 import { betterAuth } from 'better-auth';
 import { createAuthMiddleware } from 'better-auth/api';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
@@ -193,7 +192,7 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
     magicLink({
       sendMagicLink: async ({ email, url }: { email: string; url: string }) => {
         if (env.ENVIRONMENT === 'production') {
-          info('auth.magic_link_requested', { email: maskEmail(email) });
+          info('auth.magic_link_requested', { email });
         } else {
           console.log('[Auth] Magic link URL:', url);
         }
@@ -549,7 +548,7 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
         const html = getPasswordResetEmailHtml({ name, subject, resetUrl: url });
         const text = getPasswordResetEmailText({ name, resetUrl: url });
 
-        info('auth.password_reset_requested', { userId: user.id, email: maskEmail(user.email) });
+        info('auth.password_reset_requested', { userId: user.id, email: user.email });
         await queueEmail(env.EMAIL_QUEUE, { to: user.email, subject, html, text });
       },
     },
@@ -590,7 +589,7 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
 
         info('auth.verification_email_queued', {
           userId: user.id,
-          email: maskEmail(user.email),
+          email: user.email,
         });
         await queueEmail(env.EMAIL_QUEUE, { to: user.email, subject, html, text });
       },
@@ -693,13 +692,21 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
         if (!newSession) return;
 
         const userId = newSession.user.id;
-        info('auth.session_created', { userId, sessionId: newSession.session.id });
         const userImage = newSession.user.image;
         const userName =
           newSession.user.givenName ||
           newSession.user.name ||
           newSession.user.email?.split('@')[0] ||
           'User';
+
+        // Name and email ride along so dashboards can show who is active without a
+        // separate lookup against the DB. This is the only event that carries them.
+        info('auth.session_created', {
+          userId,
+          sessionId: newSession.session.id,
+          userName,
+          userEmail: newSession.user.email,
+        });
 
         // Copy external OAuth avatar to R2 in the background
         // This ensures all avatars are served from our storage, avoiding external URL issues
