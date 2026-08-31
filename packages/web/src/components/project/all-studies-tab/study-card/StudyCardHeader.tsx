@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Avatar, AvatarImage, AvatarFallback, getInitials } from '@/components/ui/avatar';
-import { type ProjectMember } from '@/components/project/ProjectContext';
+import { useProjectContext, type ProjectMember } from '@/components/project/ProjectContext';
 import type { StudyInfo } from '@/stores/projectStore';
 import { project } from '@/project';
 import { API_BASE } from '@/config/api';
@@ -58,6 +58,7 @@ export function StudyCardHeader({
   onExportPdf,
   getMember,
 }: StudyCardHeaderProps) {
+  const { isOwner } = useProjectContext();
   const hasChecklists = study.checklists.length > 0;
   const primaryPdf = useMemo(() => {
     const pdfs = study.pdfs || [];
@@ -173,10 +174,25 @@ export function StudyCardHeader({
           <MoreVerticalIcon className='size-4' />
         </DropdownMenuTrigger>
         <DropdownMenuContent align='end'>
-          <DropdownMenuItem onClick={() => onAssignReviewers?.()}>
-            <UsersIcon className='mr-2 size-4' />
-            Assign Reviewers
-          </DropdownMenuItem>
+          {isOwner ?
+            <DropdownMenuItem onClick={() => onAssignReviewers?.()}>
+              <UsersIcon className='mr-2 size-4' />
+              Assign Reviewers
+            </DropdownMenuItem>
+          : <DropdownMenuItem disabled className='data-disabled:pointer-events-auto'>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className='flex w-full cursor-not-allowed items-center'>
+                    <UsersIcon className='mr-2 size-4' />
+                    Assign Reviewers
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side='left'>
+                  Only the project owner can assign reviewers.
+                </TooltipContent>
+              </Tooltip>
+            </DropdownMenuItem>
+          }
           {hasChecklists && (onExportCsv || onExportPdf) && (
             <>
               <DropdownMenuSeparator />
