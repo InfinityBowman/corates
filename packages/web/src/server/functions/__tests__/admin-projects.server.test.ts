@@ -1,3 +1,5 @@
+// Boots the test worker at import so the DO bindings are up before the per-test timeout starts.
+import 'cloudflare:test';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { env } from 'cloudflare:workers';
 import { createDb } from '@corates/db/client';

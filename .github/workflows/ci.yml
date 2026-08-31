@@ -54,49 +54,77 @@ concurrency:
 # ---------------------------------------------------------------
 
 jobs:
-  checks:
+  lint:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Setup workspace
+        uses: ./.github/actions/setup-workspace
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build workspace dependencies
-        run: pnpm --filter @corates/shared --filter @corates/db build
-
+      # workers' test helpers import this gitignored generated module
       - name: Generate test migration SQL
         run: pnpm --filter workers db:generate:test
 
       - name: Lint
         run: pnpm lint
 
+  typecheck:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup workspace
+        uses: ./.github/actions/setup-workspace
+
+      - name: Generate test migration SQL
+        run: pnpm --filter workers db:generate:test
+
       - name: Typecheck
         run: pnpm typecheck
 
-      - name: Unit tests
-        run: pnpm test
+  test-unit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup workspace
+        uses: ./.github/actions/setup-workspace
+
+      - name: Shared and workers tests
+        run: pnpm --filter @corates/shared --filter @corates/workers test
+
+      - name: Web unit tests
+        run: pnpm --filter web test:unit
+
+  test-server:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup workspace
+        uses: ./.github/actions/setup-workspace
+
+      - name: Web server tests
+        run: pnpm --filter web test:server
 
   # On push to main, decide whether to skip e2e:
   #   - merged PR has the `skip-e2e` label, or
   #   - commit message contains `[skip e2e]` (direct pushes / squash title)
-  # Runs in parallel with deploy-staging so resolution adds no wall time.
   resolve-skip-e2e:
     if: github.event_name == 'push'
-    needs: checks
     runs-on: ubuntu-latest
     permissions:
       pull-requests: read
@@ -129,12 +157,9 @@ jobs:
               core.notice(`E2E skipped via skip-e2e label on PR #${mergedPr.number}`);
             }
 
-  # Build and deploy to staging. Gated on `checks` and push-only; this gate
-  # cascades to `e2e` and `deploy-production` via `needs` (a skipped dependency
-  # skips its dependents), so the whole deploy chain stays off pull requests.
-  deploy-staging:
-    if: github.event_name == 'push'
-    needs: checks
+  # Builds on PRs as a check; on push also deploys the build to staging. Staging
+  # deliberately does not wait on the check jobs; deploy-production does.
+  build-web:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -147,24 +172,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Setup workspace
+        uses: ./.github/actions/setup-workspace
 
       - name: Resolve Playwright version
         id: pw-version
         run: echo "version=$(pnpm --filter web exec playwright --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
-
-      - name: Build workspace dependencies
-        run: pnpm --filter @corates/shared --filter @corates/db build
 
       - name: Build web for staging
         env:
@@ -182,18 +195,21 @@ jobs:
         run: pnpm --filter web build
 
       - name: Migrate staging database
+        if: github.event_name == 'push'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: 2ab59c3eb44887bfa2bac00afd32290a
         run: pnpm --filter web db:migrate:staging
 
       - name: Deploy web to staging
+        if: github.event_name == 'push'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         working-directory: packages/web
         run: pnpm exec wrangler deploy
 
       - name: Deploy stripe-purchases to staging
+        if: github.event_name == 'push'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         working-directory: packages/stripe-purchases
@@ -202,6 +218,7 @@ jobs:
       # Confirm the deploy is live before handing off to the e2e job. Runs here
       # (not in the e2e container) so we can rely on curl being present.
       - name: Wait for staging to be ready
+        if: github.event_name == 'push'
         run: |
           for i in $(seq 1 30); do
             if curl -sf https://staging.corates.org/api/test/health > /dev/null 2>&1; then
@@ -216,18 +233,16 @@ jobs:
 
   # E2E against staging in the official Playwright container: browsers and their
   # system deps are prebaked, so there is no install step. The image tag is
-  # derived from the version deploy-staging resolved, so it always matches
+  # derived from the version build-web resolved, so it always matches
   # @playwright/test and cannot drift.
-  #
-  # Skipped when resolve-skip-e2e finds a skip-e2e label or [skip e2e] commit token.
   e2e:
-    needs: [deploy-staging, resolve-skip-e2e]
+    needs: [build-web, resolve-skip-e2e]
     if: |
-      needs.deploy-staging.result == 'success' &&
+      needs.build-web.result == 'success' &&
       needs.resolve-skip-e2e.outputs.skip_e2e != 'true'
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright:v${{ needs.deploy-staging.outputs.playwright-version }}-noble
+      image: mcr.microsoft.com/playwright:v${{ needs.build-web.outputs.playwright-version }}-noble
     permissions:
       contents: read
 
@@ -272,12 +287,16 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
-  # Production deploy after e2e passes, or when e2e was skipped via label or commit token.
   deploy-production:
-    needs: [deploy-staging, resolve-skip-e2e, e2e]
+    needs: [lint, typecheck, test-unit, test-server, build-web, resolve-skip-e2e, e2e]
     if: |
       always() && !cancelled() &&
-      needs.deploy-staging.result == 'success' &&
+      github.event_name == 'push' &&
+      needs.lint.result == 'success' &&
+      needs.typecheck.result == 'success' &&
+      needs.test-unit.result == 'success' &&
+      needs.test-server.result == 'success' &&
+      needs.build-web.result == 'success' &&
       (needs.e2e.result == 'success' || needs.resolve-skip-e2e.outputs.skip_e2e == 'true')
     runs-on: ubuntu-latest
     permissions:
@@ -287,20 +306,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build workspace dependencies
-        run: pnpm --filter @corates/shared --filter @corates/db build
+      - name: Setup workspace
+        uses: ./.github/actions/setup-workspace
 
       - name: Build web for production
         env:

@@ -1,0 +1,22 @@
+name: Setup workspace
+description: pnpm, Node, install, and build the shared workspace packages.
+
+runs:
+  using: composite
+  steps:
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '24'
+        cache: 'pnpm'
+
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile
+
+    - name: Build workspace dependencies
+      shell: bash
+      run: pnpm --filter @corates/shared --filter @corates/db build

@@ -22,7 +22,8 @@ services:
       traefik.enable: 'true'
       traefik.http.routers.corates-loki.rule: Host(`loki.jacobmaynard.dev`)
       traefik.http.routers.corates-loki.entrypoints: web
-      traefik.http.routers.corates-loki.middlewares: secure-chain@file,corates-loki-auth
+      # Not secure-chain@file: its shared rate-limit 429s Cloudflare's export pushes (see README)
+      traefik.http.routers.corates-loki.middlewares: corates-loki-auth
       traefik.http.middlewares.corates-loki-auth.basicauth.users: ${LOKI_BASIC_AUTH}
       traefik.http.services.corates-loki.loadbalancer.server.port: '3100'
 
@@ -43,7 +44,8 @@ services:
       traefik.enable: 'true'
       traefik.http.routers.corates-grafana.rule: Host(`grafana.jacobmaynard.dev`)
       traefik.http.routers.corates-grafana.entrypoints: web
-      traefik.http.routers.corates-grafana.middlewares: secure-chain@file
+      # Same rate-limit problem for Grafana's parallel panel queries
+      traefik.http.routers.corates-grafana.middlewares: security-headers@file
       traefik.http.services.corates-grafana.loadbalancer.server.port: '3000'
 
 volumes:

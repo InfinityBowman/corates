@@ -1,4 +1,3 @@
-import { createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
 import { env } from 'cloudflare:workers';
 import { createDb } from '@corates/db/client';
 import {
@@ -360,24 +359,6 @@ export async function json(res: Response): Promise<any> {
   } catch {
     return { _raw: text };
   }
-}
-
-interface FetchableApp {
-  fetch(_req: Request, _env: Record<string, unknown>, _ctx: ExecutionContext): Promise<Response>;
-}
-
-export async function fetchApp(
-  app: FetchableApp,
-  path: string,
-  init: Record<string, unknown> = {},
-  envOverrides: Record<string, unknown> = {},
-): Promise<Response> {
-  const testEnv = createTestEnv(envOverrides);
-  const ctx = createExecutionContext();
-  const req = new Request(`http://localhost${path}`, init);
-  const res = await app.fetch(req, testEnv, ctx);
-  await waitOnExecutionContext(ctx);
-  return res;
 }
 
 export function createAuthHeaders(

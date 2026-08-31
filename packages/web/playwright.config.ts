@@ -11,7 +11,9 @@ export default defineConfig({
   // Test data is namespace-isolated per scenario (unique seed prefixes), so
   // spec files can run in parallel workers against the shared dev server.
   // The database is reset once per run in global-setup.ts, not per test.
-  workers: isRemote ? 1 : 6,
+  workers: isRemote ? 4 : 6,
+  // CI defaults to the dot reporter, which shows no per-spec durations.
+  reporter: 'list',
   globalSetup: './e2e/global-setup.ts',
   use: {
     baseURL: BASE_URL,
