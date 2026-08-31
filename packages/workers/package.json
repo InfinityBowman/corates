@@ -67,7 +67,6 @@
   "devDependencies": {
     "@cf-sync/protocol": "^0.1.1",
     "@cloudflare/vitest-pool-workers": "^0.20.3",
-    "@cloudflare/workers-types": "^5.20260808.1",
     "@vitest/runner": "^4.1.10",
     "@vitest/snapshot": "^4.1.10",
     "better-sqlite3": "^13.0.2",

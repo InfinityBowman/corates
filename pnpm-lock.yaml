@@ -463,9 +463,6 @@ importers:
       '@cloudflare/vitest-pool-workers':
         specifier: ^0.20.3
         version: 0.20.3(@cloudflare/workers-types@5.20260808.1)(@vitest/runner@4.1.10)(@vitest/snapshot@4.1.10)(vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.2.0)(jsdom@30.0.1(@noble/hashes@2.3.0))(msw@2.12.10(@types/node@26.2.0)(typescript@5.9.3))(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.46.0)(tsx@4.23.11)(yaml@2.8.2)))
-      '@cloudflare/workers-types':
-        specifier: ^5.20260808.1
-        version: 5.20260808.1
       '@vitest/runner':
         specifier: ^4.1.10
         version: 4.1.10
