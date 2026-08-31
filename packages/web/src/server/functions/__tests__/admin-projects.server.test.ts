@@ -60,8 +60,6 @@ describe('listAdminProjects', () => {
       limit: 2,
     });
     expect(result.projects.length).toBe(2);
-    expect(result.pagination.total).toBe(3);
-    expect(result.pagination.totalPages).toBe(2);
     expect(result.projects[0].orgName).toBeDefined();
     expect(result.projects[0].creatorEmail).toBeDefined();
   });

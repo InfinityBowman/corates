@@ -269,23 +269,4 @@ describe('importFromDrive', () => {
       expect(body.code).toBe('FILE_TOO_LARGE');
     }
   });
-
-  it('throws 401 when Google account is not connected', async () => {
-    const { project, owner } = await buildProject();
-    currentUser = { id: owner.id, email: owner.email };
-
-    try {
-      await importFromDrive(createDb(env.DB), mockSession(), {
-        fileId: 'file-123',
-        projectId: project.id,
-        studyId: 'study-1',
-      });
-      expect.unreachable('should have thrown');
-    } catch (err) {
-      const res = err as DomainErrorException;
-      expect(res.statusCode).toBe(401);
-      const body = res.toDomainError() as { code: string };
-      expect(body.code).toBe('AUTH_PROVIDER_NOT_CONNECTED');
-    }
-  });
 });

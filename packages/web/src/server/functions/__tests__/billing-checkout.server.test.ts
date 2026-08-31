@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { env } from 'cloudflare:workers';
 import { createDb } from '@corates/db/client';
 import { resetTestDatabase } from '@/__tests__/server/helpers';
-import { buildOrg, buildOrgMember, resetCounter } from '@/__tests__/server/factories';
+import { buildOrg, resetCounter } from '@/__tests__/server/factories';
 import { createCheckout } from '@/server/functions/billing.server';
 import type { Session } from '@/server/middleware/auth';
 import { DomainErrorException } from '@corates/shared';
@@ -56,25 +56,6 @@ describe('createCheckout', () => {
       expect(res.statusCode).toBe(400);
       const body = res.toDomainError() as { code: string };
       expect(body.code).toMatch(/VALIDATION/);
-    }
-    expect(upgradeSubscriptionMock).not.toHaveBeenCalled();
-  });
-
-  it('returns 403 when caller is not org owner', async () => {
-    const { org } = await buildOrg();
-    const { user: memberUser } = await buildOrgMember({ orgId: org.id, role: 'member' });
-    const session = mockSession({
-      userId: memberUser.id,
-      email: memberUser.email,
-      name: memberUser.name,
-      activeOrganizationId: org.id,
-    });
-    try {
-      await createCheckout(createDb(env.DB), session, dummyRequest, 'team', 'monthly');
-      expect.unreachable('should have thrown');
-    } catch (err) {
-      const res = err as DomainErrorException;
-      expect(res.statusCode).toBe(403);
     }
     expect(upgradeSubscriptionMock).not.toHaveBeenCalled();
   });

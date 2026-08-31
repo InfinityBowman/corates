@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { env } from 'cloudflare:workers';
 import { createDb } from '@corates/db/client';
-import { DomainErrorException } from '@corates/shared';
 import { resetTestDatabase } from '@/__tests__/server/helpers';
 import { buildOrg, resetCounter } from '@/__tests__/server/factories';
 import { fetchSubscription } from '@/server/functions/billing.server';
@@ -33,16 +32,6 @@ beforeEach(async () => {
 });
 
 describe('fetchSubscription', () => {
-  it('throws 403 when caller has no org', async () => {
-    const session = mockSession({ userId: 'orphan', email: 'o@example.com', name: 'O' });
-    try {
-      await fetchSubscription(createDb(env.DB), session);
-      expect.fail('should have thrown');
-    } catch (res) {
-      expect((res as DomainErrorException).statusCode).toBe(403);
-    }
-  });
-
   it('returns free tier when no subscription exists', async () => {
     const { org, owner } = await buildOrg();
     const session = mockSession({

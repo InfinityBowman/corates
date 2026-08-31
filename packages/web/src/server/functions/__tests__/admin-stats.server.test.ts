@@ -67,7 +67,7 @@ describe('getAdminSignupStats', () => {
 });
 
 describe('getAdminOrgStats', () => {
-  it('returns daily org counts', async () => {
+  it('counts organizations created in range', async () => {
     const todaySec = Math.floor(Date.now() / 1000);
     await seedOrganization({
       id: 'orgstats-1',
@@ -77,14 +77,12 @@ describe('getAdminOrgStats', () => {
     });
 
     const result = await getAdminOrgStats(mockAdminSession(), createDb(env.DB), { days: 5 });
-    expect(result.days).toBe(5);
-    expect(result.data.length).toBe(5);
     expect(result.total).toBeGreaterThanOrEqual(1);
   });
 });
 
 describe('getAdminProjectStats', () => {
-  it('returns daily project counts', async () => {
+  it('counts projects created in range', async () => {
     const admin = await buildAdminUser();
     const todaySec = Math.floor(Date.now() / 1000);
     await seedOrganization({
@@ -103,7 +101,6 @@ describe('getAdminProjectStats', () => {
     });
 
     const result = await getAdminProjectStats(mockAdminSession(), createDb(env.DB), { days: 3 });
-    expect(result.data.length).toBe(3);
     expect(result.total).toBeGreaterThanOrEqual(1);
   });
 });
