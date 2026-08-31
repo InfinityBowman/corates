@@ -1,0 +1,2100 @@
+{
+  "title": "CoRATES Product Usage",
+  "uid": "corates-product-usage",
+  "description": "What people actually do in CoRATES. Server-side domain events are authoritative; the client.* rows come from track() in src/lib/analytics.ts, which is batched, rate limited, sanitized and blockable, so Plausible remains the system of record for counts and these undercount. Production only; OTLP export latency is roughly 2-4 minutes.",
+  "tags": ["corates", "loki", "production", "product", "usage"],
+  "editable": true,
+  "graphTooltip": 1,
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
+  "refresh": "15m",
+  "schemaVersion": 39,
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "label": "Data source",
+        "type": "datasource",
+        "query": "loki",
+        "current": {},
+        "options": [],
+        "refresh": 1,
+        "regex": "",
+        "hide": 0
+      },
+      {
+        "name": "user",
+        "label": "User",
+        "description": "Regex over userId. Leave as .* for everyone, or paste an id from the 'Who is active' table to follow one person. Honoured by the 'What they do' and 'Appraisal work' rows only - the other rows count events that carry no userId.",
+        "type": "textbox",
+        "query": ".*",
+        "current": {
+          "selected": false,
+          "text": ".*",
+          "value": ".*"
+        },
+        "options": [],
+        "hide": 0
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "Who is using CoRATES",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Active users",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 1
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "count(sum by (userId) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | userId!=`` [$__range])))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "0",
+          "custom": {
+            "fillOpacity": 25,
+            "lineWidth": 1
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#5794F2"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "description": "Distinct userId across every event that carries one, server and browser. userId is attached server-side, so browser events count the signed-in user, never a client-supplied id."
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Opened a project",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 1
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "count(sum by (userId) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"sync.authorize_ok\" [$__range])))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "0",
+          "custom": {
+            "fillOpacity": 25,
+            "lineWidth": 1
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#73BF69"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "description": "Distinct users who successfully connected to a project's sync session. The closest thing to a real active user."
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Sign-ins",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 1
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"auth.session_created\" [$__range]))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "0",
+          "custom": {
+            "fillOpacity": 25,
+            "lineWidth": 1
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#5794F2"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["sum"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Projects created",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 1
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"project.created\" [$__range]))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "0",
+          "custom": {
+            "fillOpacity": 25,
+            "lineWidth": 1
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#B877D9"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["sum"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Orgs created",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 1
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"org.created\" [$__range]))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "0",
+          "custom": {
+            "fillOpacity": 25,
+            "lineWidth": 1
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#B877D9"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["sum"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "description": "org.created only covers orgs made through the orgs server function. Personal orgs created at signup are logged as interpolated prose ('Created personal org <id> for user <id>') and cannot be counted here."
+    },
+    {
+      "id": 7,
+      "type": "stat",
+      "title": "Invitations accepted",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 1
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"invitation.accepted\" [$__range]))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "0",
+          "custom": {
+            "fillOpacity": 25,
+            "lineWidth": 1
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#73BF69"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["sum"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Rolling 24h active users",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "count(sum by (userId) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | userId!=`` [24h])))",
+          "legendFormat": "active users"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "lineWidth": 2,
+            "gradientMode": "none",
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "description": "Distinct users in the preceding 24 hours, evaluated at each step. Flat line means the same people; a step up is someone new."
+    },
+    {
+      "id": 9,
+      "type": "table",
+      "title": "Who is active",
+      "description": "Events per user, with name and email joined on from auth.session_created. A blank name means that user did not sign in during the range - their session predates it. Copy a User ID into the User variable to filter the rows below to that person.",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(25, sum by (userId) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | userId!=`` | userId=~`$user` [$__range])))",
+          "queryType": "instant",
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "refId": "B",
+          "expr": "sum by (userId, userName, userEmail) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"auth.session_created\" [$__range]))",
+          "queryType": "instant",
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "userId",
+            "mode": "outer"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Time 1": true,
+              "Time 2": true
+            },
+            "renameByName": {
+              "userName": "Name",
+              "userEmail": "Email",
+              "userId": "User ID",
+              "Value #A": "Events",
+              "Value #B": "Sign-ins"
+            },
+            "indexByName": {
+              "userName": 0,
+              "userEmail": 1,
+              "userId": 2,
+              "Value #A": 3,
+              "Value #B": 4
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "filterable": false
+          },
+          "noValue": "nothing in range"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Events"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 90
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Sign-ins"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 90
+              },
+              {
+                "id": "noValue",
+                "value": "0"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "User ID"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 230
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "sortBy": [
+          {
+            "displayName": "Events",
+            "desc": true
+          }
+        ],
+        "showHeader": true
+      }
+    },
+    {
+      "id": 10,
+      "type": "row",
+      "title": "What they do",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 13
+      }
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Product actions over time",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 14,
+        "x": 0,
+        "y": 14
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (message) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=~`(auth\\.session_created|org\\.(created|updated|deleted|member_added|member_removed|member_role_updated)|project\\.(created|updated|deleted)|pdf\\.(uploaded|drive_imported|deleted)|invitation\\.(created|accepted|cancelled)|member\\.(added|removed|role_updated)|sync\\.authorize_(ok|denied)|feedback\\.submitted|contact\\.sent|avatar\\.(uploaded|deleted)|google\\.disconnected|account_merge\\.(initiated|completed)|client\\..*)` | userId=~`$user` [$__auto]))",
+          "legendFormat": "{{message}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 85,
+            "lineWidth": 0,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "description": "Every product action, excluding request.completed, email.sent and billing traffic."
+    },
+    {
+      "id": 12,
+      "type": "table",
+      "title": "Top actions",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 10,
+        "x": 14,
+        "y": 14
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(25, sum by (message) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=~`(auth\\.session_created|org\\.(created|updated|deleted|member_added|member_removed|member_role_updated)|project\\.(created|updated|deleted)|pdf\\.(uploaded|drive_imported|deleted)|invitation\\.(created|accepted|cancelled)|member\\.(added|removed|role_updated)|sync\\.authorize_(ok|denied)|feedback\\.submitted|contact\\.sent|avatar\\.(uploaded|deleted)|google\\.disconnected|account_merge\\.(initiated|completed)|client\\..*)` | userId=~`$user` [$__range])))",
+          "queryType": "instant",
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "renameByName": {
+              "message": "Action",
+              "Value": "Count"
+            },
+            "indexByName": {
+              "message": 0,
+              "Value": 1
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "filterable": false
+          },
+          "noValue": "nothing in range"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Count"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 90
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "sortBy": [
+          {
+            "displayName": "Count",
+            "desc": true
+          }
+        ],
+        "showHeader": true
+      }
+    },
+    {
+      "id": 13,
+      "type": "table",
+      "title": "Actions by user",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 23
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(40, sum by (userId, message) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=~`(auth\\.session_created|org\\.(created|updated|deleted|member_added|member_removed|member_role_updated)|project\\.(created|updated|deleted)|pdf\\.(uploaded|drive_imported|deleted)|invitation\\.(created|accepted|cancelled)|member\\.(added|removed|role_updated)|sync\\.authorize_(ok|denied)|feedback\\.submitted|contact\\.sent|avatar\\.(uploaded|deleted)|google\\.disconnected|account_merge\\.(initiated|completed)|client\\..*)` | userId!=`` | userId=~`$user` [$__range])))",
+          "queryType": "instant",
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "renameByName": {
+              "userId": "User",
+              "message": "Action",
+              "Value": "Count"
+            },
+            "indexByName": {
+              "userId": 0,
+              "message": 1,
+              "Value": 2
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "filterable": false
+          },
+          "noValue": "nothing in range"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Count"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 90
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "sortBy": [
+          {
+            "displayName": "Count",
+            "desc": true
+          }
+        ],
+        "showHeader": true
+      },
+      "description": "The direct answer to 'what is each person doing'. Sorted by volume; 40 rows max."
+    },
+    {
+      "id": 14,
+      "type": "row",
+      "title": "Appraisal work",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 32
+      }
+    },
+    {
+      "id": 15,
+      "type": "stat",
+      "title": "Checklists created",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 33
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"client.checklist.created\" | userId=~`$user` [$__range]))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "0",
+          "custom": {
+            "fillOpacity": 25,
+            "lineWidth": 1
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#5794F2"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["sum"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 16,
+      "type": "stat",
+      "title": "Checklists completed",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 33
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"client.checklist.completed\" | userId=~`$user` [$__range]))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "0",
+          "custom": {
+            "fillOpacity": 25,
+            "lineWidth": 1
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#73BF69"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["sum"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "description": "The core product outcome: an appraisal carried all the way through."
+    },
+    {
+      "id": 17,
+      "type": "stat",
+      "title": "Outcomes changed",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 33
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"client.checklist.outcome_changed\" | userId=~`$user` [$__range]))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "0",
+          "custom": {
+            "fillOpacity": 25,
+            "lineWidth": 1
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#5794F2"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["sum"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 18,
+      "type": "stat",
+      "title": "Sent back to todo",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 33
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"client.checklist.sent_back_to_todo\" | userId=~`$user` [$__range]))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "0",
+          "custom": {
+            "fillOpacity": 25,
+            "lineWidth": 1
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#FF9830"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["sum"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "description": "A completed checklist reopened. High relative to completions means people are second-guessing their appraisals."
+    },
+    {
+      "id": 19,
+      "type": "stat",
+      "title": "Local appraisals",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 33
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"client.local_appraisal\" | userId=~`$user` [$__range]))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "0",
+          "custom": {
+            "fillOpacity": 25,
+            "lineWidth": 1
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#B877D9"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["sum"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "description": "Appraisals started outside a project, in local-only mode."
+    },
+    {
+      "id": 20,
+      "type": "stat",
+      "title": "Appraisal PDFs exported",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 33
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"client.local_appraisal.pdf\" | userId=~`$user` [$__range]))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "0",
+          "custom": {
+            "fillOpacity": 25,
+            "lineWidth": 1
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#B877D9"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["sum"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 21,
+      "type": "timeseries",
+      "title": "Checklist activity",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 14,
+        "x": 0,
+        "y": 37
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (message) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=~`client\\.checklist\\..*` | userId=~`$user` [$__auto]))",
+          "legendFormat": "{{message}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 85,
+            "lineWidth": 0,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "description": "Browser events only. Checklist work happens in Y.js and syncs peer to peer, so the server never sees it - these track() events are the only record of the actual research work."
+    },
+    {
+      "id": 22,
+      "type": "table",
+      "title": "Checklists by instrument",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 10,
+        "x": 14,
+        "y": 37
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(20, sum by (type, message) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=~`client\\.(checklist|local_appraisal)\\..*` | type!=`` | userId=~`$user` [$__range])))",
+          "queryType": "instant",
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "renameByName": {
+              "type": "Instrument",
+              "message": "Action",
+              "Value": "Count"
+            },
+            "indexByName": {
+              "type": 0,
+              "message": 1,
+              "Value": 2
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "filterable": false
+          },
+          "noValue": "nothing in range"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Count"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 90
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "sortBy": [
+          {
+            "displayName": "Count",
+            "desc": true
+          }
+        ],
+        "showHeader": true
+      },
+      "description": "The `type` prop on each track() call - which appraisal instrument is being used."
+    },
+    {
+      "id": 23,
+      "type": "row",
+      "title": "Collaboration",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 45
+      }
+    },
+    {
+      "id": 24,
+      "type": "timeseries",
+      "title": "Project opens",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 46
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"sync.authorize_ok\" | writeAllowed=\"true\" [$__auto]))",
+          "legendFormat": "editor"
+        },
+        {
+          "refId": "B",
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"sync.authorize_ok\" | writeAllowed=\"false\" [$__auto]))",
+          "legendFormat": "read-only"
+        },
+        {
+          "refId": "C",
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"sync.authorize_denied\" [$__auto]))",
+          "legendFormat": "denied"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 85,
+            "lineWidth": 0,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "description": "Every successful sync connection, split by whether the user could write."
+    },
+    {
+      "id": 25,
+      "type": "table",
+      "title": "Most worked-on projects",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 46
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(20, sum by (projectId) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"sync.authorize_ok\" [$__range])))",
+          "queryType": "instant",
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "renameByName": {
+              "projectId": "Project",
+              "Value": "Opens"
+            },
+            "indexByName": {
+              "projectId": 0,
+              "Value": 1
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "filterable": false
+          },
+          "noValue": "nothing in range"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Opens"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 90
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "sortBy": [
+          {
+            "displayName": "Opens",
+            "desc": true
+          }
+        ],
+        "showHeader": true
+      }
+    },
+    {
+      "id": 26,
+      "type": "stat",
+      "title": "Invitations sent",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 54
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"invitation.created\" [$__range]))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "0",
+          "custom": {
+            "fillOpacity": 25,
+            "lineWidth": 1
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#5794F2"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["sum"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 27,
+      "type": "stat",
+      "title": "Members added directly",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 54
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"member.added\" [$__range]))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "0",
+          "custom": {
+            "fillOpacity": 25,
+            "lineWidth": 1
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#5794F2"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["sum"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "description": "Existing users added without an email invitation."
+    },
+    {
+      "id": 28,
+      "type": "stat",
+      "title": "Invitation acceptance",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 54
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"invitation.accepted\" [$__range]))\n  /\nsum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"invitation.created\" [$__range]))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "noValue": "-",
+          "custom": {
+            "fillOpacity": 25,
+            "lineWidth": 1
+          },
+          "decimals": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#F2495C",
+                "value": null
+              },
+              {
+                "color": "#FF9830",
+                "value": 0.3
+              },
+              {
+                "color": "#73BF69",
+                "value": 0.6
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "description": "Acceptances divided by invitations sent in the range. Acceptance lags the invite, so short ranges understate it."
+    },
+    {
+      "id": 29,
+      "type": "stat",
+      "title": "Invitations declined or cancelled",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 54
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"invitation.cancelled\" [$__range]))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "0",
+          "custom": {
+            "fillOpacity": 25,
+            "lineWidth": 1
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#FF9830"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["sum"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 30,
+      "type": "table",
+      "title": "Invitations by role",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 58
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(12, sum by (role, message) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=~`invitation\\.(created|accepted)` | role!=`` [$__range])))",
+          "queryType": "instant",
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "renameByName": {
+              "role": "Role",
+              "message": "Stage",
+              "Value": "Count"
+            },
+            "indexByName": {
+              "role": 0,
+              "message": 1,
+              "Value": 2
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "filterable": false
+          },
+          "noValue": "nothing in range"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Count"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 90
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "sortBy": [
+          {
+            "displayName": "Count",
+            "desc": true
+          }
+        ],
+        "showHeader": true
+      }
+    },
+    {
+      "id": 31,
+      "type": "table",
+      "title": "Sync access denied",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 58
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(12, sum by (reason, projectId) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"sync.authorize_denied\" [$__range])))",
+          "queryType": "instant",
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "renameByName": {
+              "reason": "Reason",
+              "projectId": "Project",
+              "Value": "Count"
+            },
+            "indexByName": {
+              "reason": 0,
+              "projectId": 1,
+              "Value": 2
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "filterable": false
+          },
+          "noValue": "no denied connections"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Count"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 90
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "sortBy": [
+          {
+            "displayName": "Count",
+            "desc": true
+          }
+        ],
+        "showHeader": true
+      },
+      "description": "reason=auth-required is a signed-out visitor hitting a project URL. Anything else is a permissions problem worth reading."
+    },
+    {
+      "id": 32,
+      "type": "row",
+      "title": "Content",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 65
+      }
+    },
+    {
+      "id": 33,
+      "type": "timeseries",
+      "title": "PDFs added",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 66
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"pdf.uploaded\" [$__auto]))",
+          "legendFormat": "uploaded"
+        },
+        {
+          "refId": "B",
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"pdf.drive_imported\" [$__auto]))",
+          "legendFormat": "imported from Drive"
+        },
+        {
+          "refId": "C",
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"pdf.deleted\" [$__auto]))",
+          "legendFormat": "deleted"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 85,
+            "lineWidth": 0,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 34,
+      "type": "stat",
+      "title": "PDF bytes added",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 66
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(sum_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=~`pdf\\.(uploaded|drive_imported)` | keep size | unwrap size [$__range]))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "noValue": "0",
+          "custom": {
+            "fillOpacity": 25,
+            "lineWidth": 1
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#B877D9"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "description": "Sum of the `size` field. keep size collapses the label set before unwrapping, otherwise every request is its own series."
+    },
+    {
+      "id": 35,
+      "type": "stat",
+      "title": "Drive share of PDFs",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 66
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"pdf.drive_imported\" [$__range]))\n  /\nsum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=~`pdf\\.(uploaded|drive_imported)` [$__range]))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "noValue": "-",
+          "custom": {
+            "fillOpacity": 25,
+            "lineWidth": 1
+          },
+          "decimals": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#B877D9"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "description": "How much of the PDF intake comes through the Google Drive picker rather than direct upload."
+    },
+    {
+      "id": 36,
+      "type": "table",
+      "title": "PDF activity by project",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 12,
+        "x": 12,
+        "y": 70
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(20, sum by (projectId, message) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=~`pdf\\.(uploaded|drive_imported|deleted)` [$__range])))",
+          "queryType": "instant",
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "renameByName": {
+              "projectId": "Project",
+              "message": "Action",
+              "Value": "Count"
+            },
+            "indexByName": {
+              "projectId": 0,
+              "message": 1,
+              "Value": 2
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "filterable": false
+          },
+          "noValue": "nothing in range"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Count"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 90
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "sortBy": [
+          {
+            "displayName": "Count",
+            "desc": true
+          }
+        ],
+        "showHeader": true
+      }
+    },
+    {
+      "id": 37,
+      "type": "row",
+      "title": "Voice of the user",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 74
+      }
+    },
+    {
+      "id": 38,
+      "type": "table",
+      "title": "Feedback by category",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 0,
+        "y": 75
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(12, sum by (category) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=~`(feedback\\.submitted|client\\.feedback\\.submitted)` | category!=`` [$__range])))",
+          "queryType": "instant",
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "renameByName": {
+              "category": "Category",
+              "Value": "Count"
+            },
+            "indexByName": {
+              "category": 0,
+              "Value": 1
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "filterable": false
+          },
+          "noValue": "no feedback in range"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Count"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 90
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "sortBy": [
+          {
+            "displayName": "Count",
+            "desc": true
+          }
+        ],
+        "showHeader": true
+      }
+    },
+    {
+      "id": 39,
+      "type": "logs",
+      "title": "Recent sign-ins",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 82
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "{service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"auth.session_created\" | line_format `{{.userName}}  {{.userEmail}}  {{.userId}}`",
+          "maxLines": 100
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "sortOrder": "Descending"
+      },
+      "description": "Identity lookup for any user id that appears without a name elsewhere."
+    },
+    {
+      "id": 40,
+      "type": "logs",
+      "title": "Feedback and contact messages",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 16,
+        "x": 8,
+        "y": 75
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "{service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=~`(feedback\\.submitted|contact\\.sent|contact\\.duplicate)`",
+          "maxLines": 100
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "sortOrder": "Descending"
+      },
+      "description": "Bodies are not logged - these are the submission events. Read the actual text in the DB by feedbackId."
+    }
+  ]
+}
