@@ -10,7 +10,12 @@ import { createDb } from '@corates/db/client';
 import { projects, projectMembers } from '@corates/db/schema';
 import { insertWithQuotaCheck, type InsertRollbackMeta } from '../../lib/quotaTransaction';
 import { info } from '../../lib/logger';
-import { createValidationError, VALIDATION_ERRORS } from '@corates/shared';
+import {
+  createValidationError,
+  VALIDATION_ERRORS,
+  type ProjectSetupStatus,
+  type ProjectSetupStep,
+} from '@corates/shared';
 import type { OrgId, ProjectId, ProjectMemberId, UserId } from '@corates/shared/ids';
 import type { Env } from '../../types';
 import type { ProjectRole } from '../../policies/lib/roles';
@@ -23,6 +28,7 @@ interface CreateProjectParams {
   orgId: OrgId;
   name: string;
   description?: string;
+  setupSkipInvites?: boolean;
 }
 
 interface CreateProjectResult {
@@ -33,6 +39,9 @@ interface CreateProjectResult {
     orgId: string;
     createdBy: string;
     role: ProjectRole;
+    setupStatus: ProjectSetupStatus;
+    setupStep: ProjectSetupStep | null;
+    setupSkipInvites: boolean;
     createdAt: Date;
     updatedAt: Date;
   };
@@ -41,7 +50,7 @@ interface CreateProjectResult {
 export async function createProject(
   env: Env,
   actor: CreateProjectActor,
-  { orgId, name, description }: CreateProjectParams,
+  { orgId, name, description, setupSkipInvites = false }: CreateProjectParams,
 ): Promise<CreateProjectResult> {
   const db = createDb(env.DB);
 
@@ -62,6 +71,9 @@ export async function createProject(
       description: trimmedDescription,
       orgId,
       createdBy: actor.id,
+      setupStatus: 'in_progress',
+      setupStep: 'studies',
+      setupSkipInvites,
       createdAt: now,
       updatedAt: now,
     }),
@@ -104,6 +116,9 @@ export async function createProject(
       orgId,
       createdBy: actor.id,
       role: 'owner',
+      setupStatus: 'in_progress',
+      setupStep: 'studies',
+      setupSkipInvites,
       createdAt: now,
       updatedAt: now,
     },

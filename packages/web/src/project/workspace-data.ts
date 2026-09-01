@@ -44,8 +44,10 @@ import type {
   StudyInfo,
 } from '@/stores/projectStore';
 import { queryKeys } from '@/lib/queryKeys';
-import { getMyProjects } from '@/server/functions/users.functions';
+import type { ProjectSetupStatus, ProjectSetupStep } from '@corates/shared';
 import { getProjectMembers } from '@/server/functions/org-projects.functions';
+import { getMyProjects } from '@/server/functions/users.functions';
+import type { UserProject } from '@/server/functions/users.server';
 import { QUERY_STABLE } from '@/lib/queryPresets';
 import { getCachedProjectOrgId, rememberProjectOrgId } from '@/primitives/db.js';
 import { showToast } from '@/lib/toast';
@@ -483,9 +485,21 @@ export interface ProjectMetaInfo {
   name: string | null;
   description: string | null;
   orgId: string | null;
+  role: 'owner' | 'member' | null;
+  setupStatus: ProjectSetupStatus;
+  setupStep: ProjectSetupStep | null;
+  setupSkipInvites: boolean;
 }
 
-const EMPTY_META: ProjectMetaInfo = { name: null, description: null, orgId: null };
+export const EMPTY_PROJECT_META: ProjectMetaInfo = {
+  name: null,
+  description: null,
+  orgId: null,
+  role: null,
+  setupStatus: 'completed',
+  setupStep: null,
+  setupSkipInvites: false,
+};
 
 /** Project identity from D1 (via the projects list query). */
 export function useProjectMeta(projectId: string): ProjectMetaInfo {
@@ -495,16 +509,16 @@ export function useProjectMeta(projectId: string): ProjectMetaInfo {
     ...QUERY_STABLE,
   });
   return useMemo(() => {
-    const project = (
-      data as
-        | Array<{ id: string; name?: string; description?: string | null; orgId?: string }>
-        | undefined
-    )?.find(p => p.id === projectId);
-    if (!project) return EMPTY_META;
+    const project = (data as UserProject[] | undefined)?.find(p => p.id === projectId);
+    if (!project) return EMPTY_PROJECT_META;
     return {
-      name: project.name ?? null,
-      description: project.description ?? null,
-      orgId: project.orgId ?? null,
+      name: project.name,
+      description: project.description,
+      orgId: project.orgId,
+      role: project.role as ProjectMetaInfo['role'],
+      setupStatus: project.setupStatus,
+      setupStep: project.setupStep,
+      setupSkipInvites: project.setupSkipInvites,
     };
   }, [data, projectId]);
 }

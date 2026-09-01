@@ -16,7 +16,9 @@ import {
   listProjectInvitations,
   createProjectInvitation,
   cancelProjectInvitation,
+  syncSetupDraftInvitations,
 } from '@/server/functions/org-projects.server';
+import { buildUser } from '@/__tests__/server/factories';
 
 let currentUser: { id: string; email: string } = { id: 'user-1', email: 'user1@example.com' };
 
@@ -292,5 +294,68 @@ describe('cancelProjectInvitation', () => {
       .get();
 
     expect(dbInvitation).toBeUndefined();
+  });
+});
+
+describe('syncSetupDraftInvitations', () => {
+  it('stores draft invitations without sending email and filters owner email', async () => {
+    const { project, org, owner } = await buildProject();
+    currentUser = { id: owner.id, email: owner.email };
+
+    const result = await syncSetupDraftInvitations(
+      mockSession(),
+      createDb(env.DB),
+      org.id,
+      project.id,
+      {
+        emails: [owner.email, 'reviewer@example.com', 'reviewer@example.com'],
+      },
+    );
+
+    expect(result.success).toBe(true);
+    expect(result.invites).toHaveLength(1);
+    expect(result.invites[0].email).toBe('reviewer@example.com');
+    expect(result.invites[0].isExistingUser).toBe(false);
+
+    const db = createDb(env.DB);
+    const rows = await db.select().from(projectInvitations).all();
+    expect(rows).toHaveLength(1);
+    expect(rows[0].email).toBe('reviewer@example.com');
+  });
+
+  it('marks existing CoRATES users in draft sync results', async () => {
+    const { project, org, owner } = await buildProject();
+    const existing = await buildUser({ email: 'existing@example.com' });
+    currentUser = { id: owner.id, email: owner.email };
+
+    const result = await syncSetupDraftInvitations(
+      mockSession(),
+      createDb(env.DB),
+      org.id,
+      project.id,
+      { emails: [existing.email] },
+    );
+
+    expect(result.invites).toHaveLength(1);
+    expect(result.invites[0].isExistingUser).toBe(true);
+    expect(result.invites[0].displayName).toBeTruthy();
+  });
+
+  it('removes invitations no longer in the draft list', async () => {
+    const { project, org, owner } = await buildProject();
+    currentUser = { id: owner.id, email: owner.email };
+    const db = createDb(env.DB);
+
+    await syncSetupDraftInvitations(mockSession(), db, org.id, project.id, {
+      emails: ['first@example.com', 'second@example.com'],
+    });
+
+    await syncSetupDraftInvitations(mockSession(), db, org.id, project.id, {
+      emails: ['second@example.com'],
+    });
+
+    const rows = await db.select().from(projectInvitations).all();
+    expect(rows).toHaveLength(1);
+    expect(rows[0].email).toBe('second@example.com');
   });
 });

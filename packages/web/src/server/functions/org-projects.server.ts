@@ -2,7 +2,7 @@ import { captureError, info } from '@corates/workers/logger';
 import { env } from 'cloudflare:workers';
 import type { Database } from '@corates/db/client';
 import { projects, projectMembers, projectInvitations, user } from '@corates/db/schema';
-import { eq, and, count, desc, isNull } from 'drizzle-orm';
+import { eq, and, count, desc, isNull, inArray } from 'drizzle-orm';
 import {
   DomainErrorException,
   isDomainError,
@@ -12,7 +12,10 @@ import {
   USER_ERRORS,
   VALIDATION_ERRORS,
   type DomainError,
+  type ProjectSetupStatus,
+  type ProjectSetupStep,
 } from '@corates/shared';
+import { normalizeEmail } from '@corates/shared/email';
 import type { OrgId, ProjectId, UserId, ProjectInvitationId } from '@corates/shared/ids';
 import { createProject } from '@corates/workers/commands/projects';
 import {
@@ -35,22 +38,26 @@ import type { Session } from '@/server/middleware/auth';
 
 // -- Projects --
 
+const projectColumns = {
+  id: projects.id,
+  name: projects.name,
+  description: projects.description,
+  orgId: projects.orgId,
+  createdAt: projects.createdAt,
+  updatedAt: projects.updatedAt,
+  createdBy: projects.createdBy,
+  setupStatus: projects.setupStatus,
+  setupStep: projects.setupStep,
+  setupSkipInvites: projects.setupSkipInvites,
+} as const;
+
 export async function listOrgProjects(session: Session, db: Database, orgId: OrgId) {
   const membership = await requireOrgMembership(session, db, orgId);
   if (!membership.ok) throw membership.error;
 
   try {
     const results = await db
-      .select({
-        id: projects.id,
-        name: projects.name,
-        description: projects.description,
-        orgId: projects.orgId,
-        role: projectMembers.role,
-        createdAt: projects.createdAt,
-        updatedAt: projects.updatedAt,
-        createdBy: projects.createdBy,
-      })
+      .select({ ...projectColumns, role: projectMembers.role })
       .from(projects)
       .innerJoin(projectMembers, eq(projects.id, projectMembers.projectId))
       .where(and(eq(projects.orgId, orgId), eq(projectMembers.userId, membership.context.userId)))
@@ -71,7 +78,7 @@ export async function createOrgProject(
   session: Session,
   db: Database,
   orgId: OrgId,
-  data: { name: string; description?: string },
+  data: { name: string; description?: string; setupSkipInvites?: boolean },
 ) {
   const membership = await requireOrgMembership(session, db, orgId);
   if (!membership.ok) throw membership.error;
@@ -102,6 +109,7 @@ export async function createOrgProject(
         orgId,
         name: data.name,
         description: data.description,
+        setupSkipInvites: data.setupSkipInvites,
       },
     );
 
@@ -133,15 +141,7 @@ export async function getProject(
 
   try {
     const result = await db
-      .select({
-        id: projects.id,
-        name: projects.name,
-        description: projects.description,
-        orgId: projects.orgId,
-        createdAt: projects.createdAt,
-        updatedAt: projects.updatedAt,
-        createdBy: projects.createdBy,
-      })
+      .select(projectColumns)
       .from(projects)
       .where(eq(projects.id, projectId))
       .get();
@@ -157,6 +157,51 @@ export async function getProject(
     captureError(error, { tags: { component: 'org-projects', action: 'get' } });
     throwDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'fetch_project',
+      originalError: error.message,
+    });
+  }
+}
+
+export async function updateProjectSetupById(
+  session: Session,
+  db: Database,
+  orgId: OrgId,
+  projectId: ProjectId,
+  data: {
+    setupStatus?: ProjectSetupStatus;
+    setupStep?: ProjectSetupStep | null;
+    setupSkipInvites?: boolean;
+  },
+) {
+  const orgMembership = await requireOrgMembership(session, db, orgId);
+  if (!orgMembership.ok) throw orgMembership.error;
+
+  const writeAccess = await requireOrgWriteAccess('POST', db, orgId);
+  if (!writeAccess.ok) throw writeAccess.error;
+
+  const access = await requireProjectAccess(session, db, orgId, projectId, 'owner');
+  if (!access.ok) throw access.error;
+
+  try {
+    // Drizzle drops undefined keys from .set(), so optional fields fall through untouched.
+    const result = await db
+      .update(projects)
+      .set({ updatedAt: new Date(), ...data })
+      .where(eq(projects.id, projectId))
+      .returning(projectColumns)
+      .get();
+
+    if (!result) {
+      throwDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId });
+    }
+
+    return { ...result, role: access.context.projectRole };
+  } catch (err) {
+    if (err instanceof DomainErrorException) throw err;
+    const error = err as Error;
+    captureError(error, { tags: { component: 'org-projects', action: 'update_setup' } });
+    throwDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'update_project_setup',
       originalError: error.message,
     });
   }
@@ -503,14 +548,21 @@ export async function listProjectInvitations(
         acceptedAt: projectInvitations.acceptedAt,
         createdAt: projectInvitations.createdAt,
         invitedBy: projectInvitations.invitedBy,
+        userName: user.name,
+        userGivenName: user.givenName,
       })
       .from(projectInvitations)
+      .leftJoin(user, eq(user.email, projectInvitations.email))
       .where(
         and(eq(projectInvitations.projectId, projectId), isNull(projectInvitations.acceptedAt)),
       )
       .orderBy(desc(projectInvitations.createdAt));
 
-    return invitations;
+    return invitations.map(({ userName, userGivenName, ...invitation }) => ({
+      ...invitation,
+      isExistingUser: userName !== null,
+      displayName: userGivenName || userName || null,
+    }));
   } catch (err) {
     const error = err as Error;
     captureError(error, { tags: { component: 'org-projects', action: 'list-invitations' } });
@@ -615,6 +667,70 @@ export async function cancelProjectInvitation(
     captureError(error, { tags: { component: 'org-projects', action: 'cancel-invitation' } });
     throwDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'cancel_invitation',
+      originalError: error.message,
+    });
+  }
+}
+
+export async function syncSetupDraftInvitations(
+  session: Session,
+  db: Database,
+  orgId: OrgId,
+  projectId: ProjectId,
+  data: { emails: string[] },
+) {
+  const orgMembership = await requireOrgMembership(session, db, orgId);
+  if (!orgMembership.ok) throw orgMembership.error;
+
+  const writeAccess = await requireOrgWriteAccess('POST', db, orgId);
+  if (!writeAccess.ok) throw writeAccess.error;
+
+  const access = await requireProjectAccess(session, db, orgId, projectId, 'owner');
+  if (!access.ok) throw access.error;
+
+  const ownerEmail = access.context.userEmail?.toLowerCase() ?? '';
+  const desired = new Set(data.emails.map(normalizeEmail).filter(email => email !== ownerEmail));
+
+  try {
+    const existing = await listProjectInvitations(session, db, orgId, projectId);
+    const existingEmails = new Set(existing.map(inv => inv.email.toLowerCase()));
+
+    const toRemove = existing.filter(inv => !desired.has(inv.email.toLowerCase()));
+    if (toRemove.length > 0) {
+      await db.delete(projectInvitations).where(
+        inArray(
+          projectInvitations.id,
+          toRemove.map(inv => inv.id),
+        ),
+      );
+    }
+
+    const toCreate = [...desired].filter(email => !existingEmails.has(email));
+    for (const email of toCreate) {
+      await createInvitation(
+        env,
+        { id: access.context.userId },
+        { orgId, projectId, email, role: 'member', sendEmail: false },
+      );
+    }
+
+    const invites =
+      toRemove.length === 0 && toCreate.length === 0 ?
+        existing
+      : await listProjectInvitations(session, db, orgId, projectId);
+
+    return { success: true as const, invites };
+  } catch (err) {
+    if (err instanceof DomainErrorException) throw err;
+    if (isDomainError(err)) {
+      throw new DomainErrorException(err as DomainError);
+    }
+    const error = err as Error;
+    captureError(error, {
+      tags: { component: 'org-projects', action: 'sync-setup-draft-invitations' },
+    });
+    throwDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'sync_setup_draft_invitations',
       originalError: error.message,
     });
   }

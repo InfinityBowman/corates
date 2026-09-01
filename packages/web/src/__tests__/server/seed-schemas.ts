@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { PROJECT_SETUP_STATUSES, PROJECT_SETUP_STEPS } from '@corates/shared';
 
 const PROJECT_ROLES = ['owner', 'member'] as const;
 
@@ -65,6 +66,9 @@ export const seedProjectSchema = z.object({
   createdBy: z.string().min(1, 'Created by user ID is required'),
   createdAt: dateOrTimestampToNumber,
   updatedAt: dateOrTimestampToNumber,
+  setupSkipInvites: z.boolean().optional().default(false),
+  setupStatus: z.enum(PROJECT_SETUP_STATUSES).optional().default('completed'),
+  setupStep: z.enum(PROJECT_SETUP_STEPS).nullable().optional().default(null),
 });
 
 export const seedProjectMemberSchema = z.object({

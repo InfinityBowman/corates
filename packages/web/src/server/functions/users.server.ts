@@ -21,6 +21,8 @@ import {
   createValidationError,
   AUTH_ERRORS,
   VALIDATION_ERRORS,
+  type ProjectSetupStatus,
+  type ProjectSetupStep,
 } from '@corates/shared';
 
 import type { Session } from '@/server/middleware/auth';
@@ -31,6 +33,9 @@ export interface UserProject {
   description: string | null;
   orgId: string;
   role: string;
+  setupStatus: ProjectSetupStatus;
+  setupStep: ProjectSetupStep | null;
+  setupSkipInvites: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -99,6 +104,9 @@ export async function fetchMyProjects(db: Database, session: Session) {
       description: projects.description,
       orgId: projects.orgId,
       role: projectMembers.role,
+      setupStatus: projects.setupStatus,
+      setupStep: projects.setupStep,
+      setupSkipInvites: projects.setupSkipInvites,
       createdAt: projects.createdAt,
       updatedAt: projects.updatedAt,
       memberCount: count(allMembers.id),
@@ -125,6 +133,9 @@ export async function fetchUserProjects(db: Database, session: Session, userId: 
       description: projects.description,
       orgId: projects.orgId,
       role: projectMembers.role,
+      setupStatus: projects.setupStatus,
+      setupStep: projects.setupStep,
+      setupSkipInvites: projects.setupSkipInvites,
       createdAt: projects.createdAt,
       updatedAt: projects.updatedAt,
     })

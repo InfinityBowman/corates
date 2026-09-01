@@ -6,7 +6,7 @@
  */
 
 import { useState, useCallback, useEffect, lazy, Suspense } from 'react';
-import { Outlet, useLocation } from '@tanstack/react-router';
+import { Outlet, useLocation, useMatch } from '@tanstack/react-router';
 import { useAdminStore } from '@/stores/adminStore';
 import { useMembershipSync } from '@/hooks/useMembershipSync';
 import { connectionPool } from '@/project/ConnectionPool';
@@ -51,9 +51,15 @@ export function AppLayout() {
     checkImpersonationStatus();
   }, [checkImpersonationStatus]);
 
+  const isProjectSetup = Boolean(
+    useMatch({ from: '/_app/_protected/projects/$projectId/setup', shouldThrow: false }),
+  );
+
   // Routes that should NOT show the main sidebar
   const shouldHideSidebar =
-    location.pathname.startsWith('/admin') || location.pathname.startsWith('/settings');
+    location.pathname.startsWith('/admin') ||
+    location.pathname.startsWith('/settings') ||
+    isProjectSetup;
 
   // Desktop sidebar mode with localStorage persistence
   const [desktopSidebarMode, setDesktopSidebarMode] = useState<'expanded' | 'collapsed'>(() => {

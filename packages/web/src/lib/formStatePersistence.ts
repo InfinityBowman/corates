@@ -9,7 +9,7 @@ import { bestEffort } from '@/lib/errorLogger.js';
 
 const MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
 
-type FormType = 'createProject' | 'addStudies';
+export type FormType = 'createProject' | 'addStudies';
 
 /**
  * Generate a storage key based on form type and optional project ID

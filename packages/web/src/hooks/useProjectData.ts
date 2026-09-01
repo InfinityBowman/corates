@@ -10,16 +10,15 @@ import {
   useAllStudies,
   useProjectMembers,
   useProjectMeta,
-  type ProjectMetaInfo,
+  EMPTY_PROJECT_META,
 } from '@/project/workspace-data';
 
 const EMPTY_STUDIES: never[] = [];
 const EMPTY_MEMBERS: never[] = [];
-const EMPTY_META: ProjectMetaInfo = { name: null, description: null, orgId: null };
 const IDLE_STATE = {
   studies: EMPTY_STUDIES,
   members: EMPTY_MEMBERS,
-  meta: EMPTY_META,
+  meta: EMPTY_PROJECT_META,
   connected: false,
   connecting: false,
   synced: false,

@@ -216,22 +216,26 @@ const FIXTURES_DIR = path.join(import.meta.dirname, 'fixtures');
  * Creates a project from the dashboard. Returns the projectId.
  * Handles both first-project and subsequent-project scenarios.
  */
-export async function createProject(page: Page, name: string, description = ''): Promise<string> {
+export async function createProject(page: Page, name: string): Promise<string> {
   const newProjectBtn = page.getByRole('button', { name: /New Project/i });
   await newProjectBtn.click();
 
   await expect(page.getByText('Create a new project')).toBeVisible();
   await page.getByPlaceholder('My Systematic Review').fill(name);
-  if (description) {
-    await page.getByPlaceholder('What is this review about?').fill(description);
-  }
-  const createBtn = page.getByRole('button', { name: 'Create Project' });
+  const createBtn = page.getByRole('button', { name: /Create & set up/i });
   await expect(createBtn).toBeEnabled({ timeout: 10_000 });
   await createBtn.click();
-  await expect(page).toHaveURL(/\/projects\//, { timeout: 15_000 });
+  await expect(page).toHaveURL(/\/projects\/[^/]+\/setup/, { timeout: 15_000 });
 
   const projectId = page.url().match(/\/projects\/([^/?]+)/)?.[1];
   if (!projectId) throw new Error('Could not extract projectId from URL');
+
+  // Leave setup wizard so downstream steps can use the normal project view
+  await page.getByRole('button', { name: 'Finish later' }).first().click();
+  await expect(page).toHaveURL(new RegExp(`/projects/${projectId}(?:\\?|$)`), {
+    timeout: 15_000,
+  });
+
   return projectId;
 }
 
