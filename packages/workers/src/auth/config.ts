@@ -27,7 +27,8 @@ import {
   getMagicLinkEmailHtml,
   getMagicLinkEmailText,
 } from './emailTemplates';
-import { queueEmail } from '@corates/shared/email';
+import { queueEmail, isSyntheticEmail } from '@corates/shared/email';
+import { buildMagicLinkInterstitialUrl } from './magicLinkUrl';
 import { refreshOrgWorkspaceSessions } from '../sync/admin';
 import { notifyOrgMembers, EventTypes } from '../lib/notify';
 import { copyAvatarToR2, isExternalAvatarUrl, isInternalAvatarUrl } from '../lib/avatar-copy';
@@ -106,10 +107,10 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
       clientSecret: env.GOOGLE_CLIENT_SECRET,
       // Production redirect URI for OAuth proxy (allows localhost dev without registering redirect URIs)
       redirectURI: 'https://corates.org/api/auth/callback/google',
-      // Required so Google issues a refresh token (needed for Drive access when access tokens expire)
+      // Provider-level so the Drive link-social flow gets refresh tokens
       accessType: 'offline',
-      // Request Drive read-only access for PDF import
-      scope: ['openid', 'email', 'profile', 'https://www.googleapis.com/auth/drive.readonly'],
+      // Drive scope is requested incrementally at connect time; the restricted scope at sign-in scares users off
+      scope: ['openid', 'email', 'profile'],
       // Map Google's given_name/family_name to our schema
       mapProfileToUser: (profile: {
         given_name?: string;
@@ -190,11 +191,23 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
   // Magic Link plugin for passwordless authentication
   plugins.push(
     magicLink({
-      sendMagicLink: async ({ email, url }: { email: string; url: string }) => {
+      sendMagicLink: async ({
+        email,
+        url,
+        token,
+      }: {
+        email: string;
+        url: string;
+        token: string;
+      }) => {
+        // Email an interstitial link so scanners can't consume the token (see magicLinkUrl.ts)
+        const emailedUrl = buildMagicLinkInterstitialUrl(url, token);
+
         if (env.ENVIRONMENT === 'production') {
           info('auth.magic_link_requested', { email });
         } else {
-          console.log('[Auth] Magic link URL:', url);
+          console.log('[Auth] Magic link URL:', emailedUrl);
+          console.log('[Auth] Magic link verify URL:', url);
         }
 
         // Store full URL for e2e test retrieval
@@ -215,8 +228,8 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
         }
 
         const subject = 'Sign in to CoRATES';
-        const html = getMagicLinkEmailHtml({ subject, magicLinkUrl: url });
-        const text = getMagicLinkEmailText({ magicLinkUrl: url });
+        const html = getMagicLinkEmailHtml({ subject, magicLinkUrl: emailedUrl });
+        const text = getMagicLinkEmailText({ magicLinkUrl: emailedUrl });
 
         await queueEmail(env.EMAIL_QUEUE, { to: email, subject, html, text });
       },
@@ -565,6 +578,11 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
       sendOnSignIn: true,
       autoSignInAfterVerification: true,
       sendVerificationEmail: async ({ user, url }: { user: BetterAuthUser; url: string }) => {
+        // Synthetic ORCID addresses are not mailboxes; sending would hard-bounce
+        if (isSyntheticEmail(user.email)) {
+          info('auth.verification_email_skipped_synthetic', { userId: user.id });
+          return;
+        }
         // Store full URL for e2e test retrieval
         if (env.DEV_MODE) {
           const now = Math.floor(Date.now() / 1000);
@@ -605,6 +623,11 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
     },
 
     user: {
+      // Lets complete-profile swap a synthetic ORCID address for a real one
+      changeEmail: {
+        enabled: true,
+        updateEmailWithoutVerification: true,
+      },
       additionalFields: {
         givenName: {
           type: 'string',
@@ -686,6 +709,16 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
 
     // Hooks for custom auth behavior
     hooks: {
+      // Without a start event, OAuth drop-offs leave no server-side trace
+      before: createAuthMiddleware(
+        async (authCtx: { path: string; body?: { provider?: string; providerId?: string } }) => {
+          if (authCtx.path === '/sign-in/social' || authCtx.path === '/sign-in/oauth2') {
+            info('auth.social_signin_started', {
+              provider: authCtx.body?.provider || authCtx.body?.providerId || 'unknown',
+            });
+          }
+        },
+      ),
       // After hook: bootstrap personal org and copy OAuth avatar on first successful authentication
       after: createAuthMiddleware(async (authCtx: { context: { newSession?: NewSessionData } }) => {
         const newSession = authCtx.context.newSession;

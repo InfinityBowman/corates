@@ -10,6 +10,7 @@ import { createDb } from '@corates/db/client';
 import { projectMembers, projects, member, user } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS } from '@corates/shared';
+import { isSyntheticEmail } from '@corates/shared/email';
 import type { OrgId, ProjectId, UserId } from '@corates/shared/ids';
 import { notifyUser, NotificationTypes } from '../lib/notifications';
 import { insertWithQuotaCheck, type InsertRollbackMeta } from '../../lib/quotaTransaction';
@@ -155,7 +156,8 @@ export async function addMember(
     });
   }
 
-  if (userToAdd.email) {
+  // Synthetic ORCID addresses bounce and poison sender reputation
+  if (userToAdd.email && !isSyntheticEmail(userToAdd.email)) {
     try {
       const inviter = await db
         .select({ name: user.name, givenName: user.givenName, email: user.email })

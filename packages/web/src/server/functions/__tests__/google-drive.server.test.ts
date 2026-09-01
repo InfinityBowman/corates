@@ -28,13 +28,14 @@ async function seedGoogleAccount(
   userId: string,
   accessToken = 'token-123',
   refreshToken = 'refresh-123',
+  scope = 'openid email profile https://www.googleapis.com/auth/drive.readonly',
 ) {
   const nowSec = Math.floor(Date.now() / 1000);
   const expiresAt = new Date(Date.now() + 3600 * 1000);
 
   await env.DB.prepare(
-    `INSERT INTO account (id, userId, accountId, providerId, accessToken, refreshToken, accessTokenExpiresAt, createdAt, updatedAt)
-     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)`,
+    `INSERT INTO account (id, userId, accountId, providerId, accessToken, refreshToken, accessTokenExpiresAt, scope, createdAt, updatedAt)
+     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)`,
   )
     .bind(
       `acc-${userId}`,
@@ -44,6 +45,7 @@ async function seedGoogleAccount(
       accessToken,
       refreshToken,
       Math.floor(expiresAt.getTime() / 1000),
+      scope,
       nowSec,
       nowSec,
     )
@@ -83,6 +85,15 @@ describe('getStatus', () => {
     const result = await getStatus(createDb(env.DB), mockSession());
     expect(result.connected).toBe(true);
     expect(result.hasRefreshToken).toBe(true);
+  });
+
+  it('returns disconnected status when the account lacks the Drive scope', async () => {
+    const user = await buildUser({ email: 'user1@example.com' });
+    await seedGoogleAccount(user.id, 'token-123', 'refresh-123', 'openid email profile');
+    currentUser = { id: user.id, email: user.email };
+
+    const result = await getStatus(createDb(env.DB), mockSession());
+    expect(result.connected).toBe(false);
   });
 
   it('returns disconnected status when Google account is not linked', async () => {

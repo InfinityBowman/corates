@@ -73,6 +73,7 @@ interface AuthActions {
   signinWithMagicLink: (email: string, callbackPath?: string) => Promise<unknown>;
   signout: () => Promise<void>;
   updateProfile: (data: Record<string, unknown>) => Promise<unknown>;
+  changeEmail: (newEmail: string) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   confirmPasswordReset: (token: string, newPassword: string) => Promise<void>;
@@ -297,6 +298,17 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
       const updated = await authFetch(authClient.updateUser(data));
       await get().sessionRefetch?.();
       return updated;
+    } catch (err) {
+      set({ authError: (err as Error).message });
+      throw err;
+    }
+  },
+
+  changeEmail: async newEmail => {
+    try {
+      set({ authError: null });
+      await authFetch(authClient.changeEmail({ newEmail }));
+      await get().sessionRefetch?.();
     } catch (err) {
       set({ authError: (err as Error).message });
       throw err;

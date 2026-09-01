@@ -22,6 +22,9 @@ const LINK_ERROR_MESSAGES: Record<string, string | null> = {
     'The email from this account does not match. Contact support if you need to link accounts with different emails.',
   EMAIL_NOT_FOUND:
     'No email was provided by the authentication provider. Please ensure your account has a verified email.',
+  // Magic link errors - silent; the signin page shows an inline banner instead
+  INVALID_TOKEN: null,
+  EXPIRED_TOKEN: null,
   // Session/auth errors
   SESSION_EXPIRED: 'Your session expired. Please sign in again.',
   INVALID_SESSION: 'Your session is invalid. Please sign in again.',

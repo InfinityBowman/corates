@@ -1,5 +1,7 @@
 import { useState, useRef, useCallback, useEffect, useLayoutEffect } from 'react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { z } from 'zod';
+import { TriangleAlertIcon } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { handleError, parseError } from '@/lib/error-utils';
 import { clientLogger } from '@/lib/clientLogger';
@@ -19,13 +21,26 @@ import {
 import { MagicLinkForm } from '@/components/auth/MagicLinkForm';
 import { TwoFactorVerify } from '@/components/auth/TwoFactorVerify';
 import { LastLoginHint } from '@/components/auth/LastLoginHint';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+
+const signinSearch = z.object({
+  error: z.string().optional().catch(undefined),
+});
+
+// Codes the magic link verify endpoint redirects back with when a link fails
+const MAGIC_LINK_ERROR_CODES = new Set(['INVALID_TOKEN', 'EXPIRED_TOKEN']);
 
 export const Route = createFileRoute('/_auth/signin')({
   component: SignInPage,
+  validateSearch: signinSearch,
 });
 
 function SignInPage() {
   useOAuthError();
+
+  const { error: searchError } = Route.useSearch();
+  const magicLinkFailed =
+    !!searchError && MAGIC_LINK_ERROR_CODES.has(searchError.toUpperCase().replace(/-/g, '_'));
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -34,6 +49,7 @@ function SignInPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [orcidLoading, setOrcidLoading] = useState(false);
   const [useMagicLink, setUseMagicLink] = useState(() => {
+    if (magicLinkFailed) return true;
     const lastMethod = getLastLoginMethod();
     return !lastMethod || lastMethod === 'magic_link';
   });
@@ -190,6 +206,20 @@ function SignInPage() {
           </div>
 
           <LastLoginHint />
+
+          {magicLinkFailed && (
+            <Alert variant='warning'>
+              <TriangleAlertIcon />
+              <div>
+                <AlertTitle>That sign-in link is no longer valid</AlertTitle>
+                <AlertDescription>
+                  Sign-in links work once and expire after 10 minutes. Some email security tools
+                  open links before you do, which can use them up. Enter your email below and we
+                  will send you a fresh one.
+                </AlertDescription>
+              </div>
+            </Alert>
+          )}
 
           {/* Tab switcher */}
           <div
