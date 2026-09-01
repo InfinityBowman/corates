@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
 import { CheckIcon } from 'lucide-react';
 import { useAuthStore, selectUser, selectIsAuthLoading } from '@/stores/authStore';
+import { isSyntheticEmail, isValidEmail } from '@corates/shared/email';
 import { handleError } from '@/lib/error-utils';
 import { acceptInvitation } from '@/server/functions/invitations.functions';
 import { showToast } from '@/lib/toast';
@@ -58,6 +59,12 @@ function getPendingInvitationToken(search: Record<string, unknown>): string | nu
 export const Route = createFileRoute('/_auth/complete-profile')({
   ssr: false,
   beforeLoad: ({ location }) => {
+    // Failed magic link verifications land here as ?error=; signin explains and offers a fresh link
+    const search = location.search as Record<string, unknown>;
+    if (typeof search.error === 'string' && search.error) {
+      throw redirect({ to: '/signin', search: { error: search.error } });
+    }
+
     const state = useAuthStore.getState();
     const user = selectUser(state);
 
@@ -95,6 +102,11 @@ function CompleteProfilePage() {
   const user = useAuthStore(selectUser);
   const isAuthLoading = useAuthStore(selectIsAuthLoading);
   const updateProfile = useAuthStore(s => s.updateProfile);
+  const changeEmail = useAuthStore(s => s.changeEmail);
+
+  // ORCID sign-ins without a public email get a synthetic address; collect a real one here
+  const needsRealEmail = !!user?.email && isSyntheticEmail(user.email);
+  const [contactEmail, setContactEmail] = useState('');
 
   // Handles cases beforeLoad couldn't catch synchronously (session was still
   // loading, no cached user yet). Once auth resolves, redirect as needed.
@@ -187,6 +199,10 @@ function CompleteProfilePage() {
       setError('Please enter your first name');
       return false;
     }
+    if (needsRealEmail && !isValidEmail(contactEmail)) {
+      setError('Please enter a valid email address');
+      return false;
+    }
     return true;
   }
 
@@ -224,6 +240,10 @@ function CompleteProfilePage() {
       const givenName = firstName.trim();
       const familyName = lastName.trim();
       const fullName = [givenName, familyName].filter(Boolean).join(' ');
+
+      if (needsRealEmail) {
+        await changeEmail(contactEmail.trim());
+      }
 
       await updateProfile({
         name: fullName,
@@ -389,6 +409,31 @@ function CompleteProfilePage() {
                 />
               </div>
             </div>
+
+            {needsRealEmail && (
+              <div>
+                <Label className='mb-1' htmlFor='contact-email-input'>
+                  Email
+                </Label>
+                <Input
+                  type='email'
+                  autoComplete='email'
+                  autoCapitalize='off'
+                  spellCheck='false'
+                  value={contactEmail}
+                  onChange={e => setContactEmail(e.target.value)}
+                  className='h-auto py-2 text-sm'
+                  required
+                  id='contact-email-input'
+                  placeholder='you@example.com'
+                  aria-describedby={error ? 'profile-step1-error' : undefined}
+                />
+                <p className='text-muted-foreground mt-1 text-xs'>
+                  ORCID did not share an email address with us. Add one so project invitations and
+                  notifications can reach you.
+                </p>
+              </div>
+            )}
 
             <div className='flex flex-col gap-2'>
               <Label htmlFor='title-select' className='mb-1'>

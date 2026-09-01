@@ -23,3 +23,19 @@ export async function queueEmail(queue: EmailQueue, payload: EmailPayload): Prom
 
   await queue.send(payload);
 }
+
+export function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+export function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+}
+
+/**
+ * ORCID sign-in falls back to `<orcid-id>@orcid.org` when no public email
+ * exists; those are not mailboxes and hard-bounce.
+ */
+export function isSyntheticEmail(email: string): boolean {
+  return /@orcid\.org$/i.test(email.trim());
+}

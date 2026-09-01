@@ -8,6 +8,7 @@
 import { useEffect } from 'react';
 import { useLocation } from '@tanstack/react-router';
 import { parseOAuthError } from '@/lib/account-linking-errors.js';
+import { clientLogger } from '@/lib/clientLogger';
 import { showToast } from '@/lib/toast';
 
 export function useOAuthError() {
@@ -19,7 +20,13 @@ export function useOAuthError() {
 
     if (!parsedError) return;
 
-    const { message } = parsedError;
+    const { code, message } = parsedError;
+
+    // Error redirects are invisible server-side, so record them here
+    clientLogger.info('client.auth.oauth_error_redirect', {
+      code,
+      path: location.pathname,
+    });
 
     // Silent errors (user cancelled) - clean up without notification
     if (message === null) {

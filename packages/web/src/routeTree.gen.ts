@@ -28,6 +28,7 @@ import { Route as AuthCompleteProfileRouteImport } from './routes/_auth/complete
 import { Route as AuthResetPasswordRouteImport } from './routes/_auth/reset-password'
 import { Route as AuthSigninRouteImport } from './routes/_auth/signin'
 import { Route as AuthSignupRouteImport } from './routes/_auth/signup'
+import { Route as AuthVerifyLinkRouteImport } from './routes/_auth/verify-link'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
 import { Route as ApiClientLogsRouteImport } from './routes/api/client-logs'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
@@ -170,6 +171,11 @@ const AuthSigninRoute = AuthSigninRouteImport.update({
 const AuthSignupRoute = AuthSignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthVerifyLinkRoute = AuthVerifyLinkRouteImport.update({
+  id: '/verify-link',
+  path: '/verify-link',
   getParentRoute: () => AuthRoute,
 } as any)
 const ApiSplatRoute = ApiSplatRouteImport.update({
@@ -473,6 +479,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof AuthResetPasswordRoute
   '/signin': typeof AuthSigninRoute
   '/signup': typeof AuthSignupRoute
+  '/verify-link': typeof AuthVerifyLinkRoute
   '/api/$': typeof ApiSplatRoute
   '/api/client-logs': typeof ApiClientLogsRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -541,6 +548,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof AuthResetPasswordRoute
   '/signin': typeof AuthSigninRoute
   '/signup': typeof AuthSignupRoute
+  '/verify-link': typeof AuthVerifyLinkRoute
   '/api/$': typeof ApiSplatRoute
   '/api/client-logs': typeof ApiClientLogsRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -612,6 +620,7 @@ export interface FileRoutesById {
   '/_auth/reset-password': typeof AuthResetPasswordRoute
   '/_auth/signin': typeof AuthSigninRoute
   '/_auth/signup': typeof AuthSignupRoute
+  '/_auth/verify-link': typeof AuthVerifyLinkRoute
   '/api/$': typeof ApiSplatRoute
   '/api/client-logs': typeof ApiClientLogsRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -683,6 +692,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signin'
     | '/signup'
+    | '/verify-link'
     | '/api/$'
     | '/api/client-logs'
     | '/invite/$token'
@@ -751,6 +761,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signin'
     | '/signup'
+    | '/verify-link'
     | '/api/$'
     | '/api/client-logs'
     | '/invite/$token'
@@ -821,6 +832,7 @@ export interface FileRouteTypes {
     | '/_auth/reset-password'
     | '/_auth/signin'
     | '/_auth/signup'
+    | '/_auth/verify-link'
     | '/api/$'
     | '/api/client-logs'
     | '/invite/$token'
@@ -1044,6 +1056,13 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof AuthSignupRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/verify-link': {
+      id: '/_auth/verify-link'
+      path: '/verify-link'
+      fullPath: '/verify-link'
+      preLoaderRoute: typeof AuthVerifyLinkRouteImport
       parentRoute: typeof AuthRoute
     }
     '/api/$': {
@@ -1534,6 +1553,7 @@ interface AuthRouteChildren {
   AuthResetPasswordRoute: typeof AuthResetPasswordRoute
   AuthSigninRoute: typeof AuthSigninRoute
   AuthSignupRoute: typeof AuthSignupRoute
+  AuthVerifyLinkRoute: typeof AuthVerifyLinkRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
@@ -1542,6 +1562,7 @@ const AuthRouteChildren: AuthRouteChildren = {
   AuthResetPasswordRoute: AuthResetPasswordRoute,
   AuthSigninRoute: AuthSigninRoute,
   AuthSignupRoute: AuthSignupRoute,
+  AuthVerifyLinkRoute: AuthVerifyLinkRoute,
 }
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)

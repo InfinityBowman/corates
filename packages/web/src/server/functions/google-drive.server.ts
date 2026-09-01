@@ -20,18 +20,23 @@ import { generateUniqueFileName } from '@corates/workers/media-files';
 import { getGoogleTokens, getValidAccessToken } from '@/server/googleTokens';
 import type { Session } from '@/server/middleware/auth';
 
+const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.readonly';
+
 export async function getStatus(db: Database, session: Session) {
   const googleAccount = await db
     .select({
       accessToken: account.accessToken,
       refreshToken: account.refreshToken,
+      scope: account.scope,
     })
     .from(account)
     .where(and(eq(account.userId, session.user.id), eq(account.providerId, 'google')))
     .get();
 
+  const hasDriveScope = !!googleAccount?.scope && googleAccount.scope.includes(DRIVE_SCOPE);
+
   return {
-    connected: !!googleAccount?.accessToken,
+    connected: !!googleAccount?.accessToken && hasDriveScope,
     hasRefreshToken: !!googleAccount?.refreshToken,
   };
 }
