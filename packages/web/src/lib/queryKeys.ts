@@ -22,6 +22,8 @@ export const queryKeys = {
     list: (userId: string | null | undefined) => ['projects', userId] as const,
     /** Members of a project (D1 projectMembers joined with user) */
     members: (projectId: string) => ['projects', 'members', projectId] as const,
+    /** Pending invitations drafted during the setup wizard */
+    setupInvites: (projectId: string) => ['projects', 'setup-invites', projectId] as const,
     /** Projects within an organization (legacy, kept for backward compatibility) */
     byOrg: (orgId: string | null | undefined) => ['projects', 'org', orgId] as const,
   },

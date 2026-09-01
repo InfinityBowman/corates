@@ -1,5 +1,6 @@
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
+import { PROJECT_SETUP_STATUSES, PROJECT_SETUP_STEPS } from '@corates/shared';
 import type { OrgId, ProjectId, UserId, ProjectInvitationId } from '@corates/shared/ids';
 import { authMiddleware } from '@/server/middleware/auth';
 import {
@@ -8,6 +9,7 @@ import {
   getProject,
   updateProjectById,
   deleteProjectById,
+  updateProjectSetupById,
   listProjectMembers,
   addProjectMember,
   updateProjectMemberRole,
@@ -15,6 +17,7 @@ import {
   listProjectInvitations,
   createProjectInvitation,
   cancelProjectInvitation,
+  syncSetupDraftInvitations,
 } from './org-projects.server';
 
 // -- Projects --
@@ -33,6 +36,7 @@ export const createProject = createServerFn({ method: 'POST' })
       orgId: z.string(),
       name: z.string().trim().min(1).max(255),
       description: z.string().trim().max(2000).optional(),
+      setupSkipInvites: z.boolean().optional(),
     }),
   )
   .handler(async ({ data, context: { session, db } }) => {
@@ -60,6 +64,22 @@ export const updateProject = createServerFn({ method: 'POST' })
   .handler(async ({ data, context: { session, db } }) => {
     const { orgId, projectId, ...updateData } = data;
     return updateProjectById(session, db, orgId as OrgId, projectId as ProjectId, updateData);
+  });
+
+export const updateProjectSetup = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
+  .validator(
+    z.object({
+      orgId: z.string(),
+      projectId: z.string(),
+      setupStatus: z.enum(PROJECT_SETUP_STATUSES).optional(),
+      setupStep: z.enum(PROJECT_SETUP_STEPS).nullable().optional(),
+      setupSkipInvites: z.boolean().optional(),
+    }),
+  )
+  .handler(async ({ data, context: { session, db } }) => {
+    const { orgId, projectId, ...setupData } = data;
+    return updateProjectSetupById(session, db, orgId as OrgId, projectId as ProjectId, setupData);
   });
 
 export const deleteProject = createServerFn({ method: 'POST' })
@@ -176,3 +196,17 @@ export const cancelInvitation = createServerFn({ method: 'POST' })
       data.invitationId as ProjectInvitationId,
     ),
   );
+
+export const syncSetupInvites = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
+  .validator(
+    z.object({
+      orgId: z.string(),
+      projectId: z.string(),
+      emails: z.array(z.string().email()).max(50),
+    }),
+  )
+  .handler(async ({ data, context: { session, db } }) => {
+    const { orgId, projectId, ...payload } = data;
+    return syncSetupDraftInvitations(session, db, orgId as OrgId, projectId as ProjectId, payload);
+  });

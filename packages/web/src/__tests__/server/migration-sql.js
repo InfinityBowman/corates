@@ -288,4 +288,8 @@ CREATE TABLE \`contact_submissions\` (
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX \`contact_submissions_dedupKey_unique\` ON \`contact_submissions\` (\`dedupKey\`);--> statement-breakpoint
-CREATE INDEX \`contact_submissions_email_createdAt_idx\` ON \`contact_submissions\` (\`email\`,\`createdAt\`);`;
+CREATE INDEX \`contact_submissions_email_createdAt_idx\` ON \`contact_submissions\` (\`email\`,\`createdAt\`);
+
+ALTER TABLE \`projects\` ADD \`setupStatus\` text DEFAULT 'completed' NOT NULL;--> statement-breakpoint
+ALTER TABLE \`projects\` ADD \`setupStep\` text;--> statement-breakpoint
+ALTER TABLE \`projects\` ADD \`setupSkipInvites\` integer DEFAULT false NOT NULL;`;

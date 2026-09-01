@@ -184,6 +184,9 @@ export const projects = sqliteTable(
       .references(() => user.id, { onDelete: 'cascade' }),
     createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
     updatedAt: integer('updatedAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
+    setupStatus: text('setupStatus').notNull().default('completed'), // in_progress | completed | dismissed
+    setupStep: text('setupStep'), // studies | team | distribution
+    setupSkipInvites: integer('setupSkipInvites', { mode: 'boolean' }).default(false).notNull(),
   },
   t => [index('projects_orgId_idx').on(t.orgId)],
 );

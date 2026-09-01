@@ -23,6 +23,7 @@ interface CreateInvitationParams {
   projectId: string;
   email: string;
   role: string;
+  sendEmail?: boolean;
 }
 
 interface CreateInvitationResult {
@@ -33,7 +34,7 @@ interface CreateInvitationResult {
 export async function createInvitation(
   env: Env,
   actor: CreateInvitationActor,
-  { orgId, projectId, email, role }: CreateInvitationParams,
+  { orgId, projectId, email, role, sendEmail = true }: CreateInvitationParams,
 ): Promise<CreateInvitationResult> {
   const db = createDb(env.DB);
   const normalizedEmail = email.toLowerCase();
@@ -114,25 +115,27 @@ export async function createInvitation(
   const inviterName = inviter?.givenName || inviter?.name || inviter?.email || 'Someone';
 
   let emailQueued = false;
-  try {
-    const { sendInvitationEmail } = await import('../../lib/send-invitation-email.js');
-    const result = await sendInvitationEmail({
-      env,
-      email,
-      token,
-      projectName,
-      inviterName,
-      role,
-    });
-    emailQueued = result.emailQueued;
-  } catch (err) {
-    captureError(err, {
-      tags: { component: 'invitation', action: 'send-email' },
-      extra: { projectId },
-    });
+  if (sendEmail) {
+    try {
+      const { sendInvitationEmail } = await import('../../lib/send-invitation-email.js');
+      const result = await sendInvitationEmail({
+        env,
+        email,
+        token,
+        projectName,
+        inviterName,
+        role,
+      });
+      emailQueued = result.emailQueued;
+    } catch (err) {
+      captureError(err, {
+        tags: { component: 'invitation', action: 'send-email' },
+        extra: { projectId },
+      });
+    }
   }
 
-  info('invitation.created', { orgId, projectId, invitationId, role, emailQueued });
+  info('invitation.created', { orgId, projectId, invitationId, role, emailQueued, sendEmail });
 
   return { invitationId, emailQueued };
 }

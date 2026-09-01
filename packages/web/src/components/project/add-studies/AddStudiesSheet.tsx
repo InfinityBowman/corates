@@ -21,13 +21,8 @@ import type { MergedStudy } from '@/hooks/useAddStudies/deduplication';
 import { useSortedStudyIds } from '@/project/workspace-data';
 import { project } from '@/project';
 import { useProjectContext } from '../ProjectContext';
-import {
-  saveFormState,
-  getFormState,
-  clearFormState,
-  getRestoreParamsFromUrl,
-  clearRestoreParamsFromUrl,
-} from '@/lib/formStatePersistence.js';
+import { saveFormState } from '@/lib/formStatePersistence.js';
+import { useRestoredFormState } from '@/hooks/useRestoredFormState';
 
 interface AddStudiesSheetProps {
   open: boolean;
@@ -38,11 +33,17 @@ interface AddStudiesSheetProps {
 export function AddStudiesSheet({ open, onOpenChange, onAdded }: AddStudiesSheetProps) {
   const { projectId } = useProjectContext();
 
-  const [restoredState, setRestoredState] = useState<AddStudiesFormState | null>(null);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
 
   const studies = useAddStudies({});
   const studyIds = useSortedStudyIds(projectId);
+
+  // Restore state after OAuth redirect and reopen the sheet
+  const [restoredState, setRestoredState] = useRestoredFormState<AddStudiesFormState>(
+    'addStudies',
+    projectId,
+    () => onOpenChange(true),
+  );
 
   const handleOpenChange = useCallback(
     (next: boolean) => {
@@ -51,34 +52,8 @@ export function AddStudiesSheet({ open, onOpenChange, onAdded }: AddStudiesSheet
       }
       onOpenChange(next);
     },
-    [onOpenChange],
+    [onOpenChange, setRestoredState],
   );
-
-  // Restore state after OAuth redirect and reopen the sheet
-  useEffect(() => {
-    let cancelled = false;
-    const restoreParams = getRestoreParamsFromUrl();
-    if (restoreParams?.type === 'addStudies' && restoreParams.projectId === projectId) {
-      (async () => {
-        try {
-          const savedState = await getFormState('addStudies', projectId);
-          if (!cancelled && savedState) {
-            setRestoredState(savedState as AddStudiesFormState);
-            onOpenChange(true);
-            await clearFormState('addStudies', projectId);
-          }
-        } catch (err) {
-          const { handleError } = await import('@/lib/error-utils');
-          await handleError(err, { toastTitle: 'Restore Failed' });
-        }
-        if (!cancelled) clearRestoreParamsFromUrl();
-      })();
-    }
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projectId]);
 
   // Global drag-and-drop while the sheet is closed. The empty-project inline
   // form has its own dropzone, so this only arms once studies exist.

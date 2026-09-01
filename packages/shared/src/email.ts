@@ -23,3 +23,11 @@ export async function queueEmail(queue: EmailQueue, payload: EmailPayload): Prom
 
   await queue.send(payload);
 }
+
+export function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+export function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+}

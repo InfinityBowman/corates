@@ -1,14 +1,13 @@
 /**
  * CreateProjectModal - Modal dialog for creating a new project
  *
- * Collects project name (required), description (optional),
- * and organization (if user has multiple).
+ * Collects project name and organization (if user has multiple).
  */
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { FolderIcon } from 'lucide-react';
+import { ArrowRightIcon, FolderIcon } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -19,7 +18,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -35,41 +33,52 @@ import { AUTH_ERRORS } from '@corates/shared';
 import { isUnlimitedQuota } from '@corates/shared/plans';
 import { createProject } from '@/server/functions/org-projects.functions';
 import { track } from '@/lib/analytics';
+import { cn } from '@/lib/utils';
 
 interface CreateProjectModalProps {
   open: boolean;
   onOpenChange: (_open: boolean) => void;
 }
 
+const INVITE_SETUP_OPTIONS = [
+  {
+    setupSkipInvites: false,
+    title: "I'll invite reviewers",
+    description: 'Add teammates during setup so you can share out the work next.',
+  },
+  {
+    setupSkipInvites: true,
+    title: 'Skip inviting for now',
+    description: 'Go straight to sharing out work. You can invite people later from the project.',
+  },
+] as const;
+
 export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const [projectName, setProjectName] = useState('');
-  const [projectDescription, setProjectDescription] = useState('');
+  const [setupSkipInvites, setSetupSkipInvites] = useState(false);
   const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { orgs, isLoading: orgsLoading } = useOrgs();
 
-  // Auto-select first org when orgs load and user has multiple
   useEffect(() => {
     if (orgs.length > 1 && !selectedOrgId) {
       setSelectedOrgId(orgs[0].id);
     }
   }, [orgs, selectedOrgId]);
 
-  // Resolve org: auto-select if single, otherwise use selection
   const resolvedOrgId = useMemo(() => {
     if (orgs.length === 1) return orgs[0].id;
     return selectedOrgId;
   }, [orgs, selectedOrgId]);
 
-  // Reset form when dialog closes
   useEffect(() => {
     if (!open) {
       setProjectName('');
-      setProjectDescription('');
+      setSetupSkipInvites(false);
       setSelectedOrgId(null);
     }
   }, [open]);
@@ -94,7 +103,7 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
           data: {
             orgId,
             name: projectName.trim(),
-            description: projectDescription.trim() || undefined,
+            setupSkipInvites,
           },
         })) as { id: string };
 
@@ -102,7 +111,7 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
         queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
         onOpenChange(false);
 
-        navigate({ to: `/projects/${newProject.id}` as string });
+        navigate({ to: '/projects/$projectId/setup', params: { projectId: newProject.id } });
       } catch (error: unknown) {
         const domainError = getDomainError(error);
         const details = domainError?.details as Record<string, unknown> | undefined;
@@ -128,7 +137,7 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
         setIsSubmitting(false);
       }
     },
-    [projectName, projectDescription, resolvedOrgId, onOpenChange, navigate, queryClient],
+    [projectName, setupSkipInvites, resolvedOrgId, onOpenChange, navigate, queryClient],
   );
 
   return (
@@ -142,15 +151,14 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
             <div>
               <DialogTitle>Create a new project</DialogTitle>
               <p className='text-muted-foreground text-sm'>
-                You can add studies and invite collaborators later.
+                We&apos;ll walk you through adding studies and your team next.
               </p>
             </div>
           </div>
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
-          <div className='flex flex-col gap-4 py-2'>
-            {/* Project Name */}
+          <div className='flex flex-col gap-5 py-2'>
             <div>
               <Label htmlFor='project-name' className='mb-1.5'>
                 What should we call this project?
@@ -165,7 +173,6 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
               />
             </div>
 
-            {/* Organization - only show if multiple */}
             {!orgsLoading && orgs.length > 1 && (
               <div>
                 <Label htmlFor='project-org' className='mb-1.5'>
@@ -186,20 +193,42 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
               </div>
             )}
 
-            {/* Description */}
             <div>
-              <Label htmlFor='project-description' className='mb-1.5 block'>
-                Add a description{' '}
-                <span className='text-muted-foreground/70 font-normal'>(optional)</span>
-              </Label>
-              <Textarea
-                id='project-description'
-                placeholder='What is this review about?'
-                value={projectDescription}
-                onChange={e => setProjectDescription(e.target.value)}
-                rows={2}
-                className='resize-none'
-              />
+              <Label className='mb-1.5'>Will you invite reviewers during setup?</Label>
+              <p className='text-muted-foreground mb-2.5 text-xs'>
+                You can change this on the next step.
+              </p>
+              <div className='grid grid-cols-1 gap-2.5 sm:grid-cols-2'>
+                {INVITE_SETUP_OPTIONS.map(option => {
+                  const selected = setupSkipInvites === option.setupSkipInvites;
+                  return (
+                    <button
+                      key={String(option.setupSkipInvites)}
+                      type='button'
+                      onClick={() => setSetupSkipInvites(option.setupSkipInvites)}
+                      className={cn(
+                        'rounded-lg border p-3.5 text-left transition-colors',
+                        selected ?
+                          'border-primary bg-primary/5 ring-primary/20 ring-2'
+                        : 'border-border bg-card hover:bg-muted/40',
+                      )}
+                    >
+                      <div className='flex items-center gap-2'>
+                        <span
+                          className={cn(
+                            'size-3.5 shrink-0 rounded-full border-2',
+                            selected ? 'border-primary bg-primary' : 'border-muted-foreground/40',
+                          )}
+                        />
+                        <span className='text-sm font-semibold'>{option.title}</span>
+                      </div>
+                      <p className='text-muted-foreground mt-1.5 text-xs leading-relaxed'>
+                        {option.description}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
@@ -213,7 +242,13 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
               Cancel
             </Button>
             <Button type='submit' disabled={!canSubmit}>
-              {isSubmitting ? 'Creating...' : 'Create Project'}
+              {isSubmitting ?
+                'Creating...'
+              : <>
+                  Create &amp; set up
+                  <ArrowRightIcon />
+                </>
+              }
             </Button>
           </DialogFooter>
         </form>

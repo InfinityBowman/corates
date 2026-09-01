@@ -192,6 +192,9 @@ export async function seedProject(params: SeedProjectInput): Promise<void> {
     createdBy: validated.createdBy,
     createdAt: new Date(validated.createdAt * 1000),
     updatedAt: new Date(validated.updatedAt * 1000),
+    setupSkipInvites: validated.setupSkipInvites,
+    setupStatus: validated.setupStatus,
+    setupStep: validated.setupStep,
   });
 }
 
