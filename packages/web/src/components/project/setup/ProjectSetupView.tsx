@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ProjectSetupStep } from '@corates/shared';
-import { useProjectMeta, useAllStudies } from '@/project/workspace-data';
+import { useProjectMeta, useAllStudies, useProjectMembers } from '@/project/workspace-data';
 import { useProjectOrgId } from '@/hooks/useProjectOrgId';
 import { ProjectGate } from '@/project';
 import { PageLoader, Spinner } from '@/components/ui/spinner';
@@ -15,9 +15,13 @@ import { getInvitations, updateProjectSetup } from '@/server/functions/org-proje
 import { ProjectSetupStepRail } from './ProjectSetupStepRail';
 import { ProjectSetupStudiesStep } from './ProjectSetupStudiesStep';
 import { ProjectSetupTeamStep } from './ProjectSetupTeamStep';
-import { ProjectSetupStepFooter } from './ProjectSetupStepFooter';
-import { ProjectSetupStepHeader } from './ProjectSetupStepHeader';
-import { getPreviousSetupStep, setupStepNumber, SETUP_STEPS } from './setup-steps';
+import { ProjectSetupDistributionStep } from './ProjectSetupDistributionStep';
+import {
+  countAssignedStudies,
+  getPreviousSetupStep,
+  setupStepNumber,
+  SETUP_STEPS,
+} from './setup-steps';
 
 interface ProjectSetupViewProps {
   projectId: string;
@@ -37,6 +41,7 @@ function ProjectSetupViewInner({ projectId }: ProjectSetupViewProps) {
   const meta = useProjectMeta(projectId);
   const orgId = useProjectOrgId(projectId);
   const studies = useAllStudies(projectId);
+  const members = useProjectMembers(projectId);
   const [isNavigating, setIsNavigating] = useState(false);
 
   const currentStep: ProjectSetupStep = meta.setupStep ?? 'studies';
@@ -113,6 +118,7 @@ function ProjectSetupViewInner({ projectId }: ProjectSetupViewProps) {
         <ProjectSetupStepRail
           currentStep={currentStep}
           studyCount={studies.length}
+          assignedCount={countAssignedStudies(studies)}
           inviteCount={inviteCount}
           setupSkipInvites={setupSkipInvites}
           onStepSelect={step => void goToSetupStep(step)}
@@ -141,17 +147,18 @@ function ProjectSetupViewInner({ projectId }: ProjectSetupViewProps) {
                 <Spinner label='Loading invites...' />
               </div>)}
           {currentStep === 'distribution' && (
-            <div className='flex min-h-0 flex-1 flex-col px-10 py-8'>
-              <ProjectSetupStepHeader step='distribution' title='Share the studies out'>
-                Distribution (Phase 5)
-              </ProjectSetupStepHeader>
-              <ProjectSetupStepFooter
-                hint='You can rebalance any time'
-                backLabel='Back to your team'
-                onBack={goToPreviousStep}
-                backDisabled={isNavigating}
-              />
-            </div>
+            <ProjectSetupDistributionStep
+              orgId={orgId}
+              studies={studies}
+              members={members}
+              onFinished={() => {
+                void handleStepComplete();
+                goToProject();
+              }}
+              onBack={() => void goToSetupStep(setupSkipInvites ? 'studies' : 'team')}
+              backLabel={setupSkipInvites ? 'Back to studies' : 'Back to your team'}
+              isNavigating={isNavigating}
+            />
           )}
         </div>
       </div>

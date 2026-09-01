@@ -7,6 +7,7 @@ import { SETUP_STEPS } from './setup-steps';
 interface ProjectSetupStepRailProps {
   currentStep: ProjectSetupStep;
   studyCount: number;
+  assignedCount: number;
   inviteCount: number;
   setupSkipInvites: boolean;
   onStepSelect: (step: ProjectSetupStep) => void;
@@ -19,6 +20,7 @@ function stepSubtitle(
   stepId: ProjectSetupStep,
   status: StepStatus,
   studyCount: number,
+  assignedCount: number,
   inviteCount: number,
   setupSkipInvites: boolean,
 ): string {
@@ -34,14 +36,16 @@ function stepSubtitle(
       }
       return SETUP_STEPS[1].emptySubtitle;
     case 'distribution':
-      if (studyCount > 0 && status !== 'complete') return 'Ready when you are';
-      return SETUP_STEPS[2].emptySubtitle;
+      if (studyCount === 0) return SETUP_STEPS[2].emptySubtitle;
+      if (assignedCount > 0) return `${assignedCount} of ${studyCount} assigned`;
+      return 'Ready when you are';
   }
 }
 
 export function ProjectSetupStepRail({
   currentStep,
   studyCount,
+  assignedCount,
   inviteCount,
   setupSkipInvites,
   onStepSelect,
@@ -49,6 +53,10 @@ export function ProjectSetupStepRail({
 }: ProjectSetupStepRailProps) {
   const currentIndex = projectSetupStepIndex(currentStep);
   const hasStudies = studyCount > 0;
+  // The last step has no successor to advance to, so it counts as done once every study is assigned.
+  const distributionDone =
+    currentStep === 'distribution' && hasStudies && assignedCount === studyCount;
+  const completedCount = currentIndex + (distributionDone ? 1 : 0);
 
   return (
     <aside className='border-border bg-muted/30 flex w-72 shrink-0 flex-col border-r px-6 py-7'>
@@ -67,13 +75,13 @@ export function ProjectSetupStepRail({
             key={step.id}
             className={cn(
               'h-1.5 flex-1 rounded-full',
-              index < currentIndex ? 'bg-primary' : 'bg-border',
+              index < completedCount ? 'bg-primary' : 'bg-border',
             )}
           />
         ))}
       </div>
       <p className='text-muted-foreground mt-2 text-[11.5px] font-semibold tabular-nums'>
-        {currentIndex} of {SETUP_STEPS.length} done
+        {completedCount} of {SETUP_STEPS.length} done
       </p>
 
       <div className='mt-6 flex flex-col gap-1'>
@@ -82,9 +90,19 @@ export function ProjectSetupStepRail({
             index < currentIndex ? 'complete'
             : index === currentIndex ? 'current'
             : 'upcoming';
-          const subtitle = stepSubtitle(step.id, status, studyCount, inviteCount, setupSkipInvites);
+          const subtitle = stepSubtitle(
+            step.id,
+            status,
+            studyCount,
+            assignedCount,
+            inviteCount,
+            setupSkipInvites,
+          );
           const isDistributionReady =
-            step.id === 'distribution' && hasStudies && status !== 'complete';
+            step.id === 'distribution' &&
+            hasStudies &&
+            assignedCount === 0 &&
+            status !== 'complete';
           // Steps can be revisited freely; only distribution needs studies to exist first.
           const canSelect =
             !isNavigating && status !== 'current' && (step.id !== 'distribution' || hasStudies);

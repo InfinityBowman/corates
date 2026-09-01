@@ -1,4 +1,5 @@
 import { PROJECT_SETUP_STEPS, projectSetupStepIndex, type ProjectSetupStep } from '@corates/shared';
+import type { StudyInfo } from '@/stores/projectStore';
 
 export interface SetupStepDefinition {
   id: ProjectSetupStep;
@@ -31,4 +32,8 @@ export function setupStepNumber(step: ProjectSetupStep): number {
 export function getPreviousSetupStep(current: ProjectSetupStep): ProjectSetupStep | null {
   const index = projectSetupStepIndex(current);
   return index > 0 ? PROJECT_SETUP_STEPS[index - 1] : null;
+}
+
+export function countAssignedStudies(studies: StudyInfo[]): number {
+  return studies.filter(s => s.reviewer1 || s.reviewer2).length;
 }
