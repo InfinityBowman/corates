@@ -391,7 +391,7 @@ Logic that determines effective plan from multiple sources:
 ### Business/Domain
 
 - **Org** - Organization (tenant entity)
-- **CoRATES** - Collaborative Risk Assessment Tool for Evidence Synthesis
+- **CoRATES** - Collaborative Research Appraisal Tool for Evidence Synthesis
 
 ---
 

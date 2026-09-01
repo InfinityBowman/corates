@@ -5,6 +5,7 @@
 import { useState } from 'react';
 import { CheckIcon, CopyIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { APP_FULL_NAME, APP_NAME, APP_PUBLISHER } from '@/config/app';
 import {
   DropdownMenuItem,
   DropdownMenuSub,
@@ -24,10 +25,19 @@ import { showToast } from '@/lib/toast';
 export type CitationStyle = 'apa' | 'ama';
 
 export function getCoratesCitations() {
-  const year = new Date().getFullYear();
+  const now = new Date();
+  const year = now.getFullYear();
+  // AMA access dates are always US-style ("August 31, 2026"), so pin the locale
+  // rather than letting the reader's browser render "31 August 2026".
+  const accessed = now.toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+  const title = `${APP_NAME} (${APP_FULL_NAME})`;
   return {
-    apa: `Maynard, J. A., & Maynard, B. R. (${year}). CoRATES (Collaborative Risk-of-Bias and Appraisal Tracking for Evidence Synthesis) [Software]. https://corates.org`,
-    ama: `Maynard JA, Maynard BR. CoRATES (Collaborative Risk-of-Bias and Appraisal Tracking for Evidence Synthesis)[software]. ${year}. Accessed Month Day, Year. https://corates.org`,
+    apa: `Maynard, J. A., & Maynard, B. R. (${year}). ${title} [Computer software]. ${APP_PUBLISHER}. https://corates.org`,
+    ama: `Maynard JA, Maynard BR. ${title} [software]. ${APP_PUBLISHER}; ${year}. Accessed ${accessed}. https://corates.org`,
   };
 }
 
