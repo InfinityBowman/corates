@@ -90,7 +90,7 @@ export function capturePlanParams(urlParams: URLSearchParams): boolean {
   return false;
 }
 
-function getPendingPlan(): { plan: string | null; interval: BillingInterval } {
+export function getPendingPlan(): { plan: string | null; interval: BillingInterval } {
   try {
     const plan = localStorage.getItem(STORAGE_KEYS.PENDING_PLAN);
     const rawInterval = localStorage.getItem(STORAGE_KEYS.PENDING_INTERVAL);

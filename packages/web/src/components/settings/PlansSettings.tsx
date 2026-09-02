@@ -8,17 +8,19 @@ import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { useSubscription } from '@/hooks/useSubscription';
+import { showToast } from '@/lib/toast';
 import { PricingTable } from '@/components/billing/PricingTable';
 import { PlanFAQ } from '@/components/billing/PlanFAQ';
 import {
   hasPendingPlan,
+  getPendingPlan,
   clearPendingPlan,
   handlePendingPlanRedirect,
   BILLING_MESSAGES,
 } from '@/lib/plan-redirect-utils';
 
 export function PlansSettings() {
-  const { subscription, refetch } = useSubscription();
+  const { subscription, refetch, isLoading } = useSubscription();
   const tier = subscription?.tier;
   const navigate = useNavigate();
 
@@ -37,8 +39,18 @@ export function PlansSettings() {
   }, [navigate, refetch]);
 
   useEffect(() => {
-    if (hasPendingPlan()) processPendingPlan();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    if (isLoading || !hasPendingPlan()) return;
+    if (getPendingPlan().plan === tier) {
+      clearPendingPlan();
+      showToast.info(
+        BILLING_MESSAGES.ALREADY_ON_PLAN.title,
+        BILLING_MESSAGES.ALREADY_ON_PLAN.message,
+      );
+      setPageState('ready');
+      return;
+    }
+    processPendingPlan();
+  }, [isLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (pageState === 'error') {
     return (
@@ -84,7 +96,7 @@ export function PlansSettings() {
   }
 
   return (
-    <div className='bg-muted/50 min-h-full py-6'>
+    <div className='min-h-full py-6'>
       <div className='mx-auto max-w-6xl px-4 sm:px-6 lg:px-8'>
         <div className='mb-8 text-center'>
           <h1 className='text-foreground text-4xl font-bold'>
