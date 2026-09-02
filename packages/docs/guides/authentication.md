@@ -576,7 +576,7 @@ Google OAuth is used to allow users to connect their Google account and access t
    - `openid`
    - `email`
    - `profile`
-   - `https://www.googleapis.com/auth/drive.readonly` (for reading Drive files)
+   - `https://www.googleapis.com/auth/drive.file` (per-file access to PDFs picked in the Google Picker; non-sensitive, so no restricted-scope verification is needed. Do not use `drive.readonly`: it is a restricted scope that requires a CASA security assessment and shows an unverified-app warning until approved)
 
 ### 3. Create OAuth Credentials
 

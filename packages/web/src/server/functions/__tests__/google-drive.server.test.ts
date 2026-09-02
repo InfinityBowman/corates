@@ -28,7 +28,7 @@ async function seedGoogleAccount(
   userId: string,
   accessToken = 'token-123',
   refreshToken = 'refresh-123',
-  scope = 'openid email profile https://www.googleapis.com/auth/drive.readonly',
+  scope = 'openid email profile https://www.googleapis.com/auth/drive.file',
 ) {
   const nowSec = Math.floor(Date.now() / 1000);
   const expiresAt = new Date(Date.now() + 3600 * 1000);
@@ -85,6 +85,20 @@ describe('getStatus', () => {
     const result = await getStatus(createDb(env.DB), mockSession());
     expect(result.connected).toBe(true);
     expect(result.hasRefreshToken).toBe(true);
+  });
+
+  it('stays connected for accounts that granted the legacy drive.readonly scope', async () => {
+    const user = await buildUser({ email: 'user1@example.com' });
+    await seedGoogleAccount(
+      user.id,
+      'token-123',
+      'refresh-123',
+      'openid email profile https://www.googleapis.com/auth/drive.readonly',
+    );
+    currentUser = { id: user.id, email: user.email };
+
+    const result = await getStatus(createDb(env.DB), mockSession());
+    expect(result.connected).toBe(true);
   });
 
   it('returns disconnected status when the account lacks the Drive scope', async () => {

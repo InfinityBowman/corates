@@ -409,10 +409,11 @@ function PrivacyPage() {
 
             <ul className='ml-6 flex list-outside list-disc flex-col gap-2 text-gray-600'>
               <li>
-                <strong>Scopes requested.</strong> When you connect Google, we request standard
-                OpenID Connect scopes (openid, email, profile) and Google Drive read-only access
-                (https://www.googleapis.com/auth/drive.readonly) to enable you to select and import
-                PDF files from your Google Drive.
+                <strong>Scopes requested.</strong> When you sign in with Google, we request standard
+                OpenID Connect scopes (openid, email, profile). If you connect Google Drive, we
+                additionally request per-file access (https://www.googleapis.com/auth/drive.file),
+                which only covers the PDF files you explicitly select in the Google file picker. We
+                cannot see or list any other files in your Google Drive.
               </li>
               <li>
                 <strong>Tokens stored.</strong> When you connect Google, we store OAuth tokens (such

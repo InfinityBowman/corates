@@ -20,7 +20,13 @@ import { generateUniqueFileName } from '@corates/workers/media-files';
 import { getGoogleTokens, getValidAccessToken } from '@/server/googleTokens';
 import type { Session } from '@/server/middleware/auth';
 
-const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.readonly';
+// drive.file is non-sensitive (no restricted-scope verification) and covers our
+// only use: fetching files the user picked in the Google Picker. Accounts that
+// granted the older restricted scope stay connected without re-consenting.
+const DRIVE_SCOPES = [
+  'https://www.googleapis.com/auth/drive.file',
+  'https://www.googleapis.com/auth/drive.readonly',
+];
 
 export async function getStatus(db: Database, session: Session) {
   const googleAccount = await db
@@ -33,7 +39,8 @@ export async function getStatus(db: Database, session: Session) {
     .where(and(eq(account.userId, session.user.id), eq(account.providerId, 'google')))
     .get();
 
-  const hasDriveScope = !!googleAccount?.scope && googleAccount.scope.includes(DRIVE_SCOPE);
+  const grantedScopes = googleAccount?.scope?.split(/[\s,]+/) ?? [];
+  const hasDriveScope = DRIVE_SCOPES.some(scope => grantedScopes.includes(scope));
 
   return {
     connected: !!googleAccount?.accessToken && hasDriveScope,
