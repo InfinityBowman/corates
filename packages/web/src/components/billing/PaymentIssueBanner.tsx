@@ -26,10 +26,10 @@ export function PaymentIssueBanner({ status, onUpdatePayment, loading }: Payment
 
   const message =
     isPastDue ?
-      'Your recent payment failed. Please update your payment method to avoid service interruption.'
+      'Your most recent payment did not go through. Update your payment method to keep your plan active.'
     : isIncomplete ?
-      'Your subscription setup is incomplete. Please complete payment to activate your plan.'
-    : 'Your subscription is unpaid. Please update your payment method to restore access.';
+      'Your subscription setup was not finished. Complete the payment to activate your plan.'
+    : 'Your subscription is unpaid. Update your payment method to restore your plan.';
 
   return (
     <Alert variant='destructive'>
@@ -40,8 +40,8 @@ export function PaymentIssueBanner({ status, onUpdatePayment, loading }: Payment
           <AlertDescription>{message}</AlertDescription>
           {isPastDue && (
             <AlertDescription className='mt-2 text-xs'>
-              Your access will continue until the end of your billing period, but you may lose
-              access to premium features if payment is not updated.
+              Your plan stays active until the end of the current billing period. Nothing is deleted
+              if it lapses, but creating and editing projects pauses until payment goes through.
             </AlertDescription>
           )}
         </div>

@@ -127,8 +127,10 @@ test.describe('Billing flows', () => {
     await clickPlanButton(page, 'Starter Team');
     await fillStripeCheckout(page);
 
-    await expect(page.getByText('Payment successful!')).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByText('Your subscription has been activated.')).toBeVisible();
+    await expect(page.getByText('Payment complete')).toBeVisible({ timeout: 30_000 });
+    await expect(
+      page.getByText('Your plan is active. It can take a moment to appear below.'),
+    ).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Starter Team' })).toBeVisible({
       timeout: 15_000,
     });
@@ -144,7 +146,7 @@ test.describe('Billing flows', () => {
       timeout: 60_000,
     });
 
-    await expect(page.getByText('Payment successful!')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText('Payment complete')).toBeVisible({ timeout: 30_000 });
     await expect(page.getByRole('heading', { name: 'Team' })).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText('Active')).toBeVisible();
   });

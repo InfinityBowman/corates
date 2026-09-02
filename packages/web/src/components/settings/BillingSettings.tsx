@@ -86,7 +86,7 @@ export function BillingSettings() {
       await redirectToPortal();
     } catch (error) {
       const { handleError } = await import('@/lib/error-utils');
-      await handleError(error, { toastTitle: 'Portal Error' });
+      await handleError(error, { toastTitle: 'Could not open the billing portal' });
       setPortalLoading(false);
     }
   }, []);
@@ -114,8 +114,10 @@ export function BillingSettings() {
         <Alert variant='success'>
           <CheckCircleIcon />
           <div>
-            <AlertTitle>Payment successful!</AlertTitle>
-            <AlertDescription>Your subscription has been activated.</AlertDescription>
+            <AlertTitle>Payment complete</AlertTitle>
+            <AlertDescription>
+              Your plan is active. It can take a moment to appear below.
+            </AlertDescription>
           </div>
           <AlertAction>
             <Button
