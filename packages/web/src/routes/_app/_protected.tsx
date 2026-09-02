@@ -14,8 +14,10 @@ import { createFileRoute, Outlet, redirect, useNavigate } from '@tanstack/react-
 import { useAuthStore, selectIsLoggedIn, selectIsAuthLoading } from '@/stores/authStore';
 import { PageLoader } from '@/components/ui/spinner';
 import { RouteError } from '@/components/RouteError';
+import { NOINDEX_META } from '@/config/app';
 
 export const Route = createFileRoute('/_app/_protected')({
+  head: () => ({ meta: [NOINDEX_META] }),
   beforeLoad: () => {
     const state = useAuthStore.getState();
     // A valid cookie with an empty localStorage cache (fresh device, cleared

@@ -3,33 +3,26 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { config } from '../lib/config';
 
+const pageUrl = `${config.appUrl}/terms`;
+const title = 'Terms of Service - CoRATES';
+const description =
+  'The terms governing use of CoRATES, covering the service, restrictions, payment obligations, term and termination, confidentiality, and how your data is handled.';
+
 export const Route = createFileRoute('/terms')({
   headers: () => ({
     'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
   }),
   head: () => ({
     meta: [
-      { title: 'Terms of Service - CoRATES' },
-      {
-        name: 'description',
-        content:
-          'Terms of Service for CoRATES - Collaborative Research Appraisal Tool for Evidence Synthesis',
-      },
-      { property: 'og:title', content: 'Terms of Service - CoRATES' },
-      {
-        property: 'og:description',
-        content:
-          'Terms of Service for CoRATES - Collaborative Research Appraisal Tool for Evidence Synthesis',
-      },
-      { property: 'og:url', content: `${config.appUrl}/terms` },
-      { name: 'twitter:title', content: 'Terms of Service - CoRATES' },
-      {
-        name: 'twitter:description',
-        content:
-          'Terms of Service for CoRATES - Collaborative Research Appraisal Tool for Evidence Synthesis',
-      },
+      { title },
+      { name: 'description', content: description },
+      { property: 'og:title', content: title },
+      { property: 'og:description', content: description },
+      { property: 'og:url', content: pageUrl },
+      { name: 'twitter:title', content: title },
+      { name: 'twitter:description', content: description },
     ],
-    links: [{ rel: 'canonical', href: `${config.appUrl}/terms` }],
+    links: [{ rel: 'canonical', href: pageUrl }],
   }),
   component: TermsPage,
 });

@@ -7,15 +7,16 @@ export const TRANSPORT_ERRORS = {
   NETWORK_ERROR: {
     code: 'TRANSPORT_NETWORK_ERROR',
     defaultMessage:
-      'Unable to connect to the server. Please check your internet connection and try again.',
+      'Unable to connect to the server. Check your internet connection and try again.',
   },
   TIMEOUT: {
     code: 'TRANSPORT_TIMEOUT',
-    defaultMessage: 'The request timed out. Please try again.',
+    defaultMessage: 'The request timed out. Try again.',
   },
   CORS_ERROR: {
     code: 'TRANSPORT_CORS_ERROR',
-    defaultMessage: 'Cross-origin request blocked. Please check your configuration.',
+    defaultMessage:
+      'The browser blocked this request for security reasons. Contact support if it keeps happening.',
   },
 } as const;
 

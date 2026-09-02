@@ -7,9 +7,9 @@ import { getAllTools } from '../../lib/tool-content';
 import type { ToolContent } from '../../lib/tool-content';
 
 const pageUrl = `${config.appUrl}/resources`;
-const title = 'Resources - CoRATES';
+const title = 'Risk of Bias and Quality Appraisal Tools | CoRATES';
 const description =
-  'Learn about AMSTAR 2, ROBINS-I, RoB 2, and other appraisal tools supported by CoRATES, including scoring guidance and links to official documentation.';
+  'Guides to the appraisal instruments CoRATES supports: RoB 2 for randomized trials, ROBINS-I for non-randomized studies, and AMSTAR 2 for systematic reviews.';
 
 export const Route = createFileRoute('/resources/')({
   headers: () => ({
@@ -39,7 +39,7 @@ function ToolCard({ tool }: { tool: ToolContent }) {
       <div className='mb-4 flex size-12 items-center justify-center rounded-lg bg-blue-100'>
         <FileTextIcon className='size-6 text-blue-600' />
       </div>
-      <h3 className='mb-2 text-xl font-semibold text-gray-900'>{tool.name}</h3>
+      <h2 className='mb-2 text-xl font-semibold text-gray-900'>{tool.name}</h2>
       <p className='mb-4 flex-1 text-sm text-gray-600'>{tool.summary}</p>
       <div className='flex items-center gap-2 text-sm font-medium text-blue-600 group-hover:text-blue-700'>
         Learn more
@@ -58,9 +58,11 @@ function ResourcesPage() {
 
       <main className='flex-1 py-12'>
         <div className='mx-auto max-w-6xl px-6'>
-          <h1 className='mb-2 text-4xl font-bold text-gray-900'>Resources</h1>
+          <h1 className='mb-2 text-4xl font-bold text-gray-900'>
+            Risk of Bias and Quality Appraisal Tools
+          </h1>
           <p className='mb-10 text-lg text-gray-500'>
-            Appraisal tools and guidance for systematic evidence synthesis
+            Guidance on the appraisal instruments used in systematic reviews and evidence synthesis
           </p>
 
           <div className='grid gap-6 sm:grid-cols-2 lg:grid-cols-3'>

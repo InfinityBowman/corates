@@ -89,7 +89,7 @@ describe('createMultiFieldValidationError', () => {
     const error = createMultiFieldValidationError(errors);
 
     expect(error.code).toBe('VALIDATION_MULTI_FIELD');
-    expect(error.message).toBe('Validation failed for multiple fields');
+    expect(error.message).toBe('Some fields need to be corrected.');
     expect(error.statusCode).toBe(400);
     expect(error.details).toBeDefined();
     if (error.details && 'fields' in error.details && Array.isArray(error.details.fields)) {

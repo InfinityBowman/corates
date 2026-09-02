@@ -3,33 +3,26 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { config } from '../lib/config';
 
+const pageUrl = `${config.appUrl}/privacy`;
+const title = 'Privacy Policy - CoRATES';
+const description =
+  'How CoRATES collects, uses, shares, and protects personal data and research content, including tracking tools, data security, and your rights as a data subject.';
+
 export const Route = createFileRoute('/privacy')({
   headers: () => ({
     'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
   }),
   head: () => ({
     meta: [
-      { title: 'Privacy Policy - CoRATES' },
-      {
-        name: 'description',
-        content:
-          'Privacy Policy for CoRATES - Collaborative Research Appraisal Tool for Evidence Synthesis',
-      },
-      { property: 'og:title', content: 'Privacy Policy - CoRATES' },
-      {
-        property: 'og:description',
-        content:
-          'Privacy Policy for CoRATES - Collaborative Research Appraisal Tool for Evidence Synthesis',
-      },
-      { property: 'og:url', content: `${config.appUrl}/privacy` },
-      { name: 'twitter:title', content: 'Privacy Policy - CoRATES' },
-      {
-        name: 'twitter:description',
-        content:
-          'Privacy Policy for CoRATES - Collaborative Research Appraisal Tool for Evidence Synthesis',
-      },
+      { title },
+      { name: 'description', content: description },
+      { property: 'og:title', content: title },
+      { property: 'og:description', content: description },
+      { property: 'og:url', content: pageUrl },
+      { name: 'twitter:title', content: title },
+      { name: 'twitter:description', content: description },
     ],
-    links: [{ rel: 'canonical', href: `${config.appUrl}/privacy` }],
+    links: [{ rel: 'canonical', href: pageUrl }],
   }),
   component: PrivacyPage,
 });

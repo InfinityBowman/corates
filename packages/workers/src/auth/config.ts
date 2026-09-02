@@ -239,7 +239,7 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
             .run();
         }
 
-        const subject = 'Sign in to CoRATES';
+        const subject = `Your CoRATES sign-in link (expires in ${MAGIC_LINK_EXPIRY_MINUTES} minutes)`;
         const html = getMagicLinkEmailHtml({ subject, magicLinkUrl: emailedUrl });
         const text = getMagicLinkEmailText({ magicLinkUrl: emailedUrl });
 
@@ -569,7 +569,7 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
         }
 
         const name = user.givenName || user.name || user.username || 'there';
-        const subject = 'Reset Your Password - CoRATES';
+        const subject = 'Reset your CoRATES password';
         const html = getPasswordResetEmailHtml({ name, subject, resetUrl: url });
         const text = getPasswordResetEmailText({ name, resetUrl: url });
 
@@ -613,7 +613,7 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
         }
 
         const name = user.givenName || user.name || user.username || 'there';
-        const subject = 'Verify Your Email Address - CoRATES';
+        const subject = 'Confirm your email to activate your CoRATES account';
         const html = getVerificationEmailHtml({ name, subject, verificationUrl: url });
         const text = getVerificationEmailText({ name, verificationUrl: url });
 

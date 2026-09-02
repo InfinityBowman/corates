@@ -19,9 +19,11 @@ import { showToast } from '@/lib/toast';
 import { Button } from '@/components/ui/button';
 import { PrimaryButton } from '@/components/auth/AuthButtons';
 import { RouteError } from '@/components/RouteError';
+import { NOINDEX_META } from '@/config/app';
 
 export const Route = createFileRoute('/invite/$token')({
   ssr: false,
+  head: () => ({ meta: [NOINDEX_META] }),
   component: InvitePage,
   errorComponent: RouteError,
 });

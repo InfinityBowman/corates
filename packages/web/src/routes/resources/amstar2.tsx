@@ -7,11 +7,9 @@ import { config } from '../../lib/config';
 
 const tool = getToolBySlug('amstar2');
 const pageUrl = `${config.appUrl}/resources/amstar2`;
-const title = tool ? `${tool.name} Resources - CoRATES` : 'AMSTAR 2 - CoRATES';
+const title = 'AMSTAR 2: Appraising Systematic Review Quality | CoRATES';
 const description =
-  tool ?
-    `Learn about ${tool.name}, including scoring guidance and links to official documentation.`
-  : 'AMSTAR 2 appraisal tool resources.';
+  'How AMSTAR 2 rates confidence in a systematic review: 16 items, seven critical domains, High to Critically Low ratings, and links to the official guidance.';
 
 export const Route = createFileRoute('/resources/amstar2')({
   headers: () => ({

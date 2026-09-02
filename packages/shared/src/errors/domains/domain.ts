@@ -7,7 +7,7 @@
 export const AUTH_ERRORS = {
   REQUIRED: {
     code: 'AUTH_REQUIRED',
-    defaultMessage: 'Authentication required',
+    defaultMessage: 'Sign in to continue.',
     statusCode: 401,
   },
   INVALID: {
@@ -17,7 +17,7 @@ export const AUTH_ERRORS = {
   },
   EXPIRED: {
     code: 'AUTH_EXPIRED',
-    defaultMessage: 'Session expired',
+    defaultMessage: 'Your session expired. Sign in again.',
     statusCode: 401,
   },
   FORBIDDEN: {
@@ -30,7 +30,7 @@ export const AUTH_ERRORS = {
   // so the client must not redirect to sign-in.
   PROVIDER_NOT_CONNECTED: {
     code: 'AUTH_PROVIDER_NOT_CONNECTED',
-    defaultMessage: 'Account provider not connected',
+    defaultMessage: 'That provider is not connected. Connect it in Settings, then try again.',
     statusCode: 401,
   },
 } as const;
@@ -46,32 +46,32 @@ export const VALIDATION_ERRORS = {
   },
   FIELD_INVALID_FORMAT: {
     code: 'VALIDATION_FIELD_INVALID_FORMAT',
-    defaultMessage: 'Invalid format',
+    defaultMessage: 'This value is not in the right format.',
     statusCode: 400,
   },
   FIELD_TOO_LONG: {
     code: 'VALIDATION_FIELD_TOO_LONG',
-    defaultMessage: 'Value is too long',
+    defaultMessage: 'This value is too long.',
     statusCode: 400,
   },
   FIELD_TOO_SHORT: {
     code: 'VALIDATION_FIELD_TOO_SHORT',
-    defaultMessage: 'Value is too short',
+    defaultMessage: 'This value is too short.',
     statusCode: 400,
   },
   MULTI_FIELD: {
     code: 'VALIDATION_MULTI_FIELD',
-    defaultMessage: 'Validation failed for multiple fields',
+    defaultMessage: 'Some fields need to be corrected.',
     statusCode: 400,
   },
   FAILED: {
     code: 'VALIDATION_FAILED',
-    defaultMessage: 'Validation failed',
+    defaultMessage: 'Some of the information you entered is not valid.',
     statusCode: 400,
   },
   INVALID_INPUT: {
     code: 'VALIDATION_INVALID_INPUT',
-    defaultMessage: 'Invalid input',
+    defaultMessage: 'Check what you entered and try again.',
     statusCode: 400,
   },
 } as const;
@@ -88,32 +88,32 @@ export const PROJECT_ERRORS = {
   },
   NOT_IN_ORG: {
     code: 'PROJECT_NOT_IN_ORG',
-    defaultMessage: 'Project does not belong to this organization',
+    defaultMessage: 'This project belongs to a different organization.',
     statusCode: 403,
   },
   ACCESS_DENIED: {
     code: 'PROJECT_ACCESS_DENIED',
-    defaultMessage: 'You do not have access to this project',
+    defaultMessage: 'You do not have access to this project.',
     statusCode: 403,
   },
   MEMBER_ALREADY_EXISTS: {
     code: 'PROJECT_MEMBER_ALREADY_EXISTS',
-    defaultMessage: 'User is already a member of this project',
+    defaultMessage: 'That user is already a member of this project.',
     statusCode: 409,
   },
   LAST_OWNER: {
     code: 'PROJECT_LAST_OWNER',
-    defaultMessage: 'Cannot remove the last owner',
+    defaultMessage: 'A project must have at least one owner.',
     statusCode: 400,
   },
   INVALID_ROLE: {
     code: 'PROJECT_INVALID_ROLE',
-    defaultMessage: 'Invalid role specified',
+    defaultMessage: 'That is not a valid project role.',
     statusCode: 400,
   },
   INVITATION_ALREADY_ACCEPTED: {
     code: 'PROJECT_INVITATION_ALREADY_ACCEPTED',
-    defaultMessage: 'Invitation has already been accepted',
+    defaultMessage: 'This invitation has already been accepted.',
     statusCode: 400,
   },
 } as const;
@@ -124,27 +124,27 @@ export type ProjectErrorCode = (typeof PROJECT_ERRORS)[keyof typeof PROJECT_ERRO
 export const FILE_ERRORS = {
   TOO_LARGE: {
     code: 'FILE_TOO_LARGE',
-    defaultMessage: 'File exceeds size limit',
+    defaultMessage: 'This file is larger than the size limit.',
     statusCode: 413,
   },
   INVALID_TYPE: {
     code: 'FILE_INVALID_TYPE',
-    defaultMessage: 'Invalid file type',
+    defaultMessage: 'This file type is not supported.',
     statusCode: 400,
   },
   NOT_FOUND: {
     code: 'FILE_NOT_FOUND',
-    defaultMessage: 'File not found',
+    defaultMessage: 'This file could not be found.',
     statusCode: 404,
   },
   UPLOAD_FAILED: {
     code: 'FILE_UPLOAD_FAILED',
-    defaultMessage: 'File upload failed',
+    defaultMessage: 'The upload did not finish. Try again.',
     statusCode: 500,
   },
   ALREADY_EXISTS: {
     code: 'FILE_ALREADY_EXISTS',
-    defaultMessage: 'File already exists',
+    defaultMessage: 'A file with this name already exists.',
     statusCode: 409,
   },
   // External file sits behind a paywall/login at its source. Distinct from
@@ -152,7 +152,7 @@ export const FILE_ERRORS = {
   // sign-in redirect on the client.
   ACCESS_RESTRICTED: {
     code: 'FILE_ACCESS_RESTRICTED',
-    defaultMessage: 'File is not openly accessible',
+    defaultMessage: 'This file is behind a paywall or sign-in at its source.',
     statusCode: 403,
   },
 } as const;
@@ -168,7 +168,7 @@ export const USER_ERRORS = {
   },
   EMAIL_NOT_VERIFIED: {
     code: 'USER_EMAIL_NOT_VERIFIED',
-    defaultMessage: 'Email not verified. Please verify your email address.',
+    defaultMessage: 'Your email address is not verified yet. Verify it to continue.',
     statusCode: 403,
   },
 } as const;
@@ -179,37 +179,37 @@ export type UserErrorCode = (typeof USER_ERRORS)[keyof typeof USER_ERRORS]['code
 export const SYSTEM_ERRORS = {
   DB_ERROR: {
     code: 'SYSTEM_DB_ERROR',
-    defaultMessage: 'Database error',
+    defaultMessage: 'A database error stopped this request. Try again in a moment.',
     statusCode: 500,
   },
   DB_TRANSACTION_FAILED: {
     code: 'SYSTEM_DB_TRANSACTION_FAILED',
-    defaultMessage: 'Transaction failed',
+    defaultMessage: 'The change could not be saved. Nothing was changed. Try again in a moment.',
     statusCode: 500,
   },
   EMAIL_SEND_FAILED: {
     code: 'SYSTEM_EMAIL_SEND_FAILED',
-    defaultMessage: 'Failed to send email',
+    defaultMessage: 'The email could not be sent. Try again in a moment.',
     statusCode: 500,
   },
   EMAIL_INVALID: {
     code: 'SYSTEM_EMAIL_INVALID',
-    defaultMessage: 'Invalid email address',
+    defaultMessage: 'That email address is not valid.',
     statusCode: 400,
   },
   RATE_LIMITED: {
     code: 'SYSTEM_RATE_LIMITED',
-    defaultMessage: 'Too many requests. Please try again later.',
+    defaultMessage: 'Too many requests. Wait a moment and try again.',
     statusCode: 429,
   },
   INTERNAL_ERROR: {
     code: 'SYSTEM_INTERNAL_ERROR',
-    defaultMessage: 'Internal server error',
+    defaultMessage: 'Something went wrong on our end. Try again in a moment.',
     statusCode: 500,
   },
   SERVICE_UNAVAILABLE: {
     code: 'SYSTEM_SERVICE_UNAVAILABLE',
-    defaultMessage: 'Service temporarily unavailable',
+    defaultMessage: 'CoRATES is temporarily unavailable. Try again in a few minutes.',
     statusCode: 503,
   },
   ROUTE_NOT_FOUND: {

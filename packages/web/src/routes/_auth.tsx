@@ -13,9 +13,11 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
 import { useAuthStore, selectIsLoggedIn } from '@/stores/authStore';
 import { RouteError } from '@/components/RouteError';
+import { NOINDEX_META } from '@/config/app';
 
 export const Route = createFileRoute('/_auth')({
   ssr: false,
+  head: () => ({ meta: [NOINDEX_META] }),
   beforeLoad: ({ location }) => {
     // Allow logged-in users through to these pages:
     // reset-password: they may have a token link

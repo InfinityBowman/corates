@@ -20,7 +20,7 @@ export default function Footer() {
 
           {/* Product */}
           <div>
-            <h4 className='mb-3 font-semibold text-gray-900'>Product</h4>
+            <h3 className='mb-3 font-semibold text-gray-900'>Product</h3>
             <ul className='flex flex-col gap-2 text-sm'>
               <li>
                 <Link to='/pricing' className='text-gray-500 transition-colors hover:text-gray-700'>
@@ -46,6 +46,30 @@ export default function Footer() {
               </li>
               <li>
                 <Link
+                  to='/resources/rob2'
+                  className='text-gray-500 transition-colors hover:text-gray-700'
+                >
+                  RoB 2 Guide
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to='/resources/robins-i'
+                  className='text-gray-500 transition-colors hover:text-gray-700'
+                >
+                  ROBINS-I Guide
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to='/resources/amstar2'
+                  className='text-gray-500 transition-colors hover:text-gray-700'
+                >
+                  AMSTAR 2 Guide
+                </Link>
+              </li>
+              <li>
+                <Link
                   to='/checklist'
                   className='text-gray-500 transition-colors hover:text-gray-700'
                 >
@@ -57,7 +81,7 @@ export default function Footer() {
 
           {/* Company */}
           <div>
-            <h4 className='mb-3 font-semibold text-gray-900'>Company</h4>
+            <h3 className='mb-3 font-semibold text-gray-900'>Company</h3>
             <ul className='flex flex-col gap-2 text-sm'>
               <li>
                 <Link to='/about' className='text-gray-500 transition-colors hover:text-gray-700'>
@@ -74,7 +98,7 @@ export default function Footer() {
 
           {/* Legal */}
           <div>
-            <h4 className='mb-3 font-semibold text-gray-900'>Legal</h4>
+            <h3 className='mb-3 font-semibold text-gray-900'>Legal</h3>
             <ul className='flex flex-col gap-2 text-sm'>
               <li>
                 <Link to='/privacy' className='text-gray-500 transition-colors hover:text-gray-700'>

@@ -1,3 +1,24 @@
 User-agent: *
 Allow: /
+
+# API endpoints and health probes return no indexable content.
+Disallow: /api/
+Disallow: /health
+Disallow: /healthz
+
+# Application surfaces. These render client-side only and hold per-user state,
+# not indexable content, so crawling them just burns crawl budget.
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /settings
+Disallow: /orgs/
+Disallow: /projects/
+
+# Token-bearing or transactional pages. Never useful as search results.
+Disallow: /invite/
+Disallow: /check-email
+Disallow: /complete-profile
+Disallow: /reset-password
+Disallow: /verify-link
+
 Sitemap: https://corates.org/sitemap.xml

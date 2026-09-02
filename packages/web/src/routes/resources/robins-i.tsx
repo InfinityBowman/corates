@@ -7,11 +7,9 @@ import { config } from '../../lib/config';
 
 const tool = getToolBySlug('robins-i');
 const pageUrl = `${config.appUrl}/resources/robins-i`;
-const title = tool ? `${tool.name} Resources - CoRATES` : 'ROBINS-I - CoRATES';
+const title = 'ROBINS-I: Non-Randomized Studies Risk of Bias | CoRATES';
 const description =
-  tool ?
-    `Learn about ${tool.name}, including scoring guidance and links to official documentation.`
-  : 'ROBINS-I appraisal tool resources.';
+  'How ROBINS-I assesses risk of bias in non-randomized studies of interventions: the bias domains, risk-of-bias judgements, and links to official guidance.';
 
 export const Route = createFileRoute('/resources/robins-i')({
   headers: () => ({

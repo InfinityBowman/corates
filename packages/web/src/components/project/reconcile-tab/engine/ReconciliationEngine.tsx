@@ -94,6 +94,7 @@ export function ReconciliationEngine({
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerScrollY, setContainerScrollY] = useState(0);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const presence = useReconciliationPresence({
     client,
@@ -223,7 +224,7 @@ export function ReconciliationEngine({
           usersByPage={presence.usersByPage}
           goToPage={engine.goToPage}
           setViewMode={engine.setViewMode}
-          onReset={engine.handleReset}
+          onReset={() => setShowResetConfirm(true)}
           expandedDomain={engine.expandedDomain}
           setExpandedDomain={engine.setExpandedDomain}
         />
@@ -268,6 +269,28 @@ export function ReconciliationEngine({
             </Button>
             <AlertDialogAction disabled={engine.saving} onClick={engine.confirmSave}>
               {engine.saving ? 'Saving...' : 'Finish'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Reset clears every consensus answer and cannot be undone */}
+      <AlertDialog open={showResetConfirm} onOpenChange={setShowResetConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear every consensus answer?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Every consensus answer you have recorded on this reconciliation is cleared, and you
+              start again from the first item. The two reviewers' own answers are not touched. This
+              cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button variant='outline' onClick={() => setShowResetConfirm(false)}>
+              Cancel
+            </Button>
+            <AlertDialogAction variant='destructive' onClick={engine.handleReset}>
+              Clear consensus answers
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

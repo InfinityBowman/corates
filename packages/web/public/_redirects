@@ -9,13 +9,15 @@
 # These rules force 301 (permanent) so search engines collapse the slashed
 # form into the canonical no-slash form and stop revisiting it.
 #
-# This list mirrors the public marketing, legal, auth, and resources routes.
-# Authenticated app routes are intentionally omitted: they should be noindex'd
-# and the 307 there has no SEO impact.
+# This list mirrors the crawlable public routes: marketing, legal, auth,
+# resources, and the local appraisal entry point.
+# App routes disallowed in robots.txt are intentionally omitted: crawlers never
+# request them, so the 307 there has no SEO impact.
 #
 # When adding a new public route, add the trailing-slash entry here too.
 
 /about/                /about                 301
+/checklist/            /checklist             301
 /contact/              /contact               301
 /pricing/              /pricing               301
 /privacy/              /privacy               301
