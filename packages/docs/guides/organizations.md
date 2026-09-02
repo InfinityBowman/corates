@@ -191,13 +191,13 @@ Backed by Better Auth's `authClient.organization.list()` plus auth-aware `enable
 
 ## Invitation Flow
 
-Project invitations use Better Auth's magic-link infrastructure and always run through `POST /api/invitations/accept`.
+Every project add is an invitation: whether the owner picks an existing user or types an unknown email, the server creates a `projectInvitations` row and emails a link, and membership is only created when the recipient accepts. Direct membership writes are reserved for internal/test tooling (`addMember` command, dev routes).
 
 1. Project owner calls `POST /api/orgs/:orgId/projects/:projectId/invitations` with `{ email, role, grantOrgMembership?, orgRole? }`.
 2. Server creates a `projectInvitations` row with a unique token and sends a magic link.
 3. Invitee clicks the link, lands on `/complete-profile?invitation=TOKEN`, completes profile if needed.
 4. Frontend calls `POST /api/invitations/accept` with the token.
-5. Server validates: token exists, not expired, not accepted, authenticated user's email matches invitation email (case-insensitive, trimmed).
+5. Server validates: token exists, not expired, not accepted. The invited email is a delivery address, not an identity check: membership binds to whichever authenticated account accepts the token, so someone invited at an institutional alias can accept from an account keyed to a different address.
 6. If `grantOrgMembership === true`, the server adds org membership with `orgRole` (if the user isn't already a member).
 7. Server adds `projectMembers` with `role`.
 8. Frontend redirects to the project.

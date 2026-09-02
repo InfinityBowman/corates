@@ -1,15 +1,21 @@
 /**
  * Accept a project invitation by token
  *
- * Handles: token validation, expiry, email verification, quota enforcement,
- * org/project membership grants, DO sync, notifications
+ * Handles: token validation, expiry, quota enforcement, org/project
+ * membership grants, DO sync, notifications
+ *
+ * Membership binds to whoever holds the session, not to the invited email:
+ * people routinely sign in with a different address than the one they were
+ * invited at (institutional alias vs the canonical OAuth address), and
+ * requiring a match forced them into duplicate accounts. The token is the
+ * access capability.
  *
  * @throws DomainError FIELD_INVALID_FORMAT if token is invalid or expired
  * @throws DomainError MEMBER_ALREADY_EXISTS if invitation already accepted
- * @throws DomainError AUTH_FORBIDDEN if email mismatch or quota exceeded
+ * @throws DomainError AUTH_FORBIDDEN if quota exceeded
  */
 
-import { captureError, info, warn } from '../../lib/logger';
+import { captureError, info } from '../../lib/logger';
 import { createDb } from '@corates/db/client';
 import {
   projectInvitations,
@@ -86,15 +92,8 @@ export async function acceptInvitation(
     });
   }
 
-  // Verify email match
   const currentUser = await db
-    .select({
-      email: user.email,
-      name: user.name,
-      givenName: user.givenName,
-      familyName: user.familyName,
-      image: user.image,
-    })
+    .select({ email: user.email })
     .from(user)
     .where(eq(user.id, actor.id))
     .get();
@@ -107,14 +106,10 @@ export async function acceptInvitation(
   const normalizedInvitationEmail = (invitation.email || '').trim().toLowerCase();
 
   if (normalizedUserEmail !== normalizedInvitationEmail) {
-    warn('Invitation email mismatch: user=%s, invitation=%s', [
-      currentUser.email || '',
-      invitation.email || '',
-    ]);
-    throw createDomainError(AUTH_ERRORS.FORBIDDEN, {
-      reason: 'email_mismatch',
-      userEmail: currentUser.email,
-      invitationEmail: invitation.email,
+    info('invitation.accepted_with_different_email', {
+      invitationId: invitation.id,
+      projectId: invitation.projectId,
+      userId: actor.id,
     });
   }
 

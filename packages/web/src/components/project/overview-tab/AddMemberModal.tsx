@@ -138,13 +138,11 @@ export function AddMemberModal({
           : { email: searchQuery.trim(), role: selectedRole }),
         },
       })) as { invitation?: boolean; email?: string };
-      track('Collaborator:Invited', { method: result.invitation ? 'email' : 'direct' });
-      if (result.invitation) {
-        showToast.success('Invitation Sent', `Invitation sent to ${result.email || searchQuery}`);
-      }
-      // The member directory is a D1 fact read through React Query — nothing
+      track('Collaborator:Invited', { method: 'email' });
+      showToast.success('Invitation Sent', `Invitation sent to ${result.email || searchQuery}`);
+      // The invitations list is a D1 fact read through React Query — nothing
       // pushes it to this client, so refetch after the write.
-      queryClient.invalidateQueries({ queryKey: queryKeys.projects.members(projectId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.invitations(projectId) });
       handleClose();
     } catch (err: unknown) {
       const { handleError } = await import('@/lib/error-utils');
@@ -163,7 +161,7 @@ export function AddMemberModal({
     >
       <DialogContent className='sm:max-w-md'>
         <DialogHeader>
-          <DialogTitle>Add Member</DialogTitle>
+          <DialogTitle>Invite Member</DialogTitle>
         </DialogHeader>
 
         <div className='flex flex-col gap-4'>
@@ -317,13 +315,7 @@ export function AddMemberModal({
             onClick={handleAddMember}
             disabled={(!selectedUser && !canAddByEmail) || adding || !!isAtQuotaLimit}
           >
-            {adding ?
-              canAddByEmail ?
-                'Sending Invitation...'
-              : 'Adding...'
-            : canAddByEmail ?
-              'Send Invitation'
-            : 'Add Member'}
+            {adding ? 'Sending Invitation...' : 'Send Invitation'}
           </Button>
         </DialogFooter>
       </DialogContent>

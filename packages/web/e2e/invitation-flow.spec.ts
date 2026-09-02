@@ -9,6 +9,9 @@
  *   2. Existing user: the invitee already has an account by the time they
  *      click the link -> signs in from the invite page -> returns to it ->
  *      accepts explicitly -> invitee can open the project.
+ *   3. Invite anchoring: the invitation was sent to one address but the
+ *      invitee's account uses a different email -> accepting still works and
+ *      membership binds to the signed-in account.
  *
  * Requires:
  *   - Dev server running: pnpm --filter web dev (localhost:3010, DEV_MODE=true)
@@ -188,6 +191,66 @@ test.describe('Invitation flows', () => {
       await inviteeCtx.close();
     } finally {
       await cleanupByEmail(inviteeEmail);
+      await cleanupScenario(ownerScenario);
+    }
+  });
+
+  test('invitation can be accepted by an account with a different email', async ({ browser }) => {
+    const ownerScenario = await seedDualReviewerScenario();
+    // The classic duplicate-account trap: invited at the institutional alias,
+    // but the invitee's account lives under a different address.
+    const invitedEmail = `${TEST_PREFIX}-alias@test.corates.org`;
+    const accountEmail = `${TEST_PREFIX}-canonical@test.corates.org`;
+    const inviteePassword = 'Password123!';
+
+    try {
+      const ownerCtx = await browser.newContext();
+      const ownerPage = await ownerCtx.newPage();
+      await loginAs(ownerCtx, ownerScenario.cookiesA);
+      await ownerPage.goto('/dashboard');
+      await expect(ownerPage.getByText('Welcome back,')).toBeVisible({ timeout: 15_000 });
+      const projectId = await createProject(ownerPage, 'Invite Anchoring Test');
+
+      await sendInvitationViaUI(ownerPage, invitedEmail);
+      await ownerCtx.close();
+
+      const inviteUrl = await getAuthUrl(invitedEmail, 'invitation');
+
+      // The invitee's account exists under a different email
+      await signUpWithEmail(accountEmail, inviteePassword, 'Canonical Invitee');
+      await verifyEmail(accountEmail, true);
+
+      const inviteeCtx = await browser.newContext();
+      const p = await inviteeCtx.newPage();
+      await p.goto(inviteUrl);
+
+      await expect(p.getByRole('heading', { name: /You.re Invited/i })).toBeVisible({
+        timeout: 15_000,
+      });
+
+      await p.getByRole('link', { name: 'Sign in' }).click();
+      await expect(p).toHaveURL(/\/signin/, { timeout: 10_000 });
+
+      await p.getByRole('tab', { name: 'Password' }).click();
+      await p.locator('#email-input').fill(accountEmail);
+      await p.locator('#password-input').fill(inviteePassword);
+      await p.getByRole('button', { name: 'Sign In', exact: true }).click();
+
+      await expect(p).toHaveURL(/\/invite\//, { timeout: 15_000 });
+      await expect(p.getByText(`Signed in as`)).toBeVisible({ timeout: 15_000 });
+      await p.getByRole('button', { name: 'Accept Invitation', exact: true }).click();
+
+      // Membership binds to the signed-in account despite the email mismatch
+      await expect(p.getByText('Invitation Accepted')).toBeVisible({ timeout: 15_000 });
+      await expect(p).toHaveURL(/\/dashboard/, { timeout: 15_000 });
+
+      await p.goto(`/projects/${projectId}`);
+      await expect(p.getByRole('tab', { name: /All Studies/i })).toBeVisible({ timeout: 15_000 });
+
+      await inviteeCtx.close();
+    } finally {
+      await cleanupByEmail(accountEmail);
+      await cleanupByEmail(invitedEmail);
       await cleanupScenario(ownerScenario);
     }
   });

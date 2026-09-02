@@ -218,7 +218,7 @@ describe('handleAcceptInvitation', () => {
     }
   });
 
-  it('throws for email mismatch', async () => {
+  it('binds membership to the accepting account even when its email differs from the invited one', async () => {
     const { project, org, owner } = await buildProject();
     const differentUser = await buildUser({ email: 'different@example.com' });
     const token = 'token-1';
@@ -234,16 +234,20 @@ describe('handleAcceptInvitation', () => {
 
     currentUser = { id: differentUser.id, email: differentUser.email };
 
-    try {
-      await handleAcceptInvitation(mockSession(), { token });
-      expect.unreachable('should have thrown');
-    } catch (err) {
-      const res = err as DomainErrorException;
-      expect(res.statusCode).toBe(403);
-      const body = res.toDomainError() as { code: string; details?: { reason?: string } };
-      expect(body.code).toBe('AUTH_FORBIDDEN');
-      expect(body.details?.reason).toBe('email_mismatch');
-    }
+    const result = await handleAcceptInvitation(mockSession(), { token });
+
+    expect(result.success).toBe(true);
+    expect(result.projectId).toBe(project.id);
+
+    const db = createDb(env.DB);
+    const projectMember = await db
+      .select()
+      .from(projectMembers)
+      .where(
+        and(eq(projectMembers.projectId, project.id), eq(projectMembers.userId, differentUser.id)),
+      )
+      .get();
+    expect(projectMember).toBeDefined();
   });
 
   it('marks invitation as accepted if user is already project member', async () => {
