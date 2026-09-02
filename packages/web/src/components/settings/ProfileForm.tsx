@@ -118,7 +118,7 @@ export function ProfileForm() {
       showToast.success('Profile updated', 'Your changes have been saved.');
     } catch (err) {
       const { handleError } = await import('@/lib/error-utils');
-      await handleError(err, { toastTitle: 'Update Failed' });
+      await handleError(err, { toastTitle: 'Could not save your profile' });
     } finally {
       setSaving(false);
     }
@@ -130,7 +130,7 @@ export function ProfileForm() {
       if (!file) return;
 
       if (!ALLOWED_TYPES.includes(file.type)) {
-        showToast.error('Invalid file', 'Choose a JPEG, PNG, or WebP image.');
+        showToast.error('Unsupported file type', 'Choose a JPEG, PNG, or WebP image.');
         return;
       }
 
@@ -163,11 +163,11 @@ export function ProfileForm() {
         const { url } = await response.json();
         await updateProfile({ image: url });
         setOptimisticImage(null);
-        showToast.success('Photo updated', 'Your profile photo has been updated.');
+        showToast.success('Photo updated', 'Collaborators will see the new photo.');
       } catch (err) {
         setOptimisticImage(null);
         const { handleError } = await import('@/lib/error-utils');
-        await handleError(err, { toastTitle: 'Upload Failed' });
+        await handleError(err, { toastTitle: 'Could not upload your photo' });
       } finally {
         setUploadingImage(false);
         if (localUrl) URL.revokeObjectURL(localUrl);
@@ -194,7 +194,7 @@ export function ProfileForm() {
               </Button>
             )}
             <Button onClick={handleSave} disabled={!isDirty || saving}>
-              {saving ? 'Saving...' : 'Save changes'}
+              {saving ? 'Saving...' : 'Save profile'}
             </Button>
           </div>
         </>

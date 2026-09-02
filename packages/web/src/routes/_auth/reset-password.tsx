@@ -96,7 +96,7 @@ function RequestResetForm() {
       {success && (
         <Alert variant='success' className='animate-in fade-in text-center duration-200'>
           <div>
-            <AlertTitle>Reset Email Sent!</AlertTitle>
+            <AlertTitle>Reset Email Sent</AlertTitle>
             <AlertDescription>
               Check your email for instructions to reset your password. Redirecting you to sign
               in...
@@ -228,7 +228,7 @@ function SetNewPasswordForm({ token }: { token: string }) {
       {success && (
         <Alert variant='success' className='animate-in fade-in text-center duration-200'>
           <div>
-            <AlertTitle>Password Reset Successfully!</AlertTitle>
+            <AlertTitle>Password Updated</AlertTitle>
             <AlertDescription>
               Your password has been updated. Redirecting you to sign in...
             </AlertDescription>

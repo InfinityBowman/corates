@@ -8,48 +8,51 @@
 const LINK_ERROR_MESSAGES: Record<string, string | null> = {
   // Account already linked to a different user - security safeguard
   ACCOUNT_ALREADY_LINKED:
-    'This account is already linked to another CoRATES account. Unlink it from the other account first, or use a different account.',
+    'That account is already linked to a different CoRATES account. Unlink it there first, or use a different account.',
   ACCOUNT_ALREADY_LINKED_TO_DIFFERENT_USER:
-    'This account is already linked to another CoRATES account. To use it here, sign into that account and unlink it first, or use a different account.',
+    'That account is already linked to a different CoRATES account. To use it here, sign in to that account and unlink it first, or use a different account.',
   ACCOUNT_NOT_LINKED:
     'Sign in with the method you used before, then connect this one under Settings > Sign-in methods.',
   // OAuth provider errors
-  OAUTH_ERROR: 'Failed to connect to the provider. Please try again.',
+  OAUTH_ERROR: 'Connecting to that provider did not complete. Try again.',
   OAUTH_CANCELLED: null, // Silent - user cancelled intentionally
   ACCESS_DENIED: null, // Silent - user denied permission
   USER_CANCELLED: null, // Silent - user cancelled
   // Email verification errors
-  EMAIL_NOT_VERIFIED: 'Please verify your email with this provider before linking.',
+  EMAIL_NOT_VERIFIED: 'Verify your email with that provider, then link the account again.',
   EMAIL_DOESNT_MATCH:
-    'The email from this account does not match. Contact support if you need to link accounts with different emails.',
+    'The email on that account does not match the email on your CoRATES account. Contact support if you need to link accounts with different emails.',
   EMAIL_NOT_FOUND:
-    'No email was provided by the authentication provider. Please ensure your account has a verified email.',
+    'That provider did not return an email address. Add a verified email to your account there, then try again.',
   // Magic link errors - silent; the signin page shows an inline banner instead
   INVALID_TOKEN: null,
   EXPIRED_TOKEN: null,
   // Session/auth errors
-  SESSION_EXPIRED: 'Your session expired. Please sign in again.',
-  INVALID_SESSION: 'Your session is invalid. Please sign in again.',
-  PLEASE_RESTART_THE_PROCESS: 'Authentication session expired. Please try signing in again.',
+  SESSION_EXPIRED: 'Your session expired. Sign in again.',
+  INVALID_SESSION: 'Your session is no longer valid. Sign in again.',
+  PLEASE_RESTART_THE_PROCESS: 'That sign-in attempt is no longer valid. Start again.',
   // Network/connection errors
-  NETWORK_ERROR: 'Connection error. Please check your internet and try again.',
+  NETWORK_ERROR: 'Could not reach the server. Check your internet connection and try again.',
   // Provider configuration errors
-  PROVIDER_NOT_FOUND: 'This authentication provider is not configured.',
-  OAUTH_PROVIDER_NOT_FOUND: 'This authentication provider is not available.',
-  INVALID_PROVIDER: 'Invalid authentication provider.',
+  PROVIDER_NOT_FOUND: 'That sign-in provider is not set up. Contact support.',
+  OAUTH_PROVIDER_NOT_FOUND: 'That sign-in provider is not available. Contact support.',
+  INVALID_PROVIDER: 'That is not a sign-in provider CoRATES supports.',
   // Unlink errors
-  CANNOT_UNLINK_ONLY_ACCOUNT: 'Cannot unlink your only sign-in method. Link another account first.',
+  CANNOT_UNLINK_ONLY_ACCOUNT:
+    'This is your only sign-in method. Add another one before unlinking it.',
   // State errors (OAuth flow)
-  STATE_MISMATCH: 'Authentication session expired. Please try again.',
-  STATE_NOT_FOUND: 'Authentication session not found. Please try again.',
-  INVALID_CALLBACK_REQUEST: 'Invalid authentication callback. Please try again.',
-  NO_CALLBACK_URL: 'Authentication configuration error. Please try again.',
-  NO_CODE: 'Authentication was not completed. Please try again.',
-  UNABLE_TO_GET_USER_INFO: 'Could not retrieve your account information. Please try again.',
-  SIGNUP_DISABLED: 'New account registration is currently disabled.',
+  STATE_MISMATCH: 'The sign-in request could not be verified. Start again.',
+  STATE_NOT_FOUND: 'The sign-in request could not be found. Start again.',
+  INVALID_CALLBACK_REQUEST: 'The provider sent back a response CoRATES could not use. Start again.',
+  NO_CALLBACK_URL: 'Sign-in is not configured correctly for this provider. Contact support.',
+  NO_CODE: 'Sign-in did not complete at the provider. Try again.',
+  UNABLE_TO_GET_USER_INFO: 'Could not read your account details from that provider. Try again.',
+  SIGNUP_DISABLED:
+    'New account sign-ups are turned off right now. Contact support if you need access.',
   // General
-  UNABLE_TO_LINK_ACCOUNT: 'Unable to link this account. Please try again or contact support.',
-  UNKNOWN: 'An unexpected error occurred. Please try again.',
+  UNABLE_TO_LINK_ACCOUNT:
+    'Could not link that account. Try again, or contact support if it keeps happening.',
+  UNKNOWN: 'An unexpected error occurred. Try again, and contact support if it keeps happening.',
 };
 
 /**
@@ -59,7 +62,7 @@ export function getLinkErrorMessage(code: string): string | null {
   if (code in LINK_ERROR_MESSAGES) {
     return LINK_ERROR_MESSAGES[code];
   }
-  return 'An unexpected error occurred. Please try again.';
+  return 'An unexpected error occurred. Try again, and contact support if it keeps happening.';
 }
 
 interface ParsedOAuthError {

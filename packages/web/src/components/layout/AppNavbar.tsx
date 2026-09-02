@@ -65,7 +65,7 @@ export function AppNavbar({ mobileSidebarOpen, toggleMobileSidebar }: AppNavbarP
       navigate({ to: '/dashboard', replace: true });
     } catch (err) {
       const { handleError } = await import('@/lib/error-utils');
-      await handleError(err, { toastTitle: 'Sign Out Failed' });
+      await handleError(err, { toastTitle: 'Sign out failed' });
     }
   }
 
@@ -165,7 +165,7 @@ export function AppNavbar({ mobileSidebarOpen, toggleMobileSidebar }: AppNavbarP
               <DropdownMenuItem onClick={openFeedback}>Give feedback</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className='text-destructive' onClick={handleSignOut}>
-                Sign Out
+                Sign out
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -174,13 +174,13 @@ export function AppNavbar({ mobileSidebarOpen, toggleMobileSidebar }: AppNavbarP
               to='/signin'
               className='flex h-9 items-center rounded px-2 font-medium transition hover:bg-blue-600'
             >
-              Sign In
+              Sign in
             </Link>
             <Link
               to='/signup'
               className='flex h-9 items-center rounded px-2 font-medium transition hover:bg-blue-600'
             >
-              Sign Up
+              Sign up
             </Link>
           </>
         }

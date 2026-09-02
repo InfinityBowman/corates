@@ -123,7 +123,7 @@ export function SignInMethodsSection() {
       setTimeout(() => setShowMergeDialog(true), 100);
       return;
     }
-    if (oauthError.message) showToast.error('Link failed', oauthError.message);
+    if (oauthError.message) showToast.error('Could not connect that account', oauthError.message);
   }, []);
 
   const linked = useMemo(() => {
@@ -151,10 +151,10 @@ export function SignInMethodsSection() {
     } catch (err: unknown) {
       const errObj = err as Record<string, unknown>;
       showToast.error(
-        'Link failed',
+        'Could not connect that account',
         getLinkErrorMessage(errObj.code as string) ||
           (errObj.message as string) ||
-          'Failed to link account',
+          'Could not link that account. Try again.',
       );
       setLinkingProvider(null);
       sessionStorage.removeItem('linkingProvider');
@@ -168,8 +168,8 @@ export function SignInMethodsSection() {
     try {
       await authFetch(authClient.unlinkAccount({ accountId: accountToUnlink.id }));
       showToast.success(
-        'Unlinked',
-        `${PROVIDER_NAMES[accountToUnlink.providerId] || accountToUnlink.providerId} has been unlinked`,
+        'Disconnected',
+        `${PROVIDER_NAMES[accountToUnlink.providerId] || accountToUnlink.providerId} is no longer a sign-in method on your account.`,
       );
       setAccountToUnlink(null);
       refetch();
@@ -178,7 +178,7 @@ export function SignInMethodsSection() {
       setUnlinkError(
         getLinkErrorMessage(errObj.code as string) ||
           (errObj.message as string) ||
-          'Failed to unlink account. Please try again.',
+          'Could not disconnect that method. Try again.',
       );
     } finally {
       setUnlinkingId(null);
@@ -213,7 +213,7 @@ export function SignInMethodsSection() {
       setPasswordError('');
 
       if (unmetRequirements.length > 0) {
-        setPasswordError(`Password must have ${unmetRequirements.join(', ')}`);
+        setPasswordError(`Your new password still needs ${unmetRequirements.join(', ')}.`);
         return;
       }
       if (newPassword !== confirmPassword) {
@@ -249,7 +249,7 @@ export function SignInMethodsSection() {
   return (
     <SettingsSection
       title='Sign-in methods'
-      description='More than one method means you still have a way in if you lose access to another.'
+      description='Keep more than one, so you can still sign in if you lose access to one of them.'
       icon={KeyRoundIcon}
     >
       {error && (
@@ -359,7 +359,7 @@ export function SignInMethodsSection() {
                   </div>
                   <div className='flex gap-2'>
                     <Button type='submit' disabled={changingPassword}>
-                      {changingPassword ? 'Saving...' : 'Update password'}
+                      {changingPassword ? 'Saving...' : 'Change password'}
                     </Button>
                     <Button type='button' variant='ghost' onClick={resetPasswordForm}>
                       Cancel
