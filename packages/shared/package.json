@@ -77,11 +77,11 @@
   "devDependencies": {
     "@cf-sync/server": "^0.2.0",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.11"
   },
   "dependencies": {
     "@cf-sync/protocol": "^0.1.1",
-    "stripe": "^22.4.0",
-    "zod": "^4.4.3"
+    "stripe": "^22.6.1",
+    "zod": "^4.5.4"
   }
 }

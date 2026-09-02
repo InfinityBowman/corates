@@ -1,4 +1,4 @@
-// Entry point for @cloudflare/vitest-pool-workers.
+// Entry point for @cloudflare/vitest-plugin.
 //
 // Re-exports Durable Object classes so wrangler DO bindings resolve against
 // this worker. Mounts createStartHandler so tests can use SELF.fetch() to
