@@ -137,7 +137,7 @@ export function CompletedStudyRow({
                 {firstGroup.outcomeId && (
                   <div className='flex items-center gap-1'>
                     <Badge variant='secondary' data-selectable>
-                      {getOutcomeName(firstGroup.outcomeId) || 'Unknown Outcome'}
+                      {getOutcomeName(firstGroup.outcomeId) || 'Unknown outcome'}
                     </Badge>
                     <Button
                       variant='ghost'
@@ -172,7 +172,7 @@ export function CompletedStudyRow({
                       setShowPreviousReviewers(true);
                     }}
                   >
-                    View Previous
+                    View original appraisals
                   </Button>
                 )}
                 {reopenableChecklist && (
@@ -198,7 +198,7 @@ export function CompletedStudyRow({
                     variant='outline'
                     size='icon'
                     onClick={e => e.stopPropagation()}
-                    aria-label='Export study'
+                    aria-label='Export this study'
                   >
                     <MoreVerticalIcon className='size-4' />
                   </Button>

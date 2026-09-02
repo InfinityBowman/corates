@@ -54,7 +54,9 @@ export function SectionBQuestionPage({
           <span
             className={`text-xs font-medium ${isAgreement ? 'text-green-700' : 'text-amber-700'}`}
           >
-            {isAgreement ? 'Reviewers Agree' : 'Requires Reconciliation'}
+            {isAgreement ?
+              'Both reviewers gave the same answer'
+            : 'The reviewers gave different answers - record the answer you agree on'}
           </span>
         </div>
       </div>
@@ -84,7 +86,7 @@ export function SectionBQuestionPage({
         />
 
         <RobinsAnswerPanel
-          title='Final Answer'
+          title='Consensus answer'
           panelType='final'
           answer={finalData?.answer}
           commentKey={finalCommentKey}

@@ -162,9 +162,9 @@ test('Dual-Reviewer ROBINS-I Workflow', async ({ context, page }) => {
   // ================================================================
   // Walk every reconciliation page, then advance until the summary.
   // Judgements are auto-derived (not reconciled); only signalling questions need a
-  // final answer, taken from Reviewer 1 via "Use This". Direction is optional.
+  // consensus answer, taken from Reviewer 1 via "Use this answer". Direction is optional.
   // ================================================================
-  const nextBtn = page.getByRole('button', { name: /Next|Review Summary/i });
+  const nextBtn = page.getByRole('button', { name: /Next|Review summary/i });
 
   let safety = 0;
   let capturedDirectionPage = false;
@@ -199,7 +199,7 @@ test('Dual-Reviewer ROBINS-I Workflow', async ({ context, page }) => {
       sawSkippedQuestionPage = true;
     }
 
-    const useThisBtn = page.getByRole('button', { name: 'Use This' }).first();
+    const useThisBtn = page.getByRole('button', { name: 'Use this answer' }).first();
     if (await useThisBtn.isVisible().catch(() => false)) {
       await useThisBtn.click();
     }
@@ -207,7 +207,7 @@ test('Dual-Reviewer ROBINS-I Workflow', async ({ context, page }) => {
     const btnText = await nextBtn.textContent();
     await nextBtn.click();
 
-    if (btnText?.includes('Review Summary')) break;
+    if (btnText?.includes('Review summary')) break;
   }
 
   // The walk must have passed through the skipped Domain 6 question.
@@ -216,7 +216,7 @@ test('Dual-Reviewer ROBINS-I Workflow', async ({ context, page }) => {
   // ================================================================
   // Summary view - verify and save
   // ================================================================
-  await expect(page.getByText('Review Summary')).toBeVisible({ timeout: 5_000 });
+  await expect(page.getByText('Reconciliation summary')).toBeVisible({ timeout: 5_000 });
   // The reconciled domain-2 direction resolves to one reviewer's value (not "Not set").
   await expect(page.getByText(/Favours (intervention|comparator)/).first()).toBeVisible({
     timeout: 5_000,
@@ -224,12 +224,12 @@ test('Dual-Reviewer ROBINS-I Workflow', async ({ context, page }) => {
   // Skipped Domain 6 questions surface as skipped rather than unanswered and
   // do not block saving.
   await expect(page.getByText('Skipped - Not applicable').first()).toBeVisible({ timeout: 5_000 });
-  const saveBtn = page.getByRole('button', { name: /Save Reconciled Checklist/i });
+  const saveBtn = page.getByRole('button', { name: /Save consensus appraisal/i });
   await expect(saveBtn).toBeEnabled({ timeout: 10_000 });
   await saveBtn.click();
 
   // Confirm save in the dialog.
-  const finishBtn = page.getByRole('button', { name: 'Finish' });
+  const finishBtn = page.getByRole('button', { name: 'Finish reconciliation' });
   await expect(finishBtn).toBeVisible({ timeout: 5_000 });
   await finishBtn.click();
 

@@ -69,11 +69,11 @@ export function NotesCompareSection({
             className={`size-4 shrink-0 transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`}
           />
           <BookOpenIcon className='size-4 shrink-0' />
-          <span className='font-medium'>Question Notes</span>
+          <span className='font-medium'>Question notes</span>
           {hasAnyNote && (
             <span className='text-muted-foreground/70 ml-1 text-xs'>
               (
-              {[hasReviewer1Note && 'R1', hasReviewer2Note && 'R2', hasFinalNote && 'Final']
+              {[hasReviewer1Note && 'R1', hasReviewer2Note && 'R2', hasFinalNote && 'Consensus']
                 .filter(Boolean)
                 .join(', ')}
               )
@@ -95,10 +95,10 @@ export function NotesCompareSection({
                       size='xs'
                       onClick={() => copyToFinal(reviewer1Note)}
                       disabled={!finalNote.canWrite}
-                      title='Copy to final note'
+                      title='Copy this note into the consensus note'
                     >
                       <ClipboardIcon className='size-3' />
-                      Use
+                      Copy
                     </Button>
                   )}
                 </div>
@@ -121,10 +121,10 @@ export function NotesCompareSection({
                       size='xs'
                       onClick={() => copyToFinal(reviewer2Note)}
                       disabled={!finalNote.canWrite}
-                      title='Copy to final note'
+                      title='Copy this note into the consensus note'
                     >
                       <ClipboardIcon className='size-3' />
-                      Use
+                      Copy
                     </Button>
                   )}
                 </div>
@@ -138,7 +138,9 @@ export function NotesCompareSection({
               {/* Final Note (editable, co-edited live) */}
               <div className='rounded-lg bg-green-50/50 p-3'>
                 <div className='mb-2 flex items-center justify-between'>
-                  <h4 className='text-secondary-foreground text-xs font-semibold'>Final Note</h4>
+                  <h4 className='text-secondary-foreground text-xs font-semibold'>
+                    Consensus note
+                  </h4>
                   {hasReviewer1Note && hasReviewer2Note && (
                     <Button
                       variant='link'
@@ -146,9 +148,9 @@ export function NotesCompareSection({
                       onClick={mergeToFinal}
                       disabled={!finalNote.canWrite}
                       className='text-green-600 hover:text-green-800'
-                      title='Merge both notes'
+                      title="Copy both reviewers' notes into the consensus note"
                     >
-                      Merge Both
+                      Combine both
                     </Button>
                   )}
                 </div>
@@ -158,7 +160,7 @@ export function NotesCompareSection({
                   live={true}
                   disabled={!finalNote.canWrite}
                   inline={true}
-                  placeholder='Add the final reconciled note...'
+                  placeholder='Write the consensus note'
                   maxLength={MAX_LENGTH}
                   focusRingColor='green-500'
                 />

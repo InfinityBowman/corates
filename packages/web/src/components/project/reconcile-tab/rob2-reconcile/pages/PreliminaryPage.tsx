@@ -397,7 +397,7 @@ export function PreliminaryPage({
           }
           <div>
             <h2 className='text-foreground font-semibold'>{fieldLabel}</h2>
-            <p className='text-muted-foreground text-sm'>Preliminary Considerations</p>
+            <p className='text-muted-foreground text-sm'>Preliminary considerations</p>
           </div>
         </div>
       </div>
@@ -410,9 +410,9 @@ export function PreliminaryPage({
             <div>
               <h3 className='text-foreground font-medium'>Aim mismatch</h3>
               <p className='text-muted-foreground mt-1 text-sm'>
-                Reviewers selected different aims. This determines which Domain 2 questions are
-                assessed (2a for assignment effect, 2b for adhering effect). Agree on the aim before
-                continuing to domain reconciliation.
+                The reviewers chose different aims. The aim decides which Domain 2 questions are
+                assessed (2a for the assignment effect, 2b for the adhering effect), so agree on it
+                before you reconcile the domains.
               </p>
             </div>
           </div>
@@ -426,7 +426,7 @@ export function PreliminaryPage({
           <div className='mb-4 flex items-center justify-between'>
             <h3 className='text-foreground font-semibold'>{reviewer1Name}</h3>
             <Button variant='secondary' size='sm' onClick={() => onUseReviewer1?.()}>
-              Use This
+              Use this answer
             </Button>
           </div>
           {renderReadOnlyField(reviewer1Value)}
@@ -437,7 +437,7 @@ export function PreliminaryPage({
           <div className='mb-4 flex items-center justify-between'>
             <h3 className='text-foreground font-semibold'>{reviewer2Name}</h3>
             <Button variant='secondary' size='sm' onClick={() => onUseReviewer2?.()}>
-              Use This
+              Use this answer
             </Button>
           </div>
           {renderReadOnlyField(reviewer2Value)}
@@ -446,7 +446,7 @@ export function PreliminaryPage({
         {/* Final */}
         <div className={`p-4 ${getPanelBackground('final')}`}>
           <div className='mb-4'>
-            <h3 className='text-foreground font-semibold'>Final Answer</h3>
+            <h3 className='text-foreground font-semibold'>Consensus answer</h3>
           </div>
           {renderFinalField()}
         </div>

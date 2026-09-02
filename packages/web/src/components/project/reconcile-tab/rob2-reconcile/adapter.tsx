@@ -487,8 +487,8 @@ function renderWarningBanner(
       <div>
         <span className='text-foreground font-medium'>Aim mismatch:</span>{' '}
         <span className='text-muted-foreground'>
-          Reviewers selected different aims. Reconcile the aim field below before continuing to
-          domain assessment.
+          The reviewers chose different aims. Agree on the aim below before you reconcile the
+          domains.
         </span>
       </div>
     </div>
@@ -506,7 +506,7 @@ export const rob2Adapter: ReconciliationAdapter<
   Rob2NavItem
 > = {
   checklistType: 'ROB2',
-  title: 'ROB-2 Reconciliation',
+  title: 'RoB 2 reconciliation',
   pageCounterLabel: 'Item',
   getPageLabel: (pageIndex: number) => `Item ${pageIndex + 1}`,
   resources: ROB2_RESOURCES,

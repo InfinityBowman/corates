@@ -73,10 +73,11 @@ export function OverallDirectionPage({
           }
           <div>
             <h2 className='text-foreground font-semibold'>
-              Overall Risk of Bias - Judgement &amp; Direction
+              Overall risk of bias - judgement and direction
             </h2>
             <p className='text-muted-foreground mt-1 text-sm'>
-              Review the overall calculated judgement and select the overall bias direction
+              The overall judgement is calculated for you. Record the overall direction of bias you
+              agree on.
             </p>
           </div>
         </div>
@@ -87,8 +88,8 @@ export function OverallDirectionPage({
         <div className='mb-3 flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3'>
           <InfoIcon className='size-4 shrink-0 text-blue-600' />
           <p className='text-xs text-blue-800'>
-            The overall risk of bias judgement is automatically calculated from the domain
-            judgements. To change it, reconcile the signalling questions.
+            The overall risk of bias judgement is calculated from the domain judgements. To change
+            it, go back and change the consensus answers to the signalling questions.
           </p>
         </div>
 
@@ -99,7 +100,7 @@ export function OverallDirectionPage({
         <div className='grid grid-cols-3 divide-x rounded-lg border'>
           <ReadOnlyJudgement title={reviewer1Name} judgement={reviewer1Scoring.overall} />
           <ReadOnlyJudgement title={reviewer2Name} judgement={reviewer2Scoring.overall} />
-          <ReadOnlyJudgement title='Final (Reconciled)' judgement={finalScoring.overall} />
+          <ReadOnlyJudgement title='Consensus' judgement={finalScoring.overall} />
         </div>
       </div>
 
@@ -111,10 +112,10 @@ export function OverallDirectionPage({
           </h3>
           {directionMatch ?
             <span className='rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700'>
-              Agree
+              Reviewers agree
             </span>
           : <span className='rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700'>
-              Disagree
+              Reviewers disagree
             </span>
           }
         </div>
@@ -135,7 +136,7 @@ export function OverallDirectionPage({
             onUseThis={onUseReviewer2}
           />
           <DirectionPanel
-            title='Final Direction'
+            title='Consensus direction'
             panelType='final'
             direction={finalDirection}
             readOnly={false}

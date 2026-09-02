@@ -313,7 +313,10 @@ export function useReconciliationEngine({
     setCurrentPage(0);
     setViewModeRaw('questions');
     setExpandedDomain(null);
-    showToast.info('Reconciliation Reset', 'All reconciliations have been cleared.');
+    showToast.info(
+      'Consensus answers cleared',
+      "Every consensus answer on this reconciliation was cleared. The reviewers' own answers are unchanged.",
+    );
   }, [adapter, updateChecklistAnswer]);
 
   // -----------------------------------------------------------------------
@@ -323,8 +326,8 @@ export function useReconciliationEngine({
   const handleSave = useCallback(() => {
     if (!allAnswered) {
       showToast.error(
-        'Incomplete Review',
-        `Please review all ${adapter.pageCounterLabel.toLowerCase()}s before saving.`,
+        'Reconciliation is not finished',
+        `Record a consensus answer for every ${adapter.pageCounterLabel.toLowerCase()} before you save.`,
       );
       return;
     }
@@ -338,7 +341,7 @@ export function useReconciliationEngine({
       setFinishDialogOpen(false);
     } catch (err) {
       const { handleError } = await import('@/lib/error-utils');
-      await handleError(err, { toastTitle: 'Save Failed' });
+      await handleError(err, { toastTitle: 'The consensus checklist could not be saved' });
     } finally {
       setSaving(false);
     }

@@ -46,7 +46,7 @@ function FinalCommentEditor({ commentKey }: { commentKey: string }) {
       onChange={comment.setValue}
       live={true}
       disabled={!comment.canWrite}
-      placeholder='Add the final reconciled comment...'
+      placeholder='Write the consensus comment'
       inline={true}
       focusRingColor='blue-400'
     />
@@ -99,7 +99,7 @@ export function RobinsAnswerPanel({
               )
             }`}
           >
-            {isSelected ? 'Selected' : 'Use This'}
+            {isSelected ? 'Used as the consensus' : 'Use this answer'}
           </button>
         )}
       </div>
@@ -154,7 +154,7 @@ export function RobinsAnswerPanel({
         <div className='mb-4 flex flex-wrap items-center gap-2'>
           <span
             className='inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600'
-            title='The judgement was already determined by the other answers, so this question was not required.'
+            title='The other answers already determine this judgement, so this question was not required.'
           >
             Skipped - Not applicable
           </span>
@@ -176,7 +176,7 @@ export function RobinsAnswerPanel({
       {/* Comment Section */}
       <div className='mt-4'>
         <label className='text-secondary-foreground mb-1 block text-xs font-medium'>
-          {isFinal ? 'Final Comment' : 'Comment'}
+          {isFinal ? 'Consensus comment' : "This reviewer's comment"}
         </label>
         {!readOnly && commentKey ?
           <FinalCommentEditor commentKey={commentKey} />

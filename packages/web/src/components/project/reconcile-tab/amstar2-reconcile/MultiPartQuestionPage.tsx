@@ -203,7 +203,9 @@ export function MultiPartQuestionPage({
           <span
             className={`text-sm font-medium ${isAgreement ? 'text-green-700' : 'text-amber-700'}`}
           >
-            {isAgreement ? 'Reviewers Agree' : 'Requires Reconciliation'}
+            {isAgreement ?
+              'Both reviewers gave the same answer'
+            : 'The reviewers gave different answers - record the answer you agree on'}
           </span>
         </div>
       </div>
@@ -223,7 +225,7 @@ export function MultiPartQuestionPage({
                   )
                 }`}
               >
-                {selectedSource === 'reviewer1' ? 'Selected' : 'Use This'}
+                {selectedSource === 'reviewer1' ? 'Used as the consensus' : 'Use this answer'}
               </button>
             )}
           </div>
@@ -264,7 +266,7 @@ export function MultiPartQuestionPage({
                   )
                 }`}
               >
-                {selectedSource === 'reviewer2' ? 'Selected' : 'Use This'}
+                {selectedSource === 'reviewer2' ? 'Used as the consensus' : 'Use this answer'}
               </button>
             )}
           </div>
@@ -296,12 +298,12 @@ export function MultiPartQuestionPage({
         <div className='bg-green-50/30 p-4'>
           <div className='mb-4 flex items-center justify-between'>
             <div>
-              <h3 className='text-foreground font-semibold'>Final Answer</h3>
+              <h3 className='text-foreground font-semibold'>Consensus answer</h3>
               {selectedSource && (
                 <span className='text-muted-foreground text-xs'>
                   {selectedSource === 'custom' ?
-                    'Custom selection'
-                  : `Based on ${selectedSource === 'reviewer1' ? 'Reviewer 1' : 'Reviewer 2'}`}
+                    'Edited here'
+                  : `Taken from ${selectedSource === 'reviewer1' ? 'Reviewer 1' : 'Reviewer 2'}`}
                 </span>
               )}
             </div>

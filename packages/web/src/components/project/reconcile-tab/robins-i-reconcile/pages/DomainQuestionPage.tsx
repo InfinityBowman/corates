@@ -76,7 +76,9 @@ export function DomainQuestionPage({
           <span
             className={`text-xs font-medium ${isAgreement ? 'text-green-700' : 'text-amber-700'}`}
           >
-            {isAgreement ? 'Reviewers Agree' : 'Requires Reconciliation'}
+            {isAgreement ?
+              'Both reviewers gave the same answer'
+            : 'The reviewers gave different answers - record the answer you agree on'}
           </span>
         </div>
       </div>
@@ -87,8 +89,8 @@ export function DomainQuestionPage({
           <div className='flex items-center gap-2'>
             <InfoIcon className='text-muted-foreground size-4 shrink-0' />
             <p className='text-muted-foreground text-sm'>
-              The reconciled answers already determine this domain's judgement, so this question is
-              not required. You can still record an answer if needed.
+              The consensus answers so far already determine this domain's judgement, so this
+              question is not required. You can still record an answer.
             </p>
           </div>
         </div>
@@ -123,7 +125,7 @@ export function DomainQuestionPage({
         />
 
         <RobinsAnswerPanel
-          title='Final Answer'
+          title='Consensus answer'
           panelType='final'
           answer={finalData?.answer}
           commentKey={finalCommentKey}

@@ -498,7 +498,7 @@ export const robinsIAdapter: ReconciliationAdapter<
   RobinsINavItem
 > = {
   checklistType: 'ROBINS_I',
-  title: 'ROBINS-I Reconciliation',
+  title: 'ROBINS-I reconciliation',
   pageCounterLabel: 'Item',
   getPageLabel: (pageIndex: number) => `Item ${pageIndex + 1}`,
   resources: ROBINSI_RESOURCES,

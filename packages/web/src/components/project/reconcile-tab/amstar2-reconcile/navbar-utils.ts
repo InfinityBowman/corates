@@ -64,10 +64,10 @@ export function getQuestionTooltip(
   const questionNum = `Question ${questionNumber}`;
 
   if (hasAnswer) {
-    return `${questionNum} - Reconciled`;
+    return `${questionNum} - reconciled`;
   }
   if (isAgreement) {
-    return `${questionNum} - Reviewers agreed`;
+    return `${questionNum} - reviewers agreed, not confirmed yet`;
   }
-  return `${questionNum} - Reviewers disagree`;
+  return `${questionNum} - reviewers disagreed, needs a consensus answer`;
 }

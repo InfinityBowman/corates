@@ -79,6 +79,13 @@ export function SignallingQuestionPage({
               {question?.text || questionKey}
             </h2>
             <p className='text-muted-foreground mt-1 text-sm'>{domain?.name}</p>
+            <p
+              className={`mt-1 text-xs font-medium ${isAgreement ? 'text-green-700' : 'text-amber-700'}`}
+            >
+              {isAgreement ?
+                'Both reviewers gave the same answer'
+              : 'The reviewers gave different answers - record the answer you agree on'}
+            </p>
           </div>
         </div>
 
@@ -97,8 +104,8 @@ export function SignallingQuestionPage({
           <div className='flex items-center gap-2'>
             <InfoIcon className='size-4 shrink-0 text-slate-500' />
             <p className='text-sm text-slate-600'>
-              The reconciled answers already determine this domain's judgement, so this question is
-              not required. You can still record an answer if needed.
+              The consensus answers so far already determine this domain's judgement, so this
+              question is not required. You can still record an answer.
             </p>
           </div>
         </div>
@@ -132,7 +139,7 @@ export function SignallingQuestionPage({
 
         {/* Final Answer */}
         <ROB2AnswerPanel
-          title='Final Answer'
+          title='Consensus answer'
           panelType='final'
           answer={finalData?.answer}
           finalCommentKey={finalCommentKey}

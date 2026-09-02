@@ -120,7 +120,7 @@ function SummaryButton({ store }: { store: NavbarStore }) {
           Summary
         </button>
       </TooltipTrigger>
-      <TooltipContent side='bottom'>View summary of all questions</TooltipContent>
+      <TooltipContent side='bottom'>Review every consensus answer</TooltipContent>
     </Tooltip>
   );
 }
@@ -132,13 +132,15 @@ function ResetButton({ onClick }: { onClick: () => void }) {
         <button
           onClick={onClick}
           className='flex h-8 items-center gap-1 rounded-full bg-red-100 px-3 text-xs font-medium text-red-700 transition-all hover:bg-red-200'
-          aria-label='Reset reconciliation'
+          aria-label='Clear every consensus answer'
         >
           <RotateCcwIcon className='size-3' />
           Reset
         </button>
       </TooltipTrigger>
-      <TooltipContent side='bottom'>Reset final answers to unresolved</TooltipContent>
+      <TooltipContent side='bottom'>
+        Clear every consensus answer on this reconciliation. This cannot be undone.
+      </TooltipContent>
     </Tooltip>
   );
 }

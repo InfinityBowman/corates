@@ -193,7 +193,9 @@ function SingleQuestionPage({
           <span
             className={`text-xs font-medium ${isAgreement ? 'text-green-700' : 'text-amber-700'}`}
           >
-            {isAgreement ? 'Reviewers Agree' : 'Requires Reconciliation'}
+            {isAgreement ?
+              'Both reviewers gave the same answer'
+            : 'The reviewers gave different answers - record the answer you agree on'}
           </span>
           {question?.subtitle && (
             <span className='text-muted-foreground text-sm'>({question.subtitle})</span>
@@ -226,7 +228,7 @@ function SingleQuestionPage({
           hideSelectButtons={reviewersAgree}
         />
         <AnswerPanel
-          title='Final Answer'
+          title='Consensus answer'
           answers={localFinal}
           questionKey={questionKey}
           finalAnswer={finalFinalAnswer}
