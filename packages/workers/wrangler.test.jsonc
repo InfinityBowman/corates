@@ -1,7 +1,7 @@
 // Test-only wrangler config.
 //
 // `packages/workers` is a library consumed by `packages/web` — it does NOT
-// deploy. This config exists for `@cloudflare/vitest-pool-workers` (see
+// deploy. This config exists for `@cloudflare/vitest-plugin` (see
 // vitest.config.ts) and ad-hoc local D1 / DO scripts. Production worker
 // configuration lives in packages/web/wrangler.jsonc.
 {

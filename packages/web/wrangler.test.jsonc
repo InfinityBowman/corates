@@ -1,4 +1,4 @@
-// Test-only wrangler config consumed by @cloudflare/vitest-pool-workers.
+// Test-only wrangler config consumed by @cloudflare/vitest-plugin.
 // Mirrors packages/workers/wrangler.jsonc (the pre-consolidation test config)
 // so server tests in packages/web run with the same bindings the routes expect.
 // Kept separate from wrangler.jsonc because the pool does not need assets,

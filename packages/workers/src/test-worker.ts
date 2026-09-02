@@ -1,5 +1,5 @@
 /**
- * Library-only entry for `@cloudflare/vitest-pool-workers`. Re-exports the
+ * Library-only entry for `@cloudflare/vitest-plugin`. Re-exports the
  * Durable Object classes so wrangler DO bindings resolve; tests import their
  * subjects (commands, lib helpers, DO classes) directly — there is no real
  * fetch handler to wire.
