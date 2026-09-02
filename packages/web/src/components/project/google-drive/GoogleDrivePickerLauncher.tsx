@@ -89,7 +89,7 @@ export function GoogleDrivePickerLauncher({
 
       if (isAccountConflict) {
         setError(
-          'This Google account is already connected to a different user. Please use a different Google account.',
+          'That Google account is already connected to another CoRATES user. Connect a different Google account.',
         );
       } else {
         const { handleError } = await import('@/lib/error-utils.js');
@@ -117,7 +117,7 @@ export function GoogleDrivePickerLauncher({
         const result = await getGoogleDrivePickerToken();
         if (!result?.accessToken) {
           setConnected(false);
-          setError('Google connection expired. Please reconnect your Google account.');
+          setError('Your Google connection expired. Reconnect your Google account to continue.');
           return null;
         }
         return await pickGooglePdfFiles({
@@ -170,7 +170,8 @@ export function GoogleDrivePickerLauncher({
     <div className='flex flex-col gap-3'>
       {!pickerConfigured && (
         <Alert variant='warning'>
-          Google Picker is not configured. Set VITE_GOOGLE_PICKER_API_KEY.
+          Google Drive import is not available on this deployment. Use PDF upload, a reference file,
+          or DOI lookup instead.
         </Alert>
       )}
 
@@ -181,11 +182,11 @@ export function GoogleDrivePickerLauncher({
           <img src='/logos/drive.svg' alt='Google Drive' className='mx-auto mb-3 size-10' />
           <h4 className='text-foreground mb-1 text-sm font-medium'>Connect Google Drive</h4>
           <p className='text-muted-foreground mb-4 text-xs'>
-            Connect your Google account to select PDFs.
+            Connect your Google account once, then pick PDFs straight from your Drive.
           </p>
           <Button onClick={handleConnectGoogle}>
             <img src='/logos/drive.svg' alt='' className='size-4' />
-            Connect Google Account
+            Connect Google account
           </Button>
         </div>
       )}

@@ -79,7 +79,7 @@ export function AddStudiesForm({
   const handleSubmit = useCallback(async () => {
     const studiesToAdd = studies.getStudiesToSubmit();
     if (studiesToAdd.length === 0) {
-      showToast.warning('No Studies', 'Please add at least one study to import.');
+      showToast.warning('Nothing to add yet', 'Choose at least one study above, then add it.');
       return;
     }
 
@@ -161,7 +161,7 @@ export function AddStudiesForm({
                 Adding...
               </>
             : <>
-                Add {studies.totalStudyCount} {studies.totalStudyCount === 1 ? 'Study' : 'Studies'}
+                Add {studies.totalStudyCount} {studies.totalStudyCount === 1 ? 'study' : 'studies'}
               </>
             }
           </Button>
@@ -195,8 +195,8 @@ export function AddStudiesForm({
 
 const TABS = [
   { value: 'pdfs', label: 'Upload PDFs', icon: UploadIcon },
-  { value: 'references', label: 'Import References', icon: FileTextIcon },
-  { value: 'lookup', label: 'DOI / PMID', icon: LinkIcon },
+  { value: 'references', label: 'Import references', icon: FileTextIcon },
+  { value: 'lookup', label: 'DOI or PubMed ID', icon: LinkIcon },
   { value: 'drive', label: 'Google Drive', icon: FolderIcon },
 ] as const;
 

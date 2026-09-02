@@ -101,8 +101,8 @@ export function ResultsTables({ studies }: ResultsTablesProps) {
     return (
       <div className='bg-card rounded-[14px] border border-dashed border-[#d0d5dd] px-4 py-8 text-center'>
         <p className='text-muted-foreground'>
-          Once appraisals are completed, this section will display tables summarizing the ratings
-          for each included study.
+          Tables appear here once a reconciliation is finalized. They summarize the agreed judgments
+          for every included study.
         </p>
       </div>
     );

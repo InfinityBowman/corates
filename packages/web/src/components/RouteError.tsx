@@ -10,7 +10,9 @@ export function RouteError({ error, reset }: ErrorComponentProps) {
   }, [error]);
 
   const message =
-    import.meta.env.DEV ? error.message : 'An unexpected error occurred. Please try again.';
+    import.meta.env.DEV ?
+      error.message
+    : 'This page hit an unexpected error. Try again, or reload the page if it keeps happening.';
 
   return (
     <div className='flex flex-1 items-center justify-center p-8'>
@@ -18,7 +20,7 @@ export function RouteError({ error, reset }: ErrorComponentProps) {
         <div className='bg-destructive/10 mx-auto mb-4 flex size-12 items-center justify-center rounded-full'>
           <TriangleAlertIcon className='text-destructive size-6' />
         </div>
-        <h3 className='text-foreground mb-1 text-base font-semibold'>Something went wrong</h3>
+        <h3 className='text-foreground mb-1 text-base font-semibold'>This page did not load</h3>
         <p className='text-muted-foreground mb-5 text-sm'>{message}</p>
         <Button onClick={reset}>
           <RefreshCwIcon className='size-3.5' />

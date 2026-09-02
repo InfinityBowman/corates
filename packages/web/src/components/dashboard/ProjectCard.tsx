@@ -55,8 +55,8 @@ export function ProjectCard({ project, onOpen, onDelete, style }: ProjectCardPro
                 onDelete(project.id);
               }}
               className='text-muted-foreground/50 z-10 opacity-0 group-hover:opacity-100 hover:text-red-600'
-              title='Delete Project'
-              aria-label='Delete Project'
+              title='Delete project'
+              aria-label='Delete project'
             >
               <Trash2Icon className='size-4' />
             </Button>
@@ -65,7 +65,7 @@ export function ProjectCard({ project, onOpen, onDelete, style }: ProjectCardPro
 
         {/* Description */}
         <p className='text-muted-foreground mb-5 line-clamp-2 text-sm leading-relaxed'>
-          {project.description || 'No description'}
+          {project.description || 'No description yet'}
         </p>
 
         {/* Footer */}

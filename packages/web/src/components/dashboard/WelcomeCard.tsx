@@ -39,7 +39,8 @@ export function WelcomeCard({ user, onDismiss }: WelcomeCardProps) {
             Welcome{firstName ? `, ${firstName}` : ''}
           </h1>
           <p className='text-muted-foreground mt-2 max-w-xl'>
-            Start appraising studies right away. Pick a tool below to create your first appraisal.
+            Appraise your first study right now, with no setup. Pick a checklist below and answer
+            its questions.
           </p>
         </div>
 
@@ -47,13 +48,14 @@ export function WelcomeCard({ user, onDismiss }: WelcomeCardProps) {
 
         <div className='border-border mt-6 border-t pt-4'>
           <p className='text-muted-foreground text-sm'>
-            <span className='text-foreground font-medium'>Local appraisals</span> are saved on this
-            device and always free. <span className='text-foreground font-medium'>Projects</span>{' '}
-            let teams appraise independently and resolve disagreements together.{' '}
+            <span className='text-foreground font-medium'>Local appraisals</span> stay on this
+            device and are always free.{' '}
+            <span className='text-foreground font-medium'>Projects</span> let you and your team
+            appraise the same study independently, then reconcile where you disagree.{' '}
             <Link to='/pricing' className='text-primary hover:text-primary/80'>
               Explore plans
             </Link>{' '}
-            when you&#39;re ready to collaborate.
+            when you&#39;re ready to invite collaborators.
           </p>
         </div>
       </div>

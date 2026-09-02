@@ -89,7 +89,7 @@ export function ChecklistForm({
         <div className='min-w-45 flex-1'>
           <Select value={type} onValueChange={handleTypeChange}>
             <SelectTrigger>
-              <SelectValue placeholder='Checklist type...' />
+              <SelectValue placeholder='Choose a checklist type...' />
             </SelectTrigger>
             <SelectContent>
               {typeOptions.map((option: any) => (
@@ -124,15 +124,16 @@ export function ChecklistForm({
         )}
 
         <Button onClick={handleSubmit} disabled={loading || !canSubmit}>
-          {loading ? 'Adding...' : 'Add Checklist'}
+          {loading ? 'Adding...' : 'Add checklist'}
         </Button>
       </div>
 
       {requiresOutcome && outcomes.length === 0 && (
         <div className='border-warning-border bg-warning-bg mt-2 rounded-lg border p-3'>
-          <p className='text-warning-foreground text-sm font-medium'>No outcomes defined</p>
+          <p className='text-warning-foreground text-sm font-medium'>No outcomes yet</p>
           <p className='text-warning mt-1 text-xs'>
-            {getChecklistMetadata(type).name} requires an outcome. Add them from{' '}
+            A {getChecklistMetadata(type).name} checklist is completed once per outcome, so add at
+            least one outcome first. Open{' '}
             <Button
               variant='link'
               size='xs'
@@ -150,8 +151,8 @@ export function ChecklistForm({
         <div className='border-info-border bg-info-bg mt-2 rounded-lg border p-3'>
           <p className='text-info-foreground text-sm font-medium'>All outcomes covered</p>
           <p className='text-info mt-1 text-xs'>
-            You already have a {getChecklistMetadata(type).name} checklist for each available
-            outcome.
+            You already have a {getChecklistMetadata(type).name} checklist for every outcome in this
+            project. Add another outcome to start a new one.
           </p>
         </div>
       )}

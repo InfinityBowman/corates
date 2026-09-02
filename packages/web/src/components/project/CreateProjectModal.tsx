@@ -84,7 +84,7 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
 
       const orgId = resolvedOrgId;
       if (!orgId) {
-        showToast.error('Error', 'Please select an organization.');
+        showToast.error('Choose a team', 'Select which team this project belongs to.');
         return;
       }
 
@@ -109,20 +109,20 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
         if (domainError && isErrorCode(domainError, AUTH_ERRORS.FORBIDDEN.code)) {
           if (details?.reason === 'missing_entitlement') {
             showToast.error(
-              'Feature Not Available',
-              `This feature requires the '${details.entitlement}' entitlement. Please upgrade your plan.`,
+              'Not included in your plan',
+              `Creating this project needs the '${details.entitlement}' entitlement. Upgrade your plan to continue.`,
             );
           } else if (details?.reason === 'quota_exceeded') {
             const { quotaKey, used, limit, requested } = details as Record<string, number>;
             showToast.error(
-              'Quota Exceeded',
-              `${quotaKey}: Current usage ${used}, Limit ${isUnlimitedQuota(limit) ? 'unlimited' : limit}, Requested ${requested}`,
+              'Plan limit reached',
+              `${quotaKey}: you are using ${used} of ${isUnlimitedQuota(limit) ? 'unlimited' : limit}, and this needs ${requested} more. Upgrade your plan to continue.`,
             );
           } else {
-            await handleError(error, { toastTitle: 'Creation Failed' });
+            await handleError(error, { toastTitle: 'Could not create the project' });
           }
         } else {
-          await handleError(error, { toastTitle: 'Creation Failed' });
+          await handleError(error, { toastTitle: 'Could not create the project' });
         }
       } finally {
         setIsSubmitting(false);
@@ -213,7 +213,7 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
               Cancel
             </Button>
             <Button type='submit' disabled={!canSubmit}>
-              {isSubmitting ? 'Creating...' : 'Create Project'}
+              {isSubmitting ? 'Creating...' : 'Create project'}
             </Button>
           </DialogFooter>
         </form>
