@@ -37,7 +37,8 @@ const TEST_PREFIX = `invite-e2e-${Date.now()}`;
  */
 async function sendInvitationViaUI(page: Page, email: string) {
   await page.getByRole('tab', { name: /Overview/i }).click();
-  await page.getByRole('button', { name: /Invite/i }).click();
+  // The editable project title is also a button, so match the label exactly
+  await page.getByRole('button', { name: 'Invite', exact: true }).click();
 
   const dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible({ timeout: 5_000 });
