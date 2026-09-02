@@ -126,7 +126,7 @@ export function ReconcileStudyRow({
           )}
 
           <div className='min-w-0 flex-1'>
-            <span className='text-foreground truncate font-medium'>{study.name}</span>
+            <span className='text-foreground block truncate font-medium'>{study.name}</span>
             {citationLine && (
               <p
                 className='text-muted-foreground w-fit cursor-text truncate text-xs select-text'
