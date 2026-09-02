@@ -19,8 +19,9 @@ import { appLayoutMeta } from '@/config/app';
 export const Route = createFileRoute('/_app')({
   ssr: false,
   // The server stops executing head() at the first ssr:false match, so a head on
-  // any child route (dashboard, _protected) never reaches the served HTML.
-  head: ({ match }) => ({ meta: appLayoutMeta(match.pathname) }),
+  // any child route (dashboard, _protected) never reaches the served HTML. This
+  // pathless layout's own match.pathname is always '/', so read the leaf match.
+  head: ({ matches }) => ({ meta: appLayoutMeta(matches[matches.length - 1].pathname) }),
   component: AppLayout,
   errorComponent: RouteError,
 });
