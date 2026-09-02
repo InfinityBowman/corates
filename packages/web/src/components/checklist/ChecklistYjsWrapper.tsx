@@ -35,6 +35,7 @@ import {
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
 import { ScoreTag } from '@/components/checklist/ScoreTag';
+import { ChecklistResourcesButton } from '@/components/checklist/ChecklistResourcesButton';
 
 interface ChecklistYjsWrapperProps {
   projectId: string;
@@ -363,6 +364,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
       </div>
       <div className='ml-auto flex items-center gap-3'>
         <ScoreTag currentScore={currentScore} checklistType={checklistType ?? undefined} />
+        <ChecklistResourcesButton checklistType={checklistType} />
         {!isReadOnly ?
           <Button
             onClick={handleToggleComplete}

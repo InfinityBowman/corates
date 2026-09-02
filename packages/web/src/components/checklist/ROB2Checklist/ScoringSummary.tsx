@@ -1,8 +1,5 @@
 import { useMemo } from 'react';
-import { InfoIcon } from 'lucide-react';
 import { ROB2_CHECKLIST, getActiveDomainKeys } from './checklist-map';
-import { ResourcesPopover } from '../ResourcesPopover';
-import { ROB2_RESOURCES } from './resources';
 import {
   useWorkspaceProjectId,
   useAnswerValue,
@@ -75,16 +72,6 @@ export function ScoringSummary({ checklistId, onDomainClick }: ScoringSummaryPro
               onClick={() => onDomainClick?.(domainKey)}
             />
           ))}
-
-          <ResourcesPopover resources={ROB2_RESOURCES}>
-            <button
-              type='button'
-              className='border-info-border bg-info-bg text-info hover:bg-info-bg/80 ml-2 inline-flex items-center gap-1 rounded border px-2 py-0.5 text-xs font-medium transition-colors'
-            >
-              <InfoIcon className='size-3' />
-              Resources
-            </button>
-          </ResourcesPopover>
         </div>
       </div>
     </div>

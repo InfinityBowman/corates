@@ -21,6 +21,7 @@ import { useChecklistViewModel } from '@/primitives/useProject/useChecklistViewM
 import { useChecklistScore, WorkspaceProjectContext } from '@/project/workspace-data';
 import { db } from '@/primitives/db';
 import { ScoreTag } from '@/components/checklist/ScoreTag';
+import { ChecklistResourcesButton } from '@/components/checklist/ChecklistResourcesButton';
 import { track } from '@/lib/analytics';
 
 interface LocalChecklistViewProps {
@@ -139,6 +140,7 @@ function LocalChecklistEditor({ checklistId }: { checklistId: string }) {
       <div className='bg-border h-4 w-px' />
       <Badge variant='secondary'>Local Only</Badge>
       <ScoreTag currentScore={currentScore} checklistType={checklistType || undefined} />
+      <ChecklistResourcesButton checklistType={checklistType} />
     </>
   );
 
