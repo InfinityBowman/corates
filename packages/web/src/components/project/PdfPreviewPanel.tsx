@@ -18,7 +18,7 @@ export function PdfPreviewPanel() {
   const error = usePdfPreviewStore(s => s.error);
   const closePreview = usePdfPreviewStore(s => s.closePreview);
 
-  const title = pdf?.fileName || 'PDF Viewer';
+  const title = pdf?.fileName || 'PDF preview';
 
   const viewState = useMemo(() => {
     if (loading) return 'loading' as const;
@@ -45,7 +45,7 @@ export function PdfPreviewPanel() {
           <div className='bg-secondary flex h-full flex-1 flex-col'>
             <div className='flex flex-1 items-center justify-center'>
               <div className='text-center'>
-                <p className='text-destructive mb-2'>Failed to load PDF</p>
+                <p className='text-destructive mb-2'>This PDF could not be opened</p>
                 <p className='text-muted-foreground text-sm'>{error}</p>
               </div>
             </div>
@@ -68,7 +68,7 @@ export function PdfPreviewPanel() {
           <div className='bg-secondary flex h-full flex-1 flex-col'>
             <div className='flex flex-1 items-center justify-center'>
               <div className='text-muted-foreground text-center'>
-                <p>No PDF to display</p>
+                <p>No PDF selected</p>
               </div>
             </div>
           </div>

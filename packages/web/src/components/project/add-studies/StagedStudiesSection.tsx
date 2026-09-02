@@ -19,7 +19,7 @@ export function StagedStudiesSection({ studies }: StagedStudiesSectionProps) {
     <div className='border-border mt-4 border-t pt-4'>
       <div className='mb-3 flex items-center justify-between'>
         <h4 className='text-secondary-foreground text-sm font-medium'>
-          Staged Studies ({stagedStudies.length})
+          Ready to add ({stagedStudies.length})
         </h4>
       </div>
 

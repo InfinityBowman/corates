@@ -201,7 +201,7 @@ export async function createProject(page: Page, name: string, description = ''):
   if (description) {
     await page.getByPlaceholder('What is this review about?').fill(description);
   }
-  const createBtn = page.getByRole('button', { name: 'Create Project' });
+  const createBtn = page.getByRole('button', { name: 'Create project' });
   await expect(createBtn).toBeEnabled({ timeout: 10_000 });
   await createBtn.click();
   await expect(page).toHaveURL(/\/projects\//, { timeout: 15_000 });
@@ -247,7 +247,7 @@ export async function addStudyViaPdf(page: Page, fixture = 'Petrie2019.pdf') {
 export async function assignReviewers(page: Page) {
   await page.locator('button:has(svg.lucide-ellipsis-vertical)').first().click();
   await page.getByRole('menuitem', { name: /Assign Reviewers/i }).click();
-  await expect(page.getByRole('heading', { name: 'Assign Reviewers' })).toBeVisible({
+  await expect(page.getByRole('heading', { name: 'Assign reviewers' })).toBeVisible({
     timeout: 5_000,
   });
 
@@ -269,7 +269,7 @@ export async function assignReviewers(page: Page) {
   await expect(page.getByRole('option', { name: /Bob/i })).toBeVisible({ timeout: 15_000 });
   await page.getByRole('option', { name: /Bob/i }).click();
 
-  await dialog.getByRole('button', { name: 'Save' }).click();
+  await dialog.getByRole('button', { name: 'Save reviewers' }).click();
   await expect(dialog).toBeHidden({ timeout: 5_000 });
 }
 

@@ -42,11 +42,11 @@ export function GoogleDrivePickerModal({
     try {
       setImporting(true);
       const result = await importFromGoogleDrive(file.id, projectId, targetStudyId);
-      showToast.success('PDF Imported', `Successfully imported "${file.name}" from Google Drive.`);
+      showToast.success('PDF imported', `"${file.name}" is attached to this study.`);
       onImportSuccess?.(result.file, targetStudyId);
     } catch (err: unknown) {
       const { handleError } = await import('@/lib/error-utils');
-      await handleError(err, { toastTitle: 'Import Failed' });
+      await handleError(err, { toastTitle: 'Could not import from Google Drive' });
     } finally {
       setImporting(false);
     }
@@ -57,7 +57,9 @@ export function GoogleDrivePickerModal({
       <DialogContent className='max-w-lg'>
         <DialogHeader>
           <DialogTitle>Import from Google Drive</DialogTitle>
-          <DialogDescription>Select a PDF from your Google Drive to import</DialogDescription>
+          <DialogDescription>
+            Pick a PDF from your Google Drive to attach to this study.
+          </DialogDescription>
         </DialogHeader>
 
         <div className='flex flex-col gap-4'>

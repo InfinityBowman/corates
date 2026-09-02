@@ -26,7 +26,7 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
                 {firstName}
               </h1>
             </>
-          : <p className='text-primary mb-1 text-sm font-medium'>Welcome to CoRATES!</p>}
+          : <p className='text-primary mb-1 text-sm font-medium'>Welcome to CoRATES</p>}
           {(user?.persona || user?.email) && (
             <p className='text-muted-foreground mt-2'>
               {user.persona ? getRoleLabel(user.persona) : user.email}

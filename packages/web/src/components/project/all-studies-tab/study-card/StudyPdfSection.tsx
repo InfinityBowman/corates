@@ -48,7 +48,7 @@ export function StudyPdfSection({ study, onOpenGoogleDrive, readOnly }: StudyPdf
 
       const validation = await validatePdfFile(file);
       if (!validation.valid) {
-        showToast.error('Invalid File', validation.details.message);
+        showToast.error('That file cannot be used', validation.details.message);
         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
@@ -58,7 +58,7 @@ export function StudyPdfSection({ study, onOpenGoogleDrive, readOnly }: StudyPdf
         await project.pdf.upload(study.id, file);
       } catch (err) {
         const { handleError } = await import('@/lib/error-utils');
-        await handleError(err, { toastTitle: 'Upload Failed' });
+        await handleError(err, { toastTitle: 'Could not upload the PDF' });
       } finally {
         setUploading(false);
         if (fileInputRef.current) fileInputRef.current.value = '';
@@ -127,7 +127,9 @@ export function StudyPdfSection({ study, onOpenGoogleDrive, readOnly }: StudyPdf
             ))}
           </div>
         : <div className='border-border rounded-lg border-2 border-dashed p-6 text-center'>
-            <p className='text-muted-foreground text-sm'>No PDFs uploaded yet</p>
+            <p className='text-muted-foreground text-sm'>
+              No PDFs on this study yet. Reviewers read the PDF while they appraise it.
+            </p>
             {!readOnly && (
               <div className='mt-2 flex items-center justify-center gap-2'>
                 <Button

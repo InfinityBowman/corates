@@ -85,13 +85,13 @@ async function changeOutcomeViaDialog(page: Page, targetOutcomeName: string) {
   await page.getByRole('button', { name: 'Change outcome', exact: true }).first().click();
 
   const dialog = page.getByRole('dialog');
-  await expect(dialog.getByRole('heading', { name: 'Change Outcome' })).toBeVisible({
+  await expect(dialog.getByRole('heading', { name: 'Change outcome' })).toBeVisible({
     timeout: 5_000,
   });
 
   await dialog.getByRole('combobox').click();
   await page.getByRole('option', { name: targetOutcomeName }).click();
-  await dialog.getByRole('button', { name: 'Change Outcome' }).click();
+  await dialog.getByRole('button', { name: 'Change outcome' }).click();
 
   await expect(dialog).toBeHidden({ timeout: 5_000 });
 }

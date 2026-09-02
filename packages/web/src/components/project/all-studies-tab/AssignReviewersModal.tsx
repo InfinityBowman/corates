@@ -73,7 +73,10 @@ export function AssignReviewersModal({
     if (!study) return;
     if (reviewer1 !== '_unassigned' && reviewer1 === reviewer2) {
       const { showToast } = await import('@/lib/toast');
-      showToast.error('Invalid Assignment', 'Reviewer 1 and Reviewer 2 must be different.');
+      showToast.error(
+        'Reviewers must be two different people',
+        'Double review only works when two people appraise the study independently.',
+      );
       return;
     }
     setSaving(true);
@@ -85,7 +88,7 @@ export function AssignReviewersModal({
       onOpenChange(false);
     } catch (err) {
       const { handleError } = await import('@/lib/error-utils');
-      await handleError(err, { toastTitle: 'Update Failed' });
+      await handleError(err, { toastTitle: 'Could not save the reviewers' });
     } finally {
       setSaving(false);
     }
@@ -95,18 +98,18 @@ export function AssignReviewersModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className='max-w-md'>
         <DialogHeader>
-          <DialogTitle>Assign Reviewers</DialogTitle>
+          <DialogTitle>Assign reviewers</DialogTitle>
         </DialogHeader>
         <div className='flex flex-col gap-4'>
           <p className='text-secondary-foreground text-sm'>
-            Assign two reviewers to this study. Each reviewer will independently complete their
-            assessments.
+            Each reviewer gets their own checklist for this study and answers it separately. When
+            both finish, the study moves to Reconcile so they can compare their answers.
           </p>
 
           <div className='flex flex-col gap-4'>
             <div className='text-foreground flex items-center gap-2 text-sm font-medium'>
               <UserIcon className='size-4' />
-              <span>Reviewer Assignments</span>
+              <span>Reviewer assignments</span>
             </div>
 
             <div className='grid grid-cols-2 gap-4'>
@@ -152,7 +155,7 @@ export function AssignReviewersModal({
 
             {members.length === 0 && (
               <p className='text-muted-foreground text-sm'>
-                No team members available. Add members to the project first.
+                This project has no members to assign yet. Invite reviewers from the Overview tab.
               </p>
             )}
           </div>
@@ -162,7 +165,7 @@ export function AssignReviewersModal({
               Cancel
             </Button>
             <Button onClick={handleSave} disabled={saving}>
-              {saving ? 'Saving...' : 'Save'}
+              {saving ? 'Saving...' : 'Save reviewers'}
             </Button>
           </div>
         </div>

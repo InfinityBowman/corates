@@ -83,7 +83,7 @@ function ProjectLoadingFallback() {
           aria-live='polite'
         >
           <Spinner size='sm' variant='default' />
-          <span>Syncing project...</span>
+          <span>Loading your project...</span>
         </div>
         <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
           {Array.from({ length: 6 }).map((_, i) => (
@@ -287,11 +287,11 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
       { value: 'overview', label: 'Overview', icon: HomeIcon },
       {
         value: 'all-studies',
-        label: 'All Studies',
+        label: 'All studies',
         icon: BookOpenIcon,
         getCount: getAllStudiesCount,
       },
-      { value: 'todo', label: 'To Do', icon: ListTodoIcon, getCount: getToDoCount },
+      { value: 'todo', label: 'To-Do', icon: ListTodoIcon, getCount: getToDoCount },
       {
         value: 'reconcile',
         label: 'Reconcile',
@@ -371,7 +371,7 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
                 </SectionErrorBoundary>
               </TabsContent>
               <TabsContent value='all-studies'>
-                <SectionErrorBoundary name='All Studies'>
+                <SectionErrorBoundary name='All studies'>
                   <AllStudiesTab />
                 </SectionErrorBoundary>
               </TabsContent>

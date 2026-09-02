@@ -71,13 +71,23 @@ export function AllStudiesTab() {
       {/* Empty project: the add form is the centerpiece. Once studies exist it
           moves to the Add studies sheet in the project header. */}
       {hasData && studies.length === 0 && (
-        <AddStudiesForm
-          studies={addStudies}
-          projectId={projectId}
-          formType='addStudies'
-          onSaveState={handleSaveState}
-          onAddStudies={handleAddStudies}
-        />
+        <>
+          <div className='mb-4'>
+            <h2 className='text-foreground text-lg font-semibold'>Add your first study</h2>
+            <p className='text-muted-foreground mt-1 text-sm'>
+              Bring in the papers you plan to appraise. Upload PDFs, import a file from your
+              reference manager, look up DOIs or PubMed IDs, or pull PDFs from Google Drive. Once
+              studies are here, you can assign two reviewers to each one.
+            </p>
+          </div>
+          <AddStudiesForm
+            studies={addStudies}
+            projectId={projectId}
+            formType='addStudies'
+            onSaveState={handleSaveState}
+            onAddStudies={handleAddStudies}
+          />
+        </>
       )}
 
       {!hasData && (

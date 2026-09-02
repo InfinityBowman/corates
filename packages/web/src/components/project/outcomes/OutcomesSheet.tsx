@@ -24,7 +24,9 @@ export function OutcomesSheet({ open, onOpenChange }: OutcomesSheetProps) {
         <SheetHeader>
           <SheetTitle>Outcomes</SheetTitle>
           <SheetDescription>
-            Project-level outcomes used by ROB-2 and ROBINS-I checklists
+            An outcome is the result you appraise, such as all-cause mortality. RoB 2 and ROBINS-I
+            checklists are completed once per outcome, so every study in this project can be
+            appraised against the same list.
           </SheetDescription>
         </SheetHeader>
         <div className='p-4'>

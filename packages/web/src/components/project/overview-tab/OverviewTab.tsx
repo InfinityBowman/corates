@@ -182,17 +182,17 @@ export function OverviewTab() {
       const result = await project.member.remove(pendingRemoveMember.memberId);
       if (result.isSelf) {
         navigate({ to: '/dashboard', replace: true });
-        showToast.success('Left Project', 'You have left the project');
+        showToast.success('You left the project', 'You no longer have access to it.');
       } else {
         showToast.success(
-          'Member Removed',
-          `${pendingRemoveMember.memberName} has been removed from the project`,
+          'Member removed',
+          `${pendingRemoveMember.memberName} no longer has access to this project.`,
         );
       }
       setRemoveDialogOpen(false);
     } catch (err) {
       const { handleError } = await import('@/lib/error-utils');
-      await handleError(err, { toastTitle: 'Remove Failed' });
+      await handleError(err, { toastTitle: 'Could not remove the member' });
     }
   }, [pendingRemoveMember, navigate]);
 
@@ -215,7 +215,7 @@ export function OverviewTab() {
     <>
       {/* Project Progress */}
       <div className='border-border bg-card mb-6 rounded-xl border p-5'>
-        <h2 className='text-foreground mb-5 text-base font-semibold'>Project Progress</h2>
+        <h2 className='text-foreground mb-5 text-base font-semibold'>Project progress</h2>
 
         <div className='mb-5 flex flex-col items-center md:flex-row md:items-start md:gap-8'>
           <div className='mb-5 md:mb-0'>
@@ -231,7 +231,7 @@ export function OverviewTab() {
               size={140}
             />
             <p className='text-muted-foreground mt-3 text-center text-sm'>
-              {completedStudies} of {studies.length} studies completed
+              {completedStudies} of {studies.length} studies reconciled and finalized
             </p>
           </div>
 
@@ -241,14 +241,14 @@ export function OverviewTab() {
                 <BookOpenIcon className='text-muted-foreground size-5' />
               </div>
               <p className='text-foreground text-2xl font-bold'>{studies.length}</p>
-              <p className='text-muted-foreground mt-1 text-xs font-medium'>Total Studies</p>
+              <p className='text-muted-foreground mt-1 text-xs font-medium'>Total studies</p>
             </div>
             <div className='border-success-border bg-success-bg rounded-lg border p-4 text-center'>
               <div className='mb-2 flex justify-center'>
                 <ArrowRightLeftIcon className='text-success size-5' />
               </div>
               <p className='text-success text-2xl font-bold'>{readyToReconcile}</p>
-              <p className='text-success mt-1 text-xs font-medium'>Ready to Reconcile</p>
+              <p className='text-success mt-1 text-xs font-medium'>Ready to reconcile</p>
             </div>
             <div className='border-info-border bg-info-bg rounded-lg border p-4 text-center'>
               <div className='mb-2 flex justify-center'>
@@ -263,11 +263,11 @@ export function OverviewTab() {
         {/* Inter-rater Reliability */}
         {interRaterMetrics.studyCount > 0 && (
           <div className='border-border bg-muted mt-5 rounded-lg border p-4'>
-            <h3 className='text-foreground mb-4 text-sm font-semibold'>Inter-rater Reliability</h3>
+            <h3 className='text-foreground mb-4 text-sm font-semibold'>Inter-rater reliability</h3>
             <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
               <div className='text-center'>
                 <p className='text-foreground text-2xl font-bold'>{interRaterMetrics.studyCount}</p>
-                <p className='text-muted-foreground mt-1 text-xs'>Studies Included</p>
+                <p className='text-muted-foreground mt-1 text-xs'>Studies included</p>
               </div>
               <div className='text-center'>
                 <p className='text-success text-2xl font-bold'>
@@ -275,7 +275,7 @@ export function OverviewTab() {
                     `${interRaterMetrics.percentAgreement.toFixed(1)}%`
                   : 'N/A'}
                 </p>
-                <p className='text-muted-foreground mt-1 text-xs'>Percent Agreement</p>
+                <p className='text-muted-foreground mt-1 text-xs'>Percent agreement</p>
               </div>
               <div className='text-center'>
                 <p className='text-info text-2xl font-bold'>
@@ -284,7 +284,7 @@ export function OverviewTab() {
                   : 'N/A'}
                 </p>
                 <p className='text-muted-foreground mt-1 text-xs'>
-                  Cohen&apos;s Kappa ({getKappaInterpretation(interRaterMetrics.cohensKappa)})
+                  Cohen&apos;s kappa ({getKappaInterpretation(interRaterMetrics.cohensKappa)})
                 </p>
               </div>
             </div>
@@ -296,10 +296,10 @@ export function OverviewTab() {
       <div className='border-border bg-card mb-6 rounded-xl border p-5'>
         <div className='mb-4 flex items-center justify-between'>
           <h3 className='text-foreground text-base font-semibold'>
-            Team Members ({members.length})
+            Team members ({members.length})
           </h3>
           {!isOwner ?
-            <DisabledInviteButton reason='Only the project owner can invite.' />
+            <DisabledInviteButton reason='Only the project owner can invite members.' />
           : canAddMember ?
             <Button onClick={() => setShowAddMemberModal(true)}>
               <PlusIcon className='size-4' />
@@ -436,12 +436,12 @@ export function OverviewTab() {
             <AlertDialogIcon variant='danger' />
             <div>
               <AlertDialogTitle>
-                {pendingRemoveMember?.isSelf ? 'Leave Project' : 'Remove Member'}
+                {pendingRemoveMember?.isSelf ? 'Leave this project?' : 'Remove this member?'}
               </AlertDialogTitle>
               <AlertDialogDescription>
                 {pendingRemoveMember?.isSelf ?
-                  'Are you sure you want to leave this project? You will need to be re-invited to rejoin.'
-                : `Are you sure you want to remove ${pendingRemoveMember?.memberName} from this project?`
+                  'You lose access to this project straight away. The checklists you completed stay with the project. Rejoining takes a new invitation from the owner.'
+                : `${pendingRemoveMember?.memberName} loses access to this project straight away. Their completed checklists stay with the project, and any study still assigned to them will need a new reviewer. Rejoining takes a new invitation.`
                 }
               </AlertDialogDescription>
             </div>
@@ -449,7 +449,7 @@ export function OverviewTab() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction variant='destructive' onClick={confirmRemoveMember}>
-              {pendingRemoveMember?.isSelf ? 'Leave Project' : 'Remove'}
+              {pendingRemoveMember?.isSelf ? 'Leave project' : 'Remove member'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

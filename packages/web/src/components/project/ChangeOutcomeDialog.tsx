@@ -51,7 +51,7 @@ export function ChangeOutcomeDialog({
 
   const [selectedOutcomeId, setSelectedOutcomeId] = useState<string | null>(null);
 
-  const currentOutcomeName = outcomes.find(o => o.id === outcomeId)?.name || 'Unknown Outcome';
+  const currentOutcomeName = outcomes.find(o => o.id === outcomeId)?.name || 'Unknown outcome';
 
   const moverAssignees = useMemo(
     () =>
@@ -112,12 +112,13 @@ export function ChangeOutcomeDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Change Outcome</DialogTitle>
+          <DialogTitle>Change outcome</DialogTitle>
           <DialogDescription>
             Move the {getChecklistMetadata(checklistType).name} appraisals of{' '}
             <span className='font-medium'>{study.name}</span> from{' '}
             <span className='font-medium'>{currentOutcomeName}</span> to a different outcome.
-            {hasFinalizedConsensus && ' The finalized reconciliation moves with them.'}
+            {hasFinalizedConsensus &&
+              ' The finalized reconciliation moves with them, so results and exports follow the new outcome.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -127,22 +128,22 @@ export function ChangeOutcomeDialog({
             onValueChange={v => setSelectedOutcomeId(v || null)}
           >
             <SelectTrigger>
-              <SelectValue placeholder='Select new outcome...' />
+              <SelectValue placeholder='Choose the new outcome...' />
             </SelectTrigger>
             <SelectContent>
               {otherOutcomes.map(outcome => (
                 <SelectItem key={outcome.id} value={outcome.id} disabled={outcome.collides}>
                   {outcome.collides ?
-                    `${outcome.name} -- This reviewer already has this checklist for that outcome.`
+                    `${outcome.name} -- a reviewer already has this checklist for that outcome`
                   : outcome.name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         : <div className='border-warning-border bg-warning-bg rounded-lg border p-3'>
-            <p className='text-warning-foreground text-sm font-medium'>No available outcomes</p>
+            <p className='text-warning-foreground text-sm font-medium'>No other outcomes yet</p>
             <p className='text-warning mt-1 text-xs'>
-              Add a new outcome from{' '}
+              This project has only one outcome. Add another from{' '}
               <Button
                 variant='link'
                 size='xs'
@@ -161,7 +162,8 @@ export function ChangeOutcomeDialog({
 
         {otherOutcomes.length > 0 && !hasSelectableTarget && (
           <p className='text-muted-foreground text-xs'>
-            Every other outcome already has this checklist for one of these reviewers.
+            Every other outcome already has this checklist for one of these reviewers. Add a new
+            outcome to move it.
           </p>
         )}
 
@@ -170,7 +172,7 @@ export function ChangeOutcomeDialog({
             Cancel
           </Button>
           <Button onClick={handleConfirm} disabled={!selectedOutcomeId}>
-            Change Outcome
+            Change outcome
           </Button>
         </DialogFooter>
       </DialogContent>

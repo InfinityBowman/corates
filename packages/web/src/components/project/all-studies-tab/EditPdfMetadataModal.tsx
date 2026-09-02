@@ -60,7 +60,10 @@ export function EditPdfMetadataModal({
           if (trunc >= 1900 && trunc <= 2100) {
             parsedYear = trunc;
           } else {
-            showToast.error('Invalid Year', 'Publication year must be between 1900 and 2100.');
+            showToast.error(
+              'Check the publication year',
+              'Enter a four-digit year between 1900 and 2100.',
+            );
             setSaving(false);
             return;
           }
@@ -73,18 +76,18 @@ export function EditPdfMetadataModal({
         journal: journal.trim() || undefined,
         doi: doi.trim() || undefined,
       });
-      showToast.success('PDF Updated', 'Citation metadata saved.');
+      showToast.success('PDF updated', 'The citation details for this PDF are saved.');
       onOpenChange(false);
     } catch (err) {
       const { handleError } = await import('@/lib/error-utils');
-      await handleError(err, { toastTitle: 'Update Failed' });
+      await handleError(err, { toastTitle: 'Could not save the citation details' });
     } finally {
       setSaving(false);
     }
   }, [pdf, studyId, title, firstAuthor, publicationYear, journal, doi, onSave, onOpenChange]);
 
   const tagLabel =
-    pdf?.tag === 'primary' ? 'Primary Report'
+    pdf?.tag === 'primary' ? 'Primary report'
     : pdf?.tag === 'protocol' ? 'Protocol'
     : 'Secondary';
 
@@ -92,7 +95,7 @@ export function EditPdfMetadataModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className='max-w-lg'>
         <DialogHeader>
-          <DialogTitle>Edit PDF Metadata</DialogTitle>
+          <DialogTitle>Edit citation details</DialogTitle>
         </DialogHeader>
         <div className='flex flex-col gap-4'>
           <div className='border-border bg-muted rounded-lg border p-3'>
@@ -115,7 +118,7 @@ export function EditPdfMetadataModal({
 
           <div>
             <Label htmlFor='edit-pdf-title' className='mb-1'>
-              Article Title
+              Article title
             </Label>
             <Textarea
               id='edit-pdf-title'
@@ -129,7 +132,7 @@ export function EditPdfMetadataModal({
           <div className='grid grid-cols-2 gap-4'>
             <div>
               <Label htmlFor='edit-pdf-first-author' className='mb-1'>
-                First Author
+                First author
               </Label>
               <Input
                 id='edit-pdf-first-author'
@@ -141,7 +144,7 @@ export function EditPdfMetadataModal({
             </div>
             <div>
               <Label htmlFor='edit-pdf-pub-year' className='mb-1'>
-                Publication Year
+                Publication year
               </Label>
               <Input
                 id='edit-pdf-pub-year'
@@ -187,7 +190,7 @@ export function EditPdfMetadataModal({
               Cancel
             </Button>
             <Button onClick={handleSave} disabled={saving}>
-              {saving ? 'Saving...' : 'Save Changes'}
+              {saving ? 'Saving...' : 'Save changes'}
             </Button>
           </div>
         </div>

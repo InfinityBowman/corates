@@ -59,14 +59,14 @@ function MemberPercentRow({
               if (isPreset) setShowCustom(false);
             }}
             className='h-auto w-14 rounded px-1.5 py-1 text-center text-xs md:text-xs'
-            aria-label={`Percentage for ${member.name || member.email || 'member'}`}
+            aria-label={`Share of studies for ${member.name || member.email || 'member'}`}
             autoFocus={showCustom}
           />
         : <button
             type='button'
             onClick={() => setShowCustom(true)}
             className='bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded px-2 py-1 text-xs font-medium transition-colors'
-            title='Enter custom percentage'
+            title='Enter a custom percentage'
           >
             ...
           </button>
@@ -189,11 +189,14 @@ export function ReviewerAssignment({
 
   const generateAssignments = useCallback(() => {
     if (unassignedStudies.length === 0) {
-      showToast.info('No Studies', 'All studies already have reviewers assigned.');
+      showToast.info('Nothing to assign', 'Every study already has two reviewers.');
       return null;
     }
     if (showCustomize && !isCustomValid) {
-      showToast.warning('Invalid Distribution', 'Each pool must total 99-101%.');
+      showToast.warning(
+        'Percentages do not add up',
+        'Each reviewer pool has to total between 99% and 101%.',
+      );
       return null;
     }
 
@@ -293,8 +296,8 @@ export function ReviewerAssignment({
     const conflicts = previewAssignments.filter(a => a.sameReviewer);
     if (conflicts.length > 0) {
       showToast.warning(
-        'Conflicts Detected',
-        `${conflicts.length} ${conflicts.length === 1 ? 'study has' : 'studies have'} the same reviewer for both roles. Try reshuffling.`,
+        'Same person on both sides',
+        `${conflicts.length} ${conflicts.length === 1 ? 'study has' : 'studies have'} the same person as both reviewers. Reshuffle to fix it.`,
       );
       return;
     }
@@ -308,14 +311,14 @@ export function ReviewerAssignment({
         successCount++;
       } catch (err) {
         import('@/lib/error-utils').then(({ handleError }) =>
-          handleError(err, { toastTitle: 'Assignment Failed' }),
+          handleError(err, { toastTitle: 'Could not assign reviewers' }),
         );
       }
     }
     if (successCount > 0) {
       showToast.success(
-        'Reviewers Assigned',
-        `Successfully assigned reviewers to ${successCount} ${successCount === 1 ? 'study' : 'studies'}.`,
+        'Reviewers assigned',
+        `${successCount} ${successCount === 1 ? 'study is' : 'studies are'} now assigned. Reviewers see their studies on the To do tab.`,
       );
     }
     setShowPreview(false);
@@ -330,12 +333,13 @@ export function ReviewerAssignment({
     <div>
       {members.length < 2 ?
         <p className='text-muted-foreground text-sm'>
-          At least 2 project members are required to assign reviewers.
+          Double review needs two people. Invite at least one more member from the Overview tab,
+          then come back to assign reviewers.
         </p>
       : unassignedStudies.length === 0 && !showPreview ?
         <div className='text-success flex items-center gap-2'>
           <CheckIcon className='size-5' />
-          <p className='text-sm'>All studies have reviewers assigned.</p>
+          <p className='text-sm'>Every study already has two reviewers.</p>
         </div>
       : <div className='flex flex-col gap-4'>
           {/* Summary */}
@@ -345,7 +349,8 @@ export function ReviewerAssignment({
               unassigned
             </p>
             <p className='text-muted-foreground text-sm'>
-              <span className='text-foreground font-semibold'>{members.length}</span> reviewers
+              <span className='text-foreground font-semibold'>{members.length}</span> possible
+              reviewers
             </p>
             <p className='text-muted-foreground text-sm'>
               <span className='text-foreground font-semibold'>{evenPercent}%</span> each (even)
@@ -369,7 +374,7 @@ export function ReviewerAssignment({
                 <div className='border-border bg-muted rounded-xl border p-4'>
                   <div className='mb-3 flex items-center justify-between'>
                     <h4 className='text-secondary-foreground text-sm font-semibold'>
-                      1st Reviewer Pool
+                      Reviewer 1 pool
                     </h4>
                     <span
                       className={`text-xs font-medium ${isPoolValid(pool1Total) ? 'text-success' : 'text-amber-600'}`}
@@ -393,7 +398,7 @@ export function ReviewerAssignment({
                 <div className='border-border bg-muted rounded-xl border p-4'>
                   <div className='mb-3 flex items-center justify-between'>
                     <h4 className='text-secondary-foreground text-sm font-semibold'>
-                      2nd Reviewer Pool
+                      Reviewer 2 pool
                     </h4>
                     <span
                       className={`text-xs font-medium ${isPoolValid(pool2Total) ? 'text-success' : 'text-amber-600'}`}
@@ -416,7 +421,7 @@ export function ReviewerAssignment({
                 <div className='flex items-center justify-between'>
                   {!isCustomValid && (
                     <p className='text-xs text-amber-600'>
-                      Each pool must total 99-101% to generate
+                      Each pool has to total between 99% and 101% before you can generate
                     </p>
                   )}
                   <button
@@ -442,8 +447,8 @@ export function ReviewerAssignment({
             {showPreview ?
               'Reshuffle'
             : showCustomize ?
-              'Generate with Custom Split'
-            : 'Assign Randomly (Even Split)'}
+              'Generate with custom split'
+            : 'Assign randomly, even split'}
           </Button>
 
           {/* Preview */}
@@ -462,11 +467,12 @@ export function ReviewerAssignment({
                   <h4
                     className={`text-sm font-semibold ${hasConflicts ? 'text-destructive' : 'text-primary'}`}
                   >
-                    Assignment Preview
+                    Assignment preview
                   </h4>
                   {hasConflicts && (
                     <p className='text-destructive text-xs'>
-                      {conflictCount} conflict{conflictCount !== 1 && 's'} - click Reshuffle
+                      {conflictCount} {conflictCount === 1 ? 'study has' : 'studies have'} the same
+                      person twice - reshuffle to fix
                     </p>
                   )}
                 </div>
@@ -483,10 +489,10 @@ export function ReviewerAssignment({
                         Study
                       </th>
                       <th className='text-muted-foreground py-2 pr-4 text-xs font-medium'>
-                        1st Reviewer
+                        Reviewer 1
                       </th>
                       <th className='text-muted-foreground py-2 pr-4 text-xs font-medium'>
-                        2nd Reviewer
+                        Reviewer 2
                       </th>
                     </tr>
                   </thead>
@@ -517,7 +523,7 @@ export function ReviewerAssignment({
               <div className='border-border bg-muted flex gap-2 border-t px-4 py-3'>
                 <Button variant='success' onClick={handleApply} disabled={hasConflicts}>
                   <CheckIcon className='size-4' />
-                  Apply Assignments
+                  Apply assignments
                 </Button>
                 <Button
                   variant='outline'

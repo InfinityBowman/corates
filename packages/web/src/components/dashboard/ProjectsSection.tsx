@@ -97,7 +97,10 @@ export function ProjectsSection({
 
     const project = projects?.find(p => p.id === pendingDeleteId);
     if (!project?.orgId) {
-      showToast.error('Error', 'Unable to find project organization');
+      showToast.error(
+        'Delete failed',
+        'We could not find the organization this project belongs to. Reload the page and try again.',
+      );
       setDeleteDialogOpen(false);
       return;
     }
@@ -108,11 +111,11 @@ export function ProjectsSection({
       await deleteProject({ data: { orgId: project.orgId, projectId: pendingDeleteId } });
 
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
-      showToast.success('Project Deleted', 'The project has been deleted successfully');
+      showToast.success('Project deleted', 'The project and everything in it has been removed.');
       setDeleteDialogOpen(false);
     } catch (err) {
       const { handleError } = await import('@/lib/error-utils');
-      await handleError(err, { toastTitle: 'Delete Failed' });
+      await handleError(err, { toastTitle: 'Delete failed' });
     } finally {
       setDeleteLoading(false);
       setPendingDeleteId(null);
@@ -138,18 +141,18 @@ export function ProjectsSection({
       {showHeader && (
         <div className='mb-4 flex items-center justify-between'>
           <h2 className='text-muted-foreground text-sm font-semibold tracking-wide uppercase'>
-            Your Projects
+            Your projects
           </h2>
           {canCreateProject ?
             <Button onClick={handleCreateClick} disabled={!isOnline}>
               <PlusIcon data-icon='inline-start' />
-              New Project
+              New project
             </Button>
           : <Popover>
               <PopoverTrigger asChild>
                 <Button disabled={!isOnline}>
                   <PlusIcon data-icon='inline-start' />
-                  New Project
+                  New project
                 </Button>
               </PopoverTrigger>
               <PopoverContent align='end'>
@@ -175,7 +178,8 @@ export function ProjectsSection({
               No projects yet
             </h3>
             <p className='text-muted-foreground mb-6 max-w-sm text-center text-sm'>
-              Create your first project to start collaborating on evidence synthesis with your team.
+              A project is where you and your team appraise the same studies and reconcile where you
+              disagree. Use New project above to create your first one.
             </p>
           </div>
         )}
@@ -199,9 +203,10 @@ export function ProjectsSection({
               <TriangleAlertIcon />
             </AlertDialogIcon>
             <div>
-              <AlertDialogTitle>Delete Project</AlertDialogTitle>
+              <AlertDialogTitle>Delete project</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete this entire project? This action cannot be undone.
+                Deleting this project removes its studies, checklists, and reconciliations for
+                everyone on it. This cannot be undone.
               </AlertDialogDescription>
             </div>
           </AlertDialogHeader>
@@ -212,7 +217,7 @@ export function ProjectsSection({
               disabled={deleteLoading}
               onClick={confirmDeleteProject}
             >
-              {deleteLoading ? 'Deleting...' : 'Delete Project'}
+              {deleteLoading ? 'Deleting...' : 'Delete project'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -241,7 +246,7 @@ function RestrictionNudge({
         <p className='text-muted-foreground mt-1 text-sm'>{message}</p>
       </div>
       <Button asChild className='w-full'>
-        <a href='/pricing'>View Plans</a>
+        <a href='/pricing'>View plans</a>
       </Button>
     </div>
   );
