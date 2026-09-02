@@ -49,11 +49,12 @@ export async function sendProjectMemberAddedEmail(
   });
 
   const safeProjectName = sanitizeEmailSubject(projectName);
+  const safeInviterName = sanitizeEmailSubject(inviterName);
 
   try {
     await queueEmail(env.EMAIL_QUEUE, {
       to: email,
-      subject: `You've been added to "${safeProjectName}" - CoRATES`,
+      subject: `${safeInviterName} added you to "${safeProjectName}" on CoRATES`,
       html: emailHtml,
       text: emailText,
     });

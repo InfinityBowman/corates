@@ -77,11 +77,12 @@ export async function sendInvitationEmail(
   });
 
   const safeProjectName = sanitizeEmailSubject(projectName);
+  const safeInviterName = sanitizeEmailSubject(inviterName);
 
   try {
     await queueEmail(env.EMAIL_QUEUE, {
       to: email,
-      subject: `You're Invited to "${safeProjectName}" - CoRATES`,
+      subject: `${safeInviterName} invited you to "${safeProjectName}" on CoRATES`,
       html: emailHtml,
       text: emailText,
     });

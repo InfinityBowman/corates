@@ -12,9 +12,9 @@ import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 
 const pageUrl = `${config.appUrl}/contact`;
-const title = 'Contact Us - CoRATES';
+const title = 'Contact CoRATES - Questions, Feedback, and Support';
 const description =
-  'Get in touch with the CoRATES team. We would love to hear from you about questions, feedback, or partnership opportunities.';
+  'Get in touch with the CoRATES team about the appraisal platform, systematic review workflows, feature requests, or partnership opportunities.';
 
 export const Route = createFileRoute('/contact')({
   headers: () => ({

@@ -1,10 +1,34 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { PricingTable } from '@/components/billing/PricingTable';
 import { PlanFAQ, getFaqItemsForSchema } from '@/components/billing/PlanFAQ';
+import { getBillingPlanCatalog } from '@corates/shared/plans';
 import { config, urls } from '@/lib/config';
 
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+
+const catalog = getBillingPlanCatalog();
+
+// The catalog lists subscriptions cheapest-first, so the first one is the entry price.
+const entryPlan = catalog.plans.find(p => p.cta === 'subscribe');
+const singleProjectPlan = catalog.plans.find(p => p.tier === 'single_project');
+
+// Prices are stated in the description as text so that the crawlers and assistants people
+// use to shortlist tools can quote them without rendering the page.
+const pageDescription = [
+  'Appraise a single study with AMSTAR 2, RoB 2, or ROBINS-I free in your browser, with no account.',
+  entryPlan?.price?.monthly != null ?
+    `Team plans start at $${entryPlan.price.monthly} per month.`
+  : '',
+  singleProjectPlan?.oneTime ?
+    `A single review project is $${singleProjectPlan.oneTime.amount} once for ${singleProjectPlan.oneTime.durationMonths} months.`
+  : '',
+  'The co-reviewers you invite never pay.',
+]
+  .filter(Boolean)
+  .join(' ');
+
+const pageTitle = 'Pricing - CoRATES';
 
 const faqSchema = JSON.stringify({
   '@context': 'https://schema.org',
@@ -25,25 +49,13 @@ export const Route = createFileRoute('/pricing')({
   }),
   head: () => ({
     meta: [
-      { title: 'Pricing - CoRATES' },
-      {
-        name: 'description',
-        content:
-          'Explore our plans for researchers and evidence synthesis teams. Start with a free trial, then choose the plan that fits your needs.',
-      },
-      { property: 'og:title', content: 'Pricing - CoRATES' },
-      {
-        property: 'og:description',
-        content:
-          'Explore our plans for researchers and evidence synthesis teams. Start with a free trial, then choose the plan that fits your needs.',
-      },
+      { title: pageTitle },
+      { name: 'description', content: pageDescription },
+      { property: 'og:title', content: pageTitle },
+      { property: 'og:description', content: pageDescription },
       { property: 'og:url', content: `${config.appUrl}/pricing` },
-      { name: 'twitter:title', content: 'Pricing - CoRATES' },
-      {
-        name: 'twitter:description',
-        content:
-          'Explore our plans for researchers and evidence synthesis teams. Start with a free trial, then choose the plan that fits your needs.',
-      },
+      { name: 'twitter:title', content: pageTitle },
+      { name: 'twitter:description', content: pageDescription },
     ],
     links: [{ rel: 'canonical', href: `${config.appUrl}/pricing` }],
   }),

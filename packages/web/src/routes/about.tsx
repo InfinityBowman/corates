@@ -10,9 +10,9 @@ import CTA from '../components/CTA';
 import { config } from '../lib/config';
 
 const pageUrl = `${config.appUrl}/about`;
-const title = 'About CoRATES - Our Story and Team';
+const title = 'About CoRATES - The Team Behind the Appraisal Platform';
 const description =
-  'Learn about CoRATES, developed by a research synthesis expert and software engineer to support rigorous evidence appraisal.';
+  'Meet the team behind CoRATES: a research synthesis expert and a software engineer building tools for rigorous, transparent study appraisal in evidence synthesis.';
 
 export const Route = createFileRoute('/about')({
   headers: () => ({

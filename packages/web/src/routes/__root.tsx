@@ -37,11 +37,17 @@ function ClientOnly({ children }: { children: React.ReactNode }) {
 const SITE_URL = 'https://corates.org';
 const IMAGE_URL = `${SITE_URL}/landing_preview.png`;
 
+const ORGANIZATION_ID = `${SITE_URL}/#organization`;
+const WEBSITE_ID = `${SITE_URL}/#website`;
+
+// Only assert what is verifiable: there are no public social profiles to list
+// under sameAs, and no ratings/reviews exist, so no aggregateRating is claimed.
 const structuredData = JSON.stringify({
   '@context': 'https://schema.org',
   '@graph': [
     {
       '@type': 'Organization',
+      '@id': ORGANIZATION_ID,
       name: 'Syntch LLC',
       alternateName: 'CoRATES',
       url: SITE_URL,
@@ -53,25 +59,43 @@ const structuredData = JSON.stringify({
       },
     },
     {
+      '@type': 'WebSite',
+      '@id': WEBSITE_ID,
+      name: 'CoRATES',
+      alternateName: 'Collaborative Research Appraisal Tool for Evidence Synthesis',
+      url: SITE_URL,
+      inLanguage: 'en-US',
+      publisher: { '@id': ORGANIZATION_ID },
+    },
+    {
+      // WebApplication is a subtype of SoftwareApplication, so a separate
+      // SoftwareApplication node would only duplicate this entity.
       '@type': 'WebApplication',
+      '@id': `${SITE_URL}/#webapp`,
       name: 'CoRATES',
       url: SITE_URL,
+      isPartOf: { '@id': WEBSITE_ID },
       applicationCategory: 'EducationalApplication',
       applicationSubCategory: 'Research Tool',
       description:
         'Collaborative Research Appraisal Tool for Evidence Synthesis. Streamlines quality and risk-of-bias appraisal with real-time collaboration, automatic scoring, and visual summaries.',
       operatingSystem: 'Any',
       browserRequirements: 'Requires a modern web browser',
+      featureList: [
+        'RoB 2 risk-of-bias appraisal',
+        'ROBINS-I risk-of-bias appraisal',
+        'AMSTAR 2 systematic review appraisal',
+        'Double coding and consensus reconciliation',
+        'Automatic rule-based scoring',
+        'Visual risk-of-bias summaries',
+      ],
       offers: {
         '@type': 'Offer',
         price: '0',
         priceCurrency: 'USD',
         description: 'Free plan available',
       },
-      provider: {
-        '@type': 'Organization',
-        name: 'Syntch LLC',
-      },
+      provider: { '@id': ORGANIZATION_ID },
     },
   ],
 });
@@ -132,6 +156,7 @@ export const Route = createRootRoute({
       { name: 'twitter:card', content: 'summary_large_image' },
       { name: 'theme-color', content: '#ffffff' },
       { name: 'twitter:image', content: IMAGE_URL },
+      { name: 'twitter:image:alt', content: 'CoRATES product screenshot' },
     ],
     links: [
       { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },

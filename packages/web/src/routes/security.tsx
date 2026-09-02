@@ -11,33 +11,26 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { config } from '../lib/config';
 
+const pageUrl = `${config.appUrl}/security`;
+const title = 'Security at CoRATES - How We Protect Research Data';
+const description =
+  'How CoRATES protects your research data: encryption in transit and at rest, authentication and access controls, abuse prevention, and infrastructure hardening.';
+
 export const Route = createFileRoute('/security')({
   headers: () => ({
     'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
   }),
   head: () => ({
     meta: [
-      { title: 'Security - CoRATES' },
-      {
-        name: 'description',
-        content:
-          'Learn about the security measures CoRATES implements to protect your research data and ensure the integrity of your evidence synthesis work.',
-      },
-      { property: 'og:title', content: 'Security - CoRATES' },
-      {
-        property: 'og:description',
-        content:
-          'Learn about the security measures CoRATES implements to protect your research data and ensure the integrity of your evidence synthesis work.',
-      },
-      { property: 'og:url', content: `${config.appUrl}/security` },
-      { name: 'twitter:title', content: 'Security - CoRATES' },
-      {
-        name: 'twitter:description',
-        content:
-          'Learn about the security measures CoRATES implements to protect your research data and ensure the integrity of your evidence synthesis work.',
-      },
+      { title },
+      { name: 'description', content: description },
+      { property: 'og:title', content: title },
+      { property: 'og:description', content: description },
+      { property: 'og:url', content: pageUrl },
+      { name: 'twitter:title', content: title },
+      { name: 'twitter:description', content: description },
     ],
-    links: [{ rel: 'canonical', href: `${config.appUrl}/security` }],
+    links: [{ rel: 'canonical', href: pageUrl }],
   }),
   component: SecurityPage,
 });

@@ -10,9 +10,9 @@ import Footer from '../components/Footer';
 import { config } from '../lib/config';
 
 const pageUrl = `${config.appUrl}/`;
-const title = 'CoRATES - Collaborative Research Appraisal Tool for Evidence Synthesis';
+const title = 'Risk of Bias and Quality Appraisal Software | CoRATES';
 const description =
-  'CoRATES streamlines quality and risk-of-bias appraisal with intuitive workflows, real-time collaboration, automatic scoring, and clear visual summaries for evidence synthesis.';
+  'Collaborative risk-of-bias appraisal for systematic reviews. Run RoB 2, ROBINS-I, and AMSTAR 2 appraisals with double coding, automatic scoring, and visual summaries.';
 
 export const Route = createFileRoute('/')({
   headers: () => ({

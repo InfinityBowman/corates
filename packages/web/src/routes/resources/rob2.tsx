@@ -7,11 +7,9 @@ import { config } from '../../lib/config';
 
 const tool = getToolBySlug('rob2');
 const pageUrl = `${config.appUrl}/resources/rob2`;
-const title = tool ? `${tool.name} Resources - CoRATES` : 'RoB 2 - CoRATES';
+const title = 'RoB 2: Cochrane Risk of Bias Tool Guide | CoRATES';
 const description =
-  tool ?
-    `Learn about ${tool.name}, including scoring guidance and links to official documentation.`
-  : 'RoB 2 appraisal tool resources.';
+  'How the Cochrane RoB 2 tool assesses risk of bias in randomized trials: the five bias domains, the overall risk-of-bias judgements, and official guidance.';
 
 export const Route = createFileRoute('/resources/rob2')({
   headers: () => ({

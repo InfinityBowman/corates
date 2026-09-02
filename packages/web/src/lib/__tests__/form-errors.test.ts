@@ -65,7 +65,9 @@ describe('handleFormError', () => {
 
     expect(handled).toBe(true);
     expect(setFieldError).not.toHaveBeenCalled();
-    expect(setGlobalError).toHaveBeenCalledWith('Validation failed');
+    expect(setGlobalError).toHaveBeenCalledWith(
+      'Some of the information you entered is not valid.',
+    );
   });
 
   it('should handle non-validation domain errors as global error', () => {

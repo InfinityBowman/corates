@@ -6,17 +6,18 @@
 export const UNKNOWN_ERRORS = {
   PROGRAMMER_ERROR: {
     code: 'UNKNOWN_PROGRAMMER_ERROR',
-    defaultMessage: 'An unexpected error occurred',
+    defaultMessage:
+      'An unexpected error occurred. Try again, and contact support if it keeps happening.',
     statusCode: 500,
   },
   UNHANDLED_ERROR: {
     code: 'UNKNOWN_UNHANDLED_ERROR',
-    defaultMessage: 'Something went wrong',
+    defaultMessage: 'Something went wrong. Try again, and contact support if it keeps happening.',
     statusCode: 500,
   },
   INVALID_RESPONSE: {
     code: 'UNKNOWN_INVALID_RESPONSE',
-    defaultMessage: 'Invalid error response format',
+    defaultMessage: 'The server sent a response CoRATES could not read. Try again.',
     statusCode: 500,
   },
 } as const;
