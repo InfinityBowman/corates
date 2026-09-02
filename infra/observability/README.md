@@ -47,12 +47,19 @@ Grafana talks to Loki internally over the docker network without auth.
   (see `packages/web/wrangler.jsonc` and `packages/stripe-purchases/wrangler.jsonc`).
   Only the `production` envs export; staging logs stay in Cloudflare Workers Logs so the
   Grafana views are production-only.
-- Retention is 90d (`limits_config.retention_period` in `config/loki/loki-config.yaml`).
-  `max_query_length` is 7 months: Loki's default is 721h, which rejected anything past
+- Retention is unlimited. `limits_config.retention_period` is `0s`, which Loki reads as
+  "keep forever"; that is also the built-in default, so the setting is there to document
+  the intent rather than to change behaviour. `compactor.retention_enabled` stays `true`
+  so the compactor keeps compacting the index and can still serve delete requests - it is
+  the `retention_period` that decides whether anything ages out, not that flag. Turning
+  `retention_enabled` off would disable compaction too, which is not what you want.
+  `max_query_length` is 5 years: Loki's default is 721h, which rejected anything past
   a month with "the query time range exceeds the limit" even though the data was still
   on disk. A query's range and its range-vector window are both charged against that
-  limit, so a 90d panel with a `[24h]` window asks for 91d. The ceiling sits well above
-  retention, so raising `retention_period` needs no matching change here.
+  limit, so a 90d panel with a `[24h]` window asks for 91d. With retention unbounded this
+  ceiling, not retention, is what caps how far back a dashboard can look, so raise it
+  before pointing a panel at a longer window. `max_query_lookback` is unset (`0s`, no
+  limit), so nothing else truncates old queries.
 - Cloudflare re-delivers failed export batches hours later (up to ~6h seen). Loki only
   accepts entries within `max_chunk_age / 2` of the newest entry in the stream, so
   `ingester.max_chunk_age` is 24h (12h window); `querier.query_ingesters_within: 0` keeps

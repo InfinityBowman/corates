@@ -47,9 +47,12 @@ compactor:
   delete_request_store: s3
 
 limits_config:
-  retention_period: 90d
-  # Default 721h rejects anything past a month
-  max_query_length: 5040h # 7 months
+  # 0s keeps logs forever. retention_enabled stays true above so the compactor still
+  # compacts the index and can serve delete requests; with no period it deletes nothing.
+  retention_period: 0s
+  # Default 721h rejects anything past a month. A query's range and its range-vector
+  # window are both charged against this, so keep it clear of the longest panel window.
+  max_query_length: 43800h # 5 years
   # Default 500 is thin for route/url_path cardinality
   max_query_series: 5000
   # Required for OTLP ingestion; OTLP attributes land as structured metadata
