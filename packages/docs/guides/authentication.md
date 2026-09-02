@@ -97,19 +97,13 @@ The React client is configured in `packages/web/src/api/auth-client.ts`:
 
 ```ts
 import { createAuthClient } from 'better-auth/react';
-import {
-  genericOAuthClient,
-  magicLinkClient,
-  twoFactorClient,
-  adminClient,
-  organizationClient,
-} from 'better-auth/client/plugins';
+import { magicLinkClient, twoFactorClient, adminClient, organizationClient } from 'better-auth/client/plugins';
 import { API_BASE } from '@/config/api';
 import { parseError } from '@/lib/error-utils';
 
 export const authClient = createAuthClient({
   baseURL: API_BASE,
-  plugins: [genericOAuthClient(), magicLinkClient(), twoFactorClient(), adminClient(), organizationClient()],
+  plugins: [magicLinkClient(), twoFactorClient(), adminClient(), organizationClient()],
   fetchOptions: {
     credentials: 'include',
     onError(error) {

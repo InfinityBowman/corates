@@ -39,8 +39,8 @@ beforeEach(async () => {
 async function seedAccount(userId: string, providerId = 'google') {
   const nowSec = Math.floor(Date.now() / 1000);
   await env.DB.prepare(
-    `INSERT INTO account (id, userId, accountId, providerId, createdAt, updatedAt)
-     VALUES (?1, ?2, ?3, ?4, ?5, ?6)`,
+    `INSERT INTO account (id, userId, accountId, providerId, issuer, createdAt, updatedAt)
+     VALUES (?1, ?2, ?3, ?4, 'local:oauth:' || ?4, ?5, ?6)`,
   )
     .bind(
       `acc-${userId}-${providerId}`,

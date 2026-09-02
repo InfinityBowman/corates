@@ -137,6 +137,7 @@ export const account = sqliteTable(
     id: text('id').primaryKey(),
     accountId: text('accountId').notNull(),
     providerId: text('providerId').notNull(),
+    issuer: text('issuer').notNull(),
     userId: text('userId')
       .notNull()
       .$type<UserId>()
@@ -151,7 +152,10 @@ export const account = sqliteTable(
     createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
     updatedAt: integer('updatedAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
   },
-  t => [index('account_userId_idx').on(t.userId)],
+  t => [
+    index('account_userId_idx').on(t.userId),
+    uniqueIndex('account_issuer_accountId_uidx').on(t.issuer, t.accountId),
+  ],
 );
 
 // Verification table

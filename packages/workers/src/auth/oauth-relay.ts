@@ -47,6 +47,7 @@ interface RelayPayload {
   };
   account: {
     providerId: string;
+    issuer: string;
     accountId: string;
     accessToken?: string;
     refreshToken?: string;
@@ -172,10 +173,7 @@ export const oAuthRelay = (opts: OAuthRelayOptions) => {
            * On sign-in initiation (localhost): Mark for relay processing.
            */
           matcher(context) {
-            return !!(
-              context.path?.startsWith('/sign-in/social') ||
-              context.path?.startsWith('/sign-in/oauth2')
-            );
+            return !!context.path?.startsWith('/sign-in/social');
           },
           handler: createAuthMiddleware(async ctx => {
             const currentOrigin = getOrigin(ctx.context.baseURL);
@@ -198,9 +196,7 @@ export const oAuthRelay = (opts: OAuthRelayOptions) => {
            * If so, handle the entire callback ourselves and relay the data back.
            */
           matcher(context) {
-            return !!(
-              context.path?.startsWith('/callback') || context.path?.startsWith('/oauth2/callback')
-            );
+            return !!context.path?.startsWith('/callback');
           },
           handler: createAuthMiddleware(async ctx => {
             const state = ctx.query?.state || ctx.body?.state;
@@ -294,18 +290,28 @@ export const oAuthRelay = (opts: OAuthRelayOptions) => {
             }
 
             // Get user info from provider
-            const userInfoResponse = await provider.getUserInfo(tokens);
-            const userInfo = userInfoResponse?.user;
+            const providerResult = await provider.getUserInfo(tokens);
+            const userInfo = providerResult?.user;
 
-            if (!userInfo || !userInfo.email) {
+            if (!providerResult || !userInfo || !userInfo.email) {
               ctx.context.logger.error('Failed to get user info');
               throw ctx.redirect(`${relayPackage.relayOrigin}/api/auth/error?error=no_user_info`);
             }
 
+            // Mirrors better-auth's resolveOAuthAccountKey, which is not exported:
+            // the provider subject comes from the raw profile, and providers
+            // without an issuer fall back to the synthetic local namespace.
+            const keyContext = { tokens, profile: providerResult.data };
+            const accountId = String(await provider.accountSubject(keyContext));
+            const issuer =
+              typeof provider.accountIssuer === 'function' ?
+                await provider.accountIssuer(keyContext)
+              : (provider.accountIssuer ?? `local:oauth:${encodeURIComponent(provider.id)}`);
+
             // Build relay payload
             const payload: RelayPayload = {
               userInfo: {
-                id: String(userInfo.id),
+                id: accountId,
                 email: userInfo.email,
                 name: userInfo.name || userInfo.email,
                 image: userInfo.image,
@@ -313,7 +319,8 @@ export const oAuthRelay = (opts: OAuthRelayOptions) => {
               },
               account: {
                 providerId: provider.id,
-                accountId: String(userInfo.id),
+                issuer,
+                accountId,
                 accessToken: tokens.accessToken,
                 refreshToken: tokens.refreshToken,
                 accessTokenExpiresAt: tokens.accessTokenExpiresAt,
@@ -348,10 +355,7 @@ export const oAuthRelay = (opts: OAuthRelayOptions) => {
            * to include relay information in the state.
            */
           matcher(context) {
-            return !!(
-              context.path?.startsWith('/sign-in/social') ||
-              context.path?.startsWith('/sign-in/oauth2')
-            );
+            return !!context.path?.startsWith('/sign-in/social');
           },
           handler: createAuthMiddleware(async ctx => {
             const relayOrigin = relayOrigins.get(ctx.context);

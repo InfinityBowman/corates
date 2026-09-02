@@ -250,8 +250,8 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
       saveLastLoginMethod(LOGIN_METHODS.ORCID);
 
       const data = await authFetch(
-        authClient.signIn.oauth2({
-          providerId: 'orcid',
+        authClient.signIn.social({
+          provider: 'orcid',
           callbackURL,
           errorCallbackURL: errorURL,
         }),

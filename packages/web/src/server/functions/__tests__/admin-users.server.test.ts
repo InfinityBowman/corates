@@ -90,6 +90,7 @@ async function seedAccountRow(
     id,
     accountId,
     providerId,
+    issuer: `local:oauth:${providerId}`,
     userId,
     createdAt: new Date(),
     updatedAt: new Date(),

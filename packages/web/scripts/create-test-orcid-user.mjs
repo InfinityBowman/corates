@@ -201,12 +201,13 @@ async function main() {
 
   // Create ORCID account SQL
   const createAccountSql = `INSERT INTO account (
-    id, userId, accountId, providerId, createdAt, updatedAt
+    id, userId, accountId, providerId, issuer, createdAt, updatedAt
   ) VALUES (
     ${sqlString(accountId)},
     ${sqlString(userId)},
     ${sqlString(normalizeOrcidId(orcidId))},
     'orcid',
+    'https://orcid.org',
     ${now},
     ${now}
   );`;
