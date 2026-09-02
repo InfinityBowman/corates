@@ -4,7 +4,7 @@ import { SettingsPage } from './primitives';
 
 export function ProfileSettings() {
   return (
-    <SettingsPage title='Profile' description='Manage your personal information.'>
+    <SettingsPage title='Profile' description='Your name, photo, and academic affiliation.'>
       <ProfileForm />
       <DeleteAccountSection />
     </SettingsPage>

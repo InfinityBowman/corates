@@ -45,15 +45,17 @@ export function CreateOrgPage() {
       const orgSlug = slug.trim();
 
       if (!orgName) {
-        setError('Organization name is required');
+        setError('Enter a name for your organization.');
         return;
       }
       if (!orgSlug) {
-        setError('Organization slug is required');
+        setError('Enter a URL slug for your organization.');
         return;
       }
       if (!/^[a-z0-9-]+$/.test(orgSlug)) {
-        setError('Slug can only contain lowercase letters, numbers, and hyphens');
+        setError(
+          'The URL slug can only contain lowercase letters, numbers, and hyphens. Remove any other characters.',
+        );
         return;
       }
 
@@ -68,7 +70,10 @@ export function CreateOrgPage() {
 
         await queryClient.invalidateQueries({ queryKey: queryKeys.orgs.list });
         localStorage.setItem(LAST_ORG_KEY, orgSlug);
-        showToast.success('Organization Created', `${orgName} is ready to use`);
+        showToast.success(
+          'Organization created',
+          `${orgName} is ready. Create a project to start appraising with your team.`,
+        );
         navigate({ to: '/dashboard', replace: true });
       } catch (err: unknown) {
         const { handleError } = await import('@/lib/error-utils');
@@ -85,9 +90,10 @@ export function CreateOrgPage() {
       <div className='w-full max-w-md'>
         <div className='border-border bg-card rounded-lg border p-8 shadow-sm'>
           <div className='mb-6 text-center'>
-            <h1 className='text-foreground text-2xl font-bold'>Create Your Workspace</h1>
+            <h1 className='text-foreground text-2xl font-bold'>Create an organization</h1>
             <p className='text-muted-foreground mt-2'>
-              Organizations help you collaborate with your team on research projects.
+              An organization holds your projects and the people you appraise with. Most teams name
+              it after their lab, department, or review group.
             </p>
           </div>
 
@@ -95,7 +101,7 @@ export function CreateOrgPage() {
             {error && <Alert variant='destructive'>{error}</Alert>}
 
             <div>
-              <Label htmlFor='org-name'>Organization Name</Label>
+              <Label htmlFor='org-name'>Organization name</Label>
               <Input
                 id='org-name'
                 type='text'
@@ -108,7 +114,7 @@ export function CreateOrgPage() {
             </div>
 
             <div>
-              <Label htmlFor='org-slug'>URL Slug</Label>
+              <Label htmlFor='org-slug'>URL slug</Label>
               <div className='border-border focus-within:border-primary focus-within:ring-primary mt-1 flex rounded-lg border shadow-sm focus-within:ring-1'>
                 <span className='border-border bg-muted text-muted-foreground inline-flex items-center rounded-l-lg border-r px-3 text-sm'>
                   /orgs/
@@ -124,7 +130,8 @@ export function CreateOrgPage() {
                 />
               </div>
               <p className='text-muted-foreground mt-1 text-xs'>
-                Lowercase letters, numbers, and hyphens only
+                This becomes your organization&apos;s web address. Lowercase letters, numbers, and
+                hyphens only
               </p>
             </div>
 
@@ -134,7 +141,7 @@ export function CreateOrgPage() {
               disabled={isSubmitting || !name.trim() || !slug.trim()}
               className='w-full'
             >
-              {isSubmitting ? 'Creating...' : 'Create Organization'}
+              {isSubmitting ? 'Creating...' : 'Create organization'}
             </Button>
           </form>
         </div>

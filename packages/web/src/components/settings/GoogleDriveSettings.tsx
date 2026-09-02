@@ -37,7 +37,7 @@ export function GoogleDriveSettings() {
         if (!cancelled) setConnected(status.connected);
       } catch (err) {
         const { handleError } = await import('@/lib/error-utils');
-        await handleError(err, { toastTitle: 'Google Drive Error' });
+        await handleError(err, { toastTitle: 'Could not check your Google Drive connection' });
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -59,12 +59,12 @@ export function GoogleDriveSettings() {
 
       if (isAccountConflict) {
         showToast.error(
-          'Account Conflict',
+          'Google account already in use',
           'That Google account belongs to a different CoRATES user. Use another Google account, or contact support.',
         );
       } else {
         const { handleError } = await import('@/lib/error-utils');
-        await handleError(err, { toastTitle: 'Connection Failed' });
+        await handleError(err, { toastTitle: 'Could not connect Google Drive' });
       }
       setConnecting(false);
     }
@@ -78,7 +78,7 @@ export function GoogleDriveSettings() {
       showToast.success('Disconnected', 'Google Drive is no longer connected.');
     } catch (err) {
       const { handleError } = await import('@/lib/error-utils');
-      await handleError(err, { toastTitle: 'Error' });
+      await handleError(err, { toastTitle: 'Could not disconnect Google Drive' });
     } finally {
       setDisconnecting(false);
       setConfirmOpen(false);
@@ -127,7 +127,9 @@ export function GoogleDriveSettings() {
           <AlertDialogHeader>
             <AlertDialogTitle>Disconnect Google Drive?</AlertDialogTitle>
             <AlertDialogDescription>
-              You won&apos;t be able to import PDFs from Drive until you connect it again.
+              PDFs you already imported stay in your projects, but you will not be able to import
+              new ones until you connect Drive again. This also removes Google as a sign-in method
+              on your account.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

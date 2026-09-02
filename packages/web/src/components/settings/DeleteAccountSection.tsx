@@ -20,9 +20,9 @@ import {
 import { SettingsSection, SettingsRow } from './primitives';
 
 const CONSEQUENCES = [
-  'All your projects are permanently deleted',
-  'All your checklists and reviews are lost',
-  'You are removed from every shared project',
+  'Every project you created is deleted, for you and for everyone you shared it with',
+  'The appraisals in those projects are deleted with them',
+  'You are removed from projects other people created; those projects stay',
 ];
 
 export function DeleteAccountSection() {
@@ -44,7 +44,7 @@ export function DeleteAccountSection() {
       window.location.href = '/';
     } catch (err) {
       const { handleError } = await import('@/lib/error-utils');
-      await handleError(err, { toastTitle: 'Delete Failed' });
+      await handleError(err, { toastTitle: 'Could not delete your account' });
       setDeleting(false);
     }
   }, [confirmText, deleteAccount]);
@@ -56,7 +56,7 @@ export function DeleteAccountSection() {
       <SettingsSection title='Danger zone' icon={TriangleAlertIcon} tone='destructive'>
         <SettingsRow
           label='Delete account'
-          description='Permanently delete your account and everything in it. This cannot be undone.'
+          description='Permanently delete your account, the projects you created, and their appraisals. This cannot be undone.'
         >
           <Button variant='destructive' onClick={() => setOpen(true)}>
             Delete account
@@ -76,7 +76,8 @@ export function DeleteAccountSection() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete your account?</AlertDialogTitle>
             <AlertDialogDescription>
-              This is permanent. There is no way to restore your account or its data.
+              This is permanent. There is no way to restore your account or its data, and
+              collaborators cannot restore it either.
             </AlertDialogDescription>
           </AlertDialogHeader>
 

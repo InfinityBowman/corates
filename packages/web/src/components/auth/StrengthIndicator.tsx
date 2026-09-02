@@ -51,6 +51,10 @@ export function StrengthIndicator({ password, onUnmet }: StrengthIndicatorProps)
     onUnmet?.(strength.errors);
   }, [strength.errors, onUnmet]);
 
+  // Before the user types, the list is guidance rather than a set of failures,
+  // so it stays neutral instead of showing five red errors on an untouched field.
+  const untouched = !password;
+
   return (
     <div className='mt-2 w-full'>
       <ul
@@ -63,18 +67,29 @@ export function StrengthIndicator({ password, onUnmet }: StrengthIndicatorProps)
           return (
             <li key={req.label} className='flex items-center gap-2'>
               <span
-                className={`ml-1 flex size-4 items-center justify-center rounded-full ${
-                  met ?
-                    'border-success text-success border bg-white'
-                  : 'border-destructive text-destructive border'
+                className={`ml-1 flex size-4 items-center justify-center rounded-full border ${
+                  untouched ? 'border-muted-foreground/40 text-muted-foreground'
+                  : met ? 'border-success text-success bg-white'
+                  : 'border-destructive text-destructive'
                 }`}
                 aria-hidden='true'
               >
-                {met ?
+                {untouched ?
+                  null
+                : met ?
                   <CheckIcon className='size-3' />
                 : <XIcon className='size-3' />}
               </span>
-              <span className={met ? 'text-success' : 'text-destructive'}>{req.label}</span>
+              <span
+                className={
+                  untouched ? 'text-muted-foreground'
+                  : met ?
+                    'text-success'
+                  : 'text-destructive'
+                }
+              >
+                {req.label}
+              </span>
             </li>
           );
         })}

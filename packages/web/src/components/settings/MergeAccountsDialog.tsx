@@ -97,8 +97,8 @@ export function MergeAccountsDialog({
     if (!input) {
       setError(
         isOrcidConflict ?
-          'Please enter the email address or ORCID ID of the other account'
-        : 'Please enter the email address of the other account',
+          'Enter the email address or ORCID ID of the other account.'
+        : 'Enter the email address of the other account.',
       );
       return;
     }
@@ -121,7 +121,7 @@ export function MergeAccountsDialog({
       setStep(STEPS.ENTER_CODE);
       const displayValue =
         isOrcid && result.targetOrcidId ? result.targetOrcidId : result.targetEmail;
-      showToast.success('Code Sent', `A verification code has been sent to ${displayValue}`);
+      showToast.success('Code sent', `We sent a verification code to ${displayValue}.`);
     } catch (err) {
       const { handleError } = await import('@/lib/error-utils');
       await handleError(err, { setError, showToast: false });
@@ -135,7 +135,7 @@ export function MergeAccountsDialog({
       if (loading) return;
       const code = (codeFromInput || verificationCode).trim();
       if (!code || code.length !== 6) {
-        setError('Please enter the 6-digit verification code');
+        setError('Enter the 6-digit verification code.');
         return;
       }
       setLoading(true);
@@ -162,8 +162,13 @@ export function MergeAccountsDialog({
       const result = await completeMerge(mergeToken!);
       setStep(STEPS.SUCCESS);
       const linkedInfo =
-        result.mergedProviders.length ? `Linked: ${result.mergedProviders.join(', ')}` : '';
-      showToast.success('Accounts Merged', `Successfully merged accounts. ${linkedInfo}`);
+        result.mergedProviders.length ?
+          ` Sign-in methods added: ${result.mergedProviders.join(', ')}.`
+        : '';
+      showToast.success(
+        'Accounts merged',
+        `Everything from the other account is now in this one.${linkedInfo}`,
+      );
       onSuccess();
     } catch (err: unknown) {
       const { handleError } = await import('@/lib/error-utils');
@@ -216,7 +221,7 @@ export function MergeAccountsDialog({
     >
       <DialogContent className='max-w-md'>
         <DialogHeader>
-          <DialogTitle>{step === STEPS.SUCCESS ? 'Accounts Merged' : 'Merge Accounts'}</DialogTitle>
+          <DialogTitle>{step === STEPS.SUCCESS ? 'Accounts merged' : 'Merge accounts'}</DialogTitle>
         </DialogHeader>
         <div className='flex flex-col gap-4'>
           {/* PROMPT */}
@@ -234,7 +239,7 @@ export function MergeAccountsDialog({
               {isOrcidConflict && (
                 <Alert variant='info'>
                   <div>
-                    <AlertTitle>ORCID Account Merge</AlertTitle>
+                    <AlertTitle>Merging with an ORCID account</AlertTitle>
                     <AlertDescription>
                       You can enter either the email address or your ORCID ID (e.g.,
                       0000-0001-2345-6789) to identify the account you want to merge.
@@ -252,7 +257,7 @@ export function MergeAccountsDialog({
                 </Button>
                 <Button onClick={() => setStep(STEPS.ENTER_EMAIL)}>
                   <UserPlusIcon className='size-4' />
-                  Merge Accounts
+                  Merge accounts
                 </Button>
               </div>
             </>
@@ -293,7 +298,7 @@ export function MergeAccountsDialog({
                   {loading ?
                     <Spinner size='sm' variant='current' />
                   : <MailIcon className='size-4' />}
-                  Send Code
+                  Send code
                 </Button>
               </div>
             </>
@@ -313,7 +318,7 @@ export function MergeAccountsDialog({
               </Alert>
               <div>
                 <Label htmlFor={`${fieldId}-verification-code`} className='mb-1 justify-center'>
-                  Verification Code
+                  Verification code
                 </Label>
                 <div className='flex justify-center'>
                   <InputOTP
@@ -350,7 +355,7 @@ export function MergeAccountsDialog({
                   disabled={loading || verificationCode.length !== 6}
                 >
                   {loading && <Spinner size='sm' variant='current' />}
-                  Verify Code
+                  Verify code
                 </Button>
               </div>
             </>
@@ -362,10 +367,8 @@ export function MergeAccountsDialog({
               <Alert variant='success'>
                 <CheckIcon />
                 <div>
-                  <AlertTitle>Email verified!</AlertTitle>
-                  <AlertDescription>
-                    You&apos;ve confirmed access to {displayTarget}.
-                  </AlertDescription>
+                  <AlertTitle>Account verified</AlertTitle>
+                  <AlertDescription>You have confirmed access to {displayTarget}.</AlertDescription>
                 </div>
               </Alert>
               {mergePreview && (
@@ -389,10 +392,10 @@ export function MergeAccountsDialog({
               )}
               <Alert variant='warning'>
                 <div>
-                  <AlertTitle>Warning: This action cannot be undone.</AlertTitle>
+                  <AlertTitle>This cannot be undone</AlertTitle>
                   <AlertDescription>
-                    The account ({displayTarget}) will be deleted and all its data merged into your
-                    current account.
+                    Everything in {displayTarget} moves into the account you are signed in to, and{' '}
+                    {displayTarget} is then deleted.
                   </AlertDescription>
                 </div>
               </Alert>
@@ -403,7 +406,7 @@ export function MergeAccountsDialog({
                 </Button>
                 <Button variant='destructive' onClick={handleCompleteMerge} disabled={loading}>
                   {loading && <Spinner size='sm' variant='current' />}
-                  Merge Accounts
+                  Merge accounts
                 </Button>
               </div>
             </>
@@ -425,7 +428,7 @@ export function MergeAccountsDialog({
                 <div className='bg-success-bg flex size-12 items-center justify-center rounded-full'>
                   <CheckIcon className='text-success size-6' />
                 </div>
-                <p className='text-foreground mt-3 font-medium'>Accounts Merged Successfully!</p>
+                <p className='text-foreground mt-3 font-medium'>Merge complete</p>
                 <p className='text-secondary-foreground mt-1 text-sm'>
                   All data has been combined into your account.
                 </p>

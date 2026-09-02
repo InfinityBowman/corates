@@ -55,7 +55,7 @@ export function TwoFactorSetup() {
     async (e: React.FormEvent) => {
       e.preventDefault();
       if (!password) {
-        showToast.error('Please enter your password');
+        showToast.error('Enter your password to continue');
         return;
       }
       setLoading(true);
@@ -76,7 +76,7 @@ export function TwoFactorSetup() {
         const { handleError } = await import('@/lib/error-utils');
         const parsedError = await handleError(err, {
           showToast: true,
-          toastTitle: '2FA Setup Failed',
+          toastTitle: 'Could not start two-factor setup',
         });
         const message = (parsedError?.message || '').toLowerCase();
         if (message.includes('password') || message.includes('invalid')) {
@@ -95,7 +95,7 @@ export function TwoFactorSetup() {
     async (e: React.FormEvent) => {
       e.preventDefault();
       if (!verificationCode || verificationCode.length !== 6) {
-        showToast.error('Please enter a 6-digit code');
+        showToast.error('Enter the 6-digit code from your authenticator app');
         return;
       }
       setLoading(true);
@@ -104,7 +104,7 @@ export function TwoFactorSetup() {
         setSetupStep(3);
       } catch (err) {
         const { handleError } = await import('@/lib/error-utils');
-        await handleError(err, { showToast: true, toastTitle: 'Verification Failed' });
+        await handleError(err, { showToast: true, toastTitle: 'Could not verify that code' });
       } finally {
         setLoading(false);
       }
@@ -130,7 +130,7 @@ export function TwoFactorSetup() {
     async (e: React.FormEvent) => {
       e.preventDefault();
       if (!password) {
-        showToast.error('Please enter your password');
+        showToast.error('Enter your password to continue');
         return;
       }
       setLoading(true);
@@ -143,7 +143,7 @@ export function TwoFactorSetup() {
         const { handleError } = await import('@/lib/error-utils');
         const parsedError = await handleError(err, {
           showToast: true,
-          toastTitle: 'Disable Failed',
+          toastTitle: 'Could not turn off two-factor',
         });
         const message = (parsedError?.message || '').toLowerCase();
         if (message.includes('password') || message.includes('invalid')) {
@@ -210,7 +210,7 @@ export function TwoFactorSetup() {
         : isEnabled ?
           'A code from your authenticator app is required at sign-in.'
         : <span className='inline-flex items-center gap-1.5'>
-            Ask for a code from an authenticator app at sign-in.
+            Require a code from your authenticator app at sign-in.
             <Tooltip>
               <TooltipTrigger>
                 <span className='inline-flex cursor-help'>
@@ -243,7 +243,7 @@ export function TwoFactorSetup() {
                         </span>
                       </TooltipTrigger>
                       <TooltipContent>
-                        Requires a password. Add one above if you don&apos;t have one.
+                        Requires a password. Set one above if you don&apos;t have one.
                       </TooltipContent>
                     </Tooltip>
                   </div>
@@ -321,7 +321,11 @@ export function TwoFactorSetup() {
                     </div>
                     <div className='flex justify-center'>
                       <div className='border-border bg-card rounded-lg border p-4'>
-                        <QRCode value={totpUri} pixelSize={192} aria-label='2FA QR Code'>
+                        <QRCode
+                          value={totpUri}
+                          pixelSize={192}
+                          aria-label='Two-factor setup QR code'
+                        >
                           <QRCodeFrame>
                             <QRCodePattern />
                           </QRCodeFrame>
@@ -330,7 +334,7 @@ export function TwoFactorSetup() {
                     </div>
                     <div className='text-center'>
                       <p className='text-muted-foreground mb-2 text-sm'>
-                        Or enter this code manually:
+                        Or enter this setup key manually:
                       </p>
                       <div className='flex items-center justify-center gap-2'>
                         <code className='bg-muted text-foreground rounded px-3 py-1.5 font-mono text-sm'>
@@ -341,13 +345,13 @@ export function TwoFactorSetup() {
                           size='icon-sm'
                           onClick={copySecret}
                           className='text-muted-foreground'
-                          title='Copy to clipboard'
-                          aria-label='Copy to clipboard'
+                          title='Copy setup key'
+                          aria-label='Copy setup key'
                         >
                           <CopyIcon className='size-4' />
                         </Button>
                       </div>
-                      {copied && <p className='text-success mt-1 text-xs'>Copied!</p>}
+                      {copied && <p className='text-success mt-1 text-xs'>Copied</p>}
                     </div>
                     <Button onClick={() => setSetupStep(2)} className='w-full'>
                       Continue
@@ -430,7 +434,7 @@ export function TwoFactorSetup() {
                       </div>
                       <Button variant='ghost' onClick={copyBackupCodes} className='mt-3 w-full'>
                         <CopyIcon className='size-4' />
-                        <span>{copied ? 'Copied!' : 'Copy all codes'}</span>
+                        <span>{copied ? 'Copied' : 'Copy all codes'}</span>
                       </Button>
                     </div>
                     <Button variant='success' onClick={handleCompleteSetup} className='w-full'>
@@ -461,10 +465,10 @@ export function TwoFactorSetup() {
                 <Alert variant='warning'>
                   <ShieldIcon />
                   <div>
-                    <AlertTitle>Are you sure?</AlertTitle>
+                    <AlertTitle>Sign-in will only need your password</AlertTitle>
                     <AlertDescription>
-                      Turning off two-factor makes your account easier to break into. Enter your
-                      password to confirm.
+                      Anyone who has your password will be able to sign in without a second code.
+                      You can turn two-factor back on at any time. Enter your password to confirm.
                     </AlertDescription>
                   </div>
                 </Alert>
