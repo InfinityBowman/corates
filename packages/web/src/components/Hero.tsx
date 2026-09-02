@@ -8,36 +8,41 @@ export default function Hero() {
     <section className='relative isolate max-h-screen min-h-screen overflow-hidden border-b border-gray-200/80'>
       <div className='mx-auto flex max-w-7xl flex-col items-center px-4 pt-8 pb-0 sm:px-6 md:pt-14'>
         <div className='mb-2 w-full max-w-4xl'>
+          <p className='mb-4 text-center text-sm font-semibold tracking-wide text-gray-500 sm:text-base'>
+            <span className='text-blue-700'>Co</span>llaborative{' '}
+            <span className='text-blue-700'>R</span>
+            esearch <span className='text-blue-700'>A</span>ppraisal
+            <span className='text-blue-700'> T</span>ool for
+            <span className='text-blue-700'> E</span>
+            vidence <span className='text-blue-700'>S</span>ynthesis
+          </p>
           <div className='mb-6 flex items-center justify-center gap-4'>
             <h1 className='m-0 text-center text-3xl leading-tight font-extrabold tracking-tight text-gray-900 sm:text-4xl md:text-5xl'>
-              <span className='text-blue-700'>Co</span>llaborative{' '}
-              <span className='text-blue-700'>R</span>
-              esearch <span className='text-blue-700'>A</span>ppraisal
-              <span className='text-blue-700'> T</span>ool for
-              <span className='text-blue-700'> E</span>
-              vidence <span className='text-blue-700'>S</span>ynthesis
+              Appraise studies together, without the spreadsheets
             </h1>
           </div>
           <p className='mx-auto mb-8 max-w-3xl text-center text-lg leading-tight text-gray-600 sm:text-xl'>
-            Streamline the quality and risk-of-bias appraisal process with intuitive workflows,
-            real-time collaboration, and automation that improve transparency and efficiency at
-            every stage.
+            One place to run AMSTAR 2, ROBINS-I, and RoB 2: guided checklists, two reviewers working
+            side by side, scoring applied for you, and figures ready for the manuscript.
           </p>
           <div className='mb-2 flex flex-col justify-center gap-4 sm:flex-row sm:gap-6'>
             <Link
               to='/checklist'
               className='group inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-base font-semibold text-white shadow-md transition-all duration-200 hover:bg-blue-700 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:outline-none sm:w-auto'
             >
-              Start an Appraisal
+              Appraise a Study Free
               <ArrowRight className='size-4 transition-transform duration-200 group-hover:translate-x-0.5' />
             </Link>
             <Link
               to='/signup'
               className='inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-6 py-3 text-base font-semibold text-gray-800 shadow-sm transition-all duration-200 hover:border-gray-300 hover:bg-gray-50 hover:shadow-md focus-visible:ring-2 focus-visible:ring-gray-300 focus-visible:ring-offset-2 focus-visible:outline-none sm:w-auto'
             >
-              Start a Review Project
+              Set Up a Review Project
             </Link>
           </div>
+          <p className='mt-3 text-center text-sm text-gray-500'>
+            Single-study appraisals are free, need no account, and stay on your device.
+          </p>
         </div>
       </div>
       {/* Product Screenshot: full width, bottom, angled */}

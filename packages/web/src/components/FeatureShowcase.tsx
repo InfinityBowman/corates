@@ -195,7 +195,7 @@ function SecurityIllustration() {
       {/* Auth method badges */}
       <FloatingBadge position='top-4 left-4' border='border-emerald-200'>
         <KeyIcon className='size-4 text-emerald-600' />
-        <span className='text-xs font-medium text-gray-700'>OAuth</span>
+        <span className='text-xs font-medium text-gray-700'>ORCID</span>
       </FloatingBadge>
 
       <FloatingBadge position='top-4 right-4' border='border-blue-200'>
@@ -210,7 +210,7 @@ function SecurityIllustration() {
 
       <FloatingBadge position='bottom-6 right-6' border='border-indigo-200'>
         <ShieldIcon className='size-4 text-indigo-600' />
-        <span className='text-xs font-medium text-gray-700'>SSO</span>
+        <span className='text-xs font-medium text-gray-700'>Google</span>
       </FloatingBadge>
     </IllustrationWrapper>
   );
@@ -404,7 +404,7 @@ function SpeedIllustration() {
         {/* Time saved badges */}
         <FloatingBadge position='-top-2 -left-2 z-10' border='border-green-200'>
           <TimerIcon className='size-4 text-green-600' />
-          <span className='text-xs font-medium text-gray-700'>Save hours</span>
+          <span className='text-xs font-medium text-gray-700'>Less busywork</span>
         </FloatingBadge>
 
         <FloatingBadge position='-top-2 -right-2 z-10' border='border-amber-200'>
@@ -414,7 +414,7 @@ function SpeedIllustration() {
 
         <FloatingBadge position='top-[40%] -right-2 z-10' border='border-blue-200'>
           <WifiOffIcon className='size-4 text-blue-600' />
-          <span className='text-xs font-medium text-gray-700'>Works offline</span>
+          <span className='text-xs font-medium text-gray-700'>Local-first</span>
         </FloatingBadge>
 
         {/* Productivity metrics */}
@@ -488,7 +488,7 @@ function DataVisualizationIllustration() {
 
       {/* Publication ready badge */}
       <FloatingBadge position='-bottom-2 -left-2' border='border-sky-200'>
-        <span className='text-xs font-medium text-gray-700'>Publication Ready!</span>
+        <span className='text-xs font-medium text-gray-700'>Publication ready</span>
       </FloatingBadge>
     </IllustrationWrapper>
   );
@@ -531,32 +531,32 @@ function FeatureSection({ feature, reversed }: FeatureSectionProps) {
 export default function FeatureShowcase() {
   const features: Feature[] = [
     {
-      title: 'Speed & Productivity',
+      title: 'One workspace, not five files',
       description:
-        'Stop wrestling with spreadsheets and manual processes. CoRATES streamlines your workflow so you can focus on what matters.',
+        'Appraisals, PDFs, scores, and figures live in the same project. Nothing to export, re-key, or email between reviewers.',
       illustration: <SpeedIllustration />,
       bullets: [
-        'Complete appraisals faster with guided workflows',
-        'All-in-one platform replaces scattered tools',
-        'Intuitive and blazing-fast interface',
-        'Continue working even without internet access (coming soon)',
+        'Guided appraisals carry you question by question',
+        'One project replaces the checklist file, the tracking sheet, and the figure script',
+        'A fast, uncluttered interface built for long appraisal sessions',
+        'Local-first storage holds your work when the connection drops (full offline mode coming soon)',
       ],
     },
     {
-      title: 'Real-time Collaboration',
+      title: 'Two reviewers, one live appraisal',
       description:
-        'Work together with your team seamlessly. See updates instantly as reviewers complete their assessments.',
+        'Reviewers rate independently, then reconcile in the same session. No trading file versions to find out where you disagree.',
       illustration: <CollaborationIllustration />,
       bullets: [
-        'Independent ratings with blinded mode',
-        'Automatic inter-rater reliability calculation',
-        'Live, real-time collaboration with instant updates',
+        'Assign two reviewers per study, each rating in their own appraisal',
+        "Percent agreement and Cohen's kappa computed for you on AMSTAR 2 dual reviews",
+        'Every change appears for your team as it happens',
       ],
     },
     {
-      title: 'Automatic Scoring',
+      title: 'Scoring you never do by hand',
       description:
-        'Eliminate manual calculation errors. Complex scores are computed instantly as you complete appraisals.',
+        "Each instrument's scoring runs as you answer, so domain judgments and overall ratings are never a hand calculation.",
       illustration: <ScoringIllustration />,
       bullets: [
         'Built-in appraisal scoring',
@@ -565,9 +565,9 @@ export default function FeatureShowcase() {
       ],
     },
     {
-      title: 'Data Visualizations',
+      title: 'Figures ready for the manuscript',
       description:
-        'Publication-ready visual summaries generated automatically from appraisal data.',
+        'Traffic-light and summary figures build themselves from the ratings your team has already entered.',
       illustration: <DataVisualizationIllustration />,
       bullets: [
         'Study-level and across-study figures generated in real time',
@@ -576,9 +576,9 @@ export default function FeatureShowcase() {
       ],
     },
     {
-      title: 'PDF Annotation',
+      title: 'The evidence stays next to the judgment',
       description:
-        'Annotate study PDFs directly alongside your appraisals. Collaboratively create highlights, text notes, and drawings in real time.',
+        'Highlight the sentence that justified a rating and it stays with the appraisal. Annotations are shared with your team in real time.',
       illustration: <PDFAnnotationIllustration />,
       bullets: [
         'Highlight, underline, draw, and add text notes directly on PDFs',
@@ -587,13 +587,13 @@ export default function FeatureShowcase() {
       ],
     },
     {
-      title: 'Enterprise-Grade Security',
+      title: 'Sign in with ORCID, Google, or a link',
       description:
-        'Your research data is protected with multiple authentication options and industry-standard security practices.',
+        'Unpublished appraisal data sits behind the sign-in method your team already trusts, with two-factor available on every account.',
       illustration: <SecurityIllustration />,
       bullets: [
-        'OAuth, passwordless login',
-        'Two-factor authentication (2FA) for enhanced security',
+        'ORCID and Google sign-in, or a passwordless email link',
+        'Two-factor authentication (2FA) with backup codes',
         'Role-based access control and audit logging (coming soon)',
         'Single Sign-On (SSO) support (coming soon)',
       ],
@@ -606,10 +606,11 @@ export default function FeatureShowcase() {
     <section id='features' className='mx-auto max-w-6xl scroll-mt-16 px-6 py-16 md:py-24'>
       <div className='mb-16 text-center'>
         <h2 className='mb-4 text-3xl font-bold text-gray-900 md:text-4xl'>
-          Everything you need for rigorous study appraisal
+          Everything a rigorous appraisal needs, in one place
         </h2>
         <p className='mx-auto max-w-2xl text-lg text-gray-600'>
-          Built specifically for researchers conducting systematic reviews and evidence synthesis.
+          Today that means a Word checklist, a shared spreadsheet, a scoring rubric applied by hand,
+          and a separate tool for the figures. CoRATES replaces all four.
         </p>
       </div>
 

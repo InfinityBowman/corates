@@ -186,9 +186,9 @@ function ToolContentView({ tool }: { tool: ToolContent }) {
     [tool.name, pageUrl],
   );
 
-  // FAQPage JSON-LD enables Google's FAQ rich snippet in search results.
-  // Only emitted when the tool has FAQ content; pages without FAQ data
-  // (currently AMSTAR 2 and RoB 2) skip this entirely.
+  // FAQPage JSON-LD describes the visible Q&A block for search engines and
+  // answer engines. Only emitted when the tool actually has FAQ content, so the
+  // markup never claims Q&A that is not rendered on the page.
   const faqSchema = useMemo(() => {
     if (!tool.faq || tool.faq.length === 0) return null;
     return JSON.stringify({
@@ -219,7 +219,7 @@ function ToolContentView({ tool }: { tool: ToolContent }) {
 
           <div className='flex flex-col gap-8 leading-relaxed text-gray-700'>
             <div>
-              <h2 className='mb-4 text-2xl font-semibold text-gray-900'>{tool.name}</h2>
+              <h2 className='mb-4 text-2xl font-semibold text-gray-900'>What is {tool.name}?</h2>
               {tool.fullName && <p className='mb-3 text-sm text-gray-500'>{tool.fullName}</p>}
               <p className='mb-6 text-gray-600'>{tool.description}</p>
               {tool.versionNote && (
