@@ -153,7 +153,7 @@ function SectionBQuestion({
           <NoteEditor
             value={commentValue}
             onChange={text => writers.setText(`sectionB.${questionKey}.comment`, text)}
-            placeholder='Comment (optional)'
+            placeholder='Note your reasoning (optional)'
             readOnly={disabled}
             inline={true}
           />

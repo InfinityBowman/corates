@@ -68,9 +68,7 @@ export function OverallSection({ studyId, checklistId, disabled }: OverallSectio
         <div className='flex items-center justify-between'>
           <div>
             <h3 className='text-lg font-semibold'>Overall Risk of Bias</h3>
-            <p className='text-muted mt-1 text-sm'>
-              Final assessment based on all domain judgements
-            </p>
+            <p className='text-muted mt-1 text-sm'>Calculated from your domain judgements</p>
           </div>
           {!isIncomplete ?
             <span
@@ -98,7 +96,10 @@ export function OverallSection({ studyId, checklistId, disabled }: OverallSectio
               >
                 {effectiveJudgement}
               </span>
-            : <span className='text-muted-foreground/70 text-sm'>Complete all domains</span>}
+            : <span className='text-muted-foreground/70 text-sm'>
+                Available once every domain has a judgement
+              </span>
+            }
           </div>
         </div>
 

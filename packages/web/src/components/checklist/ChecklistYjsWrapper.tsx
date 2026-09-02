@@ -7,6 +7,7 @@ import { connectionPool } from '@/project/ConnectionPool';
 import { useChecklistViewModel } from '@/primitives/useProject/useChecklistViewModel';
 import { useChecklistScore, useAnswerWriters, getAnswerValue } from '@/project/workspace-data';
 import { getCompletionNaStamps } from '@/components/checklist/completion-na';
+import { getChecklistMetadata, DEFAULT_CHECKLIST_TYPE } from '@/checklist-registry';
 import type { ChecklistAnswerInput } from '@corates/shared/sync';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import { useAuthStore, selectUser } from '@/stores/authStore';
@@ -75,7 +76,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
   // Access denied redirect
   useEffect(() => {
     if (connectionState.error && ACCESS_DENIED_ERRORS.includes(connectionState.error)) {
-      showToast.error('Access Denied', connectionState.error);
+      showToast.error('Access denied', connectionState.error);
       navigate({ to: '/dashboard', replace: true });
     }
   }, [connectionState.error, navigate]);
@@ -167,7 +168,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
   const handlePdfChange = useCallback(
     async (data: ArrayBuffer, fileName: string) => {
       if (!orgId) {
-        showToast.error('Error', 'No organization context');
+        showToast.error('Upload failed', 'This project is still loading. Try again in a moment.');
         return;
       }
 
@@ -208,7 +209,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
           );
         }
         const { handleError } = await import('@/lib/error-utils.js');
-        await handleError(err, { toastTitle: 'Upload Failed' });
+        await handleError(err, { toastTitle: 'Upload failed' });
       }
     },
     [orgId, projectId, studyId, studyPdfs, user?.id, client],
@@ -219,15 +220,15 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
   const handleToggleComplete = useCallback(() => {
     if (isReadOnly) return;
     if (currentChecklist?.status === CHECKLIST_STATUS.FINALIZED) {
-      showToast.info('Checklist Locked', 'Completed checklists cannot be edited.');
+      showToast.info('Appraisal locked', 'This appraisal is complete and can no longer be edited.');
       return;
     }
     if (!isChecklistValid) {
       const message =
         checklistType === 'ROBINS_I' || checklistType === 'ROB2' ?
-          'All domains must be scored before marking the checklist as complete.'
-        : 'All questions must have a final answer before marking the checklist as complete.';
-      showToast.error('Incomplete Checklist', message);
+          'Every domain needs a judgement first. Domains still marked Incomplete need more answers.'
+        : 'Every question needs an answer first. Check the questions you have left blank.';
+      showToast.error('Not ready to complete', message);
       return;
     }
     setCompleteDialogOpen(true);
@@ -254,11 +255,11 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
       now: Date.now(),
     });
     if (nextStatus === CHECKLIST_STATUS.FINALIZED) {
-      showToast.success('Appraisal Completed', 'This appraisal has been marked as completed.');
+      showToast.success('Appraisal complete', 'It is finalized and now read-only.');
     } else {
       showToast.success(
-        'Appraisal Completed',
-        'This appraisal is awaiting reconciliation. Send it back to To-Do from the Reconcile tab if you need to edit your answers.',
+        'Appraisal complete',
+        'It is now awaiting reconciliation. Send it back to To-Do from the Reconcile tab if you need to edit your answers.',
       );
     }
     setCompleteDialogOpen(false);
@@ -331,19 +332,18 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
       <AlertDialog open={completeDialogOpen} onOpenChange={setCompleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Mark Appraisal as Complete?</AlertDialogTitle>
+            <AlertDialogTitle>Mark this appraisal complete?</AlertDialogTitle>
             <AlertDialogDescription>
               {isDualReviewerStudy ?
-                'Your answers will be read-only here while awaiting reconciliation. You can send this appraisal back to To-Do from the Reconcile tab if you need to make changes. Are you sure you want to proceed?'
-              : 'Once marked complete, this appraisal will be finalized and cannot be edited. Are you sure you want to proceed?'
-              }
+                'Your answers become read-only while the appraisal awaits reconciliation. You can undo this by sending it back to To-Do from the Reconcile tab.'
+              : 'This appraisal is finalized and can no longer be edited. This cannot be undone.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <Button variant='outline' onClick={() => setCompleteDialogOpen(false)}>
               Cancel
             </Button>
-            <AlertDialogAction onClick={confirmMarkComplete}>Mark Complete</AlertDialogAction>
+            <AlertDialogAction onClick={confirmMarkComplete}>Mark complete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -359,7 +359,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
       </Button>
       <div className='text-muted-foreground truncate text-sm'>
         <span className='text-foreground font-medium'>
-          {currentChecklist?.type || 'AMSTAR2'} Checklist
+          {getChecklistMetadata(currentChecklist?.type ?? DEFAULT_CHECKLIST_TYPE).name} appraisal
         </span>
       </div>
       <div className='ml-auto flex items-center gap-3'>
@@ -372,8 +372,8 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
             title={
               !isChecklistValid ?
                 checklistType === 'ROBINS_I' ?
-                  'Overall risk of bias must be set before marking complete'
-                : 'All questions must have a final answer before marking complete'
+                  'Every domain needs a judgement before you can mark this appraisal complete'
+                : 'Answer the remaining questions before you can mark this appraisal complete'
               : undefined
             }
             className={
@@ -384,7 +384,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
           >
             {currentChecklist?.status === CHECKLIST_STATUS.FINALIZED ?
               'Completed'
-            : 'Mark Complete'}
+            : 'Mark complete'}
           </Button>
         : <span
             className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
@@ -402,11 +402,11 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
 
   if (!checklistType) {
     return (
-      <div className='bg-secondary flex min-h-screen items-center justify-center'>
+      <div className='bg-secondary flex min-h-screen items-center justify-center px-6 text-center'>
         <div className='text-muted-foreground'>
           {connectionState.phase === 'connecting' || pdfLoading ?
-            'Loading...'
-          : 'Checklist not found'}
+            'Loading appraisal...'
+          : 'This appraisal is no longer on the study. Another reviewer may have removed it.'}
         </div>
       </div>
     );

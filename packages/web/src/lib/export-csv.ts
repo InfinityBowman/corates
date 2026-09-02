@@ -35,7 +35,7 @@ const ROBINSI_HEADERS = [
 const TYPE_LABELS: Record<string, string> = {
   AMSTAR2: 'AMSTAR 2',
   ROB2: 'RoB 2',
-  ROBINS_I: 'ROBINS-I',
+  ROBINS_I: 'ROBINS-I V2',
 };
 
 function escapeField(value: string | null | undefined): string {

@@ -80,7 +80,7 @@ export function PreliminarySection({ studyId, checklistId, disabled }: Prelimina
       <div className='bg-blue-600 px-6 py-4 text-white'>
         <h2 className='text-lg font-semibold'>Preliminary Considerations</h2>
         <p className='mt-1 text-sm text-blue-100'>
-          Complete these sections before assessing the domains
+          Complete this section before you assess the domains
         </p>
       </div>
 
