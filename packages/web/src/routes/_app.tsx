@@ -14,9 +14,13 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { RouteError } from '@/components/RouteError';
+import { appLayoutMeta } from '@/config/app';
 
 export const Route = createFileRoute('/_app')({
   ssr: false,
+  // The server stops executing head() at the first ssr:false match, so a head on
+  // any child route (dashboard, _protected) never reaches the served HTML.
+  head: ({ match }) => ({ meta: appLayoutMeta(match.pathname) }),
   component: AppLayout,
   errorComponent: RouteError,
 });
