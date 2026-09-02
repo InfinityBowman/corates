@@ -67,13 +67,13 @@
   "devDependencies": {
     "@cf-sync/protocol": "^0.1.1",
     "@cloudflare/vitest-pool-workers": "^0.20.3",
-    "@vitest/runner": "^4.1.10",
-    "@vitest/snapshot": "^4.1.10",
+    "@vitest/runner": "^4.1.11",
+    "@vitest/snapshot": "^4.1.11",
     "better-sqlite3": "^13.0.2",
     "dotenv": "^17.4.2",
     "localflare": "^0.5.0",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.10",
+    "vitest": "^4.1.11",
     "wrangler": "^4.120.0"
   }
 }

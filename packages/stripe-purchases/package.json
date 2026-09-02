@@ -19,11 +19,11 @@
     "@corates/shared": "workspace:*",
     "@sentry/cloudflare": "^10.69.0",
     "drizzle-orm": "^0.45.2",
-    "hono": "^4.13.1",
+    "hono": "^4.13.5",
     "stripe": "^22.4.0"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20260808.1",
+    "@cloudflare/workers-types": "^5.20260902.1",
     "typescript": "^5.9.3",
     "wrangler": "^4.120.0"
   }
