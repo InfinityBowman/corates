@@ -12,6 +12,7 @@
 
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
 import { useAuthStore, selectIsLoggedIn } from '@/stores/authStore';
+import { capturePlanParams } from '@/lib/plan-redirect-utils';
 import { RouteError } from '@/components/RouteError';
 import { NOINDEX_META } from '@/config/app';
 
@@ -30,7 +31,9 @@ export const Route = createFileRoute('/_auth')({
     const isLoggedIn = selectIsLoggedIn(state);
 
     if (isLoggedIn) {
-      throw redirect({ to: '/dashboard' });
+      // Signed-in users never reach signup, so capture pricing-page plan params here.
+      const hasPlan = capturePlanParams(new URLSearchParams(location.searchStr));
+      throw redirect({ to: hasPlan ? '/settings/plans' : '/dashboard' });
     }
   },
   component: AuthLayout,

@@ -10,6 +10,7 @@ import { redirectToPortal } from '@/api/billing';
 import { queryKeys } from '@/lib/queryKeys';
 import { getUsage, syncAfterSuccess } from '@/server/functions/billing.functions';
 import { Skeleton } from '@/components/ui/skeleton';
+import { showToast } from '@/lib/toast';
 import { SubscriptionCard } from '@/components/billing/SubscriptionCard';
 import { UsageCard } from '@/components/billing/UsageCard';
 import { InvoicesList } from '@/components/billing/InvoicesList';
@@ -51,7 +52,7 @@ export function BillingSettings() {
     retry: 1,
   });
 
-  const [checkoutOutcome, setCheckoutOutcome] = useState<'success' | 'canceled' | null>(null);
+  const [checkoutOutcome, setCheckoutOutcome] = useState<'success' | null>(null);
 
   // Handle checkout redirect params
   useEffect(() => {
@@ -72,7 +73,7 @@ export function BillingSettings() {
       url.searchParams.delete('success');
       window.history.replaceState({}, '', url.pathname + url.search);
     } else if (params.get('canceled') === 'true') {
-      setCheckoutOutcome('canceled');
+      showToast.warning('Checkout canceled', 'No changes were made to your subscription.');
       const url = new URL(window.location.href);
       url.searchParams.delete('canceled');
       window.history.replaceState({}, '', url.pathname + url.search);
@@ -122,27 +123,6 @@ export function BillingSettings() {
               size='icon-sm'
               onClick={() => setCheckoutOutcome(null)}
               className='text-success hover:text-success/80'
-              aria-label='Dismiss'
-            >
-              <XCircleIcon className='size-5' />
-            </Button>
-          </AlertAction>
-        </Alert>
-      )}
-
-      {checkoutOutcome === 'canceled' && (
-        <Alert variant='warning'>
-          <XCircleIcon />
-          <div>
-            <AlertTitle>Checkout canceled</AlertTitle>
-            <AlertDescription>No changes were made to your subscription.</AlertDescription>
-          </div>
-          <AlertAction>
-            <Button
-              variant='ghost'
-              size='icon-sm'
-              onClick={() => setCheckoutOutcome(null)}
-              className='text-warning hover:text-warning-foreground'
               aria-label='Dismiss'
             >
               <XCircleIcon className='size-5' />
