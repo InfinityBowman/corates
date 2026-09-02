@@ -80,7 +80,8 @@ export function UsageCard({ quotas, usage }: UsageCardProps) {
             ),
         )
       : <p className='text-muted-foreground px-4 py-6 text-center text-[13px]'>
-          The Free plan has no project or team allowance. Upgrade to start a project.
+          A plan or the 14-day trial opens up project workspaces and invited co-reviewers.
+          Single-study appraisal in your browser stays free either way.
         </p>
       }
     </SettingsSection>

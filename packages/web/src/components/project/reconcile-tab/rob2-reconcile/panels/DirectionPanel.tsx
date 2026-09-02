@@ -47,7 +47,7 @@ export function DirectionPanel({
               )
             }`}
           >
-            {isSelected ? 'Selected' : 'Use This'}
+            {isSelected ? 'Used as the consensus' : 'Use this direction'}
           </button>
         )}
       </div>

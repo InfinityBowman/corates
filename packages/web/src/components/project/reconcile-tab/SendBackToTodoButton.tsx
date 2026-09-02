@@ -38,7 +38,7 @@ export function SendBackToTodoButton({
           setShowConfirm(true);
         }}
       >
-        Send Back
+        Send back to To-Do
       </Button>
 
       <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
@@ -46,18 +46,18 @@ export function SendBackToTodoButton({
           <AlertDialogHeader>
             <AlertDialogIcon variant='warning' />
             <div>
-              <AlertDialogTitle>Send Back to To-Do</AlertDialogTitle>
+              <AlertDialogTitle>Send this appraisal back to To-Do?</AlertDialogTitle>
               <AlertDialogDescription>
-                Each reviewer gets this appraisal back in their To-Do list and can edit their
-                answers again.
+                Both reviewers get this appraisal back in their To-Do list and can change their
+                answers. It returns here for reconciliation once they have both completed it again.
                 {discardsReconciliation &&
-                  ' The consensus checklist started for this outcome, and all answers on it, will be permanently deleted.'}
+                  ' The consensus appraisal started for this outcome, and every answer on it, is deleted permanently and cannot be recovered.'}
               </AlertDialogDescription>
             </div>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={onSendBack}>Send Back</AlertDialogAction>
+            <AlertDialogAction onClick={onSendBack}>Send back to To-Do</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

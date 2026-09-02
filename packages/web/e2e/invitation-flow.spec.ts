@@ -49,7 +49,7 @@ async function sendInvitationViaUI(page: Page, email: string) {
   await expect(dialog.getByText('No user found. You can send an invitation to')).toBeVisible({
     timeout: 5_000,
   });
-  await dialog.getByRole('button', { name: 'Send Invitation', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Send invitation', exact: true }).click();
 
   await expect(dialog).toBeHidden({ timeout: 5_000 });
 }
@@ -89,7 +89,7 @@ test.describe('Invitation flows', () => {
       await expect(p.getByText(inviteeEmail)).toBeVisible();
 
       // Create an account via magic link signup
-      await p.getByRole('button', { name: /Create Account & Accept/i }).click();
+      await p.getByRole('button', { name: /Create account and join/i }).click();
       await expect(p).toHaveURL(/\/signup/, { timeout: 10_000 });
 
       const emailInput = p.locator('#magic-link-email');
@@ -122,7 +122,7 @@ test.describe('Invitation flows', () => {
       await p.getByRole('button', { name: /Finish Setup/i }).click();
 
       // Invitation is auto-accepted during onboarding
-      await expect(p.getByText('Invitation Accepted')).toBeVisible({ timeout: 15_000 });
+      await expect(p.getByText('Invitation accepted')).toBeVisible({ timeout: 15_000 });
       await expect(p).toHaveURL(/\/dashboard/, { timeout: 15_000 });
 
       // Membership is real: the project page syncs over WebSocket
@@ -180,9 +180,9 @@ test.describe('Invitation flows', () => {
       // Sign-in returns to the invite page for explicit acceptance
       await expect(p).toHaveURL(/\/invite\//, { timeout: 15_000 });
       await expect(p.getByText(`Signed in as`)).toBeVisible({ timeout: 15_000 });
-      await p.getByRole('button', { name: 'Accept Invitation', exact: true }).click();
+      await p.getByRole('button', { name: 'Accept invitation', exact: true }).click();
 
-      await expect(p.getByText('Invitation Accepted')).toBeVisible({ timeout: 15_000 });
+      await expect(p.getByText('Invitation accepted')).toBeVisible({ timeout: 15_000 });
       await expect(p).toHaveURL(/\/dashboard/, { timeout: 15_000 });
 
       // Membership is real: the project page syncs over WebSocket
@@ -239,10 +239,10 @@ test.describe('Invitation flows', () => {
 
       await expect(p).toHaveURL(/\/invite\//, { timeout: 15_000 });
       await expect(p.getByText(`Signed in as`)).toBeVisible({ timeout: 15_000 });
-      await p.getByRole('button', { name: 'Accept Invitation', exact: true }).click();
+      await p.getByRole('button', { name: 'Accept invitation', exact: true }).click();
 
       // Membership binds to the signed-in account despite the email mismatch
-      await expect(p.getByText('Invitation Accepted')).toBeVisible({ timeout: 15_000 });
+      await expect(p.getByText('Invitation accepted')).toBeVisible({ timeout: 15_000 });
       await expect(p).toHaveURL(/\/dashboard/, { timeout: 15_000 });
 
       await p.goto(`/projects/${projectId}`);

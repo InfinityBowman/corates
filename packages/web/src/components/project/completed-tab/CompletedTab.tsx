@@ -50,7 +50,10 @@ export function CompletedTab() {
 
   const reopenReconciliation = useCallback((studyId: string, checklistId: string) => {
     project.checklist.update(studyId, checklistId, { status: CHECKLIST_STATUS.RECONCILING });
-    showToast.success('Reconciliation Reopened', 'The study has moved to the Reconcile tab.');
+    showToast.success(
+      'Reconciliation reopened',
+      'This study is back on the Reconcile tab. It stays out of results and exports until you finalize it again.',
+    );
   }, []);
 
   const getReconciliationProgress = useCallback(
@@ -90,9 +93,10 @@ export function CompletedTab() {
         ))
       : <div className='py-16 text-center'>
           <CheckCircleIcon className='text-muted-foreground mx-auto mb-4 size-12 opacity-50' />
-          <h3 className='text-foreground mb-2 text-lg font-medium'>Completed</h3>
+          <h3 className='text-foreground mb-2 text-lg font-medium'>Nothing finalized yet</h3>
           <p className='text-muted-foreground mx-auto max-w-md'>
-            Studies that have completed reconciliation will appear here.
+            Studies that have completed reconciliation appear here, and their judgments feed the
+            figures and tables on Overview.
           </p>
         </div>
       }

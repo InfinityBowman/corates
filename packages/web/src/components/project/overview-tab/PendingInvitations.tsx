@@ -58,7 +58,10 @@ export function PendingInvitations({
       await cancelInvitation({
         data: { orgId, projectId, invitationId: invitation.id },
       });
-      showToast.success('Invitation Cancelled', `Cancelled invitation to ${invitation.email}`);
+      showToast.success(
+        'Invitation cancelled',
+        `${invitation.email} can no longer use that invite.`,
+      );
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.invitations(projectId) });
     } catch (err: unknown) {
       const { handleError } = await import('@/lib/error-utils');
@@ -71,7 +74,7 @@ export function PendingInvitations({
   return (
     <div className='mt-4'>
       <h4 className='text-muted-foreground mb-2 text-sm font-medium'>
-        Pending Invitations ({invitations.length})
+        Pending invitations ({invitations.length})
       </h4>
       <div className='flex flex-col gap-2'>
         {invitations.map(invitation => {

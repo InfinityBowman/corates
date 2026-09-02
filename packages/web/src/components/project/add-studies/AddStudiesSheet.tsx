@@ -69,7 +69,7 @@ export function AddStudiesSheet({ open, onOpenChange, onAdded }: AddStudiesSheet
           }
         } catch (err) {
           const { handleError } = await import('@/lib/error-utils');
-          await handleError(err, { toastTitle: 'Restore Failed' });
+          await handleError(err, { toastTitle: 'Could not restore your unsaved imports' });
         }
         if (!cancelled) clearRestoreParamsFromUrl();
       })();
@@ -168,7 +168,10 @@ export function AddStudiesSheet({ open, onOpenChange, onAdded }: AddStudiesSheet
         <SheetContent side='right' className='w-full gap-0 overflow-y-auto sm:max-w-2xl'>
           <SheetHeader>
             <SheetTitle>Add studies</SheetTitle>
-            <SheetDescription>Upload PDFs, import references, or look up by DOI</SheetDescription>
+            <SheetDescription>
+              Every paper you appraise is a study. Add them by uploading PDFs, importing a reference
+              file, looking up DOIs or PubMed IDs, or picking files from Google Drive.
+            </SheetDescription>
           </SheetHeader>
           <div className='p-4'>
             <AddStudiesForm

@@ -34,12 +34,12 @@ test('Dual-Reviewer AMSTAR2 Workflow', async ({ context, page }) => {
   // User A fills AMSTAR2 checklist
   // ================================================================
   await page.getByRole('tab', { name: /To Do/i }).click();
-  await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
+  await expect(page.getByRole('button', { name: /Select appraisal tool/i })).toBeVisible({
     timeout: 10_000,
   });
 
-  await page.getByRole('button', { name: /Select Checklist/i }).click();
-  await page.getByRole('button', { name: /Add Checklist/i }).click();
+  await page.getByRole('button', { name: /Select appraisal tool/i }).click();
+  await page.getByRole('button', { name: /Add appraisal/i }).click();
   await expect(page.getByRole('button', { name: 'Open', exact: true })).toBeVisible({
     timeout: 10_000,
   });
@@ -60,12 +60,12 @@ test('Dual-Reviewer AMSTAR2 Workflow', async ({ context, page }) => {
   await expect(page.getByText('AMSTAR2 E2E Test').first()).toBeVisible({ timeout: 15_000 });
 
   await page.getByRole('tab', { name: /To Do/i }).click();
-  await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
+  await expect(page.getByRole('button', { name: /Select appraisal tool/i })).toBeVisible({
     timeout: 10_000,
   });
 
-  await page.getByRole('button', { name: /Select Checklist/i }).click();
-  await page.getByRole('button', { name: /Add Checklist/i }).click();
+  await page.getByRole('button', { name: /Select appraisal tool/i }).click();
+  await page.getByRole('button', { name: /Add appraisal/i }).click();
   await expect(page.getByRole('button', { name: 'Open', exact: true })).toBeVisible({
     timeout: 10_000,
   });
@@ -103,7 +103,7 @@ test('Dual-Reviewer AMSTAR2 Workflow', async ({ context, page }) => {
   await page.getByRole('button', { name: /Reconcile/i }).click();
   await expect(page).toHaveURL(/\/reconcile\//, { timeout: 10_000 });
 
-  await expect(page.getByRole('heading', { name: 'Reconciliation' })).toBeVisible({
+  await expect(page.getByRole('heading', { name: 'AMSTAR 2 reconciliation' })).toBeVisible({
     timeout: 10_000,
   });
   await expect(page.getByText('Question 1 of 16')).toBeVisible();
@@ -111,9 +111,9 @@ test('Dual-Reviewer AMSTAR2 Workflow', async ({ context, page }) => {
   // Select Alice's answer for all 16 questions
   for (let q = 1; q <= 16; q++) {
     await expect(page.getByText(`Question ${q} of 16`)).toBeVisible({ timeout: 5_000 });
-    await page.getByRole('button', { name: 'Use This' }).first().click();
-    // The button label flips to "Selected" once the choice registers
-    await expect(page.getByRole('button', { name: 'Selected' }).first()).toBeVisible({
+    await page.getByRole('button', { name: 'Use this answer' }).first().click();
+    // The button label flips to "Used as the consensus" once the choice registers
+    await expect(page.getByRole('button', { name: 'Used as the consensus' }).first()).toBeVisible({
       timeout: 5_000,
     });
     if (q < 16) {
@@ -122,15 +122,15 @@ test('Dual-Reviewer AMSTAR2 Workflow', async ({ context, page }) => {
   }
 
   // Finalize
-  await page.getByRole('button', { name: 'Review Summary' }).click();
-  await expect(page.getByText('Review Summary')).toBeVisible({ timeout: 5_000 });
+  await page.getByRole('button', { name: 'Review summary' }).click();
+  await expect(page.getByText('Reconciliation summary')).toBeVisible({ timeout: 5_000 });
 
-  const saveBtn = page.getByRole('button', { name: /Save Reconciled Checklist/i });
+  const saveBtn = page.getByRole('button', { name: /Save consensus appraisal/i });
   await saveBtn.scrollIntoViewIfNeeded();
   await saveBtn.click();
 
   await expect(page.getByText('Finish reconciliation?')).toBeVisible({ timeout: 5_000 });
-  await page.getByRole('button', { name: 'Finish' }).click();
+  await page.getByRole('button', { name: 'Finish reconciliation' }).click();
   await expect(page).toHaveURL(/\/projects\//, { timeout: 15_000 });
 
   // ================================================================

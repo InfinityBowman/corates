@@ -44,24 +44,24 @@ const STORAGE_KEYS = {
 
 export const BILLING_MESSAGES = {
   TRIAL_STARTED: {
-    title: 'Trial Started',
+    title: 'Trial started',
     message: 'Your 14-day trial is now active.',
   },
   TRIAL_ALREADY_USED: {
-    title: 'Trial Already Used',
-    message: 'You have already used your free trial. Please select a paid plan.',
+    title: 'Trial already used',
+    message: 'You have already used your free trial. Choose a paid plan to continue.',
   },
   ALREADY_ON_PLAN: {
-    title: 'Already on This Plan',
+    title: 'Already on this plan',
     message: 'You are already subscribed to this plan.',
   },
   PLAN_DOWNGRADE_BLOCKED: {
-    title: 'Plan Change Blocked',
-    message: "Your current usage exceeds this plan's limits. Please reduce usage first.",
+    title: 'Plan change blocked',
+    message: "Your current usage is over this plan's limits. Reduce it first, then change plans.",
   },
   CHECKOUT_ERROR: {
-    title: 'Checkout Error',
-    message: 'Unable to redirect to checkout. Please try again.',
+    title: 'Checkout error',
+    message: 'We could not open checkout. Try again in a moment.',
   },
 } as const;
 

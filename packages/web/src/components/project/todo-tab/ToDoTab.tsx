@@ -48,7 +48,7 @@ export function ToDoTab() {
         if (success) setShowChecklistForm(null);
       } catch (err) {
         import('@/lib/error-utils').then(({ handleError }) =>
-          handleError(err, { toastTitle: 'Create Failed' }),
+          handleError(err, { toastTitle: 'Could not create the appraisal' }),
         );
       }
     },
@@ -90,10 +90,12 @@ export function ToDoTab() {
       : hasData && (
           <div className='py-16 text-center'>
             <ListTodoIcon className='text-muted-foreground mx-auto mb-4 size-12 opacity-50' />
-            <h3 className='text-foreground mb-2 text-lg font-medium'>To Do</h3>
+            <h3 className='text-foreground mb-2 text-lg font-medium'>
+              Nothing assigned to you yet
+            </h3>
             <p className='text-muted-foreground mx-auto max-w-md'>
-              Studies assigned to you will appear here. Complete your appraisals to move them to the
-              next stage.
+              Studies where you are one of the two reviewers show up here. The project owner assigns
+              reviewers from All studies.
             </p>
           </div>
         )

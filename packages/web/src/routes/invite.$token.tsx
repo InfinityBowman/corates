@@ -83,13 +83,13 @@ function InvitePage() {
     try {
       const result = await acceptInvitation({ data: { token } });
       localStorage.removeItem('pendingInvitationToken');
-      showToast.success('Invitation Accepted', `You've been added to "${result.projectName}"`);
+      showToast.success('Invitation accepted', `You now have access to "${result.projectName}"`);
       navigate({ to: '/dashboard', replace: true });
     } catch (err) {
       const domainError = getDomainError(err);
       if (domainError?.code === 'PROJECT_MEMBER_ALREADY_EXISTS') {
         localStorage.removeItem('pendingInvitationToken');
-        showToast.success('Already a Member', 'You already have access to this project.');
+        showToast.success('Already a member', 'You already have access to this project.');
         navigate({ to: '/dashboard', replace: true });
         return;
       } else {
@@ -129,8 +129,8 @@ function InvitePage() {
       return (
         <StatusMessage
           icon={<AlertTriangleIcon className='text-destructive size-8' />}
-          title='Invalid Invitation'
-          body='This invitation link is not valid. It may have been cancelled, or the link may be incomplete.'
+          title='Invitation not valid'
+          body='This link may have been cancelled, or it may be incomplete. Ask the person who invited you to send a new one.'
         />
       );
     }
@@ -141,7 +141,7 @@ function InvitePage() {
       return (
         <StatusMessage
           icon={<ClockIcon className='text-muted-foreground size-8' />}
-          title='Invitation Expired'
+          title='Invitation expired'
           body={`This invitation to "${invitation.projectName}" has expired. Ask ${invitation.inviterName} to send a new one.`}
         />
       );
@@ -151,8 +151,8 @@ function InvitePage() {
       return (
         <StatusMessage
           icon={<CheckIcon className='text-success size-8' />}
-          title='Invitation Already Used'
-          body={`This invitation to "${invitation.projectName}" has already been accepted.`}
+          title='Invitation already accepted'
+          body={`This invitation to "${invitation.projectName}" has already been used. If that was you, open the project from your dashboard.`}
           footer={
             <Link
               to='/dashboard'
@@ -165,7 +165,7 @@ function InvitePage() {
       );
     }
 
-    const roleText = invitation.role === 'owner' ? 'an Owner' : 'a Member';
+    const roleText = invitation.role === 'owner' ? 'an owner' : 'a member';
 
     return (
       <div className='flex flex-col gap-5'>
@@ -174,12 +174,13 @@ function InvitePage() {
         </div>
         <div>
           <h1 className='text-foreground mb-2 text-xl font-bold sm:text-2xl'>
-            You&apos;re Invited
+            You&apos;re invited
           </h1>
           <p className='text-muted-foreground text-sm'>
             <strong className='text-foreground'>{invitation.inviterName}</strong> invited you to
             join <strong className='text-foreground'>&quot;{invitation.projectName}&quot;</strong>{' '}
-            as {roleText}.
+            as {roleText}. CoRATES is where research teams appraise studies with AMSTAR 2, ROBINS-I,
+            and RoB 2, then reconcile where reviewers disagree.
           </p>
         </div>
 
@@ -199,7 +200,7 @@ function InvitePage() {
               loading={accepting}
               loadingText='Accepting...'
             >
-              Accept Invitation
+              Accept invitation
             </PrimaryButton>
             <Button
               type='button'
@@ -216,7 +217,7 @@ function InvitePage() {
               <strong className='text-foreground'>{invitation.email}</strong>
             </p>
             <PrimaryButton type='button' onClick={() => navigate({ to: '/signup' })}>
-              Create Account & Accept
+              Create account and join
             </PrimaryButton>
             <p className='text-muted-foreground text-sm'>
               Already have an account?{' '}

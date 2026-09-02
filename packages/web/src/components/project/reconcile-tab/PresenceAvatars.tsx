@@ -70,7 +70,7 @@ export function PresenceAvatars({
             <TooltipContent side='bottom' className='flex flex-col gap-0.5'>
               <span className='font-medium'>{user.name}</span>
               <span className='text-muted-foreground text-xs'>
-                Viewing {getLabel(user.currentPage)}
+                Looking at {getLabel(user.currentPage)}
               </span>
             </TooltipContent>
           </Tooltip>

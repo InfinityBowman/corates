@@ -41,7 +41,7 @@ const CHECKLIST_METADATA: Record<string, ChecklistMetadata> = {
     },
   },
   [CHECKLIST_TYPES.ROBINS_I]: {
-    name: 'ROBINS-I V2',
+    name: 'ROBINS-I',
     shortName: 'ROBINS-I',
     description: 'Risk of bias in non-randomized studies of interventions',
     version: 'V2',

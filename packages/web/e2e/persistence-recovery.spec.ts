@@ -77,12 +77,12 @@ test('Project state survives page refresh', async ({ context, page }) => {
   //         partial in-progress state survives the refresh.
   // ================================================================
   await page.getByRole('tab', { name: /To Do/i }).click();
-  await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
+  await expect(page.getByRole('button', { name: /Select appraisal tool/i })).toBeVisible({
     timeout: 10_000,
   });
 
-  await page.getByRole('button', { name: /Select Checklist/i }).click();
-  await page.getByRole('button', { name: /Add Checklist/i }).click();
+  await page.getByRole('button', { name: /Select appraisal tool/i }).click();
+  await page.getByRole('button', { name: /Add appraisal/i }).click();
   await expect(page.getByRole('button', { name: 'Open', exact: true })).toBeVisible({
     timeout: 10_000,
   });
@@ -190,11 +190,11 @@ test('Checklist answers survive reload with sync unavailable (local IndexedDB on
   await setupProjectWithStudy(context, page, scenario, 'Offline Persistence E2E');
 
   await page.getByRole('tab', { name: /To Do/i }).click();
-  await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
+  await expect(page.getByRole('button', { name: /Select appraisal tool/i })).toBeVisible({
     timeout: 10_000,
   });
-  await page.getByRole('button', { name: /Select Checklist/i }).click();
-  await page.getByRole('button', { name: /Add Checklist/i }).click();
+  await page.getByRole('button', { name: /Select appraisal tool/i }).click();
+  await page.getByRole('button', { name: /Add appraisal/i }).click();
   await expect(page.getByRole('button', { name: 'Open', exact: true })).toBeVisible({
     timeout: 10_000,
   });

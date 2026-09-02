@@ -106,7 +106,7 @@ export const AMSTAR2_CHART_CONFIG: ChecklistChartConfig = {
   stackOrder: ['yes', 'partial yes', 'no ma', 'no'],
   fallbackCategory: 'no ma',
   distributionXAxisLabel: n => `Percentage of SRs (%), N=${n}`,
-  distributionYAxisLabel: 'Items of AMSTAR-2',
+  distributionYAxisLabel: 'Items of AMSTAR 2',
 };
 
 export const ROB2_CHART_CONFIG: ChecklistChartConfig = {
@@ -225,7 +225,7 @@ export const ROBINS_I_CHART_CONFIG: ChecklistChartConfig = {
   ],
   fallbackCategory: 'no information',
   caption: [
-    'Domains (ROBINS-I V2):',
+    'Domains (ROBINS-I):',
     'D1: Bias due to confounding.',
     'D2: Bias in classification of interventions.',
     'D3: Bias in selection of participants into the study (or into the analysis).',

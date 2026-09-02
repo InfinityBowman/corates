@@ -127,8 +127,8 @@ export function AnswerPanel({
           {isFinal && selectedSource && (
             <span className='text-muted-foreground text-xs'>
               {selectedSource === 'custom' ?
-                'Custom selection'
-              : `Based on ${selectedSource === 'reviewer1' ? 'Reviewer 1' : 'Reviewer 2'}`}
+                'Edited here'
+              : `Taken from ${selectedSource === 'reviewer1' ? 'Reviewer 1' : 'Reviewer 2'}`}
             </span>
           )}
         </div>
@@ -141,7 +141,7 @@ export function AnswerPanel({
               )
             }`}
           >
-            {isSelected ? 'Selected' : 'Use This'}
+            {isSelected ? 'Used as the consensus' : 'Use this answer'}
           </button>
         )}
       </div>

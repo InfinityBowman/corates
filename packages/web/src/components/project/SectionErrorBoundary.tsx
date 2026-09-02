@@ -45,10 +45,11 @@ export class SectionErrorBoundary extends Component<Props, State> {
             <TriangleAlertIcon className='text-destructive size-6' />
           </div>
           <h3 className='text-foreground mb-1 text-base font-semibold'>
-            Something went wrong in {this.props.name}
+            {this.props.name} could not be displayed
           </h3>
           <p className='text-muted-foreground mb-5 text-sm'>
-            {this.state.error?.message || 'An unexpected error occurred'}
+            {this.state.error?.message ||
+              'An unexpected error stopped this section from loading. The rest of your project is unaffected.'}
           </p>
           <Button onClick={() => this.setState({ hasError: false, error: null })}>
             <RefreshCwIcon className='size-3.5' />

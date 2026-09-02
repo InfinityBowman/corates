@@ -44,11 +44,11 @@ export function OutcomeManager() {
         setIsAdding(false);
         showToast.success('Outcome added');
       } else {
-        showToast.error('Failed to add outcome');
+        showToast.error('Could not add the outcome');
       }
     } catch (err: unknown) {
       const { handleError } = await import('@/lib/error-utils');
-      await handleError(err, { toastTitle: 'Failed to Add Outcome' });
+      await handleError(err, { toastTitle: 'Could not add the outcome' });
     } finally {
       setIsSaving(false);
     }
@@ -66,11 +66,11 @@ export function OutcomeManager() {
           setEditingId(null);
           showToast.success('Outcome updated');
         } else {
-          showToast.error('Failed to update outcome');
+          showToast.error('Could not rename the outcome');
         }
       } catch (err: unknown) {
         const { handleError } = await import('@/lib/error-utils');
-        await handleError(err, { toastTitle: 'Failed to Update Outcome' });
+        await handleError(err, { toastTitle: 'Could not rename the outcome' });
       } finally {
         setIsSaving(false);
       }
@@ -86,13 +86,13 @@ export function OutcomeManager() {
         showToast.success('Outcome deleted');
       } else {
         showToast.error(
-          'Cannot delete outcome',
-          result?.error || 'Outcome is in use by checklists',
+          'Could not delete the outcome',
+          result?.error || 'This outcome is still used by an appraisal.',
         );
       }
     } catch (err: unknown) {
       const { handleError } = await import('@/lib/error-utils');
-      await handleError(err, { toastTitle: 'Failed to Delete Outcome' });
+      await handleError(err, { toastTitle: 'Could not delete the outcome' });
     }
     setDeleteTarget(null);
   }, [deleteTarget]);
@@ -154,8 +154,8 @@ export function OutcomeManager() {
             onClick={handleAdd}
             disabled={!newName.trim() || isSaving}
             className='text-primary hover:text-primary'
-            title='Add'
-            aria-label='Add'
+            title='Add outcome'
+            aria-label='Add outcome'
           >
             <CheckIcon className='size-4' />
           </Button>
@@ -178,7 +178,8 @@ export function OutcomeManager() {
       {/* Empty state */}
       {outcomes.length === 0 && !isAdding && (
         <p className='text-muted-foreground text-sm'>
-          No outcomes defined. Add outcomes to enable ROB-2 and ROBINS-I checklists.
+          No outcomes yet. Add one to start a RoB 2 or ROBINS-I checklist. AMSTAR 2 checklists do
+          not need an outcome.
         </p>
       )}
 
@@ -214,8 +215,8 @@ export function OutcomeManager() {
               onClick={() => handleUpdate(outcome.id)}
               disabled={!newName.trim() || isSaving}
               className='text-primary hover:text-primary'
-              title='Save'
-              aria-label='Save'
+              title='Save outcome name'
+              aria-label='Save outcome name'
             >
               <CheckIcon className='size-4' />
             </Button>
@@ -243,8 +244,8 @@ export function OutcomeManager() {
                 setNewName(outcome.name);
               }}
               className='text-muted-foreground'
-              title='Edit'
-              aria-label='Edit'
+              title='Rename outcome'
+              aria-label='Rename outcome'
             >
               <PencilIcon className='size-3.5' />
             </Button>
@@ -253,8 +254,8 @@ export function OutcomeManager() {
               size='icon-sm'
               onClick={() => setDeleteTarget(outcome.id)}
               className='text-muted-foreground hover:text-red-600'
-              title='Delete'
-              aria-label='Delete'
+              title='Delete outcome'
+              aria-label='Delete outcome'
             >
               <Trash2Icon className='size-3.5' />
             </Button>
@@ -268,15 +269,16 @@ export function OutcomeManager() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Outcome</AlertDialogTitle>
+            <AlertDialogTitle>Delete this outcome?</AlertDialogTitle>
             <AlertDialogDescription>
-              Delete this outcome? This will fail if any checklists use it.
+              The outcome is removed from the project and cannot be recovered. Outcomes that are
+              already used by a checklist cannot be deleted.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction variant='destructive' onClick={confirmDelete}>
-              Delete
+              Delete outcome
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

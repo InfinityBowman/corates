@@ -201,7 +201,7 @@ export async function createProject(page: Page, name: string, description = ''):
   if (description) {
     await page.getByPlaceholder('What is this review about?').fill(description);
   }
-  const createBtn = page.getByRole('button', { name: 'Create Project' });
+  const createBtn = page.getByRole('button', { name: 'Create project' });
   await expect(createBtn).toBeEnabled({ timeout: 10_000 });
   await createBtn.click();
   await expect(page).toHaveURL(/\/projects\//, { timeout: 15_000 });
@@ -247,7 +247,7 @@ export async function addStudyViaPdf(page: Page, fixture = 'Petrie2019.pdf') {
 export async function assignReviewers(page: Page) {
   await page.locator('button:has(svg.lucide-ellipsis-vertical)').first().click();
   await page.getByRole('menuitem', { name: /Assign Reviewers/i }).click();
-  await expect(page.getByRole('heading', { name: 'Assign Reviewers' })).toBeVisible({
+  await expect(page.getByRole('heading', { name: 'Assign reviewers' })).toBeVisible({
     timeout: 5_000,
   });
 
@@ -269,7 +269,7 @@ export async function assignReviewers(page: Page) {
   await expect(page.getByRole('option', { name: /Bob/i })).toBeVisible({ timeout: 15_000 });
   await page.getByRole('option', { name: /Bob/i }).click();
 
-  await dialog.getByRole('button', { name: 'Save' }).click();
+  await dialog.getByRole('button', { name: 'Save reviewers' }).click();
   await expect(dialog).toBeHidden({ timeout: 5_000 });
 }
 
@@ -311,14 +311,14 @@ export async function waitForSynced(page: Page, timeout = 15_000) {
 
 /**
  * Marks the current checklist as complete and handles the confirmation dialog.
- * The dialog says "Mark Appraisal as Complete?" with a "Mark Complete" action button.
+ * The dialog says "Mark this appraisal complete?" with a "Mark complete" action button.
  */
 export async function markChecklistComplete(page: Page) {
-  // Click the header "Mark Complete" button
+  // Click the header "Mark complete" button
   await page.getByRole('button', { name: /Mark Complete/i }).click();
 
   // Wait for the confirmation dialog to appear
-  await expect(page.getByText('Mark Appraisal as Complete?')).toBeVisible({ timeout: 5_000 });
+  await expect(page.getByText('Mark this appraisal complete?')).toBeVisible({ timeout: 5_000 });
 
   // Click the "Mark Complete" button inside the dialog
   const dialog = page.getByRole('alertdialog');

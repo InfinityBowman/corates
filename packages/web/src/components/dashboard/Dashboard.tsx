@@ -50,7 +50,8 @@ export function Dashboard() {
       <div className='px-4 py-8 sm:px-6 lg:px-8'>
         {isLoggedIn && subscriptionFetchFailed && (
           <Alert variant='warning' className='mb-6'>
-            Could not load subscription details. Some features may be limited.
+            We could not load your plan details. Some features may be unavailable until you reload
+            the page.
           </Alert>
         )}
 

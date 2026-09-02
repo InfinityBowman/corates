@@ -23,7 +23,7 @@ export function ImpersonationBanner() {
         onClick={stopImpersonation}
         className='bg-white/20 px-3 font-semibold text-white hover:bg-white/30'
       >
-        Stop Impersonating
+        Stop impersonating
       </Button>
     </div>
   );

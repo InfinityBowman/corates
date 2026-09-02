@@ -59,7 +59,7 @@ function MobileMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
                   <Link to='/signin'>Sign In</Link>
                 </Button>
                 <Button asChild size='lg' className='w-full'>
-                  <Link to='/signup'>Sign Up</Link>
+                  <Link to='/signup'>Create Account</Link>
                 </Button>
               </>
             }
@@ -118,7 +118,7 @@ export default function Navbar() {
             {isLoggedIn ?
               <>
                 <span className='hidden sm:inline-flex'>
-                  Welcome back, {user?.name || 'User'}!&nbsp;
+                  Welcome back, {user?.name || 'User'}&nbsp;
                 </span>
                 <Button asChild className='hidden sm:inline-flex'>
                   <Link to='/dashboard'>My Dashboard</Link>
@@ -129,7 +129,7 @@ export default function Navbar() {
                   <Link to='/signin'>Sign In</Link>
                 </Button>
                 <Button asChild size='lg' className='hidden px-4 sm:inline-flex'>
-                  <Link to='/signup'>Sign Up</Link>
+                  <Link to='/signup'>Create Account</Link>
                 </Button>
               </>
             }

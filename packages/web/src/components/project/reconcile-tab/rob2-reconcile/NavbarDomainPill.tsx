@@ -66,9 +66,9 @@ export function NavbarDomainPill({
     const total = progress?.total || 0;
 
     if (answered === total && total > 0) {
-      return `${section}: Complete (${total}/${total})`;
+      return `${section}: all ${total} reconciled`;
     }
-    return `${section}: ${answered}/${total}`;
+    return `${section}: ${answered} of ${total} reconciled`;
   }, [progress, sectionKey]);
 
   const items = progress?.items || [];
@@ -191,17 +191,17 @@ function QuestionPill({
   const tooltip = useMemo(() => {
     let status = '';
     if (isSkipped) {
-      status = 'Skipped (not applicable)';
+      status = 'skipped, not applicable';
     } else if (hasValue) {
-      status = 'Reconciled';
+      status = 'reconciled';
     } else if (isDirection) {
       // Direction is optional and never blocks save, so an unset one reads as
       // optional rather than as outstanding reconciliation work.
-      status = 'Optional (not set)';
+      status = 'optional, not set';
     } else if (agreement) {
-      status = 'Agreement (not yet confirmed)';
+      status = 'reviewers agreed, not confirmed yet';
     } else {
-      status = 'Needs reconciliation';
+      status = 'reviewers disagreed, needs a consensus answer';
     }
     return `${item.label}: ${status}`;
   }, [isSkipped, hasValue, isDirection, agreement, item.label]);

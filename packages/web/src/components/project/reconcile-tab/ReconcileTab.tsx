@@ -51,10 +51,10 @@ export function ReconcileTab() {
         ))
       : <div className='py-16 text-center'>
           <ArrowRightLeftIcon className='text-muted-foreground mx-auto mb-4 size-12 opacity-50' />
-          <h3 className='text-foreground mb-2 text-lg font-medium'>Reconciliation</h3>
+          <h3 className='text-foreground mb-2 text-lg font-medium'>Nothing to reconcile yet</h3>
           <p className='text-muted-foreground mx-auto max-w-md'>
-            Studies where reviewers have completed their checklists will appear here for
-            reconciliation.
+            A study appears here once both of its reviewers have completed their appraisal. Open the
+            To-Do tab to see which appraisals are still in progress.
           </p>
         </div>
       }

@@ -68,7 +68,7 @@ export function ProjectHeaderActions() {
   const handleAdded = useCallback(
     (count: number) => {
       if (!isOwner || members.length < 2 || count === 0) return;
-      toast('Assign reviewers to the new studies?', {
+      toast('Assign two reviewers to the new studies?', {
         duration: 10000,
         action: {
           label: 'Assign reviewers',
@@ -83,7 +83,8 @@ export function ProjectHeaderActions() {
     !isOwner ? 'Only the project owner can assign reviewers.'
     : studies.length === 0 ? 'Add studies first.'
     : null;
-  const exportBlockedReason = hasExportableData ? null : 'Complete a checklist first.';
+  const exportBlockedReason =
+    hasExportableData ? null : 'Start an appraisal on at least one study first.';
 
   const assignButton = (
     <>

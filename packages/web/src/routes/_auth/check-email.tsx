@@ -99,7 +99,7 @@ function CheckEmailPage() {
 
   async function handleResendEmail() {
     if (!email) {
-      setError('No email address found');
+      setError('No email address found. Sign in again to request a new link.');
       return;
     }
 
@@ -112,7 +112,7 @@ function CheckEmailPage() {
       setTimeout(() => setResent(false), RESENT_TIMEOUT_MS);
     } catch (err) {
       console.warn('Failed to resend verification email:', (err as Error).message);
-      setError('Failed to resend email. Please try again.');
+      setError('Failed to resend email. Try again.');
     } finally {
       setResending(false);
     }
@@ -129,7 +129,7 @@ function CheckEmailPage() {
           <div className='flex justify-center'>
             <Spinner size='xl' />
           </div>
-          <h2 className='text-foreground text-xl font-bold sm:text-2xl'>Email Verified!</h2>
+          <h2 className='text-foreground text-xl font-bold sm:text-2xl'>Email Verified</h2>
           <p className='text-muted-foreground text-sm sm:text-base'>
             {profileComplete ?
               'Redirecting you to the dashboard...'
@@ -153,15 +153,15 @@ function CheckEmailPage() {
 
           <div className='flex flex-col gap-4'>
             <p className='text-muted-foreground text-xs sm:text-sm'>
-              Click the verification link in your email to activate your account. Once verified,
-              you&apos;ll automatically be redirected to the dashboard.
+              Click the verification link in your email to activate your account. Leave this page
+              open.
             </p>
 
             <ErrorMessage error={error} />
 
             {resent && (
               <Alert variant='success' className='text-xs sm:text-sm'>
-                Verification email sent successfully!
+                Verification email sent.
               </Alert>
             )}
           </div>
@@ -182,7 +182,7 @@ function CheckEmailPage() {
                 navigate({ to: '/signin', replace: true });
               }}
             >
-              Back to Sign In
+              Use a Different Email
             </SecondaryButton>
           </div>
 

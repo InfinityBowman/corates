@@ -47,8 +47,9 @@ export function DoiLookupSection({ studies }: DoiLookupSectionProps) {
   return (
     <div className='flex flex-col gap-3'>
       <p className='text-muted-foreground text-sm'>
-        Paste DOIs or PubMed IDs to find references with open-access PDFs. Only references with
-        available PDFs can be added.
+        Paste one DOI or PubMed ID per line. Each one is looked up and matched to an open-access PDF
+        where there is one. Only references with a PDF can be added as studies; for publisher-hosted
+        papers, download the PDF and upload it here.
       </p>
 
       <div className='flex flex-col gap-2'>
@@ -72,7 +73,7 @@ export function DoiLookupSection({ studies }: DoiLookupSectionProps) {
             </>
           : <>
               <SearchIcon className='size-4' />
-              Look Up References
+              Look up references
             </>
           }
         </Button>
@@ -83,7 +84,7 @@ export function DoiLookupSection({ studies }: DoiLookupSectionProps) {
         <Alert variant='destructive'>
           <AlertCircleIcon />
           <div>
-            <AlertTitle>Some lookups failed:</AlertTitle>
+            <AlertTitle>These identifiers could not be looked up:</AlertTitle>
             <ul className='list-inside list-disc text-xs'>
               {studies.lookupErrors.map((err: any, i: number) => (
                 <li key={i}>
@@ -155,7 +156,7 @@ export function DoiLookupSection({ studies }: DoiLookupSectionProps) {
               <div className='border-border mt-2 border-t pt-2'>
                 <p className='text-warning mb-2 flex items-center gap-1 text-xs font-medium'>
                   <AlertCircleIcon className='size-3.5' />
-                  No open-access PDF available:
+                  No open-access PDF found, so these cannot be added as studies:
                 </p>
                 {refsWithoutPdf.map((ref: any) => (
                   <LookupRefWithoutPdf
@@ -199,7 +200,10 @@ function LookupRefWithPdf({
 
       const result = await validatePdfFile(file);
       if (!result.valid) {
-        showToast.error('Invalid PDF', (result as any).details?.message || result.error);
+        showToast.error(
+          'That file cannot be used',
+          (result as any).details?.message || result.error,
+        );
         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
@@ -207,10 +211,10 @@ function LookupRefWithPdf({
       try {
         const arrayBuffer = await file.arrayBuffer();
         onAttachPdf(ref_._id, file.name, arrayBuffer);
-        showToast.success('PDF Attached', `Attached ${file.name}`);
+        showToast.success('PDF attached', `${file.name} is attached to this reference.`);
       } catch (err) {
         const { handleError } = await import('@/lib/error-utils.js');
-        await handleError(err, { toastTitle: 'Error' });
+        await handleError(err, { toastTitle: 'Could not attach the PDF' });
       }
 
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -319,10 +323,10 @@ function PdfStatusBadge({
         <TooltipTrigger asChild>
           <span className='bg-success-bg text-success inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium'>
             <CheckIcon className='size-3' />
-            PDF Ready
+            PDF ready
           </span>
         </TooltipTrigger>
-        <TooltipContent>PDF uploaded: {ref_.manualPdfFileName}</TooltipContent>
+        <TooltipContent>You uploaded {ref_.manualPdfFileName} for this reference</TooltipContent>
       </Tooltip>
     );
   }
@@ -338,7 +342,8 @@ function PdfStatusBadge({
           </span>
         </TooltipTrigger>
         <TooltipContent>
-          PDF available via {ref_.pdfSource || 'repository'} - will auto-download
+          Open-access PDF found in {ref_.pdfSource || 'a repository'}. It downloads automatically
+          when you add the study.
         </TooltipContent>
       </Tooltip>
     );
@@ -361,7 +366,7 @@ function PdfStatusBadge({
           </Button>
         </TooltipTrigger>
         <TooltipContent>
-          Click to manually upload PDF after downloading from publisher
+          The publisher does not allow an automatic download. Download the PDF, then upload it here.
         </TooltipContent>
       </Tooltip>
       {ref_.pdfUrl && (
@@ -377,7 +382,9 @@ function PdfStatusBadge({
               <DownloadIcon className='size-4' />
             </a>
           </TooltipTrigger>
-          <TooltipContent>Download PDF from publisher (then upload)</TooltipContent>
+          <TooltipContent>
+            Open the publisher page to download the PDF, then upload it here
+          </TooltipContent>
         </Tooltip>
       )}
     </>

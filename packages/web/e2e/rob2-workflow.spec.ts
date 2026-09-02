@@ -35,9 +35,9 @@ import {
  */
 async function answerROB2DomainsWithSkips(page: import('@playwright/test').Page, answer: string) {
   await answerSignallingQuestion(page, 'domain1', /allocation sequence concealed/i, 'N');
-  // exact: the direction label renders its own lowercase "(optional)"
+  // exact: match only the skipped-question label, not other parenthesised hints
   await expect(
-    page.locator('#domain-section-domain1').getByText('(Optional)', { exact: true }),
+    page.locator('#domain-section-domain1').getByText('(Not required)', { exact: true }),
   ).toHaveCount(2, { timeout: 5_000 });
 
   await answerSignallingQuestion(
@@ -47,7 +47,7 @@ async function answerROB2DomainsWithSkips(page: import('@playwright/test').Page,
     'Y',
   );
   await expect(
-    page.locator('#domain-section-domain3').getByText('(Optional)', { exact: true }),
+    page.locator('#domain-section-domain3').getByText('(Not required)', { exact: true }),
   ).toHaveCount(3, { timeout: 5_000 });
 
   await answerAllROB2Domains(page, answer, ['domain2a', 'domain4', 'domain5']);
@@ -73,16 +73,16 @@ test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
   // User A fills ROB2 checklist
   // ================================================================
   await page.getByRole('tab', { name: /To Do/i }).click();
-  await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
+  await expect(page.getByRole('button', { name: /Select appraisal tool/i })).toBeVisible({
     timeout: 10_000,
   });
 
-  await page.getByRole('button', { name: /Select Checklist/i }).click();
+  await page.getByRole('button', { name: /Select appraisal tool/i }).click();
   await page.getByText(/AMSTAR 2/i).click();
   await page.getByRole('option', { name: /RoB 2/i }).click();
   await page.getByText(/Select outcome/i).click();
   await page.getByRole('option', { name: /Pain reduction/i }).click();
-  await page.getByRole('button', { name: /Add Checklist/i }).click();
+  await page.getByRole('button', { name: /Add appraisal/i }).click();
   await expect(page.getByRole('button', { name: 'Open', exact: true })).toBeVisible({
     timeout: 10_000,
   });
@@ -107,12 +107,12 @@ test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
   await page.getByRole('tab', { name: /To Do/i }).click();
   await expect(page.getByText(/Petrie2019/i).first()).toBeVisible({ timeout: 30_000 });
 
-  await page.getByRole('button', { name: /Select Checklist/i }).click();
+  await page.getByRole('button', { name: /Select appraisal tool/i }).click();
   await page.getByText(/AMSTAR 2/i).click();
   await page.getByRole('option', { name: /RoB 2/i }).click();
   await page.getByText(/Select outcome/i).click();
   await page.getByRole('option', { name: /Pain reduction/i }).click();
-  await page.getByRole('button', { name: /Add Checklist/i }).click();
+  await page.getByRole('button', { name: /Add appraisal/i }).click();
   await expect(page.getByRole('button', { name: 'Open', exact: true })).toBeVisible({
     timeout: 10_000,
   });
@@ -153,17 +153,17 @@ test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
   await expect(page).toHaveURL(/\/reconcile\//, { timeout: 10_000 });
 
   // Verify ROB2 reconciliation loaded
-  await expect(page.getByRole('heading', { name: /ROB-2 Reconciliation/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /RoB 2 reconciliation/i })).toBeVisible();
   await expect(page.getByText('Item 1 of')).toBeVisible();
   await expect(page.getByText('D1').first()).toBeVisible();
   await expect(page.getByText('D5').first()).toBeVisible();
 
   // ================================================================
-  // Walk through reconciliation: for each page, try "Use This" first.
-  // If no "Use This" is available (e.g., direction pages where both
+  // Walk through reconciliation: for each page, try "Use this answer" first.
+  // If no "Use this answer" is available (e.g., direction pages where both
   // reviewers left it blank), pick a value in the Final panel directly.
   // ================================================================
-  const nextBtn = page.getByRole('button', { name: /Next|Review Summary/i });
+  const nextBtn = page.getByRole('button', { name: /Next|Review summary/i });
 
   let safety = 0;
   let sawSkippedReviewerPanels = false;
@@ -208,8 +208,8 @@ test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
       sawStampedNA = true;
     }
 
-    // Try clicking "Use This" (Reviewer 1's panel)
-    const useThisBtn = page.getByRole('button', { name: 'Use This' }).first();
+    // Try clicking "Use this answer" (Reviewer 1's panel)
+    const useThisBtn = page.getByRole('button', { name: 'Use this answer' }).first();
     const hasUseThis = await useThisBtn.isVisible().catch(() => false);
 
     if (hasUseThis) {
@@ -222,17 +222,17 @@ test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
     // For sources page: neither reviewer selected sources, so check one
     const sourceLabel = page.locator('label').filter({ hasText: 'Journal article(s)' });
     if (await sourceLabel.isVisible().catch(() => false)) {
-      const finalAnswerHeading = page.getByText('Final Answer');
+      const finalAnswerHeading = page.getByText('Consensus answer');
       if (await finalAnswerHeading.isVisible().catch(() => false)) {
         await sourceLabel.click();
       }
     }
 
-    // Check if the Next button says "Review Summary" (last page)
+    // Check if the Next button says "Review summary" (last page)
     const btnText = await nextBtn.textContent();
     await nextBtn.click();
 
-    if (btnText?.includes('Review Summary')) break;
+    if (btnText?.includes('Review summary')) break;
   }
 
   // The walk must have passed through all three skip states.
@@ -243,17 +243,17 @@ test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
   // ================================================================
   // Summary view - verify and save
   // ================================================================
-  await expect(page.getByText('Reconciliation Summary')).toBeVisible({ timeout: 5_000 });
+  await expect(page.getByText('Reconciliation summary')).toBeVisible({ timeout: 5_000 });
   await page.screenshot({ path: 'test-results/debug-summary.png' });
   // Skipped questions surface as "Skipped" rather than "Not set" and do not
   // block saving.
   await expect(page.getByText('Skipped', { exact: true }).first()).toBeVisible({ timeout: 5_000 });
-  const saveBtn = page.getByRole('button', { name: /Save Reconciled Checklist/i });
+  const saveBtn = page.getByRole('button', { name: /Save consensus appraisal/i });
   await expect(saveBtn).toBeEnabled({ timeout: 10_000 });
   await saveBtn.click();
 
   // Confirm save in the dialog
-  const finishBtn = page.getByRole('button', { name: 'Finish' });
+  const finishBtn = page.getByRole('button', { name: 'Finish reconciliation' });
   await expect(finishBtn).toBeVisible({ timeout: 5_000 });
   await finishBtn.click();
 

@@ -13,17 +13,17 @@ export default function EarlyAccessBanner() {
         <InfoIcon className='size-5 shrink-0' />
         <p className='text-sm md:text-base'>
           <span className='font-semibold'>
-            CoRATES is in early access. We're actively building and{' '}
+            CoRATES is in early access. Features are still changing, so{' '}
             {isLoggedIn ?
               <button
                 type='button'
                 onClick={openFeedback}
                 className='cursor-pointer underline underline-offset-2 hover:text-blue-100'
               >
-                welcome your feedback
+                tell us what's working and what's not
               </button>
             : <Link to='/contact' className='underline underline-offset-2 hover:text-blue-100'>
-                welcome your feedback
+                tell us what's working and what's not
               </Link>
             }
             .

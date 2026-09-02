@@ -132,7 +132,7 @@ export function FeedbackDialog() {
 
             {formState === 'error' && (
               <p className='text-destructive text-sm'>
-                Something went wrong sending your feedback. Please try again.
+                Your feedback did not send. Check your connection and try again.
               </p>
             )}
 

@@ -35,7 +35,7 @@ export function SplitPanelControls({
   pdfUrl,
   pdfData,
 }: SplitPanelControlsProps) {
-  const panelLabel = secondPanelLabel || 'second panel';
+  const panelLabel = secondPanelLabel || 'PDF';
   const ratioLabel = defaultRatioLabel || '50/50';
 
   const hasPdf = !!(pdfUrl || pdfData);

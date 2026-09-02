@@ -22,7 +22,7 @@ function QuestionInfo({ question }: { question: AMSTAR2QuestionSchema }) {
             variant='ghost'
             size='icon-xs'
             className='rounded-full opacity-70 hover:opacity-100 focus-visible:opacity-100'
-            aria-label='Question information'
+            aria-label='Guidance for this question'
           >
             <InfoIcon />
           </Button>
@@ -639,7 +639,7 @@ export function AMSTAR2Checklist({ studyId, checklistId, readOnly }: AMSTAR2Chec
     <div className='bg-blue-50'>
       <div className='container mx-auto max-w-5xl px-4 py-6'>
         <div className='text-foreground mb-6 text-left text-lg font-semibold sm:text-center'>
-          {checklistName || 'AMSTAR 2 Checklist'}
+          {checklistName || 'AMSTAR 2 appraisal'}
         </div>
         <fieldset disabled={!!readOnly} className={readOnly ? 'opacity-90' : ''}>
           <div className='flex flex-col gap-6'>

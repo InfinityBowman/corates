@@ -28,7 +28,7 @@ const FIXTURES_DIR = path.join(import.meta.dirname, 'fixtures');
 const TYPE_LABELS: Record<string, string> = {
   AMSTAR2: 'AMSTAR 2',
   ROB2: 'RoB 2',
-  ROBINS_I: 'ROBINS-I V2',
+  ROBINS_I: 'ROBINS-I',
 };
 
 async function createLocalChecklist(
@@ -44,11 +44,11 @@ async function createLocalChecklist(
   await page.locator('#checklist-type').click();
   await page.getByRole('option', { name: new RegExp(TYPE_LABELS[type]) }).click();
   await page.locator('#checklist-name').fill(name);
-  await page.getByRole('button', { name: /^Start$/ }).click();
+  await page.getByRole('button', { name: /^Start appraisal$/ }).click();
 
   await expect(page).toHaveURL(/\/checklist\/[0-9a-f-]{36}/, { timeout: 10_000 });
   // Wait for the "Loading checklist..." gate to clear (phase === 'synced').
-  await expect(page.getByText('Loading checklist...')).toBeHidden({ timeout: 15_000 });
+  await expect(page.getByText('Loading appraisal...')).toBeHidden({ timeout: 15_000 });
 }
 
 test.describe('Local-practice checklists', () => {
@@ -61,7 +61,7 @@ test.describe('Local-practice checklists', () => {
     expect(checkedBefore).toBeGreaterThan(0);
 
     await page.reload();
-    await expect(page.getByText('Loading checklist...')).toBeHidden({ timeout: 15_000 });
+    await expect(page.getByText('Loading appraisal...')).toBeHidden({ timeout: 15_000 });
 
     await expect(async () => {
       const checkedAfter = await page.getByRole('radio', { name: 'Yes', checked: true }).count();
@@ -75,7 +75,7 @@ test.describe('Local-practice checklists', () => {
     await fillROB2Preliminary(page, 'Drug X', 'Placebo');
 
     await page.reload();
-    await expect(page.getByText('Loading checklist...')).toBeHidden({ timeout: 15_000 });
+    await expect(page.getByText('Loading appraisal...')).toBeHidden({ timeout: 15_000 });
 
     // Y.Text fields round-trip via getTextRef + DexieYProvider.
     await expect(page.getByPlaceholder(/experimental intervention/i)).toHaveValue('Drug X');

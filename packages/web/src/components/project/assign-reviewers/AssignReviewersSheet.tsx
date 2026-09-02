@@ -37,8 +37,9 @@ export function AssignReviewersSheet({ open, onOpenChange }: AssignReviewersShee
         <SheetHeader>
           <SheetTitle>Assign reviewers</SheetTitle>
           <SheetDescription>
-            Distribute unassigned studies across the team. Individual studies can be reassigned from
-            their card in the study list.
+            Every study is appraised independently by two reviewers, who then reconcile their
+            answers. Spread the unassigned studies across your team here, or set the two reviewers
+            for a single study from its card on All studies.
           </SheetDescription>
         </SheetHeader>
         <div className='p-4'>

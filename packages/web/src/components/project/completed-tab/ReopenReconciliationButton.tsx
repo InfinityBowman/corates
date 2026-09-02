@@ -41,17 +41,17 @@ export function ReopenReconciliationButton({ onReopen }: ReopenReconciliationBut
           <AlertDialogHeader>
             <AlertDialogIcon variant='warning' />
             <div>
-              <AlertDialogTitle>Reopen Reconciliation</AlertDialogTitle>
+              <AlertDialogTitle>Reopen this reconciliation?</AlertDialogTitle>
               <AlertDialogDescription>
-                This moves the study back to the Reconcile tab. Consensus answers are kept and can
-                be edited before finalizing again. Until then, this checklist will not appear in
-                results or exports.
+                The study moves back to the Reconcile tab. Your consensus answers are kept and can
+                be edited, then finalized again. Until you finalize it, this checklist is left out
+                of the figures, tables, and exports.
               </AlertDialogDescription>
             </div>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={onReopen}>Reopen</AlertDialogAction>
+            <AlertDialogAction onClick={onReopen}>Reopen reconciliation</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

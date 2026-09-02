@@ -14,7 +14,7 @@
  *   1. Both users open the reconciliation view
  *   2. Verify presence avatars appear via awareness protocol
  *   3. Verify cursor position syncs between users
- *   4. Verify text editing in the Final Note syncs via Y.Text
+ *   4. Verify text editing in the consensus note syncs via Y.Text
  *
  * Prerequisites:
  *   pnpm --filter web dev  (localhost:3010, DEV_MODE=true)
@@ -109,11 +109,11 @@ test('Presence avatars, cursor sync, and text editing sync during reconciliation
 
   // User A: add AMSTAR2 checklist, answer Yes to everything, mark complete
   await page.getByRole('tab', { name: /To Do/i }).click();
-  await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
+  await expect(page.getByRole('button', { name: /Select appraisal tool/i })).toBeVisible({
     timeout: 10_000,
   });
-  await page.getByRole('button', { name: /Select Checklist/i }).click();
-  await page.getByRole('button', { name: /Add Checklist/i }).click();
+  await page.getByRole('button', { name: /Select appraisal tool/i }).click();
+  await page.getByRole('button', { name: /Add appraisal/i }).click();
   await expect(page.getByRole('button', { name: 'Open', exact: true })).toBeVisible({
     timeout: 10_000,
   });
@@ -132,11 +132,11 @@ test('Presence avatars, cursor sync, and text editing sync during reconciliation
   await expect(page.getByText('Realtime Reconcile Test').first()).toBeVisible({ timeout: 15_000 });
 
   await page.getByRole('tab', { name: /To Do/i }).click();
-  await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
+  await expect(page.getByRole('button', { name: /Select appraisal tool/i })).toBeVisible({
     timeout: 10_000,
   });
-  await page.getByRole('button', { name: /Select Checklist/i }).click();
-  await page.getByRole('button', { name: /Add Checklist/i }).click();
+  await page.getByRole('button', { name: /Select appraisal tool/i }).click();
+  await page.getByRole('button', { name: /Add appraisal/i }).click();
   await expect(page.getByRole('button', { name: 'Open', exact: true })).toBeVisible({
     timeout: 10_000,
   });
@@ -225,19 +225,19 @@ test('Presence avatars, cursor sync, and text editing sync during reconciliation
 
     // ================================================================
     // TEST 3: Text editing sync via Y.Text
-    // User A types in the Final Note textarea on the current question,
+    // User A types in the consensus note textarea on the current question,
     // User B should see the text appear without refreshing.
     // ================================================================
-    // Expand the collapsed "Question Notes" section on both pages
-    await pageA.getByText('Question Notes').click();
-    await pageB.getByText('Question Notes').click();
+    // Expand the collapsed "Question notes" section on both pages
+    await pageA.getByText('Question notes').click();
+    await pageB.getByText('Question notes').click();
 
-    // User A fills the Final Note
-    const finalNoteA = pageA.locator('textarea[placeholder="Add the final reconciled note..."]');
+    // User A fills the consensus note
+    const finalNoteA = pageA.locator('textarea[placeholder="Write the consensus note"]');
     await finalNoteA.fill('Agreed to use conservative estimate');
 
     // User B should see the same text via Y.Text sync
-    const finalNoteB = pageB.locator('textarea[placeholder="Add the final reconciled note..."]');
+    const finalNoteB = pageB.locator('textarea[placeholder="Write the consensus note"]');
     await expect(finalNoteB).toHaveValue('Agreed to use conservative estimate', {
       timeout: 15_000,
     });

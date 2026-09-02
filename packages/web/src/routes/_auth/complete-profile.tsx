@@ -437,7 +437,7 @@ function CompleteProfilePage() {
 
             <div className='flex flex-col gap-2'>
               <Label htmlFor='title-select' className='mb-1'>
-                Title
+                Title <span className='text-muted-foreground/70 font-normal'>(optional)</span>
               </Label>
               <Select value={titleSelection} onValueChange={v => setTitleSelection(v)}>
                 <SelectTrigger id='title-select' className='w-full'>
@@ -550,7 +550,7 @@ function CompleteProfilePage() {
               What best describes you?
             </h2>
             <p className='text-muted-foreground text-xs sm:text-sm'>
-              This helps us tailor your experience
+              Shown on your dashboard. Changeable in settings.
             </p>
           </div>
 
@@ -592,7 +592,7 @@ function CompleteProfilePage() {
               disabled={loading}
               className='text-muted-foreground hover:text-secondary-foreground mx-auto'
             >
-              Skip for now
+              Skip and finish
             </Button>
           </form>
         </StepsContent>
@@ -602,7 +602,7 @@ function CompleteProfilePage() {
             <div className='bg-success-bg mb-4 flex size-16 items-center justify-center rounded-full'>
               <CheckIcon className='text-success size-8' />
             </div>
-            <h2 className='text-foreground mb-2 text-xl font-bold'>All Done!</h2>
+            <h2 className='text-foreground mb-2 text-xl font-bold'>Profile Saved</h2>
             <p className='text-muted-foreground text-sm'>Redirecting to your dashboard...</p>
           </div>
         </StepsCompletedContent>

@@ -145,7 +145,10 @@ export function RobinsISummaryView({
     <div className='bg-card overflow-hidden rounded-lg shadow-lg'>
       {/* Summary Header */}
       <div className='border-border bg-muted border-b p-6'>
-        <h2 className='text-foreground mb-4 text-xl font-bold'>Review Summary</h2>
+        <h2 className='text-foreground mb-2 text-xl font-bold'>Reconciliation summary</h2>
+        <p className='text-muted-foreground mb-4 text-sm'>
+          Check every consensus answer before you finish. Select an item to go back and change it.
+        </p>
 
         {/* Stats */}
         {summary && (
@@ -156,7 +159,7 @@ export function RobinsISummaryView({
               <div className='text-secondary-foreground text-2xl font-bold'>
                 {summary.scoredTotal}
               </div>
-              <div className='text-muted-foreground text-xs'>Domain Items</div>
+              <div className='text-muted-foreground text-xs'>Domain items</div>
             </div>
             <div className='rounded-lg border border-green-200 bg-green-50 p-3 text-center'>
               <div className='text-2xl font-bold text-green-700'>{summary.agreed}</div>
@@ -168,7 +171,7 @@ export function RobinsISummaryView({
             </div>
             <div className='rounded-lg border border-sky-200 bg-sky-50 p-3 text-center'>
               <div className='text-2xl font-bold text-sky-700'>{summary.agreementPercentage}%</div>
-              <div className='text-xs text-sky-600'>Agreement Rate</div>
+              <div className='text-xs text-sky-600'>Agreement rate</div>
             </div>
           </div>
         )}
@@ -214,7 +217,7 @@ export function RobinsISummaryView({
                           {getItemLabel(item)}
                         </div>
                         <div className='text-muted-foreground text-xs'>
-                          {agreement ? 'Reviewers agreed' : 'Reviewers differed'}
+                          {agreement ? 'Reviewers agreed' : 'Reviewers disagreed'}
                         </div>
                       </div>
                     </div>
@@ -255,18 +258,25 @@ export function RobinsISummaryView({
       <div className='border-border bg-muted flex items-center justify-between border-t p-6'>
         <Button variant='outline' size='lg' onClick={onBack}>
           <ArrowLeftIcon className='size-4' />
-          Back to Questions
+          Back to the questions
         </Button>
 
-        <Button size='lg' onClick={onSave} disabled={!allAnswered || saving}>
-          {saving ?
-            'Saving...'
-          : <>
-              <CheckIcon className='size-4' />
-              Save Reconciled Checklist
-            </>
-          }
-        </Button>
+        <div className='flex items-center gap-4'>
+          {!allAnswered && (
+            <span className='text-muted-foreground text-sm'>
+              Record a consensus answer for every item to finish.
+            </span>
+          )}
+          <Button size='lg' onClick={onSave} disabled={!allAnswered || saving}>
+            {saving ?
+              'Saving...'
+            : <>
+                <CheckIcon className='size-4' />
+                Save consensus appraisal
+              </>
+            }
+          </Button>
+        </div>
       </div>
     </div>
   );

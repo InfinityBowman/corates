@@ -72,7 +72,7 @@ export function LocalAppraisalsSection({
     if (!checklist) continue;
     appraisals.push({
       id: study.id,
-      name: study.name || 'Untitled Checklist',
+      name: study.name || 'Untitled appraisal',
       type: checklist.type,
       updatedAt: (checklist.updatedAt ?? study.updatedAt) as number | undefined,
       createdAt: (checklist.createdAt ?? study.createdAt) as number | undefined,
@@ -164,7 +164,7 @@ export function LocalAppraisalsSection({
       {showHeader && (
         <div className='mb-4 flex items-center justify-between'>
           <h2 className='text-muted-foreground text-sm font-semibold tracking-wide uppercase'>
-            Local Appraisals
+            Local appraisals
           </h2>
           {hasChecklists && (
             <div className='flex items-center gap-2'>
@@ -172,7 +172,7 @@ export function LocalAppraisalsSection({
                 <DropdownMenuTrigger asChild>
                   <Button variant='outline'>
                     <DownloadIcon data-icon='inline-start' />
-                    Export All
+                    Export all
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align='end'>
@@ -188,7 +188,7 @@ export function LocalAppraisalsSection({
               </DropdownMenu>
               <Button onClick={handleCreate}>
                 <PlusIcon data-icon='inline-start' />
-                New Appraisal
+                New appraisal
               </Button>
             </div>
           )}
@@ -205,11 +205,12 @@ export function LocalAppraisalsSection({
             <div>
               <p className='text-primary text-sm font-medium'>Want to collaborate?</p>
               <p className='text-primary/70 text-xs'>
-                Sign in to create projects and sync across devices
+                Sign in to create projects, invite reviewers, and sync your appraisals across
+                devices
               </p>
             </div>
           </div>
-          <Button onClick={() => navigate({ to: '/signin' })}>Sign In</Button>
+          <Button onClick={() => navigate({ to: '/signin' })}>Sign in</Button>
         </div>
       )}
 
@@ -221,15 +222,15 @@ export function LocalAppraisalsSection({
               <FileTextIcon className='text-muted-foreground size-6 opacity-70' />
             </div>
             <h3 className='text-secondary-foreground mb-1 text-sm font-medium'>
-              No local appraisals
+              No local appraisals yet
             </h3>
             <p className='text-muted-foreground mb-4 max-w-sm text-center text-xs'>
-              Use AMSTAR 2, ROBINS-I, or RoB 2 to appraise studies on this device with optional PDF
-              annotation
+              Appraise a study with AMSTAR 2, ROBINS-I, or RoB 2. It stays on this device, and you
+              can annotate the PDF as you work
             </p>
             <Button onClick={handleCreate}>
               <PlusIcon data-icon='inline-start' />
-              Create Appraisal
+              Create appraisal
             </Button>
           </div>
         )}
@@ -256,16 +257,17 @@ export function LocalAppraisalsSection({
               <TriangleAlertIcon />
             </AlertDialogIcon>
             <div>
-              <AlertDialogTitle>Delete Appraisal</AlertDialogTitle>
+              <AlertDialogTitle>Delete appraisal</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete this appraisal? This cannot be undone.
+                This appraisal, its answers, and any PDF you attached are removed from this device.
+                This cannot be undone.
               </AlertDialogDescription>
             </div>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction variant='destructive' onClick={confirmDelete}>
-              Delete
+              Delete appraisal
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

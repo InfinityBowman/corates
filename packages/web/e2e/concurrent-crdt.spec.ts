@@ -258,11 +258,11 @@ test.describe('Concurrent CRDT: AMSTAR2', () => {
 
     // User A adds checklist
     await setupPage.getByRole('tab', { name: /To Do/i }).click();
-    await expect(setupPage.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
+    await expect(setupPage.getByRole('button', { name: /Select appraisal tool/i })).toBeVisible({
       timeout: 10_000,
     });
-    await setupPage.getByRole('button', { name: /Select Checklist/i }).click();
-    await setupPage.getByRole('button', { name: /Add Checklist/i }).click();
+    await setupPage.getByRole('button', { name: /Select appraisal tool/i }).click();
+    await setupPage.getByRole('button', { name: /Add appraisal/i }).click();
     await expect(setupPage.getByRole('button', { name: 'Open', exact: true })).toBeVisible({
       timeout: 10_000,
     });
@@ -282,11 +282,11 @@ test.describe('Concurrent CRDT: AMSTAR2', () => {
     await expect(setupPage.getByText('AMSTAR2 CRDT Test').first()).toBeVisible({ timeout: 15_000 });
 
     await setupPage.getByRole('tab', { name: /To Do/i }).click();
-    await expect(setupPage.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
+    await expect(setupPage.getByRole('button', { name: /Select appraisal tool/i })).toBeVisible({
       timeout: 10_000,
     });
-    await setupPage.getByRole('button', { name: /Select Checklist/i }).click();
-    await setupPage.getByRole('button', { name: /Add Checklist/i }).click();
+    await setupPage.getByRole('button', { name: /Select appraisal tool/i }).click();
+    await setupPage.getByRole('button', { name: /Add appraisal/i }).click();
     await expect(setupPage.getByRole('button', { name: 'Open', exact: true })).toBeVisible({
       timeout: 10_000,
     });
@@ -351,15 +351,15 @@ test.describe('Concurrent CRDT: ROB2', () => {
 
     // User A adds ROB2 checklist
     await setupPage.getByRole('tab', { name: /To Do/i }).click();
-    await expect(setupPage.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
+    await expect(setupPage.getByRole('button', { name: /Select appraisal tool/i })).toBeVisible({
       timeout: 10_000,
     });
-    await setupPage.getByRole('button', { name: /Select Checklist/i }).click();
+    await setupPage.getByRole('button', { name: /Select appraisal tool/i }).click();
     await setupPage.getByText(/AMSTAR 2/i).click();
     await setupPage.getByRole('option', { name: /RoB 2/i }).click();
     await setupPage.getByText(/Select outcome/i).click();
     await setupPage.getByRole('option', { name: /Primary outcome/i }).click();
-    await setupPage.getByRole('button', { name: /Add Checklist/i }).click();
+    await setupPage.getByRole('button', { name: /Add appraisal/i }).click();
     await expect(setupPage.getByRole('button', { name: 'Open', exact: true })).toBeVisible({
       timeout: 10_000,
     });
@@ -386,15 +386,15 @@ test.describe('Concurrent CRDT: ROB2', () => {
     await expect(setupPage.getByText('ROB2 CRDT Test').first()).toBeVisible({ timeout: 15_000 });
 
     await setupPage.getByRole('tab', { name: /To Do/i }).click();
-    await expect(setupPage.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
+    await expect(setupPage.getByRole('button', { name: /Select appraisal tool/i })).toBeVisible({
       timeout: 10_000,
     });
-    await setupPage.getByRole('button', { name: /Select Checklist/i }).click();
+    await setupPage.getByRole('button', { name: /Select appraisal tool/i }).click();
     await setupPage.getByText(/AMSTAR 2/i).click();
     await setupPage.getByRole('option', { name: /RoB 2/i }).click();
     await setupPage.getByText(/Select outcome/i).click();
     await setupPage.getByRole('option', { name: /Primary outcome/i }).click();
-    await setupPage.getByRole('button', { name: /Add Checklist/i }).click();
+    await setupPage.getByRole('button', { name: /Add appraisal/i }).click();
     await expect(setupPage.getByRole('button', { name: 'Open', exact: true })).toBeVisible({
       timeout: 10_000,
     });

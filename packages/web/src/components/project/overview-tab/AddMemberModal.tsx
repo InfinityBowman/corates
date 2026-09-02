@@ -122,7 +122,7 @@ export function AddMemberModal({
   const handleAddMember = useCallback(async () => {
     if (!selectedUser && !canAddByEmail) return;
     if (!orgId) {
-      setError('No organization context');
+      setError('This project is not linked to a team yet. Reload the page and try again.');
       return;
     }
 
@@ -139,7 +139,10 @@ export function AddMemberModal({
         },
       })) as { invitation?: boolean; email?: string };
       track('Collaborator:Invited', { method: 'email' });
-      showToast.success('Invitation Sent', `Invitation sent to ${result.email || searchQuery}`);
+      showToast.success(
+        'Invitation sent',
+        `${result.email || searchQuery} can join the project from the link in the email.`,
+      );
       // The invitations list is a D1 fact read through React Query — nothing
       // pushes it to this client, so refetch after the write.
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.invitations(projectId) });
@@ -161,7 +164,7 @@ export function AddMemberModal({
     >
       <DialogContent className='sm:max-w-md'>
         <DialogHeader>
-          <DialogTitle>Invite Member</DialogTitle>
+          <DialogTitle>Invite a member</DialogTitle>
         </DialogHeader>
 
         <div className='flex flex-col gap-4'>
@@ -279,7 +282,7 @@ export function AddMemberModal({
                   setSearchQuery('');
                 }}
               >
-                <span className='sr-only'>Remove selection</span>
+                <span className='sr-only'>Clear the selected person</span>
               </Button>
             </div>
           )}
@@ -297,8 +300,12 @@ export function AddMemberModal({
                   <SelectValue placeholder='Select a role' />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value='member'>Member - Can edit project content</SelectItem>
-                  <SelectItem value='owner'>Owner - Full access and member management</SelectItem>
+                  <SelectItem value='member'>
+                    Member - can appraise studies and edit project content
+                  </SelectItem>
+                  <SelectItem value='owner'>
+                    Owner - can also assign reviewers and manage members
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -315,7 +322,7 @@ export function AddMemberModal({
             onClick={handleAddMember}
             disabled={(!selectedUser && !canAddByEmail) || adding || !!isAtQuotaLimit}
           >
-            {adding ? 'Sending Invitation...' : 'Send Invitation'}
+            {adding ? 'Sending invitation...' : 'Send invitation'}
           </Button>
         </DialogFooter>
       </DialogContent>

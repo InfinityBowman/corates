@@ -92,10 +92,10 @@ export function DomainDirectionPage({
           }
           <div>
             <h2 className='text-foreground font-semibold'>
-              {domain?.name} - Judgement &amp; Direction
+              {domain?.name} - judgement and direction
             </h2>
             <p className='text-muted-foreground mt-1 text-sm'>
-              Review the calculated judgement and select the bias direction
+              The judgement is calculated for you. Record the direction of bias you agree on.
             </p>
           </div>
         </div>
@@ -106,8 +106,8 @@ export function DomainDirectionPage({
         <div className='mb-3 flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3'>
           <InfoIcon className='size-4 shrink-0 text-blue-600' />
           <p className='text-xs text-blue-800'>
-            The risk of bias judgement is automatically calculated from the signalling question
-            answers. To change it, reconcile the signalling questions above.
+            The risk of bias judgement is calculated from the signalling question answers. To change
+            it, go back and change the consensus answers to those questions.
           </p>
         </div>
 
@@ -118,7 +118,7 @@ export function DomainDirectionPage({
         <div className='grid grid-cols-3 divide-x rounded-lg border'>
           <ReadOnlyJudgement title={reviewer1Name} judgement={reviewer1Scoring.judgement} />
           <ReadOnlyJudgement title={reviewer2Name} judgement={reviewer2Scoring.judgement} />
-          <ReadOnlyJudgement title='Final (Reconciled)' judgement={finalScoring.judgement} />
+          <ReadOnlyJudgement title='Consensus' judgement={finalScoring.judgement} />
         </div>
       </div>
 
@@ -130,10 +130,10 @@ export function DomainDirectionPage({
           </h3>
           {directionMatch ?
             <span className='rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700'>
-              Agree
+              Reviewers agree
             </span>
           : <span className='rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700'>
-              Disagree
+              Reviewers disagree
             </span>
           }
         </div>
@@ -156,7 +156,7 @@ export function DomainDirectionPage({
             onUseThis={onUseReviewer2}
           />
           <DirectionPanel
-            title='Final Direction'
+            title='Consensus direction'
             panelType='final'
             direction={finalDirection}
             directionOptions={directionOptions}

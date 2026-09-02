@@ -26,7 +26,7 @@ export function MagicLinkForm({
   initialEmail = '',
   callbackPath = '/complete-profile',
   buttonText = 'Send Sign-In Link',
-  description = "We'll email you a magic link for password-free sign in.",
+  description = 'We email you a one-time sign-in link. No password needed.',
 }: MagicLinkFormProps) {
   const [email, setEmail] = useState(initialEmail);
   const [loading, setLoading] = useState(false);
@@ -106,17 +106,17 @@ export function MagicLinkForm({
           </div>
           <h3 className='text-foreground mb-1 text-base font-semibold'>Check your email</h3>
           <p className='text-muted-foreground mb-3 text-sm'>
-            We sent a sign-in link to <strong className='text-foreground'>{email}</strong>
+            We sent a link to <strong className='text-foreground'>{email}</strong>
           </p>
           <p className='text-muted-foreground mb-4 text-xs'>
-            Click the link in the email to sign in. The link expires in 10 minutes.
+            Click the link in the email to continue. It works once and expires in 10 minutes.
           </p>
 
           <ErrorMessage error={displayError} id='magic-link-resend-error' />
 
           {resent && (
             <Alert variant='success' className='mb-4 text-xs sm:text-sm'>
-              Email sent successfully!
+              Email sent.
             </Alert>
           )}
 

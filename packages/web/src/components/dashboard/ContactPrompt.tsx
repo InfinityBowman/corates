@@ -14,12 +14,12 @@ export function getRestrictionCopy({
   quotaLimit,
 }: RestrictionCopyArgs) {
   const title =
-    restrictionType === 'entitlement' ? 'Ready to Collaborate?' : 'Project Limit Reached';
+    restrictionType === 'entitlement' ? 'Ready to collaborate?' : 'Project limit reached';
 
   const message =
     restrictionType === 'entitlement' ?
-      'Projects let your team appraise studies independently and resolve disagreements together. Start a 14-day free trial to create your first project, no credit card required.'
-    : `You've reached your project limit (${projectCount}/${quotaLimit === null || quotaLimit === -1 ? 'unlimited' : quotaLimit}). Upgrade your plan to create more projects.`;
+      'Projects let you and your team appraise the same study independently, then reconcile where you disagree. Start a 14-day free trial to create your first project. No credit card required.'
+    : `Your plan covers ${quotaLimit === null || quotaLimit === -1 ? 'unlimited' : quotaLimit} projects and you are using ${projectCount}. Upgrade your plan to create more.`;
 
   return { title, message };
 }
@@ -37,7 +37,7 @@ export function ContactPrompt({ restrictionType, projectCount, quotaLimit }: Res
         href='/pricing'
         className='bg-primary hover:bg-primary/90 ml-4 rounded-lg px-4 py-2 font-medium whitespace-nowrap text-white transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none'
       >
-        View Plans
+        View plans
       </a>
     </div>
   );

@@ -137,8 +137,8 @@ export function TodoStudyRow({
 
   const addBlockedReason =
     !hasChecklists || canAddMore ? null
-    : outcomes.length === 0 ? 'Add an outcome first.'
-    : 'All outcomes covered.';
+    : outcomes.length === 0 ? 'Add an outcome before starting a RoB 2 or ROBINS-I appraisal.'
+    : 'You already have an appraisal for every outcome in this project.';
 
   const addCancelButton =
     showChecklistForm ?
@@ -161,7 +161,7 @@ export function TodoStudyRow({
           e.stopPropagation();
           onToggleChecklistForm();
         }}
-        title='Add another checklist'
+        title='Add another appraisal to this study'
       >
         <PlusIcon className='size-4' />
         Add
@@ -241,8 +241,8 @@ export function TodoStudyRow({
                       setDeleteChecklistId(checklist.id);
                     }}
                     className='text-muted-foreground hover:text-red-600'
-                    title='Delete checklist'
-                    aria-label='Delete checklist'
+                    title='Delete appraisal'
+                    aria-label='Delete appraisal'
                   >
                     <Trash2Icon className='size-4' />
                   </Button>
@@ -258,7 +258,7 @@ export function TodoStudyRow({
                 onToggleChecklistForm();
               }}
             >
-              Select Checklist
+              Select appraisal tool
             </Button>
           )}
 
@@ -285,8 +285,8 @@ export function TodoStudyRow({
                   size='icon-sm'
                   onClick={() => setDeleteChecklistId(checklist.id)}
                   className='text-muted-foreground hover:text-red-600'
-                  title='Delete checklist'
-                  aria-label='Delete checklist'
+                  title='Delete appraisal'
+                  aria-label='Delete appraisal'
                 >
                   <Trash2Icon className='size-4' />
                 </Button>
@@ -338,17 +338,17 @@ export function TodoStudyRow({
           <AlertDialogHeader>
             <AlertDialogIcon variant='danger' />
             <div>
-              <AlertDialogTitle>Delete Checklist</AlertDialogTitle>
+              <AlertDialogTitle>Delete this appraisal?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will permanently delete this checklist and all its data. This action cannot be
-                undone.
+                Your answers and notes on this checklist are deleted for good. The study and its
+                PDFs stay in the project. This cannot be undone.
               </AlertDialogDescription>
             </div>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction variant='destructive' onClick={handleConfirmDelete}>
-              Delete
+              Delete checklist
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

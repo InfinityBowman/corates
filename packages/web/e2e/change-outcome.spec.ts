@@ -42,16 +42,16 @@ async function fillROB2ChecklistForOutcome(
   answer: string,
 ) {
   await page.getByRole('tab', { name: /To Do/i }).click();
-  await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
+  await expect(page.getByRole('button', { name: /Select appraisal tool/i })).toBeVisible({
     timeout: 30_000,
   });
 
-  await page.getByRole('button', { name: /Select Checklist/i }).click();
+  await page.getByRole('button', { name: /Select appraisal tool/i }).click();
   await page.getByText(/AMSTAR 2/i).click();
   await page.getByRole('option', { name: /RoB 2/i }).click();
   await page.getByText(/Select outcome/i).click();
   await page.getByRole('option', { name: outcomeName }).click();
-  await page.getByRole('button', { name: /Add Checklist/i }).click();
+  await page.getByRole('button', { name: /Add appraisal/i }).click();
   await expect(page.getByRole('button', { name: 'Open', exact: true })).toBeVisible({
     timeout: 10_000,
   });
@@ -85,13 +85,13 @@ async function changeOutcomeViaDialog(page: Page, targetOutcomeName: string) {
   await page.getByRole('button', { name: 'Change outcome', exact: true }).first().click();
 
   const dialog = page.getByRole('dialog');
-  await expect(dialog.getByRole('heading', { name: 'Change Outcome' })).toBeVisible({
+  await expect(dialog.getByRole('heading', { name: 'Change outcome' })).toBeVisible({
     timeout: 5_000,
   });
 
   await dialog.getByRole('combobox').click();
   await page.getByRole('option', { name: targetOutcomeName }).click();
-  await dialog.getByRole('button', { name: 'Change Outcome' }).click();
+  await dialog.getByRole('button', { name: 'Change outcome' }).click();
 
   await expect(dialog).toBeHidden({ timeout: 5_000 });
 }
@@ -130,14 +130,14 @@ test('Change outcome from Reconcile and Completed tabs', async ({ context, page 
   // ================================================================
   await reconcileBtn.click();
   await expect(page).toHaveURL(/\/reconcile\//, { timeout: 10_000 });
-  await expect(page.getByRole('heading', { name: /ROB-2 Reconciliation/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /RoB 2 reconciliation/i })).toBeVisible();
 
-  const nextBtn = page.getByRole('button', { name: /Next|Review Summary/i });
+  const nextBtn = page.getByRole('button', { name: /Next|Review summary/i });
   let safety = 0;
   while (safety < 80) {
     safety++;
 
-    const useThisBtn = page.getByRole('button', { name: 'Use This' }).first();
+    const useThisBtn = page.getByRole('button', { name: 'Use this answer' }).first();
     if (await useThisBtn.isVisible().catch(() => false)) {
       await useThisBtn.click();
     }
@@ -146,7 +146,7 @@ test('Change outcome from Reconcile and Completed tabs', async ({ context, page 
     if (await sourceLabel.isVisible().catch(() => false)) {
       if (
         await page
-          .getByText('Final Answer')
+          .getByText('Consensus answer')
           .isVisible()
           .catch(() => false)
       ) {
@@ -156,14 +156,14 @@ test('Change outcome from Reconcile and Completed tabs', async ({ context, page 
 
     const btnText = await nextBtn.textContent();
     await nextBtn.click();
-    if (btnText?.includes('Review Summary')) break;
+    if (btnText?.includes('Review summary')) break;
   }
 
-  await expect(page.getByText('Reconciliation Summary')).toBeVisible({ timeout: 5_000 });
-  const saveBtn = page.getByRole('button', { name: /Save Reconciled Checklist/i });
+  await expect(page.getByText('Reconciliation summary')).toBeVisible({ timeout: 5_000 });
+  const saveBtn = page.getByRole('button', { name: /Save consensus appraisal/i });
   await expect(saveBtn).toBeEnabled({ timeout: 10_000 });
   await saveBtn.click();
-  const finishBtn = page.getByRole('button', { name: 'Finish' });
+  const finishBtn = page.getByRole('button', { name: 'Finish reconciliation' });
   await expect(finishBtn).toBeVisible({ timeout: 5_000 });
   await finishBtn.click();
   await expect(page).toHaveURL(/\/projects\//, { timeout: 10_000 });
@@ -183,5 +183,5 @@ test('Change outcome from Reconcile and Completed tabs', async ({ context, page 
 
   // Reconciliation history moved with the group: previous reviewer
   // checklists are still reachable under the new outcome key
-  await expect(page.getByRole('button', { name: /View Previous/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /View original appraisals/i })).toBeVisible();
 });

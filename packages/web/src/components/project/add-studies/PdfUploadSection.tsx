@@ -22,8 +22,8 @@ export function PdfUploadSection({ studies }: PdfUploadSectionProps) {
   return (
     <div className='flex flex-col gap-3'>
       <p className='text-muted-foreground text-sm'>
-        Upload research papers to automatically create studies. Titles will be extracted from each
-        PDF.
+        Each PDF becomes one study. CoRATES reads the title, first author, year, and DOI out of the
+        file, so you can correct anything it gets wrong before adding.
       </p>
 
       <FileUpload
@@ -76,7 +76,9 @@ export function PdfUploadSection({ studies }: PdfUploadSectionProps) {
                 : <>
                     <div className='flex items-center gap-2'>
                       <Spinner size='sm' />
-                      <span className='text-muted-foreground text-sm'>Extracting metadata...</span>
+                      <span className='text-muted-foreground text-sm'>
+                        Reading citation details...
+                      </span>
                     </div>
                     <p className='text-muted-foreground/70 mt-1 truncate text-xs'>
                       {pdf.file.name}

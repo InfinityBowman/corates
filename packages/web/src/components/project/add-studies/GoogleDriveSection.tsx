@@ -35,7 +35,7 @@ export function GoogleDriveSection({
   return (
     <div className='flex flex-col gap-3'>
       <p className='text-muted-foreground text-sm'>
-        Import PDFs from your Google Drive. Each selected file will create a new study.
+        Pick PDFs from your Google Drive. Each file you select becomes one study.
       </p>
 
       <GoogleDrivePickerLauncher
