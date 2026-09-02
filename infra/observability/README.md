@@ -75,6 +75,26 @@ Grafana's parallel panel queries were both getting 429s from it. Traefik runs wi
 access log, so those never appeared anywhere. Loki gets basic auth only; Grafana gets
 `security-headers@file` only.
 
+## Stat panel query convention
+
+A stat panel that shows one number for the dashboard window must never combine a
+`[$__range]` window with a range query. Grafana would evaluate the expression at every step
+across the window, each step counting a full range-wide window, and the panel's `sum` reducer
+would then add up hundreds of near-identical overlapping counts. The displayed number lands
+far above the truth and is not monotonic in the time range - widening from 2d to 7d lowered
+`Sign-ins` from 5878 to 2263 when the real counts were 29 and 34.
+
+- Additive counters (`sum(count_over_time(...))`) use `[$__auto]` with `"calcs": ["sum"]`.
+  The buckets tile instead of overlapping, so the sum is exact and the panel keeps a real
+  activity sparkline. The leading bucket reaches up to one step before the window start, so
+  totals can run marginally high at the left edge.
+- Everything that cannot be added across buckets - ratios, `quantile_over_time` percentiles,
+  and unique counts like `count(sum by (userId) (...))` - keeps `[$__range]` and runs as an
+  instant query (`"queryType": "instant", "instant": true`) with `"calcs": ["lastNotNull"]`.
+  One evaluation, exact answer, no sparkline.
+
+The same rule applies to the `topk` tables, which were already instant.
+
 ## Useful LogQL
 
 Only a small share of ingested lines are `@corates/shared/logger` JSON (roughly 3% - the rest

@@ -57,7 +57,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"billing.subscription_plan_unresolved\" [$__range]))"
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"billing.subscription_plan_unresolved\" [$__auto]))"
         }
       ],
       "fieldConfig": {
@@ -105,7 +105,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=~`billing\\.(subscription_sync_skipped|sync_after_checkout_skipped)` [$__range]))"
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=~`billing\\.(subscription_sync_skipped|sync_after_checkout_skipped)` [$__auto]))"
         }
       ],
       "fieldConfig": {
@@ -153,7 +153,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"billing.checkout_failed\" [$__range]))"
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"billing.checkout_failed\" [$__auto]))"
         }
       ],
       "fieldConfig": {
@@ -201,7 +201,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-stripe-purchases-prod\", deployment_environment_name=\"production\"} | json | message=\"stripe.webhook_rejected\" [$__range]))"
+          "expr": "sum(count_over_time({service_name=\"corates-stripe-purchases-prod\", deployment_environment_name=\"production\"} | json | message=\"stripe.webhook_rejected\" [$__auto]))"
         }
       ],
       "fieldConfig": {
@@ -262,7 +262,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"billing.checkout_initiated\" [$__range]))"
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"billing.checkout_initiated\" [$__auto]))"
         }
       ],
       "fieldConfig": {
@@ -310,7 +310,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"billing.subscription_completed\" [$__range]))"
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"billing.subscription_completed\" [$__auto]))"
         }
       ],
       "fieldConfig": {
@@ -358,7 +358,9 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"billing.subscription_completed\" [$__range]))\n  /\nsum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"billing.checkout_initiated\" [$__range]))"
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"billing.subscription_completed\" [$__range]))\n  /\nsum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"billing.checkout_initiated\" [$__range]))",
+          "queryType": "instant",
+          "instant": true
         }
       ],
       "fieldConfig": {
@@ -423,7 +425,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"billing.single_project_checkout_initiated\" [$__range]))"
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"billing.single_project_checkout_initiated\" [$__auto]))"
         }
       ],
       "fieldConfig": {
@@ -471,7 +473,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"billing.checkout_created\" [$__range]))"
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"billing.checkout_created\" [$__auto]))"
         }
       ],
       "fieldConfig": {
@@ -519,7 +521,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"billing.trial_started\" [$__range]))"
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"billing.trial_started\" [$__auto]))"
         }
       ],
       "fieldConfig": {
@@ -765,7 +767,9 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"billing.subscription_completed\" [$__range]))\n  -\nsum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=~`billing\\.subscription_(canceled|canceled_by_sync)` [$__range]))"
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"billing.subscription_completed\" [$__range]))\n  -\nsum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=~`billing\\.subscription_(canceled|canceled_by_sync)` [$__range]))",
+          "queryType": "instant",
+          "instant": true
         }
       ],
       "fieldConfig": {

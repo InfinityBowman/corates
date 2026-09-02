@@ -87,7 +87,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"request.completed\" | label_format route=`{{ regexReplaceAll \"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\" .route \":id\" }}` | route=~`$route` [$__range]))"
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"request.completed\" | label_format route=`{{ regexReplaceAll \"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\" .route \":id\" }}` | route=~`$route` [$__auto]))"
         }
       ],
       "fieldConfig": {
@@ -135,7 +135,9 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"request.completed\" | label_format route=`{{ regexReplaceAll \"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\" .route \":id\" }}` | route=~`$route` | status != 404 | status < 500 [$__range]))\n  /\nsum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"request.completed\" | label_format route=`{{ regexReplaceAll \"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\" .route \":id\" }}` | route=~`$route` | status != 404 [$__range]))"
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"request.completed\" | label_format route=`{{ regexReplaceAll \"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\" .route \":id\" }}` | route=~`$route` | status != 404 | status < 500 [$__range]))\n  /\nsum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"request.completed\" | label_format route=`{{ regexReplaceAll \"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\" .route \":id\" }}` | route=~`$route` | status != 404 [$__range]))",
+          "queryType": "instant",
+          "instant": true
         }
       ],
       "fieldConfig": {
@@ -200,7 +202,9 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "quantile_over_time(0.50, {service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"request.completed\" | label_format route=`{{ regexReplaceAll \"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\" .route \":id\" }}` | route=~`$route` | status != 404 | keep durationMs | unwrap durationMs [$__range])"
+          "expr": "quantile_over_time(0.50, {service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"request.completed\" | label_format route=`{{ regexReplaceAll \"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\" .route \":id\" }}` | route=~`$route` | status != 404 | keep durationMs | unwrap durationMs [$__range])",
+          "queryType": "instant",
+          "instant": true
         }
       ],
       "fieldConfig": {
@@ -248,7 +252,9 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "quantile_over_time(0.95, {service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"request.completed\" | label_format route=`{{ regexReplaceAll \"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\" .route \":id\" }}` | route=~`$route` | status != 404 | keep durationMs | unwrap durationMs [$__range])"
+          "expr": "quantile_over_time(0.95, {service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"request.completed\" | label_format route=`{{ regexReplaceAll \"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\" .route \":id\" }}` | route=~`$route` | status != 404 | keep durationMs | unwrap durationMs [$__range])",
+          "queryType": "instant",
+          "instant": true
         }
       ],
       "fieldConfig": {
@@ -312,7 +318,9 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "quantile_over_time(0.99, {service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"request.completed\" | label_format route=`{{ regexReplaceAll \"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\" .route \":id\" }}` | route=~`$route` | status != 404 | keep durationMs | unwrap durationMs [$__range])"
+          "expr": "quantile_over_time(0.99, {service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"request.completed\" | label_format route=`{{ regexReplaceAll \"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\" .route \":id\" }}` | route=~`$route` | status != 404 | keep durationMs | unwrap durationMs [$__range])",
+          "queryType": "instant",
+          "instant": true
         }
       ],
       "fieldConfig": {
@@ -376,7 +384,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"request.completed\" | label_format route=`{{ regexReplaceAll \"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\" .route \":id\" }}` | route=~`$route` | status >= 500 [$__range]))"
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"request.completed\" | label_format route=`{{ regexReplaceAll \"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\" .route \":id\" }}` | route=~`$route` | status >= 500 [$__auto]))"
         }
       ],
       "fieldConfig": {

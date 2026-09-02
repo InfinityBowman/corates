@@ -71,7 +71,9 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "count(sum by (userId) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | userId!=`` [$__range])))"
+          "expr": "count(sum by (userId) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | userId!=`` [$__range])))",
+          "queryType": "instant",
+          "instant": true
         }
       ],
       "fieldConfig": {
@@ -119,7 +121,9 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "count(sum by (userId) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"sync.authorize_ok\" [$__range])))"
+          "expr": "count(sum by (userId) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"sync.authorize_ok\" [$__range])))",
+          "queryType": "instant",
+          "instant": true
         }
       ],
       "fieldConfig": {
@@ -167,7 +171,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"auth.session_created\" [$__range]))"
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"auth.session_created\" [$__auto]))"
         }
       ],
       "fieldConfig": {
@@ -214,7 +218,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"project.created\" [$__range]))"
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"project.created\" [$__auto]))"
         }
       ],
       "fieldConfig": {
@@ -261,7 +265,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"org.created\" [$__range]))"
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"org.created\" [$__auto]))"
         }
       ],
       "fieldConfig": {
@@ -309,7 +313,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"invitation.accepted\" [$__range]))"
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"invitation.accepted\" [$__auto]))"
         }
       ],
       "fieldConfig": {
@@ -766,7 +770,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"client.checklist.created\" | userId=~`$user` [$__range]))"
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"client.checklist.created\" | userId=~`$user` [$__auto]))"
         }
       ],
       "fieldConfig": {
@@ -813,7 +817,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"client.checklist.completed\" | userId=~`$user` [$__range]))"
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"client.checklist.completed\" | userId=~`$user` [$__auto]))"
         }
       ],
       "fieldConfig": {
@@ -861,7 +865,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"client.checklist.outcome_changed\" | userId=~`$user` [$__range]))"
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"client.checklist.outcome_changed\" | userId=~`$user` [$__auto]))"
         }
       ],
       "fieldConfig": {
@@ -908,7 +912,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"client.checklist.sent_back_to_todo\" | userId=~`$user` [$__range]))"
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"client.checklist.sent_back_to_todo\" | userId=~`$user` [$__auto]))"
         }
       ],
       "fieldConfig": {
@@ -956,7 +960,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"client.local_appraisal\" | userId=~`$user` [$__range]))"
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"client.local_appraisal\" | userId=~`$user` [$__auto]))"
         }
       ],
       "fieldConfig": {
@@ -1004,7 +1008,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"client.local_appraisal.pdf\" | userId=~`$user` [$__range]))"
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"client.local_appraisal.pdf\" | userId=~`$user` [$__auto]))"
         }
       ],
       "fieldConfig": {
@@ -1337,7 +1341,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"invitation.created\" [$__range]))"
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"invitation.created\" [$__auto]))"
         }
       ],
       "fieldConfig": {
@@ -1384,7 +1388,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"member.added\" [$__range]))"
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"member.added\" [$__auto]))"
         }
       ],
       "fieldConfig": {
@@ -1432,7 +1436,9 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"invitation.accepted\" [$__range]))\n  /\nsum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"invitation.created\" [$__range]))"
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"invitation.accepted\" [$__range]))\n  /\nsum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"invitation.created\" [$__range]))",
+          "queryType": "instant",
+          "instant": true
         }
       ],
       "fieldConfig": {
@@ -1497,7 +1503,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"invitation.cancelled\" [$__range]))"
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"invitation.cancelled\" [$__auto]))"
         }
       ],
       "fieldConfig": {
@@ -1779,7 +1785,9 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(sum_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=~`pdf\\.(uploaded|drive_imported)` | keep size | unwrap size [$__range]))"
+          "expr": "sum(sum_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=~`pdf\\.(uploaded|drive_imported)` | keep size | unwrap size [$__range]))",
+          "queryType": "instant",
+          "instant": true
         }
       ],
       "fieldConfig": {
@@ -1827,7 +1835,9 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"pdf.drive_imported\" [$__range]))\n  /\nsum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=~`pdf\\.(uploaded|drive_imported)` [$__range]))"
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"pdf.drive_imported\" [$__range]))\n  /\nsum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=~`pdf\\.(uploaded|drive_imported)` [$__range]))",
+          "queryType": "instant",
+          "instant": true
         }
       ],
       "fieldConfig": {
