@@ -157,6 +157,11 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
             tokenUrl: 'https://orcid.org/oauth/token',
             userInfoUrl: 'https://orcid.org/oauth/userinfo',
             scopes: ['openid'],
+            // Account rows are keyed on (issuer, accountId). createAuth runs per
+            // request, so pin ORCID's OIDC issuer rather than paying for a
+            // discovery fetch on every cold path. Must match the backfill in
+            // the account.issuer migration.
+            accountIssuer: 'https://orcid.org',
             // Map ORCID profile to user fields
             getUserInfo: async (tokens: { accessToken?: string }) => {
               if (!tokens.accessToken) return null;
@@ -180,6 +185,12 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
                 image: undefined,
               };
             },
+            // Only email/name/image survive from getUserInfo; extra user fields
+            // have to come through mapProfileToUser
+            mapProfileToUser: profile => ({
+              givenName: (profile.givenName as string | null | undefined) ?? null,
+              familyName: (profile.familyName as string | null | undefined) ?? null,
+            }),
           },
         ],
       }),
@@ -711,10 +722,10 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
     hooks: {
       // Without a start event, OAuth drop-offs leave no server-side trace
       before: createAuthMiddleware(
-        async (authCtx: { path: string; body?: { provider?: string; providerId?: string } }) => {
-          if (authCtx.path === '/sign-in/social' || authCtx.path === '/sign-in/oauth2') {
+        async (authCtx: { path: string; body?: { provider?: string } }) => {
+          if (authCtx.path === '/sign-in/social') {
             info('auth.social_signin_started', {
-              provider: authCtx.body?.provider || authCtx.body?.providerId || 'unknown',
+              provider: authCtx.body?.provider || 'unknown',
             });
           }
         },

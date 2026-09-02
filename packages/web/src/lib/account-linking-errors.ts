@@ -2,7 +2,7 @@
  * Error code mapping for account linking operations
  *
  * Better Auth returns error codes in URL params after OAuth redirect.
- * Common codes: account_already_linked_to_different_user, email_doesn't_match, etc.
+ * Common codes: account_already_linked_to_different_user, email_does_not_match, etc.
  */
 
 const LINK_ERROR_MESSAGES: Record<string, string | null> = {
@@ -86,6 +86,7 @@ export function parseOAuthError(params: URLSearchParams): ParsedOAuthError | nul
     ACCOUNT_EXISTS: 'ACCOUNT_ALREADY_LINKED',
     ACCOUNT_ALREADY_LINKED_TO_DIFFERENT_USER: 'ACCOUNT_ALREADY_LINKED_TO_DIFFERENT_USER',
     EMAIL_DOESNT_MATCH: 'EMAIL_DOESNT_MATCH',
+    EMAIL_DOES_NOT_MATCH: 'EMAIL_DOESNT_MATCH',
     EMAIL_NOT_FOUND: 'EMAIL_NOT_FOUND',
     STATE_MISMATCH: 'STATE_MISMATCH',
     STATE_NOT_FOUND: 'STATE_NOT_FOUND',

@@ -61,11 +61,15 @@ export function TwoFactorSetup() {
       setLoading(true);
       try {
         const data = await enableTwoFactor(password);
-        const result = data as { totpURI?: string; secret?: string; backupCodes?: string[] };
-        setTotpUri(result.totpURI || '');
-        const secretMatch = result.totpURI?.match(/[?&]secret=([^&]+)/i);
-        setSecret(secretMatch ? secretMatch[1] : result.secret || '');
-        setBackupCodes(result.backupCodes || []);
+        const result = data as
+          { method: 'totp'; totpURI: string; backupCodes: string[] } | { method: 'otp' };
+        if (result.method !== 'totp') {
+          throw new Error('Expected a TOTP enrollment response');
+        }
+        setTotpUri(result.totpURI);
+        const secretMatch = result.totpURI.match(/[?&]secret=([^&]+)/i);
+        setSecret(secretMatch ? secretMatch[1] : '');
+        setBackupCodes(result.backupCodes);
         setSetupStep(1);
         setPassword('');
       } catch (err: unknown) {

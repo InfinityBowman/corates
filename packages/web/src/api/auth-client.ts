@@ -1,6 +1,5 @@
 import { createAuthClient } from 'better-auth/react';
 import {
-  genericOAuthClient,
   magicLinkClient,
   twoFactorClient,
   adminClient,
@@ -27,13 +26,7 @@ const BETTER_AUTH_ERROR_MAP: Record<string, ErrorDefinition> = {
 export const authClient = createAuthClient({
   baseURL: API_BASE,
 
-  plugins: [
-    genericOAuthClient(),
-    magicLinkClient(),
-    twoFactorClient(),
-    adminClient(),
-    organizationClient(),
-  ],
+  plugins: [magicLinkClient(), twoFactorClient(), adminClient(), organizationClient()],
 
   fetchOptions: {
     credentials: 'include' as globalThis.RequestCredentials,

@@ -106,7 +106,7 @@ export function SignInMethodsSection() {
 
     let provider = params.get('provider') || sessionStorage.getItem('linkingProvider');
     if (!provider) {
-      const pathMatch = window.location.pathname.match(/\/oauth2\/callback\/([^/]+)/);
+      const pathMatch = window.location.pathname.match(/\/callback\/([^/]+)/);
       if (pathMatch) provider = pathMatch[1];
     }
     provider = provider || 'google';
@@ -166,7 +166,7 @@ export function SignInMethodsSection() {
     setUnlinkingId(accountToUnlink.id);
     setUnlinkError(null);
     try {
-      await authFetch(authClient.unlinkAccount({ providerId: accountToUnlink.providerId }));
+      await authFetch(authClient.unlinkAccount({ accountId: accountToUnlink.id }));
       showToast.success(
         'Unlinked',
         `${PROVIDER_NAMES[accountToUnlink.providerId] || accountToUnlink.providerId} has been unlinked`,
