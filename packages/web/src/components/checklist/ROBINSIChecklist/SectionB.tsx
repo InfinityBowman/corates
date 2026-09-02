@@ -72,8 +72,8 @@ export function SectionB({ studyId, checklistId, disabled }: SectionBProps) {
             <div className='text-sm'>
               <p className='text-foreground font-medium'>Domain assessment not required</p>
               <p className='text-muted-foreground mt-1'>
-                Because B2 or B3 is Yes/Probably Yes, ROBINS-I rates this result as Critical risk of
-                bias and the domain questions are skipped.
+                Because B2 or B3 is Yes/Probably Yes, ROBINS-I V2 rates this result as Critical risk
+                of bias and the domain questions are skipped.
               </p>
             </div>
           </div>

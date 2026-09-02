@@ -22,8 +22,8 @@ export function PdfUploadSection({ studies }: PdfUploadSectionProps) {
   return (
     <div className='flex flex-col gap-3'>
       <p className='text-muted-foreground text-sm'>
-        Each PDF becomes one study. CoRATES reads the title, first author, year, and DOI out of the
-        file, so you can correct anything it gets wrong before adding.
+        Each PDF becomes one study. CoRATES pulls the title, first author, year, and DOI from each
+        file for you to review and edit before adding.
       </p>
 
       <FileUpload

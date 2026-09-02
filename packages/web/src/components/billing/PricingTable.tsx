@@ -511,10 +511,10 @@ export function PricingTable({
                     <AlertCircleIcon className='text-destructive size-5' />
                   </div>
                   <div>
-                    <DialogTitle>Your workspace is larger than that plan</DialogTitle>
+                    <DialogTitle>That plan is too small right now</DialogTitle>
                     <DialogDescription className='mt-1'>
-                      Nothing has been changed or charged. Bring your workspace within the
-                      allowances below, then switch.
+                      Nothing has been changed or charged. Come back under the limits below, then
+                      switch.
                     </DialogDescription>
                   </div>
                 </div>

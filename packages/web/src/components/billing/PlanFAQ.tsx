@@ -14,17 +14,17 @@ const FAQ_ITEMS_BASE: FAQItemData[] = [
   {
     question: 'What can I do without paying anything?',
     answer:
-      'Appraise one study at a time, without an account. You can run AMSTAR 2, RoB 2, or ROBINS-I on a study, upload and mark up its PDF, and export the finished appraisal to CSV or PDF. That work is stored in your own browser rather than on our servers. What a plan or trial adds is the shared side of a review: project workspaces holding many studies, invited co-reviewers, independent dual appraisal, and a view for reconciling disagreements.',
+      'Appraise one study at a time, without an account. You can run AMSTAR 2, RoB 2, or ROBINS-I on a study, upload and mark up its PDF, and export the finished appraisal to CSV or PDF. That work is stored in your own browser rather than on our servers. What a plan or trial adds is the shared side of a review: projects holding many studies, invited co-reviewers, independent dual appraisal, and a view for reconciling disagreements.',
   },
   {
     question: 'Do collaborators need their own subscription?',
     answer:
-      'No. Only the person who owns the workspace pays. Co-reviewers create a free CoRATES account, accept your invitation, and can then appraise, reconcile, and export like anyone else on the project. Your plan sets how many collaborators the workspace can hold; your own owner account does not count toward that number.',
+      'No. Only you pay. Co-reviewers create a free CoRATES account, accept your invitation, and can then appraise, reconcile, and export like anyone else on the project. Your plan sets how many collaborators you can invite; you do not count toward that number.',
   },
   {
     question: 'What happens to my projects if my plan ends or my funding runs out?',
     answer:
-      'Nothing is deleted. Projects, appraisals, and uploaded PDFs stay in your workspace, and you keep read access to all of it: you can open a project, read every appraisal, download the PDFs, and export to CSV or PDF whenever you want. Creating new projects requires an active plan, and after a trial or a Single Project purchase runs out, editing pauses until you start a plan again. Nothing is charged automatically to reinstate it.',
+      'Nothing is deleted. Projects, appraisals, and uploaded PDFs stay where they are, and you keep read access to all of it: you can open a project, read every appraisal, download the PDFs, and export to CSV or PDF whenever you want. Creating new projects requires an active plan, and after a trial or a Single Project purchase runs out, editing pauses until you start a plan again. Nothing is charged automatically to reinstate it.',
   },
   {
     question: 'Can I get my data out?',
@@ -58,7 +58,7 @@ const FAQ_ITEMS_BASE: FAQItemData[] = [
   {
     question: 'Can I cancel my subscription?',
     answer:
-      'Yes. The workspace owner can cancel from Manage billing in billing settings, which opens the Stripe customer portal. Access continues to the end of the period you have already paid for and you are not charged again. Your projects are not deleted, and your exports keep working.',
+      'Yes. Cancel from Manage billing in billing settings, which opens the Stripe customer portal. Access continues to the end of the period you have already paid for and you are not charged again. Your projects are not deleted, and your exports keep working.',
   },
   {
     question: 'How do payments and receipts work?',

@@ -582,7 +582,7 @@ function renderRobinsI(
   y: number,
   ctx?: ExportContext,
 ): number {
-  y = drawSectionHeader(doc, `ROBINS-I | ${studyName}`, y);
+  y = drawSectionHeader(doc, `ROBINS-I V2 | ${studyName}`, y);
   y = drawChecklistContext(doc, cl, y, ctx);
 
   const answers = (cl.answers || {}) as ROBINSIAnswers;

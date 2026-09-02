@@ -291,7 +291,7 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
         icon: BookOpenIcon,
         getCount: getAllStudiesCount,
       },
-      { value: 'todo', label: 'To do', icon: ListTodoIcon, getCount: getToDoCount },
+      { value: 'todo', label: 'To-Do', icon: ListTodoIcon, getCount: getToDoCount },
       {
         value: 'reconcile',
         label: 'Reconcile',
@@ -376,7 +376,7 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
                 </SectionErrorBoundary>
               </TabsContent>
               <TabsContent value='todo'>
-                <SectionErrorBoundary name='To do'>
+                <SectionErrorBoundary name='To-Do'>
                   <ToDoTab />
                 </SectionErrorBoundary>
               </TabsContent>

@@ -76,8 +76,9 @@ function PricingPage() {
             Appraisal is free. Collaboration is what you pay for.
           </h1>
           <p className='text-muted-foreground mt-4 text-lg'>
-            Appraising a single study is free, with no account. A plan adds project workspaces and
-            invited co-reviewers, priced per workspace rather than per person.
+            Individual appraisals with PDF annotation and export are always free.
+            <br />
+            Choose a plan when you&apos;re ready to collaborate with your team.
           </p>
         </div>
 

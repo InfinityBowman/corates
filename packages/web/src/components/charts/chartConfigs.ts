@@ -225,7 +225,7 @@ export const ROBINS_I_CHART_CONFIG: ChecklistChartConfig = {
   ],
   fallbackCategory: 'no information',
   caption: [
-    'Domains (ROBINS-I):',
+    'Domains (ROBINS-I V2):',
     'D1: Bias due to confounding.',
     'D2: Bias in classification of interventions.',
     'D3: Bias in selection of participants into the study (or into the analysis).',

@@ -1,7 +1,7 @@
 import type { ChecklistResources } from '../ResourcesPopover';
 
 export const ROBINSI_RESOURCES: ChecklistResources = {
-  title: 'ROBINS-I Resources',
+  title: 'ROBINS-I V2 Resources',
   description: 'Guidance for making judgements with the ROBINS-I assessment tool.',
   links: [
     {

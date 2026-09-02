@@ -80,8 +80,8 @@ export function UsageCard({ quotas, usage }: UsageCardProps) {
             ),
         )
       : <p className='text-muted-foreground px-4 py-6 text-center text-[13px]'>
-          A plan or the 14-day trial opens up project workspaces and invited co-reviewers.
-          Single-study appraisal in your browser stays free either way.
+          A plan or the 14-day trial lets you create projects and invite co-reviewers. Single-study
+          appraisal in your browser stays free either way.
         </p>
       }
     </SettingsSection>

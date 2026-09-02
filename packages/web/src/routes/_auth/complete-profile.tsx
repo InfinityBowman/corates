@@ -550,7 +550,7 @@ function CompleteProfilePage() {
               What best describes you?
             </h2>
             <p className='text-muted-foreground text-xs sm:text-sm'>
-              Shown on your dashboard. Changeable in settings.
+              You can change this later in settings.
             </p>
           </div>
 
