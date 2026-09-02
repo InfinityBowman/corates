@@ -17,10 +17,10 @@
   "dependencies": {
     "@corates/db": "workspace:*",
     "@corates/shared": "workspace:*",
-    "@sentry/cloudflare": "^10.69.0",
+    "@sentry/cloudflare": "^10.73.0",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.13.5",
-    "stripe": "^22.4.0"
+    "stripe": "^22.6.1"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260902.1",
