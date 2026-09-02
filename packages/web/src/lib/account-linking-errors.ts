@@ -11,6 +11,8 @@ const LINK_ERROR_MESSAGES: Record<string, string | null> = {
     'This account is already linked to another CoRATES account. Unlink it from the other account first, or use a different account.',
   ACCOUNT_ALREADY_LINKED_TO_DIFFERENT_USER:
     'This account is already linked to another CoRATES account. To use it here, sign into that account and unlink it first, or use a different account.',
+  ACCOUNT_NOT_LINKED:
+    'Sign in with the method you used before, then connect this one under Settings > Sign-in methods.',
   // OAuth provider errors
   OAUTH_ERROR: 'Failed to connect to the provider. Please try again.',
   OAUTH_CANCELLED: null, // Silent - user cancelled intentionally

@@ -32,6 +32,7 @@ import { buildMagicLinkInterstitialUrl } from './magicLinkUrl';
 import { refreshOrgWorkspaceSessions } from '../sync/admin';
 import { notifyOrgMembers, EventTypes } from '../lib/notify';
 import { copyAvatarToR2, isExternalAvatarUrl, isInternalAvatarUrl } from '../lib/avatar-copy';
+import { buildAppUrl } from '../lib/app-url';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import type { Env } from '../types';
 
@@ -712,6 +713,13 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
     },
 
     baseURL: env.AUTH_BASE_URL || 'http://localhost:8787',
+
+    // Send auth failures that have no errorCallbackURL (relay failures, state
+    // parse errors) to the signin page, which already maps ?error= codes,
+    // instead of Better Auth's built-in error page
+    onAPIError: {
+      errorURL: buildAppUrl(env, '/signin'),
+    },
 
     // Use centralized origin configuration
     trustedOrigins: [...getAllowedOrigins()],

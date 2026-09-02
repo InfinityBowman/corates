@@ -152,7 +152,9 @@ export const oAuthRelay = (opts: OAuthRelayOptions) => {
           if (result.error) {
             ctx.context.logger.error('OAuth relay user creation failed:', result.error);
             throw ctx.redirect(
-              `${ctx.context.baseURL}/error?error=${encodeURIComponent(result.error)}`,
+              // Better Auth's error page rejects codes containing spaces; its own
+              // callback route applies the same underscore join
+              `${ctx.context.baseURL}/error?error=${encodeURIComponent(result.error.split(' ').join('_'))}`,
             );
           }
 
