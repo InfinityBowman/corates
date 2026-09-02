@@ -19,7 +19,6 @@ import {
   updateProject as updateProjectCmd,
   deleteProject as deleteProjectCmd,
 } from '@corates/workers/commands/projects';
-import { addMember } from '@corates/workers/commands/members';
 import {
   updateMemberRole as updateMemberRoleCmd,
   removeMember as removeMemberCmd,
@@ -304,72 +303,63 @@ export async function addProjectMember(
   }
 
   try {
+    // Every add is an invitation: membership is only created when the
+    // recipient accepts, and it binds to whichever account they accept with.
+    // Direct membership writes are reserved for internal/test tooling.
     let userToAdd;
     if (data.userId) {
       userToAdd = await db
-        .select({
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          username: user.username,
-          givenName: user.givenName,
-          familyName: user.familyName,
-          image: user.image,
-        })
+        .select({ id: user.id, email: user.email })
         .from(user)
         .where(eq(user.id, data.userId))
         .get();
+      if (!userToAdd) {
+        throwDomainError(USER_ERRORS.NOT_FOUND, { userId: data.userId });
+      }
     } else if (data.email) {
       userToAdd = await db
-        .select({
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          username: user.username,
-          givenName: user.givenName,
-          familyName: user.familyName,
-          image: user.image,
-        })
+        .select({ id: user.id, email: user.email })
         .from(user)
         .where(eq(user.email, data.email.toLowerCase()))
         .get();
     }
 
-    if (!userToAdd && data.email) {
-      try {
-        const result = await createInvitation(
-          env,
-          { id: access.context.userId },
-          { orgId, projectId, email: data.email, role },
-        );
-        return {
-          success: true,
-          invitation: true,
-          message:
-            result.emailQueued ?
-              'Invitation sent successfully'
-            : 'Invitation created but email delivery may be delayed',
-          email: data.email,
-        };
-      } catch (err) {
-        if (isDomainError(err)) {
-          throw new DomainErrorException(err);
-        }
-        throw err;
+    if (userToAdd) {
+      const existingMember = await db
+        .select({ id: projectMembers.id })
+        .from(projectMembers)
+        .where(
+          and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, userToAdd.id)),
+        )
+        .get();
+      if (existingMember) {
+        throwDomainError(PROJECT_ERRORS.MEMBER_ALREADY_EXISTS, {
+          projectId,
+          userId: userToAdd.id,
+        });
       }
     }
 
-    if (!userToAdd) {
-      throwDomainError(USER_ERRORS.NOT_FOUND, { userId: data.userId, email: data.email });
+    const inviteEmail = userToAdd?.email || data.email;
+    if (!inviteEmail) {
+      throwDomainError(VALIDATION_ERRORS.FIELD_REQUIRED, { field: 'email' });
     }
 
-    const { member: addedMember } = await addMember(
+    const result = await createInvitation(
       env,
       { id: access.context.userId },
-      { orgId, projectId, userToAdd, role },
+      { orgId, projectId, email: inviteEmail, role },
     );
 
-    return addedMember;
+    return {
+      success: true,
+      invitation: true,
+      message:
+        result.emailQueued ?
+          'Invitation sent successfully'
+        : 'Invitation created but email delivery may be delayed',
+      email: inviteEmail,
+    };
   } catch (err) {
     if (err instanceof DomainErrorException) throw err;
     if (isDomainError(err)) {

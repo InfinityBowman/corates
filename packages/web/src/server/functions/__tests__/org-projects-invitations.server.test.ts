@@ -144,10 +144,10 @@ describe('createProjectInvitation', () => {
     expect(invitations[0].role).toBe('owner');
   });
 
-  it('returns error when invitation already accepted', async () => {
+  it('resets an accepted invitation with a fresh token so the person can be re-invited', async () => {
     const { project, org, owner } = await buildProject();
 
-    await buildProjectInvitation({
+    const accepted = await buildProjectInvitation({
       orgId: org.id,
       projectId: project.id,
       email: 'invitee@example.com',
@@ -157,19 +157,28 @@ describe('createProjectInvitation', () => {
 
     currentUser = { id: owner.id, email: owner.email };
 
-    try {
-      await createProjectInvitation(mockSession(), createDb(env.DB), org.id, project.id, {
-        email: 'invitee@example.com',
-        role: 'member',
-      });
-      expect.unreachable('should have thrown');
-    } catch (err) {
-      expect(err).toBeInstanceOf(DomainErrorException);
-      const res = err as DomainErrorException;
-      expect(res.statusCode).toBe(400);
-      const body = res.toDomainError() as { code: string };
-      expect(body.code).toMatch(/INVITATION_ALREADY_ACCEPTED/);
-    }
+    const result = await createProjectInvitation(
+      mockSession(),
+      createDb(env.DB),
+      org.id,
+      project.id,
+      { email: 'invitee@example.com', role: 'member' },
+    );
+
+    expect(result.success).toBe(true);
+
+    const db = createDb(env.DB);
+    const invitations = await db
+      .select()
+      .from(projectInvitations)
+      .where(eq(projectInvitations.email, 'invitee@example.com'))
+      .all();
+
+    expect(invitations).toHaveLength(1);
+    expect(invitations[0].id).toBe(accepted.id);
+    expect(invitations[0].acceptedAt).toBeNull();
+    // The old emailed link must go dead
+    expect(invitations[0].token).not.toBe(accepted.token);
   });
 });
 

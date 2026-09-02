@@ -49,6 +49,7 @@ import { CircularProgress } from './CircularProgress';
 import { ChartSection } from './ChartSection';
 import { ResultsTables } from './ResultsTables';
 import { AddMemberModal } from './AddMemberModal';
+import { PendingInvitations } from './PendingInvitations';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useMembers } from '@/hooks/useMembers';
 
@@ -377,6 +378,7 @@ export function OverviewTab() {
             })}
           </div>
         )}
+        <PendingInvitations projectId={projectId} orgId={orgId} isOwner={isOwner} />
       </div>
 
       {/* Results */}

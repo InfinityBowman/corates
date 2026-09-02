@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { createProject, addMemberToProject } from '@/server/functions/org-projects.functions';
+import { createProject } from '@/server/functions/org-projects.functions';
 import { importState } from '@/server/functions/dev-tools.functions';
 import { searchUsers } from '@/server/functions/users.functions';
 import { collectSnapshotUserIds, remapSnapshotUserIds } from '@/dev/snapshot';
@@ -204,15 +204,19 @@ export function DevImportProject() {
   const canCreateFromJson = resolvedOrgId && jsonProjectName.trim() && jsonText.trim();
 
   // Add mapped users as project members (skip creator, they're already a
-  // member) so remapped reviewer ids resolve in member UIs.
+  // member) so remapped reviewer ids resolve in member UIs. Uses the
+  // dev-gated direct-add route: the user-facing path only sends invitations,
+  // but template import needs immediate membership.
   const addAssignedMembers = async (projectId: string, mapping: Record<string, string>) => {
     if (!resolvedOrgId) return;
     const assignedUserIds = [...new Set(Object.values(mapping))];
     for (const userId of assignedUserIds) {
       if (userId === currentUser?.id) continue;
       try {
-        await addMemberToProject({
-          data: { orgId: resolvedOrgId, projectId, userId, role: 'member' },
+        await fetch('/api/test/add-project-member', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orgId: resolvedOrgId, projectId, userId, role: 'member' }),
         });
       } catch {
         // Non-fatal -- user may already be a member or not in org

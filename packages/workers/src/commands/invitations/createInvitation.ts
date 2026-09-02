@@ -2,15 +2,13 @@
  * Create or resend a project invitation
  *
  * Handles: existing invitation check, token generation, insert/update, email sending
- *
- * @throws DomainError INVITATION_ALREADY_ACCEPTED if invitation was already accepted
  */
 
 import { captureError, info } from '../../lib/logger';
 import { createDb } from '@corates/db/client';
 import { projectInvitations, projects, user } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { createDomainError, PROJECT_ERRORS } from '@corates/shared';
+import { isSyntheticEmail } from '@corates/shared/email';
 import { TIME_DURATIONS } from '../../config/constants';
 import type { Env } from '../../types';
 
@@ -56,16 +54,13 @@ export async function createInvitation(
   let token: string;
   let invitationId: string;
 
-  if (existingInvitation && existingInvitation.acceptedAt) {
-    throw createDomainError(PROJECT_ERRORS.INVITATION_ALREADY_ACCEPTED, {
-      invitationId: existingInvitation.id,
-    });
-  }
-
-  if (existingInvitation && !existingInvitation.acceptedAt) {
-    // Resend: update role and extend expiration
+  if (existingInvitation) {
+    // Resend: update role and extend expiration. A previously accepted
+    // invitation is reset with a fresh token so someone who was removed from
+    // the project can be invited again (accepting is the only way back in);
+    // the old emailed link stays dead because the token changes.
     invitationId = existingInvitation.id;
-    token = existingInvitation.token;
+    token = existingInvitation.acceptedAt ? crypto.randomUUID() : existingInvitation.token;
     const expiresAt = new Date(Date.now() + TIME_DURATIONS.INVITATION_EXPIRY_MS);
 
     await db
@@ -74,6 +69,8 @@ export async function createInvitation(
         role,
         orgRole: 'member',
         grantOrgMembership: true,
+        token,
+        acceptedAt: null,
         expiresAt,
       })
       .where(eq(projectInvitations.id, existingInvitation.id));
@@ -115,16 +112,19 @@ export async function createInvitation(
 
   let emailQueued = false;
   try {
-    const { sendInvitationEmail } = await import('../../lib/send-invitation-email.js');
-    const result = await sendInvitationEmail({
-      env,
-      email,
-      token,
-      projectName,
-      inviterName,
-      role,
-    });
-    emailQueued = result.emailQueued;
+    // Synthetic ORCID addresses bounce and poison sender reputation
+    if (!isSyntheticEmail(email)) {
+      const { sendInvitationEmail } = await import('../../lib/send-invitation-email.js');
+      const result = await sendInvitationEmail({
+        env,
+        email,
+        token,
+        projectName,
+        inviterName,
+        role,
+      });
+      emailQueued = result.emailQueued;
+    }
   } catch (err) {
     captureError(err, {
       tags: { component: 'invitation', action: 'send-email' },

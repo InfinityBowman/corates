@@ -1,15 +1,16 @@
 // Boots the test worker at import so the DO bindings are up before the per-test timeout starts.
 import 'cloudflare:test';
-import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { env } from 'cloudflare:workers';
 import { createDb } from '@corates/db/client';
+import { projectMembers, projectInvitations } from '@corates/db/schema';
+import { eq, and } from 'drizzle-orm';
 import { resetTestDatabase } from '@/__tests__/server/helpers';
 import {
   buildProjectWithMembers,
   buildProject,
   buildSelfRemovalScenario,
   buildMultipleOwnersScenario,
-  buildUser,
   buildOrgMember,
   resetCounter,
   asUserId,
@@ -48,32 +49,11 @@ vi.mock('@corates/workers/billing-resolver', () => ({
   })),
 }));
 
-let mockCheckCollaboratorQuota: Mock;
-let mockInsertWithQuotaCheck: Mock;
-vi.mock('@corates/workers/quota-transaction', () => ({
-  checkCollaboratorQuota: vi.fn(),
-  insertWithQuotaCheck: vi.fn(),
-}));
-
 beforeEach(async () => {
   await resetTestDatabase();
   vi.clearAllMocks();
   resetCounter();
   currentUser = { id: 'user-1', email: 'user1@example.com' };
-
-  const quotaTransaction = await import('@corates/workers/quota-transaction');
-  mockCheckCollaboratorQuota = quotaTransaction.checkCollaboratorQuota as unknown as Mock;
-  mockCheckCollaboratorQuota.mockResolvedValue({ allowed: true, used: 0, limit: -1 });
-  mockInsertWithQuotaCheck = quotaTransaction.insertWithQuotaCheck as unknown as Mock;
-  mockInsertWithQuotaCheck.mockImplementation(
-    async (db: unknown, options: { insertStatements: unknown[] }) => {
-      const typedDb = db as { batch: (ops: unknown[]) => Promise<unknown> };
-      await typedDb.batch(
-        options.insertStatements as unknown as Parameters<typeof typedDb.batch>[0],
-      );
-      return { success: true };
-    },
-  );
 });
 
 describe('listProjectMembers', () => {
@@ -110,7 +90,7 @@ describe('listProjectMembers', () => {
 });
 
 describe('addProjectMember', () => {
-  it('allows owner to add member by userId', async () => {
+  it('creates an invitation for an existing user added by userId', async () => {
     const { project, org, owner } = await buildProject();
     const { user: newMember } = await buildOrgMember({ orgId: org.id, role: 'member' });
     currentUser = { id: owner.id, email: owner.email };
@@ -118,12 +98,21 @@ describe('addProjectMember', () => {
     const result = (await addProjectMember(mockSession(), createDb(env.DB), org.id, project.id, {
       userId: newMember.id,
       role: 'member',
-    })) as { userId: string; role: string };
-    expect(result.userId).toBe(newMember.id);
-    expect(result.role).toBe('member');
+    })) as { success: boolean; invitation: boolean; email: string };
+    expect(result.success).toBe(true);
+    expect(result.invitation).toBe(true);
+    expect(result.email).toBe(newMember.email);
+
+    // No membership until the invitation is accepted
+    const memberRow = await createDb(env.DB)
+      .select({ id: projectMembers.id })
+      .from(projectMembers)
+      .where(and(eq(projectMembers.projectId, project.id), eq(projectMembers.userId, newMember.id)))
+      .get();
+    expect(memberRow).toBeUndefined();
   });
 
-  it('allows owner to add member by email', async () => {
+  it('creates an invitation for an existing user added by email', async () => {
     const { project, org, owner } = await buildProject();
     const { user: newMember } = await buildOrgMember({ orgId: org.id, role: 'member' });
     currentUser = { id: owner.id, email: owner.email };
@@ -131,8 +120,8 @@ describe('addProjectMember', () => {
     const result = (await addProjectMember(mockSession(), createDb(env.DB), org.id, project.id, {
       email: newMember.email,
       role: 'member',
-    })) as { userId: string; email: string };
-    expect(result.userId).toBe(newMember.id);
+    })) as { invitation: boolean; email: string };
+    expect(result.invitation).toBe(true);
     expect(result.email).toBe(newMember.email);
   });
 
@@ -201,15 +190,26 @@ describe('addProjectMember', () => {
     }
   });
 
-  it('defaults role to member', async () => {
+  it('defaults invitation role to member', async () => {
     const { project, org, owner } = await buildProject();
     const { user: newMember } = await buildOrgMember({ orgId: org.id, role: 'member' });
     currentUser = { id: owner.id, email: owner.email };
 
-    const result = (await addProjectMember(mockSession(), createDb(env.DB), org.id, project.id, {
+    await addProjectMember(mockSession(), createDb(env.DB), org.id, project.id, {
       userId: newMember.id,
-    })) as { role: string };
-    expect(result.role).toBe('member');
+    });
+
+    const invitationRow = await createDb(env.DB)
+      .select({ role: projectInvitations.role })
+      .from(projectInvitations)
+      .where(
+        and(
+          eq(projectInvitations.projectId, project.id),
+          eq(projectInvitations.email, newMember.email),
+        ),
+      )
+      .get();
+    expect(invitationRow?.role).toBe('member');
   });
 });
 
@@ -332,57 +332,6 @@ describe('removeProjectMember', () => {
   });
 });
 
-describe('Collaborator Quota Enforcement', () => {
-  it('rejects adding a new org member when at collaborator quota', async () => {
-    const { project, org, owner } = await buildProject();
-    const newUser = await buildUser();
-    currentUser = { id: owner.id, email: owner.email };
-
-    const { createDomainError, AUTH_ERRORS } = await import('@corates/shared');
-    mockInsertWithQuotaCheck.mockResolvedValueOnce({
-      success: false,
-      error: createDomainError(
-        AUTH_ERRORS.FORBIDDEN,
-        {
-          reason: 'quota_exceeded',
-          quotaKey: 'collaborators.org.max',
-          used: 1,
-          limit: 0,
-          requested: 1,
-        },
-        'Collaborator quota exceeded.',
-      ),
-    });
-
-    try {
-      await addProjectMember(mockSession(), createDb(env.DB), org.id, project.id, {
-        userId: newUser.id,
-        role: 'member',
-      });
-      expect.unreachable('should have thrown');
-    } catch (err) {
-      expect(err).toBeInstanceOf(DomainErrorException);
-      const res = err as DomainErrorException;
-      expect(res.statusCode).toBe(403);
-      const body = res.toDomainError() as {
-        code: string;
-        details?: { reason?: string; quotaKey?: string };
-      };
-      expect(body.code).toBe('AUTH_FORBIDDEN');
-      expect(body.details?.reason).toBe('quota_exceeded');
-      expect(body.details?.quotaKey).toBe('collaborators.org.max');
-    }
-  });
-
-  it('allows adding existing org member without quota check', async () => {
-    const { project, org, owner } = await buildProject();
-    const { user: existingOrgMember } = await buildOrgMember({ orgId: org.id, role: 'member' });
-    currentUser = { id: owner.id, email: owner.email };
-
-    const result = (await addProjectMember(mockSession(), createDb(env.DB), org.id, project.id, {
-      userId: existingOrgMember.id,
-      role: 'member',
-    })) as { userId: string };
-    expect(result.userId).toBe(existingOrgMember.id);
-  });
-});
+// Collaborator quota is enforced when an invitation is accepted (membership
+// creation), covered in invitations.server.test.ts. Sending an invitation is
+// not quota-checked.

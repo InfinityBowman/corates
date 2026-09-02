@@ -85,12 +85,7 @@ function InvitePage() {
       navigate({ to: '/dashboard', replace: true });
     } catch (err) {
       const domainError = getDomainError(err);
-      const details = domainError?.details as Record<string, unknown> | undefined;
-      if (details?.reason === 'email_mismatch') {
-        setAcceptError(
-          'This invitation was sent to a different email address. Sign in with the invited email to accept it.',
-        );
-      } else if (domainError?.code === 'PROJECT_MEMBER_ALREADY_EXISTS') {
+      if (domainError?.code === 'PROJECT_MEMBER_ALREADY_EXISTS') {
         localStorage.removeItem('pendingInvitationToken');
         showToast.success('Already a Member', 'You already have access to this project.');
         navigate({ to: '/dashboard', replace: true });
