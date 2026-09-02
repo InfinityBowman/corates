@@ -46,7 +46,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | service=\"corates-web-client\" | message=\"client.sync.fatal\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | service=\"corates-web-client\" | message=\"client.sync.fatal\" [$__auto]))",
           "legendFormat": "fatals"
         }
       ],
@@ -77,7 +77,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | service=\"corates-web-client\" | message=~`client\\.pdf\\.(load|upload)_failed` [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | service=\"corates-web-client\" | message=~`client\\.pdf\\.(load|upload)_failed` [$__auto]))",
           "legendFormat": "pdf failures"
         }
       ],
@@ -108,7 +108,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | service=\"corates-web-client\" | message=\"client.auth.sign_in_failed\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | service=\"corates-web-client\" | message=\"client.auth.sign_in_failed\" [$__auto]))",
           "legendFormat": "sign-in failures"
         }
       ],
@@ -139,7 +139,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | service=\"corates-web-client\" | message=~`client\\.drive\\.(connect|picker)_failed` [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | service=\"corates-web-client\" | message=~`client\\.drive\\.(connect|picker)_failed` [$__auto]))",
           "legendFormat": "drive failures"
         }
       ],

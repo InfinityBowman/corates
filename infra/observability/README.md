@@ -47,12 +47,19 @@ Grafana talks to Loki internally over the docker network without auth.
   (see `packages/web/wrangler.jsonc` and `packages/stripe-purchases/wrangler.jsonc`).
   Only the `production` envs export; staging logs stay in Cloudflare Workers Logs so the
   Grafana views are production-only.
-- Retention is 90d (`limits_config.retention_period` in `config/loki/loki-config.yaml`).
-  `max_query_length` is 7 months: Loki's default is 721h, which rejected anything past
+- Retention is unlimited. `limits_config.retention_period` is `0s`, which Loki reads as
+  "keep forever"; that is also the built-in default, so the setting is there to document
+  the intent rather than to change behaviour. `compactor.retention_enabled` stays `true`
+  so the compactor keeps compacting the index and can still serve delete requests - it is
+  the `retention_period` that decides whether anything ages out, not that flag. Turning
+  `retention_enabled` off would disable compaction too, which is not what you want.
+  `max_query_length` is 5 years: Loki's default is 721h, which rejected anything past
   a month with "the query time range exceeds the limit" even though the data was still
   on disk. A query's range and its range-vector window are both charged against that
-  limit, so a 90d panel with a `[24h]` window asks for 91d. The ceiling sits well above
-  retention, so raising `retention_period` needs no matching change here.
+  limit, so a 90d panel with a `[24h]` window asks for 91d. With retention unbounded this
+  ceiling, not retention, is what caps how far back a dashboard can look, so raise it
+  before pointing a panel at a longer window. `max_query_lookback` is unset (`0s`, no
+  limit), so nothing else truncates old queries.
 - Cloudflare re-delivers failed export batches hours later (up to ~6h seen). Loki only
   accepts entries within `max_chunk_age / 2` of the newest entry in the stream, so
   `ingester.max_chunk_age` is 24h (12h window); `querier.query_ingesters_within: 0` keeps
@@ -74,6 +81,26 @@ one 100 req/s bucket keyed on the cloudflared container's IP. Cloudflare's push 
 Grafana's parallel panel queries were both getting 429s from it. Traefik runs without an
 access log, so those never appeared anywhere. Loki gets basic auth only; Grafana gets
 `security-headers@file` only.
+
+## Stat panel query convention
+
+A stat panel that shows one number for the dashboard window must never combine a
+`[$__range]` window with a range query. Grafana would evaluate the expression at every step
+across the window, each step counting a full range-wide window, and the panel's `sum` reducer
+would then add up hundreds of near-identical overlapping counts. The displayed number lands
+far above the truth and is not monotonic in the time range - widening from 2d to 7d lowered
+`Sign-ins` from 5878 to 2263 when the real counts were 29 and 34.
+
+- Additive counters (`sum(count_over_time(...))`) use `[$__auto]` with `"calcs": ["sum"]`.
+  The buckets tile instead of overlapping, so the sum is exact and the panel keeps a real
+  activity sparkline. The leading bucket reaches up to one step before the window start, so
+  totals can run marginally high at the left edge.
+- Everything that cannot be added across buckets - ratios, `quantile_over_time` percentiles,
+  and unique counts like `count(sum by (userId) (...))` - keeps `[$__range]` and runs as an
+  instant query (`"queryType": "instant", "instant": true`) with `"calcs": ["lastNotNull"]`.
+  One evaluation, exact answer, no sparkline.
+
+The same rule applies to the `topk` tables, which were already instant.
 
 ## Useful LogQL
 
