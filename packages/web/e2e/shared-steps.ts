@@ -285,7 +285,7 @@ export async function addOutcome(page: Page, name: string) {
   await sheet.getByRole('button', { name: /Add/i }).last().click();
   await page.getByPlaceholder(/outcome/i).fill(name);
   await page.keyboard.press('Enter');
-  await expect(sheet.getByText(name)).toBeVisible({ timeout: 5_000 });
+  await expect(sheet.getByText(name, { exact: true })).toBeVisible({ timeout: 5_000 });
 
   // The sheet is modal and nothing else closes it, so its overlay would swallow
   // every later click on the tabs behind it.

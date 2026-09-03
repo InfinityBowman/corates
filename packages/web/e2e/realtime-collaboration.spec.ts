@@ -108,7 +108,7 @@ test('Presence avatars, cursor sync, and text editing sync during reconciliation
   await assignReviewers(page);
 
   // User A: add AMSTAR2 checklist, answer Yes to everything, mark complete
-  await page.getByRole('tab', { name: /To Do/i }).click();
+  await page.getByRole('tab', { name: /To-Do/i }).click();
   await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
     timeout: 10_000,
   });
@@ -124,14 +124,14 @@ test('Presence avatars, cursor sync, and text editing sync during reconciliation
   await answerAllAMSTAR2Yes(page);
   await markChecklistComplete(page);
   await page.goto(`${BASE_URL}/projects/${projectId}`);
-  await expect(page.getByRole('tab', { name: /To Do/i })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('tab', { name: /To-Do/i })).toBeVisible({ timeout: 15_000 });
 
   // User B: add AMSTAR2 checklist, answer No to everything, mark complete
   await switchUser(setupCtx, scenario.cookiesB);
   await page.goto(`${BASE_URL}/projects/${projectId}`);
   await expect(page.getByText('Realtime Reconcile Test').first()).toBeVisible({ timeout: 15_000 });
 
-  await page.getByRole('tab', { name: /To Do/i }).click();
+  await page.getByRole('tab', { name: /To-Do/i }).click();
   await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
     timeout: 10_000,
   });
@@ -162,7 +162,7 @@ test('Presence avatars, cursor sync, and text editing sync during reconciliation
   await answerAllAMSTAR2No(page);
   await markChecklistComplete(page);
   await page.goto(`${BASE_URL}/projects/${projectId}`);
-  await expect(page.getByRole('tab', { name: /To Do/i })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('tab', { name: /To-Do/i })).toBeVisible({ timeout: 15_000 });
 
   // Navigate to reconciliation and grab the URL
   await page.getByRole('tab', { name: /Reconcile/i }).click();

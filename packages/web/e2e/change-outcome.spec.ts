@@ -41,7 +41,7 @@ async function fillROB2ChecklistForOutcome(
   outcomeName: string,
   answer: string,
 ) {
-  await page.getByRole('tab', { name: /To Do/i }).click();
+  await page.getByRole('tab', { name: /To-Do/i }).click();
   await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
     timeout: 30_000,
   });
@@ -77,7 +77,7 @@ async function fillROB2ChecklistForOutcome(
   await answerAllROB2Domains(page, answer);
   await markChecklistComplete(page);
   await page.goto(`/projects/${projectId}`);
-  await expect(page.getByRole('tab', { name: /To Do/i })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('tab', { name: /To-Do/i })).toBeVisible({ timeout: 15_000 });
 }
 
 /** Change the outcome via the pencil button next to the outcome badge. */

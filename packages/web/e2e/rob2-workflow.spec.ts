@@ -72,7 +72,7 @@ test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
   // ================================================================
   // User A fills ROB2 checklist
   // ================================================================
-  await page.getByRole('tab', { name: /To Do/i }).click();
+  await page.getByRole('tab', { name: /To-Do/i }).click();
   await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
     timeout: 10_000,
   });
@@ -97,14 +97,14 @@ test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
   await answerROB2DomainsWithSkips(page, 'Y');
   await markChecklistComplete(page);
   await page.goto(`/projects/${projectId}`);
-  await expect(page.getByRole('tab', { name: /To Do/i })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('tab', { name: /To-Do/i })).toBeVisible({ timeout: 15_000 });
 
   // ================================================================
   // User B fills ROB2 checklist
   // ================================================================
   await switchUser(context, scenario.cookiesB);
   await page.goto(`/projects/${projectId}`);
-  await page.getByRole('tab', { name: /To Do/i }).click();
+  await page.getByRole('tab', { name: /To-Do/i }).click();
   await expect(page.getByText(/Petrie2019/i).first()).toBeVisible({ timeout: 30_000 });
 
   await page.getByRole('button', { name: /Select Checklist/i }).click();
@@ -141,7 +141,7 @@ test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
   await answerROB2DomainsWithSkips(page, 'N');
   await markChecklistComplete(page);
   await page.goto(`/projects/${projectId}`);
-  await expect(page.getByRole('tab', { name: /To Do/i })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('tab', { name: /To-Do/i })).toBeVisible({ timeout: 15_000 });
 
   // ================================================================
   // Reconciliation

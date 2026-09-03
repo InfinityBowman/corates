@@ -217,7 +217,7 @@ async function runConcurrentEditCycle(
 
     // ---- Cross-check: project page still shows the study ----
     await pageA.goto(`${BASE_URL}/projects/${projectId}`);
-    await pageA.getByRole('tab', { name: /To Do/i }).click();
+    await pageA.getByRole('tab', { name: /To-Do/i }).click();
     await expect(pageA.getByText(/Petrie2019/i).first()).toBeVisible({ timeout: 10_000 });
   } finally {
     await contextA.close();
@@ -257,7 +257,7 @@ test.describe('Concurrent CRDT: AMSTAR2', () => {
     await assignReviewers(setupPage);
 
     // User A adds checklist
-    await setupPage.getByRole('tab', { name: /To Do/i }).click();
+    await setupPage.getByRole('tab', { name: /To-Do/i }).click();
     await expect(setupPage.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
       timeout: 10_000,
     });
@@ -271,7 +271,7 @@ test.describe('Concurrent CRDT: AMSTAR2', () => {
     await expect(setupPage).toHaveURL(/\/checklists\//, { timeout: 10_000 });
     const checklistUrlA = new URL(setupPage.url()).pathname;
     await setupPage.goto(`${BASE_URL}/projects/${projectId}`);
-    await expect(setupPage.getByRole('tab', { name: /To Do/i })).toBeVisible({ timeout: 15_000 });
+    await expect(setupPage.getByRole('tab', { name: /To-Do/i })).toBeVisible({ timeout: 15_000 });
     // User A's checklist creation must be durable before the login switch.
     await waitForSynced(setupPage);
 
@@ -281,7 +281,7 @@ test.describe('Concurrent CRDT: AMSTAR2', () => {
     await setupPage.goto(`${BASE_URL}/projects/${projectId}`);
     await expect(setupPage.getByText('AMSTAR2 CRDT Test').first()).toBeVisible({ timeout: 15_000 });
 
-    await setupPage.getByRole('tab', { name: /To Do/i }).click();
+    await setupPage.getByRole('tab', { name: /To-Do/i }).click();
     await expect(setupPage.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
       timeout: 10_000,
     });
@@ -295,7 +295,7 @@ test.describe('Concurrent CRDT: AMSTAR2', () => {
 
     await expect(setupPage.getByText('AMSTAR2 Checklist').first()).toBeVisible({ timeout: 15_000 });
     await setupPage.goto(`${BASE_URL}/projects/${projectId}`);
-    await expect(setupPage.getByRole('tab', { name: /To Do/i })).toBeVisible({ timeout: 15_000 });
+    await expect(setupPage.getByRole('tab', { name: /To-Do/i })).toBeVisible({ timeout: 15_000 });
 
     // Checklist creation is a fire-and-forget mutation; a rendered checklist
     // only proves the local optimistic apply. Wait for the outbox to drain
@@ -350,7 +350,7 @@ test.describe('Concurrent CRDT: ROB2', () => {
     await addOutcome(setupPage, 'Primary outcome');
 
     // User A adds ROB2 checklist
-    await setupPage.getByRole('tab', { name: /To Do/i }).click();
+    await setupPage.getByRole('tab', { name: /To-Do/i }).click();
     await expect(setupPage.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
       timeout: 10_000,
     });
@@ -375,7 +375,7 @@ test.describe('Concurrent CRDT: ROB2', () => {
 
     const checklistUrlA = new URL(setupPage.url()).pathname;
     await setupPage.goto(`${BASE_URL}/projects/${projectId}`);
-    await expect(setupPage.getByRole('tab', { name: /To Do/i })).toBeVisible({ timeout: 15_000 });
+    await expect(setupPage.getByRole('tab', { name: /To-Do/i })).toBeVisible({ timeout: 15_000 });
     // User A's checklist creation must be durable before the login switch.
     await waitForSynced(setupPage);
 
@@ -385,7 +385,7 @@ test.describe('Concurrent CRDT: ROB2', () => {
     await setupPage.goto(`${BASE_URL}/projects/${projectId}`);
     await expect(setupPage.getByText('ROB2 CRDT Test').first()).toBeVisible({ timeout: 15_000 });
 
-    await setupPage.getByRole('tab', { name: /To Do/i }).click();
+    await setupPage.getByRole('tab', { name: /To-Do/i }).click();
     await expect(setupPage.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
       timeout: 10_000,
     });

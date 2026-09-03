@@ -33,7 +33,7 @@ test('Dual-Reviewer AMSTAR2 Workflow', async ({ context, page }) => {
   // ================================================================
   // User A fills AMSTAR2 checklist
   // ================================================================
-  await page.getByRole('tab', { name: /To Do/i }).click();
+  await page.getByRole('tab', { name: /To-Do/i }).click();
   await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
     timeout: 10_000,
   });
@@ -50,7 +50,7 @@ test('Dual-Reviewer AMSTAR2 Workflow', async ({ context, page }) => {
 
   await markChecklistComplete(page);
   await page.goto(`/projects/${projectId}`);
-  await expect(page.getByRole('tab', { name: /To Do/i })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('tab', { name: /To-Do/i })).toBeVisible({ timeout: 15_000 });
 
   // ================================================================
   // User B fills AMSTAR2 checklist
@@ -59,7 +59,7 @@ test('Dual-Reviewer AMSTAR2 Workflow', async ({ context, page }) => {
   await page.goto(`/projects/${projectId}`);
   await expect(page.getByText('AMSTAR2 E2E Test').first()).toBeVisible({ timeout: 15_000 });
 
-  await page.getByRole('tab', { name: /To Do/i }).click();
+  await page.getByRole('tab', { name: /To-Do/i }).click();
   await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
     timeout: 10_000,
   });
@@ -92,7 +92,7 @@ test('Dual-Reviewer AMSTAR2 Workflow', async ({ context, page }) => {
 
   await markChecklistComplete(page);
   await page.goto(`/projects/${projectId}`);
-  await expect(page.getByRole('tab', { name: /To Do/i })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('tab', { name: /To-Do/i })).toBeVisible({ timeout: 15_000 });
 
   // ================================================================
   // Reconciliation

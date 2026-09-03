@@ -33,7 +33,7 @@ test.afterAll(async () => {
 
 /** Add an AMSTAR2 checklist, answer every question, and mark it complete. */
 async function addAndCompleteChecklist(page: Page, projectId: string, answer: 'Yes' | 'No') {
-  await page.getByRole('tab', { name: /To Do/i }).click();
+  await page.getByRole('tab', { name: /To-Do/i }).click();
   await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
     timeout: 10_000,
   });
@@ -61,7 +61,7 @@ async function addAndCompleteChecklist(page: Page, projectId: string, answer: 'Y
   await answerAllAMSTAR2(page, answer);
   await markChecklistComplete(page);
   await page.goto(`/projects/${projectId}`);
-  await expect(page.getByRole('tab', { name: /To Do/i })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('tab', { name: /To-Do/i })).toBeVisible({ timeout: 15_000 });
 }
 
 /** Click Send Back on the first reconcile row and confirm the dialog. */
@@ -98,7 +98,7 @@ test('Send appraisals back to To-Do from the Reconcile tab', async ({ browser, c
   await expect(page.getByText(RECONCILE_EMPTY_STATE)).toBeVisible({ timeout: 10_000 });
 
   // The checklist is editable again rather than locked
-  await page.getByRole('tab', { name: /To Do/i }).click();
+  await page.getByRole('tab', { name: /To-Do/i }).click();
   await page.getByRole('button', { name: 'Open', exact: true }).first().click();
   await expect(page).toHaveURL(/\/checklists\//, { timeout: 10_000 });
   await expect(page.getByRole('button', { name: /Mark Complete/i })).toBeVisible({
@@ -108,7 +108,7 @@ test('Send appraisals back to To-Do from the Reconcile tab', async ({ browser, c
   // Re-complete it so the pair can become ready
   await markChecklistComplete(page);
   await page.goto(`/projects/${projectId}`);
-  await expect(page.getByRole('tab', { name: /To Do/i })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('tab', { name: /To-Do/i })).toBeVisible({ timeout: 15_000 });
 
   // ================================================================
   // Ready pair: second reviewer completes, then opens reconciliation
@@ -157,7 +157,7 @@ test('Send appraisals back to To-Do from the Reconcile tab', async ({ browser, c
       timeout: 15_000,
     });
 
-    await pageA.getByRole('tab', { name: /To Do/i }).click();
+    await pageA.getByRole('tab', { name: /To-Do/i }).click();
     await expect(pageA.getByRole('button', { name: 'Open', exact: true }).first()).toBeVisible({
       timeout: 10_000,
     });

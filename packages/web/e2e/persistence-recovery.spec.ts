@@ -76,7 +76,7 @@ test('Project state survives page refresh', async ({ context, page }) => {
   //         do NOT mark the checklist complete. We want to confirm that
   //         partial in-progress state survives the refresh.
   // ================================================================
-  await page.getByRole('tab', { name: /To Do/i }).click();
+  await page.getByRole('tab', { name: /To-Do/i }).click();
   await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
     timeout: 10_000,
   });
@@ -137,7 +137,7 @@ test('Project state survives page refresh', async ({ context, page }) => {
   //         updates made after a cold load, not just for state seeded
   //         before the first reload.
   // ================================================================
-  await page.getByRole('tab', { name: /To Do/i }).click();
+  await page.getByRole('tab', { name: /To-Do/i }).click();
   await expect(page.getByRole('button', { name: 'Open', exact: true })).toBeVisible({
     timeout: 10_000,
   });
@@ -189,7 +189,7 @@ test('Checklist answers survive reload with sync unavailable (local IndexedDB on
   // any restored answers must have come from IndexedDB via y-dexie.
   await setupProjectWithStudy(context, page, scenario, 'Offline Persistence E2E');
 
-  await page.getByRole('tab', { name: /To Do/i }).click();
+  await page.getByRole('tab', { name: /To-Do/i }).click();
   await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
     timeout: 10_000,
   });

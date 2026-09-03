@@ -70,7 +70,7 @@ test('Dual-Reviewer ROBINS-I Workflow', async ({ context, page }) => {
   // ================================================================
   // User A fills ROBINS-I checklist (Yes-leaning answers)
   // ================================================================
-  await page.getByRole('tab', { name: /To Do/i }).click();
+  await page.getByRole('tab', { name: /To-Do/i }).click();
   await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
     timeout: 10_000,
   });
@@ -99,14 +99,14 @@ test('Dual-Reviewer ROBINS-I Workflow', async ({ context, page }) => {
   await page.screenshot({ path: 'test-results/robins-editor-domain2.png' });
   await markChecklistComplete(page);
   await page.goto(`/projects/${projectId}`);
-  await expect(page.getByRole('tab', { name: /To Do/i })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('tab', { name: /To-Do/i })).toBeVisible({ timeout: 15_000 });
 
   // ================================================================
   // User B fills ROBINS-I checklist (opposite answers for reconciliation)
   // ================================================================
   await switchUser(context, scenario.cookiesB);
   await page.goto(`/projects/${projectId}`);
-  await page.getByRole('tab', { name: /To Do/i }).click();
+  await page.getByRole('tab', { name: /To-Do/i }).click();
   await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
     timeout: 30_000,
   });
@@ -145,7 +145,7 @@ test('Dual-Reviewer ROBINS-I Workflow', async ({ context, page }) => {
   await setROBINSIDomainDirection(page, 'D2', 'domain2', 'Favours comparator');
   await markChecklistComplete(page);
   await page.goto(`/projects/${projectId}`);
-  await expect(page.getByRole('tab', { name: /To Do/i })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('tab', { name: /To-Do/i })).toBeVisible({ timeout: 15_000 });
 
   // ================================================================
   // Reconciliation

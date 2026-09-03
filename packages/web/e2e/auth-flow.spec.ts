@@ -230,7 +230,7 @@ test.describe('Auth flows', () => {
       await page.getByRole('button', { name: /Send Reset Email/i }).click();
 
       // Verify success message
-      await expect(page.getByText('Reset Email Sent!')).toBeVisible({ timeout: 10_000 });
+      await expect(page.getByText('Reset Email Sent')).toBeVisible({ timeout: 10_000 });
 
       // Grab the reset URL from backend
       const resetUrl = await getAuthUrl(email, 'reset-password');
@@ -258,7 +258,7 @@ test.describe('Auth flows', () => {
       await page.getByRole('button', { name: /Set Password/i }).click();
 
       // Verify success
-      await expect(page.getByText('Password Reset Successfully!')).toBeVisible({ timeout: 10_000 });
+      await expect(page.getByText('Password Updated')).toBeVisible({ timeout: 10_000 });
 
       // Wait for auto-redirect to signin, then sign in with new password
       await expect(page).toHaveURL(/\/signin/, { timeout: 10_000 });
