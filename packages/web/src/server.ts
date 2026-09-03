@@ -4,6 +4,7 @@ import { handleEmailQueue } from '@corates/workers/queue';
 import { runWithLogger } from '@corates/workers/logger';
 import { handleSyncFetch } from '@corates/workers/sync';
 import { withRequestCompletionLog } from '@/server/requestCompletion';
+import { withAcceptNegotiation } from '@/server/ssrAccept';
 
 // Re-export DOs so wrangler DO bindings in wrangler.jsonc resolve against this
 // worker's main module. The class implementations live in @corates/workers.
@@ -83,7 +84,9 @@ const workerHandler = {
           // work like Stripe webhook ledger updates and notification fan-out).
           // Cast: createStartHandler's RequestOptions.context defaults to a narrow
           // BaseContext until we register a project-wide requestContext type.
-          return startFetch(request, { context: { cloudflareCtx: ctx } } as never);
+          return withAcceptNegotiation(
+            await startFetch(request, { context: { cloudflareCtx: ctx } } as never),
+          );
         }),
     );
   },
