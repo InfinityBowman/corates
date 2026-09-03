@@ -39,10 +39,10 @@ async function createLocalChecklist(
   await page.locator('#checklist-type').click();
   await page.getByRole('option', { name: new RegExp(TYPE_LABELS[type]) }).click();
   await page.locator('#checklist-name').fill(name);
-  await page.getByRole('button', { name: /^Start$/ }).click();
+  await page.getByRole('button', { name: /^Start appraisal$/ }).click();
 
   await expect(page).toHaveURL(/\/checklist\/[0-9a-f-]{36}/, { timeout: 10_000 });
-  await expect(page.getByText('Loading checklist...')).toBeHidden({ timeout: 15_000 });
+  await expect(page.getByText('Loading appraisal...')).toBeHidden({ timeout: 15_000 });
 }
 
 /**
@@ -79,7 +79,7 @@ test.describe('Flat-key migration', () => {
 
     // Reload -- the one-time converter (incl. flat-key migration) runs
     await page.reload();
-    await expect(page.getByText('Loading checklist...')).toBeHidden({ timeout: 15_000 });
+    await expect(page.getByText('Loading appraisal...')).toBeHidden({ timeout: 15_000 });
 
     // All Yes answers should survive the nested -> flat migration
     await expect(async () => {
@@ -114,7 +114,7 @@ test.describe('Flat-key migration', () => {
     // one-time converter (incl. flat-key migration) runs
     await rewriteToLegacyDoc(page);
     await page.reload();
-    await expect(page.getByText('Loading checklist...')).toBeHidden({ timeout: 15_000 });
+    await expect(page.getByText('Loading appraisal...')).toBeHidden({ timeout: 15_000 });
 
     // The form should render without errors
     await expect(page.getByRole('button', { name: 'D1', exact: true })).toBeVisible({

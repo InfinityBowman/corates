@@ -189,7 +189,7 @@ export function Sidebar({
       await db.localChecklistPdfs.delete(pendingDeleteId);
     } catch (err) {
       const { handleError } = await import('@/lib/error-utils');
-      await handleError(err, { toastTitle: 'Delete Failed' });
+      await handleError(err, { toastTitle: 'Delete failed' });
     } finally {
       setDeleteDialogOpen(false);
       setPendingDeleteId(null);
@@ -268,8 +268,8 @@ export function Sidebar({
               ))
             : <EmptyGroup
                 icon={FileCheck2Icon}
-                message='No appraisals'
-                actionLabel='Create one'
+                message='No appraisals yet'
+                actionLabel='Create an appraisal'
                 onAction={() => navigate({ to: '/checklist' as string })}
               />
             }
@@ -377,7 +377,7 @@ export function Sidebar({
                     <button
                       onClick={onToggleDesktop}
                       className='text-muted-foreground hover:bg-muted hover:text-foreground flex size-8 items-center justify-center rounded-md transition-colors'
-                      aria-label='Projects'
+                      aria-label='Expand sidebar to see your projects'
                     >
                       <CloudIcon className='size-4' />
                     </button>
@@ -391,7 +391,7 @@ export function Sidebar({
                   <button
                     onClick={onToggleDesktop}
                     className='text-muted-foreground hover:bg-muted hover:text-foreground flex size-8 items-center justify-center rounded-md transition-colors'
-                    aria-label='Appraisals'
+                    aria-label='Expand sidebar to see your appraisals'
                   >
                     <FileCheck2Icon className='size-4' />
                   </button>
@@ -444,16 +444,17 @@ export function Sidebar({
               <TriangleAlertIcon />
             </AlertDialogIcon>
             <div>
-              <AlertDialogTitle>Delete Checklist</AlertDialogTitle>
+              <AlertDialogTitle>Delete appraisal</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete this checklist? This cannot be undone.
+                This checklist, its answers, and any PDF you attached are removed from this device.
+                This cannot be undone.
               </AlertDialogDescription>
             </div>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction variant='destructive' onClick={confirmDeleteChecklist}>
-              Delete
+              Delete checklist
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

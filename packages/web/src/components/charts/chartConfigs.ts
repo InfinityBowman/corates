@@ -106,7 +106,7 @@ export const AMSTAR2_CHART_CONFIG: ChecklistChartConfig = {
   stackOrder: ['yes', 'partial yes', 'no ma', 'no'],
   fallbackCategory: 'no ma',
   distributionXAxisLabel: n => `Percentage of SRs (%), N=${n}`,
-  distributionYAxisLabel: 'Items of AMSTAR-2',
+  distributionYAxisLabel: 'Items of AMSTAR 2',
 };
 
 export const ROB2_CHART_CONFIG: ChecklistChartConfig = {

@@ -138,7 +138,7 @@ function LocalChecklistEditor({ checklistId }: { checklistId: string }) {
         Back
       </Button>
       <div className='bg-border h-4 w-px' />
-      <Badge variant='secondary'>Local Only</Badge>
+      <Badge variant='secondary'>Saved on this device</Badge>
       <ScoreTag currentScore={currentScore} checklistType={checklistType || undefined} />
       <ChecklistResourcesButton checklistType={checklistType} />
     </>
@@ -154,9 +154,13 @@ function LocalChecklistEditor({ checklistId }: { checklistId: string }) {
 
   if (!currentChecklist || !checklistType) {
     return (
-      <div className='bg-secondary flex min-h-screen flex-col items-center justify-center gap-4'>
-        <div className='text-destructive'>Checklist not found</div>
-        <Button onClick={handleBack}>Go Back</Button>
+      <div className='bg-secondary flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center'>
+        <div className='text-destructive'>This checklist is not on this device</div>
+        <p className='text-muted-foreground max-w-md text-sm'>
+          Local appraisals are saved in one browser only. It may have been deleted, or started in a
+          different browser or on a different device.
+        </p>
+        <Button onClick={handleBack}>Back to dashboard</Button>
       </div>
     );
   }

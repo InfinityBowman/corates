@@ -61,7 +61,7 @@ export function StudyTreeItem({
               />
             ))
           : <div className='text-2xs text-muted-foreground/70 px-2 py-1'>
-              {userId ? 'No checklists assigned to you' : 'No checklists'}
+              {userId ? 'No appraisals assigned to you' : 'No appraisals'}
             </div>
           }
         </div>

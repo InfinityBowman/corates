@@ -9,7 +9,7 @@ const ACTIONS = [
   {
     type: 'AMSTAR2',
     title: 'AMSTAR 2',
-    description: 'Quality assessment of systematic reviews',
+    description: 'Quality appraisal of systematic reviews',
     iconColor: 'text-blue-600',
     iconBg: 'bg-blue-50',
     border: 'border-blue-100 hover:border-blue-200',

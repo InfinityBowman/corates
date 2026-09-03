@@ -51,7 +51,7 @@ export function LocalAppraisalCard({
 }: LocalAppraisalCardProps) {
   const typeLabel = useMemo(() => {
     const metadata = getChecklistMetadata(checklist.type || checklist.checklistType || '');
-    return (metadata as { name?: string })?.name || checklist.type || 'Checklist';
+    return (metadata as { name?: string })?.name || checklist.type || 'Appraisal';
   }, [checklist.type, checklist.checklistType]);
 
   const relativeTime = formatRelativeTime(checklist.updatedAt || checklist.createdAt);
@@ -74,7 +74,7 @@ export function LocalAppraisalCard({
               className='text-foreground truncate text-sm font-medium'
               value={checklist.name || 'Untitled'}
               showEditIcon
-              ariaLabel='Rename checklist'
+              ariaLabel='Rename appraisal'
               onCommit={newName => onRename(newName)}
             />
           : <h4 className='text-foreground truncate text-sm font-medium'>{checklist.name}</h4>}
@@ -96,8 +96,8 @@ export function LocalAppraisalCard({
                   size='icon-sm'
                   onClick={e => e.stopPropagation()}
                   className='text-muted-foreground'
-                  title='Export'
-                  aria-label='Export'
+                  title='Export appraisal'
+                  aria-label='Export appraisal'
                 >
                   <DownloadIcon className='size-4' />
                 </Button>

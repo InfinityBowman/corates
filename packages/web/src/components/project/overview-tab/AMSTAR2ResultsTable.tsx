@@ -102,9 +102,9 @@ export function AMSTAR2ResultsTable({ studies, tableNumber }: AMSTAR2ResultsTabl
         number={tableNumber}
         numberPrefix='TBL'
         name='Overall confidence by review'
-        instrumentLabel='AMSTAR-2'
+        instrumentLabel='AMSTAR 2'
         instrumentKind='amstar'
-        description='Algorithm-derived confidence rating for each completed checklist.'
+        description='Algorithm-derived confidence rating for each completed appraisal.'
       />
       <OutputCardPlate className='px-[18px] pt-[18px] pb-[18px]'>
         {summary && (

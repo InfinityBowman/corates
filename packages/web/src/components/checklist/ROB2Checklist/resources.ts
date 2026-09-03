@@ -1,11 +1,11 @@
 import type { ChecklistResources } from '../ResourcesPopover';
 
 export const ROB2_RESOURCES: ChecklistResources = {
-  title: 'ROB-2 Resources',
+  title: 'RoB 2 Resources',
   description: 'Guidance for making judgements with the RoB 2 assessment tool.',
   links: [
     {
-      title: 'CoRATES ROB-2 Guide',
+      title: 'CoRATES RoB 2 Guide',
       description: 'Overview, scoring rules, FAQs, and official references',
       url: '/resources/rob2',
     },

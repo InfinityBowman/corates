@@ -35,9 +35,9 @@ import {
  */
 async function answerROB2DomainsWithSkips(page: import('@playwright/test').Page, answer: string) {
   await answerSignallingQuestion(page, 'domain1', /allocation sequence concealed/i, 'N');
-  // exact: the direction label renders its own lowercase "(optional)"
+  // exact: match only the skipped-question label, not other parenthesised hints
   await expect(
-    page.locator('#domain-section-domain1').getByText('(Optional)', { exact: true }),
+    page.locator('#domain-section-domain1').getByText('(Not required)', { exact: true }),
   ).toHaveCount(2, { timeout: 5_000 });
 
   await answerSignallingQuestion(
@@ -47,7 +47,7 @@ async function answerROB2DomainsWithSkips(page: import('@playwright/test').Page,
     'Y',
   );
   await expect(
-    page.locator('#domain-section-domain3').getByText('(Optional)', { exact: true }),
+    page.locator('#domain-section-domain3').getByText('(Not required)', { exact: true }),
   ).toHaveCount(3, { timeout: 5_000 });
 
   await answerAllROB2Domains(page, answer, ['domain2a', 'domain4', 'domain5']);

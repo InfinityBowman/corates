@@ -99,7 +99,7 @@ export function NoteEditor({
         onChange={handleInput}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        placeholder={placeholder || 'Add a note for this question...'}
+        placeholder={placeholder || 'Record the evidence behind your answer...'}
         disabled={readOnly || disabled}
         className={`w-full resize-none overflow-hidden rounded-lg border px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:outline-none ${focusRingClass} ${readOnly ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-card text-foreground'} ${disabled ? 'bg-secondary cursor-not-allowed' : ''}`}
         style={{ minHeight: '60px' }}

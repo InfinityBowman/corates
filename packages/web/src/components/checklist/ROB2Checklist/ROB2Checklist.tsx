@@ -64,7 +64,7 @@ export function ROB2Checklist({
     <div className='bg-blue-50'>
       <div className='container mx-auto flex max-w-5xl flex-col gap-4 px-4 py-6'>
         <div className='text-foreground mb-6 text-left text-lg font-semibold sm:text-center'>
-          {checklistName || 'RoB 2 Checklist'}
+          {checklistName || 'RoB 2 appraisal'}
         </div>
 
         {/* Scoring Summary Strip */}
@@ -88,11 +88,11 @@ export function ROB2Checklist({
         {!hasAimSelected && (
           <div className='border-info-border bg-info-bg rounded-lg border-2 p-6 text-center'>
             <div className='text-info-foreground mb-2 text-lg font-semibold'>
-              Select Assessment Aim
+              Choose an aim to continue
             </div>
             <p className='text-info text-sm'>
-              Please select the review team's aim in the Preliminary Considerations section above to
-              proceed with the domain assessment.
+              Select the review team's aim in Preliminary Considerations above. Your choice
+              determines which domains you assess, so they stay hidden until you pick one.
             </p>
           </div>
         )}
