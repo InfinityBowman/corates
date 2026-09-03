@@ -25,14 +25,13 @@ import {
   compareChecklists,
   hasAimMismatch,
   getDomainQuestions,
-  getSkippedDomainQuestions,
-  questionHasNaOption,
   type ComparisonResult,
   type DomainComparison,
   type OverallComparison,
 } from '@corates/shared/checklists/rob2';
 import {
   buildNavigationItems,
+  getConsensusSkippedQuestionsCached,
   getSkippedQuestionsCached,
   hasNavItemAnswer as rob2HasNavItemAnswer,
   isNavItemAgreement as rob2IsNavItemAgreement,
@@ -114,8 +113,12 @@ function compare(
 // Adapter: answer checking
 // ---------------------------------------------------------------------------
 
-function hasAnswer(item: Rob2NavItem, finalAnswers: ROB2Checklist): boolean {
-  return rob2HasNavItemAnswer(item, finalAnswers);
+function hasAnswer(
+  item: Rob2NavItem,
+  finalAnswers: ROB2Checklist,
+  comparison: ComparisonResult | null,
+): boolean {
+  return rob2HasNavItemAnswer(item, finalAnswers, comparison);
 }
 
 function isAgreement(item: Rob2NavItem, comparison: ComparisonResult | null): boolean {
@@ -208,33 +211,6 @@ function resetAllAnswers(updateChecklistAnswer: (sectionKey: string, data: unkno
 }
 
 // ---------------------------------------------------------------------------
-// Adapter: onAfterNavigate (stamp NA where the official scale allows it)
-// ---------------------------------------------------------------------------
-
-function onAfterNavigate(
-  navItems: Rob2NavItem[],
-  finalAnswers: ROB2Checklist,
-  updateChecklistAnswer: (sectionKey: string, data: unknown) => void,
-): void {
-  const domainKeys = new Set<string>();
-  for (const item of navItems) {
-    if (item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION) domainKeys.add(item.domainKey);
-  }
-
-  for (const domainKey of domainKeys) {
-    const domain = finalAnswers[domainKey] as ROB2DomainState | undefined;
-    for (const qKey of getSkippedDomainQuestions(domainKey, domain?.answers)) {
-      // Only conditional questions carry NA on the official RoB 2 scale; the
-      // off-path STANDARD questions stay null and read as skipped through
-      // derivation.
-      if (questionHasNaOption(domainKey, qKey)) {
-        updateDomainQuestionAnswer(updateChecklistAnswer, domainKey, qKey, 'NA');
-      }
-    }
-  }
-}
-
-// ---------------------------------------------------------------------------
 // Adapter: renderPage
 // ---------------------------------------------------------------------------
 
@@ -242,7 +218,7 @@ function renderPage(
   context: EngineContext<ROB2Checklist, ROB2Checklist, ComparisonResult | null, Rob2NavItem>,
 ) {
   const { currentItem, checklist1: c1, checklist2: c2, finalAnswers: fa, comparison } = context;
-  const skippable = getSkippedQuestionsCached(fa);
+  const skippable = getConsensusSkippedQuestionsCached(fa, comparison);
 
   if (currentItem.type === NAV_ITEM_TYPES.PRELIMINARY) {
     const r1Value = c1?.preliminary?.[currentItem.key as keyof ROB2Checklist['preliminary']];
@@ -420,9 +396,9 @@ function Rob2NavbarAdapter(
   navbarContext: NavbarContext<ROB2Checklist, ComparisonResult | null, Rob2NavItem>,
 ) {
   const fa = navbarContext.finalAnswers;
-  const skippable = getSkippedQuestionsCached(fa);
-
   const comp = navbarContext.comparison;
+  const skippable = getConsensusSkippedQuestionsCached(fa, comp);
+
   const aimField = comp?.preliminary?.fields?.find(f => f.key === 'aim');
   const aimMismatch = aimField ? !aimField.isAgreement && !fa?.preliminary?.aim : false;
 
@@ -521,7 +497,6 @@ export const rob2Adapter: ReconciliationAdapter<
 
   autoFillFromReviewer1,
   resetAllAnswers,
-  onAfterNavigate,
 
   renderPage,
   NavbarComponent: Rob2NavbarAdapter,

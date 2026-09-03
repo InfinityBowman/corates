@@ -249,8 +249,8 @@ export interface ReconciliationAdapter<
 
   // --- Answer checking (pure functions) ---
 
-  /** Whether this nav item has a committed final answer */
-  hasAnswer: (item: TNavItem, finalAnswers: TFinalAnswers) => boolean;
+  /** Whether this nav item is satisfied; the reviewers' agreement alone can satisfy it. */
+  hasAnswer: (item: TNavItem, finalAnswers: TFinalAnswers, comparison: TComparison) => boolean;
 
   /** Whether reviewers agreed on this nav item */
   isAgreement: (item: TNavItem, comparison: TComparison) => boolean;
@@ -281,8 +281,7 @@ export interface ReconciliationAdapter<
 
   /**
    * Optional: called after each navigation step.
-   * ROB2 uses this to auto-set NA for skipped questions.
-   * ROBINS-I will use this when scoring-based skip detection is added.
+   * ROBINS-I uses this to auto-set NA for skipped questions; ROB2 stamps at finalize instead.
    */
   onAfterNavigate?: (
     navItems: TNavItem[],

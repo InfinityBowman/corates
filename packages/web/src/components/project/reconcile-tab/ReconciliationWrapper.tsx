@@ -35,6 +35,7 @@ import {
   type ChecklistStatus,
 } from '@corates/shared/checklists';
 import { downloadPdf, getPdfUrl } from '@/api/pdf-api';
+import { getCompletionNaStamps } from '@/components/checklist/completion-na';
 import { getCachedPdf, cachePdf } from '@/primitives/pdfCache.js';
 import { Button } from '@/components/ui/button';
 import { showToast } from '@/lib/toast';
@@ -510,6 +511,7 @@ export function ReconciliationWrapper({
   // Handle saving the reconciled checklist. Online, the co-edited field text
   // is serialized into answer rows first — the finalized checklist must read
   // entirely from rows — and finalize aborts if the fields cannot be read.
+  // NA is stamped here, not mid-walk, so an upstream change cannot leave stale NA.
   const handleSaveReconciled = useCallback(
     async (reconciledName?: string) => {
       try {
@@ -530,6 +532,13 @@ export function ReconciliationWrapper({
             );
             return;
           }
+        }
+        for (const stamp of getCompletionNaStamps(checklistType, key => flatReconciled[key])) {
+          writers.updateAnswer({
+            type: checklistType,
+            key: stamp.domainKey,
+            data: { answers: { [stamp.questionKey]: { answer: 'NA' } } },
+          } as ChecklistAnswerInput);
         }
         updateChecklist(reconciledChecklistId, {
           status: CHECKLIST_STATUS.FINALIZED,
