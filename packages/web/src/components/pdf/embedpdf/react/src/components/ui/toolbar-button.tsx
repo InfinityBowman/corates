@@ -1,5 +1,5 @@
 import { ReactNode, forwardRef } from 'react';
-import { twMerge } from 'tailwind-merge';
+import { cn } from '@/lib/utils';
 
 type ToolbarButtonProps = {
   onClick?: () => void;
@@ -34,7 +34,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
         'cursor-not-allowed opacity-50 hover:bg-transparent hover:text-gray-600 hover:ring-0'
       : '';
 
-    const mergedClasses = twMerge(
+    const mergedClasses = cn(
       'rounded p-1.5 transition-colors',
       baseClasses,
       disabledClasses,
