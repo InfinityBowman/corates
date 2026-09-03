@@ -67,7 +67,7 @@ export function PlansSettings() {
         <div className='mt-6 flex gap-3'>
           <Button onClick={processPendingPlan}>
             <RefreshCwIcon className='size-4' />
-            Try Again
+            Try again
           </Button>
           <Button
             variant='outline'
@@ -76,7 +76,7 @@ export function PlansSettings() {
               setPageState('ready');
             }}
           >
-            Choose a Plan
+            Choose a plan
           </Button>
         </div>
       </div>
@@ -88,9 +88,7 @@ export function PlansSettings() {
       <div className='flex min-h-[60vh] flex-col items-center justify-center'>
         <Spinner size='lg' />
         <p className='text-foreground mt-4 text-lg font-medium'>Redirecting to checkout...</p>
-        <p className='text-muted-foreground mt-1 text-sm'>
-          Please wait while we prepare your order.
-        </p>
+        <p className='text-muted-foreground mt-1 text-sm'>This takes a few seconds.</p>
       </div>
     );
   }
@@ -99,12 +97,10 @@ export function PlansSettings() {
     <div className='min-h-full py-6'>
       <div className='mx-auto max-w-6xl px-4 sm:px-6 lg:px-8'>
         <div className='mb-8 text-center'>
-          <h1 className='text-foreground text-4xl font-bold'>
-            Choose the right plan for your team
-          </h1>
+          <h1 className='text-foreground text-4xl font-bold'>Choose a plan</h1>
           <p className='text-muted-foreground mx-auto mt-4 max-w-2xl text-lg'>
-            Start with a free trial, then pick the plan that fits your workflow. All plans include
-            our core features.
+            Start with a 14-day free trial, then pick the plan that fits your team. Appraising a
+            single study stays free.
           </p>
         </div>
 
@@ -116,13 +112,13 @@ export function PlansSettings() {
         <div className='from-primary to-primary/90 mt-16 rounded-2xl bg-gradient-to-r px-8 py-12 text-center'>
           <h2 className='text-2xl font-bold text-white'>Still have questions?</h2>
           <p className='mx-auto mt-2 max-w-xl text-blue-100'>
-            Our team is here to help. Reach out and we&apos;ll get back to you within 24 hours.
+            Tell us what your team needs and we will help you pick a plan.
           </p>
           <a
             href='/contact'
             className='bg-card text-primary mt-6 inline-flex items-center rounded-xl px-6 py-3 font-semibold shadow-lg transition-all hover:shadow-xl'
           >
-            Contact Support
+            Contact support
           </a>
         </div>
       </div>

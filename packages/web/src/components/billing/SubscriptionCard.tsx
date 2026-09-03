@@ -85,7 +85,8 @@ export function SubscriptionCard({ subscription, onManage, manageLoading }: Subs
           <div>
             <AlertTitle>Subscription ending</AlertTitle>
             <AlertDescription>
-              Your subscription ends on {periodEndDate}, after which you move to the Free plan.
+              Your subscription ends on {periodEndDate}. Your projects and exports stay available
+              after that; creating new projects needs an active plan.
             </AlertDescription>
           </div>
         </Alert>
@@ -96,14 +97,14 @@ export function SubscriptionCard({ subscription, onManage, manageLoading }: Subs
           <div>
             <AlertTitle>Trial ending soon</AlertTitle>
             <AlertDescription>
-              Your trial ends in {daysRemaining} day{daysRemaining !== 1 ? 's' : ''}. Upgrade to
-              keep your projects and data.
+              Your trial ends in {daysRemaining} day{daysRemaining !== 1 ? 's' : ''}. Nothing is
+              deleted when it does, but editing pauses until you choose a plan.
             </AlertDescription>
             <Link
               to='/settings/plans'
               className='text-warning-foreground mt-2 inline-flex items-center gap-1 text-sm font-medium hover:underline'
             >
-              See upgrade options
+              Compare plans
               <ArrowRightIcon className='size-4' />
             </Link>
           </div>
@@ -137,7 +138,7 @@ export function SubscriptionCard({ subscription, onManage, manageLoading }: Subs
           <Button asChild>
             <Link to='/settings/plans'>
               <ZapIcon className='size-4' />
-              Upgrade
+              Choose a plan
             </Link>
           </Button>
         : <Button variant='outline' onClick={onManage} disabled={manageLoading}>
