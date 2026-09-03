@@ -114,9 +114,9 @@ export function ROB2SummaryView({
     <div className='bg-card rounded-xl shadow-lg'>
       {/* Header */}
       <div className='bg-muted border-b p-6'>
-        <h2 className='text-foreground text-xl font-bold'>Reconciliation Summary</h2>
+        <h2 className='text-foreground text-xl font-bold'>Reconciliation summary</h2>
         <p className='text-muted-foreground mt-1 text-sm'>
-          Review all reconciled items before saving. Click any item to edit.
+          Check every consensus answer before you finish. Select an item to go back and change it.
         </p>
       </div>
 
@@ -126,7 +126,7 @@ export function ROB2SummaryView({
             reconciled but excluded from the agreement rate */}
         <div className='bg-muted rounded-lg p-4 text-center'>
           <div className='text-foreground text-2xl font-bold'>{summary?.scoredTotal || 0}</div>
-          <div className='text-muted-foreground text-sm'>Domain Items</div>
+          <div className='text-muted-foreground text-sm'>Domain items</div>
         </div>
         <div className='rounded-lg bg-green-50 p-4 text-center'>
           <div className='text-2xl font-bold text-green-700'>{summary?.agreed || 0}</div>
@@ -140,7 +140,7 @@ export function ROB2SummaryView({
           <div className='text-2xl font-bold text-blue-700'>
             {summary?.agreementPercentage || 0}%
           </div>
-          <div className='text-sm text-blue-600'>Agreement Rate</div>
+          <div className='text-sm text-blue-600'>Agreement rate</div>
         </div>
       </div>
 
@@ -234,12 +234,15 @@ export function ROB2SummaryView({
       <div className='flex items-center justify-between border-t p-6'>
         <Button variant='secondary' onClick={() => onBack?.()}>
           <ArrowLeftIcon className='size-4' />
-          Back to Questions
+          Back to the questions
         </Button>
 
         <div className='flex items-center gap-4'>
           <div className='text-muted-foreground text-sm'>
-            {summary?.answered || 0} of {summary?.total || 0} items reconciled
+            {allAnswered ?
+              `All ${summary?.total || 0} items reconciled`
+            : `${summary?.answered || 0} of ${summary?.total || 0} items reconciled - record the rest to finish`
+            }
           </div>
 
           <Button
@@ -249,7 +252,7 @@ export function ROB2SummaryView({
             disabled={!allAnswered || saving}
           >
             <CheckIcon className='size-4' />
-            {saving ? 'Saving...' : 'Save Reconciled Checklist'}
+            {saving ? 'Saving...' : 'Save consensus appraisal'}
           </Button>
         </div>
       </div>

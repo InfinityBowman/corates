@@ -46,7 +46,7 @@ export function CompletedOutcomeRow({
 
   const finalizedChecklist = outcomeGroup.checklists[0];
   const outcomeName =
-    outcomeGroup.outcomeId ? getOutcomeName(outcomeGroup.outcomeId) || 'Unknown Outcome' : null;
+    outcomeGroup.outcomeId ? getOutcomeName(outcomeGroup.outcomeId) || 'Unknown outcome' : null;
 
   const reconciliationProgress = useMemo(
     () => getReconciliationProgress?.(outcomeGroup.outcomeId, outcomeGroup.type),
@@ -90,7 +90,7 @@ export function CompletedOutcomeRow({
         <div className='flex items-center gap-2'>
           {hasPreviousReviewers && (
             <Button variant='secondary' onClick={() => setShowPreviousReviewers(true)}>
-              View Previous
+              View original appraisals
             </Button>
           )}
           {reopenableChecklist && (

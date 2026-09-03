@@ -74,10 +74,10 @@ export function ReconcileStudyRow({
   const hasMultipleOutcomes = readyGroups.length + waitingGroups.length > 1;
 
   const getReviewerName = (checklist: { assignedTo?: string | null }) =>
-    checklist.assignedTo ? getAssigneeName(checklist.assignedTo) : 'Unknown';
+    checklist.assignedTo ? getAssigneeName(checklist.assignedTo) : 'Unknown reviewer';
 
   const getGroupOutcomeName = (group: ChecklistGroup) =>
-    group.outcomeId ? getOutcomeName(group.outcomeId) || 'Unknown Outcome' : null;
+    group.outcomeId ? getOutcomeName(group.outcomeId) || 'Unknown outcome' : null;
 
   const startReconciliation = useCallback(
     (group: ChecklistGroup) => {
@@ -290,7 +290,7 @@ export function ReconcileStudyRow({
                           </div>
                         )}
                         <span className='text-muted-foreground text-sm'>
-                          {getReviewerName(group.checklists[0])} -- waiting for second reviewer
+                          {getReviewerName(group.checklists[0])} -- waiting for the second reviewer
                         </span>
                       </div>
                       <div className='flex items-center gap-2'>

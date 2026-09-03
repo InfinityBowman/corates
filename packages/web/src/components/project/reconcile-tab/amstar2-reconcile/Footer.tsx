@@ -17,18 +17,25 @@ export function Footer({ onBack, onSave, allAnswered, saving }: FooterProps) {
     <div className='border-border bg-muted flex items-center justify-between border-t p-6'>
       <Button variant='outline' size='lg' onClick={onBack}>
         <ArrowLeftIcon className='size-4' />
-        Back to Questions
+        Back to the questions
       </Button>
 
-      <Button size='lg' onClick={onSave} disabled={!allAnswered || saving}>
-        {saving ?
-          'Saving...'
-        : <>
-            <CheckIcon className='size-4' />
-            Save Reconciled Checklist
-          </>
-        }
-      </Button>
+      <div className='flex items-center gap-4'>
+        {!allAnswered && (
+          <span className='text-muted-foreground text-sm'>
+            Record a consensus answer for every question to finish.
+          </span>
+        )}
+        <Button size='lg' onClick={onSave} disabled={!allAnswered || saving}>
+          {saving ?
+            'Saving...'
+          : <>
+              <CheckIcon className='size-4' />
+              Save consensus appraisal
+            </>
+          }
+        </Button>
+      </div>
     </div>
   );
 }

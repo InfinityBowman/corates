@@ -60,10 +60,10 @@ export function PreviousReviewersView({
     >
       <DialogContent className='sm:max-w-4xl'>
         <DialogHeader>
-          <DialogTitle>Original Reviewer Appraisals</DialogTitle>
+          <DialogTitle>Original reviewer appraisals</DialogTitle>
           <DialogDescription>
-            The original appraisals from each reviewer that were reconciled to create the final
-            version.
+            What each reviewer answered on their own, before reconciliation. These are read-only;
+            the finalized consensus is the one that counts.
           </DialogDescription>
         </DialogHeader>
 
@@ -111,7 +111,7 @@ export function PreviousReviewersView({
             </>
           : <div className='flex flex-1 items-center justify-center py-16'>
               <div className='text-muted-foreground text-center'>
-                No previous reviewer appraisals found.
+                No original appraisals were recorded for this reconciliation.
               </div>
             </div>
           }

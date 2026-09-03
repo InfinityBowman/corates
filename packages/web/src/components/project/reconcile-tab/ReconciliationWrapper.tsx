@@ -97,7 +97,7 @@ export function ReconciliationWrapper({
   // Watch for access-denied errors and redirect
   useEffect(() => {
     if (connectionState.error && ACCESS_DENIED_ERRORS.includes(connectionState.error)) {
-      showToast.error('Access Denied', connectionState.error);
+      showToast.error('Access denied', connectionState.error);
       navigate({ to: '/dashboard', replace: true });
     }
   }, [connectionState.error, navigate]);
@@ -161,7 +161,7 @@ export function ReconciliationWrapper({
       })
       .catch(async (err: unknown) => {
         const { handleError } = await import('@/lib/error-utils');
-        await handleError(err, { toastTitle: 'PDF Load Failed' });
+        await handleError(err, { toastTitle: "This study's PDF could not be loaded" });
       })
       .finally(() => {
         setPdfLoading(false);
@@ -196,7 +196,7 @@ export function ReconciliationWrapper({
     (userId: string | null) => {
       if (!userId) return 'Unassigned';
       const member = members.find(m => m.userId === userId);
-      return member?.name || member?.email || 'Unknown';
+      return member?.name || member?.email || 'Unknown reviewer';
     },
     [members],
   );
@@ -246,7 +246,7 @@ export function ReconciliationWrapper({
     if (!checklist1Meta) return null;
     return {
       id: checklist1Meta.id,
-      name: currentStudy?.name || 'Checklist 1',
+      name: currentStudy?.name || 'Appraisal 1',
       reviewerName: getReviewerName(checklist1Meta.assignedTo),
       createdAt: checklist1Meta.createdAt,
       ...serializeAnswerRows(checklistType, flat1),
@@ -257,7 +257,7 @@ export function ReconciliationWrapper({
     if (!checklist2Meta) return null;
     return {
       id: checklist2Meta.id,
-      name: currentStudy?.name || 'Checklist 2',
+      name: currentStudy?.name || 'Appraisal 2',
       reviewerName: getReviewerName(checklist2Meta.assignedTo),
       createdAt: checklist2Meta.createdAt,
       ...serializeAnswerRows(checklistType, flat2),
@@ -339,7 +339,7 @@ export function ReconciliationWrapper({
 
     updateChecklist(newChecklistId, {
       status: CHECKLIST_STATUS.RECONCILING,
-      title: 'Reconciled Checklist',
+      title: 'Consensus appraisal',
     });
 
     saveReconciliationProgress({
@@ -435,8 +435,8 @@ export function ReconciliationWrapper({
     if (stillAwaiting) return;
 
     showToast.info(
-      'Reconciliation Cancelled',
-      "This appraisal was sent back to the reviewers' To-Do lists.",
+      'Reconciliation stopped',
+      "Someone sent this appraisal back to the reviewers' To-Do lists, so there is nothing to reconcile right now.",
     );
     navigate({ to: `/projects/${projectId}?tab=todo` as string, replace: true });
   }, [currentStudy, connectionState.phase, checklist1Meta, checklist2Meta, navigate, projectId]);
@@ -475,7 +475,7 @@ export function ReconciliationWrapper({
     if (!reconciledChecklistId || !reconciledChecklistMeta) return null;
     return {
       id: reconciledChecklistId,
-      name: 'Reconciled Checklist',
+      name: 'Consensus appraisal',
       reviewerName: 'Consensus',
       createdAt: reconciledChecklistMeta.createdAt || 0,
       ...serializeAnswerRows(checklistType, { ...flatReconciled, ...fieldTextOverlay }),
@@ -525,15 +525,15 @@ export function ReconciliationWrapper({
           );
           if (!serialized) {
             showToast.error(
-              'Connection required',
-              'Could not read the consolidated notes — check your connection and try again.',
+              'The consensus appraisal was not saved',
+              'The shared notes and comments could not be read. Check your connection and try saving again.',
             );
             return;
           }
         }
         updateChecklist(reconciledChecklistId, {
           status: CHECKLIST_STATUS.FINALIZED,
-          title: reconciledName || 'Reconciled Checklist',
+          title: reconciledName || 'Consensus appraisal',
         });
         track('Checklist:Completed', { type: checklistType });
         navigate({ to: `${getProjectPath()}?tab=completed` as string });
@@ -586,10 +586,12 @@ export function ReconciliationWrapper({
     return (
       <div className='bg-secondary flex min-h-screen items-center justify-center'>
         <div className='bg-card max-w-md rounded-lg p-8 shadow-lg'>
-          <h2 className='text-destructive mb-2 text-xl font-bold'>Error</h2>
+          <h2 className='text-destructive mb-2 text-xl font-bold'>
+            This reconciliation could not be opened
+          </h2>
           <p className='text-secondary-foreground'>{error}</p>
           <Button onClick={handleCancel} className='mt-4'>
-            Go Back
+            Back to the reconcile tab
           </Button>
         </div>
       </div>
@@ -603,7 +605,9 @@ export function ReconciliationWrapper({
         <div className='text-center'>
           <Spinner size='lg' className='mx-auto mb-4' />
           <p className='text-secondary-foreground'>
-            {reconciledChecklistLoading ? 'Setting up reconciliation...' : 'Loading checklists...'}
+            {reconciledChecklistLoading ?
+              'Setting up this reconciliation...'
+            : "Loading both reviewers' appraisals..."}
           </p>
         </div>
       </div>

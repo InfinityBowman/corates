@@ -326,7 +326,7 @@ export const amstar2Adapter: ReconciliationAdapter<
   Amstar2NavItem
 > = {
   checklistType: 'AMSTAR2',
-  title: 'Reconciliation',
+  title: 'AMSTAR 2 reconciliation',
   pageCounterLabel: 'Question',
   getPageLabel: (pageIndex: number) => `Question ${pageIndex + 1}`,
   resources: AMSTAR2_RESOURCES,

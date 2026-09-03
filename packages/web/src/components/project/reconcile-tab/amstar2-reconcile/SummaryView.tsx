@@ -43,7 +43,11 @@ export function SummaryView({
     <div className='bg-card overflow-hidden rounded-lg shadow-lg'>
       {/* Summary Header */}
       <div className='border-border bg-muted border-b p-6'>
-        <h2 className='text-foreground mb-4 text-xl font-bold'>Review Summary</h2>
+        <h2 className='text-foreground mb-2 text-xl font-bold'>Reconciliation summary</h2>
+        <p className='text-muted-foreground mb-4 text-sm'>
+          Check every consensus answer before you finish. Select a question to go back and change
+          it.
+        </p>
 
         {summary && (
           <div className='mb-6 grid grid-cols-4 gap-4'>
@@ -51,7 +55,7 @@ export function SummaryView({
               <div className='text-secondary-foreground text-2xl font-bold'>
                 {summary.totalQuestions}
               </div>
-              <div className='text-muted-foreground text-xs'>Total Questions</div>
+              <div className='text-muted-foreground text-xs'>Questions</div>
             </div>
             <div className='rounded-lg border border-green-200 bg-green-50 p-3 text-center'>
               <div className='text-2xl font-bold text-green-700'>{summary.agreementCount}</div>
@@ -63,7 +67,7 @@ export function SummaryView({
             </div>
             <div className='rounded-lg border border-sky-200 bg-sky-50 p-3 text-center'>
               <div className='text-2xl font-bold text-sky-700'>{summary.agreementPercentage}%</div>
-              <div className='text-xs text-sky-600'>Agreement Rate</div>
+              <div className='text-xs text-sky-600'>Agreement rate</div>
             </div>
           </div>
         )}
@@ -127,7 +131,7 @@ export function SummaryView({
                 <div>
                   <div className='text-foreground text-sm font-medium'>Question {index + 1}</div>
                   <div className='text-muted-foreground text-xs'>
-                    {isAgreement ? 'Reviewers agreed' : 'Reviewers differed'}
+                    {isAgreement ? 'Reviewers agreed' : 'Reviewers disagreed'}
                   </div>
                 </div>
               </div>

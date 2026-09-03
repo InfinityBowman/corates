@@ -127,12 +127,12 @@ test(`Realtime reconciliation with ${STUDY_COUNT} ROB2 studies`, async ({ browse
     await pageA.getByRole('button', { name: /D1\s+\d+\// }).click();
     await pageB.getByRole('button', { name: /D1\s+\d+\// }).click();
 
-    const commentA = pageA.locator('textarea[placeholder="Add the final reconciled comment..."]');
+    const commentA = pageA.locator('textarea[placeholder="Write the consensus comment"]');
     await expect(commentA).toBeVisible({ timeout: 10_000 });
 
     const textSyncStart = Date.now();
     await commentA.fill('Scale test comment');
-    const commentB = pageB.locator('textarea[placeholder="Add the final reconciled comment..."]');
+    const commentB = pageB.locator('textarea[placeholder="Write the consensus comment"]');
     await expect(commentB).toHaveValue('Scale test comment', { timeout: 15_000 });
     timings.textSync = Date.now() - textSyncStart;
 

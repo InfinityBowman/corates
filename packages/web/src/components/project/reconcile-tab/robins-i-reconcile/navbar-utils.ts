@@ -321,10 +321,10 @@ export function getNavItemTooltip(
   const label = navItem.label;
 
   if (isSkipped) {
-    return `${label} - Skipped (not applicable)`;
+    return `${label} - skipped, not applicable`;
   }
   if (hasAnswer) {
-    return `${label} - Reconciled`;
+    return `${label} - reconciled`;
   }
   if (
     navItem.type === NAV_ITEM_TYPES.DOMAIN_DIRECTION ||
@@ -332,12 +332,12 @@ export function getNavItemTooltip(
   ) {
     // Direction is optional and never blocks save, so an unset one reads as
     // optional rather than as outstanding reconciliation work.
-    return `${label} - Optional (not set)`;
+    return `${label} - optional, not set`;
   }
   if (isAgreement) {
-    return `${label} - Reviewers agreed`;
+    return `${label} - reviewers agreed, not confirmed yet`;
   }
-  return `${label} - Reviewers disagree`;
+  return `${label} - reviewers disagreed, needs a consensus answer`;
 }
 
 /**

@@ -156,8 +156,8 @@ export function ReconciliationEngine({
         variant='ghost'
         size='icon-lg'
         onClick={onCancel}
-        title='Go back'
-        aria-label='Go back'
+        title='Back to the reconcile tab'
+        aria-label='Back to the reconcile tab'
       >
         <ArrowLeftIcon className='text-muted-foreground size-5' />
       </Button>
@@ -166,7 +166,7 @@ export function ReconciliationEngine({
       <div className='shrink-0'>
         <h1 className='text-foreground text-lg font-bold'>{adapter.title}</h1>
         <p className='text-muted-foreground text-xs'>
-          {reviewer1Name} vs {reviewer2Name}
+          Comparing {reviewer1Name} and {reviewer2Name}
         </p>
       </div>
 
@@ -255,8 +255,9 @@ export function ReconciliationEngine({
           <AlertDialogHeader>
             <AlertDialogTitle>Finish reconciliation?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will mark the reconciled checklist as completed. You will no longer be able to
-              edit these reconciliation answers afterwards.
+              The consensus checklist becomes this study's agreed appraisal and moves to the
+              Completed tab. The answers are locked once you finish, but you can reopen the
+              reconciliation from the Completed tab to change them.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -268,7 +269,7 @@ export function ReconciliationEngine({
               Cancel
             </Button>
             <AlertDialogAction disabled={engine.saving} onClick={engine.confirmSave}>
-              {engine.saving ? 'Saving...' : 'Finish'}
+              {engine.saving ? 'Saving...' : 'Finish reconciliation'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -341,13 +342,13 @@ export function ReconciliationEngine({
 
                       <Button size='lg' onClick={engine.goToNext}>
                         {engine.currentPage === engine.navItems.length - 1 ?
-                          'Review Summary'
+                          'Review summary'
                         : 'Next'}
                         <ArrowRightIcon className='size-4' />
                       </Button>
                     </div>
                   </>
-                : <div className='py-12 text-center'>Loading...</div>}
+                : <div className='py-12 text-center'>Loading this item...</div>}
               </>
             )}
 

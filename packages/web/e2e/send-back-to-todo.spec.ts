@@ -64,23 +64,25 @@ async function addAndCompleteChecklist(page: Page, projectId: string, answer: 'Y
   await expect(page.getByRole('tab', { name: /To-Do/i })).toBeVisible({ timeout: 15_000 });
 }
 
-/** Click Send Back on the first reconcile row and confirm the dialog. */
+/** Click Send back to To-Do on the first reconcile row and confirm the dialog. */
 async function sendBackFirstGroup(page: Page, expectsConsensusWarning: boolean) {
-  await page.getByRole('button', { name: 'Send Back', exact: true }).first().click();
+  await page.getByRole('button', { name: 'Send back to To-Do', exact: true }).first().click();
 
   const dialog = page.getByRole('alertdialog');
-  await expect(dialog.getByText('Send Back to To-Do')).toBeVisible({ timeout: 5_000 });
+  await expect(dialog.getByText('Send this appraisal back to To-Do?')).toBeVisible({
+    timeout: 5_000,
+  });
   if (expectsConsensusWarning) {
-    await expect(dialog.getByText(/consensus checklist/i)).toBeVisible();
+    await expect(dialog.getByText(/consensus appraisal/i)).toBeVisible();
   } else {
-    await expect(dialog.getByText(/consensus checklist/i)).toBeHidden();
+    await expect(dialog.getByText(/consensus appraisal/i)).toBeHidden();
   }
 
-  await dialog.getByRole('button', { name: 'Send Back', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Send back to To-Do', exact: true }).click();
   await expect(dialog).toBeHidden({ timeout: 10_000 });
 }
 
-const RECONCILE_EMPTY_STATE = /Studies where reviewers have completed their checklists/i;
+const RECONCILE_EMPTY_STATE = /A study appears here once both of its reviewers/i;
 
 test('Send appraisals back to To-Do from the Reconcile tab', async ({ browser, context, page }) => {
   const projectId = await setupProjectWithStudy(context, page, scenario, 'Send Back E2E');
@@ -125,7 +127,7 @@ test('Send appraisals back to To-Do from the Reconcile tab', async ({ browser, c
   // Opening the screen creates the consensus checklist; user B stays on it
   await page.getByRole('button', { name: /^Reconcile$/ }).click();
   await expect(page).toHaveURL(/\/reconcile\//, { timeout: 10_000 });
-  await expect(page.getByText('Setting up reconciliation...')).toBeHidden({ timeout: 20_000 });
+  await expect(page.getByText('Setting up this reconciliation...')).toBeHidden({ timeout: 20_000 });
 
   // ================================================================
   // User A sends the group back while user B watches the reconciliation
@@ -163,7 +165,9 @@ test('Send appraisals back to To-Do from the Reconcile tab', async ({ browser, c
     });
 
     await pageA.getByRole('tab', { name: /Completed/i }).click();
-    await expect(pageA.getByText(/Studies that have completed reconciliation/i)).toBeVisible({
+    await expect(
+      pageA.getByText(/Studies that have completed reconciliation appear here/i),
+    ).toBeVisible({
       timeout: 10_000,
     });
   } finally {

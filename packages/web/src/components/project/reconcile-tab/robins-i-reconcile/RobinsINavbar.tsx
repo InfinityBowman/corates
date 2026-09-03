@@ -84,7 +84,7 @@ export function RobinsINavbar({ store }: RobinsINavbarProps) {
               Critical
             </div>
           </TooltipTrigger>
-          <TooltipContent side='bottom'>Section B indicates Critical Risk</TooltipContent>
+          <TooltipContent side='bottom'>Section B indicates a critical risk of bias</TooltipContent>
         </Tooltip>
       )}
 
@@ -138,7 +138,7 @@ function SummaryButton({ store }: { store: NavbarStore }) {
           Summary
         </button>
       </TooltipTrigger>
-      <TooltipContent side='bottom'>View summary of all items</TooltipContent>
+      <TooltipContent side='bottom'>Review every consensus answer</TooltipContent>
     </Tooltip>
   );
 }
@@ -151,13 +151,15 @@ function ResetButton({ onClick }: { onClick: () => void }) {
           type='button'
           onClick={onClick}
           className='flex h-7 items-center gap-1 rounded-full bg-red-100 px-2 text-xs font-medium text-red-700 transition-all hover:bg-red-200'
-          aria-label='Reset reconciliation'
+          aria-label='Clear every consensus answer'
         >
           <RotateCcwIcon className='size-2.5' />
           Reset
         </button>
       </TooltipTrigger>
-      <TooltipContent side='bottom'>Reset all final answers</TooltipContent>
+      <TooltipContent side='bottom'>
+        Clear every consensus answer on this reconciliation. This cannot be undone.
+      </TooltipContent>
     </Tooltip>
   );
 }

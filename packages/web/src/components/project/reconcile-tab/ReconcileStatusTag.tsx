@@ -1,5 +1,5 @@
 /**
- * ReconcileStatusTag - Shows "Waiting for {Reviewer}" or "Ready" status
+ * ReconcileStatusTag - Shows "Waiting for {Reviewer}" or "Ready to reconcile" status
  */
 
 import { useMemo } from 'react';
@@ -33,7 +33,7 @@ export function ReconcileStatusTag({ study, getAssigneeName }: ReconcileStatusTa
   }, [isReady, awaitingChecklists, study.reviewer1, study.reviewer2, getAssigneeName]);
 
   if (isReady) {
-    return <Badge variant='success'>Ready</Badge>;
+    return <Badge variant='success'>Ready to reconcile</Badge>;
   }
 
   return <Badge variant='warning'>Waiting for {waitingForName}</Badge>;
