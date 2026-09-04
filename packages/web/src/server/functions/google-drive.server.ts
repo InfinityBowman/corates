@@ -79,20 +79,7 @@ export async function getPickerToken(db: Database, session: Session) {
   } catch (error) {
     if (error instanceof DomainErrorException) throw error;
     captureError(error, { tags: { component: 'google-drive', action: 'picker-token' } });
-    const err = error as { message?: string; code?: string };
-    if (
-      (typeof err?.message === 'string' && err.message.includes('reconnect')) ||
-      (typeof err?.code === 'string' && err.code.includes('GOOGLE'))
-    ) {
-      const authError =
-        isDomainError(error) ? error : (
-          createDomainError(AUTH_ERRORS.PROVIDER_NOT_CONNECTED, {
-            context: 'google_token_expired',
-            originalError: typeof err?.message === 'string' ? err.message : String(error),
-          })
-        );
-      throw new DomainErrorException(authError);
-    }
+    const err = error as { message?: string };
     const systemError = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
       operation: 'get_google_picker_token',
       originalError: typeof err?.message === 'string' ? err.message : String(error),

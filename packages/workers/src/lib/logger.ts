@@ -58,7 +58,11 @@ export function getRequestId(): string | undefined {
 
 export function captureError(error: unknown, context?: ErrorContext): void {
   const err = error instanceof Error ? error : undefined;
-  current().error(err?.message ?? String(error), {
+  // Plain objects (e.g. a DomainError thrown without wrapping) stringify as
+  // "[object Object]", which hides the code and details the log exists to show
+  const fallback =
+    typeof error === 'object' && error !== null ? JSON.stringify(error) : String(error);
+  current().error(err?.message ?? fallback, {
     ...(err?.name && err.name !== 'Error' && { errorName: err.name }),
     ...(err?.stack && { stack: err.stack }),
     ...context?.tags,

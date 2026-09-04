@@ -1,7 +1,7 @@
 import { createDb } from '@corates/db/client';
 import { account } from '@corates/db/schema';
 import { and, eq } from 'drizzle-orm';
-import { createDomainError, AUTH_ERRORS } from '@corates/shared';
+import { createDomainError, DomainErrorException, AUTH_ERRORS } from '@corates/shared';
 
 interface GoogleTokens {
   accessToken: string | null;
@@ -39,12 +39,16 @@ async function refreshGoogleToken(
     }),
   });
 
+  // A rejected refresh (revoked grant, changed password) means the stored
+  // connection is dead and the user has to link Google again
   if (!response.ok) {
     const errorText = await response.text();
-    throw createDomainError(AUTH_ERRORS.INVALID, {
-      context: 'google_token_refresh',
-      originalError: errorText,
-    });
+    throw new DomainErrorException(
+      createDomainError(AUTH_ERRORS.PROVIDER_NOT_CONNECTED, {
+        context: 'google_token_refresh',
+        originalError: errorText,
+      }),
+    );
   }
 
   const data = (await response.json()) as { access_token: string; expires_in: number };
@@ -70,10 +74,11 @@ export async function getValidAccessToken(
   }
 
   if (!tokens.refreshToken) {
-    throw createDomainError(AUTH_ERRORS.INVALID, {
-      context: 'google_no_refresh_token',
-      message: 'No refresh token available. User needs to reconnect Google account.',
-    });
+    throw new DomainErrorException(
+      createDomainError(AUTH_ERRORS.PROVIDER_NOT_CONNECTED, {
+        context: 'google_no_refresh_token',
+      }),
+    );
   }
 
   const newTokens = await refreshGoogleToken(env, tokens.refreshToken);
