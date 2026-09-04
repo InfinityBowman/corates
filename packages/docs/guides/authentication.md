@@ -84,7 +84,6 @@ The following endpoints require authentication:
 - `/api/admin/*` - Admin endpoints (requires admin role)
 - `/api/billing/*` - Billing endpoints (requires auth)
 - `/api/google-drive/*` - Google Drive integration (requires auth)
-- `/api/accounts/merge/*` - Account merging (requires auth)
 - `/api/invitations/accept` - Accept project invitations (requires auth)
 
 See the [Organizations Guide](/guides/organizations) for detailed org/project route patterns.
@@ -291,9 +290,11 @@ await authClient.admin.impersonate({ userId: 'user-id' });
 
 Admin routes require admin role and use special middleware to check permissions.
 
-## Account Linking and Merging
+## Account Linking
 
-Users can link multiple accounts (e.g., email and OAuth) and merge accounts when needed. This is handled through Better Auth's account linking features.
+Users can link multiple sign-in methods (Google, ORCID, magic link, password) to one account from Settings > Sign-in methods, which uses Better Auth's `linkSocial` and `unlinkAccount`. Account linking is configured in `packages/workers/src/auth/config.ts` with `allowDifferentEmails: true`, so an authenticated user can link a provider whose email differs from their account email. Google is a trusted provider, so a Google sign-in whose email matches an existing account links automatically.
+
+Sign-in with a provider whose email matches no existing account creates a new user. ORCID sign-ins without a public email get a synthetic `<orcid-id>@orcid.org` address, which can never match another provider, so those users must link additional providers explicitly or they will end up with a duplicate account. There is no account merge endpoint; duplicates are resolved by hand in the database (move the `account` row to the surviving user, update its email, delete the duplicate user and its personal organization).
 
 ## Two-Factor Authentication
 

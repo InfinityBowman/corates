@@ -165,7 +165,7 @@ export function AddStudiesSheet({ open, onOpenChange, onAdded }: AddStudiesSheet
       )}
 
       <Sheet open={open} onOpenChange={handleOpenChange}>
-        <SheetContent side='right' className='w-full gap-0 overflow-y-auto sm:max-w-2xl'>
+        <SheetContent side='right' className='w-full gap-0 overflow-y-auto sm:max-w-3xl'>
           <SheetHeader>
             <SheetTitle>Add studies</SheetTitle>
             <SheetDescription>

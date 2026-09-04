@@ -13,11 +13,15 @@
  *    (skips session creation on production)
  * 5. Localhost decrypts, creates user/session locally, sets cookies
  *
+ * The same relay covers /link-social: the state carries the linking user, and
+ * localhost attaches the provider account to its own signed-in user instead of
+ * creating a session.
+ *
  * This solves the "session in wrong database" problem with oAuthProxy.
  */
 
 import type { BetterAuthPlugin } from 'better-auth';
-import { createAuthEndpoint, createAuthMiddleware } from 'better-auth/api';
+import { createAuthEndpoint, createAuthMiddleware, getSessionFromCtx } from 'better-auth/api';
 import { setSessionCookie } from 'better-auth/cookies';
 import { symmetricDecrypt, symmetricEncrypt } from 'better-auth/crypto';
 import { handleOAuthUserInfo } from 'better-auth/oauth2';
@@ -57,6 +61,8 @@ interface RelayPayload {
     idToken?: string;
   };
   callbackURL: string;
+  // Present when the flow started from /link-social; the localhost user to attach to
+  link?: { userId: string; email: string };
   timestamp: number;
 }
 
@@ -83,6 +89,89 @@ function getOrigin(url: string): string {
 function stripTrailingSlash(url: string | undefined): string {
   if (!url) return '';
   return url.replace(/\/+$/, '');
+}
+
+function isRelayedOAuthStart(path: string | undefined): boolean {
+  return !!path && (path.startsWith('/sign-in/social') || path.startsWith('/link-social'));
+}
+
+function toDate(value: Date | string | undefined): Date | undefined {
+  if (!value) return undefined;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? undefined : d;
+}
+
+function mergeScopes(existing: string | null | undefined, incoming: string | undefined): string {
+  const merged = new Set([...(existing?.split(/[\s,]+/) ?? []), ...(incoming?.split(',') ?? [])]);
+  merged.delete('');
+  return [...merged].join(',');
+}
+
+type RelayCtx = Parameters<typeof getSessionFromCtx>[0];
+
+/**
+ * Localhost side of a relayed /link-social: mirrors the link branch of Better
+ * Auth's callback route, attaching the provider account to the signed-in user.
+ */
+async function linkRelayedAccount(
+  ctx: RelayCtx,
+  payload: RelayPayload,
+  link: NonNullable<RelayPayload['link']>,
+) {
+  const errorURL = (code: string) => `${ctx.context.baseURL}/error?error=${code}`;
+
+  const session = await getSessionFromCtx(ctx);
+  if (!session || session.user.id !== link.userId) {
+    throw ctx.redirect(errorURL('link_session_mismatch'));
+  }
+
+  const { account, userInfo } = payload;
+  const linking = ctx.context.options.account?.accountLinking;
+  const trusted = ctx.context.trustedProviders.includes(account.providerId);
+  if ((!trusted && !userInfo.emailVerified) || linking?.enabled === false) {
+    throw ctx.redirect(errorURL('unable_to_link_account'));
+  }
+  if (
+    userInfo.email.toLowerCase() !== link.email.toLowerCase() &&
+    linking?.allowDifferentEmails !== true
+  ) {
+    throw ctx.redirect(errorURL('email_does_not_match'));
+  }
+
+  const tokens = {
+    accessToken: account.accessToken,
+    refreshToken: account.refreshToken,
+    idToken: account.idToken,
+    accessTokenExpiresAt: toDate(account.accessTokenExpiresAt),
+    refreshTokenExpiresAt: toDate(account.refreshTokenExpiresAt),
+  };
+
+  const existing = await ctx.context.internalAdapter.findAccountByKey({
+    issuer: account.issuer,
+    accountId: account.accountId,
+  });
+  if (existing) {
+    if (existing.userId.toString() !== link.userId) {
+      throw ctx.redirect(errorURL('account_already_linked_to_different_user'));
+    }
+    const updateData = Object.fromEntries(
+      Object.entries({
+        ...tokens,
+        scope: mergeScopes(existing.scope, account.scope) || undefined,
+      }).filter(([, value]) => value !== undefined),
+    );
+    await ctx.context.internalAdapter.updateAccount(existing.id, updateData);
+    return;
+  }
+
+  await ctx.context.internalAdapter.createAccount({
+    userId: link.userId,
+    providerId: account.providerId,
+    issuer: account.issuer,
+    accountId: account.accountId,
+    ...tokens,
+    scope: account.scope,
+  });
 }
 
 export const oAuthRelay = (opts: OAuthRelayOptions) => {
@@ -136,6 +225,11 @@ export const oAuthRelay = (opts: OAuthRelayOptions) => {
             throw ctx.redirect(`${ctx.context.baseURL}/error?error=oauth_relay_expired`);
           }
 
+          if (payload.link) {
+            await linkRelayedAccount(ctx, payload, payload.link);
+            throw ctx.redirect(payload.callbackURL);
+          }
+
           // Create user and session locally using Better Auth's internal handler
           const result = await handleOAuthUserInfo(ctx, {
             userInfo: {
@@ -172,10 +266,10 @@ export const oAuthRelay = (opts: OAuthRelayOptions) => {
       before: [
         {
           /**
-           * On sign-in initiation (localhost): Mark for relay processing.
+           * On sign-in or link initiation (localhost): Mark for relay processing.
            */
           matcher(context) {
-            return !!context.path?.startsWith('/sign-in/social');
+            return isRelayedOAuthStart(context.path);
           },
           handler: createAuthMiddleware(async ctx => {
             const currentOrigin = getOrigin(ctx.context.baseURL);
@@ -258,7 +352,11 @@ export const oAuthRelay = (opts: OAuthRelayOptions) => {
             }
 
             // Decrypt the original state cookie to get codeVerifier and callbackURL
-            let stateData: { codeVerifier?: string; callbackURL?: string } | null = null;
+            let stateData: {
+              codeVerifier?: string;
+              callbackURL?: string;
+              link?: { userId: string; email: string };
+            } | null = null;
             try {
               const decryptedCookie = await symmetricDecrypt({
                 key: ctx.context.secret,
@@ -331,6 +429,7 @@ export const oAuthRelay = (opts: OAuthRelayOptions) => {
                 idToken: tokens.idToken,
               },
               callbackURL: stateData?.callbackURL || '/',
+              link: stateData?.link,
               timestamp: Date.now(),
             };
 
@@ -353,11 +452,11 @@ export const oAuthRelay = (opts: OAuthRelayOptions) => {
       after: [
         {
           /**
-           * After sign-in initiation (localhost): Modify the OAuth redirect URL
+           * After sign-in or link initiation (localhost): Modify the OAuth redirect URL
            * to include relay information in the state.
            */
           matcher(context) {
-            return !!context.path?.startsWith('/sign-in/social');
+            return isRelayedOAuthStart(context.path);
           },
           handler: createAuthMiddleware(async ctx => {
             const relayOrigin = relayOrigins.get(ctx.context);

@@ -18,6 +18,7 @@ import { pickGooglePdfFiles } from '@/lib/googlePicker.js';
 import { buildRestoreCallbackUrl } from '@/lib/formStatePersistence.js';
 import { clientLogger } from '@/lib/clientLogger';
 import { parseError } from '@/lib/error-utils';
+import { AUTH_ERRORS } from '@corates/shared';
 
 interface GoogleDrivePickerLauncherProps {
   active?: boolean;
@@ -127,6 +128,13 @@ export function GoogleDrivePickerLauncher({
           multiselect: multi,
         });
       } catch (err) {
+        // Expired or revoked Google grant: the stored connection is dead, so
+        // show the connect card again instead of a generic failure
+        if (parseError(err).code === AUTH_ERRORS.PROVIDER_NOT_CONNECTED.code) {
+          setConnected(false);
+          setError('Your Google connection expired. Reconnect your Google account to continue.');
+          return null;
+        }
         const { handleError } = await import('@/lib/error-utils.js');
         await handleError(err, { setError: (msg: string) => setError(msg), showToast: false });
         throw err;

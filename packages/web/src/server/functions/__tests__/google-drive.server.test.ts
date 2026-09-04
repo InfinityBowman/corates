@@ -181,6 +181,64 @@ describe('getPickerToken', () => {
       expect.objectContaining({ method: 'POST' }),
     );
   });
+
+  async function seedExpiredGoogleAccount(userId: string, refreshToken: string | null) {
+    const nowSec = Math.floor(Date.now() / 1000);
+    await env.DB.prepare(
+      `INSERT INTO account (id, userId, accountId, providerId, issuer, accessToken, refreshToken, accessTokenExpiresAt, createdAt, updatedAt)
+       VALUES (?1, ?2, ?3, ?4, 'https://accounts.google.com', ?5, ?6, ?7, ?8, ?9)`,
+    )
+      .bind(
+        `acc-${userId}`,
+        userId,
+        `google-${userId}`,
+        'google',
+        'expired-token',
+        refreshToken,
+        nowSec - 60,
+        nowSec,
+        nowSec,
+      )
+      .run();
+  }
+
+  it('throws PROVIDER_NOT_CONNECTED when the token is expired and no refresh token exists', async () => {
+    const user = await buildUser({ email: 'user1@example.com' });
+    currentUser = { id: user.id, email: user.email };
+    await seedExpiredGoogleAccount(user.id, null);
+
+    try {
+      await getPickerToken(createDb(env.DB), mockSession());
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      const res = err as DomainErrorException;
+      expect(res).toBeInstanceOf(DomainErrorException);
+      expect(res.statusCode).toBe(401);
+      expect(res.code).toBe('AUTH_PROVIDER_NOT_CONNECTED');
+    }
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it('throws PROVIDER_NOT_CONNECTED when Google rejects the refresh token', async () => {
+    const user = await buildUser({ email: 'user1@example.com' });
+    currentUser = { id: user.id, email: user.email };
+    await seedExpiredGoogleAccount(user.id, 'revoked-refresh');
+
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      text: async () => '{"error":"invalid_grant"}',
+    } as unknown as Response);
+
+    try {
+      await getPickerToken(createDb(env.DB), mockSession());
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      const res = err as DomainErrorException;
+      expect(res).toBeInstanceOf(DomainErrorException);
+      expect(res.statusCode).toBe(401);
+      expect(res.code).toBe('AUTH_PROVIDER_NOT_CONNECTED');
+    }
+  });
 });
 
 describe('disconnectGoogle', () => {
