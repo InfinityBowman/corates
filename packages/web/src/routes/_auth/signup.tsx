@@ -60,7 +60,7 @@ function SignUpPage() {
     setError('');
     try {
       localStorage.setItem('oauthSignup', 'true');
-      await signinWithGoogle('/complete-profile');
+      await signinWithGoogle('/complete-profile', { requestSignUp: true });
     } catch (err) {
       await handleError(err, { setError, showToast: false });
       localStorage.removeItem('oauthSignup');
@@ -73,7 +73,7 @@ function SignUpPage() {
     setError('');
     try {
       localStorage.setItem('oauthSignup', 'true');
-      await signinWithOrcid('/complete-profile');
+      await signinWithOrcid('/complete-profile', { requestSignUp: true });
     } catch (err) {
       await handleError(err, { setError, showToast: false });
       localStorage.removeItem('oauthSignup');

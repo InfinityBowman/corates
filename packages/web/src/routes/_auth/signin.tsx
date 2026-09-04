@@ -7,7 +7,7 @@ import { handleError, parseError } from '@/lib/error-utils';
 import { clientLogger } from '@/lib/clientLogger';
 import { useOAuthError } from '@/hooks/useOAuthError';
 import { useBfcacheReset } from '@/hooks/useBfcacheReset';
-import { getLastLoginMethod } from '@/lib/lastLoginMethod';
+import { getLastLoginMethod, LOGIN_METHODS } from '@/lib/lastLoginMethod';
 import { PasswordInput } from '@/components/ui/password-input';
 import { Input } from '@/components/ui/input';
 import { ErrorMessage } from '@/components/auth/ErrorMessage';
@@ -30,6 +30,15 @@ const signinSearch = z.object({
 // Codes the magic link verify endpoint redirects back with when a link fails
 const MAGIC_LINK_ERROR_CODES = new Set(['INVALID_TOKEN', 'EXPIRED_TOKEN']);
 
+// Social providers run with disableImplicitSignUp, so an unknown identity on
+// this page comes back with this code instead of a silently created account
+const SIGNUP_DISABLED_CODE = 'SIGNUP_DISABLED';
+
+const SOCIAL_IDENTITY_LABELS: Record<string, string> = {
+  [LOGIN_METHODS.GOOGLE]: 'Google account',
+  [LOGIN_METHODS.ORCID]: 'ORCID iD',
+};
+
 export const Route = createFileRoute('/_auth/signin')({
   component: SignInPage,
   validateSearch: signinSearch,
@@ -39,8 +48,13 @@ function SignInPage() {
   useOAuthError();
 
   const { error: searchError } = Route.useSearch();
-  const magicLinkFailed =
-    !!searchError && MAGIC_LINK_ERROR_CODES.has(searchError.toUpperCase().replace(/-/g, '_'));
+  const searchErrorCode = searchError?.toUpperCase().replace(/-/g, '_');
+  const magicLinkFailed = !!searchErrorCode && MAGIC_LINK_ERROR_CODES.has(searchErrorCode);
+  // The redirect carries no provider, but the attempt saved its method before leaving
+  const [blockedProvider] = useState(() =>
+    searchErrorCode === SIGNUP_DISABLED_CODE ? getLastLoginMethod() : null,
+  );
+  const blockedProviderLabel = blockedProvider ? SOCIAL_IDENTITY_LABELS[blockedProvider] : null;
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -103,12 +117,12 @@ function SignInPage() {
     return () => observer.disconnect();
   }, [useMagicLink, displayError]);
 
-  async function handleGoogleSignIn() {
+  async function handleGoogleSignIn(requestSignUp = false) {
     setGoogleLoading(true);
     setError('');
     try {
       localStorage.setItem('oauthSignup', 'true');
-      await signinWithGoogle('/complete-profile');
+      await signinWithGoogle('/complete-profile', { requestSignUp });
     } catch (err) {
       console.error('Google sign-in error:', err);
       clientLogger.info('client.auth.sign_in_failed', {
@@ -121,12 +135,12 @@ function SignInPage() {
     }
   }
 
-  async function handleOrcidSignIn() {
+  async function handleOrcidSignIn(requestSignUp = false) {
     setOrcidLoading(true);
     setError('');
     try {
       localStorage.setItem('oauthSignup', 'true');
-      await signinWithOrcid('/complete-profile');
+      await signinWithOrcid('/complete-profile', { requestSignUp });
     } catch (err) {
       console.error('ORCID sign-in error:', err);
       clientLogger.info('client.auth.sign_in_failed', {
@@ -137,6 +151,12 @@ function SignInPage() {
       localStorage.removeItem('oauthSignup');
       setOrcidLoading(false);
     }
+  }
+
+  function handleCreateAccount() {
+    if (blockedProvider === LOGIN_METHODS.GOOGLE) return handleGoogleSignIn(true);
+    if (blockedProvider === LOGIN_METHODS.ORCID) return handleOrcidSignIn(true);
+    return navigate({ to: '/signup' });
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -206,6 +226,28 @@ function SignInPage() {
           </div>
 
           <LastLoginHint />
+
+          {blockedProviderLabel && (
+            <Alert variant='warning'>
+              <TriangleAlertIcon />
+              <div>
+                <AlertTitle>No CoRATES account uses that {blockedProviderLabel}</AlertTitle>
+                <AlertDescription>
+                  If you signed up another way, sign in with that method below so you keep your
+                  projects. New to CoRATES?{' '}
+                  <AuthLink
+                    href='/signup'
+                    onClick={e => {
+                      e.preventDefault();
+                      handleCreateAccount();
+                    }}
+                  >
+                    Create an account with your {blockedProviderLabel}
+                  </AuthLink>
+                </AlertDescription>
+              </div>
+            </Alert>
+          )}
 
           {magicLinkFailed && (
             <Alert variant='warning'>
@@ -386,12 +428,12 @@ function SignInPage() {
           <SocialAuthContainer buttonCount={socialProviderCount}>
             <GoogleButton
               loading={googleLoading}
-              onClick={handleGoogleSignIn}
+              onClick={() => handleGoogleSignIn()}
               iconOnly={socialProviderCount > 1}
             />
             <OrcidButton
               loading={orcidLoading}
-              onClick={handleOrcidSignIn}
+              onClick={() => handleOrcidSignIn()}
               iconOnly={socialProviderCount > 1}
             />
           </SocialAuthContainer>

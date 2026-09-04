@@ -112,6 +112,9 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
       accessType: 'offline',
       // Drive scope is requested incrementally at connect time; the restricted scope at sign-in scares users off
       scope: ['openid', 'email', 'profile'],
+      // An unknown identity on the sign-in page must not silently mint a second
+      // account; the sign-up page opts in with requestSignUp
+      disableImplicitSignUp: true,
       // Map Google's given_name/family_name to our schema
       mapProfileToUser: (profile: {
         given_name?: string;
@@ -158,6 +161,8 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
             tokenUrl: 'https://orcid.org/oauth/token',
             userInfoUrl: 'https://orcid.org/oauth/userinfo',
             scopes: ['openid'],
+            // Same sign-in gate as Google; see socialProviders.google above
+            disableImplicitSignUp: true,
             // Account rows are keyed on (issuer, accountId). createAuth runs per
             // request, so pin ORCID's OIDC issuer rather than paying for a
             // discovery fetch on every cold path. Must match the backfill in

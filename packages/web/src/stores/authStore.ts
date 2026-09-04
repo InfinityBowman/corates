@@ -30,6 +30,11 @@ const AUTH_CACHE_KEY = 'corates-auth-cache';
 const AUTH_CACHE_TIMESTAMP_KEY = 'corates-auth-cache-timestamp';
 const AUTH_CACHE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
 
+// Providers run with disableImplicitSignUp; only the sign-up page sets this
+interface SocialSignInOptions {
+  requestSignUp?: boolean;
+}
+
 export interface AuthUser {
   id: string;
   email: string;
@@ -68,8 +73,8 @@ interface AuthActions {
   // Auth API methods
   signup: (email: string, password: string, name: string, role?: string | null) => Promise<unknown>;
   signin: (email: string, password: string) => Promise<{ twoFactorRequired: true } | unknown>;
-  signinWithGoogle: (callbackPath?: string) => Promise<unknown>;
-  signinWithOrcid: (callbackPath?: string) => Promise<unknown>;
+  signinWithGoogle: (callbackPath?: string, options?: SocialSignInOptions) => Promise<unknown>;
+  signinWithOrcid: (callbackPath?: string, options?: SocialSignInOptions) => Promise<unknown>;
   signinWithMagicLink: (email: string, callbackPath?: string) => Promise<unknown>;
   signout: () => Promise<void>;
   updateProfile: (data: Record<string, unknown>) => Promise<unknown>;
@@ -215,7 +220,7 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
     }
   },
 
-  signinWithGoogle: async callbackPath => {
+  signinWithGoogle: async (callbackPath, options) => {
     try {
       set({ authError: null });
       const path = callbackPath || '/dashboard';
@@ -230,6 +235,7 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
           provider: 'google',
           callbackURL,
           errorCallbackURL: errorURL,
+          requestSignUp: options?.requestSignUp,
         }),
       );
       return data;
@@ -239,7 +245,7 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
     }
   },
 
-  signinWithOrcid: async callbackPath => {
+  signinWithOrcid: async (callbackPath, options) => {
     try {
       set({ authError: null });
       const path = callbackPath || '/dashboard';
@@ -254,6 +260,7 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
           provider: 'orcid',
           callbackURL,
           errorCallbackURL: errorURL,
+          requestSignUp: options?.requestSignUp,
         }),
       );
       return data;
