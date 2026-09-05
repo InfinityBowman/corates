@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
 import { CheckIcon } from 'lucide-react';
 import { useAuthStore, selectUser, selectIsAuthLoading } from '@/stores/authStore';
-import { isSyntheticEmail, isValidEmail } from '@corates/shared/email';
+import { getOnboardingStep, isSyntheticEmail, isValidEmail } from '@corates/shared/email';
 import { handleError } from '@/lib/error-utils';
 import { acceptInvitation } from '@/server/functions/invitations.functions';
 import { showToast } from '@/lib/toast';
@@ -35,6 +35,7 @@ import {
 } from '@/components/ui/steps';
 import { ErrorMessage } from '@/components/auth/ErrorMessage';
 import { PrimaryButton } from '@/components/auth/AuthButtons';
+import { CodeInput, ResendCode } from '@/components/auth/CodeInput';
 import { RoleSelector, TITLE_OPTIONS } from '@/components/auth/RoleSelector';
 
 const STEPS_CONFIG = [
@@ -44,8 +45,8 @@ const STEPS_CONFIG = [
 ];
 
 // Users with a completed profile don't need onboarding; if they arrived here
-// holding an invitation (magic link callback or a stashed token), acceptance
-// happens on the invite landing page instead.
+// holding an invitation (query param or a stashed token), acceptance happens
+// on the invite landing page instead.
 function getPendingInvitationToken(search: Record<string, unknown>): string | null {
   if (typeof search.invitation === 'string' && search.invitation) {
     return search.invitation;
@@ -58,8 +59,12 @@ function getPendingInvitationToken(search: Record<string, unknown>): string | nu
 
 // Profiles completed before the real-email step existed still carry the
 // synthetic ORCID address; they are sent back through the email step only
-function isOnboarded(user: { profileCompletedAt?: number | null; email?: string | null }) {
-  return !!user.profileCompletedAt && !isSyntheticEmail(user.email ?? '');
+function isOnboarded(user: {
+  profileCompletedAt?: number | null;
+  email?: string | null;
+  emailVerified?: boolean | null;
+}) {
+  return getOnboardingStep(user) === null;
 }
 
 function navigateAfterProfile(navigate: ReturnType<typeof useNavigate>) {
@@ -76,7 +81,7 @@ function navigateAfterProfile(navigate: ReturnType<typeof useNavigate>) {
 export const Route = createFileRoute('/_auth/complete-profile')({
   ssr: false,
   beforeLoad: ({ location }) => {
-    // Failed magic link verifications land here as ?error=; signin explains and offers a fresh link
+    // Auth failures that redirect here with ?error= are explained on the sign-in page
     const search = location.search as Record<string, unknown>;
     if (typeof search.error === 'string' && search.error) {
       throw redirect({ to: '/signin', search: { error: search.error } });
@@ -119,11 +124,6 @@ function CompleteProfilePage() {
   const user = useAuthStore(selectUser);
   const isAuthLoading = useAuthStore(selectIsAuthLoading);
   const updateProfile = useAuthStore(s => s.updateProfile);
-  const changeEmail = useAuthStore(s => s.changeEmail);
-
-  // ORCID sign-ins without a public email get a synthetic address; collect a real one here
-  const needsRealEmail = !!user?.email && isSyntheticEmail(user.email);
-  const [contactEmail, setContactEmail] = useState('');
 
   // Handles cases beforeLoad couldn't catch synchronously (session was still
   // loading, no cached user yet). Once auth resolves, redirect as needed.
@@ -144,10 +144,10 @@ function CompleteProfilePage() {
 
   const isCustomTitle = titleSelection === 'other';
 
-  // Pre-fill name from OAuth session or magic link pending data
+  // Pre-fill name from the OAuth session or the email typed at sign-up
   useEffect(() => {
     if (hasEditedName || hasAutofilledName || !user) {
-      // For non-authenticated users, try pendingName from magic link
+      // For non-authenticated users, try the email typed at sign-up
       if (!user && !hasEditedName && !hasAutofilledName) {
         const pendingName = localStorage.getItem('pendingName');
         if (!firstName.trim() && !lastName.trim() && pendingName) {
@@ -206,10 +206,6 @@ function CompleteProfilePage() {
       setError('Please enter your first name');
       return false;
     }
-    if (needsRealEmail && !isValidEmail(contactEmail)) {
-      setError('Please enter a valid email address');
-      return false;
-    }
     return true;
   }
 
@@ -247,10 +243,6 @@ function CompleteProfilePage() {
       const givenName = firstName.trim();
       const familyName = lastName.trim();
       const fullName = [givenName, familyName].filter(Boolean).join(' ');
-
-      if (needsRealEmail) {
-        await changeEmail(contactEmail.trim());
-      }
 
       await updateProfile({
         name: fullName,
@@ -329,8 +321,8 @@ function CompleteProfilePage() {
     return null;
   }
 
-  if (user.profileCompletedAt && needsRealEmail) {
-    return <AddEmailForm />;
+  if (getOnboardingStep(user) === 'email') {
+    return <OnboardingEmailStep currentEmail={user.email ?? ''} />;
   }
 
   return (
@@ -420,31 +412,6 @@ function CompleteProfilePage() {
                 />
               </div>
             </div>
-
-            {needsRealEmail && (
-              <div>
-                <Label className='mb-1' htmlFor='contact-email-input'>
-                  Email
-                </Label>
-                <Input
-                  type='email'
-                  autoComplete='email'
-                  autoCapitalize='off'
-                  spellCheck='false'
-                  value={contactEmail}
-                  onChange={e => setContactEmail(e.target.value)}
-                  className='h-auto py-2 text-sm'
-                  required
-                  id='contact-email-input'
-                  placeholder='you@example.com'
-                  aria-describedby={error ? 'profile-step1-error' : undefined}
-                />
-                <p className='text-muted-foreground mt-1 text-xs'>
-                  ORCID did not share an email address with us. Add one so project invitations and
-                  notifications can reach you.
-                </p>
-              </div>
-            )}
 
             <div className='flex flex-col gap-2'>
               <Label htmlFor='title-select' className='mb-1'>
@@ -622,14 +589,17 @@ function CompleteProfilePage() {
   );
 }
 
-function AddEmailForm() {
-  const navigate = useNavigate();
-  const changeEmail = useAuthStore(s => s.changeEmail);
-  const [email, setEmail] = useState('');
+function OnboardingEmailStep({ currentEmail }: { currentEmail: string }) {
+  const requestOnboardingEmailCode = useAuthStore(s => s.requestOnboardingEmailCode);
+  const confirmOnboardingEmail = useAuthStore(s => s.confirmOnboardingEmail);
+  const hasRealEmail = !!currentEmail && !isSyntheticEmail(currentEmail);
+  const [email, setEmail] = useState(hasRealEmail ? currentEmail : '');
+  const [code, setCode] = useState('');
+  const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSend(e: React.FormEvent) {
     e.preventDefault();
     if (!isValidEmail(email)) {
       setError('Please enter a valid email address');
@@ -638,11 +608,35 @@ function AddEmailForm() {
     setLoading(true);
     setError('');
     try {
-      await changeEmail(email.trim());
-      navigateAfterProfile(navigate);
+      await requestOnboardingEmailCode(email.trim());
+      setSent(true);
     } catch (err) {
       await handleError(err, { setError, showToast: false });
     } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleConfirm(submitted = code) {
+    if (loading) return;
+    setError('');
+    if (submitted.length !== 6) {
+      setError('Enter the six-digit code from your email');
+      return;
+    }
+    setLoading(true);
+    try {
+      const { claimed } = await confirmOnboardingEmail(email.trim(), submitted);
+      if (claimed) {
+        showToast.success(
+          'Welcome back',
+          'That email already had a CoRATES account, so we signed you in to it and connected this sign-in method.',
+        );
+      }
+      // The refreshed session moves this page to the next step or onward
+    } catch (err) {
+      setCode('');
+      await handleError(err, { setError, showToast: false });
       setLoading(false);
     }
   }
@@ -654,40 +648,75 @@ function AddEmailForm() {
       </a>
 
       <div className='mb-5 pt-4 text-center'>
-        <h2 className='text-foreground mb-1 text-xl font-bold sm:text-2xl'>Add your email</h2>
+        <h2 className='text-foreground mb-1 text-xl font-bold sm:text-2xl'>
+          {hasRealEmail ? 'Confirm your email' : 'Add your email'}
+        </h2>
         <p className='text-muted-foreground text-xs sm:text-sm'>
-          ORCID did not share an email address with us, so project invitations and notifications
-          cannot reach you yet.
+          {sent ?
+            <>
+              We sent a six-digit code to <strong className='text-foreground'>{email}</strong>
+            </>
+          : hasRealEmail ?
+            'Confirm this address so project invitations and notifications can reach you.'
+          : 'ORCID did not share an email address with us. Add one so project invitations and notifications can reach you.'
+          }
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className='flex flex-col gap-4' autoComplete='off'>
-        <div>
-          <Label className='mb-1' htmlFor='contact-email-input'>
-            Email
-          </Label>
-          <Input
-            type='email'
-            autoComplete='email'
-            autoCapitalize='off'
-            spellCheck='false'
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            className='h-auto py-2 text-sm'
-            required
-            id='contact-email-input'
-            placeholder='you@example.com'
+      {sent ?
+        <form
+          onSubmit={e => {
+            e.preventDefault();
+            handleConfirm();
+          }}
+          className='flex flex-col gap-4'
+        >
+          <CodeInput
+            id='onboarding-email-code'
+            value={code}
+            onChange={setCode}
+            onComplete={handleConfirm}
             disabled={loading}
-            aria-describedby={error ? 'add-email-error' : undefined}
           />
-        </div>
-
-        <ErrorMessage error={error} id='add-email-error' />
-
-        <PrimaryButton loading={loading} loadingText='Saving...'>
-          Continue
-        </PrimaryButton>
-      </form>
+          <ErrorMessage error={error} id='onboarding-email-error' />
+          <PrimaryButton loading={loading} loadingText='Verifying...'>
+            Continue
+          </PrimaryButton>
+          <ResendCode
+            onResend={() => requestOnboardingEmailCode(email.trim())}
+            onChangeEmail={() => {
+              setSent(false);
+              setCode('');
+              setError('');
+            }}
+          />
+        </form>
+      : <form onSubmit={handleSend} className='flex flex-col gap-4' autoComplete='off'>
+          <div>
+            <Label className='mb-1' htmlFor='contact-email-input'>
+              Email
+            </Label>
+            <Input
+              type='email'
+              autoComplete='email'
+              autoCapitalize='off'
+              spellCheck='false'
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              className='h-auto py-2 text-sm'
+              required
+              id='contact-email-input'
+              placeholder='you@example.com'
+              disabled={loading}
+              aria-describedby={error ? 'onboarding-email-error' : undefined}
+            />
+          </div>
+          <ErrorMessage error={error} id='onboarding-email-error' />
+          <PrimaryButton loading={loading} loadingText='Sending Code...'>
+            Send Code
+          </PrimaryButton>
+        </form>
+      }
     </div>
   );
 }

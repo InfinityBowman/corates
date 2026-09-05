@@ -1,10 +1,10 @@
 import { captureError, warn, info } from '../lib/logger';
 import { betterAuth } from 'better-auth';
-import { createAuthMiddleware } from 'better-auth/api';
+import { APIError, createAuthMiddleware } from 'better-auth/api';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import {
   genericOAuth,
-  magicLink,
+  emailOTP,
   twoFactor,
   admin,
   organization,
@@ -14,21 +14,14 @@ import { oAuthRelay } from './oauth-relay';
 import { stripe } from '@better-auth/stripe';
 import { createStripeClient } from '@corates/shared/stripe';
 import { drizzle } from 'drizzle-orm/d1';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, count } from 'drizzle-orm';
 import * as schema from '@corates/db/schema';
 import { getAllowedOrigins } from '../config/origins';
 import { isAdminUser } from './admin';
-import {
-  MAGIC_LINK_EXPIRY_MINUTES,
-  getVerificationEmailHtml,
-  getVerificationEmailText,
-  getPasswordResetEmailHtml,
-  getPasswordResetEmailText,
-  getMagicLinkEmailHtml,
-  getMagicLinkEmailText,
-} from './emailTemplates';
-import { queueEmail, isSyntheticEmail } from '@corates/shared/email';
-import { buildMagicLinkInterstitialUrl } from './magicLinkUrl';
+import { getAuthCodeEmail, AUTH_CODE_EXPIRY_MINUTES } from './emailTemplates';
+import { queueEmail, isSyntheticEmail, makeSyntheticEmail } from '@corates/shared/email';
+import { onboardingEmail } from './onboarding-email';
+import { fetchOrcidPublicEmail } from './orcid-public-email';
 import { refreshOrgWorkspaceSessions } from '../sync/admin';
 import { notifyOrgMembers, EventTypes } from '../lib/notify';
 import { copyAvatarToR2, isExternalAvatarUrl, isInternalAvatarUrl } from '../lib/avatar-copy';
@@ -181,13 +174,17 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
               const familyName = profile.family_name || null;
               const name =
                 profile.name || [givenName, familyName].filter(Boolean).join(' ') || profile.sub;
+              // OIDC userinfo has no email claim; fall back to a verified public address
+              const publicEmail =
+                profile.email || (await fetchOrcidPublicEmail(profile.sub, tokens.accessToken));
+              info('auth.orcid_public_email', { found: !!publicEmail });
               return {
                 id: profile.sub,
                 name,
                 givenName,
                 familyName,
-                email: profile.email || `${profile.sub}@orcid.org`,
-                emailVerified: !!profile.email,
+                email: publicEmail || makeSyntheticEmail(profile.sub),
+                emailVerified: !!publicEmail,
                 image: undefined,
               };
             },
@@ -205,52 +202,58 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
     warn('ORCID OAuth NOT configured - missing ORCID_CLIENT_ID or ORCID_CLIENT_SECRET');
   }
 
-  // Magic Link plugin for passwordless authentication
+  // Codes instead of links: mail scanners burn single-use links, and a link
+  // opened on another device loses the browser state the flow needs
+  const sendAuthCode = async (
+    email: string,
+    code: string,
+    purpose: 'sign-in' | 'email-verification' | 'forget-password' | 'change-email',
+  ) => {
+    // Placeholder ORCID addresses are not mailboxes; sending would hard-bounce
+    if (isSyntheticEmail(email)) {
+      info('auth.code_skipped_synthetic', { purpose });
+      return;
+    }
+    if (env.ENVIRONMENT === 'production') {
+      info('auth.code_requested', { purpose, email });
+    } else {
+      // Bold yellow so the code stands out in the dev server log
+      console.log(`\x1b[1;33m[Auth] ${purpose} code for ${email}: ${code}\x1b[0m`);
+    }
+    const { subject, html, text } = getAuthCodeEmail({ purpose, code });
+    await queueEmail(env.EMAIL_QUEUE, { to: email, subject, html, text });
+  };
+
   plugins.push(
-    magicLink({
-      sendMagicLink: async ({
-        email,
-        url,
-        token,
-      }: {
-        email: string;
-        url: string;
-        token: string;
-      }) => {
-        // Email an interstitial link so scanners can't consume the token (see magicLinkUrl.ts)
-        const emailedUrl = buildMagicLinkInterstitialUrl(url, token);
+    emailOTP({
+      otpLength: 6,
+      expiresIn: 60 * AUTH_CODE_EXPIRY_MINUTES,
+      allowedAttempts: 5,
+      overrideDefaultEmailVerification: true,
+      sendVerificationOnSignUp: true,
+      sendVerificationOTP: async ({ email, otp, type }) => sendAuthCode(email, otp, type),
+    }),
+  );
 
-        if (env.ENVIRONMENT === 'production') {
-          info('auth.magic_link_requested', { email });
-        } else {
-          console.log('[Auth] Magic link URL:', emailedUrl);
-          console.log('[Auth] Magic link verify URL:', url);
-        }
-
-        // Store full URL for e2e test retrieval
-        if (env.DEV_MODE) {
-          const now = Math.floor(Date.now() / 1000);
-          await env.DB.prepare(
-            'INSERT INTO verification (id, identifier, value, expiresAt, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?)',
-          )
-            .bind(
-              `test-${crypto.randomUUID()}`,
-              `test-url:magic-link:${email}`,
-              url,
-              now + 600,
-              now,
-              now,
-            )
-            .run();
-        }
-
-        const subject = `Your CoRATES sign-in link (expires in ${MAGIC_LINK_EXPIRY_MINUTES} minutes)`;
-        const html = getMagicLinkEmailHtml({ subject, magicLinkUrl: emailedUrl });
-        const text = getMagicLinkEmailText({ magicLinkUrl: emailedUrl });
-
-        await queueEmail(env.EMAIL_QUEUE, { to: email, subject, html, text });
+  plugins.push(
+    onboardingEmail({
+      db,
+      expiresIn: 60 * AUTH_CODE_EXPIRY_MINUTES,
+      sendCode: async ({ email, code }) => sendAuthCode(email, code, 'change-email'),
+      // A user that created or joined a project is not a throwaway sign-in
+      canDiscardUser: async userId => {
+        const owned = await db
+          .select({ n: count() })
+          .from(schema.projects)
+          .where(eq(schema.projects.createdBy, userId))
+          .get();
+        const joined = await db
+          .select({ n: count() })
+          .from(schema.projectMembers)
+          .where(eq(schema.projectMembers.userId, userId))
+          .get();
+        return (owned?.n ?? 0) === 0 && (joined?.n ?? 0) === 0;
       },
-      expiresIn: 60 * MAGIC_LINK_EXPIRY_MINUTES,
     }),
   );
 
@@ -542,7 +545,7 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
         trustedProviders: ['google'],
         // Allow linking accounts with different emails (user must be authenticated first)
         allowDifferentEmails: true,
-        // Allow unlinking all OAuth accounts (user can still sign in with magic link if email is verified)
+        // Allow unlinking all OAuth accounts (a verified email can always sign in with a code)
         allowUnlinkingAll: true,
       },
       // Use cookie-based state storage for OAuth flows
@@ -554,33 +557,6 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
       enabled: true,
       requireEmailVerification: true,
       minPasswordLength: 8,
-      // Password reset - sendResetPassword is required for requestPasswordReset to work
-      sendResetPassword: async ({ user, url }: { user: BetterAuthUser; url: string }) => {
-        // Store full URL for e2e test retrieval
-        if (env.DEV_MODE) {
-          const now = Math.floor(Date.now() / 1000);
-          await env.DB.prepare(
-            'INSERT INTO verification (id, identifier, value, expiresAt, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?)',
-          )
-            .bind(
-              `test-${crypto.randomUUID()}`,
-              `test-url:reset-password:${user.email}`,
-              url,
-              now + 3600,
-              now,
-              now,
-            )
-            .run();
-        }
-
-        const name = user.givenName || user.name || user.username || 'there';
-        const subject = 'Reset your CoRATES password';
-        const html = getPasswordResetEmailHtml({ name, subject, resetUrl: url });
-        const text = getPasswordResetEmailText({ name, resetUrl: url });
-
-        info('auth.password_reset_requested', { userId: user.id, email: user.email });
-        await queueEmail(env.EMAIL_QUEUE, { to: user.email, subject, html, text });
-      },
     },
 
     // Social/OAuth providers
@@ -594,40 +570,6 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
       sendOnSignUp: true,
       sendOnSignIn: true,
       autoSignInAfterVerification: true,
-      sendVerificationEmail: async ({ user, url }: { user: BetterAuthUser; url: string }) => {
-        // Synthetic ORCID addresses are not mailboxes; sending would hard-bounce
-        if (isSyntheticEmail(user.email)) {
-          info('auth.verification_email_skipped_synthetic', { userId: user.id });
-          return;
-        }
-        // Store full URL for e2e test retrieval
-        if (env.DEV_MODE) {
-          const now = Math.floor(Date.now() / 1000);
-          await env.DB.prepare(
-            'INSERT INTO verification (id, identifier, value, expiresAt, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?)',
-          )
-            .bind(
-              `test-${crypto.randomUUID()}`,
-              `test-url:verification:${user.email}`,
-              url,
-              now + 86400,
-              now,
-              now,
-            )
-            .run();
-        }
-
-        const name = user.givenName || user.name || user.username || 'there';
-        const subject = 'Confirm your email to activate your CoRATES account';
-        const html = getVerificationEmailHtml({ name, subject, verificationUrl: url });
-        const text = getVerificationEmailText({ name, verificationUrl: url });
-
-        info('auth.verification_email_queued', {
-          userId: user.id,
-          email: user.email,
-        });
-        await queueEmail(env.EMAIL_QUEUE, { to: user.email, subject, html, text });
-      },
     },
 
     session: {
@@ -640,11 +582,6 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
     },
 
     user: {
-      // Lets complete-profile swap a synthetic ORCID address for a real one
-      changeEmail: {
-        enabled: true,
-        updateEmailWithoutVerification: true,
-      },
       additionalFields: {
         givenName: {
           type: 'string',
@@ -744,114 +681,142 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
         },
       ),
       // After hook: bootstrap personal org and copy OAuth avatar on first successful authentication
-      after: createAuthMiddleware(async (authCtx: { context: { newSession?: NewSessionData } }) => {
-        const newSession = authCtx.context.newSession;
-        if (!newSession) return;
+      after: createAuthMiddleware(
+        async (authCtx: {
+          path: string;
+          context: { newSession?: NewSessionData; returned?: unknown };
+        }) => {
+          if (CODE_PATHS.has(authCtx.path) && authCtx.context.returned instanceof APIError) {
+            info('auth.code_rejected', {
+              path: authCtx.path,
+              reason: authCtx.context.returned.body?.code,
+            });
+          }
+          const newSession = authCtx.context.newSession;
+          if (!newSession) return;
 
-        const userId = newSession.user.id;
-        const userImage = newSession.user.image;
-        const userName =
-          newSession.user.givenName ||
-          newSession.user.name ||
-          newSession.user.email?.split('@')[0] ||
-          'User';
+          const userId = newSession.user.id;
+          const userImage = newSession.user.image;
+          const userName =
+            newSession.user.givenName ||
+            newSession.user.name ||
+            newSession.user.email?.split('@')[0] ||
+            'User';
 
-        // Name and email ride along so dashboards can show who is active without a
-        // separate lookup against the DB. This is the only event that carries them.
-        info('auth.session_created', {
-          userId,
-          sessionId: newSession.session.id,
-          userName,
-          userEmail: newSession.user.email,
-        });
+          // Name and email ride along so dashboards can show who is active without a
+          // separate lookup against the DB. This is the only event that carries them.
+          info('auth.session_created', {
+            userId,
+            sessionId: newSession.session.id,
+            userName,
+            userEmail: newSession.user.email,
+          });
 
-        // Copy external OAuth avatar to R2 in the background
-        // This ensures all avatars are served from our storage, avoiding external URL issues
-        if (
-          ctx &&
-          ctx.waitUntil &&
-          isExternalAvatarUrl(userImage) &&
-          !isInternalAvatarUrl(userImage)
-        ) {
-          ctx.waitUntil(
-            (async () => {
-              try {
-                const result = await copyAvatarToR2(env, userId, userImage);
-                if (result.success && result.url) {
-                  await db
-                    .update(schema.user)
-                    .set({ image: result.url })
-                    .where(eq(schema.user.id, userId));
-                } else if (result.error) {
-                  captureError(new Error(`Avatar copy failed: ${result.error.code}`), {
+          // Copy external OAuth avatar to R2 in the background
+          // This ensures all avatars are served from our storage, avoiding external URL issues
+          if (
+            ctx &&
+            ctx.waitUntil &&
+            isExternalAvatarUrl(userImage) &&
+            !isInternalAvatarUrl(userImage)
+          ) {
+            ctx.waitUntil(
+              (async () => {
+                try {
+                  const result = await copyAvatarToR2(env, userId, userImage);
+                  if (result.success && result.url) {
+                    await db
+                      .update(schema.user)
+                      .set({ image: result.url })
+                      .where(eq(schema.user.id, userId));
+                  } else if (result.error) {
+                    captureError(new Error(`Avatar copy failed: ${result.error.code}`), {
+                      tags: { component: 'auth', action: 'avatar-copy' },
+                      extra: { userId, error: result.error },
+                    });
+                  }
+                } catch (err) {
+                  captureError(err, {
                     tags: { component: 'auth', action: 'avatar-copy' },
-                    extra: { userId, error: result.error },
+                    extra: { userId },
                   });
                 }
-              } catch (err) {
-                captureError(err, {
-                  tags: { component: 'auth', action: 'avatar-copy' },
-                  extra: { userId },
-                });
-              }
-            })(),
-          );
-        }
-
-        try {
-          // Check if user has any org memberships
-          const existingMembership = await db
-            .select({ id: schema.member.id })
-            .from(schema.member)
-            .where(eq(schema.member.userId, userId))
-            .limit(1)
-            .get();
-
-          if (existingMembership) {
-            // User already has at least one org, no bootstrap needed
-            return;
+              })(),
+            );
           }
 
-          // Create personal org for the user
-          const orgId = crypto.randomUUID();
-          const memberId = crypto.randomUUID();
-          const now = new Date();
-          const slug = `${userName.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${orgId.slice(0, 8)}`;
+          try {
+            // Check if user has any org memberships
+            const existingMembership = await db
+              .select({ id: schema.member.id })
+              .from(schema.member)
+              .where(eq(schema.member.userId, userId))
+              .limit(1)
+              .get();
 
-          // Insert org and membership
-          await db.insert(schema.organization).values({
-            id: orgId,
-            name: `${userName}'s Workspace`,
-            slug,
-            metadata: JSON.stringify({ type: 'personal' }),
-            createdAt: now,
-          });
+            if (existingMembership) {
+              // User already has at least one org, no bootstrap needed
+              return;
+            }
 
-          await db.insert(schema.member).values({
-            id: memberId,
-            userId,
-            organizationId: orgId,
-            role: 'owner',
-            createdAt: now,
-          });
+            // Create personal org for the user
+            const orgId = crypto.randomUUID();
+            const memberId = crypto.randomUUID();
+            const now = new Date();
+            const slug = `${userName.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${orgId.slice(0, 8)}`;
 
-          // Update the session to set activeOrganizationId
-          await db
-            .update(schema.session)
-            .set({ activeOrganizationId: orgId })
-            .where(eq(schema.session.id, newSession.session.id));
+            // Insert org and membership
+            await db.insert(schema.organization).values({
+              id: orgId,
+              name: `${userName}'s Workspace`,
+              slug,
+              metadata: JSON.stringify({ type: 'personal' }),
+              createdAt: now,
+            });
 
-          info('Created personal org %s for user %s', [orgId, userId]);
-        } catch (err) {
-          captureError(err, {
-            tags: { component: 'auth', action: 'bootstrap-personal-org' },
-            extra: { userId },
-          });
-        }
-      }),
+            await db.insert(schema.member).values({
+              id: memberId,
+              userId,
+              organizationId: orgId,
+              role: 'owner',
+              createdAt: now,
+            });
+
+            // Update the session to set activeOrganizationId
+            await db
+              .update(schema.session)
+              .set({ activeOrganizationId: orgId })
+              .where(eq(schema.session.id, newSession.session.id));
+
+            info('Created personal org %s for user %s', [orgId, userId]);
+          } catch (err) {
+            captureError(err, {
+              tags: { component: 'auth', action: 'bootstrap-personal-org' },
+              extra: { userId },
+            });
+          }
+        },
+      ),
+    },
+
+    databaseHooks: {
+      user: {
+        create: {
+          after: async user => {
+            info('auth.user_created', { userId: user.id, synthetic: isSyntheticEmail(user.email) });
+          },
+        },
+      },
     },
   });
 }
+
+// Endpoints that verify an emailed code; rejections are worth watching for abuse
+const CODE_PATHS = new Set([
+  '/sign-in/email-otp',
+  '/email-otp/verify-email',
+  '/email-otp/reset-password',
+]);
 
 /**
  * Get AUTH_SECRET with proper validation

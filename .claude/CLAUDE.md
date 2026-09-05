@@ -2,7 +2,7 @@
 
 NEVER commit anything, the user will decide what and when to commit, you may request the user commit if you have a need for something to be committed
 
-This file contains critical instructions for Agents. For detailed patterns, see specialized rule files in this directory.
+This file contains critical instructions for Agents.
 
 This project is CoRATES (Collaborative Research Appraisal Tool for Evidence Synthesis), a React/TanStack Start web application deployed on Cloudflare Workers.
 
@@ -145,6 +145,7 @@ retries += 1;
 - To clarify intent when the code could be misread or misunderstood
 - To provide context from external systems, specs, or requirements
 - To document assumptions, edge cases, or limitations
+- Comments should be short and to the point
 
 **When Not to Comment:**
 
@@ -152,6 +153,7 @@ retries += 1;
 - Don't duplicate function or variable names in plain English
 - Don't leave stale comments that contradict the code
 - Don't reference removed or obsolete code paths (e.g. "No longer uses X format")
+- An overly long comment may mean the design is unintuitive and should be rethought or discussed
 
 ### React Patterns
 

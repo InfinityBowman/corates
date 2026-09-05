@@ -38,6 +38,8 @@ interface SocialSignInOptions {
 export interface AuthUser {
   id: string;
   email: string;
+  emailVerified?: boolean | null;
+  profileCompletedAt?: number | null;
   name?: string;
   givenName?: string;
   persona?: string;
@@ -75,14 +77,17 @@ interface AuthActions {
   signin: (email: string, password: string) => Promise<{ twoFactorRequired: true } | unknown>;
   signinWithGoogle: (callbackPath?: string, options?: SocialSignInOptions) => Promise<unknown>;
   signinWithOrcid: (callbackPath?: string, options?: SocialSignInOptions) => Promise<unknown>;
-  signinWithMagicLink: (email: string, callbackPath?: string) => Promise<unknown>;
+  sendSignInCode: (email: string) => Promise<void>;
+  signinWithEmailCode: (email: string, code: string) => Promise<unknown>;
   signout: () => Promise<void>;
   updateProfile: (data: Record<string, unknown>) => Promise<unknown>;
-  changeEmail: (newEmail: string) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
-  resetPassword: (email: string) => Promise<void>;
-  confirmPasswordReset: (token: string, newPassword: string) => Promise<void>;
-  resendVerificationEmail: (email: string) => Promise<void>;
+  requestPasswordResetCode: (email: string) => Promise<void>;
+  resetPasswordWithCode: (email: string, code: string, newPassword: string) => Promise<void>;
+  sendVerificationCode: (email: string) => Promise<void>;
+  verifyEmailWithCode: (email: string, code: string) => Promise<void>;
+  requestOnboardingEmailCode: (email: string) => Promise<void>;
+  confirmOnboardingEmail: (email: string, code: string) => Promise<{ claimed: boolean }>;
   deleteAccount: () => Promise<{ success: boolean }>;
 
   // 2FA
@@ -270,17 +275,24 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
     }
   },
 
-  signinWithMagicLink: async (email, callbackPath) => {
+  sendSignInCode: async email => {
     try {
       set({ authError: null });
-      const path = callbackPath || '/dashboard';
-      const base = (BASEPATH || '').replace(/\/$/, '');
-      const callbackURL = `${window.location.origin}${base}${path}`;
-
-      const data = await authFetch(authClient.signIn.magicLink({ email, callbackURL }));
-
+      await authFetch(authClient.emailOtp.sendVerificationOtp({ email, type: 'sign-in' }));
       localStorage.setItem('pendingEmail', email);
-      saveLastLoginMethod(LOGIN_METHODS.MAGIC_LINK);
+    } catch (err) {
+      set({ authError: (err as Error).message });
+      throw err;
+    }
+  },
+
+  // Also creates the account for a new address; the code already proved ownership
+  signinWithEmailCode: async (email, code) => {
+    try {
+      set({ authError: null });
+      const data = await authFetch(authClient.signIn.emailOtp({ email, otp: code }));
+      saveLastLoginMethod(LOGIN_METHODS.EMAIL_CODE);
+      await get().sessionRefetch?.();
       return data;
     } catch (err) {
       set({ authError: (err as Error).message });
@@ -311,17 +323,6 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
     }
   },
 
-  changeEmail: async newEmail => {
-    try {
-      set({ authError: null });
-      await authFetch(authClient.changeEmail({ newEmail }));
-      await get().sessionRefetch?.();
-    } catch (err) {
-      set({ authError: (err as Error).message });
-      throw err;
-    }
-  },
-
   changePassword: async (currentPassword, newPassword) => {
     try {
       set({ authError: null });
@@ -332,15 +333,21 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
     }
   },
 
-  resetPassword: async email => {
+  requestPasswordResetCode: async email => {
     try {
       set({ authError: null });
-      const base = (BASEPATH || '').replace(/\/$/, '');
+      await authFetch(authClient.forgetPassword.emailOtp({ email }));
+    } catch (err) {
+      set({ authError: (err as Error).message });
+      throw err;
+    }
+  },
+
+  resetPasswordWithCode: async (email, code, newPassword) => {
+    try {
+      set({ authError: null });
       await authFetch(
-        authClient.requestPasswordReset({
-          email,
-          redirectTo: `${window.location.origin}${base}/reset-password`,
-        }),
+        authClient.emailOtp.resetPassword({ email, otp: code, password: newPassword }),
       );
     } catch (err) {
       set({ authError: (err as Error).message });
@@ -348,27 +355,55 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
     }
   },
 
-  confirmPasswordReset: async (token, newPassword) => {
+  sendVerificationCode: async email => {
     try {
       set({ authError: null });
-      await authFetch(authClient.resetPassword({ token, newPassword }));
+      await authFetch(
+        authClient.emailOtp.sendVerificationOtp({ email, type: 'email-verification' }),
+      );
     } catch (err) {
       set({ authError: (err as Error).message });
       throw err;
     }
   },
 
-  resendVerificationEmail: async email => {
+  verifyEmailWithCode: async (email, code) => {
+    try {
+      set({ authError: null });
+      await authFetch(authClient.emailOtp.verifyEmail({ email, otp: code }));
+      saveLastLoginMethod(LOGIN_METHODS.EMAIL);
+      await get().sessionRefetch?.();
+    } catch (err) {
+      set({ authError: (err as Error).message });
+      throw err;
+    }
+  },
+
+  requestOnboardingEmailCode: async email => {
     try {
       set({ authError: null });
       await authFetch(
-        authClient.$fetch('/send-verification-email', {
+        authClient.$fetch('/onboarding/request-email', { method: 'POST', body: { email } }),
+      );
+    } catch (err) {
+      set({ authError: (err as Error).message });
+      throw err;
+    }
+  },
+
+  confirmOnboardingEmail: async (email, code) => {
+    try {
+      set({ authError: null });
+      const data = await authFetch(
+        authClient.$fetch<{ claimed: boolean }>('/onboarding/confirm-email', {
           method: 'POST',
-          body: { email },
+          body: { email, code },
         }),
       );
+      await get().sessionRefetch?.();
+      return data ?? { claimed: false };
     } catch (err) {
-      set({ authError: (err as Error).message || 'Failed to resend verification email' });
+      set({ authError: (err as Error).message });
       throw err;
     }
   },

@@ -1,13 +1,13 @@
 import { useState, useRef, useCallback, useEffect, useLayoutEffect } from 'react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { z } from 'zod';
-import { TriangleAlertIcon } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { handleError, parseError } from '@/lib/error-utils';
 import { clientLogger } from '@/lib/clientLogger';
 import { useOAuthError } from '@/hooks/useOAuthError';
 import { useBfcacheReset } from '@/hooks/useBfcacheReset';
 import { getLastLoginMethod, LOGIN_METHODS } from '@/lib/lastLoginMethod';
+import { USER_ERRORS } from '@corates/shared';
 import { PasswordInput } from '@/components/ui/password-input';
 import { Input } from '@/components/ui/input';
 import { ErrorMessage } from '@/components/auth/ErrorMessage';
@@ -19,17 +19,13 @@ import {
   SocialAuthContainer,
   AuthDivider,
 } from '@/components/auth/SocialAuthButtons';
-import { MagicLinkForm } from '@/components/auth/MagicLinkForm';
+import { EmailCodeForm } from '@/components/auth/EmailCodeForm';
 import { TwoFactorVerify } from '@/components/auth/TwoFactorVerify';
 import { LastLoginHint } from '@/components/auth/LastLoginHint';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 const signinSearch = z.object({
   error: z.string().optional().catch(undefined),
 });
-
-// Codes the magic link verify endpoint redirects back with when a link fails
-const MAGIC_LINK_ERROR_CODES = new Set(['INVALID_TOKEN', 'EXPIRED_TOKEN']);
 
 // Social providers run with disableImplicitSignUp, so an unknown identity on
 // this page comes back with this code instead of a silently created account
@@ -50,7 +46,6 @@ function SignInPage() {
 
   const { error: searchError } = Route.useSearch();
   const searchErrorCode = searchError?.toUpperCase().replace(/-/g, '_');
-  const magicLinkFailed = !!searchErrorCode && MAGIC_LINK_ERROR_CODES.has(searchErrorCode);
   // The redirect carries no provider, but the attempt saved its method before leaving
   const [blockedProvider] = useState(() =>
     searchErrorCode === SIGNUP_DISABLED_CODE ? getLastLoginMethod() : null,
@@ -63,16 +58,15 @@ function SignInPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [orcidLoading, setOrcidLoading] = useState(false);
-  const [useMagicLink, setUseMagicLink] = useState(() => {
-    if (magicLinkFailed) return true;
+  const [useEmailCode, setUseEmailCode] = useState(() => {
     const lastMethod = getLastLoginMethod();
-    return !lastMethod || lastMethod === 'magic_link';
+    return !lastMethod || lastMethod === LOGIN_METHODS.EMAIL_CODE;
   });
   const [showTwoFactor, setShowTwoFactor] = useState(false);
   const [formHeight, setFormHeight] = useState<string>('auto');
 
   const passwordFormRef = useRef<HTMLDivElement>(null);
-  const magicLinkFormRef = useRef<HTMLDivElement>(null);
+  const emailCodeFormRef = useRef<HTMLDivElement>(null);
 
   const navigate = useNavigate();
   const signin = useAuthStore(s => s.signin);
@@ -103,11 +97,10 @@ function SignInPage() {
   // Reset social loading states when page is restored from bfcache
   useBfcacheReset(resetSocialLoading);
 
-  // Measure the active panel synchronously before paint to prevent flicker, and
-  // track content-driven height changes (e.g. the magic-link form swapping to its
-  // taller "check your email" state) so the overflow-hidden container never clips.
+  // Measure the active panel before paint and track content-driven height
+  // changes (the code form swapping steps) so the clipped container never cuts off
   useLayoutEffect(() => {
-    const activeEl = useMagicLink ? magicLinkFormRef.current : passwordFormRef.current;
+    const activeEl = useEmailCode ? emailCodeFormRef.current : passwordFormRef.current;
     if (!activeEl) return;
 
     const measure = () => setFormHeight(`${activeEl.offsetHeight}px`);
@@ -116,7 +109,7 @@ function SignInPage() {
     const observer = new ResizeObserver(measure);
     observer.observe(activeEl);
     return () => observer.disconnect();
-  }, [useMagicLink, displayError]);
+  }, [useEmailCode, displayError]);
 
   async function handleGoogleSignIn(requestSignUp = false) {
     setGoogleLoading(true);
@@ -191,10 +184,12 @@ function SignInPage() {
 
       navigate({ to: '/dashboard', replace: true });
     } catch (err) {
-      clientLogger.info('client.auth.sign_in_failed', {
-        provider: 'password',
-        code: parseError(err).code,
-      });
+      const code = parseError(err).code;
+      clientLogger.info('client.auth.sign_in_failed', { provider: 'password', code });
+      if (code === USER_ERRORS.EMAIL_NOT_VERIFIED.code) {
+        navigate({ to: '/verify-email', search: { email }, replace: true });
+        return;
+      }
       await handleError(err, { setError, showToast: false, navigate });
     } finally {
       setLoading(false);
@@ -259,20 +254,6 @@ function SignInPage() {
             </div>
           )}
 
-          {magicLinkFailed && (
-            <Alert variant='warning'>
-              <TriangleAlertIcon />
-              <div>
-                <AlertTitle>That sign-in link is no longer valid</AlertTitle>
-                <AlertDescription>
-                  Sign-in links work once and expire after 10 minutes. Some email security tools
-                  open links before you do, which can use them up. Enter your email below and we
-                  will send you a fresh one.
-                </AlertDescription>
-              </div>
-            </Alert>
-          )}
-
           {/* Tab switcher */}
           <div
             className='bg-secondary relative flex rounded-lg p-1'
@@ -281,9 +262,9 @@ function SignInPage() {
             onKeyDown={e => {
               if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
                 e.preventDefault();
-                const goToMagicLink = e.key === 'ArrowRight';
-                setUseMagicLink(goToMagicLink);
-                document.getElementById(goToMagicLink ? 'tab-magic-link' : 'tab-password')?.focus();
+                const goToEmailCode = e.key === 'ArrowRight';
+                setUseEmailCode(goToEmailCode);
+                document.getElementById(goToEmailCode ? 'tab-email-code' : 'tab-password')?.focus();
               }
             }}
           >
@@ -292,7 +273,7 @@ function SignInPage() {
               aria-hidden='true'
               className='bg-card absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] rounded-md shadow-sm transition-transform duration-300'
               style={{
-                transform: useMagicLink ? 'translateX(100%)' : 'translateX(0)',
+                transform: useEmailCode ? 'translateX(100%)' : 'translateX(0)',
                 transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',
               }}
             />
@@ -300,12 +281,12 @@ function SignInPage() {
               type='button'
               role='tab'
               id='tab-password'
-              tabIndex={useMagicLink ? -1 : 0}
-              aria-selected={!useMagicLink}
+              tabIndex={useEmailCode ? -1 : 0}
+              aria-selected={!useEmailCode}
               aria-controls='panel-password'
-              onClick={() => setUseMagicLink(false)}
+              onClick={() => setUseEmailCode(false)}
               className={`relative z-10 flex-1 rounded-md px-3 py-2 text-xs font-medium transition-colors duration-300 sm:text-sm ${
-                !useMagicLink ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+                !useEmailCode ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               Password
@@ -313,16 +294,16 @@ function SignInPage() {
             <button
               type='button'
               role='tab'
-              id='tab-magic-link'
-              tabIndex={useMagicLink ? 0 : -1}
-              aria-selected={useMagicLink}
-              aria-controls='panel-magic-link'
-              onClick={() => setUseMagicLink(true)}
+              id='tab-email-code'
+              tabIndex={useEmailCode ? 0 : -1}
+              aria-selected={useEmailCode}
+              aria-controls='panel-email-code'
+              onClick={() => setUseEmailCode(true)}
               className={`relative z-10 flex-1 rounded-md px-3 py-2 text-xs font-medium transition-colors duration-300 sm:text-sm ${
-                useMagicLink ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+                useEmailCode ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              Email Link
+              Email Code
             </button>
           </div>
 
@@ -337,7 +318,7 @@ function SignInPage() {
             <div
               className='flex w-[200%] items-start transition-transform duration-300'
               style={{
-                transform: useMagicLink ? 'translateX(-50%)' : 'translateX(0)',
+                transform: useEmailCode ? 'translateX(-50%)' : 'translateX(0)',
                 transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',
               }}
             >
@@ -347,8 +328,8 @@ function SignInPage() {
                 id='panel-password'
                 role='tabpanel'
                 aria-labelledby='tab-password'
-                aria-hidden={useMagicLink}
-                inert={useMagicLink ? true : undefined}
+                aria-hidden={useEmailCode}
+                inert={useEmailCode ? true : undefined}
                 className='bg-card w-1/2 shrink-0 px-1'
               >
                 <form aria-labelledby='signin-heading' onSubmit={handleSubmit} autoComplete='off'>
@@ -408,7 +389,7 @@ function SignInPage() {
                         href='/reset-password'
                         onClick={e => {
                           e.preventDefault();
-                          navigate({ to: '/reset-password', search: { token: '' } });
+                          navigate({ to: '/reset-password', search: { email } });
                         }}
                       >
                         <span className='text-xs sm:text-sm'>Forgot password?</span>
@@ -418,17 +399,17 @@ function SignInPage() {
                 </form>
               </div>
 
-              {/* Magic Link Form */}
+              {/* Email code form */}
               <div
-                ref={magicLinkFormRef}
-                id='panel-magic-link'
+                ref={emailCodeFormRef}
+                id='panel-email-code'
                 role='tabpanel'
-                aria-labelledby='tab-magic-link'
-                aria-hidden={!useMagicLink}
-                inert={!useMagicLink ? true : undefined}
+                aria-labelledby='tab-email-code'
+                aria-hidden={!useEmailCode}
+                inert={!useEmailCode ? true : undefined}
                 className='bg-card w-1/2 shrink-0 px-1'
               >
-                <MagicLinkForm callbackPath='/complete-profile' />
+                <EmailCodeForm callbackPath='/complete-profile' />
               </div>
             </div>
           </div>

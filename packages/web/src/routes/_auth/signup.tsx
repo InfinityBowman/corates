@@ -13,7 +13,7 @@ import {
   SocialAuthContainer,
   AuthDivider,
 } from '@/components/auth/SocialAuthButtons';
-import { MagicLinkForm } from '@/components/auth/MagicLinkForm';
+import { EmailCodeForm } from '@/components/auth/EmailCodeForm';
 
 export const Route = createFileRoute('/_auth/signup')({
   component: SignUpPage,
@@ -114,10 +114,10 @@ function SignUpPage() {
 
       <ErrorMessage error={displayError} id='signup-error' />
 
-      <MagicLinkForm
+      <EmailCodeForm
         callbackPath='/complete-profile'
         buttonText='Continue with Email'
-        description="We'll send you a link to create your account - no password needed."
+        description='We email you a six-digit code. No password needed.'
       />
 
       <p className='text-muted-foreground/70 mt-6 text-center text-xs'>

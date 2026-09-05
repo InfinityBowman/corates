@@ -2,7 +2,7 @@
  * Auth flow e2e tests
  *
  * Tests the authentication UI: protected route guards, sign-in, sign-up,
- * magic link, password reset, profile onboarding, and sign out.
+ * email codes, password reset, profile onboarding, and sign out.
  *
  * Requires:
  *   - Dev server running: pnpm --filter web dev (localhost:3010, DEV_MODE=true)
@@ -10,7 +10,8 @@
 
 import { test, expect } from '@playwright/test';
 import {
-  getAuthUrl,
+  getAuthCode,
+  submitEmailCodeSignIn,
   signUpWithEmail,
   verifyEmail,
   cleanupByEmail,
@@ -31,34 +32,20 @@ test.describe('Auth flows', () => {
     await expect(page).toHaveURL(/\/signin/, { timeout: 10_000 });
   });
 
-  test.describe('magic link sign-up + profile onboarding', () => {
-    const email = `${TEST_PREFIX}-magic@test.corates.org`;
+  test.describe('email code sign-up + profile onboarding', () => {
+    const email = `${TEST_PREFIX}-code@test.corates.org`;
 
     test.afterAll(async () => {
       await cleanupByEmail(email);
     });
 
-    test('sign up via magic link and complete profile', async ({ page }) => {
+    test('sign up via email code and complete profile', async ({ page }) => {
       // Navigate to sign-up page
       await page.goto('/signup');
       await expect(page.getByText('Create an Account')).toBeVisible({ timeout: 10_000 });
 
-      // Fill magic link form and submit
-      const emailInput = page.locator('#magic-link-email');
-      await emailInput.click();
-      await emailInput.pressSequentially(email, { delay: 20 });
-      await page.getByRole('button', { name: /Continue with Email/i }).click();
-
-      // Verify "check your email" state appears
-      await expect(page.getByText('Check your email')).toBeVisible({ timeout: 10_000 });
-      await expect(page.getByText(email)).toBeVisible();
-
-      // Grab the magic link URL from the backend
-      const magicLinkUrl = await getAuthUrl(email, 'magic-link');
-      expect(magicLinkUrl).toBeTruthy();
-
-      // Navigate to the magic link URL (backend creates session, redirects)
-      await page.goto(magicLinkUrl);
+      // A complete code signs in on its own and creates the account
+      await submitEmailCodeSignIn(page, email);
 
       // Should arrive at complete-profile (new user, no profile yet)
       await expect(page).toHaveURL(/\/complete-profile/, { timeout: 15_000 });
@@ -90,7 +77,7 @@ test.describe('Auth flows', () => {
     });
 
     test('fresh session can deep-link to a project with WebSocket auth', async ({ browser }) => {
-      // Seed an owner with an org and project for the magic-link user to join
+      // Seed an owner with an org and project for the new user to join
       const ownerScenario = await seedDualReviewerScenario();
       const wsEmail = `${TEST_PREFIX}-ws@test.corates.org`;
 
@@ -104,21 +91,14 @@ test.describe('Auth flows', () => {
         const projectId = await createProject(ownerPage, 'WebSocket Auth Test');
         await ownerCtx.close();
 
-        // Fresh context for the magic-link user (no cached auth state)
+        // Fresh context for the new user (no cached auth state)
         const freshCtx = await browser.newContext();
         const p = await freshCtx.newPage();
 
         await p.goto('/signup');
         await expect(p.getByText('Create an Account')).toBeVisible({ timeout: 10_000 });
 
-        const emailInput = p.locator('#magic-link-email');
-        await emailInput.click();
-        await emailInput.pressSequentially(wsEmail, { delay: 20 });
-        await p.getByRole('button', { name: /Continue with Email/i }).click();
-        await expect(p.getByText('Check your email')).toBeVisible({ timeout: 10_000 });
-
-        const magicLinkUrl = await getAuthUrl(wsEmail, 'magic-link');
-        await p.goto(magicLinkUrl);
+        await submitEmailCodeSignIn(p, wsEmail);
         await expect(p).toHaveURL(/\/complete-profile/, { timeout: 15_000 });
 
         const firstNameInput = p.locator('#first-name-input');
@@ -157,7 +137,7 @@ test.describe('Auth flows', () => {
 
         // The project page renders tabs only after the Yjs Y.Doc syncs
         // over WebSocket. Seeing these tabs proves the WS auth upgrade
-        // succeeded with the fresh magic-link session cookie.
+        // succeeded with the fresh session cookie.
         await expect(p.getByRole('tab', { name: /All Studies/i })).toBeVisible({
           timeout: 15_000,
         });
@@ -193,7 +173,7 @@ test.describe('Auth flows', () => {
       await page.goto('/signin');
       await expect(page.getByText('Welcome Back')).toBeVisible({ timeout: 10_000 });
 
-      // Switch to the password tab (magic link is now the default)
+      // Switch to the password tab (email code is the default)
       await page.getByRole('tab', { name: 'Password' }).click();
 
       const passwordPanel = page.locator('#panel-password');
@@ -227,25 +207,14 @@ test.describe('Auth flows', () => {
       const resetEmailField = page.locator('#email-input');
       await resetEmailField.click();
       await resetEmailField.pressSequentially(email, { delay: 20 });
-      await page.getByRole('button', { name: /Send Reset Email/i }).click();
+      await page.getByRole('button', { name: /Send Reset Code/i }).click();
 
-      // Verify success message
-      await expect(page.getByText('Reset Email Sent')).toBeVisible({ timeout: 10_000 });
-
-      // Grab the reset URL from backend
-      const resetUrl = await getAuthUrl(email, 'reset-password');
-      expect(resetUrl).toBeTruthy();
-
-      // Extract token from the URL (format: {baseURL}/reset-password/{token}?callbackURL=...)
-      const urlObj = new URL(resetUrl);
-      const pathParts = urlObj.pathname.split('/');
-      const token = pathParts[pathParts.length - 1];
-
-      // Navigate to the frontend reset page with the token
-      await page.goto(`/reset-password?token=${token}`);
+      // The same page moves on to the code and password step
       await expect(page.getByRole('heading', { name: 'Set New Password' })).toBeVisible({
         timeout: 10_000,
       });
+      const resetCode = await getAuthCode(email, 'forget-password');
+      await page.locator('#reset-code-input').fill(resetCode);
 
       // Fill and submit new password
       const newPwField = page.locator('#new-password-input');
@@ -263,7 +232,7 @@ test.describe('Auth flows', () => {
       // Wait for auto-redirect to signin, then sign in with new password
       await expect(page).toHaveURL(/\/signin/, { timeout: 10_000 });
 
-      // Switch to the password tab (magic link is now the default)
+      // Switch to the password tab (email code is the default)
       await page.getByRole('tab', { name: 'Password' }).click();
 
       const signinEmail = page.locator('#email-input');

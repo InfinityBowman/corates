@@ -130,7 +130,7 @@ Authentication library (v1.4.10) providing:
 
 - Email/password authentication
 - Social OAuth (Google)
-- Magic link email authentication
+- Emailed one-time code authentication
 - Organization membership
 - Session management with httpOnly cookies
 

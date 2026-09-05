@@ -4,20 +4,20 @@ This guide covers authentication setup, configuration, usage patterns, and code 
 
 ## Overview
 
-CoRATES uses Better Auth for authentication, providing email/password, magic links, OAuth (Google, ORCID), and two-factor authentication. Authentication state is managed on the server (via `getSession` in TanStack Start route handlers) and on the React client (via `useAuthStore`, a Zustand store that mirrors Better Auth's session for use outside React).
+CoRATES uses Better Auth for authentication, providing email/password, emailed one-time codes, OAuth (Google, ORCID), and two-factor authentication. Authentication state is managed on the server (via `getSession` in TanStack Start route handlers) and on the React client (via `useAuthStore`, a Zustand store that mirrors Better Auth's session for use outside React).
 
 This setup provides comprehensive user authentication using Better Auth with multiple authentication methods, storing users in Cloudflare D1 database, and protecting all API endpoints.
 
 ## Features
 
-- Email/password authentication with email verification
-- Magic link (passwordless) authentication
+- Email/password authentication with email verification by code
+- Emailed six-digit codes for passwordless sign-in, verification, and password reset
 - Google OAuth integration (for Google Drive access)
 - ORCID OAuth integration (for academic researchers)
 - Two-factor authentication (TOTP with backup codes)
 - User data stored in D1 database via Drizzle ORM
 - Session management with secure cookies (7-day expiry)
-- Rate limiting on auth endpoints
+- Rate limiting on every endpoint via Cloudflare domain-level rules (Better Auth's built-in limiter is disabled)
 - Admin features with user impersonation
 - Account linking and merging
 - WebSocket authentication support
@@ -33,7 +33,7 @@ Better Auth is configured in `packages/workers/src/auth/config.ts` and exposed v
 CoRATES supports multiple authentication methods:
 
 1. **Email/Password** - Traditional email and password authentication
-2. **Magic Link** - Passwordless email-based authentication
+2. **Email Code** - Passwordless sign-in with a six-digit emailed code (creates the account for a new address)
 3. **Google OAuth** - OAuth with Google (includes Drive access)
 4. **ORCID OAuth** - OAuth with ORCID for academic researchers
 5. **Two-Factor Authentication** - TOTP-based 2FA with backup codes
@@ -46,10 +46,13 @@ CoRATES supports multiple authentication methods:
 - `POST /api/auth/sign-in/email` - Login with email/password
 - `POST /api/auth/sign-out` - Logout user
 - `GET /api/auth/session` - Get current session info
-- `GET /api/auth/verify-email` - Verify email address (from email link)
-- `POST /api/auth/forget-password` - Request password reset
-- `POST /api/auth/reset-password` - Reset password with token
-- `POST /api/auth/magic-link` - Send magic link for passwordless login
+- `POST /api/auth/email-otp/send-verification-otp` - Send a code (`type`: `sign-in` or `email-verification`)
+- `POST /api/auth/sign-in/email-otp` - Sign in (or sign up) with an emailed code
+- `POST /api/auth/email-otp/verify-email` - Verify an email address with a code
+- `POST /api/auth/forget-password/email-otp` - Send a password reset code
+- `POST /api/auth/email-otp/reset-password` - Reset password with a code
+- `POST /api/auth/onboarding/request-email` - Send a code to the address a placeholder-email user wants to use
+- `POST /api/auth/onboarding/confirm-email` - Verify that code; claims an existing account when the address already has one
 
 ### OAuth Endpoints
 
@@ -96,13 +99,13 @@ The React client is configured in `packages/web/src/api/auth-client.ts`:
 
 ```ts
 import { createAuthClient } from 'better-auth/react';
-import { magicLinkClient, twoFactorClient, adminClient, organizationClient } from 'better-auth/client/plugins';
+import { emailOTPClient, twoFactorClient, adminClient, organizationClient } from 'better-auth/client/plugins';
 import { API_BASE } from '@/config/api';
 import { parseError } from '@/lib/error-utils';
 
 export const authClient = createAuthClient({
   baseURL: API_BASE,
-  plugins: [magicLinkClient(), twoFactorClient(), adminClient(), organizationClient()],
+  plugins: [emailOTPClient(), twoFactorClient(), adminClient(), organizationClient()],
   fetchOptions: {
     credentials: 'include',
     onError(error) {
@@ -292,9 +295,15 @@ Admin routes require admin role and use special middleware to check permissions.
 
 ## Account Linking
 
-Users can link multiple sign-in methods (Google, ORCID, magic link, password) to one account from Settings > Sign-in methods, which uses Better Auth's `linkSocial` and `unlinkAccount`. Account linking is configured in `packages/workers/src/auth/config.ts` with `allowDifferentEmails: true`, so an authenticated user can link a provider whose email differs from their account email. Google is a trusted provider, so a Google sign-in whose email matches an existing account links automatically.
+Users can link multiple sign-in methods (Google, ORCID, email code, password) to one account from Settings > Sign-in methods, which uses Better Auth's `linkSocial` and `unlinkAccount`. Account linking is configured in `packages/workers/src/auth/config.ts` with `allowDifferentEmails: true`, so an authenticated user can link a provider whose email differs from their account email. Google is a trusted provider, so a Google sign-in whose email matches an existing account links automatically.
 
-Both social providers run with `disableImplicitSignUp`, so a sign-in with an identity CoRATES has never seen fails with `signup_disabled` and the sign-in page offers two options: sign in with the method used before, or create an account with that identity (which re-runs the flow with `requestSignUp`). The sign-up page always passes `requestSignUp`. Sign-up through a provider creates a new user. ORCID sign-ins without a public email get a synthetic `<orcid-id>@orcid.org` address, which can never match another provider, so those users must link additional providers explicitly or they will end up with a duplicate account. There is no account merge endpoint; duplicates are resolved by hand in the database (move the `account` row to the surviving user, update its email, delete the duplicate user and its personal organization).
+Both social providers run with `disableImplicitSignUp`, so a sign-in with an identity CoRATES has never seen fails with `signup_disabled` and the sign-in page offers two options: sign in with the method used before, or create an account with that identity (which re-runs the flow with `requestSignUp`). The sign-up page always passes `requestSignUp`. Email code sign-in is deliberately not gated: the code proves ownership of the address, so a new address becomes an account and an existing one signs in, and the same address can never become two accounts.
+
+## Onboarding and the Email Identity
+
+A verified real email is the account identity; providers only prove ownership of one. `getOnboardingStep` in `@corates/shared/email` derives the state from the user row (`email`, `emailVerified`, `profileCompletedAt`): `email`, then `profile`, then done. The `_app/_protected` layout redirects anyone with a pending step to `/complete-profile`, which renders that step, so no signed-in user reaches the app without a verified email.
+
+ORCID's OIDC userinfo carries no email. On sign-in CoRATES asks the public API (`GET https://pub.orcid.org/v3.0/{orcid}/email`) for a verified public address and uses it as a verified email. Otherwise the user is created with a placeholder `<orcid-id>@orcid.placeholder.invalid` (`isSyntheticEmail`) and `emailVerified` false, and lands on the email step. That step is served by the `onboardingEmail` plugin in `packages/workers/src/auth/onboarding-email.ts`: it sends a code to the typed address regardless of whether an account exists, and a correct code either writes the address as verified or, when another account already owns it, claims that account. Claiming moves the provider `account` rows and any shared organization memberships onto the existing user, deletes the throwaway user and any organization only it occupied, and signs the browser in as the existing user. If the existing account was never verified, its pre-existing password, provider links, and sessions are revoked first (Better Auth's `revokeUnprovenAccountAccess`), so nothing that predates proof of the mailbox is inherited; a banned existing account cannot be claimed. A user with a completed profile or any project data is never discarded; the endpoint returns `EMAIL_IN_USE` and the person is told to sign in to the other account and link from Settings. The only remaining manual merge is that case.
 
 ## Two-Factor Authentication
 
@@ -326,16 +335,14 @@ Users receive backup codes when enabling 2FA. These can be used if the authentic
 
 ## Email Verification
 
-Users must verify their email address after signup. Verification links are sent via email and contain tokens that expire after a set time.
+Every emailed secret is a six-digit code (Better Auth `emailOTP` plugin with `overrideDefaultEmailVerification`), never a link: mail security scanners consume single-use links, and a link opened on another device loses the browser state the flow depends on. Codes expire after `AUTH_CODE_EXPIRY_MINUTES` (10) and allow five wrong guesses. A password sign-in on an unverified address sends a code and the client moves to `/verify-email`, where a correct code verifies the address and signs the user in. In `DEV_MODE` the pending code can be read back through `GET /api/test/auth-code?email=&type=` for e2e tests.
 
 ## Password Reset
 
-Password reset flow:
+1. User enters their email on `/reset-password` (`POST /api/auth/forget-password/email-otp`)
+2. The same page asks for the code and a new password (`POST /api/auth/email-otp/reset-password`)
 
-1. User requests password reset (`POST /api/auth/forget-password`)
-2. Email sent with reset token
-3. User clicks link and enters new password
-4. Password is reset (`POST /api/auth/reset-password`)
+Settings uses the same page to let a user without a password set one: it sends the code and opens `/reset-password?email=...&sent=1`.
 
 ## Better Auth Organization Plugin
 
@@ -367,11 +374,11 @@ See the [Organizations Guide](/guides/organizations) for complete organization p
 
 ## Project Invitations
 
-Project invitations allow project owners to invite users who don't have accounts yet. Invitations use Better Auth's magic link system for seamless account creation and project access.
+Project invitations allow project owners to invite users who don't have accounts yet. The email carries a stable `/invite/{token}` link that stays valid for the invitation's lifetime; no short-lived auth token is embedded.
 
 ### Combined Org + Project Flow
 
-Project invitations now use a **combined flow** that ensures org membership before granting project access:
+Project invitations use a **combined flow** that ensures org membership before granting project access:
 
 1. **Invitation Creation**: When a project owner creates an invitation via `POST /api/orgs/:orgId/projects/:projectId/invitations`:
    - Invitation includes `orgId`, `projectId`, `role` (project), `orgRole` (org)
@@ -379,16 +386,9 @@ Project invitations now use a **combined flow** that ensures org membership befo
    - 7-day expiration
    - Inviter information
 
-2. **Magic Link Generation**: The invitation email contains a Better Auth magic link that:
-   - Points to `/complete-profile?invitation={token}`
-   - Uses Better Auth's `signInMagicLink` API
-   - Creates a magic link token in the verification table
-   - Expires after the configured magic link expiry time
+2. **Invitation Link**: The email links to `/invite/{token}` (`packages/workers/src/lib/send-invitation-email.ts`), which handles every auth state: a signed-in user accepts in place, an existing user is sent to sign in, and a new user is sent to sign up. The token is stashed in `localStorage` as `pendingInvitationToken` so onboarding can finish the acceptance.
 
-3. **Account Creation**: When the invited user clicks the magic link:
-   - Better Auth handles authentication/account creation
-   - User is redirected to `/complete-profile` with the invitation token
-   - Frontend extracts the token and calls `POST /api/invitations/accept`
+3. **Account Creation**: A new user signs up with an email code or a provider, completes `/complete-profile`, and the onboarding flow calls `acceptInvitation` with the stashed token.
 
 4. **Invitation Acceptance**: The acceptance endpoint:
    - Validates the invitation token
@@ -545,12 +545,6 @@ Used for academic researcher authentication:
 | --------------------- | ------------------------- |
 | `ORCID_CLIENT_ID`     | ORCID OAuth Client ID     |
 | `ORCID_CLIENT_SECRET` | ORCID OAuth Client Secret |
-
-### Optional - Magic Links
-
-| Variable                    | Description                          |
-| --------------------------- | ------------------------------------ |
-| `MAGIC_LINK_EXPIRY_MINUTES` | Magic link expiry time (default: 15) |
 
 ## Google OAuth Setup
 

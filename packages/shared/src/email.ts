@@ -32,10 +32,26 @@ export function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 }
 
-/**
- * ORCID sign-in falls back to `<orcid-id>@orcid.org` when no public email
- * exists; those are not mailboxes and hard-bounce.
- */
+// ORCID sign-ins without a public email get a placeholder on a reserved domain
+export const SYNTHETIC_EMAIL_DOMAIN = 'orcid.placeholder.invalid';
+
+export function makeSyntheticEmail(orcidId: string): string {
+  return `${orcidId}@${SYNTHETIC_EMAIL_DOMAIN}`;
+}
+
 export function isSyntheticEmail(email: string): boolean {
-  return /@orcid\.org$/i.test(email.trim());
+  return email.trim().toLowerCase().endsWith(`@${SYNTHETIC_EMAIL_DOMAIN}`);
+}
+
+export type OnboardingStep = 'email' | 'profile';
+
+// A verified real email is the account identity; providers only prove ownership
+export function getOnboardingStep(user: {
+  email?: string | null;
+  emailVerified?: boolean | null;
+  profileCompletedAt?: number | null;
+}): OnboardingStep | null {
+  if (!user.email || isSyntheticEmail(user.email) || !user.emailVerified) return 'email';
+  if (!user.profileCompletedAt) return 'profile';
+  return null;
 }

@@ -4,7 +4,7 @@
  * Covers the full lifecycle of project invitations through the emailed
  * /invite/$token link:
  *   1. New user: owner invites an unknown email -> invitee opens the invite
- *      link -> signs up via magic link -> completes profile -> invitation is
+ *      link -> signs up via email code -> completes profile -> invitation is
  *      auto-accepted -> invitee can open the project.
  *   2. Existing user: the invitee already has an account by the time they
  *      click the link -> signs in from the invite page -> returns to it ->
@@ -20,6 +20,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import {
   getAuthUrl,
+  submitEmailCodeSignIn,
   signUpWithEmail,
   verifyEmail,
   cleanupByEmail,
@@ -88,18 +89,11 @@ test.describe('Invitation flows', () => {
       await expect(p.getByText('Invitation Flow Test')).toBeVisible();
       await expect(p.getByText(inviteeEmail)).toBeVisible();
 
-      // Create an account via magic link signup
+      // Create an account via email code signup
       await p.getByRole('button', { name: /Create account and join/i }).click();
       await expect(p).toHaveURL(/\/signup/, { timeout: 10_000 });
 
-      const emailInput = p.locator('#magic-link-email');
-      await emailInput.click();
-      await emailInput.pressSequentially(inviteeEmail, { delay: 20 });
-      await p.getByRole('button', { name: /Continue with Email/i }).click();
-      await expect(p.getByText('Check your email')).toBeVisible({ timeout: 10_000 });
-
-      const magicLinkUrl = await getAuthUrl(inviteeEmail, 'magic-link');
-      await p.goto(magicLinkUrl);
+      await submitEmailCodeSignIn(p, inviteeEmail);
       await expect(p).toHaveURL(/\/complete-profile/, { timeout: 15_000 });
 
       // Complete onboarding

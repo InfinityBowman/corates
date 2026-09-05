@@ -12,7 +12,7 @@ function getIcon(method: string) {
       return <img src='/logos/google.svg' alt='' className='size-4' aria-hidden='true' />;
     case LOGIN_METHODS.ORCID:
       return <img src='/logos/orcid.svg' alt='' className='size-4' aria-hidden='true' />;
-    case LOGIN_METHODS.MAGIC_LINK:
+    case LOGIN_METHODS.EMAIL_CODE:
       return <MailIcon className='size-4' />;
     default:
       return <LockIcon className='size-4' />;

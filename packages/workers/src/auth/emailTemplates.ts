@@ -2,39 +2,6 @@
 
 import { escapeHtml } from '@corates/shared/html';
 
-interface VerificationEmailParams {
-  name: string;
-  subject: string;
-  verificationUrl: string;
-}
-
-interface VerificationEmailTextParams {
-  name: string;
-  verificationUrl: string;
-}
-
-interface PasswordResetEmailParams {
-  name: string;
-  subject: string;
-  resetUrl: string;
-}
-
-interface PasswordResetEmailTextParams {
-  name: string;
-  resetUrl: string;
-}
-
-interface MagicLinkEmailParams {
-  subject: string;
-  magicLinkUrl: string;
-  expiryMinutes?: number;
-}
-
-interface MagicLinkEmailTextParams {
-  magicLinkUrl: string;
-  expiryMinutes?: number;
-}
-
 interface AccountMergeEmailParams {
   code: string;
   expiryMinutes?: number;
@@ -157,122 +124,93 @@ function renderTextFooter(footerReason: string): string {
 CoRATES is operated by Syntch LLC. Questions? Email ${SUPPORT_EMAIL}`;
 }
 
-export function getVerificationEmailHtml({
-  name,
-  subject,
-  verificationUrl,
-}: VerificationEmailParams): string {
-  return renderShell({
-    title: subject,
-    preheader:
-      'Confirm this address to finish setting up your CoRATES account. The link expires in 24 hours.',
-    heading: 'Verify your email address',
+export const AUTH_CODE_EXPIRY_MINUTES = 10;
+
+export type AuthCodePurpose = 'sign-in' | 'email-verification' | 'forget-password' | 'change-email';
+
+interface AuthCodeEmailParams {
+  purpose: AuthCodePurpose;
+  code: string;
+  expiryMinutes?: number;
+}
+
+const AUTH_CODE_COPY: Record<
+  AuthCodePurpose,
+  { subject: string; heading: string; intro: string; footerReason: string; ignore: string }
+> = {
+  'sign-in': {
+    subject: 'Your CoRATES sign-in code',
+    heading: 'Your sign-in code',
+    intro: 'Enter this code on the CoRATES sign-in page to continue.',
+    footerReason: 'someone requested a sign-in code for this address on corates.org.',
+    ignore: 'If you did not request this code, you can ignore this email.',
+  },
+  'email-verification': {
+    subject: 'Confirm your CoRATES email',
+    heading: 'Confirm your email address',
+    intro: 'Enter this code in CoRATES to confirm this email address belongs to you.',
     footerReason: 'this address was used to sign up for CoRATES.',
-    bodyHtml: `<p style="${LEAD_STYLE}">Hi ${escapeHtml(name)},</p>
-              <p style="${PARAGRAPH_STYLE}">Thanks for signing up for CoRATES. Confirm this email address to finish setting up your account.</p>
-              ${renderButton(verificationUrl, 'Verify email address')}
-              ${renderFallbackLink(verificationUrl)}
-              <p style="${PARAGRAPH_STYLE}">The link expires in 24 hours.</p>
-              ${DIVIDER}
-              <p style="${NOTE_STYLE}">If you did not sign up for CoRATES, you can ignore this email.</p>`,
-  });
-}
-
-export function getVerificationEmailText({
-  name,
-  verificationUrl,
-}: VerificationEmailTextParams): string {
-  return `Hi ${name},
-
-Thanks for signing up for CoRATES. Confirm this email address to finish setting up your account.
-
-Verify your email address:
-${verificationUrl}
-
-The link expires in 24 hours.
-
-If you did not sign up for CoRATES, you can ignore this email.
-
-${renderTextFooter('this address was used to sign up for CoRATES.')}`;
-}
-
-export function getPasswordResetEmailHtml({
-  name,
-  subject,
-  resetUrl,
-}: PasswordResetEmailParams): string {
-  return renderShell({
-    title: subject,
-    preheader: 'Choose a new password using the link inside. It expires in 1 hour.',
-    heading: 'Reset your CoRATES password',
+    ignore: 'If you did not sign up for CoRATES, you can ignore this email.',
+  },
+  'forget-password': {
+    subject: 'Your CoRATES password reset code',
+    heading: 'Reset your password',
+    intro:
+      'Enter this code in CoRATES to choose a new password for the account tied to this address.',
     footerReason: 'a password reset was requested for the CoRATES account using this address.',
-    bodyHtml: `<p style="${LEAD_STYLE}">Hi ${escapeHtml(name)},</p>
-              <p style="${PARAGRAPH_STYLE}">We received a request to reset the password for the CoRATES account tied to this address. Use the link below to choose a new one.</p>
-              ${renderButton(resetUrl, 'Choose a new password')}
-              ${renderFallbackLink(resetUrl)}
-              <p style="${PARAGRAPH_STYLE}">The link expires in 1 hour.</p>
-              ${DIVIDER}
-              <p style="${NOTE_STYLE}"><strong style="color: #374151;">Did not request this?</strong> Ignore this email and your password stays as it is. If you think someone else has access to your account, change your password once you are signed in.</p>`,
-  });
+    ignore:
+      'Did not request this? Ignore this email and your password stays as it is. If you think someone else has access to your account, change your password once you are signed in.',
+  },
+  'change-email': {
+    subject: 'Confirm your CoRATES email',
+    heading: 'Confirm your email address',
+    intro: 'Enter this code in CoRATES to use this email address for your account.',
+    footerReason: 'someone asked to use this address for a CoRATES account.',
+    ignore: 'If you did not request this, you can ignore this email and nothing will change.',
+  },
+};
+
+function renderCodeBox(code: string): string {
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 24px 0;">
+                <tr>
+                  <td align="center" style="background-color: #f3f4f6; padding: 24px; border-radius: 12px;">
+                    <span style="font-family: Consolas, Menlo, Monaco, monospace; font-size: 32px; font-weight: 700; letter-spacing: 6px; color: #1e40af;">${escapeHtml(code)}</span>
+                  </td>
+                </tr>
+              </table>`;
 }
 
-export function getPasswordResetEmailText({
-  name,
-  resetUrl,
-}: PasswordResetEmailTextParams): string {
-  return `Hi ${name},
-
-We received a request to reset the password for the CoRATES account tied to this address. Use the link below to choose a new one.
-
-Choose a new password:
-${resetUrl}
-
-The link expires in 1 hour.
-
-Did not request this? Ignore this email and your password stays as it is. If you think someone else has access to your account, change your password once you are signed in.
-
-${renderTextFooter('a password reset was requested for the CoRATES account using this address.')}`;
-}
-
-// Magic link expiration time in minutes - used by both config and email templates
-export const MAGIC_LINK_EXPIRY_MINUTES = 10;
-
-export function getMagicLinkEmailHtml({
-  subject,
-  magicLinkUrl,
-  expiryMinutes = MAGIC_LINK_EXPIRY_MINUTES,
-}: MagicLinkEmailParams): string {
-  return renderShell({
-    title: subject,
-    preheader: `Your one-time sign-in link is ready. It expires in ${expiryMinutes} minutes.`,
-    heading: 'Your CoRATES sign-in link',
-    footerReason: 'someone requested a sign-in link for this address on corates.org.',
+export function getAuthCodeEmail({
+  purpose,
+  code,
+  expiryMinutes = AUTH_CODE_EXPIRY_MINUTES,
+}: AuthCodeEmailParams): { subject: string; html: string; text: string } {
+  const copy = AUTH_CODE_COPY[purpose];
+  const html = renderShell({
+    title: copy.subject,
+    // The code stays out of the preview line so it is not exposed on a locked phone screen
+    preheader: `Your verification code is inside. It expires in ${expiryMinutes} minutes.`,
+    heading: copy.heading,
+    footerReason: copy.footerReason,
     bodyHtml: `<p style="${LEAD_STYLE}">Hi there,</p>
-              <p style="${PARAGRAPH_STYLE}">Use the link below to sign in to CoRATES. No password needed.</p>
-              ${renderButton(magicLinkUrl, 'Sign in to CoRATES')}
-              ${renderFallbackLink(magicLinkUrl)}
-              <p style="${PARAGRAPH_STYLE}">The link expires in ${expiryMinutes} minutes.</p>
+              <p style="${PARAGRAPH_STYLE}">${copy.intro}</p>
+              ${renderCodeBox(code)}
+              <p style="${PARAGRAPH_STYLE}">The code expires in ${expiryMinutes} minutes. Never share it with anyone.</p>
               ${DIVIDER}
-              <p style="${NOTE_STYLE}">If you did not request this sign-in link, you can ignore this email.</p>`,
+              <p style="${NOTE_STYLE}">${copy.ignore}</p>`,
   });
-}
+  const text = `Hi there,
 
-export function getMagicLinkEmailText({
-  magicLinkUrl,
-  expiryMinutes = MAGIC_LINK_EXPIRY_MINUTES,
-}: MagicLinkEmailTextParams): string {
-  return `Hi there,
+${copy.intro}
 
-Use the link below to sign in to CoRATES. No password needed.
+Your code: ${code}
 
-Sign in to CoRATES:
-${magicLinkUrl}
+The code expires in ${expiryMinutes} minutes. Never share it with anyone.
 
-The link expires in ${expiryMinutes} minutes.
+${copy.ignore}
 
-If you did not request this sign-in link, you can ignore this email.
-
-${renderTextFooter('someone requested a sign-in link for this address on corates.org.')}`;
+${renderTextFooter(copy.footerReason)}`;
+  return { subject: copy.subject, html, text };
 }
 
 export function getAccountMergeEmailHtml({

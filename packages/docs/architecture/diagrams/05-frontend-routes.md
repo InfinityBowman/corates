@@ -7,7 +7,7 @@ flowchart TD
     subgraph Public["_auth layout (public)"]
         signin["/signin"]
         signup["/signup"]
-        checkemail["/check-email"]
+        verifyemail["/verify-email"]
         completeprofile["/complete-profile"]
         resetpw["/reset-password"]
     end
@@ -48,9 +48,9 @@ TanStack file-based conventions: an underscore prefix (`_app`, `_auth`) denotes 
 
 | Route               | File                                | Purpose                   |
 | ------------------- | ----------------------------------- | ------------------------- |
-| `/signin`           | `routes/_auth/signin.tsx`           | Email/password + OAuth    |
+| `/signin`           | `routes/_auth/signin.tsx`           | Password, code, OAuth     |
 | `/signup`           | `routes/_auth/signup.tsx`           | New account               |
-| `/check-email`      | `routes/_auth/check-email.tsx`      | Email verification prompt |
+| `/verify-email`     | `routes/_auth/verify-email.tsx`     | Email verification code   |
 | `/complete-profile` | `routes/_auth/complete-profile.tsx` | Post-signup + invitations |
 | `/reset-password`   | `routes/_auth/reset-password.tsx`   | Password recovery         |
 
