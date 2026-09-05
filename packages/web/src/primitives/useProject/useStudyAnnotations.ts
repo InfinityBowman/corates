@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useLiveQuery, eq } from '@tanstack/react-db';
-import { useProjectCollections } from '@/project/workspace-data';
+import { collectionsKey, useProjectCollections } from '@/project/workspace-data';
 import { emptyCollections } from '@/project/localCollections';
 import type { AnnotationEntry } from '@/stores/projectStore';
 
@@ -14,13 +14,13 @@ export function useStudyAnnotations(
 ): AnnotationEntry[] {
   const collections = useProjectCollections(projectId) ?? emptyCollections;
 
-  const { data } = useLiveQuery(
-    q =>
+  const { data } = useLiveQuery({
+    queryKey: ['annotations', collectionsKey(collections), checklistId],
+    query: q =>
       q
         .from({ annotation: collections.annotations })
         .where(({ annotation }) => eq(annotation.checklistId, checklistId)),
-    [collections, checklistId],
-  );
+  });
 
   return useMemo(() => {
     if (!pdfId) return EMPTY;
