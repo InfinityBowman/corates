@@ -502,11 +502,10 @@ export function useProjectOutcomes(projectId: string): OutcomeEntry[] {
 
 export interface ProjectMetaInfo {
   name: string | null;
-  description: string | null;
   orgId: string | null;
 }
 
-const EMPTY_META: ProjectMetaInfo = { name: null, description: null, orgId: null };
+const EMPTY_META: ProjectMetaInfo = { name: null, orgId: null };
 
 /** Project identity from D1 (via the projects list query). */
 export function useProjectMeta(projectId: string): ProjectMetaInfo {
@@ -517,14 +516,11 @@ export function useProjectMeta(projectId: string): ProjectMetaInfo {
   });
   return useMemo(() => {
     const project = (
-      data as
-        | Array<{ id: string; name?: string; description?: string | null; orgId?: string }>
-        | undefined
+      data as Array<{ id: string; name?: string; orgId?: string }> | undefined
     )?.find(p => p.id === projectId);
     if (!project) return EMPTY_META;
     return {
       name: project.name ?? null,
-      description: project.description ?? null,
       orgId: project.orgId ?? null,
     };
   }, [data, projectId]);

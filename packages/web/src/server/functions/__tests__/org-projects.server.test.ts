@@ -110,12 +110,10 @@ describe('createOrgProject', () => {
 
     const result = await createOrgProject(mockSession(), createDb(env.DB), org.id, {
       name: 'New Project',
-      description: 'Project description',
     });
 
     expect(result.id).toBeDefined();
     expect(result.name).toBe('New Project');
-    expect(result.description).toBe('Project description');
     expect(result.role).toBe('owner');
 
     const project = await env.DB.prepare('SELECT * FROM projects WHERE id = ?1')
@@ -133,26 +131,6 @@ describe('createOrgProject', () => {
     expect(membership).toBeDefined();
     expect(membership!.role).toBe('owner');
   });
-
-  it('handles null description', async () => {
-    const { org, owner } = await buildOrg();
-    await seedSubscription({
-      id: `sub-${org.id}`,
-      plan: 'team',
-      referenceId: org.id,
-      status: 'active',
-      createdAt: Math.floor(Date.now() / 1000),
-      updatedAt: Math.floor(Date.now() / 1000),
-    });
-    currentUser = { id: owner.id, email: owner.email };
-
-    const result = await createOrgProject(mockSession(), createDb(env.DB), org.id, {
-      name: 'Project Without Description',
-    });
-
-    expect(result.name).toBe('Project Without Description');
-    expect(result.description).toBeNull();
-  });
 });
 
 describe('updateProjectById', () => {
@@ -162,16 +140,14 @@ describe('updateProjectById', () => {
 
     const result = await updateProjectById(mockSession(), createDb(env.DB), org.id, project.id, {
       name: 'Updated Name',
-      description: 'Updated description',
     });
 
     expect(result.success).toBe(true);
 
     const updatedProject = await env.DB.prepare('SELECT * FROM projects WHERE id = ?1')
       .bind(project.id)
-      .first<{ name: string; description: string }>();
+      .first<{ name: string }>();
     expect(updatedProject!.name).toBe('Updated Name');
-    expect(updatedProject!.description).toBe('Updated description');
   });
 
   it('allows member to update project', async () => {
@@ -357,7 +333,6 @@ describe('Read-only access enforcement', () => {
     try {
       await createOrgProject(mockSession(), createDb(env.DB), org.id, {
         name: 'Test Project',
-        description: 'Test Description',
       });
       expect.unreachable('should have thrown');
     } catch (err) {

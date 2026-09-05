@@ -28,7 +28,6 @@ import type { Session } from '@/server/middleware/auth';
 export interface UserProject {
   id: string;
   name: string;
-  description: string | null;
   orgId: string;
   role: string;
   createdAt: string;
@@ -96,7 +95,6 @@ export async function fetchMyProjects(db: Database, session: Session) {
     .select({
       id: projects.id,
       name: projects.name,
-      description: projects.description,
       orgId: projects.orgId,
       role: projectMembers.role,
       createdAt: projects.createdAt,
@@ -122,7 +120,6 @@ export async function fetchUserProjects(db: Database, session: Session, userId: 
     .select({
       id: projects.id,
       name: projects.name,
-      description: projects.description,
       orgId: projects.orgId,
       role: projectMembers.role,
       createdAt: projects.createdAt,

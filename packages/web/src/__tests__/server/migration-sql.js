@@ -335,4 +335,6 @@ CREATE TABLE \`notifications\` (
 --> statement-breakpoint
 CREATE INDEX \`notifications_userId_createdAt_idx\` ON \`notifications\` (\`userId\`,\`createdAt\`);--> statement-breakpoint
 CREATE INDEX \`notifications_userId_readAt_idx\` ON \`notifications\` (\`userId\`,\`readAt\`);
-`;
+
+
+ALTER TABLE \`projects\` DROP COLUMN \`description\`;`;

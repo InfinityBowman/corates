@@ -32,7 +32,6 @@ import {
 interface ProjectRow {
   id: string;
   name: string;
-  description?: string;
   orgId: string;
   orgName: string;
   orgSlug: string;
@@ -108,14 +107,7 @@ function AdminProjectList() {
               <div className='bg-success-bg flex size-10 items-center justify-center rounded-lg'>
                 <FolderIcon className='text-success size-5' />
               </div>
-              <div>
-                <p className='text-primary hover:text-primary/80 font-medium'>{project.name}</p>
-                {project.description && (
-                  <p className='text-muted-foreground max-w-xs truncate text-sm'>
-                    {project.description}
-                  </p>
-                )}
-              </div>
+              <p className='text-primary hover:text-primary/80 font-medium'>{project.name}</p>
             </Link>
           );
         },

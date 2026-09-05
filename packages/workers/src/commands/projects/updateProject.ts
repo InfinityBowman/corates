@@ -18,7 +18,6 @@ interface UpdateProjectActor {
 interface UpdateProjectParams {
   projectId: string;
   name?: string;
-  description?: string;
 }
 
 interface UpdateProjectResult {
@@ -29,19 +28,17 @@ interface UpdateProjectResult {
 export async function updateProject(
   env: Env,
   _actor: UpdateProjectActor,
-  { projectId, name, description }: UpdateProjectParams,
+  { projectId, name }: UpdateProjectParams,
 ): Promise<UpdateProjectResult> {
   const db = createDb(env.DB);
   const now = new Date();
 
   const trimmedName = name?.trim();
-  const trimmedDescription = description?.trim();
 
-  const updateData: { updatedAt: Date; name?: string; description?: string | null } = {
+  const updateData: { updatedAt: Date; name?: string } = {
     updatedAt: now,
   };
   if (trimmedName !== undefined) updateData.name = trimmedName;
-  if (trimmedDescription !== undefined) updateData.description = trimmedDescription || null;
 
   try {
     await db.update(projects).set(updateData).where(eq(projects.id, projectId));
