@@ -11,7 +11,7 @@ import { projectMembers, projects } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS } from '@corates/shared';
 import { kickWorkspaceUser, refreshWorkspaceSessions } from '../../sync/admin';
-import { notifyUser, NotificationTypes } from '../lib/notifications';
+import { notifyUser } from '../lib/notifications';
 import { getProjectMembership, requireSafeRemoval } from '../../policies';
 import type { Env } from '../../types';
 
@@ -69,7 +69,7 @@ export async function removeMember(
         .get();
 
       await notifyUser(env, userId, {
-        type: NotificationTypes.PROJECT_MEMBERSHIP_REMOVED,
+        type: 'project-membership-removed',
         orgId,
         projectId,
         projectName: project?.name || 'Unknown Project',

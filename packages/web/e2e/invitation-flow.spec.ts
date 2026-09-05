@@ -145,7 +145,6 @@ test.describe('Invitation flows', () => {
       const projectId = await createProject(ownerPage, 'Invitation Existing User Test');
 
       await sendInvitationViaUI(ownerPage, inviteeEmail);
-      await ownerCtx.close();
 
       const inviteUrl = await getAuthUrl(inviteeEmail, 'invitation');
 
@@ -184,6 +183,17 @@ test.describe('Invitation flows', () => {
       await expect(p.getByRole('tab', { name: /All Studies/i })).toBeVisible({ timeout: 15_000 });
 
       await inviteeCtx.close();
+
+      // The owner, still on the project page, is told live that the invitee joined
+      const badge = ownerPage.getByTestId('notification-badge');
+      await expect(badge).toHaveText('1', { timeout: 15_000 });
+      await ownerPage.getByRole('button', { name: /^Notifications/ }).click();
+      await expect(ownerPage.getByText(/joined Invitation Existing User Test/)).toBeVisible({
+        timeout: 10_000,
+      });
+      await ownerPage.getByRole('button', { name: 'Mark all as read' }).click();
+      await expect(badge).toBeHidden({ timeout: 10_000 });
+      await ownerCtx.close();
     } finally {
       await cleanupByEmail(inviteeEmail);
       await cleanupScenario(ownerScenario);

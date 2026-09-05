@@ -63,6 +63,10 @@
     "./logger": {
       "types": "./dist/logger.d.ts",
       "import": "./dist/logger.js"
+    },
+    "./notifications": {
+      "types": "./dist/notifications.d.ts",
+      "import": "./dist/notifications.js"
     }
   },
   "scripts": {

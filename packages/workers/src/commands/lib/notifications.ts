@@ -1,55 +1,28 @@
 /**
- * Notification utilities for commands
- *
- * Consolidates user notification operations used across commands.
+ * Push events to users through their UserSession Durable Object.
  */
 
+import type { UserSessionEvent } from '@corates/shared/notifications';
 import { captureError } from '../../lib/logger';
 import type { Env } from '../../types';
 
-/**
- * Notification type constants
- */
-export const NotificationTypes = {
-  PROJECT_DELETED: 'project-deleted',
-  PROJECT_MEMBERSHIP_ADDED: 'project-membership-added',
-  PROJECT_MEMBERSHIP_UPDATED: 'project-membership-updated',
-  PROJECT_MEMBERSHIP_REMOVED: 'project-membership-removed',
-} as const;
-
-type NotificationType = (typeof NotificationTypes)[keyof typeof NotificationTypes];
-
-interface Notification {
-  type: NotificationType | string;
-  [key: string]: unknown;
-}
-
-/**
- * Send a notification to a single user via their UserSession Durable Object
- */
-export async function notifyUser(
-  env: Env,
-  userId: string,
-  notification: Notification,
-): Promise<void> {
+export async function notifyUser(env: Env, userId: string, event: UserSessionEvent): Promise<void> {
   const userSessionId = env.USER_SESSION.idFromName(userId);
   const userSession = env.USER_SESSION.get(userSessionId);
 
   await userSession.notify({
-    ...notification,
+    ...event,
     timestamp: Date.now(),
   });
 }
 
 /**
- * Send a notification to multiple users
- *
  * @returns Number of users successfully notified
  */
 export async function notifyUsers(
   env: Env,
   userIds: string[],
-  notification: Notification,
+  event: UserSessionEvent,
   excludeUserId: string | null = null,
 ): Promise<number> {
   let notifiedCount = 0;
@@ -60,7 +33,7 @@ export async function notifyUsers(
     }
 
     try {
-      await notifyUser(env, userId, notification);
+      await notifyUser(env, userId, event);
       notifiedCount++;
     } catch (err) {
       captureError(err, { tags: { component: 'notifications' }, extra: { userId } });

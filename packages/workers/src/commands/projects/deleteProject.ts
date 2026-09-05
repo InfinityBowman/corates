@@ -11,7 +11,7 @@ import { eq } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { teardownWorkspace } from '../../sync/admin';
 import { cleanupProjectStorage } from '../lib/storage';
-import { notifyUsers, NotificationTypes } from '../lib/notifications';
+import { notifyUsers } from '../lib/notifications';
 import type { Env } from '../../types';
 
 interface DeleteProjectActor {
@@ -81,7 +81,7 @@ export async function deleteProject(
     env,
     userIds,
     {
-      type: NotificationTypes.PROJECT_DELETED,
+      type: 'project-deleted',
       projectId,
       projectName: project?.name || 'Unknown Project',
       deletedBy: actor.name || actor.email || 'Unknown',

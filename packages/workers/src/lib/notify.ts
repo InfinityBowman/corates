@@ -1,12 +1,9 @@
+import type { UserSessionEvent } from '@corates/shared/notifications';
 import { captureError, warn } from './logger';
 import type { Env } from '../types';
 import type { Database } from '@corates/db/client';
 
-interface NotifyEvent {
-  type: string;
-  data?: Record<string, unknown>;
-  timestamp?: number;
-}
+type NotifyEvent = UserSessionEvent & { timestamp?: number };
 
 interface NotifyResult {
   success: boolean;
@@ -92,9 +89,4 @@ export async function notifyOrgMembers(
 export const EventTypes = {
   SUBSCRIPTION_UPDATED: 'subscription:updated',
   SUBSCRIPTION_CANCELED: 'subscription:canceled',
-  ORG_MEMBER_ADDED: 'org:member-added',
-  ORG_MEMBER_REMOVED: 'org:member-removed',
-  ORG_ROLE_CHANGED: 'org:role-changed',
-  PROJECT_SHARED: 'project:shared',
-  PROJECT_UNSHARED: 'project:unshared',
-} as const;
+} as const satisfies Record<string, UserSessionEvent['type']>;

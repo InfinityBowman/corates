@@ -14,6 +14,7 @@ Plans are intentionally opinionated and are expected to change as the codebase e
 
 - [Presence (project WebSocket)](/plans/presence)
 - [Y.js awareness](/plans/yjs-awareness)
+- [Notification center](/plans/notification-center)
 
 ## Quality and architecture
 

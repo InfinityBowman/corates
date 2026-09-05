@@ -14,6 +14,7 @@ import type {
   OrgAccessGrantId,
   FeedbackId,
   ContactSubmissionId,
+  NotificationId,
 } from '@corates/shared/ids';
 
 // Users table
@@ -409,6 +410,28 @@ export const feedback = sqliteTable(
     createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
   },
   t => [index('feedback_userId_createdAt_idx').on(t.userId, t.createdAt)],
+);
+
+// Persisted notification center rows. `data` is a JSON payload whose shape is
+// keyed by `type` (see @corates/shared/notifications); copy is rendered on the
+// client so rows never need rewriting when wording changes.
+export const notifications = sqliteTable(
+  'notifications',
+  {
+    id: text('id').primaryKey().$type<NotificationId>(),
+    userId: text('userId')
+      .notNull()
+      .$type<UserId>()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    type: text('type').notNull(),
+    data: text('data').notNull(),
+    readAt: integer('readAt', { mode: 'timestamp_ms' }),
+    createdAt: integer('createdAt', { mode: 'timestamp_ms' }).notNull(),
+  },
+  t => [
+    index('notifications_userId_createdAt_idx').on(t.userId, t.createdAt),
+    index('notifications_userId_readAt_idx').on(t.userId, t.readAt),
+  ],
 );
 
 // Idempotency table for email queue deduplication (Cloudflare Queues is at-least-once)

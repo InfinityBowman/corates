@@ -42,6 +42,15 @@ export const queryKeys = {
     usage: ['billing', 'usage'] as const,
   },
 
+  // Notification center queries
+  notifications: {
+    all: ['notifications'] as const,
+    /** Most recent page of the current user's notifications */
+    list: ['notifications', 'list'] as const,
+    /** Current user's unread count */
+    unreadCount: ['notifications', 'unreadCount'] as const,
+  },
+
   // Members queries
   members: {
     /** Current org's members */
