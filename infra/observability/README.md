@@ -73,6 +73,37 @@ Grafana talks to Loki internally over the docker network without auth.
   Any non-zero `reason=` or `status_code="400"` on `otlp_v1_logs` means Cloudflare is
   being told to retry (it does, but the batch ages out and is dropped for good).
 
+## Query performance
+
+Dashboard load time here is dominated by subquery fan-out, not by scan volume - the whole
+production stream is only ~50MB/week, and any single panel query runs in about 0.25s on its
+own. Four settings matter, all of them Loki defaults tuned for a much larger cluster:
+
+- `split_queries_by_interval` and `split_instant_metric_queries_by_interval` (both default
+  `1h`) are set to `24h`. At the default a 7d panel becomes 168 subqueries and a 30d panel
+  720, each with its own queue and index lookup; one 7d `topk` table was burning 1m23s of
+  querier CPU and 16s of queue time to read 68MB. These two are independent - range queries
+  use the first, and instant queries (every `topk` table and every `[$__range]` stat) use the
+  second, so setting only one leaves half the dashboard slow.
+- `querier.max_concurrent` (default `4`) is `16`. Product Usage fires 40 panel queries at
+  once; four workers make them queue behind each other on a 12-core box that is otherwise
+  idle.
+- `query_range.cache_results` and `cache_instant_metric_results` (both default off) are on,
+  with embedded in-process caches. These only help a reload of an unchanged window, but that
+  is what reading a dashboard looks like.
+
+Measured on Product Usage, 40 concurrent panel queries, wall clock:
+
+| range | before | after | after, reload |
+| ----- | ------ | ----- | ------------- |
+| 7d    | 5-6s   | ~1.1s | ~0.06s        |
+| 30d   | 16-30s | ~1.8s | ~0.06s        |
+
+Isolating the levers at 7d: splits alone took 5.1s to 1.6s, concurrency alone to 3.1s, both
+plus caching to 1.0s. If a dashboard ever feels slow again, check `splits=` and `queue_time=`
+in Loki's per-query log line (`docker --context homelab logs corates-loki`) before assuming
+the query itself is expensive.
+
 ## Traefik
 
 Both routers deliberately skip the box-wide `secure-chain@file` (see `compose.yaml`): its

@@ -395,7 +395,7 @@
       "id": 9,
       "type": "table",
       "title": "Who is active",
-      "description": "Events per user, with name and email joined on from auth.session_created. A blank name means that user did not sign in during the range - their session predates it. Copy a User ID into the User variable to filter the rows below to that person.",
+      "description": "Events per user in the selected range. Name and email are resolved from the most recent auth.session_created over a fixed 365d lookback, not the dashboard range, so a user whose session predates the window still shows a name. Unknown means that user id has never emitted a sign-in - typically an account that was deleted. Copy a User ID into the User variable to filter the rows below to that person.",
       "datasource": {
         "type": "loki",
         "uid": "${datasource}"
@@ -416,7 +416,14 @@
         },
         {
           "refId": "B",
-          "expr": "sum by (userId, userName, userEmail) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"auth.session_created\" [$__range]))",
+          "expr": "topk(1, sum by (userId, userName, userEmail) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} |= `auth.session_created` | json | message=\"auth.session_created\" | userEmail!=`` [365d]))) by (userId)",
+          "queryType": "instant",
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "refId": "C",
+          "expr": "sum by (userId) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} |= `auth.session_created` | json | message=\"auth.session_created\" [$__range]))",
           "queryType": "instant",
           "instant": true,
           "format": "table"
@@ -436,21 +443,23 @@
             "excludeByName": {
               "Time": true,
               "Time 1": true,
-              "Time 2": true
+              "Time 2": true,
+              "Time 3": true,
+              "Value #B": true
             },
             "renameByName": {
               "userName": "Name",
               "userEmail": "Email",
               "userId": "User ID",
               "Value #A": "Events",
-              "Value #B": "Sign-ins"
+              "Value #C": "Sign-ins"
             },
             "indexByName": {
               "userName": 0,
               "userEmail": 1,
               "userId": 2,
               "Value #A": 3,
-              "Value #B": 4
+              "Value #C": 4
             }
           }
         }
@@ -461,7 +470,7 @@
             "align": "auto",
             "filterable": false
           },
-          "noValue": "nothing in range"
+          "noValue": "unknown"
         },
         "overrides": [
           {
