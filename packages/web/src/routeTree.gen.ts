@@ -76,6 +76,7 @@ import { Route as AppProtectedAdminOrgsOrgIdRouteImport } from './routes/_app/_p
 import { Route as AppProtectedAdminProjectsIndexRouteImport } from './routes/_app/_protected/admin/projects.index'
 import { Route as AppProtectedAdminProjectsProjectIdRouteImport } from './routes/_app/_protected/admin/projects.$projectId'
 import { Route as AppProtectedAdminUsersUserIdRouteImport } from './routes/_app/_protected/admin/users.$userId'
+import { Route as AppProtectedProjectsProjectIdSetupRouteImport } from './routes/_app/_protected/projects.$projectId.setup'
 import { Route as AppProtectedProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRouteImport } from './routes/_app/_protected/projects.$projectId/studies.$studyId.checklists.$checklistId'
 import { Route as ApiOrgsOrgIdProjectsProjectIdStudiesStudyIdPdfsRouteImport } from './routes/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs'
 import { Route as AppProtectedProjectsProjectIdStudiesStudyIdReconcileChecklist1IdChecklist2IdRouteImport } from './routes/_app/_protected/projects.$projectId/studies.$studyId.reconcile.$checklist1Id.$checklist2Id'
@@ -433,6 +434,12 @@ const AppProtectedAdminUsersUserIdRoute =
     path: '/users/$userId',
     getParentRoute: () => AppProtectedAdminRoute,
   } as any)
+const AppProtectedProjectsProjectIdSetupRoute =
+  AppProtectedProjectsProjectIdSetupRouteImport.update({
+    id: '/setup',
+    path: '/setup',
+    getParentRoute: () => AppProtectedProjectsProjectIdRoute,
+  } as any)
 const AppProtectedProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRoute =
   AppProtectedProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRouteImport.update(
     {
@@ -525,6 +532,7 @@ export interface FileRoutesByFullPath {
   '/admin/orgs/$orgId': typeof AppProtectedAdminOrgsOrgIdRoute
   '/admin/projects/$projectId': typeof AppProtectedAdminProjectsProjectIdRoute
   '/admin/users/$userId': typeof AppProtectedAdminUsersUserIdRoute
+  '/projects/$projectId/setup': typeof AppProtectedProjectsProjectIdSetupRoute
   '/admin/orgs/': typeof AppProtectedAdminOrgsIndexRoute
   '/admin/projects/': typeof AppProtectedAdminProjectsIndexRoute
   '/projects/$projectId/studies/$studyId/checklists/$checklistId': typeof AppProtectedProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRoute
@@ -592,6 +600,7 @@ export interface FileRoutesByTo {
   '/admin/orgs/$orgId': typeof AppProtectedAdminOrgsOrgIdRoute
   '/admin/projects/$projectId': typeof AppProtectedAdminProjectsProjectIdRoute
   '/admin/users/$userId': typeof AppProtectedAdminUsersUserIdRoute
+  '/projects/$projectId/setup': typeof AppProtectedProjectsProjectIdSetupRoute
   '/admin/orgs': typeof AppProtectedAdminOrgsIndexRoute
   '/admin/projects': typeof AppProtectedAdminProjectsIndexRoute
   '/projects/$projectId/studies/$studyId/checklists/$checklistId': typeof AppProtectedProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRoute
@@ -666,6 +675,7 @@ export interface FileRoutesById {
   '/_app/_protected/admin/orgs/$orgId': typeof AppProtectedAdminOrgsOrgIdRoute
   '/_app/_protected/admin/projects/$projectId': typeof AppProtectedAdminProjectsProjectIdRoute
   '/_app/_protected/admin/users/$userId': typeof AppProtectedAdminUsersUserIdRoute
+  '/_app/_protected/projects/$projectId/setup': typeof AppProtectedProjectsProjectIdSetupRoute
   '/_app/_protected/admin/orgs/': typeof AppProtectedAdminOrgsIndexRoute
   '/_app/_protected/admin/projects/': typeof AppProtectedAdminProjectsIndexRoute
   '/_app/_protected/projects/$projectId/studies/$studyId/checklists/$checklistId': typeof AppProtectedProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRoute
@@ -738,6 +748,7 @@ export interface FileRouteTypes {
     | '/admin/orgs/$orgId'
     | '/admin/projects/$projectId'
     | '/admin/users/$userId'
+    | '/projects/$projectId/setup'
     | '/admin/orgs/'
     | '/admin/projects/'
     | '/projects/$projectId/studies/$studyId/checklists/$checklistId'
@@ -805,6 +816,7 @@ export interface FileRouteTypes {
     | '/admin/orgs/$orgId'
     | '/admin/projects/$projectId'
     | '/admin/users/$userId'
+    | '/projects/$projectId/setup'
     | '/admin/orgs'
     | '/admin/projects'
     | '/projects/$projectId/studies/$studyId/checklists/$checklistId'
@@ -878,6 +890,7 @@ export interface FileRouteTypes {
     | '/_app/_protected/admin/orgs/$orgId'
     | '/_app/_protected/admin/projects/$projectId'
     | '/_app/_protected/admin/users/$userId'
+    | '/_app/_protected/projects/$projectId/setup'
     | '/_app/_protected/admin/orgs/'
     | '/_app/_protected/admin/projects/'
     | '/_app/_protected/projects/$projectId/studies/$studyId/checklists/$checklistId'
@@ -1395,6 +1408,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProtectedAdminUsersUserIdRouteImport
       parentRoute: typeof AppProtectedAdminRoute
     }
+    '/_app/_protected/projects/$projectId/setup': {
+      id: '/_app/_protected/projects/$projectId/setup'
+      path: '/setup'
+      fullPath: '/projects/$projectId/setup'
+      preLoaderRoute: typeof AppProtectedProjectsProjectIdSetupRouteImport
+      parentRoute: typeof AppProtectedProjectsProjectIdRoute
+    }
     '/_app/_protected/projects/$projectId/studies/$studyId/checklists/$checklistId': {
       id: '/_app/_protected/projects/$projectId/studies/$studyId/checklists/$checklistId'
       path: '/studies/$studyId/checklists/$checklistId'
@@ -1484,12 +1504,15 @@ const AppProtectedSettingsRouteWithChildren =
   AppProtectedSettingsRoute._addFileChildren(AppProtectedSettingsRouteChildren)
 
 interface AppProtectedProjectsProjectIdRouteChildren {
+  AppProtectedProjectsProjectIdSetupRoute: typeof AppProtectedProjectsProjectIdSetupRoute
   AppProtectedProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRoute: typeof AppProtectedProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRoute
   AppProtectedProjectsProjectIdStudiesStudyIdReconcileChecklist1IdChecklist2IdRoute: typeof AppProtectedProjectsProjectIdStudiesStudyIdReconcileChecklist1IdChecklist2IdRoute
 }
 
 const AppProtectedProjectsProjectIdRouteChildren: AppProtectedProjectsProjectIdRouteChildren =
   {
+    AppProtectedProjectsProjectIdSetupRoute:
+      AppProtectedProjectsProjectIdSetupRoute,
     AppProtectedProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRoute:
       AppProtectedProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRoute,
     AppProtectedProjectsProjectIdStudiesStudyIdReconcileChecklist1IdChecklist2IdRoute:

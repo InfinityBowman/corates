@@ -21,6 +21,7 @@ import {
   createValidationError,
   AUTH_ERRORS,
   VALIDATION_ERRORS,
+  type ProjectSetupStep,
 } from '@corates/shared';
 
 import type { Session } from '@/server/middleware/auth';
@@ -33,6 +34,7 @@ export interface UserProject {
   role: string;
   createdAt: string;
   updatedAt: string;
+  setupStep: ProjectSetupStep | null;
 }
 
 export interface UserProjectWithMemberCount extends UserProject {
@@ -101,6 +103,7 @@ export async function fetchMyProjects(db: Database, session: Session) {
       role: projectMembers.role,
       createdAt: projects.createdAt,
       updatedAt: projects.updatedAt,
+      setupStep: projects.setupStep,
       memberCount: count(allMembers.id),
     })
     .from(projects)
@@ -127,6 +130,7 @@ export async function fetchUserProjects(db: Database, session: Session, userId: 
       role: projectMembers.role,
       createdAt: projects.createdAt,
       updatedAt: projects.updatedAt,
+      setupStep: projects.setupStep,
     })
     .from(projects)
     .innerJoin(projectMembers, eq(projects.id, projectMembers.projectId))

@@ -1,12 +1,14 @@
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
 import type { OrgId, ProjectId, UserId, ProjectInvitationId } from '@corates/shared/ids';
+import { PROJECT_SETUP_STEPS } from '@corates/shared';
 import { authMiddleware } from '@/server/middleware/auth';
 import {
   listOrgProjects,
   createOrgProject,
   getProject,
   updateProjectById,
+  updateProjectSetupStepById,
   deleteProjectById,
   listProjectMembers,
   addProjectMember,
@@ -61,6 +63,25 @@ export const updateProject = createServerFn({ method: 'POST' })
     const { orgId, projectId, ...updateData } = data;
     return updateProjectById(session, db, orgId as OrgId, projectId as ProjectId, updateData);
   });
+
+export const updateProjectSetupStep = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
+  .validator(
+    z.object({
+      orgId: z.string(),
+      projectId: z.string(),
+      setupStep: z.enum(PROJECT_SETUP_STEPS).nullable(),
+    }),
+  )
+  .handler(async ({ data, context: { session, db } }) =>
+    updateProjectSetupStepById(
+      session,
+      db,
+      data.orgId as OrgId,
+      data.projectId as ProjectId,
+      data.setupStep,
+    ),
+  );
 
 export const deleteProject = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])

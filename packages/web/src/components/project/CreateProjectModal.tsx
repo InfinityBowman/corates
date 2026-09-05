@@ -102,7 +102,7 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
         queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
         onOpenChange(false);
 
-        navigate({ to: `/projects/${newProject.id}` as string });
+        navigate({ to: '/projects/$projectId/setup', params: { projectId: newProject.id } });
       } catch (error: unknown) {
         const domainError = getDomainError(error);
         const details = domainError?.details as Record<string, unknown> | undefined;

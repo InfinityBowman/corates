@@ -2,7 +2,8 @@
  * AppLayout - Main application layout with navbar + sidebar + content area
  *
  * Manages sidebar state (desktop mode, mobile overlay, width) with localStorage persistence.
- * Hides sidebar on /admin and /settings routes (they have their own sidebars).
+ * Hides sidebar on /admin and /settings routes (they have their own sidebars)
+ * and on project setup, which takes the full page.
  */
 
 import { useState, useCallback, useEffect, lazy, Suspense } from 'react';
@@ -19,6 +20,7 @@ const SIDEBAR_WIDTH_KEY = 'corates-sidebar-width';
 const DEFAULT_SIDEBAR_WIDTH = 256;
 const MIN_SIDEBAR_WIDTH = 200;
 const MAX_SIDEBAR_WIDTH = 480;
+const PROJECT_SETUP_PATH = /^\/projects\/[^/]+\/setup\/?$/;
 
 // Lazy load admin components
 const ImpersonationBanner = lazy(() =>
@@ -53,7 +55,9 @@ export function AppLayout() {
 
   // Routes that should NOT show the main sidebar
   const shouldHideSidebar =
-    location.pathname.startsWith('/admin') || location.pathname.startsWith('/settings');
+    location.pathname.startsWith('/admin') ||
+    location.pathname.startsWith('/settings') ||
+    PROJECT_SETUP_PATH.test(location.pathname);
 
   // Desktop sidebar mode with localStorage persistence
   const [desktopSidebarMode, setDesktopSidebarMode] = useState<'expanded' | 'collapsed'>(() => {

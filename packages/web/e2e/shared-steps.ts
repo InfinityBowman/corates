@@ -204,7 +204,11 @@ export async function createProject(page: Page, name: string, description = ''):
   const createBtn = page.getByRole('button', { name: 'Create project' });
   await expect(createBtn).toBeEnabled({ timeout: 10_000 });
   await createBtn.click();
-  await expect(page).toHaveURL(/\/projects\//, { timeout: 15_000 });
+
+  // New projects land in first-run setup; leave it so callers get the project view.
+  await expect(page).toHaveURL(/\/projects\/[^/]+\/setup/, { timeout: 15_000 });
+  await page.getByRole('button', { name: 'Finish later' }).click();
+  await expect(page).toHaveURL(/\/projects\/[^/]+\/?(\?.*)?$/, { timeout: 15_000 });
 
   const projectId = page.url().match(/\/projects\/([^/?]+)/)?.[1];
   if (!projectId) throw new Error('Could not extract projectId from URL');

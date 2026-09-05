@@ -9,3 +9,4 @@ export * from './pdf/index.js';
 export * from './checklists/index.js';
 export * from './assert-never.js';
 export * from './ids.js';
+export * from './project-setup.js';
