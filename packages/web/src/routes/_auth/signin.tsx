@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { z } from 'zod';
 import { useAuthStore } from '@/stores/authStore';
 import { handleError, parseError } from '@/lib/error-utils';
+import { getPendingInvitationToken, setPendingInvitationToken } from '@/lib/pendingInvitation';
 import { clientLogger } from '@/lib/clientLogger';
 import { useOAuthError } from '@/hooks/useOAuthError';
 import { useBfcacheReset } from '@/hooks/useBfcacheReset';
@@ -90,7 +91,7 @@ function SignInPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const invitationToken = urlParams.get('invitation');
     if (invitationToken) {
-      localStorage.setItem('pendingInvitationToken', invitationToken);
+      setPendingInvitationToken(invitationToken);
     }
   }, [setAuthError]);
 
@@ -176,7 +177,7 @@ function SignInPage() {
       await new Promise(resolve => setTimeout(resolve, 200));
 
       // Resume a pending project invitation instead of landing on the dashboard
-      const pendingInvitation = localStorage.getItem('pendingInvitationToken');
+      const pendingInvitation = getPendingInvitationToken();
       if (pendingInvitation) {
         navigate({ to: '/invite/$token', params: { token: pendingInvitation }, replace: true });
         return;

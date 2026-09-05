@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useAuthStore } from '@/stores/authStore';
 import { handleError } from '@/lib/error-utils';
+import { setPendingInvitationToken } from '@/lib/pendingInvitation';
 import { useOAuthError } from '@/hooks/useOAuthError';
 import { useBfcacheReset } from '@/hooks/useBfcacheReset';
 import { capturePlanParams } from '@/lib/plan-redirect-utils';
@@ -47,7 +48,7 @@ function SignUpPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const invitationToken = urlParams.get('invitation');
     if (invitationToken) {
-      localStorage.setItem('pendingInvitationToken', invitationToken);
+      setPendingInvitationToken(invitationToken);
     }
     capturePlanParams(urlParams);
   }, [setAuthError]);

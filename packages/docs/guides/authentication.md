@@ -386,7 +386,7 @@ Project invitations use a **combined flow** that ensures org membership before g
    - 7-day expiration
    - Inviter information
 
-2. **Invitation Link**: The email links to `/invite/{token}` (`packages/workers/src/lib/send-invitation-email.ts`), which handles every auth state: a signed-in user accepts in place, an existing user is sent to sign in, and a new user is sent to sign up. The token is stashed in `localStorage` as `pendingInvitationToken` so onboarding can finish the acceptance.
+2. **Invitation Link**: The email links to `/invite/{token}` (`packages/workers/src/lib/send-invitation-email.ts`), which handles every auth state: a signed-in user accepts in place, an existing user is sent to sign in, and a new user is sent to sign up. When the visitor leaves for sign-in or sign-up, the token is stashed in `sessionStorage` (`packages/web/src/lib/pendingInvitation.ts`) so onboarding can finish the acceptance and sign-in can return to the invite page; arriving back at `/invite/{token}` clears it, and it never outlives the tab.
 
 3. **Account Creation**: A new user signs up with an email code or a provider, completes `/complete-profile`, and the onboarding flow calls `acceptInvitation` with the stashed token.
 

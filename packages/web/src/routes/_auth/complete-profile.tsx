@@ -4,6 +4,7 @@ import { CheckIcon } from 'lucide-react';
 import { useAuthStore, selectUser, selectIsAuthLoading } from '@/stores/authStore';
 import { getOnboardingStep, isSyntheticEmail, isValidEmail } from '@corates/shared/email';
 import { handleError } from '@/lib/error-utils';
+import { getPendingInvitationToken, clearPendingInvitationToken } from '@/lib/pendingInvitation';
 import { acceptInvitation } from '@/server/functions/invitations.functions';
 import { showToast } from '@/lib/toast';
 import { Button } from '@/components/ui/button';
@@ -47,12 +48,12 @@ const STEPS_CONFIG = [
 // Users with a completed profile don't need onboarding; if they arrived here
 // holding an invitation (query param or a stashed token), acceptance happens
 // on the invite landing page instead.
-function getPendingInvitationToken(search: Record<string, unknown>): string | null {
+function resolveInvitationToken(search: Record<string, unknown>): string | null {
   if (typeof search.invitation === 'string' && search.invitation) {
     return search.invitation;
   }
-  if (typeof localStorage !== 'undefined') {
-    return localStorage.getItem('pendingInvitationToken');
+  if (typeof sessionStorage !== 'undefined') {
+    return getPendingInvitationToken();
   }
   return null;
 }
@@ -68,7 +69,7 @@ function isOnboarded(user: {
 }
 
 function navigateAfterProfile(navigate: ReturnType<typeof useNavigate>) {
-  const invitationToken = getPendingInvitationToken(
+  const invitationToken = resolveInvitationToken(
     Object.fromEntries(new URLSearchParams(window.location.search)),
   );
   if (invitationToken) {
@@ -94,7 +95,7 @@ export const Route = createFileRoute('/_auth/complete-profile')({
     // immediately without mounting the component. This covers the common case
     // of an existing user signing in (cached or session user is available).
     if (user && isOnboarded(user)) {
-      const invitationToken = getPendingInvitationToken(location.search as Record<string, unknown>);
+      const invitationToken = resolveInvitationToken(location.search as Record<string, unknown>);
       if (invitationToken) {
         throw redirect({ to: '/invite/$token', params: { token: invitationToken } });
       }
@@ -261,13 +262,12 @@ function CompleteProfilePage() {
       localStorage.removeItem('pendingPersona');
 
       // Handle invitation acceptance
-      const invitationToken =
-        urlParams.get('invitation') || localStorage.getItem('pendingInvitationToken');
+      const invitationToken = urlParams.get('invitation') || getPendingInvitationToken();
 
       if (invitationToken) {
         try {
           const result = await acceptInvitation({ data: { token: invitationToken } });
-          localStorage.removeItem('pendingInvitationToken');
+          clearPendingInvitationToken();
 
           if (result.projectId) {
             showToast.success(
@@ -280,7 +280,7 @@ function CompleteProfilePage() {
         } catch (inviteErr) {
           console.error('Failed to accept invitation:', inviteErr);
           // The emailed /invite link is stable, so the user can retry from it
-          localStorage.removeItem('pendingInvitationToken');
+          clearPendingInvitationToken();
           showToast.error(
             'Invitation Not Accepted',
             'Your account was created, but the project invitation could not be accepted. Open the invitation link from your email to try again.',

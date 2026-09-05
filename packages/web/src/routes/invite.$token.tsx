@@ -2,9 +2,9 @@
  * Invitation landing page - the stable link sent in invitation emails.
  *
  * Handles every auth state:
- * - Signed out: shows the invitation and offers sign up / sign in. The token
- *   is stashed in localStorage so signup -> complete-profile can auto-accept,
- *   and sign-in flows can return here.
+ * - Signed out: shows the invitation and offers sign up / sign in. Leaving for
+ *   auth stashes the token so signup -> complete-profile can auto-accept and
+ *   sign-in flows can return here.
  * - Signed in: shows the invitation with an Accept button.
  * - Invalid / expired / already-accepted tokens get clear explanations.
  */
@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/button';
 import { PrimaryButton } from '@/components/auth/AuthButtons';
 import { RouteError } from '@/components/RouteError';
 import { NOINDEX_META } from '@/config/app';
+import { setPendingInvitationToken, clearPendingInvitationToken } from '@/lib/pendingInvitation';
 
 export const Route = createFileRoute('/invite/$token')({
   ssr: false,
@@ -55,16 +56,13 @@ function InvitePage() {
   useEffect(() => {
     let cancelled = false;
 
+    // Arriving here ends any auth round-trip that was carrying a token
+    clearPendingInvitationToken();
+
     async function load() {
       try {
         const invitation = (await getInvitation({ data: { token } })) as InvitationSummary;
         if (cancelled) return;
-
-        if (invitation.status === 'pending') {
-          // Stash the token so signup -> complete-profile and sign-in flows
-          // can resume acceptance after authentication.
-          localStorage.setItem('pendingInvitationToken', token);
-        }
         setLoadState({ kind: 'loaded', invitation });
       } catch (err) {
         if (cancelled) return;
@@ -84,14 +82,12 @@ function InvitePage() {
     setAcceptError('');
     try {
       const result = await acceptInvitation({ data: { token } });
-      localStorage.removeItem('pendingInvitationToken');
       queryClient.invalidateQueries({ queryKey: queryKeys.invitations.pendingForMe });
       showToast.success('Invitation accepted', `You now have access to "${result.projectName}"`);
       navigate({ to: '/dashboard', replace: true });
     } catch (err) {
       const domainError = getDomainError(err);
       if (domainError?.code === 'PROJECT_MEMBER_ALREADY_EXISTS') {
-        localStorage.removeItem('pendingInvitationToken');
         showToast.success('Already a member', 'You already have access to this project.');
         navigate({ to: '/dashboard', replace: true });
         return;
@@ -102,9 +98,15 @@ function InvitePage() {
     }
   }
 
+  // Set only when leaving for auth, so viewing an invite never leaves a token behind
+  function leaveForAuth(to: '/signin' | '/signup') {
+    setPendingInvitationToken(token);
+    navigate({ to });
+  }
+
   async function handleSwitchAccount() {
     await signout();
-    navigate({ to: '/signin' });
+    leaveForAuth('/signin');
   }
 
   return (
@@ -219,13 +221,14 @@ function InvitePage() {
               This invitation was sent to{' '}
               <strong className='text-foreground'>{invitation.email}</strong>
             </p>
-            <PrimaryButton type='button' onClick={() => navigate({ to: '/signup' })}>
+            <PrimaryButton type='button' onClick={() => leaveForAuth('/signup')}>
               Create account and join
             </PrimaryButton>
             <p className='text-muted-foreground text-sm'>
               Already have an account?{' '}
               <Link
                 to='/signin'
+                onClick={() => setPendingInvitationToken(token)}
                 className='text-primary font-medium underline-offset-4 hover:underline'
               >
                 Sign in
