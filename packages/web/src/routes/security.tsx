@@ -95,9 +95,9 @@ function SecurityPage() {
                   <div>
                     <h2 className='mb-2 text-lg font-semibold text-gray-900'>Abuse Prevention</h2>
                     <p className='text-gray-600'>
-                      We apply rate limiting to sensitive endpoints (such as sign-in, registration,
-                      password resets, and email flows) to reduce brute-force attempts and automated
-                      abuse.
+                      We apply rate limiting at the domain level through Cloudflare to sensitive
+                      endpoints (such as sign-in, registration, password resets, and email flows) to
+                      reduce brute-force attempts and automated abuse.
                     </p>
                   </div>
                 </div>

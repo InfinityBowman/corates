@@ -32,8 +32,7 @@ export function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 }
 
-// ORCID sign-ins without a public email get a placeholder on a reserved domain;
-// older accounts carry `<orcid-id>@orcid.org`
+// ORCID sign-ins without a public email get a placeholder on a reserved domain
 export const SYNTHETIC_EMAIL_DOMAIN = 'orcid.placeholder.invalid';
 
 export function makeSyntheticEmail(orcidId: string): string {
@@ -41,7 +40,7 @@ export function makeSyntheticEmail(orcidId: string): string {
 }
 
 export function isSyntheticEmail(email: string): boolean {
-  return /@(orcid\.org|orcid\.placeholder\.invalid)$/i.test(email.trim());
+  return email.trim().toLowerCase().endsWith(`@${SYNTHETIC_EMAIL_DOMAIN}`);
 }
 
 export type OnboardingStep = 'email' | 'profile';

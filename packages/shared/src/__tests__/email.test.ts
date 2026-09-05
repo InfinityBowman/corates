@@ -2,10 +2,10 @@ import { describe, it, expect } from 'vitest';
 import { getOnboardingStep, isSyntheticEmail, makeSyntheticEmail } from '../email';
 
 describe('isSyntheticEmail', () => {
-  it('matches both placeholder domains', () => {
-    expect(isSyntheticEmail('0000-0001-2345-6789@orcid.org')).toBe(true);
+  it('matches only the placeholder domain', () => {
     expect(isSyntheticEmail(makeSyntheticEmail('0000-0001-2345-6789'))).toBe(true);
     expect(isSyntheticEmail('someone@example.org')).toBe(false);
+    expect(isSyntheticEmail('support@orcid.org')).toBe(false);
   });
 });
 
@@ -23,10 +23,10 @@ describe('getOnboardingStep', () => {
     ).toBeNull();
   });
 
-  it('pulls legacy placeholder users with a completed profile back to the email step', () => {
+  it('pulls placeholder users with a completed profile back to the email step', () => {
     expect(
       getOnboardingStep({
-        email: '0000-0001-2345-6789@orcid.org',
+        email: makeSyntheticEmail('0000-0001-2345-6789'),
         emailVerified: false,
         profileCompletedAt: 1,
       }),

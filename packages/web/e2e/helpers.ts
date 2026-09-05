@@ -487,9 +487,12 @@ export async function verifyEmail(email: string, completeProfile = false) {
  * Removes user, account, session, member, and verification records.
  */
 export async function cleanupByEmail(email: string) {
-  await fetch(`${API_BASE}/api/test/cleanup-user-by-email`, {
+  const res = await fetch(`${API_BASE}/api/test/cleanup-user-by-email`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email }),
   });
+  if (!res.ok) {
+    throw new Error(`Cleanup failed: ${res.status} ${await res.text()}`);
+  }
 }

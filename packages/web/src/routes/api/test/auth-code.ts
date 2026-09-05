@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
 import { drizzle } from 'drizzle-orm/d1';
-import { eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import { verification } from '@corates/db/schema';
 import { devModeGate } from '@/server/devModeGate';
 import { captureError } from '@corates/workers/logger';
@@ -20,10 +20,13 @@ export const handler = async ({ request }: { request: Request }) => {
       return Response.json({ error: 'email and type query params required' }, { status: 400 });
     }
 
+    // Every send adds a row; Better Auth verifies against the newest
     const row = await db
       .select()
       .from(verification)
       .where(eq(verification.identifier, `${type}-otp-${email}`))
+      .orderBy(desc(verification.createdAt))
+      .limit(1)
       .get();
     if (!row) {
       return Response.json({ error: `No ${type} code found for ${email}` }, { status: 404 });

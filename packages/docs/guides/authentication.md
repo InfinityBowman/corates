@@ -17,7 +17,7 @@ This setup provides comprehensive user authentication using Better Auth with mul
 - Two-factor authentication (TOTP with backup codes)
 - User data stored in D1 database via Drizzle ORM
 - Session management with secure cookies (7-day expiry)
-- Rate limiting on auth endpoints
+- Rate limiting on auth endpoints via Cloudflare domain-level rules (Better Auth's built-in limiter is disabled)
 - Admin features with user impersonation
 - Account linking and merging
 - WebSocket authentication support
@@ -303,7 +303,7 @@ Both social providers run with `disableImplicitSignUp`, so a sign-in with an ide
 
 A verified real email is the account identity; providers only prove ownership of one. `getOnboardingStep` in `@corates/shared/email` derives the state from the user row (`email`, `emailVerified`, `profileCompletedAt`): `email`, then `profile`, then done. The `_app/_protected` layout redirects anyone with a pending step to `/complete-profile`, which renders that step, so no signed-in user reaches the app without a verified email.
 
-ORCID's OIDC userinfo carries no email. On sign-in CoRATES asks the public API (`GET https://pub.orcid.org/v3.0/{orcid}/email`) for a verified public address and uses it as a verified email. Otherwise the user is created with a placeholder `<orcid-id>@orcid.placeholder.invalid` (older accounts have `<orcid-id>@orcid.org`; `isSyntheticEmail` matches both) and `emailVerified` false, and lands on the email step. That step is served by the `onboardingEmail` plugin in `packages/workers/src/auth/onboarding-email.ts`: it sends a code to the typed address regardless of whether an account exists, and a correct code either writes the address as verified or, when another account already owns it, claims that account. Claiming moves the provider `account` rows onto the existing user, deletes the throwaway user and its personal organization, and signs the browser in as the existing user. A user with a completed profile or any project data is never discarded; the endpoint returns `EMAIL_IN_USE` and the person is told to sign in to the other account and link from Settings. The only remaining manual merge is that case.
+ORCID's OIDC userinfo carries no email. On sign-in CoRATES asks the public API (`GET https://pub.orcid.org/v3.0/{orcid}/email`) for a verified public address and uses it as a verified email. Otherwise the user is created with a placeholder `<orcid-id>@orcid.placeholder.invalid` (`isSyntheticEmail`) and `emailVerified` false, and lands on the email step. That step is served by the `onboardingEmail` plugin in `packages/workers/src/auth/onboarding-email.ts`: it sends a code to the typed address regardless of whether an account exists, and a correct code either writes the address as verified or, when another account already owns it, claims that account. Claiming moves the provider `account` rows and any shared organization memberships onto the existing user, deletes the throwaway user and any organization only it occupied, and signs the browser in as the existing user. If the existing account was never verified, its pre-existing password, provider links, and sessions are revoked first (Better Auth's `revokeUnprovenAccountAccess`), so nothing that predates proof of the mailbox is inherited; a banned existing account cannot be claimed. A user with a completed profile or any project data is never discarded; the endpoint returns `EMAIL_IN_USE` and the person is told to sign in to the other account and link from Settings. The only remaining manual merge is that case.
 
 ## Two-Factor Authentication
 

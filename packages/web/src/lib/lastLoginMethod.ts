@@ -31,7 +31,9 @@ export function saveLastLoginMethod(method: string): void {
 
 export function getLastLoginMethod(): string | null {
   try {
-    return localStorage.getItem(STORAGE_KEY);
+    const stored = localStorage.getItem(STORAGE_KEY);
+    // Magic links became emailed codes; browsers still hold the old value
+    return stored === 'magic_link' ? LOGIN_METHODS.EMAIL_CODE : stored;
   } catch (err) {
     console.warn('Failed to get last login method from localStorage:', (err as Error).message);
     return null;

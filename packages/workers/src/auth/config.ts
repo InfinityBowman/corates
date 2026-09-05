@@ -237,6 +237,7 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
 
   plugins.push(
     onboardingEmail({
+      db,
       expiresIn: 60 * AUTH_CODE_EXPIRY_MINUTES,
       sendCode: async ({ email, code }) => sendAuthCode(email, code, 'change-email'),
       // A user that created or joined a project is not a throwaway sign-in
