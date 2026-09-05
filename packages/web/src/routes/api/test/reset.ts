@@ -19,6 +19,7 @@ function parseSqlStatements(sql: string): string[] {
 }
 
 const TABLES_IN_DELETE_ORDER = [
+  'notifications',
   'stripe_event_ledger',
   'org_access_grants',
   'project_invitations',
