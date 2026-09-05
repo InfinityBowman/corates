@@ -192,15 +192,11 @@ const FIXTURES_DIR = path.join(import.meta.dirname, 'fixtures');
  * Creates a project from the dashboard. Returns the projectId.
  * Handles both first-project and subsequent-project scenarios.
  */
-export async function createProject(page: Page, name: string, description = ''): Promise<string> {
+export async function createProject(page: Page, name: string): Promise<string> {
   const newProjectBtn = page.getByRole('button', { name: /New Project/i });
   await newProjectBtn.click();
 
-  await expect(page.getByText('Create a new project')).toBeVisible();
-  await page.getByPlaceholder('My Systematic Review').fill(name);
-  if (description) {
-    await page.getByPlaceholder('What is this review about?').fill(description);
-  }
+  await page.getByPlaceholder('Project name').fill(name);
   const createBtn = page.getByRole('button', { name: 'Create project' });
   await expect(createBtn).toBeEnabled({ timeout: 10_000 });
   await createBtn.click();
