@@ -197,7 +197,7 @@ function TeamBody({ setup }: { setup: Setup }) {
           const label = member.name || member.email;
           return (
             <div key={member.userId} className='flex items-center gap-2'>
-              <span className='bg-primary/15 text-primary flex size-4.5 shrink-0 items-center justify-center rounded-full text-3xs font-semibold'>
+              <span className='bg-primary/15 text-primary text-3xs flex size-4.5 shrink-0 items-center justify-center rounded-full font-semibold'>
                 {getInitials(label)}
               </span>
               <span className='text-foreground min-w-0 flex-1 truncate text-xs'>
@@ -217,7 +217,7 @@ function TeamBody({ setup }: { setup: Setup }) {
         })}
         {setup.invitations.map(invitation => (
           <div key={invitation.id} className='flex items-center gap-2'>
-            <span className='border-muted-foreground/40 text-muted-foreground flex size-4.5 shrink-0 items-center justify-center rounded-full border border-dashed text-3xs font-semibold'>
+            <span className='border-muted-foreground/40 text-muted-foreground text-3xs flex size-4.5 shrink-0 items-center justify-center rounded-full border border-dashed font-semibold'>
               {getInitials(invitation.email)}
             </span>
             <span className='text-muted-foreground min-w-0 flex-1 truncate text-xs'>

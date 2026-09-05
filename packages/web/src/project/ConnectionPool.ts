@@ -208,8 +208,9 @@ class ConnectionPool {
     );
 
     // Membership is D1-authoritative; the workers refresh-disconnect on
-    // membership changes, so every 'synced' refetches members. No
-    // first-synced gate — the refresh can race the initial connection.
+    // membership changes, so every 'synced' refetches members and the
+    // invitations they were accepted from. No first-synced gate — the
+    // refresh can race the initial connection.
     const applyStatus = (status: string) => {
       if (cancelled()) return;
       const current = useProjectStore.getState().connections[projectId];
@@ -222,6 +223,9 @@ class ConnectionPool {
       useProjectStore.getState().setConnectionState(projectId, phase);
       if (phase === 'synced') {
         void queryClient.invalidateQueries({ queryKey: queryKeys.projects.members(projectId) });
+        void queryClient.invalidateQueries({
+          queryKey: queryKeys.projects.invitations(projectId),
+        });
       }
     };
 
