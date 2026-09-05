@@ -63,6 +63,8 @@ interface RelayPayload {
   callbackURL: string;
   // Present when the flow started from /link-social; the localhost user to attach to
   link?: { userId: string; email: string };
+  requestSignUp?: boolean;
+  errorURL?: string;
   timestamp: number;
 }
 
@@ -231,6 +233,9 @@ export const oAuthRelay = (opts: OAuthRelayOptions) => {
           }
 
           // Create user and session locally using Better Auth's internal handler
+          const provider = ctx.context.socialProviders.find(
+            p => p.id === payload.account.providerId,
+          );
           const result = await handleOAuthUserInfo(ctx, {
             userInfo: {
               ...payload.userInfo,
@@ -241,14 +246,20 @@ export const oAuthRelay = (opts: OAuthRelayOptions) => {
             },
             account: payload.account,
             callbackURL: payload.callbackURL,
+            disableSignUp:
+              (provider?.disableImplicitSignUp && !payload.requestSignUp) ||
+              provider?.disableSignUp,
           });
 
           if (result.error) {
             ctx.context.logger.error('OAuth relay user creation failed:', result.error);
+            // Better Auth's error page rejects codes containing spaces; its own
+            // callback route applies the same underscore join
+            const code = encodeURIComponent(result.error.split(' ').join('_'));
             throw ctx.redirect(
-              // Better Auth's error page rejects codes containing spaces; its own
-              // callback route applies the same underscore join
-              `${ctx.context.baseURL}/error?error=${encodeURIComponent(result.error.split(' ').join('_'))}`,
+              payload.errorURL ?
+                `${payload.errorURL}?error=${code}`
+              : `${ctx.context.baseURL}/error?error=${code}`,
             );
           }
 
@@ -355,7 +366,9 @@ export const oAuthRelay = (opts: OAuthRelayOptions) => {
             let stateData: {
               codeVerifier?: string;
               callbackURL?: string;
+              errorURL?: string;
               link?: { userId: string; email: string };
+              requestSignUp?: boolean;
             } | null = null;
             try {
               const decryptedCookie = await symmetricDecrypt({
@@ -430,6 +443,8 @@ export const oAuthRelay = (opts: OAuthRelayOptions) => {
               },
               callbackURL: stateData?.callbackURL || '/',
               link: stateData?.link,
+              requestSignUp: stateData?.requestSignUp,
+              errorURL: stateData?.errorURL,
               timestamp: Date.now(),
             };
 

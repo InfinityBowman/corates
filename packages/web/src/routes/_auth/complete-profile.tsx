@@ -56,6 +56,23 @@ function getPendingInvitationToken(search: Record<string, unknown>): string | nu
   return null;
 }
 
+// Profiles completed before the real-email step existed still carry the
+// synthetic ORCID address; they are sent back through the email step only
+function isOnboarded(user: { profileCompletedAt?: number | null; email?: string | null }) {
+  return !!user.profileCompletedAt && !isSyntheticEmail(user.email ?? '');
+}
+
+function navigateAfterProfile(navigate: ReturnType<typeof useNavigate>) {
+  const invitationToken = getPendingInvitationToken(
+    Object.fromEntries(new URLSearchParams(window.location.search)),
+  );
+  if (invitationToken) {
+    navigate({ to: '/invite/$token', params: { token: invitationToken }, replace: true });
+    return;
+  }
+  navigate({ to: hasPendingPlan() ? '/settings/plans' : '/dashboard', replace: true });
+}
+
 export const Route = createFileRoute('/_auth/complete-profile')({
   ssr: false,
   beforeLoad: ({ location }) => {
@@ -71,7 +88,7 @@ export const Route = createFileRoute('/_auth/complete-profile')({
     // Synchronous check: if we already know the profile is complete, redirect
     // immediately without mounting the component. This covers the common case
     // of an existing user signing in (cached or session user is available).
-    if (user?.profileCompletedAt) {
+    if (user && isOnboarded(user)) {
       const invitationToken = getPendingInvitationToken(location.search as Record<string, unknown>);
       if (invitationToken) {
         throw redirect({ to: '/invite/$token', params: { token: invitationToken } });
@@ -113,18 +130,8 @@ function CompleteProfilePage() {
   useEffect(() => {
     if (isAuthLoading) return;
 
-    if (user?.profileCompletedAt) {
-      const invitationToken = getPendingInvitationToken(
-        Object.fromEntries(new URLSearchParams(window.location.search)),
-      );
-      if (invitationToken) {
-        navigate({ to: '/invite/$token', params: { token: invitationToken }, replace: true });
-        return;
-      }
-      navigate({
-        to: hasPendingPlan() ? '/settings/plans' : '/dashboard',
-        replace: true,
-      });
+    if (user && isOnboarded(user)) {
+      navigateAfterProfile(navigate);
     } else if (!user) {
       navigate({ to: '/signup', replace: true });
     }
@@ -318,8 +325,12 @@ function CompleteProfilePage() {
   // here (profile already complete / not logged in). The useEffect above
   // handles the redirect; returning null keeps the auth layout background
   // visible with no flash of the form.
-  if (isAuthLoading || !user || user.profileCompletedAt) {
+  if (isAuthLoading || !user || isOnboarded(user)) {
     return null;
+  }
+
+  if (user.profileCompletedAt && needsRealEmail) {
+    return <AddEmailForm />;
   }
 
   return (
@@ -607,6 +618,76 @@ function CompleteProfilePage() {
           </div>
         </StepsCompletedContent>
       </Steps>
+    </div>
+  );
+}
+
+function AddEmailForm() {
+  const navigate = useNavigate();
+  const changeEmail = useAuthStore(s => s.changeEmail);
+  const [email, setEmail] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!isValidEmail(email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      await changeEmail(email.trim());
+      navigateAfterProfile(navigate);
+    } catch (err) {
+      await handleError(err, { setError, showToast: false });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className='border-border bg-card relative w-full max-w-md rounded-xl border p-5 shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-10'>
+      <a href='/' className='absolute top-4 left-4 sm:top-5 sm:left-5'>
+        <img src='/logo.svg' alt='CoRATES' className='h-6 w-auto sm:h-7' />
+      </a>
+
+      <div className='mb-5 pt-4 text-center'>
+        <h2 className='text-foreground mb-1 text-xl font-bold sm:text-2xl'>Add your email</h2>
+        <p className='text-muted-foreground text-xs sm:text-sm'>
+          ORCID did not share an email address with us, so project invitations and notifications
+          cannot reach you yet.
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} className='flex flex-col gap-4' autoComplete='off'>
+        <div>
+          <Label className='mb-1' htmlFor='contact-email-input'>
+            Email
+          </Label>
+          <Input
+            type='email'
+            autoComplete='email'
+            autoCapitalize='off'
+            spellCheck='false'
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            className='h-auto py-2 text-sm'
+            required
+            id='contact-email-input'
+            placeholder='you@example.com'
+            disabled={loading}
+            aria-describedby={error ? 'add-email-error' : undefined}
+          />
+        </div>
+
+        <ErrorMessage error={error} id='add-email-error' />
+
+        <PrimaryButton loading={loading} loadingText='Saving...'>
+          Continue
+        </PrimaryButton>
+      </form>
     </div>
   );
 }

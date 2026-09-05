@@ -47,8 +47,8 @@ const LINK_ERROR_MESSAGES: Record<string, string | null> = {
   NO_CALLBACK_URL: 'Sign-in is not configured correctly for this provider. Contact support.',
   NO_CODE: 'Sign-in did not complete at the provider. Try again.',
   UNABLE_TO_GET_USER_INFO: 'Could not read your account details from that provider. Try again.',
-  SIGNUP_DISABLED:
-    'New account sign-ups are turned off right now. Contact support if you need access.',
+  // Silent - the signin page shows an inline prompt with sign-up and other-method options
+  SIGNUP_DISABLED: null,
   // General
   UNABLE_TO_LINK_ACCOUNT:
     'Could not link that account. Try again, or contact support if it keeps happening.',
