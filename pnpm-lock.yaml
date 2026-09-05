@@ -138,8 +138,8 @@ importers:
         specifier: ^5.39.1
         version: 5.39.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@cf-sync/client':
-        specifier: ^0.1.0
-        version: 0.1.1(@tanstack/db@0.6.17(typescript@5.9.3))(@tanstack/react-db@0.1.95(react@19.2.8)(typescript@5.9.3))(react@19.2.8)(zod@4.5.4)
+        specifier: ^0.2.0
+        version: 0.2.0(@tanstack/db@0.8.7(typescript@5.9.3))(@tanstack/react-db@0.3.7(react@19.2.8)(typescript@5.9.3))(react@19.2.8)(zod@4.5.4)
       '@cf-sync/yjs':
         specifier: ^0.2.0
         version: 0.2.0(@cf-sync/server@0.2.0(zod@4.5.4))(react@19.2.8)(yjs@13.6.32)(zod@4.5.4)
@@ -252,11 +252,11 @@ importers:
         specifier: ^5.4.0
         version: 5.4.0(rollup@4.62.4)
       '@tanstack/db':
-        specifier: ^0.6.17
-        version: 0.6.17(typescript@5.9.3)
+        specifier: ^0.8.7
+        version: 0.8.7(typescript@5.9.3)
       '@tanstack/react-db':
-        specifier: ^0.1.95
-        version: 0.1.95(react@19.2.8)(typescript@5.9.3)
+        specifier: ^0.3.7
+        version: 0.3.7(react@19.2.8)(typescript@5.9.3)
       '@tanstack/react-query':
         specifier: ^5.102.8
         version: 5.102.8(react@19.2.8)
@@ -828,11 +828,11 @@ packages:
     resolution: {integrity: sha512-ctxtJ/eA+t+6q2++vj5j7FYX3nRu311q1wfYH3xjlLOsczhlhxAg2FWNUXhpGvAw3BWo1xBcvOV6/YLc2r5FJw==}
     hasBin: true
 
-  '@cf-sync/client@0.1.1':
-    resolution: {integrity: sha512-68C+Yois8Abq1BnBbrOMIhkGOb2Nt1vbMQGu1yZSlhr3tUv2kQQjxF8tSg09/MNNGtAgDOWuhN3N22mFlMKVDQ==}
+  '@cf-sync/client@0.2.0':
+    resolution: {integrity: sha512-cIvk9CuEGEeLcffnVOQWGbFsoupzhxP0xcZrfouOd9QqsPE/oX0DKRb/cp3Ocnq9j+WVaWl21+TkW7GeIVoLJw==}
     peerDependencies:
-      '@tanstack/db': ^0.6.16
-      '@tanstack/react-db': ^0.1.94
+      '@tanstack/db': ^0.8.0
+      '@tanstack/react-db': ^0.3.0
       react: '>=18'
     peerDependenciesMeta:
       '@tanstack/react-db':
@@ -3822,13 +3822,13 @@ packages:
     peerDependencies:
       vite: ^5.2.0 || ^6 || ^7 || ^8
 
-  '@tanstack/db-ivm@0.1.18':
-    resolution: {integrity: sha512-+pZJiRKdoKRM5Epq9T7otD9ZJl82pRFauo7LKuJGrarjVKQ7r+QQlPe3kGdN9LEKSnuNGIWjX9OOY4M8kH4eLw==}
+  '@tanstack/db-ivm@0.1.19':
+    resolution: {integrity: sha512-3VGvgNXAPSVqny/pL8Y6n/txnaZzV49WmgSQ9N5eyCQNgMtuOEOJHKDatqqCy3gDxVu6pkhSHDKxcNFOtxMouw==}
     peerDependencies:
       typescript: '>=4.7'
 
-  '@tanstack/db@0.6.17':
-    resolution: {integrity: sha512-/i6+dedEkOCVQbTQtCjQHx3Nqlkqe6zvi+9/JPnSgm47o+akoaPqcSwxTmesDZxc/efHokUtzeD2ocow257RdQ==}
+  '@tanstack/db@0.8.7':
+    resolution: {integrity: sha512-NIocfK737qPvkE1Ot2iM5PXN6CSBZY5cw1ovAwo0RvQDc/iinyr3x7v+kavoiWxClbkul98J/wRzr0KLanMxOA==}
     peerDependencies:
       typescript: '>=4.7'
 
@@ -3849,8 +3849,8 @@ packages:
   '@tanstack/query-core@5.102.8':
     resolution: {integrity: sha512-ZNjkJ33CqvPNec/6lZBnHqLc3EVGPZ9ySLhYahU9TcuRFdmwXewuj0c4hwSWcGHqEUwcSrKeZ+oGcvPBqXcQcg==}
 
-  '@tanstack/react-db@0.1.95':
-    resolution: {integrity: sha512-Om2qgKtoK+iTcE3nR+MaPQsM4JUsDWB8LqFt4yFjwuSawwMJ7bcPnc7gP0V06YKOtm5MzrIu8IV/OexMJbraKQ==}
+  '@tanstack/react-db@0.3.7':
+    resolution: {integrity: sha512-u0AmiKNyyZoYcTVWEFJ5NG+6mQ6mFKzxwQNeljW8mLPzM7vIBZMVfD5QxUDg7j/54ggsVNkp+MIFisaWEXxVug==}
     peerDependencies:
       react: '>=16.8.0'
 
@@ -9233,12 +9233,12 @@ snapshots:
     dependencies:
       css-tree: 3.2.1
 
-  '@cf-sync/client@0.1.1(@tanstack/db@0.6.17(typescript@5.9.3))(@tanstack/react-db@0.1.95(react@19.2.8)(typescript@5.9.3))(react@19.2.8)(zod@4.5.4)':
+  '@cf-sync/client@0.2.0(@tanstack/db@0.8.7(typescript@5.9.3))(@tanstack/react-db@0.3.7(react@19.2.8)(typescript@5.9.3))(react@19.2.8)(zod@4.5.4)':
     dependencies:
       '@cf-sync/protocol': 0.1.1(zod@4.5.4)
-      '@tanstack/db': 0.6.17(typescript@5.9.3)
+      '@tanstack/db': 0.8.7(typescript@5.9.3)
     optionalDependencies:
-      '@tanstack/react-db': 0.1.95(react@19.2.8)(typescript@5.9.3)
+      '@tanstack/react-db': 0.3.7(react@19.2.8)(typescript@5.9.3)
       react: 19.2.8
     transitivePeerDependencies:
       - zod
@@ -11811,16 +11811,16 @@ snapshots:
       tailwindcss: 4.3.3
       vite: 8.2.2(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.46.0)(tsx@4.23.13)(yaml@2.8.2)
 
-  '@tanstack/db-ivm@0.1.18(typescript@5.9.3)':
+  '@tanstack/db-ivm@0.1.19(typescript@5.9.3)':
     dependencies:
       fractional-indexing: 3.4.0
       sorted-btree: 1.8.1
       typescript: 5.9.3
 
-  '@tanstack/db@0.6.17(typescript@5.9.3)':
+  '@tanstack/db@0.8.7(typescript@5.9.3)':
     dependencies:
       '@standard-schema/spec': 1.1.0
-      '@tanstack/db-ivm': 0.1.18(typescript@5.9.3)
+      '@tanstack/db-ivm': 0.1.19(typescript@5.9.3)
       '@tanstack/pacer-lite': 0.2.2
       typescript: 5.9.3
 
@@ -11846,9 +11846,9 @@ snapshots:
 
   '@tanstack/query-core@5.102.8': {}
 
-  '@tanstack/react-db@0.1.95(react@19.2.8)(typescript@5.9.3)':
+  '@tanstack/react-db@0.3.7(react@19.2.8)(typescript@5.9.3)':
     dependencies:
-      '@tanstack/db': 0.6.17(typescript@5.9.3)
+      '@tanstack/db': 0.8.7(typescript@5.9.3)
       react: 19.2.8
       use-sync-external-store: 1.6.0(react@19.2.8)
     transitivePeerDependencies:
@@ -12498,10 +12498,10 @@ snapshots:
       '@types/webidl-conversions': 7.0.3
     optional: true
 
-  '@typescript-eslint/eslint-plugin@8.69.0(@typescript-eslint/parser@8.69.0(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3))(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)':
+  '@typescript-eslint/eslint-plugin@8.69.0(@typescript-eslint/parser@8.69.0(eslint@9.39.5(jiti@2.7.0))(typescript@6.0.2))(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)':
     dependencies:
       '@eslint-community/regexpp': 4.12.2
-      '@typescript-eslint/parser': 8.69.0(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
+      '@typescript-eslint/parser': 8.69.0(eslint@9.39.5(jiti@2.7.0))(typescript@6.0.2)
       '@typescript-eslint/scope-manager': 8.69.0
       '@typescript-eslint/type-utils': 8.69.0(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
       '@typescript-eslint/utils': 8.69.0(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
@@ -16937,7 +16937,7 @@ snapshots:
 
   typescript-eslint@8.69.0(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3):
     dependencies:
-      '@typescript-eslint/eslint-plugin': 8.69.0(@typescript-eslint/parser@8.69.0(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3))(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
+      '@typescript-eslint/eslint-plugin': 8.69.0(@typescript-eslint/parser@8.69.0(eslint@9.39.5(jiti@2.7.0))(typescript@6.0.2))(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
       '@typescript-eslint/parser': 8.69.0(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
       '@typescript-eslint/typescript-estree': 8.69.0(typescript@5.9.3)
       '@typescript-eslint/utils': 8.69.0(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)

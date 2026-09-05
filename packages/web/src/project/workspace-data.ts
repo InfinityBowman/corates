@@ -85,6 +85,20 @@ function useCollections(projectId: string): ProjectCollections {
   return useProjectCollections(projectId) ?? emptyCollections;
 }
 
+// Live-query identity derives from collection ids, which the pool reuses when
+// it rebuilds a workspace; keying by the collection set's instance keeps a
+// still-mounted hook from staying subscribed to the torn-down one.
+const collectionsTokens = new WeakMap<ProjectCollections, number>();
+let nextCollectionsToken = 0;
+export function collectionsKey(collections: ProjectCollections): number {
+  let token = collectionsTokens.get(collections);
+  if (token === undefined) {
+    token = nextCollectionsToken++;
+    collectionsTokens.set(collections, token);
+  }
+  return token;
+}
+
 // ---------------------------------------------------------------------------
 // Answers
 
@@ -96,10 +110,10 @@ export function useAnswerValue<T = unknown>(
 ): T | null {
   const collections = useCollections(projectId);
   const rowId = answerRowId(checklistId, flatKey);
-  const { data } = useLiveQuery(
-    q => q.from({ answer: collections.answers }).where(({ answer }) => eq(answer.id, rowId)),
-    [collections, rowId],
-  );
+  const { data } = useLiveQuery({
+    queryKey: ['answer', collectionsKey(collections), rowId],
+    query: q => q.from({ answer: collections.answers }).where(({ answer }) => eq(answer.id, rowId)),
+  });
   return (data?.[0]?.value as T | undefined) ?? null;
 }
 
@@ -109,13 +123,13 @@ export function useChecklistAnswerMap(
   checklistId: string,
 ): Record<string, unknown> {
   const collections = useCollections(projectId);
-  const { data } = useLiveQuery(
-    q =>
+  const { data } = useLiveQuery({
+    queryKey: ['checklistAnswers', collectionsKey(collections), checklistId],
+    query: q =>
       q
         .from({ answer: collections.answers })
         .where(({ answer }) => eq(answer.checklistId, checklistId)),
-    [collections, checklistId],
-  );
+  });
   return useMemo(() => {
     const map: Record<string, unknown> = {};
     for (const row of data ?? []) map[row.key] = row.value;
@@ -284,19 +298,23 @@ function toPdfEntry(row: {
  */
 export function useAllStudies(projectId: string): StudyInfo[] {
   const collections = useCollections(projectId);
-  const { data: studies } = useLiveQuery(
-    q => q.from({ study: collections.studies }),
-    [collections],
-  );
-  const { data: checklists } = useLiveQuery(
-    q => q.from({ checklist: collections.checklists }),
-    [collections],
-  );
-  const { data: pdfs } = useLiveQuery(q => q.from({ pdf: collections.pdfs }), [collections]);
-  const { data: answers } = useLiveQuery(
-    q => q.from({ answer: collections.answers }),
-    [collections],
-  );
+  const key = collectionsKey(collections);
+  const { data: studies } = useLiveQuery({
+    queryKey: ['studies', key],
+    query: q => q.from({ study: collections.studies }),
+  });
+  const { data: checklists } = useLiveQuery({
+    queryKey: ['checklists', key],
+    query: q => q.from({ checklist: collections.checklists }),
+  });
+  const { data: pdfs } = useLiveQuery({
+    queryKey: ['pdfs', key],
+    query: q => q.from({ pdf: collections.pdfs }),
+  });
+  const { data: answers } = useLiveQuery({
+    queryKey: ['answers', key],
+    query: q => q.from({ answer: collections.answers }),
+  });
 
   return useMemo(() => {
     const answersByChecklist = new Map<string, Record<string, unknown>>();
@@ -435,13 +453,13 @@ export function useReconciliationProgress(
 ): ReconciliationProgressEntry | null {
   const collections = useCollections(projectId);
   const rowId = reconciliationRowId(studyId, getOutcomeKey(outcomeId, type));
-  const { data } = useLiveQuery(
-    q =>
+  const { data } = useLiveQuery({
+    queryKey: ['reconciliation', collectionsKey(collections), rowId],
+    query: q =>
       q
         .from({ reconciliation: collections.reconciliations })
         .where(({ reconciliation }) => eq(reconciliation.id, rowId)),
-    [collections, rowId],
-  );
+  });
   return useMemo(() => {
     const row = data?.[0];
     return row ? toProgressEntry(row) : null;
@@ -451,10 +469,10 @@ export function useReconciliationProgress(
 /** All reconciliation progress rows for a project, reactively. */
 export function useAllReconciliationProgress(projectId: string): ReconciliationProgressEntry[] {
   const collections = useCollections(projectId);
-  const { data } = useLiveQuery(
-    q => q.from({ reconciliation: collections.reconciliations }),
-    [collections],
-  );
+  const { data } = useLiveQuery({
+    queryKey: ['reconciliations', collectionsKey(collections)],
+    query: q => q.from({ reconciliation: collections.reconciliations }),
+  });
   return useMemo(() => (data ?? []).map(toProgressEntry), [data]);
 }
 
@@ -463,7 +481,10 @@ export function useAllReconciliationProgress(projectId: string): ReconciliationP
 
 export function useProjectOutcomes(projectId: string): OutcomeEntry[] {
   const collections = useCollections(projectId);
-  const { data } = useLiveQuery(q => q.from({ outcome: collections.outcomes }), [collections]);
+  const { data } = useLiveQuery({
+    queryKey: ['outcomes', collectionsKey(collections)],
+    query: q => q.from({ outcome: collections.outcomes }),
+  });
   return useMemo(() => {
     const outcomes = (data ?? []).map(row => ({
       id: row.id,
