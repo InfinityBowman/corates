@@ -1,7 +1,7 @@
 /**
- * Project-level actions -- rename, delete, update description
+ * Project-level actions -- rename, delete
  *
- * Project name/description are D1-authoritative (the server fn + React Query);
+ * Project name is D1-authoritative (the server fn + React Query);
  * there is no workspace-side meta write anymore.
  */
 
@@ -28,26 +28,6 @@ export const projectActions = {
       console.error('Error renaming project:', err);
       captureException(err, { component: 'projectActions', action: 'rename' });
       showToast.error('Rename Failed', (err as Error).message || 'Failed to rename project');
-    }
-  },
-
-  async updateDescription(newDescription: string): Promise<void> {
-    try {
-      const trimmed = (newDescription || '').trim();
-
-      const projectId = connectionPool.getActiveProjectId();
-      const orgId = connectionPool.getActiveOrgId();
-      if (!projectId || !orgId) throw new Error('No active project connection');
-
-      // Send '' as-is: the server maps it to null (clear). Turning it into
-      // undefined made clearing a description a silent no-op that reverted
-      // on reload.
-      await updateProject({ data: { orgId, projectId, description: trimmed } });
-      queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
-    } catch (err) {
-      console.error('Error updating description:', err);
-      captureException(err, { component: 'projectActions', action: 'updateDescription' });
-      showToast.error('Update Failed', (err as Error).message || 'Failed to update description');
     }
   },
 
