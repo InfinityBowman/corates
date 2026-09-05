@@ -44,7 +44,7 @@ export function ProjectSetupPanel() {
             >
               <span
                 className={cn(
-                  'flex size-5 shrink-0 items-center justify-center rounded-full border text-2xs font-semibold',
+                  'text-2xs flex size-5 shrink-0 items-center justify-center rounded-full border font-semibold',
                   step.done ? 'border-success bg-success text-success-foreground'
                   : active ? 'border-primary text-primary'
                   : 'border-muted-foreground/40 text-muted-foreground border-dashed',

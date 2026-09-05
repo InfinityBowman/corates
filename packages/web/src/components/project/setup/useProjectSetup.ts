@@ -5,7 +5,7 @@
  */
 
 import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   useAllStudies,
   useProjectMembers,
@@ -15,7 +15,7 @@ import {
 import { useMembers } from '@/hooks/useMembers';
 import { useSubscription } from '@/hooks/useSubscription';
 import { queryKeys } from '@/lib/queryKeys';
-import { updateProjectSetupStep } from '@/server/functions/org-projects.functions';
+import { getInvitations, updateProjectSetupStep } from '@/server/functions/org-projects.functions';
 import { useProjectContext } from '../ProjectContext';
 
 export type SetupStepKey = 'studies' | 'outcomes' | 'team' | 'assign';
@@ -30,6 +30,11 @@ export interface SetupStep {
   onOpen: () => void;
 }
 
+interface PendingInvitation {
+  id: string;
+  email: string;
+}
+
 export function useProjectSetup() {
   const { projectId, orgId, setAddStudiesSheetOpen, setAssignSheetOpen, setOutcomesSheetOpen } =
     useProjectContext();
@@ -40,6 +45,12 @@ export function useProjectSetup() {
   const members = useProjectMembers(projectId);
   const { quotas } = useSubscription();
   const { members: orgMembers } = useMembers();
+  const { data: invitations = [] } = useQuery({
+    queryKey: queryKeys.projects.invitations(projectId),
+    queryFn: async () =>
+      (await getInvitations({ data: { orgId: orgId!, projectId } })) as PendingInvitation[],
+    enabled: !!orgId,
+  });
   const [inviteOpen, setInviteOpen] = useState(false);
   const [isDismissing, setIsDismissing] = useState(false);
 
@@ -50,6 +61,7 @@ export function useProjectSetup() {
 
   const hasStudies = studies.length > 0;
   const hasTeam = members.length > 1;
+  const hasInvited = invitations.length > 0;
   const assignDone = hasStudies && studies.every(s => s.reviewer1 && s.reviewer2);
 
   const steps: SetupStep[] = [
@@ -78,7 +90,7 @@ export function useProjectSetup() {
       title: 'Invite your co-reviewers',
       description: 'Two reviewers appraise each study independently. You count as one.',
       cta: 'Invite',
-      done: hasTeam,
+      done: hasTeam || hasInvited,
       lockReason: null,
       onOpen: () => setInviteOpen(true),
     },
@@ -121,7 +133,9 @@ export function useProjectSetup() {
     studies,
     outcomes,
     members,
+    invitations,
     hasTeam,
+    hasInvited,
     inviteOpen,
     setInviteOpen,
     collaboratorQuotaInfo,

@@ -197,7 +197,7 @@ function TeamBody({ setup }: { setup: Setup }) {
           const label = member.name || member.email;
           return (
             <div key={member.userId} className='flex items-center gap-2'>
-              <span className='bg-primary/15 text-primary flex size-4.5 shrink-0 items-center justify-center rounded-full text-[8px] font-semibold'>
+              <span className='bg-primary/15 text-primary flex size-4.5 shrink-0 items-center justify-center rounded-full text-3xs font-semibold'>
                 {getInitials(label)}
               </span>
               <span className='text-foreground min-w-0 flex-1 truncate text-xs'>
@@ -215,6 +215,17 @@ function TeamBody({ setup }: { setup: Setup }) {
             </div>
           );
         })}
+        {setup.invitations.map(invitation => (
+          <div key={invitation.id} className='flex items-center gap-2'>
+            <span className='border-muted-foreground/40 text-muted-foreground flex size-4.5 shrink-0 items-center justify-center rounded-full border border-dashed text-3xs font-semibold'>
+              {getInitials(invitation.email)}
+            </span>
+            <span className='text-muted-foreground min-w-0 flex-1 truncate text-xs'>
+              {invitation.email}
+            </span>
+            <span className='text-muted-foreground text-[11px]'>Invited</span>
+          </div>
+        ))}
       </div>
       <Button
         variant='outline'
@@ -223,7 +234,7 @@ function TeamBody({ setup }: { setup: Setup }) {
         onClick={() => setup.setInviteOpen(true)}
       >
         <PlusIcon />
-        {setup.hasTeam ? 'Invite another' : 'Invite'}
+        {setup.hasTeam || setup.hasInvited ? 'Invite another' : 'Invite'}
       </Button>
     </>
   );
