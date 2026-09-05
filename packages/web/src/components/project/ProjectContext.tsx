@@ -27,6 +27,10 @@ interface ProjectContextValue {
   getMember: (userId: string | null) => ProjectMember | null;
   getChecklistPath: (studyId: string, checklistId: string, tab?: string) => string;
   getReconcilePath: (studyId: string, checklist1Id: string, checklist2Id: string) => string;
+  addStudiesSheetOpen: boolean;
+  setAddStudiesSheetOpen: (open: boolean) => void;
+  assignSheetOpen: boolean;
+  setAssignSheetOpen: (open: boolean) => void;
   outcomesSheetOpen: boolean;
   setOutcomesSheetOpen: (open: boolean) => void;
 }
@@ -50,6 +54,8 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
   }, [user, members]);
 
   const isOwner = userRole === 'owner';
+  const [addStudiesSheetOpen, setAddStudiesSheetOpen] = useState(false);
+  const [assignSheetOpen, setAssignSheetOpen] = useState(false);
   const [outcomesSheetOpen, setOutcomesSheetOpen] = useState(false);
 
   // Stable path helpers that only depend on projectId
@@ -91,6 +97,10 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
       getMember,
       getChecklistPath,
       getReconcilePath,
+      addStudiesSheetOpen,
+      setAddStudiesSheetOpen,
+      assignSheetOpen,
+      setAssignSheetOpen,
       outcomesSheetOpen,
       setOutcomesSheetOpen,
     }),
@@ -103,6 +113,8 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
       getMember,
       getChecklistPath,
       getReconcilePath,
+      addStudiesSheetOpen,
+      assignSheetOpen,
       outcomesSheetOpen,
     ],
   );

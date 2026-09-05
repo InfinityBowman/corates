@@ -56,9 +56,14 @@ function TabsIndicator({ className }: { className?: string }) {
     const observer = new MutationObserver(update);
     observer.observe(list, { attributes: true, subtree: true, attributeFilter: ['data-state'] });
 
+    // Triggers change width when a count badge appears or updates inside them.
+    const resizeObserver = new ResizeObserver(update);
+    list.querySelectorAll('[data-slot="tabs-trigger"]').forEach(el => resizeObserver.observe(el));
+
     window.addEventListener('resize', update);
     return () => {
       observer.disconnect();
+      resizeObserver.disconnect();
       window.removeEventListener('resize', update);
     };
   }, []);

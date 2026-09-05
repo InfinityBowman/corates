@@ -189,6 +189,8 @@ export const projects = sqliteTable(
       .references(() => user.id, { onDelete: 'cascade' }),
     createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
     updatedAt: integer('updatedAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
+    // First-run setup progress; null once setup is finished or dismissed
+    setupStep: text('setupStep'),
   },
   t => [index('projects_orgId_idx').on(t.orgId)],
 );
