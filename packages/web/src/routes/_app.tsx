@@ -13,6 +13,7 @@
 
 import { createFileRoute } from '@tanstack/react-router';
 import { AppLayout } from '@/components/layout/AppLayout';
+import { AppNotFound } from '@/components/NotFound';
 import { RouteError } from '@/components/RouteError';
 import { NOINDEX_META } from '@/config/app';
 
@@ -24,5 +25,7 @@ export const Route = createFileRoute('/_app')({
   // crawler only ever sees an empty shell.
   head: () => ({ meta: [NOINDEX_META] }),
   component: AppLayout,
+  // Renders inside the app shell so an in-app miss keeps the navbar and sidebar
+  notFoundComponent: AppNotFound,
   errorComponent: RouteError,
 });
