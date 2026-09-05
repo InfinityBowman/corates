@@ -38,7 +38,6 @@ export interface ProjectData {
   project: {
     id: string;
     name: string;
-    description?: string;
     orgId: string;
     orgName: string;
     orgSlug: string;

@@ -43,7 +43,6 @@ export async function listOrgProjects(session: Session, db: Database, orgId: Org
       .select({
         id: projects.id,
         name: projects.name,
-        description: projects.description,
         orgId: projects.orgId,
         role: projectMembers.role,
         createdAt: projects.createdAt,
@@ -70,7 +69,7 @@ export async function createOrgProject(
   session: Session,
   db: Database,
   orgId: OrgId,
-  data: { name: string; description?: string },
+  data: { name: string },
 ) {
   const membership = await requireOrgMembership(session, db, orgId);
   if (!membership.ok) throw membership.error;
@@ -97,11 +96,7 @@ export async function createOrgProject(
     const { project } = await createProject(
       env,
       { id: membership.context.userId },
-      {
-        orgId,
-        name: data.name,
-        description: data.description,
-      },
+      { orgId, name: data.name },
     );
 
     return project;
@@ -135,7 +130,6 @@ export async function getProject(
       .select({
         id: projects.id,
         name: projects.name,
-        description: projects.description,
         orgId: projects.orgId,
         createdAt: projects.createdAt,
         updatedAt: projects.updatedAt,
@@ -166,7 +160,7 @@ export async function updateProjectById(
   db: Database,
   orgId: OrgId,
   projectId: ProjectId,
-  data: { name?: string; description?: string },
+  data: { name?: string },
 ) {
   const orgMembership = await requireOrgMembership(session, db, orgId);
   if (!orgMembership.ok) throw orgMembership.error;
@@ -181,7 +175,7 @@ export async function updateProjectById(
     const result = await updateProjectCmd(
       env,
       { id: access.context.userId },
-      { projectId, name: data.name, description: data.description },
+      { projectId, name: data.name },
     );
     return { success: true as const, projectId: result.projectId };
   } catch (err) {

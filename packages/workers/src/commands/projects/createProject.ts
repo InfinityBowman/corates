@@ -22,14 +22,12 @@ interface CreateProjectActor {
 interface CreateProjectParams {
   orgId: OrgId;
   name: string;
-  description?: string;
 }
 
 interface CreateProjectResult {
   project: {
     id: string;
     name: string;
-    description: string | null;
     orgId: string;
     createdBy: string;
     role: ProjectRole;
@@ -41,7 +39,7 @@ interface CreateProjectResult {
 export async function createProject(
   env: Env,
   actor: CreateProjectActor,
-  { orgId, name, description }: CreateProjectParams,
+  { orgId, name }: CreateProjectParams,
 ): Promise<CreateProjectResult> {
   const db = createDb(env.DB);
 
@@ -49,7 +47,6 @@ export async function createProject(
   const memberId = crypto.randomUUID() as ProjectMemberId;
   const now = new Date();
   const trimmedName = name?.trim() || '';
-  const trimmedDescription = description?.trim() || null;
 
   if (!trimmedName) {
     throw createValidationError('name', VALIDATION_ERRORS.FIELD_REQUIRED.code, null);
@@ -59,7 +56,6 @@ export async function createProject(
     db.insert(projects).values({
       id: projectId,
       name: trimmedName,
-      description: trimmedDescription,
       orgId,
       createdBy: actor.id,
       createdAt: now,
@@ -100,7 +96,6 @@ export async function createProject(
     project: {
       id: projectId,
       name: trimmedName,
-      description: trimmedDescription,
       orgId,
       createdBy: actor.id,
       role: 'owner',

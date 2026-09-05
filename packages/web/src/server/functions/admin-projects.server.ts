@@ -52,7 +52,6 @@ export async function listAdminProjects(
     .select({
       id: projects.id,
       name: projects.name,
-      description: projects.description,
       orgId: projects.orgId,
       orgName: organization.name,
       orgSlug: organization.slug,
@@ -130,7 +129,6 @@ export async function getAdminProjectDetails(session: Session, db: Database, pro
     .select({
       id: projects.id,
       name: projects.name,
-      description: projects.description,
       orgId: projects.orgId,
       orgName: organization.name,
       orgSlug: organization.slug,

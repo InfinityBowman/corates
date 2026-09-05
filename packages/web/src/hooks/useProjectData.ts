@@ -15,7 +15,7 @@ import {
 
 const EMPTY_STUDIES: never[] = [];
 const EMPTY_MEMBERS: never[] = [];
-const EMPTY_META: ProjectMetaInfo = { name: null, description: null, orgId: null };
+const EMPTY_META: ProjectMetaInfo = { name: null, orgId: null };
 const IDLE_STATE = {
   studies: EMPTY_STUDIES,
   members: EMPTY_MEMBERS,

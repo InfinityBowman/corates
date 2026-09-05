@@ -75,7 +75,7 @@ Both Workers share:
 
 ### Storage
 
-- **D1**: SQLite database for users, project metadata (id, name, description), and access control (project_members table). Source of truth for authorization.
+- **D1**: SQLite database for users, project metadata (id, name), and access control (project_members table). Source of truth for authorization.
 - **Durable Objects**:
   - **WorkspaceDO**: Persistent DO storage for the row collections containing all project content (studies, checklists, answers). One workspace per project; membership and project metadata stay in D1.
   - **UserSession**: Stores pending notifications when users are offline, manages WebSocket connections for real-time delivery. One UserSession per user.

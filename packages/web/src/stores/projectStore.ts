@@ -93,7 +93,6 @@ export interface OutcomeEntry {
 
 export interface ProjectMeta {
   name?: string;
-  description?: string | null;
   orgId?: string;
   outcomes: OutcomeEntry[];
   updatedAt?: number;

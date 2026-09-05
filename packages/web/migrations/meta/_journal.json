@@ -64,6 +64,13 @@
       "when": 1788438647006,
       "tag": "0008_notifications",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1788644309919,
+      "tag": "0009_drop_project_description",
+      "breakpoints": true
     }
   ]
 }

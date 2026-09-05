@@ -24,7 +24,6 @@ import type { BuiltOrg } from './org.js';
 export interface BuiltProject {
   id: ProjectId;
   name: string;
-  description: string | null;
   orgId: OrgId | null;
   createdBy: UserId;
   createdAt: number;
@@ -96,7 +95,6 @@ export async function buildProject(options: BuildProjectOptions = {}): Promise<B
   const projectDefaults = {
     id: projectId,
     name: projectName,
-    description: options.project?.description || `Description for ${projectName}`,
     orgId: org.id,
     createdBy: owner.id,
     createdAt: ts,

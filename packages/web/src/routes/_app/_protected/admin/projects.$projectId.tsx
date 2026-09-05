@@ -146,9 +146,6 @@ function ProjectDetailPage() {
               </div>
               <div>
                 <h1 className='text-foreground text-2xl font-bold'>{projectData.project.name}</h1>
-                {projectData.project.description && (
-                  <p className='text-muted-foreground mt-1'>{projectData.project.description}</p>
-                )}
                 <div className='text-muted-foreground mt-2 flex items-center gap-4 text-sm'>
                   <Link
                     to={'/admin/orgs/$orgId' as string}
