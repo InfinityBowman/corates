@@ -396,6 +396,14 @@
   }
 }
 
+/* Modal Radix dialogs set pointer-events: none on body. The Google Picker
+   mounts its dialog and backdrop directly on body, so re-enable them or the
+   picker cannot be clicked while a sheet is open. */
+.picker-dialog,
+.picker-dialog-bg {
+  pointer-events: auto;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
