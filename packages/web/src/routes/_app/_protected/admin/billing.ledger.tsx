@@ -4,7 +4,13 @@ import { ExternalLinkIcon, FilterIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useAdminBillingLedger } from '@/hooks/useAdminQueries';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
-import { DashboardHeader, AdminBox, AdminDataTable, CopyButton } from '@/components/admin/ui';
+import {
+  DashboardHeader,
+  AdminBox,
+  AdminDataTable,
+  CopyButton,
+  type AdminColumnDef,
+} from '@/components/admin/ui';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -16,7 +22,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { formatDateTime } from '@/lib/formatDate';
-import type { ColumnDef } from '@tanstack/react-table';
 
 interface LedgerEntry {
   receivedAt?: string | number;
@@ -107,7 +112,7 @@ function AdminBillingLedgerPage() {
   const entries = data?.entries || [];
   const stats = data?.stats || {};
 
-  const columns = useMemo<ColumnDef<LedgerEntry, unknown>[]>(
+  const columns = useMemo<AdminColumnDef<LedgerEntry>[]>(
     () => [
       {
         accessorKey: 'receivedAt',
