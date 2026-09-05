@@ -17,7 +17,7 @@ This setup provides comprehensive user authentication using Better Auth with mul
 - Two-factor authentication (TOTP with backup codes)
 - User data stored in D1 database via Drizzle ORM
 - Session management with secure cookies (7-day expiry)
-- Rate limiting on auth endpoints via Cloudflare domain-level rules (Better Auth's built-in limiter is disabled)
+- Rate limiting on every endpoint via Cloudflare domain-level rules (Better Auth's built-in limiter is disabled)
 - Admin features with user impersonation
 - Account linking and merging
 - WebSocket authentication support
