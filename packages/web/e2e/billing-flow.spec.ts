@@ -83,6 +83,22 @@ async function fillStripeCheckout(page: Page) {
   });
 }
 
+// Leaving Checkout while Stripe is still attaching its cross-origin iframes
+// hits a Chromium race on Linux that leaves the next document with a 0x0
+// viewport, so every element on our cancel page reads as hidden. networkidle
+// cannot be the settle signal: the route prefetches our own page fired are
+// still in flight when the navigation happens and never resolve on Stripe's
+// origin, so the page stays permanently busy.
+async function waitForCheckoutFramesToSettle(page: Page) {
+  let previous = 0;
+  for (let i = 0; i < 20; i++) {
+    const count = page.frames().length;
+    if (count > 0 && count === previous) return;
+    previous = count;
+    await page.waitForTimeout(500);
+  }
+}
+
 async function clickPlanButton(page: Page, planName: string) {
   await page.goto('/settings/plans');
   await page.waitForLoadState('networkidle');
@@ -105,11 +121,7 @@ test.describe('Billing flows', () => {
     await clickPlanButton(page, 'Starter Team');
     await page.waitForURL(/checkout\.stripe\.com/, { timeout: 30_000 });
 
-    // Leaving Checkout while Stripe is still attaching its cross-origin iframes
-    // hits a Chromium race on Linux that leaves the next document with a 0x0
-    // viewport, so every element on our cancel page reads as hidden. Let the
-    // page settle before clicking the back arrow.
-    await page.waitForLoadState('networkidle');
+    await waitForCheckoutFramesToSettle(page);
     await page.locator('header a').first().click();
 
     // Should be back on billing page with canceled banner
