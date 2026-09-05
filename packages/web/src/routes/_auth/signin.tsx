@@ -12,6 +12,7 @@ import { PasswordInput } from '@/components/ui/password-input';
 import { Input } from '@/components/ui/input';
 import { ErrorMessage } from '@/components/auth/ErrorMessage';
 import { PrimaryButton, AuthLink } from '@/components/auth/AuthButtons';
+import { Button } from '@/components/ui/button';
 import {
   GoogleButton,
   OrcidButton,
@@ -34,9 +35,9 @@ const MAGIC_LINK_ERROR_CODES = new Set(['INVALID_TOKEN', 'EXPIRED_TOKEN']);
 // this page comes back with this code instead of a silently created account
 const SIGNUP_DISABLED_CODE = 'SIGNUP_DISABLED';
 
-const SOCIAL_IDENTITY_LABELS: Record<string, string> = {
-  [LOGIN_METHODS.GOOGLE]: 'Google account',
-  [LOGIN_METHODS.ORCID]: 'ORCID iD',
+const SOCIAL_IDENTITIES: Record<string, { label: string; logo: string }> = {
+  [LOGIN_METHODS.GOOGLE]: { label: 'Google account', logo: '/logos/google.svg' },
+  [LOGIN_METHODS.ORCID]: { label: 'ORCID iD', logo: '/logos/orcid.svg' },
 };
 
 export const Route = createFileRoute('/_auth/signin')({
@@ -54,7 +55,7 @@ function SignInPage() {
   const [blockedProvider] = useState(() =>
     searchErrorCode === SIGNUP_DISABLED_CODE ? getLastLoginMethod() : null,
   );
-  const blockedProviderLabel = blockedProvider ? SOCIAL_IDENTITY_LABELS[blockedProvider] : null;
+  const blockedIdentity = blockedProvider ? SOCIAL_IDENTITIES[blockedProvider] : null;
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -227,26 +228,35 @@ function SignInPage() {
 
           <LastLoginHint />
 
-          {blockedProviderLabel && (
-            <Alert variant='warning'>
-              <TriangleAlertIcon />
-              <div>
-                <AlertTitle>No CoRATES account uses that {blockedProviderLabel}</AlertTitle>
-                <AlertDescription>
-                  If you signed up another way, sign in with that method below so you keep your
-                  projects. New to CoRATES?{' '}
-                  <AuthLink
-                    href='/signup'
-                    onClick={e => {
-                      e.preventDefault();
-                      handleCreateAccount();
-                    }}
-                  >
-                    Create an account with your {blockedProviderLabel}
-                  </AuthLink>
-                </AlertDescription>
+          {blockedIdentity && (
+            <div
+              role='status'
+              className='border-border flex flex-col gap-3 rounded-lg border px-4 py-3 sm:flex-row sm:items-center'
+            >
+              <img
+                src={blockedIdentity.logo}
+                alt=''
+                aria-hidden='true'
+                className='size-4 shrink-0 self-start sm:self-center'
+              />
+              <div className='flex-1 space-y-0.5'>
+                <p className='text-foreground text-sm font-medium'>
+                  No account uses this {blockedIdentity.label}
+                </p>
+                <p className='text-muted-foreground text-xs'>
+                  Use the sign-in method for your existing account. You can connect your{' '}
+                  {blockedIdentity.label} later in Settings.
+                </p>
               </div>
-            </Alert>
+              <Button
+                size='sm'
+                onClick={handleCreateAccount}
+                disabled={googleLoading || orcidLoading}
+                className='shrink-0 self-start sm:self-center'
+              >
+                Create account
+              </Button>
+            </div>
           )}
 
           {magicLinkFailed && (
