@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { CheckIcon, XIcon, ChevronRightIcon, ArrowLeftIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
-  getSkippedQuestionsCached,
+  getConsensusSkippedQuestionsCached,
   hasNavItemValue,
   isNavItemAgreement,
   getGroupedNavigationItems,
@@ -36,10 +36,13 @@ function getDomainQuestionDisplayValue(
   domainKey: string,
   questionKey: string,
   finalAnswers: any,
+  comparison: any,
 ): string {
   const answer = finalAnswers?.[domainKey]?.answers?.[questionKey]?.answer;
   if (answer) return answer;
-  return getSkippedQuestionsCached(finalAnswers).has(questionKey) ? 'Skipped' : 'Not set';
+  return getConsensusSkippedQuestionsCached(finalAnswers, comparison).has(questionKey) ?
+      'Skipped'
+    : 'Not set';
 }
 
 /**
@@ -76,12 +79,12 @@ interface ROB2SummaryViewProps {
 /**
  * Get display value for any nav item
  */
-function getDisplayValue(item: any, finalAnswers: any): string {
+function getDisplayValue(item: any, finalAnswers: any, comparison: any): string {
   if (item.type === NAV_ITEM_TYPES.PRELIMINARY) {
     return getPreliminaryDisplayValue(item.key, finalAnswers);
   }
   if (item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION) {
-    return getDomainQuestionDisplayValue(item.domainKey, item.key, finalAnswers);
+    return getDomainQuestionDisplayValue(item.domainKey, item.key, finalAnswers, comparison);
   }
   if (item.type === NAV_ITEM_TYPES.DOMAIN_DIRECTION) {
     return getDirectionDisplayValue(item.domainKey, finalAnswers);
@@ -156,9 +159,9 @@ export function ROB2SummaryView({
             {/* Section Items */}
             <div className='divide-border-subtle divide-y'>
               {group.items.map((item: any) => {
-                const hasAnswer = hasNavItemValue(item, finalAnswers);
+                const hasAnswer = hasNavItemValue(item, finalAnswers, comparison);
                 const agreement = isNavItemAgreement(item, comparison);
-                const displayVal = getDisplayValue(item, finalAnswers);
+                const displayVal = getDisplayValue(item, finalAnswers, comparison);
 
                 return (
                   <button

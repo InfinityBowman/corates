@@ -176,7 +176,7 @@ function QuestionPill({
 }: QuestionPillProps) {
   const isCurrentPage = currentPage === globalIndex;
   const agreement = isNavItemAgreement(item, comparison);
-  const hasValue = hasNavItemValue(item, finalAnswers);
+  const hasValue = hasNavItemValue(item, finalAnswers, comparison);
 
   const isDirection =
     item.type === NAV_ITEM_TYPES.DOMAIN_DIRECTION || item.type === NAV_ITEM_TYPES.OVERALL_DIRECTION;

@@ -10,7 +10,6 @@ import type { Judgement, ChecklistState } from '@corates/shared/checklists/rob2'
 
 // Re-export functions from shared package with original names for registry compatibility
 export const scoreRob2Domain = rob2.scoreRob2Domain;
-export const getRequiredQuestions = rob2.getRequiredQuestions;
 const scoreAllDomains = rob2.scoreAllDomains;
 
 interface SmartScoringDomain {

@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import { ROB2_CHECKLIST, getDomainQuestions } from './checklist-map';
 import { SignallingQuestion } from './SignallingQuestion';
 import { DomainJudgement, JudgementBadge } from './DomainJudgement';
-import { getRequiredQuestions } from './checklist.js';
 import {
   useWorkspaceProjectId,
   useAnswerValue,
@@ -11,7 +10,7 @@ import {
   useRob2DomainScore,
 } from '@/project/workspace-data';
 import type { ChecklistAnswerInput } from '@corates/shared/sync';
-import type { DomainAnswers } from '@corates/shared/checklists/rob2';
+import { getSkippedDomainQuestions, type DomainAnswers } from '@corates/shared/checklists/rob2';
 
 interface DomainSectionProps {
   studyId: string;
@@ -46,23 +45,11 @@ export function DomainSection({
   const flat = useChecklistAnswerMap(projectId, checklistId);
   const writers = useAnswerWriters(projectId, studyId, checklistId);
 
-  const answersForRequired = (() => {
-    const a: DomainAnswers = {};
-    for (const qKey of questionKeys) {
-      a[qKey] = { answer: (flat[qKey] as string) ?? null };
-    }
-    return a;
-  })();
-
-  const requiredQuestions = getRequiredQuestions(domainKey, answersForRequired);
-
-  const hasAnyAnswer = questionKeys.some(qKey => flat[qKey] != null);
-
-  const isQuestionSkippable = (qKey: string) =>
-    hasAnyAnswer &&
-    requiredQuestions.size > 0 &&
-    !requiredQuestions.has(qKey) &&
-    flat[qKey] == null;
+  const domainAnswers: DomainAnswers = {};
+  for (const qKey of questionKeys) {
+    domainAnswers[qKey] = { answer: (flat[qKey] as string) ?? null };
+  }
+  const skippedQuestions = getSkippedDomainQuestions(domainKey, domainAnswers);
 
   const completionStatus = {
     answered: questionKeys.filter(k => flat[k] != null).length,
@@ -124,7 +111,7 @@ export function DomainSection({
                 question={qDef}
                 disabled={disabled}
                 showComment={showComments}
-                isSkippable={isQuestionSkippable(qKey)}
+                isSkippable={skippedQuestions.has(qKey)}
               />
             ))}
           </div>

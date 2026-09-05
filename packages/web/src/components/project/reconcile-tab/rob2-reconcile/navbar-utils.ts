@@ -6,9 +6,11 @@ import {
   ROB2_CHECKLIST,
   PRELIMINARY_SECTION,
   getActiveDomainKeys,
+  getDomainQuestions,
+  getReachableQuestions,
   getSkippedQuestions,
 } from '@corates/shared/checklists/rob2';
-import type { ROB2Domain } from '@corates/shared/checklists/rob2';
+import type { DomainAnswers, ROB2Domain } from '@corates/shared/checklists/rob2';
 
 /**
  * Navigation item types
@@ -68,10 +70,16 @@ interface ComparisonField {
   isAgreement: boolean;
 }
 
+interface ComparisonQuestion {
+  key: string;
+  reviewer1?: { answer: string | null };
+  reviewer2?: { answer: string | null };
+}
+
 interface ComparisonDomain {
   questions?: {
-    agreements?: Array<{ key: string }>;
-    disagreements?: Array<{ key: string }>;
+    agreements?: ComparisonQuestion[];
+    disagreements?: ComparisonQuestion[];
   };
   directionMatch?: boolean;
   reviewer1?: { judgement?: string; direction?: string };
@@ -211,6 +219,65 @@ export function getSkippedQuestionsCached(checklist: FinalAnswers | null | undef
 }
 
 /**
+ * Consensus questions off the scoring path, with the reviewers' agreed answers
+ * standing in for consensus answers not yet recorded, so the skip shows before
+ * the walk reaches the question.
+ */
+export function getConsensusSkippedQuestions(
+  finalAnswers: FinalAnswers,
+  comparison: Comparison | null,
+): Set<string> {
+  const skipped = new Set<string>();
+  const preliminary = finalAnswers?.preliminary as Record<string, unknown> | undefined;
+  const isAdhering = preliminary?.aim === 'ADHERING';
+
+  for (const domainKey of getActiveDomainKeys(isAdhering)) {
+    const finalDomain = finalAnswers?.[domainKey] as Record<string, unknown> | undefined;
+    const finalDomainAnswers = finalDomain?.answers as
+      Record<string, { answer?: string | null }> | undefined;
+
+    const agreed = new Map<string, string>();
+    for (const q of comparison?.domains?.[domainKey]?.questions?.agreements ?? []) {
+      const a1 = q.reviewer1?.answer ?? null;
+      if (a1 != null && a1 === (q.reviewer2?.answer ?? null)) agreed.set(q.key, a1);
+    }
+
+    const questionKeys = Object.keys(getDomainQuestions(domainKey));
+    const effective: DomainAnswers = {};
+    for (const qKey of questionKeys) {
+      effective[qKey] = { answer: finalDomainAnswers?.[qKey]?.answer ?? agreed.get(qKey) ?? null };
+    }
+
+    const reachable = getReachableQuestions(domainKey, effective);
+    for (const qKey of questionKeys) {
+      if (!reachable.has(qKey) && finalDomainAnswers?.[qKey]?.answer == null) {
+        skipped.add(qKey);
+      }
+    }
+  }
+  return skipped;
+}
+
+const consensusSkipCache = new WeakMap<
+  object,
+  { comparison: Comparison | null; skipped: Set<string> }
+>();
+
+/** Cached per (finalAnswers, comparison) pair: answer checks run inside render loops. */
+export function getConsensusSkippedQuestionsCached(
+  finalAnswers: FinalAnswers | null | undefined,
+  comparison: Comparison | null | undefined,
+): Set<string> {
+  if (!finalAnswers || typeof finalAnswers !== 'object') return new Set();
+  const comp = comparison ?? null;
+  const cached = consensusSkipCache.get(finalAnswers);
+  if (cached && cached.comparison === comp) return cached.skipped;
+  const skipped = getConsensusSkippedQuestions(finalAnswers, comp);
+  consensusSkipCache.set(finalAnswers, { comparison: comp, skipped });
+  return skipped;
+}
+
+/**
  * Check if a preliminary field has been answered in the final answers
  */
 function hasPreliminaryAnswer(key: string, finalAnswers: FinalAnswers): boolean {
@@ -246,18 +313,21 @@ function hasDomainQuestionAnswer(
  *
  * Predicted direction of bias is optional, so direction items never block
  * completion -- they are reconcilable but not required.
- * Domain questions that are derived-skipped (off the scoring path of a
- * completed domain) are satisfied without a stored answer -- the official
- * response scales have no NA option for the non-conditional questions.
+ * Domain questions off the consensus scoring path are satisfied without a
+ * stored answer -- the official scales have no NA option for most of them.
  */
-export function hasNavItemAnswer(navItem: NavItem, finalAnswers: FinalAnswers): boolean {
+export function hasNavItemAnswer(
+  navItem: NavItem,
+  finalAnswers: FinalAnswers,
+  comparison: Comparison | null,
+): boolean {
   switch (navItem.type) {
     case NAV_ITEM_TYPES.PRELIMINARY:
       return hasPreliminaryAnswer(navItem.key, finalAnswers);
     case NAV_ITEM_TYPES.DOMAIN_QUESTION:
       return (
         hasDomainQuestionAnswer(navItem.domainKey, navItem.key, finalAnswers) ||
-        getSkippedQuestionsCached(finalAnswers).has(navItem.key)
+        getConsensusSkippedQuestionsCached(finalAnswers, comparison).has(navItem.key)
       );
     case NAV_ITEM_TYPES.DOMAIN_DIRECTION:
     case NAV_ITEM_TYPES.OVERALL_DIRECTION:
@@ -272,14 +342,18 @@ export function hasNavItemAnswer(navItem: NavItem, finalAnswers: FinalAnswers): 
  * it never blocks completion), this reflects real value presence. Use it for the
  * "answered" check indicators so an unset direction is not rendered as filled.
  */
-export function hasNavItemValue(navItem: NavItem, finalAnswers: FinalAnswers): boolean {
+export function hasNavItemValue(
+  navItem: NavItem,
+  finalAnswers: FinalAnswers,
+  comparison: Comparison | null,
+): boolean {
   switch (navItem.type) {
     case NAV_ITEM_TYPES.PRELIMINARY:
       return hasPreliminaryAnswer(navItem.key, finalAnswers);
     case NAV_ITEM_TYPES.DOMAIN_QUESTION:
       return (
         hasDomainQuestionAnswer(navItem.domainKey, navItem.key, finalAnswers) ||
-        getSkippedQuestionsCached(finalAnswers).has(navItem.key)
+        getConsensusSkippedQuestionsCached(finalAnswers, comparison).has(navItem.key)
       );
     case NAV_ITEM_TYPES.DOMAIN_DIRECTION: {
       const domain = finalAnswers?.[navItem.domainKey] as Record<string, unknown> | undefined;
@@ -367,7 +441,7 @@ export function getDomainProgress(
     let hasDisagreements = false;
 
     for (const item of group.items) {
-      if (hasNavItemAnswer(item, finalAnswers)) {
+      if (hasNavItemAnswer(item, finalAnswers, comparison)) {
         answered++;
       }
       if (!isNavItemAgreement(item, comparison)) {
@@ -402,9 +476,10 @@ export function getFirstUnansweredInSection(
   sectionProgress: SectionProgress,
   navItems: NavItem[],
   finalAnswers: FinalAnswers,
+  comparison: Comparison | null,
 ): number {
   for (const item of sectionProgress.items) {
-    if (!hasNavItemAnswer(item, finalAnswers)) {
+    if (!hasNavItemAnswer(item, finalAnswers, comparison)) {
       return navItems.indexOf(item);
     }
   }

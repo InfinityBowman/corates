@@ -149,13 +149,13 @@ export function useReconciliationEngine({
   // -----------------------------------------------------------------------
 
   const allAnswered = useMemo(
-    () => navItems.every(item => adapter.hasAnswer(item, finalAnswers)),
-    [adapter, navItems, finalAnswers],
+    () => navItems.every(item => adapter.hasAnswer(item, finalAnswers, comparison)),
+    [adapter, navItems, finalAnswers, comparison],
   );
 
   const answeredCount = useMemo(
-    () => navItems.filter(item => adapter.hasAnswer(item, finalAnswers)).length,
-    [adapter, navItems, finalAnswers],
+    () => navItems.filter(item => adapter.hasAnswer(item, finalAnswers, comparison)).length,
+    [adapter, navItems, finalAnswers, comparison],
   );
 
   const summaryStats: ReconciliationSummaryStats = useMemo(() => {
@@ -253,7 +253,7 @@ export function useReconciliationEngine({
     if (!item) return;
 
     // Auto-fill from reviewer1 if item is unanswered and reviewers agree
-    const hasAns = adapter.hasAnswer(item, finalAnswers);
+    const hasAns = adapter.hasAnswer(item, finalAnswers, comparison);
     const isAgree = adapter.isAgreement(item, comparison);
     if (!hasAns && isAgree) {
       adapter.autoFillFromReviewer1(item, checklist1, updateChecklistAnswer, setTextValue);

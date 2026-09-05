@@ -64,6 +64,7 @@ export function ROB2Navbar({ store }: ROB2NavbarProps) {
           progress,
           store.navItems,
           store.finalAnswers,
+          store.comparison,
         );
         if (targetIndex >= 0) {
           store.goToPage?.(targetIndex);
