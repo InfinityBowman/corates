@@ -93,3 +93,14 @@ export async function markAllRead(db: Database, session: Session): Promise<{ suc
     .where(and(eq(notifications.userId, session.user.id), isNull(notifications.readAt)));
   return { success: true };
 }
+
+export async function dismiss(
+  db: Database,
+  session: Session,
+  { id }: { id: string },
+): Promise<{ success: true }> {
+  await db
+    .delete(notifications)
+    .where(and(eq(notifications.userId, session.user.id), eq(notifications.id, id)));
+  return { success: true };
+}

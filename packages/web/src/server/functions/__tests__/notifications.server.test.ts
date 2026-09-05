@@ -12,6 +12,7 @@ import {
   getUnreadCount,
   markRead,
   markAllRead,
+  dismiss,
 } from '@/server/functions/notifications.server';
 
 function sessionFor(userId: UserId): Session {
@@ -99,6 +100,24 @@ describe('notification server functions', () => {
 
     await markAllRead(db, sessionFor(alice.id));
     expect(await getUnreadCount(db, sessionFor(alice.id))).toBe(0);
+    expect(await getUnreadCount(db, sessionFor(bob.id))).toBe(1);
+  });
+
+  it('dismisses only the session user row', async () => {
+    const alice = await buildUser();
+    const bob = await buildUser();
+    const base = Date.now() - 60_000;
+    await insertRows(alice.id, 2, base);
+    await insertRows(bob.id, 1, base);
+    const db = createDb(env.DB);
+
+    await dismiss(db, sessionFor(bob.id), { id: `${alice.id}-n0` });
+    expect(await getUnreadCount(db, sessionFor(alice.id))).toBe(2);
+
+    await dismiss(db, sessionFor(alice.id), { id: `${alice.id}-n0` });
+    expect((await listNotifications(db, sessionFor(alice.id))).items.map(n => n.id)).toEqual([
+      `${alice.id}-n1`,
+    ]);
     expect(await getUnreadCount(db, sessionFor(bob.id))).toBe(1);
   });
 });

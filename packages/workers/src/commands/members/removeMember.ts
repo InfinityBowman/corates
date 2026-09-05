@@ -12,8 +12,11 @@ import { eq, and } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS } from '@corates/shared';
 import { kickWorkspaceUser, refreshWorkspaceSessions } from '../../sync/admin';
 import { notifyUser } from '../lib/notifications';
+import { createNotification } from '../notifications';
+import { displayName } from '../lib/displayName';
 import { getProjectMembership, requireSafeRemoval } from '../../policies';
 import type { Env } from '../../types';
+import type { UserId } from '@corates/shared/ids';
 
 interface RemoveMemberActor {
   id: string;
@@ -68,12 +71,19 @@ export async function removeMember(
         .where(eq(projects.id, projectId))
         .get();
 
+      const projectName = project?.name || 'Unknown Project';
+
       await notifyUser(env, userId, {
         type: 'project-membership-removed',
         orgId,
         projectId,
-        projectName: project?.name || 'Unknown Project',
+        projectName,
         removedBy: actor.name || actor.email || 'Unknown',
+      });
+      await createNotification(env, {
+        userId: userId as UserId,
+        type: 'project.removed',
+        data: { projectId, projectName, actorName: await displayName(db, actor.id) },
       });
     } catch (err) {
       captureError(err, {

@@ -6,6 +6,7 @@ import {
   getUnreadCount as getUnreadCountImpl,
   markRead as markReadImpl,
   markAllRead as markAllReadImpl,
+  dismiss as dismissImpl,
 } from './notifications.server';
 
 const cursorSchema = z.object({ createdAt: z.number().int(), id: z.string().min(1) });
@@ -36,3 +37,8 @@ export const markNotificationsRead = createServerFn({ method: 'POST' })
 export const markAllNotificationsRead = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
   .handler(async ({ context: { db, session } }) => markAllReadImpl(db, session));
+
+export const dismissNotification = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
+  .validator(z.object({ id: z.string().min(1) }))
+  .handler(async ({ data, context: { db, session } }) => dismissImpl(db, session, data));

@@ -51,6 +51,12 @@ export const queryKeys = {
     unreadCount: ['notifications', 'unreadCount'] as const,
   },
 
+  // Invitation queries
+  invitations: {
+    /** Pending, unexpired invitations addressed to the current user's email */
+    pendingForMe: ['invitations', 'pendingForMe'] as const,
+  },
+
   // Members queries
   members: {
     /** Current org's members */

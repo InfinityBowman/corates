@@ -25,6 +25,8 @@ export interface NotificationPayloads {
     acceptedByName: string;
     acceptedByEmail: string;
   };
+  'project.removed': { projectId: string; projectName: string; actorName: string };
+  'project.deleted': { projectId: string; projectName: string; actorName: string };
 }
 
 export type NotificationType = keyof NotificationPayloads;

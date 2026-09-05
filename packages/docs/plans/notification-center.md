@@ -1,8 +1,8 @@
 # Plan: Notification Center
 
-**Status:** In Progress (Phase 0 and 1 implemented, Phase 2 next)
+**Status:** In Progress (Phases 0 to 2 implemented, Phase 3 deferred)
 **Created:** 2026-09-01
-**Last Updated:** 2026-09-03
+**Last Updated:** 2026-09-05
 
 ---
 
@@ -49,11 +49,11 @@ A **notification** is a D1 row addressed to one user. Creating one also pushes a
 
 ### Store data, render copy on the client
 
-A row stores `type` plus a small JSON `data` payload (ids and display names captured at creation time). The client owns a `type -> { title, body, href }` renderer map. Copy changes never touch rows, and the row never needs updating when the referenced thing changes state.
+A row stores `type` plus a small JSON `data` payload (ids and display names captured at creation time). The client owns a `type -> { title, actor, action, icon, destructive, href }` renderer map. Copy changes never touch rows, and the row never needs updating when the referenced thing changes state.
 
 ### Invitations link to the invite page
 
-`invitation.received` links to `/invite/$token`. That page already renders pending, expired, accepted, and cancelled states, so the notification does not need to track invitation status. Accept happens there. "Decline" is simply dismissing (marking read); there is no server-side decline.
+`invitation.received` links to `/invite/$token`. That page already renders pending, expired, accepted, and cancelled states, so the notification does not need to track invitation status. Accept happens there or from the dashboard ghost card, which is also where the invitee can decline (Phase 2).
 
 ### Server state lives in TanStack Query
 
@@ -127,14 +127,20 @@ index (userId, readAt)             // unread count
 
 ### Phase 2: Remaining membership events and the dashboard card
 
+Implemented. Both project payloads carry `actorName`, looked up from the `user` table by the command (`commands/lib/displayName.ts`, same precedence as invitation emails), because the row copy reads "Otto removed you from the project" and the callers only pass an actor id.
+
 **Tasks:**
 
-- [ ] `project.removed` from `removeMember.ts` (not on self-removal), `project.role_changed` from `updateMemberRole.ts`, `project.deleted` from `deleteProject.ts` (all members except the actor). Each is a one-call addition next to the existing event push.
-- [ ] Dashboard "Needs your attention" card: pending, unexpired `project_invitations` whose email matches the signed-in user, each linking to `/invite/$token`. This is a plain invitations query, not a notification, and it covers the case where the account was created after the invitation was sent (so no `invitation.received` row exists).
+- [x] `project.removed` from `removeMember.ts` (not on self-removal) and `project.deleted` from `deleteProject.ts` (all members except the actor). Each is a one-call addition next to the existing event push, covered by command tests.
+- [x] Pending invitations as ghost cards in the dashboard projects grid (`InvitationCard`): pending, unexpired `project_invitations` whose email matches the signed-in user, each with Accept and Decline. Served by `listMyPendingInvitations`, keyed on `queryKeys.invitations.pendingForMe`, invalidated when an `invitation.received` push arrives and after an accept on the invite page. This is a plain invitations query, not a notification, and it covers the case where the account was created after the invitation was sent (so no `invitation.received` row exists). The existing-user invitation e2e accepts from the card.
+- [x] Invitee-side decline (`declineInvitation`): deletes the row, like the inviter's cancel, scoped to the session email. Acts immediately with a toast, no confirmation. The inviter is not notified, so a stranger's invitation gives them no signal about the account.
+- [x] Popover redesign after manual testing. Each row is object first, actor second: line one is the project name, line two is "Actor did what", with the actor's initials as an avatar and a small type glyph pinned to its corner (`NotificationRow`). Unread is a dot plus medium weight rather than a tint. Hovering or focusing a row swaps the timestamp for mark-read and dismiss; dismiss (`dismissNotification`) deletes the row for the session user. The header carries the unread count, an All / Unread filter, and mark-all-read as an icon button. No keyboard shortcuts; researchers are not shortcut users.
 
 ### Phase 3: Reviewer assignment (deferred, needs its own design)
 
 Assignment changes flow through the sync engine, not commands. The plausible hook is the workspace DO after a transform touching `assignedTo` passes verification, which needs the acting user id and the previous value at that point. Scope this separately once Phases 1 and 2 have shipped; it should reuse `createNotification` unchanged.
+
+Also a candidate for this phase: admin announcements. There is no broadcast today; an `announcement` type with an admin-only server function that fans out one row per user would reuse `createNotification` and the renderer map as they are.
 
 ## Technical Details
 
@@ -145,16 +151,17 @@ Assignment changes flow through the sync engine, not commands. The plausible hoo
 
 ## Success Criteria
 
-- [ ] Inviter sees an in-app notification, live, when an invitation is accepted (unit, server function, and e2e coverage).
-- [ ] An existing user who is invited sees the invitation in the bell and can accept from there.
-- [ ] Unread count and read state persist across reload and across devices.
-- [ ] No push event type is unhandled on the client; the union is the single source of truth.
+- [x] Inviter sees an in-app notification, live, when an invitation is accepted (unit, server function, and e2e coverage).
+- [x] An existing user who is invited sees the invitation in the bell and can accept from there.
+- [x] Unread count and read state persist across reload and across devices.
+- [x] No push event type is unhandled on the client; the union is the single source of truth.
 - [x] `packages/docs/architecture/diagrams/02-system-architecture.md` "UserSession Notification Flow" updated to show persistence. `07-api-actions.md` has no invitation flows, so nothing there conflicts.
 - [ ] No regressions in existing membership event handling.
 
 ## Decisions
 
-- Dashboard surface: only the actionable pending-invitations card (Phase 2); no recent-notifications feed.
+- Dashboard surface: pending invitations render as ghost cards inside the projects grid rather than a separate section (Phase 2); no recent-notifications feed.
+- Rows for accepted, declined, or cancelled invitations stay in the list until dismissed or trimmed; the invite page shows the final state on click. Dismiss is the per-row escape hatch.
 - Retention: 200 rows per user, trimmed on insert (`MAX_NOTIFICATIONS_PER_USER`).
 - No unread-count polling; every socket (re)connect invalidates the notification queries.
 

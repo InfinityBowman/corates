@@ -51,6 +51,9 @@ export function useMembershipSync() {
         break;
       case 'notification:new':
         prependNotification(event.notification);
+        if (event.notification.type === 'invitation.received') {
+          queryClient.invalidateQueries({ queryKey: queryKeys.invitations.pendingForMe });
+        }
         break;
       default:
         assertNever(event);
