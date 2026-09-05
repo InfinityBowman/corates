@@ -16,6 +16,7 @@ import {
   AdminSection,
   AdminDataTable,
   ServerPagination,
+  type AdminColumnDef,
 } from '@/components/admin/ui';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -27,7 +28,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { ColumnDef } from '@tanstack/react-table';
 
 interface ProjectRow {
   id: string;
@@ -92,7 +92,7 @@ function AdminProjectList() {
     setPage(1);
   };
 
-  const columns = useMemo<ColumnDef<ProjectRow, unknown>[]>(
+  const columns = useMemo<AdminColumnDef<ProjectRow>[]>(
     () => [
       {
         accessorKey: 'name',
