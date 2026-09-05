@@ -17,6 +17,7 @@ import { project } from '@/project';
 import { useProjectContext } from '../ProjectContext';
 import { saveFormState } from '@/lib/formStatePersistence.js';
 import { ProjectSetupPanel } from '../setup/ProjectSetupPanel';
+import { ProjectSetupCard } from '../setup/ProjectSetupCard';
 
 export function AllStudiesTab() {
   const { projectId, getMember, isOwner } = useProjectContext();
@@ -100,6 +101,8 @@ export function AllStudiesTab() {
           <p className='text-muted-foreground/70'>Loading studies...</p>
         </div>
       )}
+
+      {studies.length > 0 && showSetup && <ProjectSetupCard />}
 
       {studies.length > 0 && (
         <div className='flex flex-col gap-2'>
