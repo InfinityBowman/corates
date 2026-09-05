@@ -279,16 +279,6 @@ export interface ReconciliationAdapter<
   /** Reset all answers to empty/default state */
   resetAllAnswers: (updateChecklistAnswer: (sectionKey: string, data: unknown) => void) => void;
 
-  /**
-   * Optional: called after each navigation step.
-   * ROBINS-I uses this to auto-set NA for skipped questions; ROB2 stamps at finalize instead.
-   */
-  onAfterNavigate?: (
-    navItems: TNavItem[],
-    finalAnswers: TFinalAnswers,
-    updateChecklistAnswer: (sectionKey: string, data: unknown) => void,
-  ) => void;
-
   // --- Rendering ---
 
   /**

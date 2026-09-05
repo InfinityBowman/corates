@@ -203,11 +203,7 @@ export function getGroupedNavigationItems(navItems: NavItem[]): NavGroup[] {
 
 const skippedQuestionsCache = new WeakMap<object, Set<string>>();
 
-/**
- * Derived skipped questions for a checklist (off the scoring path of a
- * completed domain), cached per checklist object because answer checks run
- * inside render loops.
- */
+/** Per-checklist skips for the reviewer panels, cached because answer checks run inside render loops. */
 export function getSkippedQuestionsCached(checklist: FinalAnswers | null | undefined): Set<string> {
   if (!checklist || typeof checklist !== 'object') return new Set();
   let cached = skippedQuestionsCache.get(checklist);
@@ -219,9 +215,9 @@ export function getSkippedQuestionsCached(checklist: FinalAnswers | null | undef
 }
 
 /**
- * Consensus questions off the scoring path, with the reviewers' agreed answers
- * standing in for consensus answers not yet recorded, so the skip shows before
- * the walk reaches the question.
+ * Consensus skips, with the reviewers' agreed answers standing in for consensus
+ * answers not yet recorded so the skip shows before the walk reaches the
+ * question. A consensus answer always wins; a disagreement assumes nothing.
  */
 export function getConsensusSkippedQuestions(
   finalAnswers: FinalAnswers,
@@ -309,12 +305,9 @@ function hasDomainQuestionAnswer(
 }
 
 /**
- * Check if a navigation item has been answered/completed.
- *
- * Predicted direction of bias is optional, so direction items never block
- * completion -- they are reconcilable but not required.
- * Domain questions off the consensus scoring path are satisfied without a
- * stored answer -- the official scales have no NA option for most of them.
+ * Whether a nav item is satisfied. Direction is optional and never blocks
+ * completion. Off-path domain questions are satisfied without a stored answer,
+ * since most of their scales have no NA option.
  */
 export function hasNavItemAnswer(
   navItem: NavItem,
@@ -336,11 +329,9 @@ export function hasNavItemAnswer(
 }
 
 /**
- * Check if a navigation item actually has a stored value.
- *
- * Unlike hasNavItemAnswer (which treats optional direction as always satisfied so
- * it never blocks completion), this reflects real value presence. Use it for the
- * "answered" check indicators so an unset direction is not rendered as filled.
+ * Whether a nav item holds a real value. Unlike hasNavItemAnswer, an unset
+ * direction is not satisfied here, so the check indicators do not show it as
+ * filled.
  */
 export function hasNavItemValue(
   navItem: NavItem,
@@ -483,6 +474,5 @@ export function getFirstUnansweredInSection(
       return navItems.indexOf(item);
     }
   }
-  // All answered - return first item in section
   return navItems.indexOf(sectionProgress.items[0]);
 }

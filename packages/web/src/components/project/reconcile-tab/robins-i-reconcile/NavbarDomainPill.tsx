@@ -2,8 +2,8 @@ import { useMemo } from 'react';
 import { CheckIcon, ChevronRightIcon } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import {
+  getConsensusSkippedQuestionsCached,
   getSectionLabel,
-  getSkippedQuestionsCached,
   hasNavItemValue,
   isNavItemAgreement,
   getNavItemPillStyle,
@@ -160,10 +160,10 @@ function QuestionPill({
 }: QuestionPillProps) {
   const isCurrentPage = currentPage === globalIndex;
   const isAgreement = isNavItemAgreement(item, comparison);
-  const hasValue = hasNavItemValue(item, finalAnswers);
+  const hasValue = hasNavItemValue(item, finalAnswers, comparison);
   const isSkipped =
     item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION &&
-    getSkippedQuestionsCached(finalAnswers).has(item.key);
+    getConsensusSkippedQuestionsCached(finalAnswers, comparison).has(item.key);
 
   const pillStyle = getNavItemPillStyle(isCurrentPage, hasValue, isAgreement);
   const tooltip = getNavItemTooltip(item, hasValue, isAgreement, isSkipped);

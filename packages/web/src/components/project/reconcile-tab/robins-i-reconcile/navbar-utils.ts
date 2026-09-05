@@ -8,7 +8,12 @@ import {
   getActiveDomainKeys,
   ROBINS_I_CHECKLIST,
 } from '@/components/checklist/ROBINSIChecklist/checklist-map';
-import { getSkippedQuestions } from '@corates/shared/checklists/robins-i';
+import {
+  getReachableQuestions,
+  getSkippedQuestions,
+  isSectionBCritical,
+} from '@corates/shared/checklists/robins-i';
+import type { DomainAnswers } from '@corates/shared/checklists/robins-i';
 
 type ROBINSQuestion = ReturnType<typeof getDomainQuestions>[string];
 
@@ -65,10 +70,16 @@ interface SectionProgress {
   items: NavItem[];
 }
 
+interface ComparisonQuestion {
+  key: string;
+  reviewer1?: { answer?: string | null };
+  reviewer2?: { answer?: string | null };
+}
+
 interface ComparisonDomain {
   questions?: {
-    agreements?: Array<{ key: string }>;
-    disagreements?: Array<{ key: string }>;
+    agreements?: ComparisonQuestion[];
+    disagreements?: ComparisonQuestion[];
   };
   judgementMatch?: boolean;
   directionMatch?: boolean;
@@ -78,8 +89,8 @@ interface ComparisonDomain {
 
 interface Comparison {
   sectionB?: {
-    agreements?: Array<{ key: string }>;
-    disagreements?: Array<{ key: string }>;
+    agreements?: ComparisonQuestion[];
+    disagreements?: ComparisonQuestion[];
   };
   domains?: Record<string, ComparisonDomain>;
   overall?: {
@@ -179,11 +190,7 @@ export function getGroupedNavigationItems(navItems: NavItem[]): NavGroup[] {
 
 const skippedQuestionsCache = new WeakMap<object, Set<string>>();
 
-/**
- * Derived skipped questions for a checklist (early-complete domains and
- * Section B Critical), cached per checklist object because answer checks run
- * inside render loops.
- */
+/** Per-checklist skips for the reviewer panels, cached because answer checks run inside render loops. */
 export function getSkippedQuestionsCached(checklist: FinalAnswers | null | undefined): Set<string> {
   if (!checklist || typeof checklist !== 'object') return new Set();
   let cached = skippedQuestionsCache.get(checklist);
@@ -192,6 +199,84 @@ export function getSkippedQuestionsCached(checklist: FinalAnswers | null | undef
     skippedQuestionsCache.set(checklist, cached);
   }
   return cached;
+}
+
+function agreedAnswers(agreements: ComparisonQuestion[] | undefined): Map<string, string> {
+  const agreed = new Map<string, string>();
+  for (const q of agreements ?? []) {
+    const a1 = q.reviewer1?.answer ?? null;
+    if (a1 != null && a1 === (q.reviewer2?.answer ?? null)) agreed.set(q.key, a1);
+  }
+  return agreed;
+}
+
+/**
+ * Consensus skips, with the reviewers' agreed answers standing in for consensus
+ * answers not yet recorded so the skip shows before the walk reaches the
+ * question. A consensus answer always wins; a disagreement assumes nothing.
+ * An agreed Section B Critical rating skips every domain question.
+ */
+export function getConsensusSkippedQuestions(
+  finalAnswers: FinalAnswers,
+  comparison: Comparison | null,
+): Set<string> {
+  const skipped = new Set<string>();
+  const sectionC = finalAnswers?.sectionC as { isPerProtocol?: boolean } | undefined;
+  const finalSectionB = finalAnswers?.sectionB as
+    Record<string, { answer?: string | null }> | undefined;
+
+  const agreedSectionB = agreedAnswers(comparison?.sectionB?.agreements);
+  const sectionBCritical = isSectionBCritical({
+    b2: { answer: finalSectionB?.b2?.answer ?? agreedSectionB.get('b2') ?? null },
+    b3: { answer: finalSectionB?.b3?.answer ?? agreedSectionB.get('b3') ?? null },
+  });
+
+  for (const domainKey of getActiveDomainKeys(sectionC?.isPerProtocol || false)) {
+    const finalDomain = finalAnswers?.[domainKey] as Record<string, unknown> | undefined;
+    const finalDomainAnswers = finalDomain?.answers as
+      Record<string, { answer?: string | null }> | undefined;
+    const questionKeys = Object.keys(getDomainQuestions(domainKey));
+
+    if (sectionBCritical) {
+      for (const qKey of questionKeys) {
+        if (finalDomainAnswers?.[qKey]?.answer == null) skipped.add(qKey);
+      }
+      continue;
+    }
+
+    const agreed = agreedAnswers(comparison?.domains?.[domainKey]?.questions?.agreements);
+    const effective: DomainAnswers = {};
+    for (const qKey of questionKeys) {
+      effective[qKey] = { answer: finalDomainAnswers?.[qKey]?.answer ?? agreed.get(qKey) ?? null };
+    }
+
+    const reachable = getReachableQuestions(domainKey, effective);
+    for (const qKey of questionKeys) {
+      if (!reachable.has(qKey) && finalDomainAnswers?.[qKey]?.answer == null) {
+        skipped.add(qKey);
+      }
+    }
+  }
+  return skipped;
+}
+
+const consensusSkipCache = new WeakMap<
+  object,
+  { comparison: Comparison | null; skipped: Set<string> }
+>();
+
+/** Cached per (finalAnswers, comparison) pair: answer checks run inside render loops. */
+export function getConsensusSkippedQuestionsCached(
+  finalAnswers: FinalAnswers | null | undefined,
+  comparison: Comparison | null | undefined,
+): Set<string> {
+  if (!finalAnswers || typeof finalAnswers !== 'object') return new Set();
+  const comp = comparison ?? null;
+  const cached = consensusSkipCache.get(finalAnswers);
+  if (cached && cached.comparison === comp) return cached.skipped;
+  const skipped = getConsensusSkippedQuestions(finalAnswers, comp);
+  consensusSkipCache.set(finalAnswers, { comparison: comp, skipped });
+  return skipped;
 }
 
 /**
@@ -216,22 +301,22 @@ function hasDomainQuestionAnswer(
 }
 
 /**
- * Check if a navigation item has been answered/completed.
- *
- * Predicted direction of bias is optional (there is no "not applicable" option),
- * so direction items never block completion -- they are reconcilable but not required.
- * Domain questions that are derived-skipped (off the scoring path of a completed
- * domain, or behind a Section B Critical rating) are satisfied without a stored
- * answer -- the official response scales have no NA option for many of them.
+ * Whether a nav item is satisfied. Direction is optional and never blocks
+ * completion. Off-path domain questions are satisfied without a stored answer,
+ * since many of their scales have no NA option.
  */
-export function hasNavItemAnswer(navItem: NavItem, finalAnswers: FinalAnswers): boolean {
+export function hasNavItemAnswer(
+  navItem: NavItem,
+  finalAnswers: FinalAnswers,
+  comparison: Comparison | null,
+): boolean {
   switch (navItem.type) {
     case NAV_ITEM_TYPES.SECTION_B:
       return hasSectionBAnswer(navItem.key, finalAnswers);
     case NAV_ITEM_TYPES.DOMAIN_QUESTION:
       return (
         hasDomainQuestionAnswer(navItem.domainKey, navItem.key, finalAnswers) ||
-        getSkippedQuestionsCached(finalAnswers).has(navItem.key)
+        getConsensusSkippedQuestionsCached(finalAnswers, comparison).has(navItem.key)
       );
     case NAV_ITEM_TYPES.DOMAIN_DIRECTION:
     case NAV_ITEM_TYPES.OVERALL_DIRECTION:
@@ -240,20 +325,22 @@ export function hasNavItemAnswer(navItem: NavItem, finalAnswers: FinalAnswers): 
 }
 
 /**
- * Check if a navigation item actually has a stored value.
- *
- * Unlike hasNavItemAnswer (which treats optional direction as always satisfied so
- * it never blocks completion), this reflects real value presence. Use it for the
- * "answered" check indicators so an unset direction is not rendered as filled.
+ * Whether a nav item holds a real value. Unlike hasNavItemAnswer, an unset
+ * direction is not satisfied here, so the check indicators do not show it as
+ * filled.
  */
-export function hasNavItemValue(navItem: NavItem, finalAnswers: FinalAnswers): boolean {
+export function hasNavItemValue(
+  navItem: NavItem,
+  finalAnswers: FinalAnswers,
+  comparison: Comparison | null,
+): boolean {
   switch (navItem.type) {
     case NAV_ITEM_TYPES.SECTION_B:
       return hasSectionBAnswer(navItem.key, finalAnswers);
     case NAV_ITEM_TYPES.DOMAIN_QUESTION:
       return (
         hasDomainQuestionAnswer(navItem.domainKey, navItem.key, finalAnswers) ||
-        getSkippedQuestionsCached(finalAnswers).has(navItem.key)
+        getConsensusSkippedQuestionsCached(finalAnswers, comparison).has(navItem.key)
       );
     case NAV_ITEM_TYPES.DOMAIN_DIRECTION: {
       const domain = finalAnswers?.[navItem.domainKey] as Record<string, unknown> | undefined;
@@ -341,17 +428,6 @@ export function getNavItemTooltip(
 }
 
 /**
- * Check if Section B indicates critical risk (B2 or B3 = Y/PY)
- */
-export function isSectionBCritical(
-  sectionB: Record<string, { answer?: string | null }> | undefined,
-): boolean {
-  const b2Answer = sectionB?.b2?.answer;
-  const b3Answer = sectionB?.b3?.answer;
-  return ['Y', 'PY'].includes(b2Answer!) || ['Y', 'PY'].includes(b3Answer!);
-}
-
-/**
  * Get abbreviated label for a section/domain pill
  */
 export function getSectionLabel(sectionKey: string): string {
@@ -383,7 +459,7 @@ export function getDomainProgress(
     let hasDisagreements = false;
 
     group.items.forEach(item => {
-      if (hasNavItemAnswer(item, finalAnswers)) {
+      if (hasNavItemAnswer(item, finalAnswers, comparison)) {
         answered++;
       }
       if (!isNavItemAgreement(item, comparison)) {
@@ -418,9 +494,10 @@ export function getFirstUnansweredInSection(
   sectionProgress: SectionProgress,
   navItems: NavItem[],
   finalAnswers: FinalAnswers,
+  comparison: Comparison | null,
 ): number {
   for (const item of sectionProgress.items) {
-    if (!hasNavItemAnswer(item, finalAnswers)) {
+    if (!hasNavItemAnswer(item, finalAnswers, comparison)) {
       return navItems.indexOf(item);
     }
   }

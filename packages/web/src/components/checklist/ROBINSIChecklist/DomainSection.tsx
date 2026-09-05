@@ -10,6 +10,7 @@ import {
   useRobinsIDomainScore,
 } from '@/project/workspace-data';
 import type { ChecklistAnswerInput } from '@corates/shared/sync';
+import { getSkippedDomainQuestions, type DomainAnswers } from '@corates/shared/checklists/robins-i';
 
 interface DomainSectionProps {
   studyId: string;
@@ -46,8 +47,11 @@ export function DomainSection({
   const flat = useChecklistAnswerMap(projectId, checklistId);
   const writers = useAnswerWriters(projectId, studyId, checklistId);
 
-  const isEarlyComplete = autoComplete && autoJudgement !== null;
-  const isQuestionSkippable = (qKey: string) => isEarlyComplete && flat[qKey] == null;
+  const domainAnswers: DomainAnswers = {};
+  for (const qKey of questionKeys) {
+    domainAnswers[qKey] = { answer: (flat[qKey] as string) ?? null };
+  }
+  const skippedQuestions = getSkippedDomainQuestions(domainKey, domainAnswers);
 
   const completionStatus = {
     answered: questionKeys.filter(k => flat[k] != null).length,
@@ -73,7 +77,7 @@ export function DomainSection({
         question={qDef}
         disabled={disabled}
         showComment={showComments}
-        isSkippable={isQuestionSkippable(qKey)}
+        isSkippable={skippedQuestions.has(qKey)}
       />
     ));
 

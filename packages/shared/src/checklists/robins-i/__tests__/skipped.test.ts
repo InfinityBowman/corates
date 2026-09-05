@@ -1,9 +1,10 @@
 /**
  * Tests for ROBINS-I skipped-question derivation
  *
- * Skipped = domain early-complete (judgement determined) + no stored answer,
- * or Section B Critical which skips all domain questions. NA stamping is only
- * allowed for questions whose response scale includes NA.
+ * Skipped = no way of answering the open questions can bring the question
+ * onto the decision table's path + no stored answer, or Section B Critical
+ * which skips all domain questions. NA stamping is only allowed for questions
+ * whose response scale includes NA.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -57,9 +58,15 @@ describe('isSectionBCritical', () => {
 });
 
 describe('getSkippedDomainQuestions', () => {
-  it('returns empty when the domain is not early-complete', () => {
+  it('keeps questions on a pending branch out of the skipped set', () => {
     expect(getSkippedDomainQuestions('domain5', answers({ d5_1: 'N' })).size).toBe(0);
     expect(getSkippedDomainQuestions('domain5', undefined).size).toBe(0);
+  });
+
+  it('derives skips before the domain is scoring-complete', () => {
+    // 3.1=SN settles part A, pruning 3.2, while part B is still open.
+    const skipped = getSkippedDomainQuestions('domain3', answers({ d3_1: 'SN' }));
+    expect([...skipped]).toEqual(['d3_2']);
   });
 
   it('derives unanswered questions once the judgement is determined', () => {
