@@ -14,7 +14,6 @@ import { showToast } from '@/lib/toast';
 import { SubscriptionCard } from '@/components/billing/SubscriptionCard';
 import { UsageCard } from '@/components/billing/UsageCard';
 import { InvoicesList } from '@/components/billing/InvoicesList';
-import { PaymentIssueBanner } from '@/components/billing/PaymentIssueBanner';
 import { SettingsPage, SettingsSection } from './primitives';
 
 function PlanSkeleton() {
@@ -92,7 +91,6 @@ export function BillingSettings() {
   }, []);
 
   const usage = usageQuery.data ?? { projects: 0, collaborators: 0 };
-  const subscriptionStatus = subscription?.status || 'active';
 
   return (
     <SettingsPage
@@ -104,12 +102,6 @@ export function BillingSettings() {
         </Button>
       }
     >
-      <PaymentIssueBanner
-        status={subscriptionStatus}
-        onUpdatePayment={handleManageSubscription}
-        loading={portalLoading}
-      />
-
       {checkoutOutcome === 'success' && (
         <Alert variant='success'>
           <CheckCircleIcon />

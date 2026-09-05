@@ -1,23 +1,34 @@
-/** Banner shown while a subscription payment needs attention. */
+/** Banner shown on every app page while a subscription payment needs attention. */
 
+import { useState } from 'react';
 import { TriangleAlertIcon, CreditCardIcon } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { useSubscription } from '@/hooks/useSubscription';
+import { redirectToPortal } from '@/api/billing';
 
-interface PaymentIssueBannerProps {
-  status: string;
-  onUpdatePayment: () => void;
-  loading: boolean;
-}
+export function PaymentIssueBanner() {
+  const { status } = useSubscription();
+  const [loading, setLoading] = useState(false);
 
-export function PaymentIssueBanner({ status, onUpdatePayment, loading }: PaymentIssueBannerProps) {
   const isPastDue = status === 'past_due';
   const isIncomplete = status === 'incomplete';
   const isUnpaid = status === 'unpaid';
   const hasIssue = isPastDue || isIncomplete || isUnpaid;
 
   if (!hasIssue) return null;
+
+  async function handleUpdatePayment() {
+    setLoading(true);
+    try {
+      await redirectToPortal();
+    } catch (error) {
+      const { handleError } = await import('@/lib/error-utils');
+      await handleError(error, { toastTitle: 'Portal Error' });
+      setLoading(false);
+    }
+  }
 
   const title =
     isPastDue ? 'Payment failed'
@@ -32,31 +43,33 @@ export function PaymentIssueBanner({ status, onUpdatePayment, loading }: Payment
     : 'Your subscription is unpaid. Please update your payment method to restore access.';
 
   return (
-    <Alert variant='destructive'>
-      <TriangleAlertIcon />
-      <div className='flex flex-1 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
-        <div>
-          <AlertTitle>{title}</AlertTitle>
-          <AlertDescription>{message}</AlertDescription>
-          {isPastDue && (
-            <AlertDescription className='mt-2 text-xs'>
-              Your access will continue until the end of your billing period, but you may lose
-              access to premium features if payment is not updated.
-            </AlertDescription>
-          )}
+    <div className='px-4 pt-4 sm:px-6'>
+      <Alert variant='destructive'>
+        <TriangleAlertIcon />
+        <div className='flex flex-1 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
+          <div>
+            <AlertTitle>{title}</AlertTitle>
+            <AlertDescription>{message}</AlertDescription>
+            {isPastDue && (
+              <AlertDescription className='mt-2 text-xs'>
+                Your access will continue until the end of your billing period, but you may lose
+                access to premium features if payment is not updated.
+              </AlertDescription>
+            )}
+          </div>
+          <Button
+            variant='destructive'
+            className='shrink-0'
+            onClick={handleUpdatePayment}
+            disabled={loading}
+          >
+            {loading ?
+              <Spinner size='sm' variant='white' data-icon='inline-start' />
+            : <CreditCardIcon data-icon='inline-start' />}
+            {loading ? 'Opening...' : 'Update payment method'}
+          </Button>
         </div>
-        <Button
-          variant='destructive'
-          className='shrink-0'
-          onClick={onUpdatePayment}
-          disabled={loading}
-        >
-          {loading ?
-            <Spinner size='sm' variant='white' data-icon='inline-start' />
-          : <CreditCardIcon data-icon='inline-start' />}
-          {loading ? 'Opening...' : 'Update payment method'}
-        </Button>
-      </div>
-    </Alert>
+      </Alert>
+    </div>
   );
 }
