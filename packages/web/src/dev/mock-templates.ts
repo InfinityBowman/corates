@@ -740,7 +740,6 @@ export interface MockProjectData {
   version: number;
   meta: {
     name: string;
-    description: string;
     createdAt: number;
     updatedAt: number;
     outcomes?: Record<string, { name: string; createdAt: number }>;
@@ -756,7 +755,6 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
     version: 1,
     meta: {
       name: 'Empty Test Project',
-      description: 'A project with no studies or members',
       createdAt: timestamp(),
       updatedAt: timestamp(),
     },
@@ -1244,7 +1242,6 @@ const MOCK_TEMPLATES: Record<string, TemplateFunction> = {
       version: 1,
       meta: {
         name: 'Full Workflow Project',
-        description: 'Complex project with studies in various workflow states',
         createdAt: now,
         updatedAt: now,
         outcomes: {

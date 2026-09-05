@@ -341,7 +341,6 @@ const newProject = await db
   .values({
     id: crypto.randomUUID(),
     name: 'My Project',
-    description: 'Project description',
     createdBy: userId,
   })
   .returning()
@@ -718,7 +717,6 @@ await seedUser({
 await seedProject({
   id: 'project-1',
   name: 'Test Project',
-  description: 'A test project',
   createdBy: 'user-1',
   createdAt: Math.floor(Date.now() / 1000),
   updatedAt: Math.floor(Date.now() / 1000),
