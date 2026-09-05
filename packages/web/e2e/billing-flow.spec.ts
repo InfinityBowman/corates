@@ -105,7 +105,11 @@ test.describe('Billing flows', () => {
     await clickPlanButton(page, 'Starter Team');
     await page.waitForURL(/checkout\.stripe\.com/, { timeout: 30_000 });
 
-    // Click the back arrow on Stripe Checkout to cancel
+    // Leaving Checkout while Stripe is still attaching its cross-origin iframes
+    // hits a Chromium race on Linux that leaves the next document with a 0x0
+    // viewport, so every element on our cancel page reads as hidden. Let the
+    // page settle before clicking the back arrow.
+    await page.waitForLoadState('networkidle');
     await page.locator('header a').first().click();
 
     // Should be back on billing page with canceled banner
