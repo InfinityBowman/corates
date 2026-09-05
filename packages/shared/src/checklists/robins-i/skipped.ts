@@ -1,12 +1,11 @@
 /**
  * ROBINS-I Skipped Question Derivation
  *
- * ROBINS-I has no explicit required-question tree; the completion UI lets
- * reviewers stop answering a domain once its judgement is determined by the
- * decision table ("early complete"), and skips all domain questions when
- * Section B rates the result Critical (B2 or B3 = Y/PY). This module mirrors
- * those rules so reading surfaces (reconciliation, summaries) can distinguish
- * a legitimately skipped question from an unanswered one.
+ * A question counts as "skipped" when no way of answering the domain's open
+ * questions can bring it onto the decision table's path, and it has no stored
+ * answer. A question further down a branch that is still pending is not
+ * skipped. Section B rating the result Critical (B2 or B3 = Y/PY) skips every
+ * domain question.
  *
  * Skipped state is derived, never stored. Only questions whose official
  * response scale includes NA (the WITH_NA_* response types) may carry a
@@ -16,6 +15,58 @@
 import { RESPONSE_TYPES, getActiveDomainKeys, getDomainQuestions } from './schema.js';
 import type { DomainAnswers } from './scoring-helpers.js';
 import { scoreRobinsDomain } from './scoring.js';
+
+/**
+ * Questions on the active path of a domain's decision table: the ones the
+ * scorer consults given the current answers. Derived by recording reads, so
+ * the table lives only in the scorers.
+ */
+export function getRequiredQuestions(
+  domainKey: string,
+  answers: DomainAnswers | undefined,
+): Set<string> {
+  const read = new Set<string>();
+  if (!answers) return read;
+
+  const tracked = new Proxy(answers, {
+    get(target, prop) {
+      if (typeof prop === 'string') read.add(prop);
+      return target[prop as string];
+    },
+  });
+  scoreRobinsDomain(domainKey, tracked);
+  return read;
+}
+
+/**
+ * Questions required now or under any way of answering the open required
+ * questions. The complement of getRequiredQuestions mixes questions pruned off
+ * the path with questions further down a branch that is still pending; this
+ * separates them.
+ */
+export function getReachableQuestions(domainKey: string, answers: DomainAnswers): Set<string> {
+  const questions = getDomainQuestions(domainKey);
+  const questionKeys = Object.keys(questions);
+  const reachable = new Set<string>();
+  const seen = new Set<string>();
+
+  const visit = (state: DomainAnswers) => {
+    const stateKey = questionKeys.map(qKey => state[qKey]?.answer ?? '').join('|');
+    if (seen.has(stateKey)) return;
+    seen.add(stateKey);
+
+    for (const qKey of getRequiredQuestions(domainKey, state)) {
+      reachable.add(qKey);
+      if (state[qKey]?.answer != null) continue;
+      for (const option of RESPONSE_TYPES[questions[qKey].responseType]) {
+        visit({ ...state, [qKey]: { answer: option } });
+      }
+    }
+  };
+
+  visit(answers);
+  return reachable;
+}
 
 interface QuestionAnswerState {
   answer?: string | null;
@@ -63,11 +114,9 @@ export function getSkippedDomainQuestions(
   const skipped = new Set<string>();
   if (!answers) return skipped;
 
-  const scoring = scoreRobinsDomain(domainKey, answers);
-  if (!scoring.isComplete || scoring.judgement === null) return skipped;
-
+  const reachable = getReachableQuestions(domainKey, answers);
   for (const qKey of Object.keys(getDomainQuestions(domainKey))) {
-    if (answers[qKey]?.answer == null) {
+    if (!reachable.has(qKey) && answers[qKey]?.answer == null) {
       skipped.add(qKey);
     }
   }
@@ -77,7 +126,7 @@ export function getSkippedDomainQuestions(
 /**
  * Derive all skipped questions of a checklist (active domains only).
  * When Section B is Critical every unanswered domain question is skipped;
- * otherwise each domain contributes its early-complete skips.
+ * otherwise each domain contributes its off-path skips.
  * Question keys are unique across domains, so a flat set is safe.
  */
 export function getSkippedQuestions(checklist: ChecklistState | null): Set<string> {

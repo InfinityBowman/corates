@@ -3,7 +3,7 @@ import { CheckIcon, ArrowLeftIcon, ArrowRightIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { RESPONSE_LABELS } from '@/components/checklist/ROBINSIChecklist/checklist-map';
 import {
-  getSkippedQuestionsCached,
+  getConsensusSkippedQuestionsCached,
   hasNavItemValue,
   isNavItemAgreement,
   getGroupedNavigationItems,
@@ -188,12 +188,12 @@ export function RobinsISummaryView({
               {group.items.map((item: any) => {
                 const itemIndex = navItems?.indexOf(item) ?? -1;
                 const agreement = isNavItemAgreement(item, comparison);
-                const answered = hasNavItemValue(item, finalAnswers);
+                const answered = hasNavItemValue(item, finalAnswers, comparison);
                 const value = getItemValue(item, finalAnswers);
                 const skipped =
                   !value &&
                   item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION &&
-                  getSkippedQuestionsCached(finalAnswers).has(item.key);
+                  getConsensusSkippedQuestionsCached(finalAnswers, comparison).has(item.key);
 
                 return (
                   <div

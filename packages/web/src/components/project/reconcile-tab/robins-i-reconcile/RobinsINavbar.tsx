@@ -53,6 +53,7 @@ export function RobinsINavbar({ store }: RobinsINavbarProps) {
           progress,
           store.navItems,
           store.finalAnswers,
+          store.comparison,
         );
         if (targetIndex >= 0) {
           store.goToPage?.(targetIndex);

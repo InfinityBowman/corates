@@ -271,9 +271,6 @@ export function useReconciliationEngine({
     } else {
       setViewModeRaw('summary');
     }
-
-    // Run adapter-specific post-navigation side effects (ROB2 auto-NA)
-    adapter.onAfterNavigate?.(navItems, finalAnswers, updateChecklistAnswer);
   }, [
     adapter,
     navItems,

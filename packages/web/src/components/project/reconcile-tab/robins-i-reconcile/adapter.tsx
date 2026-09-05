@@ -28,11 +28,8 @@ import {
   type ComparisonResult,
 } from '@/components/checklist/ROBINSIChecklist/checklist-compare.js';
 import {
-  getSkippedDomainQuestions,
-  questionHasNaOption,
-} from '@corates/shared/checklists/robins-i';
-import {
   buildNavigationItems,
+  getConsensusSkippedQuestionsCached,
   getSkippedQuestionsCached,
   hasNavItemAnswer as robinsHasNavItemAnswer,
   isNavItemAgreement as robinsIsNavItemAgreement,
@@ -111,8 +108,12 @@ function compare(
 // Adapter: answer checking
 // ---------------------------------------------------------------------------
 
-function hasAnswer(item: RobinsINavItem, finalAnswers: ROBINSIChecklist): boolean {
-  return robinsHasNavItemAnswer(item, finalAnswers);
+function hasAnswer(
+  item: RobinsINavItem,
+  finalAnswers: ROBINSIChecklist,
+  comparison: ComparisonResult | null,
+): boolean {
+  return robinsHasNavItemAnswer(item, finalAnswers, comparison);
 }
 
 function isAgreement(item: RobinsINavItem, comparison: ComparisonResult | null): boolean {
@@ -201,39 +202,6 @@ function resetAllAnswers(updateChecklistAnswer: (sectionKey: string, data: unkno
 }
 
 // ---------------------------------------------------------------------------
-// Adapter: onAfterNavigate (stamp NA where the official scale allows it)
-// ---------------------------------------------------------------------------
-
-function onAfterNavigate(
-  navItems: RobinsINavItem[],
-  finalAnswers: ROBINSIChecklist,
-  updateChecklistAnswer: (sectionKey: string, data: unknown) => void,
-): void {
-  // When Section B rates the result Critical the assessment officially ends
-  // there -- domain questions stay untouched rather than being stamped NA.
-  const sectionB = finalAnswers?.sectionB as unknown as Parameters<typeof isSectionBCritical>[0];
-  if (isSectionBCritical(sectionB)) {
-    return;
-  }
-
-  const domainKeys = new Set<string>();
-  for (const item of navItems) {
-    if (item.type === NAV_ITEM_TYPES.DOMAIN_QUESTION) domainKeys.add(item.domainKey);
-  }
-
-  for (const domainKey of domainKeys) {
-    const domain = finalAnswers[domainKey] as ROBINSIDomainState | undefined;
-    for (const qKey of getSkippedDomainQuestions(domainKey, domain?.answers)) {
-      // Only questions with NA on the official response scale get a stored NA;
-      // the rest stay null and read as skipped through derivation.
-      if (questionHasNaOption(domainKey, qKey)) {
-        updateDomainQuestionAnswer(updateChecklistAnswer, domainKey, qKey, 'NA');
-      }
-    }
-  }
-}
-
-// ---------------------------------------------------------------------------
 // Adapter: renderPage
 // ---------------------------------------------------------------------------
 
@@ -246,6 +214,7 @@ function renderPage(
   >,
 ) {
   const { currentItem, checklist1: c1, checklist2: c2, finalAnswers: fa, comparison } = context;
+  const skippable = getConsensusSkippedQuestionsCached(fa, comparison);
 
   if (currentItem.type === NAV_ITEM_TYPES.SECTION_B) {
     const c1SectionB = c1?.sectionB;
@@ -328,7 +297,7 @@ function renderPage(
         finalData={faDomain?.answers?.[questionKey]}
         reviewer1Skipped={getSkippedQuestionsCached(c1).has(questionKey)}
         reviewer2Skipped={getSkippedQuestionsCached(c2).has(questionKey)}
-        finalSkipped={getSkippedQuestionsCached(fa).has(questionKey)}
+        finalSkipped={skippable.has(questionKey)}
         finalCommentKey={textFieldKey({
           type: 'ROBINS_I',
           sectionKey: domainKey,
@@ -513,7 +482,6 @@ export const robinsIAdapter: ReconciliationAdapter<
 
   autoFillFromReviewer1,
   resetAllAnswers,
-  onAfterNavigate,
 
   renderPage,
   NavbarComponent: RobinsINavbarAdapter,
