@@ -1,8 +1,9 @@
 /**
  * Tests for ROB-2 skipped-question derivation
  *
- * Skipped = domain scoring-complete + question off the scoring path + no
- * stored answer. NA stamping is only allowed for WITH_NA questions.
+ * Skipped = no way of answering the open questions can bring the question
+ * onto the scoring path + no stored answer. NA stamping is only allowed for
+ * WITH_NA questions.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -42,9 +43,17 @@ describe('questionHasNaOption', () => {
 });
 
 describe('getSkippedDomainQuestions', () => {
-  it('returns empty when the domain is not scoring-complete', () => {
+  it('keeps questions on a pending branch out of the skipped set', () => {
     expect(getSkippedDomainQuestions('domain1', answers({ d1_2: 'Y' })).size).toBe(0);
+    expect(getSkippedDomainQuestions('domain1', answers({})).size).toBe(0);
     expect(getSkippedDomainQuestions('domain1', undefined).size).toBe(0);
+  });
+
+  it('derives skips before the domain is scoring-complete', () => {
+    // 2.1=N and 2.2=N prune 2.3-2.5 while 2.6 is still open; 2.7 hinges on
+    // 2.6 so it stays pending.
+    const skipped = getSkippedDomainQuestions('domain2a', answers({ d2a_1: 'N', d2a_2: 'N' }));
+    expect([...skipped].sort()).toEqual(['d2a_3', 'd2a_4', 'd2a_5']);
   });
 
   it('derives off-path STANDARD questions when 1.2=N forces High', () => {

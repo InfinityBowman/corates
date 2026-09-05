@@ -7,7 +7,7 @@ import {
   PRELIMINARY_SECTION,
   getActiveDomainKeys,
   getDomainQuestions,
-  getRequiredQuestions,
+  getReachableQuestions,
   getSkippedQuestions,
 } from '@corates/shared/checklists/rob2';
 import type { DomainAnswers, ROB2Domain } from '@corates/shared/checklists/rob2';
@@ -220,8 +220,8 @@ export function getSkippedQuestionsCached(checklist: FinalAnswers | null | undef
 
 /**
  * Consensus questions off the scoring path, with the reviewers' agreed answers
- * standing in for consensus answers not yet recorded. Live path check, not
- * completion-gated, so the skip shows before the walk reaches the question.
+ * standing in for consensus answers not yet recorded, so the skip shows before
+ * the walk reaches the question.
  */
 export function getConsensusSkippedQuestions(
   finalAnswers: FinalAnswers,
@@ -244,17 +244,13 @@ export function getConsensusSkippedQuestions(
 
     const questionKeys = Object.keys(getDomainQuestions(domainKey));
     const effective: DomainAnswers = {};
-    let hasAnyAnswer = false;
     for (const qKey of questionKeys) {
-      const answer = finalDomainAnswers?.[qKey]?.answer ?? agreed.get(qKey) ?? null;
-      effective[qKey] = { answer };
-      if (answer != null) hasAnyAnswer = true;
+      effective[qKey] = { answer: finalDomainAnswers?.[qKey]?.answer ?? agreed.get(qKey) ?? null };
     }
-    if (!hasAnyAnswer) continue;
 
-    const required = getRequiredQuestions(domainKey, effective);
+    const reachable = getReachableQuestions(domainKey, effective);
     for (const qKey of questionKeys) {
-      if (!required.has(qKey) && finalDomainAnswers?.[qKey]?.answer == null) {
+      if (!reachable.has(qKey) && finalDomainAnswers?.[qKey]?.answer == null) {
         skipped.add(qKey);
       }
     }

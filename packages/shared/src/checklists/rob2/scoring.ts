@@ -5,7 +5,7 @@
  * the top-level dispatcher and aggregation functions.
  */
 
-import { JUDGEMENTS, type DomainKey } from './schema.js';
+import { JUDGEMENTS, RESPONSE_TYPES, getDomainQuestions, type DomainKey } from './schema.js';
 import type {
   ScoringResult,
   DomainAnswers,
@@ -26,7 +26,6 @@ import {
 // Re-export everything from sub-modules so the public API stays unchanged
 export * from './scoring-helpers.js';
 export * from './scoring-domains.js';
-export * from './scoring-required.js';
 
 /**
  * Main entry point: score a ROB-2 domain
@@ -55,6 +54,58 @@ export function scoreRob2Domain(
     default:
       return { judgement: null, isComplete: false, ruleId: null };
   }
+}
+
+/**
+ * Questions on the active scoring path for a domain: the ones the scorer
+ * consults given the current answers. Derived by recording reads, so the
+ * decision tree lives only in the scorers.
+ */
+export function getRequiredQuestions(
+  domainKey: string,
+  answers: DomainAnswers | undefined,
+): Set<string> {
+  const read = new Set<string>();
+  if (!answers) return read;
+
+  const tracked = new Proxy(answers, {
+    get(target, prop) {
+      if (typeof prop === 'string') read.add(prop);
+      return target[prop as string];
+    },
+  });
+  scoreRob2Domain(domainKey, tracked);
+  return read;
+}
+
+/**
+ * Questions required now or under any way of answering the open required
+ * questions. The complement of getRequiredQuestions mixes questions pruned off
+ * the path with questions further down a branch that is still pending; this
+ * separates them. 3.2 is only off the path once 3.1 is actually Y.
+ */
+export function getReachableQuestions(domainKey: string, answers: DomainAnswers): Set<string> {
+  const questions = getDomainQuestions(domainKey);
+  const questionKeys = Object.keys(questions);
+  const reachable = new Set<string>();
+  const seen = new Set<string>();
+
+  const visit = (state: DomainAnswers) => {
+    const stateKey = questionKeys.map(qKey => state[qKey]?.answer ?? '').join('|');
+    if (seen.has(stateKey)) return;
+    seen.add(stateKey);
+
+    for (const qKey of getRequiredQuestions(domainKey, state)) {
+      reachable.add(qKey);
+      if (state[qKey]?.answer != null) continue;
+      for (const option of RESPONSE_TYPES[questions[qKey].responseType]) {
+        visit({ ...state, [qKey]: { answer: option } });
+      }
+    }
+  };
+
+  visit(answers);
+  return reachable;
 }
 
 /**

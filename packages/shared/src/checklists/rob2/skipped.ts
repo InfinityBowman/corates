@@ -1,9 +1,9 @@
 /**
  * ROB-2 Skipped Question Derivation
  *
- * A question counts as "skipped" when the domain's judgement is already
- * determined by the stored answers (scoring-complete) and the question sits
- * off the active scoring path with no stored answer.
+ * A question counts as "skipped" when no way of answering the domain's open
+ * questions can bring it onto the scoring path, and it has no stored answer.
+ * A question further down a branch that is still pending is not skipped.
  *
  * Skipped state is derived, never stored. The official RoB 2 response scales
  * only include NA for the conditional signalling questions (responseType
@@ -13,8 +13,7 @@
 
 import { getActiveDomainKeys, getDomainQuestions } from './schema.js';
 import type { ChecklistState, DomainAnswers, DomainState } from './scoring-helpers.js';
-import { scoreRob2Domain } from './scoring.js';
-import { getRequiredQuestions } from './scoring-required.js';
+import { getReachableQuestions } from './scoring.js';
 
 /**
  * Whether the official instrument offers NA as a response for this question.
@@ -34,12 +33,9 @@ export function getSkippedDomainQuestions(
   const skipped = new Set<string>();
   if (!answers) return skipped;
 
-  const scoring = scoreRob2Domain(domainKey, answers);
-  if (!scoring.isComplete || scoring.judgement === null) return skipped;
-
-  const required = getRequiredQuestions(domainKey, answers);
+  const reachable = getReachableQuestions(domainKey, answers);
   for (const qKey of Object.keys(getDomainQuestions(domainKey))) {
-    if (!required.has(qKey) && answers[qKey]?.answer == null) {
+    if (!reachable.has(qKey) && answers[qKey]?.answer == null) {
       skipped.add(qKey);
     }
   }

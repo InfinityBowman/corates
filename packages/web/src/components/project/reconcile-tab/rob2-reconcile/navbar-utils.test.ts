@@ -30,7 +30,8 @@ describe('getConsensusSkippedQuestions', () => {
 
     const skipped = getConsensusSkippedQuestions(consensus, compareChecklists(r1, r2));
 
-    expect([...skipped].sort()).toEqual(['d2a_3', 'd2a_4', 'd2a_5', 'd2a_7']);
+    // 2.7 hinges on the unresolved 2.6, so it stays pending rather than skipped.
+    expect([...skipped].sort()).toEqual(['d2a_3', 'd2a_4', 'd2a_5']);
   });
 
   it('lets a consensus answer override the reviewers agreement', () => {
@@ -49,6 +50,20 @@ describe('getConsensusSkippedQuestions', () => {
     const consensus = checklist('domain1', {});
 
     expect(getConsensusSkippedQuestions(consensus, compareChecklists(r1, r2)).size).toBe(0);
+  });
+
+  it('keeps a branch pending while the reviewers disagree on the question that decides it', () => {
+    // Both completions stamped NA on 3.4, but 3.2 and 3.3 hinge on the
+    // unresolved 3.1 and must not read as skipped yet.
+    const r1 = checklist('domain3', { d3_1: 'Y', d3_2: 'NA', d3_3: 'NA', d3_4: 'NA' });
+    const r2 = checklist('domain3', { d3_1: 'N', d3_2: 'N', d3_3: 'N', d3_4: 'NA' });
+    const consensus = checklist('domain3', {});
+
+    expect(getConsensusSkippedQuestions(consensus, compareChecklists(r1, r2)).size).toBe(0);
+
+    const resolved = checklist('domain3', { d3_1: 'Y' });
+    const skipped = getConsensusSkippedQuestions(resolved, compareChecklists(r1, r2));
+    expect([...skipped].sort()).toEqual(['d3_2', 'd3_3', 'd3_4']);
   });
 
   it('never marks a question with a consensus answer as skipped', () => {
