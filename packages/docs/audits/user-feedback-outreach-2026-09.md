@@ -45,9 +45,12 @@ Related context:
    is past tense and carries no implied criticism of the person.
 2. **For active users, ask for a complaint specifically.** "What is the most
    annoying part right now?" gets a real list where "any feedback?" gets nothing.
-3. **Do not lead with a free plan or discount.** Attaching an offer converts a
-   feedback request into a sales email and the answer becomes polite. Offer the
-   comp after they reply, as a thank you.
+3. **Question first, offer second, and the offer is unconditional.** With
+   thirty external users the goal is not clean survey data, it is getting anyone
+   to use the real product and talk. A free Team plan removes the suspected
+   barrier (see "What to watch for") and is the experiment itself. Never phrase
+   it as a trade for feedback; "free plan if you tell me what you think" gets
+   polite non-answers.
 4. **One question per email.** Multiple questions sharply reduce reply rate.
 5. **Send individually, from a personal address.** No marketing tool, no tracking
    pixels, no template footer. Replies must land in an inbox that gets read.
@@ -91,9 +94,13 @@ recovering by hand.
 
 Two consequences:
 
-- **Sharon Duncan is recoverable.** She has an active paid subscription, so
-  Stripe holds her real billing email under customer `cus_UhX3HFTqEqv1cn`. Pull
-  it from the Stripe dashboard before sending email 2.
+- **Sharon Duncan's Stripe record does not help.** Customer `cus_UhX3HFTqEqv1cn`
+  carries the same placeholder (checked 2026-09-05), and her ORCID record has no
+  public email. The probable address is `sfd082@uowmail.edu.au`: a second account
+  created the same day as hers, 2026-06-14, with matching initials. Bridget Kelly
+  (UOW) and Jennifer Norman (NSW Health) registered within two days of her and
+  never joined a project, which looks like intended co-reviewers and a failed
+  invitation. Hold their cohort emails until Sharon replies.
 - **Peter Atef is recovered.** He returned on 2026-09-04, signed in with ORCID,
   then tried Google and was given a second empty account because the placeholder
   email can never match another provider. The duplicate was merged into his
@@ -110,48 +117,53 @@ Two consequences:
 ## Email 1: Sarah
 
 **To:** `szhao@hotmail.co.uk`
-**Send:** immediately, 2026-09-02 or 2026-09-03
-**Subject:** Quick question about your ROBINS-I appraisals
+**Send:** Tuesday 2026-09-08, morning UK time
+**Subject:** Your ROBINS-I appraisals
 
     Hi Sarah,
 
-    I'm Jacob, I build CoRATES. I saw you ran through a batch of ROBINS-I
-    appraisals yesterday and exported them, which is the most anyone has done
-    with it in one sitting in a while.
+    I'm Jacob, I build CoRATES. I noticed you worked through six ROBINS-I
+    appraisals on Wednesday and exported each one, which is more than most
+    people do in a first session, so I wanted to say hello.
 
-    Would you tell me what you're working on, and whether there was anything
-    you wanted it to do that it didn't? I'm especially curious whether you
-    were looking for a way to save the appraisals or have a second reviewer
-    on them, since that part isn't obvious right now.
+    Can I ask what the review is for, and whether there was anything you
+    wanted CoRATES to do that it didn't? I'm particularly curious whether
+    you'd have liked to keep the appraisals together in a project or bring
+    in a second reviewer, because that part isn't obvious from the checklist
+    page.
 
-    No pitch, I just want to know what you needed.
+    If you'd like to try that side of it, I'll set you up on the Team plan
+    at no cost. Just reply and I'll sort it.
 
     Jacob
 
 **Why this one first.** Signed up 2026-09-02 and completed six ROBINS-I
 appraisals with a PDF export after each, between 08:14 and 10:26 CDT, entirely
-in the local `/checklist` tool. Her memory is a day old. The second question is
-the important one: she could not save any of that work, and her answer says
-whether she noticed or cared. Based in Hook, England.
+in the local `/checklist` tool, which is the tool working as intended. Her
+memory is a day old. The second question is the important one: was the
+checklist all she needed, or did she want a project with a second reviewer and
+not find that path. Based in Hook, England.
 
 ---
 
 ## Email 2: Sharon Duncan
 
-**To:** real billing email from Stripe customer `cus_UhX3HFTqEqv1cn`
+**To:** `sfd082@uowmail.edu.au` (probable, see Contactability)
 **Subject:** First Bite SLR
 
     Hi Sharon,
 
-    Jacob here, I built CoRATES. You started a project called First Bite SLR
-    back in June and you're on a paid plan, but I haven't seen you back in the
-    app in a while and I'd really like to know why.
+    Jacob here, I built CoRATES. You set up First Bite SLR back in June and
+    you're on a paid plan, but I haven't seen you in the app since, and I'd
+    rather ask than guess at why.
 
-    Did something get in the way, or did the review move somewhere else?
-    Either answer is useful and I'd rather hear it than guess. If it's
-    something I can fix I'd like the chance to.
+    Did something get in the way, or did the review move elsewhere? Either
+    answer helps. If it was something about CoRATES, I'd like the chance to
+    put it right.
 
-    Happy to refund you if it hasn't been worth it.
+    If it hasn't been useful I'll refund you, no questions asked. And if
+    you'd like to pick it back up, I'll move you onto the Team plan at no
+    charge so there's room for co-reviewers.
 
     Jacob
 
@@ -170,13 +182,16 @@ The refund offer costs 8 USD and signals the question is genuine.
 
     Hi Linda,
 
-    I'm Jacob, the developer behind CoRATES. You were using it steadily through
-    the second half of August and then stopped, and I'm trying to work out
-    whether that's because you finished what you were doing or because you ran
-    into a wall.
+    I'm Jacob, the developer behind CoRATES. You were using it steadily
+    through the second half of August and then stopped, and I'm trying to
+    work out whether that's because you finished what you set out to do or
+    because something got in the way.
 
-    Whichever it was, I'd like to know. You've used it more than almost anyone
-    outside my own university, so your view is worth a lot to me.
+    Either way I'd like to know. You've used it more than almost anyone
+    outside my own university, so your view carries a lot of weight with me.
+
+    And if there's more you'd want to do with it, I'll set you up on the
+    Team plan at no cost.
 
     Jacob
 
@@ -222,18 +237,21 @@ understanding.
 ## Email 5: Sophie-Marie Roth
 
 **To:** `marie.roth@campus.lmu.de`
-**Subject:** You may have landed in an empty CoRATES account
+**Subject:** An apology about your CoRATES account
 
     Hi Sophie-Marie,
 
-    I'm Jacob, I build CoRATES. I owe you a small explanation. When you signed
-    in with ORCID on 20 August it created a second, empty account instead of
-    opening the one you already had, so you would have seen a blank slate. That
-    was our bug, and I've now merged the two - your ORCID login and your LMU
-    email both open the same account.
+    I'm Jacob, I build CoRATES, and I owe you an explanation. When you
+    signed in with ORCID on 20 August, it opened a second, empty account
+    instead of the one you already had, so you would have seen a blank
+    slate. That was a bug on our side. I've merged the two, and your ORCID
+    login and your LMU email now open the same account.
 
-    If that's what made you give up on it, I'm sorry, and it's fixed. If it was
+    If that's what put you off, I'm sorry, and it's fixed. If it was
     something else, I'd genuinely like to know what.
+
+    Should you want to give it another go, I'll set you up on the Team plan
+    at no cost.
 
     Jacob
 
@@ -267,10 +285,15 @@ users with no activity in the log window, most of them registered between May an
 July. One question, three sentences, batched in tens so
 every reply can be answered the same day.
 
-    Hi [name] - you signed up for CoRATES back in [month] and I noticed you
-    didn't get far into it. I'm not trying to sell you anything, I'd genuinely
-    just like to know what you were hoping it would do. Even one line would
-    help a lot.
+    Hi [name],
+
+    I'm Jacob, I build CoRATES. You signed up back in [month] and didn't get
+    very far into it, which is entirely fair, and I'm not writing to sell
+    you anything. I'd just like to know what you were hoping it would do
+    when you signed up. Even a line or two would help me a great deal.
+
+    And if you'd like to give it a proper try, I'll set you up on the Team
+    plan at no cost.
 
 Be careful with EU recipients (Linda Schultz, Sophie-Marie Roth, Francesco
 Motolese, Micol Cigna, Isabella Klarenbeek). A personal note to your own
@@ -278,12 +301,16 @@ registered user is defensible; a promotional blast is a different thing.
 
 ## What to watch for in the replies
 
-The hypothesis under test is that the Free plan is the leak: a new user cannot
-save a single appraisal or invite a single reviewer without paying first. If
-three or four replies say some version of "I couldn't try the actual thing",
-that is the answer, and giving Free one project and two collaborators is a
-config change in `packages/shared/src/plans/plans.ts` that can be tested
-immediately.
+The hypothesis under test is that the Free plan is the leak: the checklist tool
+and exports work for everyone, but a new user cannot put appraisals into a
+project or invite a reviewer without paying first. Every email carries an
+unconditional Team plan offer, so the replies and the sign-ins together are the
+test. If people come back and build a project once the plan is free, the plan
+was the wall, and giving Free one project and two collaborators is a config
+change in `packages/shared/src/plans/plans.ts` that can be tested immediately.
+If they take the plan and still do nothing, the wall is somewhere else, and the
+replies say where. Plans granted this way go on as access grants in
+`org_access_grants`, not checkouts.
 
 Record replies somewhere durable. The sample is small enough that three
 consistent answers is a finding.
