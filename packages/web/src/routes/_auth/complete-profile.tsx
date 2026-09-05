@@ -4,10 +4,7 @@ import { CheckIcon } from 'lucide-react';
 import { useAuthStore, selectUser, selectIsAuthLoading } from '@/stores/authStore';
 import { getOnboardingStep, isSyntheticEmail, isValidEmail } from '@corates/shared/email';
 import { handleError } from '@/lib/error-utils';
-import {
-  getPendingInvitationToken,
-  clearPendingInvitationToken,
-} from '@/lib/pendingInvitation';
+import { getPendingInvitationToken, clearPendingInvitationToken } from '@/lib/pendingInvitation';
 import { acceptInvitation } from '@/server/functions/invitations.functions';
 import { showToast } from '@/lib/toast';
 import { Button } from '@/components/ui/button';
@@ -265,8 +262,7 @@ function CompleteProfilePage() {
       localStorage.removeItem('pendingPersona');
 
       // Handle invitation acceptance
-      const invitationToken =
-        urlParams.get('invitation') || getPendingInvitationToken();
+      const invitationToken = urlParams.get('invitation') || getPendingInvitationToken();
 
       if (invitationToken) {
         try {
