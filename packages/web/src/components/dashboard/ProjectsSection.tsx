@@ -4,7 +4,7 @@
 
 import { useState, useCallback } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { PlusIcon, FolderIcon, TriangleAlertIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useMyProjectsList } from '@/hooks/useMyProjectsList';
@@ -27,6 +27,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useAnimation } from './useInitialAnimation';
 import { ProjectCard } from './ProjectCard';
+import { InvitationCard } from './InvitationCard';
+import { listMyPendingInvitations } from '@/server/functions/invitations.functions';
 import { ContactPrompt, getRestrictionCopy } from './ContactPrompt';
 
 interface ProjectsSectionProps {
@@ -52,6 +54,10 @@ export function ProjectsSection({
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   const { projects } = useMyProjectsList();
+  const { data: invitations } = useQuery({
+    queryKey: queryKeys.invitations.pendingForMe,
+    queryFn: () => listMyPendingInvitations(),
+  });
   const { hasEntitlement, hasQuota, quotas, isLoading: subscriptionLoading } = useSubscription();
 
   const projectCount = projects?.length || 0;
@@ -122,7 +128,7 @@ export function ProjectsSection({
     }
   }, [pendingDeleteId, projects, queryClient]);
 
-  const hasProjects = projectCount > 0;
+  const hasProjects = projectCount > 0 || (invitations?.length ?? 0) > 0;
 
   return (
     <section style={animation.fadeUp(200)}>
@@ -183,6 +189,14 @@ export function ProjectsSection({
             </p>
           </div>
         )}
+
+        {invitations?.map((invitation, index) => (
+          <InvitationCard
+            key={invitation.id}
+            invitation={invitation}
+            style={animation.statRise(index * 50)}
+          />
+        ))}
 
         {projects?.map((project, index) => (
           <ProjectCard

@@ -83,11 +83,19 @@ Both Workers share:
 
 ### UserSession Notification Flow
 
-The `UserSession` Durable Object enables real-time, user-level notifications:
+The `UserSession` Durable Object is the per-user push channel. Two kinds of message travel over it, both typed by the `UserSessionEvent` union in `@corates/shared/notifications` so server and client cannot drift:
 
-1. **When events occur** (e.g., user added to project), the main app API sends a notification to that user's UserSession DO via `notify` helpers from `@corates/workers/notify`
-2. **If the user is connected** via WebSocket, the notification is immediately delivered
-3. **If the user is offline**, the notification is stored as "pending" and delivered when they reconnect
-4. **Frontend connects** to `/api/sessions/:userId` via WebSocket to receive notifications in real-time
+- **Events** are ephemeral cache-invalidation signals (membership changes, subscription updates, project deletion). They are not persisted anywhere except the DO's short pending queue.
+- **Notifications** are D1 rows in the `notifications` table addressed to one user (for example "your invitation was accepted"). Creating one goes through `createNotification` in `@corates/workers/commands/notifications`, which inserts the row, trims the user to their newest 200, and then pushes a `notification:new` event carrying the row.
 
-This is separate from the sync-engine WebSockets (`/api/sync/:projectId`), which handle collaborative editing of project content. UserSession handles user-level events like project invitations, membership changes, etc.
+Delivery:
+
+1. **When an action commits**, the command sends the event to that user's UserSession DO via the `notifyUser` helpers
+2. **If the user is connected** via WebSocket, the message is delivered immediately
+3. **If the user is offline**, the DO stores the message as "pending" and flushes it on the next connect
+4. **Frontend connects** to `/api/sessions/:userId` via WebSocket; `useMembershipSync` invalidates TanStack Query caches for events and prepends `notification:new` rows into the notification queries
+5. **On every (re)connect** the client refetches the notification list and unread count from D1, which is the source of truth, so the pending queue is only a fast path for notifications
+
+The navbar bell reads and marks notifications through the server functions in `notifications.functions.ts`; rows store a `type` plus a JSON `data` payload and the client renders the copy.
+
+This is separate from the sync-engine WebSockets (`/api/sync/:projectId`), which handle collaborative editing of project content.

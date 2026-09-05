@@ -67,3 +67,6 @@ export type FeedbackId = z.infer<typeof FeedbackId>;
 
 export const ContactSubmissionId = z.string().brand<'ContactSubmissionId'>();
 export type ContactSubmissionId = z.infer<typeof ContactSubmissionId>;
+
+export const NotificationId = z.string().brand<'NotificationId'>();
+export type NotificationId = z.infer<typeof NotificationId>;

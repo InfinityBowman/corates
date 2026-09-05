@@ -145,7 +145,6 @@ test.describe('Invitation flows', () => {
       const projectId = await createProject(ownerPage, 'Invitation Existing User Test');
 
       await sendInvitationViaUI(ownerPage, inviteeEmail);
-      await ownerCtx.close();
 
       const inviteUrl = await getAuthUrl(inviteeEmail, 'invitation');
 
@@ -173,17 +172,37 @@ test.describe('Invitation flows', () => {
 
       // Sign-in returns to the invite page for explicit acceptance
       await expect(p).toHaveURL(/\/invite\//, { timeout: 15_000 });
-      await expect(p.getByText(`Signed in as`)).toBeVisible({ timeout: 15_000 });
-      await p.getByRole('button', { name: 'Accept invitation', exact: true }).click();
+
+      // The account was created after the invite was sent, so no notification
+      // exists; the invitation must still appear as a ghost card in the projects grid
+      await p.goto('/dashboard');
+      const ghostCard = p.getByTestId('invitation-card');
+      await expect(ghostCard.getByText('Invitation Existing User Test')).toBeVisible({
+        timeout: 15_000,
+      });
+      await ghostCard.getByRole('button', { name: 'Accept' }).click();
 
       await expect(p.getByText('Invitation accepted')).toBeVisible({ timeout: 15_000 });
-      await expect(p).toHaveURL(/\/dashboard/, { timeout: 15_000 });
+      await expect(ghostCard).toBeHidden({ timeout: 15_000 });
 
       // Membership is real: the project page syncs over WebSocket
       await p.goto(`/projects/${projectId}`);
       await expect(p.getByRole('tab', { name: /All Studies/i })).toBeVisible({ timeout: 15_000 });
 
       await inviteeCtx.close();
+
+      // The owner, still on the project page, is told live that the invitee joined
+      const badge = ownerPage.getByTestId('notification-badge');
+      await expect(badge).toHaveText('1', { timeout: 15_000 });
+      await ownerPage.getByRole('button', { name: /^Notifications/ }).click();
+      await expect(
+        ownerPage.getByRole('button', {
+          name: /Invitation Existing User Test.*joined the project/,
+        }),
+      ).toBeVisible({ timeout: 10_000 });
+      await ownerPage.getByRole('button', { name: 'Mark all as read' }).click();
+      await expect(badge).toBeHidden({ timeout: 10_000 });
+      await ownerCtx.close();
     } finally {
       await cleanupByEmail(inviteeEmail);
       await cleanupScenario(ownerScenario);

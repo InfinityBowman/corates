@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useAdminStore } from '@/stores/adminStore';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { NotificationBell } from './NotificationBell';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { getInitials } from '@/components/ui/avatar';
 import {
@@ -124,6 +125,8 @@ export function AppNavbar({ mobileSidebarOpen, toggleMobileSidebar }: AppNavbarP
         >
           Dashboard
         </Link>
+
+        {user && <NotificationBell />}
 
         {showAdminMenu && (
           <Link

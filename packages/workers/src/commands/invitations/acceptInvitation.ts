@@ -15,7 +15,7 @@
  * @throws DomainError AUTH_FORBIDDEN if quota exceeded
  */
 
-import { captureError, info } from '../../lib/logger';
+import { info } from '../../lib/logger';
 import { createDb } from '@corates/db/client';
 import {
   projectInvitations,
@@ -29,6 +29,7 @@ import { eq, and } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS, AUTH_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import { insertWithQuotaCheck, type InsertRollbackMeta } from '../../lib/quotaTransaction';
 import { refreshWorkspaceSessions } from '../../sync/admin';
+import { createNotification } from '../notifications';
 import type { Env } from '../../types';
 
 interface AcceptInvitationActor {
@@ -67,6 +68,7 @@ export async function acceptInvitation(
       grantOrgMembership: projectInvitations.grantOrgMembership,
       expiresAt: projectInvitations.expiresAt,
       acceptedAt: projectInvitations.acceptedAt,
+      invitedBy: projectInvitations.invitedBy,
     })
     .from(projectInvitations)
     .where(eq(projectInvitations.token, token))
@@ -93,7 +95,7 @@ export async function acceptInvitation(
   }
 
   const currentUser = await db
-    .select({ email: user.email })
+    .select({ email: user.email, name: user.name, givenName: user.givenName })
     .from(user)
     .where(eq(user.id, actor.id))
     .get();
@@ -230,19 +232,17 @@ export async function acceptInvitation(
     orgSlug = org?.slug ?? null;
   }
 
-  // Notification
-  try {
-    const userSessionId = env.USER_SESSION.idFromName(actor.id);
-    const userSession = env.USER_SESSION.get(userSessionId);
-    await userSession.notify({
-      type: 'project-invite',
-      projectId: invitation.projectId,
-      projectName: project?.name || 'Unknown Project',
-      role: invitation.role,
-      timestamp: Date.now(),
+  if (invitation.invitedBy !== actor.id) {
+    await createNotification(env, {
+      userId: invitation.invitedBy,
+      type: 'invitation.accepted',
+      data: {
+        projectId: invitation.projectId,
+        projectName: project?.name || 'Unknown Project',
+        acceptedByName: currentUser.givenName || currentUser.name || currentUser.email,
+        acceptedByEmail: currentUser.email,
+      },
     });
-  } catch (err) {
-    captureError(err, { tags: { component: 'invitation', action: 'accept-notify' } });
   }
 
   info('invitation.accepted', {

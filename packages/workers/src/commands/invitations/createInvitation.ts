@@ -7,10 +7,11 @@
 import { captureError, info } from '../../lib/logger';
 import { createDb } from '@corates/db/client';
 import { projectInvitations, projects, user } from '@corates/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { isSyntheticEmail } from '@corates/shared/email';
 import { TIME_DURATIONS } from '../../config/constants';
 import type { Env } from '../../types';
+import { createNotification } from '../notifications';
 
 interface CreateInvitationActor {
   id: string;
@@ -129,6 +130,22 @@ export async function createInvitation(
     captureError(err, {
       tags: { component: 'invitation', action: 'send-email' },
       extra: { projectId },
+    });
+  }
+
+  // An invitee who already has an account also gets the invitation in-app.
+  // Emitted on resend too, since the token may have rotated.
+  const invitee = await db
+    .select({ id: user.id })
+    .from(user)
+    .where(eq(sql`lower(${user.email})`, normalizedEmail))
+    .get();
+
+  if (invitee && invitee.id !== actor.id) {
+    await createNotification(env, {
+      userId: invitee.id,
+      type: 'invitation.received',
+      data: { invitationId, token, projectId, projectName, inviterName, role },
     });
   }
 
