@@ -77,17 +77,17 @@ than an ongoing leak. They completed the older profile flow, which never asked.
 Nothing to fix in code; the only question is whether these nine are worth
 recovering by hand.
 
-| Name                | Placeholder email               |
-| ------------------- | ------------------------------- |
-| Ahmed A Morsy       | `0009-0002-8318-1718@orcid.org` |
-| Caio Camargo Calarga| `0000-0001-6405-2270@orcid.org` |
-| David               | `0000-0002-4624-3337@orcid.org` |
-| Elisabetta Brigo    | `0000-0001-9052-9749@orcid.org` |
-| Isabella Klarenbeek | `0009-0001-2980-8607@orcid.org` |
-| Megan L Hammersley  | `0000-0003-4326-480x@orcid.org` |
-| Mohamed Ahmed Deyab | `0009-0008-3496-5712@orcid.org` |
-| Peter Atef          | `0009-0006-8345-763x@orcid.org` (recovered 2026-09-04, see below) |
-| Sharon Duncan       | `0009-0003-8111-0104@orcid.org` |
+| Name                 | Placeholder email                                                 |
+| -------------------- | ----------------------------------------------------------------- |
+| Ahmed A Morsy        | `0009-0002-8318-1718@orcid.org`                                   |
+| Caio Camargo Calarga | `0000-0001-6405-2270@orcid.org`                                   |
+| David                | `0000-0002-4624-3337@orcid.org`                                   |
+| Elisabetta Brigo     | `0000-0001-9052-9749@orcid.org`                                   |
+| Isabella Klarenbeek  | `0009-0001-2980-8607@orcid.org`                                   |
+| Megan L Hammersley   | `0000-0003-4326-480x@orcid.org`                                   |
+| Mohamed Ahmed Deyab  | `0009-0008-3496-5712@orcid.org`                                   |
+| Peter Atef           | `0009-0006-8345-763x@orcid.org` (recovered 2026-09-04, see below) |
+| Sharon Duncan        | `0009-0003-8111-0104@orcid.org`                                   |
 
 Two consequences:
 

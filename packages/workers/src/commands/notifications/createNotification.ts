@@ -60,7 +60,13 @@ export async function createNotification<T extends NotificationType>(
     return null;
   }
 
-  const record = { id, type, data, readAt: null, createdAt: createdAt.getTime() } as NotificationRecord;
+  const record = {
+    id,
+    type,
+    data,
+    readAt: null,
+    createdAt: createdAt.getTime(),
+  } as NotificationRecord;
 
   try {
     await notifyUser(env, userId, { type: 'notification:new', notification: record });
