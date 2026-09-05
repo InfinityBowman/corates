@@ -27,13 +27,13 @@ import {
   getDomainKeysForComparison,
   type ComparisonResult,
 } from '@/components/checklist/ROBINSIChecklist/checklist-compare.js';
+import { isSectionBCritical } from '@corates/shared/checklists/robins-i';
 import {
   buildNavigationItems,
   getConsensusSkippedQuestionsCached,
   getSkippedQuestionsCached,
   hasNavItemAnswer as robinsHasNavItemAnswer,
   isNavItemAgreement as robinsIsNavItemAgreement,
-  isSectionBCritical,
   NAV_ITEM_TYPES,
   type RobinsINavItem,
 } from './navbar-utils.js';

@@ -8,7 +8,11 @@ import {
   getActiveDomainKeys,
   ROBINS_I_CHECKLIST,
 } from '@/components/checklist/ROBINSIChecklist/checklist-map';
-import { getReachableQuestions, getSkippedQuestions } from '@corates/shared/checklists/robins-i';
+import {
+  getReachableQuestions,
+  getSkippedQuestions,
+  isSectionBCritical,
+} from '@corates/shared/checklists/robins-i';
 import type { DomainAnswers } from '@corates/shared/checklists/robins-i';
 
 type ROBINSQuestion = ReturnType<typeof getDomainQuestions>[string];
@@ -421,15 +425,6 @@ export function getNavItemTooltip(
     return `${label} - Reviewers agreed`;
   }
   return `${label} - Reviewers disagree`;
-}
-
-/** B2 or B3 = Y/PY rates the result Critical and ends the assessment before the domains. */
-export function isSectionBCritical(
-  sectionB: Record<string, { answer?: string | null }> | undefined,
-): boolean {
-  const b2Answer = sectionB?.b2?.answer;
-  const b3Answer = sectionB?.b3?.answer;
-  return ['Y', 'PY'].includes(b2Answer!) || ['Y', 'PY'].includes(b3Answer!);
 }
 
 /**
