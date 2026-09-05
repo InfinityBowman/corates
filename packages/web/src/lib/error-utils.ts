@@ -59,6 +59,13 @@ const USER_FRIENDLY_MESSAGES: Record<string, string> = {
   USER_NOT_FOUND: 'User not found',
   USER_EMAIL_NOT_VERIFIED: 'Please verify your email address to continue',
 
+  // Emailed codes
+  AUTH_CODE_INVALID: 'That code is not right. Check it and try again.',
+  AUTH_CODE_EXPIRED: 'That code has expired. Request a new one.',
+  AUTH_CODE_TOO_MANY_ATTEMPTS: 'Too many incorrect attempts. Request a new code.',
+  AUTH_EMAIL_IN_USE:
+    'That email already belongs to another CoRATES account. Sign in to that account and connect this sign-in method from Settings.',
+
   // System errors
   SYSTEM_DB_ERROR: 'Something went wrong. Please try again.',
   SYSTEM_DB_TRANSACTION_FAILED: 'Something went wrong. Please try again.',
@@ -159,7 +166,7 @@ export async function handleDomainError(
       return;
     }
     if (error.code === USER_ERRORS.EMAIL_NOT_VERIFIED.code) {
-      navigate({ to: '/check-email', replace: true });
+      navigate({ to: '/verify-email', replace: true });
       return;
     }
   }

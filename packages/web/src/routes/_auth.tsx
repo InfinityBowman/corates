@@ -21,10 +21,9 @@ export const Route = createFileRoute('/_auth')({
   head: () => ({ meta: [NOINDEX_META] }),
   beforeLoad: ({ location }) => {
     // Allow logged-in users through to these pages:
-    // reset-password: they may have a token link
+    // reset-password: settings sends signed-in users here to set a password
     // complete-profile: post-signup onboarding for authenticated users
-    // check-email: logged-in but email not yet verified
-    const exemptPaths = ['/reset-password', '/complete-profile', '/check-email'];
+    const exemptPaths = ['/reset-password', '/complete-profile'];
     if (exemptPaths.includes(location.pathname)) return;
 
     const state = useAuthStore.getState();

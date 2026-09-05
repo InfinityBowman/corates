@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { z } from 'zod';
 import { useAuthStore } from '@/stores/authStore';
 import { handleError } from '@/lib/error-utils';
@@ -9,11 +9,14 @@ import { Input } from '@/components/ui/input';
 import { ErrorMessage } from '@/components/auth/ErrorMessage';
 import { PrimaryButton, AuthLink } from '@/components/auth/AuthButtons';
 import { StrengthIndicator } from '@/components/auth/StrengthIndicator';
+import { CodeInput, ResendCode } from '@/components/auth/CodeInput';
 
 const REDIRECT_DELAY_MS = 3000;
 
+// Settings lands here with the code already sent when a user sets a first password
 const resetPasswordSearch = z.object({
-  token: z.string().catch(''),
+  email: z.string().catch(''),
+  sent: z.string().optional().catch(undefined),
 });
 
 export const Route = createFileRoute('/_auth/reset-password')({
@@ -22,7 +25,8 @@ export const Route = createFileRoute('/_auth/reset-password')({
 });
 
 function ResetPasswordPage() {
-  const { token } = useSearch({ from: '/_auth/reset-password' });
+  const search = Route.useSearch();
+  const [email, setEmail] = useState(search.sent === '1' ? search.email : '');
 
   return (
     <div className='border-border bg-card relative flex w-full max-w-md flex-col gap-4 rounded-xl border p-6 shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-12'>
@@ -30,20 +34,25 @@ function ResetPasswordPage() {
         <img src='/logo.svg' alt='CoRATES' className='h-6 w-auto sm:h-7' />
       </a>
 
-      {token ?
-        <SetNewPasswordForm token={token} />
-      : <RequestResetForm />}
+      {email ?
+        <SetNewPasswordForm email={email} onChangeEmail={() => setEmail('')} />
+      : <RequestResetForm initialEmail={search.email} onSent={setEmail} />}
     </div>
   );
 }
 
-function RequestResetForm() {
-  const [email, setEmail] = useState('');
+function RequestResetForm({
+  initialEmail,
+  onSent,
+}: {
+  initialEmail: string;
+  onSent: (email: string) => void;
+}) {
+  const [email, setEmail] = useState(initialEmail);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
-  const resetPassword = useAuthStore(s => s.resetPassword);
+  const requestPasswordResetCode = useAuthStore(s => s.requestPasswordResetCode);
   const setAuthError = useAuthStore(s => s.setAuthError);
   const authError = useAuthStore(s => s.authError);
 
@@ -51,30 +60,19 @@ function RequestResetForm() {
     setAuthError(null);
   }, [setAuthError]);
 
-  // Redirect to signin after success with cleanup
-  useEffect(() => {
-    if (!success) return;
-    const timer = setTimeout(() => navigate({ to: '/signin' }), REDIRECT_DELAY_MS);
-    return () => clearTimeout(timer);
-  }, [success, navigate]);
-
   const displayError = error || authError;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
-    setSuccess(false);
-
     if (!email) {
       setError('Please enter your email address');
       return;
     }
-
     setLoading(true);
-
     try {
-      await resetPassword(email);
-      setSuccess(true);
+      await requestPasswordResetCode(email);
+      onSent(email);
     } catch (err) {
       await handleError(err, { setError, showToast: false });
     } finally {
@@ -89,74 +87,64 @@ function RequestResetForm() {
           Reset Password
         </h2>
         <p className='text-muted-foreground text-xs sm:text-sm'>
-          Enter your email address and we&apos;ll send you a link to reset your password.
+          Enter your email address and we&apos;ll send you a code to reset your password.
         </p>
       </div>
 
-      {success && (
-        <Alert variant='success' className='animate-in fade-in text-center duration-200'>
-          <div>
-            <AlertTitle>Reset Email Sent</AlertTitle>
-            <AlertDescription>
-              Check your email for instructions to reset your password. Redirecting you to sign
-              in...
-            </AlertDescription>
-          </div>
-        </Alert>
-      )}
+      <form onSubmit={handleSubmit} className='animate-in fade-in flex flex-col gap-4 duration-200'>
+        <div>
+          <label
+            className='text-secondary-foreground mb-1 block text-xs font-semibold sm:mb-2 sm:text-sm'
+            htmlFor='email-input'
+          >
+            Email Address
+          </label>
+          <Input
+            type='email'
+            autoComplete='email'
+            autoCapitalize='off'
+            spellCheck='false'
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            className='h-auto py-2 text-sm'
+            required
+            id='email-input'
+            placeholder='you@example.com'
+            disabled={loading}
+          />
+        </div>
 
-      {!success && (
-        <form
-          onSubmit={handleSubmit}
-          className='animate-in fade-in flex flex-col gap-4 duration-200'
-        >
-          <div>
-            <label
-              className='text-secondary-foreground mb-1 block text-xs font-semibold sm:mb-2 sm:text-sm'
-              htmlFor='email-input'
-            >
-              Email Address
-            </label>
-            <Input
-              type='email'
-              autoComplete='email'
-              autoCapitalize='off'
-              spellCheck='false'
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              className='h-auto py-2 text-sm'
-              required
-              id='email-input'
-              placeholder='you@example.com'
-              disabled={loading}
-            />
-          </div>
+        <ErrorMessage error={displayError} />
 
-          <ErrorMessage error={displayError} />
+        <PrimaryButton loading={loading} loadingText='Sending Code...'>
+          Send Reset Code
+        </PrimaryButton>
 
-          <PrimaryButton loading={loading} loadingText='Sending Email...'>
-            Send Reset Email
-          </PrimaryButton>
-
-          <div className='text-muted-foreground mt-2 text-center text-xs sm:mt-4 sm:text-sm'>
-            Remember your password?{' '}
-            <AuthLink
-              href='/signin'
-              onClick={e => {
-                e.preventDefault();
-                navigate({ to: '/signin' });
-              }}
-            >
-              Sign In
-            </AuthLink>
-          </div>
-        </form>
-      )}
+        <div className='text-muted-foreground mt-2 text-center text-xs sm:mt-4 sm:text-sm'>
+          Remember your password?{' '}
+          <AuthLink
+            href='/signin'
+            onClick={e => {
+              e.preventDefault();
+              navigate({ to: '/signin' });
+            }}
+          >
+            Sign In
+          </AuthLink>
+        </div>
+      </form>
     </>
   );
 }
 
-function SetNewPasswordForm({ token }: { token: string }) {
+function SetNewPasswordForm({
+  email,
+  onChangeEmail,
+}: {
+  email: string;
+  onChangeEmail: () => void;
+}) {
+  const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
@@ -164,7 +152,8 @@ function SetNewPasswordForm({ token }: { token: string }) {
   const [success, setSuccess] = useState(false);
   const [unmetRequirements, setUnmetRequirements] = useState<string[]>([]);
   const navigate = useNavigate();
-  const confirmPasswordReset = useAuthStore(s => s.confirmPasswordReset);
+  const resetPasswordWithCode = useAuthStore(s => s.resetPasswordWithCode);
+  const requestPasswordResetCode = useAuthStore(s => s.requestPasswordResetCode);
   const setAuthError = useAuthStore(s => s.setAuthError);
   const authError = useAuthStore(s => s.authError);
 
@@ -172,7 +161,6 @@ function SetNewPasswordForm({ token }: { token: string }) {
     setAuthError(null);
   }, [setAuthError]);
 
-  // Redirect to signin after success with cleanup
   useEffect(() => {
     if (!success) return;
     const timer = setTimeout(() => navigate({ to: '/signin' }), REDIRECT_DELAY_MS);
@@ -188,26 +176,25 @@ function SetNewPasswordForm({ token }: { token: string }) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
-
+    if (code.length !== 6) {
+      setError('Enter the six-digit code from your email');
+      return;
+    }
     if (!password) {
       setError('Please enter a new password');
       return;
     }
-
     if (unmetRequirements.length > 0) {
       setError(`Password must have ${unmetRequirements.join(', ')}`);
       return;
     }
-
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
     }
-
     setLoading(true);
-
     try {
-      await confirmPasswordReset(token, password);
+      await resetPasswordWithCode(email, code, password);
       setSuccess(true);
     } catch (err) {
       await handleError(err, { setError, showToast: false });
@@ -222,7 +209,10 @@ function SetNewPasswordForm({ token }: { token: string }) {
         <h2 className='text-foreground mb-1 text-xl font-bold sm:mb-2 sm:text-2xl'>
           Set New Password
         </h2>
-        <p className='text-muted-foreground text-xs sm:text-sm'>Enter your new password below.</p>
+        <p className='text-muted-foreground text-xs sm:text-sm'>
+          Enter the code we sent to <strong className='text-foreground'>{email}</strong> and choose
+          a new password.
+        </p>
       </div>
 
       {success && (
@@ -241,6 +231,8 @@ function SetNewPasswordForm({ token }: { token: string }) {
           onSubmit={handleSubmit}
           className='animate-in fade-in flex flex-col gap-4 duration-200'
         >
+          <CodeInput id='reset-code-input' value={code} onChange={setCode} disabled={loading} />
+
           <div>
             <label
               className='text-secondary-foreground mb-1 block text-xs font-semibold sm:mb-2 sm:text-sm'
@@ -288,17 +280,10 @@ function SetNewPasswordForm({ token }: { token: string }) {
             Set Password
           </PrimaryButton>
 
-          <div className='text-muted-foreground mt-2 text-center text-xs sm:mt-4 sm:text-sm'>
-            <AuthLink
-              href='/reset-password'
-              onClick={e => {
-                e.preventDefault();
-                navigate({ to: '/reset-password', search: { token: '' } });
-              }}
-            >
-              Request a new reset link
-            </AuthLink>
-          </div>
+          <ResendCode
+            onResend={() => requestPasswordResetCode(email)}
+            onChangeEmail={onChangeEmail}
+          />
         </form>
       )}
     </>

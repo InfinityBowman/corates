@@ -16,9 +16,8 @@ Disallow: /projects/
 
 # Token-bearing or transactional pages. Never useful as search results.
 Disallow: /invite/
-Disallow: /check-email
+Disallow: /verify-email
 Disallow: /complete-profile
 Disallow: /reset-password
-Disallow: /verify-link
 
 Sitemap: https://corates.org/sitemap.xml

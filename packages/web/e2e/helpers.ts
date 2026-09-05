@@ -3,6 +3,7 @@
  * Seed data, auth cookies, and cleanup via the backend test-seed endpoints
  */
 
+import { expect } from '@playwright/test';
 import type { BrowserContext, Page } from '@playwright/test';
 import { BASE_URL } from './constants';
 
@@ -392,15 +393,11 @@ export async function cleanupBillingScenario(scenario: BillingScenario) {
 // --- Auth flow helpers ---
 
 /**
- * Fetches a stored auth URL from the backend test endpoint.
- * URLs are captured by DEV_MODE callbacks in auth/config.ts and
- * send-invitation-email.ts. Retries a few times since the URL may
- * not be stored instantly.
+ * Fetches a stored auth URL from the backend test endpoint. Invitation URLs
+ * are captured by DEV_MODE code in send-invitation-email.ts. Retries a few
+ * times since the URL may not be stored instantly.
  */
-export async function getAuthUrl(
-  email: string,
-  type: 'magic-link' | 'verification' | 'reset-password' | 'invitation',
-): Promise<string> {
+export async function getAuthUrl(email: string, type: 'invitation'): Promise<string> {
   for (let attempt = 0; attempt < 25; attempt++) {
     const res = await fetch(
       `${API_BASE}/api/test/auth-url?email=${encodeURIComponent(email)}&type=${type}`,
@@ -413,6 +410,42 @@ export async function getAuthUrl(
     await new Promise(r => setTimeout(r, 200));
   }
   throw new Error(`No ${type} URL found for ${email} after retries`);
+}
+
+/**
+ * Fetches the pending emailed code for an address. Codes are stored in the
+ * verification table by the email-otp and onboarding plugins.
+ */
+export async function getAuthCode(
+  email: string,
+  type: 'sign-in' | 'email-verification' | 'forget-password' | 'onboarding-email',
+): Promise<string> {
+  for (let attempt = 0; attempt < 25; attempt++) {
+    const res = await fetch(
+      `${API_BASE}/api/test/auth-code?email=${encodeURIComponent(email)}&type=${type}`,
+    );
+    if (res.ok) {
+      const data = await res.json();
+      return data.code;
+    }
+    await new Promise(r => setTimeout(r, 200));
+  }
+  throw new Error(`No ${type} code found for ${email} after retries`);
+}
+
+/**
+ * Signs up (or in) through the email code UI on the current page, which
+ * must already be on /signin or /signup with the email code form visible.
+ */
+export async function submitEmailCodeSignIn(page: Page, email: string) {
+  const emailInput = page.locator('#email-code-email');
+  await emailInput.click();
+  await emailInput.pressSequentially(email, { delay: 20 });
+  await page.getByRole('button', { name: /Continue with Email|Send Code/i }).click();
+  await expect(page.getByText('Enter your code')).toBeVisible({ timeout: 10_000 });
+
+  const code = await getAuthCode(email, 'sign-in');
+  await page.locator('#email-code-input').fill(code);
 }
 
 /**

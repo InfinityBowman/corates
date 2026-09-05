@@ -4,9 +4,36 @@ import { OTPInput, OTPInputContext } from 'input-otp';
 import { cn } from '@/lib/utils';
 import { MinusIcon } from 'lucide-react';
 
+// The library's overlay input keeps its text collapsed, so a native click always
+// lands at the end; pick the slot under the pointer and select that character
+function selectClickedSlot(event: React.MouseEvent<HTMLInputElement>) {
+  const input = event.currentTarget;
+  const slots = input
+    .closest('[data-input-otp-container]')
+    ?.querySelectorAll<HTMLElement>('[data-slot=input-otp-slot]');
+  if (!slots?.length) return;
+  const clicked = Array.from(slots).findIndex(
+    slot => event.clientX < slot.getBoundingClientRect().right,
+  );
+  const index = Math.min(clicked === -1 ? slots.length : clicked, input.value.length);
+
+  // Native focus would first snap the selection to the end and paint that frame
+  event.preventDefault();
+  if (document.activeElement !== input) input.focus();
+  if (index < input.value.length) {
+    input.setSelectionRange(index, index + 1, 'forward');
+  } else {
+    input.setSelectionRange(index, index);
+  }
+  // The library listens for this to sync its slot state; the browser's own
+  // selectionchange arrives a task later, after the focus frame has painted
+  document.dispatchEvent(new Event('selectionchange'));
+}
+
 function InputOTP({
   className,
   containerClassName,
+  onMouseDown,
   ...props
 }: React.ComponentProps<typeof OTPInput> & {
   containerClassName?: string;
@@ -20,6 +47,10 @@ function InputOTP({
       )}
       spellCheck={false}
       className={cn('disabled:cursor-not-allowed', className)}
+      onMouseDown={event => {
+        selectClickedSlot(event);
+        onMouseDown?.(event);
+      }}
       {...props}
     />
   );
@@ -53,7 +84,7 @@ function InputOTPSlot({
       data-slot='input-otp-slot'
       data-active={isActive}
       className={cn(
-        'border-input aria-invalid:border-destructive data-[active=true]:border-ring data-[active=true]:ring-ring/50 data-[active=true]:aria-invalid:border-destructive data-[active=true]:aria-invalid:ring-destructive/20 dark:bg-input/30 dark:data-[active=true]:aria-invalid:ring-destructive/40 relative flex size-8 items-center justify-center border-y border-r text-sm transition-all outline-none first:rounded-l-lg first:border-l last:rounded-r-lg data-[active=true]:z-10 data-[active=true]:ring-3',
+        'border-input aria-invalid:border-destructive data-[active=true]:border-ring data-[active=true]:ring-ring/50 data-[active=true]:aria-invalid:border-destructive data-[active=true]:aria-invalid:ring-destructive/20 dark:bg-input/30 dark:data-[active=true]:aria-invalid:ring-destructive/40 relative -ml-px flex size-8 items-center justify-center border text-sm transition-all outline-none first:ml-0 first:rounded-l-lg last:rounded-r-lg data-[active=true]:z-10 data-[active=true]:ring-3',
         className,
       )}
       {...props}

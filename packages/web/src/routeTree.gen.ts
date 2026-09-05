@@ -23,12 +23,11 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AppProtectedRouteImport } from './routes/_app/_protected'
 import { Route as AppChecklistRouteImport } from './routes/_app/checklist'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
-import { Route as AuthCheckEmailRouteImport } from './routes/_auth/check-email'
 import { Route as AuthCompleteProfileRouteImport } from './routes/_auth/complete-profile'
 import { Route as AuthResetPasswordRouteImport } from './routes/_auth/reset-password'
 import { Route as AuthSigninRouteImport } from './routes/_auth/signin'
 import { Route as AuthSignupRouteImport } from './routes/_auth/signup'
-import { Route as AuthVerifyLinkRouteImport } from './routes/_auth/verify-link'
+import { Route as AuthVerifyEmailRouteImport } from './routes/_auth/verify-email'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
 import { Route as ApiClientLogsRouteImport } from './routes/api/client-logs'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
@@ -44,6 +43,7 @@ import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiAuthSessionRouteImport } from './routes/api/auth/session'
 import { Route as ApiAuthVerifyEmailRouteImport } from './routes/api/auth/verify-email'
 import { Route as ApiTestAddProjectMemberRouteImport } from './routes/api/test/add-project-member'
+import { Route as ApiTestAuthCodeRouteImport } from './routes/api/test/auth-code'
 import { Route as ApiTestAuthUrlRouteImport } from './routes/api/test/auth-url'
 import { Route as ApiTestCleanupRouteImport } from './routes/api/test/cleanup'
 import { Route as ApiTestCleanupUserByEmailRouteImport } from './routes/api/test/cleanup-user-by-email'
@@ -148,11 +148,6 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
-const AuthCheckEmailRoute = AuthCheckEmailRouteImport.update({
-  id: '/check-email',
-  path: '/check-email',
-  getParentRoute: () => AuthRoute,
-} as any)
 const AuthCompleteProfileRoute = AuthCompleteProfileRouteImport.update({
   id: '/complete-profile',
   path: '/complete-profile',
@@ -173,9 +168,9 @@ const AuthSignupRoute = AuthSignupRouteImport.update({
   path: '/signup',
   getParentRoute: () => AuthRoute,
 } as any)
-const AuthVerifyLinkRoute = AuthVerifyLinkRouteImport.update({
-  id: '/verify-link',
-  path: '/verify-link',
+const AuthVerifyEmailRoute = AuthVerifyEmailRouteImport.update({
+  id: '/verify-email',
+  path: '/verify-email',
   getParentRoute: () => AuthRoute,
 } as any)
 const ApiSplatRoute = ApiSplatRouteImport.update({
@@ -251,6 +246,11 @@ const ApiAuthVerifyEmailRoute = ApiAuthVerifyEmailRouteImport.update({
 const ApiTestAddProjectMemberRoute = ApiTestAddProjectMemberRouteImport.update({
   id: '/api/test/add-project-member',
   path: '/api/test/add-project-member',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTestAuthCodeRoute = ApiTestAuthCodeRouteImport.update({
+  id: '/api/test/auth-code',
+  path: '/api/test/auth-code',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiTestAuthUrlRoute = ApiTestAuthUrlRouteImport.update({
@@ -474,12 +474,11 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/checklist': typeof AppChecklistRouteWithChildren
   '/dashboard': typeof AppDashboardRoute
-  '/check-email': typeof AuthCheckEmailRoute
   '/complete-profile': typeof AuthCompleteProfileRoute
   '/reset-password': typeof AuthResetPasswordRoute
   '/signin': typeof AuthSigninRoute
   '/signup': typeof AuthSignupRoute
-  '/verify-link': typeof AuthVerifyLinkRoute
+  '/verify-email': typeof AuthVerifyEmailRoute
   '/api/$': typeof ApiSplatRoute
   '/api/client-logs': typeof ApiClientLogsRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -494,6 +493,7 @@ export interface FileRoutesByFullPath {
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/auth/verify-email': typeof ApiAuthVerifyEmailRoute
   '/api/test/add-project-member': typeof ApiTestAddProjectMemberRoute
+  '/api/test/auth-code': typeof ApiTestAuthCodeRoute
   '/api/test/auth-url': typeof ApiTestAuthUrlRoute
   '/api/test/cleanup': typeof ApiTestCleanupRoute
   '/api/test/cleanup-user-by-email': typeof ApiTestCleanupUserByEmailRoute
@@ -543,12 +543,11 @@ export interface FileRoutesByTo {
   '/security': typeof SecurityRoute
   '/terms': typeof TermsRoute
   '/dashboard': typeof AppDashboardRoute
-  '/check-email': typeof AuthCheckEmailRoute
   '/complete-profile': typeof AuthCompleteProfileRoute
   '/reset-password': typeof AuthResetPasswordRoute
   '/signin': typeof AuthSigninRoute
   '/signup': typeof AuthSignupRoute
-  '/verify-link': typeof AuthVerifyLinkRoute
+  '/verify-email': typeof AuthVerifyEmailRoute
   '/api/$': typeof ApiSplatRoute
   '/api/client-logs': typeof ApiClientLogsRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -561,6 +560,7 @@ export interface FileRoutesByTo {
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/auth/verify-email': typeof ApiAuthVerifyEmailRoute
   '/api/test/add-project-member': typeof ApiTestAddProjectMemberRoute
+  '/api/test/auth-code': typeof ApiTestAuthCodeRoute
   '/api/test/auth-url': typeof ApiTestAuthUrlRoute
   '/api/test/cleanup': typeof ApiTestCleanupRoute
   '/api/test/cleanup-user-by-email': typeof ApiTestCleanupUserByEmailRoute
@@ -615,12 +615,11 @@ export interface FileRoutesById {
   '/_app/_protected': typeof AppProtectedRouteWithChildren
   '/_app/checklist': typeof AppChecklistRouteWithChildren
   '/_app/dashboard': typeof AppDashboardRoute
-  '/_auth/check-email': typeof AuthCheckEmailRoute
   '/_auth/complete-profile': typeof AuthCompleteProfileRoute
   '/_auth/reset-password': typeof AuthResetPasswordRoute
   '/_auth/signin': typeof AuthSigninRoute
   '/_auth/signup': typeof AuthSignupRoute
-  '/_auth/verify-link': typeof AuthVerifyLinkRoute
+  '/_auth/verify-email': typeof AuthVerifyEmailRoute
   '/api/$': typeof ApiSplatRoute
   '/api/client-logs': typeof ApiClientLogsRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -635,6 +634,7 @@ export interface FileRoutesById {
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/auth/verify-email': typeof ApiAuthVerifyEmailRoute
   '/api/test/add-project-member': typeof ApiTestAddProjectMemberRoute
+  '/api/test/auth-code': typeof ApiTestAuthCodeRoute
   '/api/test/auth-url': typeof ApiTestAuthUrlRoute
   '/api/test/cleanup': typeof ApiTestCleanupRoute
   '/api/test/cleanup-user-by-email': typeof ApiTestCleanupUserByEmailRoute
@@ -687,12 +687,11 @@ export interface FileRouteTypes {
     | '/terms'
     | '/checklist'
     | '/dashboard'
-    | '/check-email'
     | '/complete-profile'
     | '/reset-password'
     | '/signin'
     | '/signup'
-    | '/verify-link'
+    | '/verify-email'
     | '/api/$'
     | '/api/client-logs'
     | '/invite/$token'
@@ -707,6 +706,7 @@ export interface FileRouteTypes {
     | '/api/auth/session'
     | '/api/auth/verify-email'
     | '/api/test/add-project-member'
+    | '/api/test/auth-code'
     | '/api/test/auth-url'
     | '/api/test/cleanup'
     | '/api/test/cleanup-user-by-email'
@@ -756,12 +756,11 @@ export interface FileRouteTypes {
     | '/security'
     | '/terms'
     | '/dashboard'
-    | '/check-email'
     | '/complete-profile'
     | '/reset-password'
     | '/signin'
     | '/signup'
-    | '/verify-link'
+    | '/verify-email'
     | '/api/$'
     | '/api/client-logs'
     | '/invite/$token'
@@ -774,6 +773,7 @@ export interface FileRouteTypes {
     | '/api/auth/session'
     | '/api/auth/verify-email'
     | '/api/test/add-project-member'
+    | '/api/test/auth-code'
     | '/api/test/auth-url'
     | '/api/test/cleanup'
     | '/api/test/cleanup-user-by-email'
@@ -827,12 +827,11 @@ export interface FileRouteTypes {
     | '/_app/_protected'
     | '/_app/checklist'
     | '/_app/dashboard'
-    | '/_auth/check-email'
     | '/_auth/complete-profile'
     | '/_auth/reset-password'
     | '/_auth/signin'
     | '/_auth/signup'
-    | '/_auth/verify-link'
+    | '/_auth/verify-email'
     | '/api/$'
     | '/api/client-logs'
     | '/invite/$token'
@@ -847,6 +846,7 @@ export interface FileRouteTypes {
     | '/api/auth/session'
     | '/api/auth/verify-email'
     | '/api/test/add-project-member'
+    | '/api/test/auth-code'
     | '/api/test/auth-url'
     | '/api/test/cleanup'
     | '/api/test/cleanup-user-by-email'
@@ -909,6 +909,7 @@ export interface RootRouteChildren {
   ApiAuthSessionRoute: typeof ApiAuthSessionRoute
   ApiAuthVerifyEmailRoute: typeof ApiAuthVerifyEmailRoute
   ApiTestAddProjectMemberRoute: typeof ApiTestAddProjectMemberRoute
+  ApiTestAuthCodeRoute: typeof ApiTestAuthCodeRoute
   ApiTestAuthUrlRoute: typeof ApiTestAuthUrlRoute
   ApiTestCleanupRoute: typeof ApiTestCleanupRoute
   ApiTestCleanupUserByEmailRoute: typeof ApiTestCleanupUserByEmailRoute
@@ -1023,13 +1024,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_auth/check-email': {
-      id: '/_auth/check-email'
-      path: '/check-email'
-      fullPath: '/check-email'
-      preLoaderRoute: typeof AuthCheckEmailRouteImport
-      parentRoute: typeof AuthRoute
-    }
     '/_auth/complete-profile': {
       id: '/_auth/complete-profile'
       path: '/complete-profile'
@@ -1058,11 +1052,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthSignupRouteImport
       parentRoute: typeof AuthRoute
     }
-    '/_auth/verify-link': {
-      id: '/_auth/verify-link'
-      path: '/verify-link'
-      fullPath: '/verify-link'
-      preLoaderRoute: typeof AuthVerifyLinkRouteImport
+    '/_auth/verify-email': {
+      id: '/_auth/verify-email'
+      path: '/verify-email'
+      fullPath: '/verify-email'
+      preLoaderRoute: typeof AuthVerifyEmailRouteImport
       parentRoute: typeof AuthRoute
     }
     '/api/$': {
@@ -1168,6 +1162,13 @@ declare module '@tanstack/react-router' {
       path: '/api/test/add-project-member'
       fullPath: '/api/test/add-project-member'
       preLoaderRoute: typeof ApiTestAddProjectMemberRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/test/auth-code': {
+      id: '/api/test/auth-code'
+      path: '/api/test/auth-code'
+      fullPath: '/api/test/auth-code'
+      preLoaderRoute: typeof ApiTestAuthCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/test/auth-url': {
@@ -1548,21 +1549,19 @@ const AppRouteChildren: AppRouteChildren = {
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 interface AuthRouteChildren {
-  AuthCheckEmailRoute: typeof AuthCheckEmailRoute
   AuthCompleteProfileRoute: typeof AuthCompleteProfileRoute
   AuthResetPasswordRoute: typeof AuthResetPasswordRoute
   AuthSigninRoute: typeof AuthSigninRoute
   AuthSignupRoute: typeof AuthSignupRoute
-  AuthVerifyLinkRoute: typeof AuthVerifyLinkRoute
+  AuthVerifyEmailRoute: typeof AuthVerifyEmailRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
-  AuthCheckEmailRoute: AuthCheckEmailRoute,
   AuthCompleteProfileRoute: AuthCompleteProfileRoute,
   AuthResetPasswordRoute: AuthResetPasswordRoute,
   AuthSigninRoute: AuthSigninRoute,
   AuthSignupRoute: AuthSignupRoute,
-  AuthVerifyLinkRoute: AuthVerifyLinkRoute,
+  AuthVerifyEmailRoute: AuthVerifyEmailRoute,
 }
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
@@ -1617,6 +1616,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAuthSessionRoute: ApiAuthSessionRoute,
   ApiAuthVerifyEmailRoute: ApiAuthVerifyEmailRoute,
   ApiTestAddProjectMemberRoute: ApiTestAddProjectMemberRoute,
+  ApiTestAuthCodeRoute: ApiTestAuthCodeRoute,
   ApiTestAuthUrlRoute: ApiTestAuthUrlRoute,
   ApiTestCleanupRoute: ApiTestCleanupRoute,
   ApiTestCleanupUserByEmailRoute: ApiTestCleanupUserByEmailRoute,

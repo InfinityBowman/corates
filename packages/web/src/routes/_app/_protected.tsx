@@ -11,7 +11,13 @@
 
 import { useEffect } from 'react';
 import { createFileRoute, Outlet, redirect, useNavigate } from '@tanstack/react-router';
-import { useAuthStore, selectIsLoggedIn, selectIsAuthLoading } from '@/stores/authStore';
+import {
+  useAuthStore,
+  selectIsLoggedIn,
+  selectIsAuthLoading,
+  selectUser,
+} from '@/stores/authStore';
+import { getOnboardingStep } from '@corates/shared/email';
 import { PageLoader } from '@/components/ui/spinner';
 import { RouteError } from '@/components/RouteError';
 
@@ -25,6 +31,11 @@ export const Route = createFileRoute('/_app/_protected')({
     if (!selectIsLoggedIn(state)) {
       throw redirect({ to: '/signin' });
     }
+    // ORCID sign-ins arrive without a verified email and finish in onboarding
+    const user = selectUser(state);
+    if (user && getOnboardingStep(user)) {
+      throw redirect({ to: '/complete-profile' });
+    }
   },
   component: ProtectedLayout,
   errorComponent: RouteError,
@@ -33,20 +44,25 @@ export const Route = createFileRoute('/_app/_protected')({
 function ProtectedLayout() {
   const isLoading = useAuthStore(selectIsAuthLoading);
   const isLoggedIn = useAuthStore(selectIsLoggedIn);
+  const user = useAuthStore(selectUser);
+  const needsOnboarding = !!user && !!getOnboardingStep(user);
   const navigate = useNavigate();
 
   // After loading resolves, redirect if session expired (cached user was stale)
   useEffect(() => {
-    if (!isLoading && !isLoggedIn) {
+    if (isLoading) return;
+    if (!isLoggedIn) {
       navigate({ to: '/signin', replace: true });
+    } else if (needsOnboarding) {
+      navigate({ to: '/complete-profile', replace: true });
     }
-  }, [isLoading, isLoggedIn, navigate]);
+  }, [isLoading, isLoggedIn, needsOnboarding, navigate]);
 
   if (isLoading) {
     return <PageLoader label='Checking authentication...' />;
   }
 
-  if (!isLoggedIn) {
+  if (!isLoggedIn || needsOnboarding) {
     return <PageLoader label='Redirecting...' />;
   }
 
