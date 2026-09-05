@@ -63,11 +63,6 @@ export function ProjectCard({ project, onOpen, onDelete, style }: ProjectCardPro
           )}
         </div>
 
-        {/* Description */}
-        <p className='text-muted-foreground mb-5 line-clamp-2 text-sm leading-relaxed'>
-          {project.description || 'No description yet'}
-        </p>
-
         {/* Footer */}
         <div className='mt-auto flex items-center justify-between'>
           <div className='text-muted-foreground flex items-center gap-1.5 text-xs'>

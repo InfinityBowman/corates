@@ -1,6 +1,6 @@
 /**
  * App Navbar - top navigation bar for authenticated app routes
- * Shows logo, dashboard link, admin link (if admin), user menu, offline badge
+ * Shows logo, dashboard link, admin link (if admin), user menu with current plan, offline badge
  */
 
 import { useState, useEffect } from 'react';
@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { useAdminStore } from '@/stores/adminStore';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { NotificationBell } from './NotificationBell';
+import { PlanBadge } from '@/components/billing/PlanBadge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { getInitials } from '@/components/ui/avatar';
 import {
@@ -153,10 +154,11 @@ export function AppNavbar({ mobileSidebarOpen, toggleMobileSidebar }: AppNavbarP
                 <ChevronDownIcon className='size-3' aria-hidden='true' />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align='end' className='w-48'>
+            <DropdownMenuContent align='end' className='w-56'>
               <DropdownMenuLabel>
                 <div className='font-medium'>{user?.name || 'User'}</div>
                 <div className='text-muted-foreground truncate text-xs'>{user?.email}</div>
+                <PlanBadge />
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
