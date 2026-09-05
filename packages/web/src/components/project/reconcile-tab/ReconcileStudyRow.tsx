@@ -20,6 +20,7 @@ import { getChecklistMetadata } from '@/checklist-registry';
 import { PdfListItem } from '@/components/pdf/PdfListItem';
 import { project } from '@/project';
 import { ChangeOutcomeDialog } from '../ChangeOutcomeDialog';
+import { useCanReconcileChecklists } from './useCanReconcileChecklists';
 import { ReconcileStatusTag } from './ReconcileStatusTag';
 import { SendBackToTodoButton } from './SendBackToTodoButton';
 import type { StudyInfo, PdfEntry } from '@/stores/projectStore';
@@ -43,6 +44,7 @@ export function ReconcileStudyRow({
 }: ReconcileStudyRowProps) {
   const [expanded, setExpanded] = useState(false);
   const [changeOutcomeGroup, setChangeOutcomeGroup] = useState<ChecklistGroup | null>(null);
+  const canReconcileChecklists = useCanReconcileChecklists();
 
   const sortedPdfs = useMemo(() => sortStudyPdfs(study.pdfs || []), [study.pdfs]);
   const hasPdfs = sortedPdfs.length > 0;
@@ -72,6 +74,12 @@ export function ReconcileStudyRow({
   const hasReadyPair = readyGroups.length > 0;
   const firstReadyGroup = readyGroups[0] || null;
   const hasMultipleOutcomes = readyGroups.length + waitingGroups.length > 1;
+
+  const canReconcile = (group: ChecklistGroup) => canReconcileChecklists(group.checklists);
+  // The inline button follows whichever group the single-outcome row shows,
+  // so a member not on the waiting checklist never sees it appear later.
+  const inlineGroup = firstReadyGroup || waitingGroups[0] || null;
+  const showInlineReconcile = !inlineGroup || canReconcile(inlineGroup);
 
   const getReviewerName = (checklist: { assignedTo?: string | null }) =>
     checklist.assignedTo ? getAssigneeName(checklist.assignedTo) : 'Unknown';
@@ -177,18 +185,20 @@ export function ReconcileStudyRow({
                 </div>
               )}
 
-              {renderSendBack(firstReadyGroup || waitingGroups[0] || null)}
+              {renderSendBack(inlineGroup)}
 
-              <Button
-                onClick={e => {
-                  e.stopPropagation();
-                  if (firstReadyGroup) startReconciliation(firstReadyGroup);
-                }}
-                disabled={!hasReadyPair}
-              >
-                <GitCompareArrowsIcon className='size-4' />
-                Reconcile
-              </Button>
+              {showInlineReconcile && (
+                <Button
+                  onClick={e => {
+                    e.stopPropagation();
+                    if (firstReadyGroup) startReconciliation(firstReadyGroup);
+                  }}
+                  disabled={!hasReadyPair}
+                >
+                  <GitCompareArrowsIcon className='size-4' />
+                  Reconcile
+                </Button>
+              )}
             </>
           )}
 
@@ -246,10 +256,12 @@ export function ReconcileStudyRow({
                       </div>
                       <div className='flex items-center gap-2'>
                         {renderSendBack(group)}
-                        <Button onClick={() => startReconciliation(group)}>
-                          <GitCompareArrowsIcon className='size-4' />
-                          Reconcile
-                        </Button>
+                        {canReconcile(group) && (
+                          <Button onClick={() => startReconciliation(group)}>
+                            <GitCompareArrowsIcon className='size-4' />
+                            Reconcile
+                          </Button>
+                        )}
                       </div>
                     </div>
                   ))}

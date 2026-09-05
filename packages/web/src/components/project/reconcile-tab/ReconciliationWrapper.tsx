@@ -43,6 +43,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { usePdfPreviewStore } from '@/stores/pdfPreviewStore';
 import { track } from '@/lib/analytics';
 import { ReconciliationEngine, registerReconciliationAdapter } from './engine';
+import { useCanReconcileChecklists } from './useCanReconcileChecklists';
 import { amstar2Adapter } from './amstar2-reconcile/adapter';
 import { rob2Adapter } from './rob2-reconcile/adapter';
 import { robinsIAdapter } from './robins-i-reconcile/adapter';
@@ -68,6 +69,7 @@ export function ReconciliationWrapper({
   const navigate = useNavigate();
   const { orgId } = useProjectContext();
   const user = useAuthStore(selectUser);
+  const canReconcileChecklists = useCanReconcileChecklists();
 
   const [error, setError] = useState<string | null>(null);
   const closePreview = usePdfPreviewStore(s => s.closePreview);
@@ -192,6 +194,23 @@ export function ReconciliationWrapper({
     return currentStudy.checklists?.find(c => c.id === checklist2Id);
   }, [currentStudy, checklist2Id]);
 
+  // A pasted URL must not reach the reconciled-checklist setup below when the
+  // member is on neither checklist. Owner role comes from the member list, so
+  // do not deny before that list has loaded.
+  const pair = checklist1Meta && checklist2Meta ? [checklist1Meta, checklist2Meta] : null;
+  const canReconcile = !!pair && canReconcileChecklists(pair);
+  const roleKnown = !!user && members.some(m => m.userId === user.id);
+  const accessDenied = !!pair && !canReconcile && roleKnown;
+
+  useEffect(() => {
+    if (!accessDenied) return;
+    showToast.error(
+      'Access Denied',
+      'Only the assigned reviewers or a project owner can reconcile these checklists.',
+    );
+    navigate({ to: `/projects/${projectId}?tab=reconcile` as string, replace: true });
+  }, [accessDenied, navigate, projectId]);
+
   // Get reviewer name from userId
   const getReviewerName = useCallback(
     (userId: string | null) => {
@@ -276,6 +295,7 @@ export function ReconciliationWrapper({
   useEffect(() => {
     if (
       !currentStudy ||
+      !canReconcile ||
       (connectionState.phase !== 'synced' && connectionState.phase !== 'cached') ||
       reconciledChecklistId ||
       hasCheckedForReconciled
@@ -353,6 +373,7 @@ export function ReconciliationWrapper({
     setReconciledChecklistLoading(false);
   }, [
     currentStudy,
+    canReconcile,
     connectionState.phase,
     reconciledChecklistId,
     hasCheckedForReconciled,
