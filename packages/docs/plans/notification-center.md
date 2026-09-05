@@ -1,6 +1,6 @@
 # Plan: Notification Center
 
-**Status:** In Progress (Phases 0 to 2 implemented, Phase 3 deferred)
+**Status:** In Review (Phases 0 to 2 in #629, Phase 3 tracked in #628)
 **Created:** 2026-09-01
 **Last Updated:** 2026-09-05
 
@@ -136,9 +136,9 @@ Implemented. Both project payloads carry `actorName`, looked up from the `user` 
 - [x] Invitee-side decline (`declineInvitation`): deletes the row, like the inviter's cancel, scoped to the session email. Acts immediately with a toast, no confirmation. The inviter is not notified, so a stranger's invitation gives them no signal about the account.
 - [x] Popover redesign after manual testing. Each row is object first, actor second: line one is the project name, line two is "Actor did what", with the actor's initials as an avatar and a small type glyph pinned to its corner (`NotificationRow`). Unread is a dot plus medium weight rather than a tint. Hovering or focusing a row swaps the timestamp for mark-read and dismiss; dismiss (`dismissNotification`) deletes the row for the session user. The header carries the unread count, an All / Unread filter, and mark-all-read as an icon button. No keyboard shortcuts; researchers are not shortcut users.
 
-### Phase 3: Reviewer assignment (deferred, needs its own design)
+### Phase 3: Reviewer assignment (split out to #628)
 
-Assignment changes flow through the sync engine, not commands. The plausible hook is the workspace DO after a transform touching `assignedTo` passes verification, which needs the acting user id and the previous value at that point. Scope this separately once Phases 1 and 2 have shipped; it should reuse `createNotification` unchanged.
+Assignment changes flow through the sync engine, not commands, and the engine has no post-commit seam today. #628 adds an `onMutationCommitted` hook to `@cf-sync/server` that receives the principal and each written row with its previous value; the workspace DO uses it to emit `checklist.assigned` through `createNotification` unchanged.
 
 Also a candidate for this phase: admin announcements. There is no broadcast today; an `announcement` type with an admin-only server function that fans out one row per user would reuse `createNotification` and the renderer map as they are.
 
@@ -167,7 +167,7 @@ Also a candidate for this phase: admin announcements. There is no broadcast toda
 
 ## Related Documents
 
-- Issue #580 (this plan), #581 (invite anchoring, merged)
+- Issue #580 (this plan), #581 (invite anchoring, merged), #628 (Phase 3), PR #629
 - [System architecture](/architecture/diagrams/02-system-architecture)
 - [API actions](/architecture/diagrams/07-api-actions)
 - [Organizations guide](/guides/organizations)
