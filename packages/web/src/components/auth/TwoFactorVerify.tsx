@@ -8,6 +8,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { LockIcon } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { handleError } from '@/lib/error-utils';
+import { getPendingInvitationToken } from '@/lib/pendingInvitation';
 import { ErrorMessage } from './ErrorMessage';
 import { PrimaryButton } from './AuthButtons';
 import { Button } from '@/components/ui/button';
@@ -50,7 +51,7 @@ export function TwoFactorVerify({ onCancel }: TwoFactorVerifyProps) {
       await new Promise(resolve => setTimeout(resolve, 200));
 
       // Resume a pending project invitation instead of landing on the dashboard
-      const pendingInvitation = localStorage.getItem('pendingInvitationToken');
+      const pendingInvitation = getPendingInvitationToken();
       if (pendingInvitation) {
         navigate({ to: '/invite/$token', params: { token: pendingInvitation }, replace: true });
         return;
