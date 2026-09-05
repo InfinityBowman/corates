@@ -328,9 +328,7 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
               <div className='mx-auto max-w-7xl px-6'>
                 <ProjectHeader
                   name={meta.name ?? undefined}
-                  description={meta.description ?? undefined}
                   onRename={newName => project.project.rename(newName)}
-                  onUpdateDescription={desc => project.project.updateDescription(desc)}
                   onBack={() => navigate({ to: '/dashboard' })}
                 />
               </div>

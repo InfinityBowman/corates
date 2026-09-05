@@ -1,8 +1,7 @@
 /**
  * CreateProjectModal - Modal dialog for creating a new project
  *
- * Collects project name (required), description (optional),
- * and organization (if user has multiple).
+ * Collects project name (required) and organization (if user has multiple).
  */
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
@@ -19,7 +18,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -46,7 +44,6 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
   const queryClient = useQueryClient();
 
   const [projectName, setProjectName] = useState('');
-  const [projectDescription, setProjectDescription] = useState('');
   const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -69,7 +66,6 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
   useEffect(() => {
     if (!open) {
       setProjectName('');
-      setProjectDescription('');
       setSelectedOrgId(null);
     }
   }, [open]);
@@ -94,7 +90,6 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
           data: {
             orgId,
             name: projectName.trim(),
-            description: projectDescription.trim() || undefined,
           },
         })) as { id: string };
 
@@ -128,7 +123,7 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
         setIsSubmitting(false);
       }
     },
-    [projectName, projectDescription, resolvedOrgId, onOpenChange, navigate, queryClient],
+    [projectName, resolvedOrgId, onOpenChange, navigate, queryClient],
   );
 
   return (
@@ -185,22 +180,6 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
                 </Select>
               </div>
             )}
-
-            {/* Description */}
-            <div>
-              <Label htmlFor='project-description' className='mb-1.5 block'>
-                Add a description{' '}
-                <span className='text-muted-foreground/70 font-normal'>(optional)</span>
-              </Label>
-              <Textarea
-                id='project-description'
-                placeholder='What is this review about?'
-                value={projectDescription}
-                onChange={e => setProjectDescription(e.target.value)}
-                rows={2}
-                className='resize-none'
-              />
-            </div>
           </div>
 
           <DialogFooter>
