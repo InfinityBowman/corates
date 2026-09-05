@@ -14,9 +14,11 @@ import {
   type DomainError,
 } from '@corates/shared';
 import type { OrgId, ProjectId, UserId, ProjectInvitationId } from '@corates/shared/ids';
+import type { ProjectSetupStep } from '@corates/shared';
 import { createProject } from '@corates/workers/commands/projects';
 import {
   updateProject as updateProjectCmd,
+  updateProjectSetupStep as updateProjectSetupStepCmd,
   deleteProject as deleteProjectCmd,
 } from '@corates/workers/commands/projects';
 import {
@@ -192,6 +194,37 @@ export async function updateProjectById(
     captureError(error, { tags: { component: 'org-projects', action: 'update' } });
     throwDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'update_project',
+      originalError: error.message,
+    });
+  }
+}
+
+export async function updateProjectSetupStepById(
+  session: Session,
+  db: Database,
+  orgId: OrgId,
+  projectId: ProjectId,
+  setupStep: ProjectSetupStep | null,
+) {
+  const orgMembership = await requireOrgMembership(session, db, orgId);
+  if (!orgMembership.ok) throw orgMembership.error;
+
+  const writeAccess = await requireOrgWriteAccess('PUT', db, orgId);
+  if (!writeAccess.ok) throw writeAccess.error;
+
+  const access = await requireProjectAccess(session, db, orgId, projectId, 'owner');
+  if (!access.ok) throw access.error;
+
+  try {
+    return await updateProjectSetupStepCmd(env, { projectId, setupStep });
+  } catch (err) {
+    if (isDomainError(err)) {
+      throw new DomainErrorException(err);
+    }
+    const error = err as Error;
+    captureError(error, { tags: { component: 'org-projects', action: 'update-setup-step' } });
+    throwDomainError(SYSTEM_ERRORS.DB_ERROR, {
+      operation: 'update_project_setup_step',
       originalError: error.message,
     });
   }

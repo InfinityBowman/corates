@@ -10,7 +10,12 @@ import { createDb } from '@corates/db/client';
 import { projects, projectMembers } from '@corates/db/schema';
 import { insertWithQuotaCheck, type InsertRollbackMeta } from '../../lib/quotaTransaction';
 import { info } from '../../lib/logger';
-import { createValidationError, VALIDATION_ERRORS } from '@corates/shared';
+import {
+  createValidationError,
+  VALIDATION_ERRORS,
+  PROJECT_SETUP_STEPS,
+  type ProjectSetupStep,
+} from '@corates/shared';
 import type { OrgId, ProjectId, ProjectMemberId, UserId } from '@corates/shared/ids';
 import type { Env } from '../../types';
 import type { ProjectRole } from '../../policies/lib/roles';
@@ -35,6 +40,7 @@ interface CreateProjectResult {
     role: ProjectRole;
     createdAt: Date;
     updatedAt: Date;
+    setupStep: ProjectSetupStep;
   };
 }
 
@@ -55,6 +61,8 @@ export async function createProject(
     throw createValidationError('name', VALIDATION_ERRORS.FIELD_REQUIRED.code, null);
   }
 
+  const setupStep: ProjectSetupStep = PROJECT_SETUP_STEPS[0];
+
   const insertStatements = [
     db.insert(projects).values({
       id: projectId,
@@ -64,6 +72,7 @@ export async function createProject(
       createdBy: actor.id,
       createdAt: now,
       updatedAt: now,
+      setupStep,
     }),
     db.insert(projectMembers).values({
       id: memberId,
@@ -106,6 +115,7 @@ export async function createProject(
       role: 'owner',
       createdAt: now,
       updatedAt: now,
+      setupStep,
     },
   };
 }

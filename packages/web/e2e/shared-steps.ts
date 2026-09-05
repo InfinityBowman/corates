@@ -192,19 +192,16 @@ const FIXTURES_DIR = path.join(import.meta.dirname, 'fixtures');
  * Creates a project from the dashboard. Returns the projectId.
  * Handles both first-project and subsequent-project scenarios.
  */
-export async function createProject(page: Page, name: string, description = ''): Promise<string> {
+export async function createProject(page: Page, name: string): Promise<string> {
   const newProjectBtn = page.getByRole('button', { name: /New Project/i });
   await newProjectBtn.click();
 
-  await expect(page.getByText('Create a new project')).toBeVisible();
-  await page.getByPlaceholder('My Systematic Review').fill(name);
-  if (description) {
-    await page.getByPlaceholder('What is this review about?').fill(description);
-  }
+  await page.getByPlaceholder('Project name').fill(name);
   const createBtn = page.getByRole('button', { name: 'Create project' });
   await expect(createBtn).toBeEnabled({ timeout: 10_000 });
   await createBtn.click();
-  await expect(page).toHaveURL(/\/projects\//, { timeout: 15_000 });
+
+  await expect(page).toHaveURL(/\/projects\/[^/]+\/?(\?.*)?$/, { timeout: 15_000 });
 
   const projectId = page.url().match(/\/projects\/([^/?]+)/)?.[1];
   if (!projectId) throw new Error('Could not extract projectId from URL');
@@ -233,8 +230,10 @@ export async function addStudyViaPdf(page: Page, fixture = 'Petrie2019.pdf') {
   await fileInput.setInputFiles(path.join(FIXTURES_DIR, fixture));
 
   // Wait for metadata extraction to finish and the study to appear in staged list
-  await expect(page.getByRole('button', { name: /Add 1 Stud/i })).toBeVisible({ timeout: 30_000 });
-  await page.getByRole('button', { name: /Add 1 Stud/i }).click();
+  await expect(page.getByRole('button', { name: /Upload 1 Stud/i })).toBeVisible({
+    timeout: 30_000,
+  });
+  await page.getByRole('button', { name: /Upload 1 Stud/i }).click();
 
   await expect(studyCardTitle(page, fixture.replace(/\.pdf$/i, ''))).toBeVisible({
     timeout: 15_000,

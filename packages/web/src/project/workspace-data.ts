@@ -45,6 +45,7 @@ import type {
 } from '@/stores/projectStore';
 import { queryKeys } from '@/lib/queryKeys';
 import { getMyProjects } from '@/server/functions/users.functions';
+import type { UserProject } from '@/server/functions/users.server';
 import { getProjectMembers } from '@/server/functions/org-projects.functions';
 import { QUERY_STABLE } from '@/lib/queryPresets';
 import { getCachedProjectOrgId, rememberProjectOrgId } from '@/primitives/db.js';
@@ -504,9 +505,18 @@ export interface ProjectMetaInfo {
   name: string | null;
   description: string | null;
   orgId: string | null;
+  /** The current user's role on the project; null until the projects query resolves. */
+  role: string | null;
+  setupStep: UserProject['setupStep'];
 }
 
-const EMPTY_META: ProjectMetaInfo = { name: null, description: null, orgId: null };
+const EMPTY_META: ProjectMetaInfo = {
+  name: null,
+  description: null,
+  orgId: null,
+  role: null,
+  setupStep: null,
+};
 
 /** Project identity from D1 (via the projects list query). */
 export function useProjectMeta(projectId: string): ProjectMetaInfo {
@@ -516,16 +526,14 @@ export function useProjectMeta(projectId: string): ProjectMetaInfo {
     ...QUERY_STABLE,
   });
   return useMemo(() => {
-    const project = (
-      data as
-        | Array<{ id: string; name?: string; description?: string | null; orgId?: string }>
-        | undefined
-    )?.find(p => p.id === projectId);
+    const project = (data as UserProject[] | undefined)?.find(p => p.id === projectId);
     if (!project) return EMPTY_META;
     return {
       name: project.name ?? null,
       description: project.description ?? null,
       orgId: project.orgId ?? null,
+      role: project.role ?? null,
+      setupStep: project.setupStep ?? null,
     };
   }, [data, projectId]);
 }
