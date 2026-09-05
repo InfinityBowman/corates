@@ -10,6 +10,7 @@ import { APIError, createAuthEndpoint, sessionMiddleware } from 'better-auth/api
 import { setCookieCache, setSessionCookie } from 'better-auth/cookies';
 import { z } from 'zod';
 import { isSyntheticEmail, isValidEmail, normalizeEmail } from '@corates/shared/email';
+import { info, warn } from '../lib/logger';
 
 export const ONBOARDING_EMAIL_ERROR_CODES = {
   INVALID_EMAIL: { code: 'INVALID_EMAIL', message: 'Enter a valid email address' },
@@ -119,25 +120,30 @@ export function onboardingEmail(opts: OnboardingEmailOptions) {
           const email = normalizeEmail(ctx.body.email);
           const identifier = onboardingCodeIdentifier(email);
 
+          const reject = (
+            error: (typeof ONBOARDING_EMAIL_ERROR_CODES)[keyof typeof ONBOARDING_EMAIL_ERROR_CODES],
+            status: 'BAD_REQUEST' | 'FORBIDDEN' = 'BAD_REQUEST',
+          ) => {
+            info('auth.onboarding_code_rejected', { userId: user.id, reason: error.code });
+            return APIError.from(status, error);
+          };
           const record = await internalAdapter.findVerificationValue(identifier);
-          if (!record) {
-            throw APIError.from('BAD_REQUEST', ONBOARDING_EMAIL_ERROR_CODES.CODE_INVALID);
-          }
+          if (!record) throw reject(ONBOARDING_EMAIL_ERROR_CODES.CODE_INVALID);
           if (record.expiresAt < new Date()) {
             await internalAdapter.deleteVerificationByIdentifier(identifier);
-            throw APIError.from('BAD_REQUEST', ONBOARDING_EMAIL_ERROR_CODES.CODE_EXPIRED);
+            throw reject(ONBOARDING_EMAIL_ERROR_CODES.CODE_EXPIRED);
           }
           const [storedCode, attemptsRaw] = splitAtLastColon(record.value);
           const attempts = Number.parseInt(attemptsRaw || '0', 10);
           if (attempts >= allowedAttempts) {
             await internalAdapter.deleteVerificationByIdentifier(identifier);
-            throw APIError.from('FORBIDDEN', ONBOARDING_EMAIL_ERROR_CODES.TOO_MANY_ATTEMPTS);
+            throw reject(ONBOARDING_EMAIL_ERROR_CODES.TOO_MANY_ATTEMPTS, 'FORBIDDEN');
           }
           if (storedCode !== ctx.body.code.trim()) {
             await internalAdapter.updateVerificationByIdentifier(identifier, {
               value: `${storedCode}:${attempts + 1}`,
             });
-            throw APIError.from('BAD_REQUEST', ONBOARDING_EMAIL_ERROR_CODES.CODE_INVALID);
+            throw reject(ONBOARDING_EMAIL_ERROR_CODES.CODE_INVALID);
           }
           await internalAdapter.deleteVerificationByIdentifier(identifier);
 
@@ -156,7 +162,7 @@ export function onboardingEmail(opts: OnboardingEmailOptions) {
               { session: session.session, user: updated },
               !!dontRememberMe,
             );
-            ctx.context.logger.info('auth.onboarding_email_verified', { userId: user.id });
+            info('auth.onboarding_email_verified', { userId: user.id });
             return ctx.json({ claimed: false });
           }
 
@@ -164,6 +170,11 @@ export function onboardingEmail(opts: OnboardingEmailOptions) {
           const discardable =
             !user.profileCompletedAt && ((await opts.canDiscardUser?.(user.id)) ?? true);
           if (!discardable) {
+            // The one case that still needs a manual merge
+            warn('auth.onboarding_email_in_use', {
+              userId: user.id,
+              existingUserId: existing.user.id,
+            });
             throw APIError.from('CONFLICT', ONBOARDING_EMAIL_ERROR_CODES.EMAIL_IN_USE);
           }
 
@@ -207,10 +218,7 @@ export function onboardingEmail(opts: OnboardingEmailOptions) {
             });
           }
           await setSessionCookie(ctx, { session: newSession, user: target });
-          ctx.context.logger.info('auth.onboarding_account_claimed', {
-            discardedUserId: user.id,
-            userId: target.id,
-          });
+          info('auth.onboarding_account_claimed', { discardedUserId: user.id, userId: target.id });
           return ctx.json({ claimed: true });
         },
       ),
