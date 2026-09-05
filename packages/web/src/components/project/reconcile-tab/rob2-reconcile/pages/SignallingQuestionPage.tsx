@@ -19,7 +19,7 @@ interface SignallingQuestionPageProps {
   reviewer2Name: string;
   isAgreement: boolean;
   isSkipped: boolean;
-  /** Derived skip state per reviewer: null answer while off the scoring path. */
+  /** Per-reviewer derived skips: null answer while off the scoring path. */
   reviewer1Skipped?: boolean;
   reviewer2Skipped?: boolean;
   onFinalAnswerChange: (_answer: string) => void;
@@ -97,8 +97,8 @@ export function SignallingQuestionPage({
           <div className='flex items-center gap-2'>
             <InfoIcon className='size-4 shrink-0 text-slate-500' />
             <p className='text-sm text-slate-600'>
-              The reconciled answers already determine this domain's judgement, so this question is
-              not required. You can still record an answer if needed.
+              This question is not required: the reconciled answers put it off the scoring path. You
+              can still record an answer if needed.
             </p>
           </div>
         </div>

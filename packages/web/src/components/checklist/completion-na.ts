@@ -1,14 +1,12 @@
 /**
  * Completion-time NA stamping
  *
- * When a reviewer marks a ROB-2 or ROBINS-I checklist complete, conditional
- * questions that sit off the scoring path get an explicit 'NA' answer -- the
- * response the official instruments record for them. Only questions whose
- * official response scale includes NA are stamped; off-path questions without
- * an NA option stay null and read as skipped through derivation.
+ * Marking a ROB-2 or ROBINS-I checklist complete, or finalizing a
+ * reconciliation, writes the official 'NA' response into off-path questions
+ * whose scale offers it. The rest stay null and read as skipped by derivation.
  *
- * Stamping happens at completion rather than live during editing so a
- * changing upstream answer never leaves stale NA values behind.
+ * Stamping at completion rather than live during editing means a changing
+ * upstream answer never leaves stale NA values behind.
  */
 
 import {
@@ -85,11 +83,7 @@ function getRobinsIStamps(getValue: AnswerGetter): NaStamp[] {
   return stamps;
 }
 
-/**
- * Determine which questions should receive an explicit 'NA' answer when the
- * reviewer marks the checklist complete. Returns an empty list for checklist
- * types without conditional NA semantics (e.g. AMSTAR2).
- */
+/** Empty for checklist types without conditional NA semantics, such as AMSTAR2. */
 export function getCompletionNaStamps(
   checklistType: string | null | undefined,
   getValue: AnswerGetter,

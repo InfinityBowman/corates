@@ -17,7 +17,7 @@ interface DomainQuestionPageProps {
   reviewer1Name: string;
   reviewer2Name: string;
   isAgreement: boolean;
-  /** Derived skip state per checklist: null answer while off the scoring path. */
+  /** Per-checklist derived skips: null answer while off the decision path. */
   reviewer1Skipped?: boolean;
   reviewer2Skipped?: boolean;
   finalSkipped?: boolean;
@@ -87,8 +87,8 @@ export function DomainQuestionPage({
           <div className='flex items-center gap-2'>
             <InfoIcon className='text-muted-foreground size-4 shrink-0' />
             <p className='text-muted-foreground text-sm'>
-              The reconciled answers already determine this domain's judgement, so this question is
-              not required. You can still record an answer if needed.
+              This question is not required: the reconciled answers put it off the scoring path. You
+              can still record an answer if needed.
             </p>
           </div>
         </div>

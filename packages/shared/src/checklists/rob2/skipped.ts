@@ -1,31 +1,24 @@
 /**
  * ROB-2 Skipped Question Derivation
  *
- * A question counts as "skipped" when no way of answering the domain's open
- * questions can bring it onto the scoring path, and it has no stored answer.
- * A question further down a branch that is still pending is not skipped.
+ * A question is skipped when no way of answering the domain's open questions
+ * can bring it onto the scoring path and it has no stored answer. A question
+ * further down a branch that is still pending is not skipped.
  *
- * Skipped state is derived, never stored. The official RoB 2 response scales
- * only include NA for the conditional signalling questions (responseType
- * WITH_NA); off-path STANDARD questions have no NA option in the instrument,
- * so a null answer plus this derivation is their canonical representation.
+ * Skipped state is derived, never stored. The official scales only offer NA
+ * on the conditional (WITH_NA) questions, so a null answer plus this
+ * derivation is the canonical representation of an off-path STANDARD question.
  */
 
 import { getActiveDomainKeys, getDomainQuestions } from './schema.js';
 import type { ChecklistState, DomainAnswers, DomainState } from './scoring-helpers.js';
 import { getReachableQuestions } from './scoring.js';
 
-/**
- * Whether the official instrument offers NA as a response for this question.
- * Only these questions may be stamped with a stored 'NA' answer.
- */
+/** Only questions whose official scale offers NA may be stamped with a stored 'NA'. */
 export function questionHasNaOption(domainKey: string, questionKey: string): boolean {
   return getDomainQuestions(domainKey)[questionKey]?.responseType === 'WITH_NA';
 }
 
-/**
- * Derive the skipped questions of one domain from its stored answers.
- */
 export function getSkippedDomainQuestions(
   domainKey: string,
   answers: DomainAnswers | undefined,
@@ -42,10 +35,7 @@ export function getSkippedDomainQuestions(
   return skipped;
 }
 
-/**
- * Derive all skipped questions of a checklist (active domains only).
- * Question keys are unique across domains, so a flat set is safe.
- */
+/** Active domains only. Question keys are unique across domains, so a flat set is safe. */
 export function getSkippedQuestions(checklist: ChecklistState | null): Set<string> {
   const skipped = new Set<string>();
   if (!checklist) return skipped;
@@ -61,9 +51,8 @@ export function getSkippedQuestions(checklist: ChecklistState | null): Set<strin
 }
 
 /**
- * Whether a question's stored state means "not applicable" for comparison
- * purposes: an explicit NA answer, or a derived skip. Two reviewers where one
- * clicked NA and the other left the question off-path are in agreement.
+ * An explicit NA and a derived skip both mean "not applicable", so a reviewer
+ * who clicked NA agrees with one who left the question off-path.
  */
 export function isEffectivelyNotApplicable(
   questionKey: string,

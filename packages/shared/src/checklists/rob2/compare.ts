@@ -172,9 +172,8 @@ function compareDomain(
   const agreements: QuestionComparison[] = [];
   const disagreements: QuestionComparison[] = [];
 
-  // Skipped questions are derived per reviewer so that an explicit NA on one
-  // side agrees with a derived skip (null while off the scoring path) on the
-  // other -- both mean "not applicable".
+  // Derived per reviewer so an explicit NA on one side agrees with a derived
+  // skip on the other.
   const skipped1 = getSkippedDomainQuestions(domainKey, domain1?.answers);
   const skipped2 = getSkippedDomainQuestions(domainKey, domain2?.answers);
 
@@ -182,8 +181,6 @@ function compareDomain(
     const ans1 = domain1?.answers?.[qKey]?.answer ?? null;
     const ans2 = domain2?.answers?.[qKey]?.answer ?? null;
 
-    // Agreement requires both answers present and equal, or both sides
-    // effectively not applicable (explicit NA or derived skip)
     const bothNotApplicable =
       isEffectivelyNotApplicable(qKey, ans1, skipped1) &&
       isEffectivelyNotApplicable(qKey, ans2, skipped2);

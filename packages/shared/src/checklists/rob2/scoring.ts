@@ -139,10 +139,8 @@ export function scoreAllDomains(checklistState: ChecklistState | null): AllDomai
     }
   }
 
-  // Calculate overall judgement
   let overall: (typeof JUDGEMENTS)[keyof typeof JUDGEMENTS] | null = null;
   if (judgements.length === activeDomainKeys.length) {
-    // All domains complete
     if (judgements.includes(JUDGEMENTS.HIGH)) {
       overall = JUDGEMENTS.HIGH;
     } else if (judgements.includes(JUDGEMENTS.SOME_CONCERNS)) {
