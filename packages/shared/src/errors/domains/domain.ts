@@ -33,6 +33,28 @@ export const AUTH_ERRORS = {
     defaultMessage: 'That provider is not connected. Connect it in Settings, then try again.',
     statusCode: 401,
   },
+  // Emailed one-time codes (sign-in, verification, password reset, onboarding)
+  CODE_INVALID: {
+    code: 'AUTH_CODE_INVALID',
+    defaultMessage: 'That code is not right. Check it and try again.',
+    statusCode: 400,
+  },
+  CODE_EXPIRED: {
+    code: 'AUTH_CODE_EXPIRED',
+    defaultMessage: 'That code has expired. Request a new one.',
+    statusCode: 400,
+  },
+  CODE_TOO_MANY_ATTEMPTS: {
+    code: 'AUTH_CODE_TOO_MANY_ATTEMPTS',
+    defaultMessage: 'Too many incorrect attempts. Request a new code.',
+    statusCode: 403,
+  },
+  EMAIL_IN_USE: {
+    code: 'AUTH_EMAIL_IN_USE',
+    defaultMessage:
+      'That email already belongs to another CoRATES account. Sign in to that account and connect this sign-in method from Settings.',
+    statusCode: 409,
+  },
 } as const;
 
 export type AuthErrorCode = (typeof AUTH_ERRORS)[keyof typeof AUTH_ERRORS]['code'];

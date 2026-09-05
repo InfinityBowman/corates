@@ -3,10 +3,9 @@ import { Link, useNavigate } from '@tanstack/react-router';
 import { CheckCircleIcon, MailIcon } from 'lucide-react';
 import { UserAvatar } from '@/components/ui/avatar';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { AdminDataTable } from '@/components/admin/ui';
+import { AdminDataTable, type AdminColumnDef } from '@/components/admin/ui';
 import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/lib/formatDate';
-import type { ColumnDef } from '@tanstack/react-table';
 
 interface UserRow {
   id: string;
@@ -41,7 +40,7 @@ interface UserTableProps {
 export function UserTable({ users, loading }: UserTableProps) {
   const navigate = useNavigate();
 
-  const columns = useMemo<ColumnDef<UserRow, unknown>[]>(
+  const columns = useMemo<AdminColumnDef<UserRow>[]>(
     () => [
       {
         accessorKey: 'name',

@@ -13,7 +13,7 @@
  */
 
 import { test, expect, type Page } from '@playwright/test';
-import { getAuthUrl } from './helpers';
+import { submitEmailCodeSignIn } from './helpers';
 import { BASE_URL } from './constants';
 
 const TEST_PREFIX = `e2e-billing-${Date.now()}`;
@@ -29,15 +29,7 @@ async function signUpViaUI(page: Page) {
   await page.goto('/signup');
   await expect(page.getByText('Create an Account')).toBeVisible({ timeout: 10_000 });
 
-  const emailInput = page.locator('#magic-link-email');
-  await emailInput.click();
-  await emailInput.pressSequentially(TEST_EMAIL, { delay: 20 });
-  await page.getByRole('button', { name: /Continue with Email/i }).click();
-
-  await expect(page.getByText('Check your email')).toBeVisible({ timeout: 10_000 });
-
-  const magicLinkUrl = await getAuthUrl(TEST_EMAIL, 'magic-link');
-  await page.goto(magicLinkUrl);
+  await submitEmailCodeSignIn(page, TEST_EMAIL);
   await page.waitForURL(/\/(dashboard|complete-profile)/, { timeout: 15_000 });
 
   if (page.url().includes('complete-profile')) {

@@ -4,6 +4,7 @@ import { drizzle } from 'drizzle-orm/d1';
 import { eq } from 'drizzle-orm';
 import { user, member, session, account, verification } from '@corates/db/schema';
 import { devModeGate } from '@/server/devModeGate';
+import { containsInsensitive } from '@/server/lib/sqlSearch';
 import { captureError } from '@corates/workers/logger';
 
 export const handler = async ({ request }: { request: Request }) => {
@@ -24,13 +25,10 @@ export const handler = async ({ request }: { request: Request }) => {
     }
 
     await db.delete(verification).where(eq(verification.identifier, body.email));
-    for (const prefix of [
-      'test-url:magic-link:',
-      'test-url:verification:',
-      'test-url:reset-password:',
-    ]) {
-      await db.delete(verification).where(eq(verification.identifier, `${prefix}${body.email}`));
-    }
+    // Pending codes are keyed `<type>-otp-<email>` by the email-otp and onboarding plugins
+    await db
+      .delete(verification)
+      .where(containsInsensitive(verification.identifier, `-otp-${body.email}`));
 
     return Response.json({ success: true, deletedCount: users.length });
   } catch (err) {

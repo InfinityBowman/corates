@@ -9,9 +9,9 @@ import {
   AdminSection,
   AdminDataTable,
   ServerPagination,
+  type AdminColumnDef,
 } from '@/components/admin/ui';
 import { Input } from '@/components/ui/input';
-import type { ColumnDef } from '@tanstack/react-table';
 
 interface OrgRow {
   id: string;
@@ -52,7 +52,7 @@ function AdminOrgList() {
     setPage(1);
   };
 
-  const columns = useMemo<ColumnDef<OrgRow, unknown>[]>(
+  const columns = useMemo<AdminColumnDef<OrgRow>[]>(
     () => [
       {
         accessorKey: 'name',

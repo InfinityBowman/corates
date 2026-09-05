@@ -20,5 +20,9 @@ export default defineConfig({
     setupFiles: ['./src/__tests__/setup.js'],
     include: ['src/**/*.{test,spec}.{js,ts}'],
     testTimeout: 10000,
+    // workerd re-reports Better Auth APIErrors as unhandled rejections after
+    // the endpoint has already turned them into responses
+    onUnhandledError: error =>
+      (error as { name?: string }).name === 'APIError' ? false : undefined,
   },
 });

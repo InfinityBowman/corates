@@ -1,5 +1,6 @@
 /** Password, linked providers, and two-factor as one list of sign-in methods. */
 
+import { useNavigate } from '@tanstack/react-router';
 import { useState, useMemo, useEffect, useCallback, useId } from 'react';
 import { MailIcon, KeyIcon, KeyRoundIcon, ExternalLinkIcon, AlertCircleIcon } from 'lucide-react';
 import { authClient, authFetch } from '@/api/auth-client';
@@ -76,10 +77,11 @@ function MethodLogo({ src, alt }: { src?: string; alt?: string }) {
 }
 
 export function SignInMethodsSection() {
+  const navigate = useNavigate();
   const { accounts, isLoading, error, refetch } = useLinkedAccounts();
   const user = useAuthStore(selectUser);
   const changePassword = useAuthStore(s => s.changePassword);
-  const resetPassword = useAuthStore(s => s.resetPassword);
+  const requestPasswordResetCode = useAuthStore(s => s.requestPasswordResetCode);
   const fieldId = useId();
 
   const [linkingProvider, setLinkingProvider] = useState<string | null>(null);
@@ -97,7 +99,6 @@ export function SignInMethodsSection() {
   const [changingPassword, setChangingPassword] = useState(false);
   const [unmetRequirements, setUnmetRequirements] = useState<string[]>([]);
   const [setupEmailLoading, setSetupEmailLoading] = useState(false);
-  const [setupEmailSent, setSetupEmailSent] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -186,18 +187,19 @@ export function SignInMethodsSection() {
   }, [accountToUnlink, refetch]);
 
   const handleSendSetupEmail = useCallback(async () => {
+    const email = (user?.email as string) || '';
     setSetupEmailLoading(true);
     setPasswordError('');
     try {
-      await resetPassword((user?.email as string) || '');
-      setSetupEmailSent(true);
+      await requestPasswordResetCode(email);
+      navigate({ to: '/reset-password', search: { email, sent: '1' } });
     } catch (err) {
       const { handleError } = await import('@/lib/error-utils');
       await handleError(err, { setError: setPasswordError, showToast: false });
     } finally {
       setSetupEmailLoading(false);
     }
-  }, [resetPassword, user?.email]);
+  }, [requestPasswordResetCode, navigate, user?.email]);
 
   const resetPasswordForm = useCallback(() => {
     setShowPasswordForm(false);
@@ -288,7 +290,7 @@ export function SignInMethodsSection() {
             description={
               credentialAccount ?
                 (user?.email as string)
-              : 'Not set. Sign in with an emailed link instead.'
+              : 'Not set. Sign in with an emailed code instead.'
             }
             meta={
               credentialAccount ?
@@ -296,28 +298,9 @@ export function SignInMethodsSection() {
                 `Added ${formatLinkedDate(credentialAccount.createdAt)}`
               : null
             }
-            alignTop={showPasswordForm || setupEmailSent}
+            alignTop={showPasswordForm}
             expanded={
-              setupEmailSent ?
-                <Alert variant='info'>
-                  <MailIcon />
-                  <div>
-                    <p className='font-medium'>Check your email</p>
-                    <p className='mt-1 text-sm'>
-                      We sent a link to <strong>{user?.email as string}</strong> to set your
-                      password.
-                    </p>
-                    <Button
-                      variant='link'
-                      size='sm'
-                      onClick={() => setSetupEmailSent(false)}
-                      className='mt-1 h-auto p-0'
-                    >
-                      Dismiss
-                    </Button>
-                  </div>
-                </Alert>
-              : showPasswordForm ?
+              showPasswordForm ?
                 <form onSubmit={handlePasswordChange} className='flex max-w-sm flex-col gap-4'>
                   {passwordError && <Alert variant='destructive'>{passwordError}</Alert>}
                   <div>
@@ -369,8 +352,7 @@ export function SignInMethodsSection() {
               : null
             }
           >
-            {!setupEmailSent &&
-              !showPasswordForm &&
+            {!showPasswordForm &&
               (credentialAccount ?
                 <Button variant='outline' onClick={() => setShowPasswordForm(true)}>
                   <KeyIcon className='size-4' />

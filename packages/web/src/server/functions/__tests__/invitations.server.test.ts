@@ -13,7 +13,12 @@ import {
 import { createDb } from '@corates/db/client';
 import { projectInvitations, projectMembers, member } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { handleAcceptInvitation, handleGetInvitation } from '@/server/functions/invitations.server';
+import {
+  handleAcceptInvitation,
+  handleGetInvitation,
+  listPendingInvitationsForUser,
+  declineInvitation,
+} from '@/server/functions/invitations.server';
 import type { Session } from '@/server/middleware/auth';
 import { DomainErrorException } from '@corates/shared';
 
@@ -336,5 +341,95 @@ describe('handleAcceptInvitation', () => {
       .where(and(eq(projectMembers.projectId, project.id), eq(projectMembers.userId, invitee.id)))
       .get();
     expect(projectMember).toBeUndefined();
+  });
+});
+
+describe('listPendingInvitationsForUser', () => {
+  it('returns pending unexpired invitations for the session email, case-insensitively', async () => {
+    const inviter = await buildUser({ name: 'Inviter', givenName: 'Ada' });
+    const { project, org } = await buildProject({
+      owner: inviter,
+      project: { name: 'Pending Project' },
+    });
+
+    const base = { orgId: org.id, projectId: project.id, invitedBy: inviter.id };
+    const pending = await buildProjectInvitation({ ...base, email: 'invitee@example.com' });
+    await buildProjectInvitation({ ...base, email: 'invitee@example.com', status: 'expired' });
+    await buildProjectInvitation({ ...base, email: 'invitee@example.com', status: 'accepted' });
+    await buildProjectInvitation({ ...base, email: 'someone-else@example.com' });
+
+    currentUser = { id: 'invitee-user', email: 'Invitee@Example.com' };
+
+    const result = await listPendingInvitationsForUser(createDb(env.DB), mockSession());
+
+    expect(result).toEqual([
+      {
+        id: pending.id,
+        token: pending.token,
+        role: 'member',
+        projectName: 'Pending Project',
+        inviterName: 'Ada',
+      },
+    ]);
+  });
+});
+
+describe('declineInvitation', () => {
+  it('deletes a pending invitation addressed to the session email', async () => {
+    const { project, org, owner } = await buildProject();
+    const invitation = await buildProjectInvitation({
+      orgId: org.id,
+      projectId: project.id,
+      invitedBy: owner.id,
+      email: 'invitee@example.com',
+    });
+    currentUser = { id: 'invitee-user', email: 'Invitee@Example.com' };
+
+    await declineInvitation(createDb(env.DB), mockSession(), { invitationId: invitation.id });
+
+    const row = await createDb(env.DB)
+      .select()
+      .from(projectInvitations)
+      .where(eq(projectInvitations.id, invitation.id))
+      .get();
+    expect(row).toBeUndefined();
+  });
+
+  it('rejects an invitation addressed to someone else without revealing it', async () => {
+    const { project, org, owner } = await buildProject();
+    const invitation = await buildProjectInvitation({
+      orgId: org.id,
+      projectId: project.id,
+      invitedBy: owner.id,
+      email: 'invitee@example.com',
+    });
+    currentUser = { id: 'other-user', email: 'other@example.com' };
+
+    await expect(
+      declineInvitation(createDb(env.DB), mockSession(), { invitationId: invitation.id }),
+    ).rejects.toMatchObject({ statusCode: 400 });
+
+    const row = await createDb(env.DB)
+      .select()
+      .from(projectInvitations)
+      .where(eq(projectInvitations.id, invitation.id))
+      .get();
+    expect(row).toBeDefined();
+  });
+
+  it('rejects an already accepted invitation', async () => {
+    const { project, org, owner } = await buildProject();
+    const invitation = await buildProjectInvitation({
+      orgId: org.id,
+      projectId: project.id,
+      invitedBy: owner.id,
+      email: 'invitee@example.com',
+      status: 'accepted',
+    });
+    currentUser = { id: 'invitee-user', email: 'invitee@example.com' };
+
+    await expect(
+      declineInvitation(createDb(env.DB), mockSession(), { invitationId: invitation.id }),
+    ).rejects.toMatchObject({ code: 'PROJECT_INVITATION_ALREADY_ACCEPTED' });
   });
 });

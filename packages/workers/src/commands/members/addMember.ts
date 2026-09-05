@@ -12,7 +12,7 @@ import { eq, and } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS } from '@corates/shared';
 import { isSyntheticEmail } from '@corates/shared/email';
 import type { OrgId, ProjectId, UserId } from '@corates/shared/ids';
-import { notifyUser, NotificationTypes } from '../lib/notifications';
+import { notifyUser } from '../lib/notifications';
 import { insertWithQuotaCheck, type InsertRollbackMeta } from '../../lib/quotaTransaction';
 import { refreshWorkspaceSessions } from '../../sync/admin';
 import type { Env } from '../../types';
@@ -143,7 +143,7 @@ export async function addMember(
   // Send notification to the added user
   try {
     await notifyUser(env, userToAdd.id, {
-      type: NotificationTypes.PROJECT_MEMBERSHIP_ADDED,
+      type: 'project-membership-added',
       orgId,
       projectId,
       projectName,

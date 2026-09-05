@@ -24,9 +24,6 @@ const LINK_ERROR_MESSAGES: Record<string, string | null> = {
     'The email on that account does not match the email on your CoRATES account. Contact support if you need to link accounts with different emails.',
   EMAIL_NOT_FOUND:
     'That provider did not return an email address. Add a verified email to your account there, then try again.',
-  // Magic link errors - silent; the signin page shows an inline banner instead
-  INVALID_TOKEN: null,
-  EXPIRED_TOKEN: null,
   // Session/auth errors
   SESSION_EXPIRED: 'Your session expired. Sign in again.',
   INVALID_SESSION: 'Your session is no longer valid. Sign in again.',

@@ -8,7 +8,7 @@ import { captureError, info } from '../../lib/logger';
 import { createDb } from '@corates/db/client';
 import { projectMembers } from '@corates/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { notifyUser, NotificationTypes } from '../lib/notifications';
+import { notifyUser } from '../lib/notifications';
 import { requireSafeRoleChange } from '../../policies';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { refreshWorkspaceSessions } from '../../sync/admin';
@@ -61,7 +61,7 @@ export async function updateMemberRole(
   // Send notification to the user whose role was updated
   try {
     await notifyUser(env, userId, {
-      type: NotificationTypes.PROJECT_MEMBERSHIP_UPDATED,
+      type: 'project-membership-updated',
       orgId,
       projectId,
       role,

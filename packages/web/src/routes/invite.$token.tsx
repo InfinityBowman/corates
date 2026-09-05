@@ -16,6 +16,8 @@ import { useAuthStore, selectUser, selectIsAuthLoading } from '@/stores/authStor
 import { getInvitation, acceptInvitation } from '@/server/functions/invitations.functions';
 import { getDomainError, getUserFriendlyMessage, parseError } from '@/lib/error-utils';
 import { showToast } from '@/lib/toast';
+import { queryClient } from '@/lib/queryClient';
+import { queryKeys } from '@/lib/queryKeys';
 import { Button } from '@/components/ui/button';
 import { PrimaryButton } from '@/components/auth/AuthButtons';
 import { RouteError } from '@/components/RouteError';
@@ -83,6 +85,7 @@ function InvitePage() {
     try {
       const result = await acceptInvitation({ data: { token } });
       localStorage.removeItem('pendingInvitationToken');
+      queryClient.invalidateQueries({ queryKey: queryKeys.invitations.pendingForMe });
       showToast.success('Invitation accepted', `You now have access to "${result.projectName}"`);
       navigate({ to: '/dashboard', replace: true });
     } catch (err) {

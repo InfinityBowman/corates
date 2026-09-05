@@ -1,10 +1,14 @@
 import { useState } from 'react';
 import {
-  useReactTable,
-  getCoreRowModel,
-  getSortedRowModel,
+  useTable,
+  tableFeatures,
+  rowSortingFeature,
+  createSortedRowModel,
+  sortFn_alphanumeric,
+  sortFn_text,
   flexRender,
   type ColumnDef,
+  type RowData,
   type SortingState,
 } from '@tanstack/react-table';
 import { ChevronUpIcon, ChevronDownIcon } from 'lucide-react';
@@ -18,8 +22,18 @@ import {
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 
-interface AdminDataTableProps<T> {
-  columns: ColumnDef<T, any>[];
+// V9 resolves the default 'auto' sort only against registered functions;
+// these two are what V8 picked for our string columns.
+const features = tableFeatures({
+  rowSortingFeature,
+  sortedRowModel: createSortedRowModel(),
+  sortFns: { alphanumeric: sortFn_alphanumeric, text: sortFn_text },
+});
+
+export type AdminColumnDef<T extends RowData> = ColumnDef<typeof features, T, unknown>;
+
+interface AdminDataTableProps<T extends RowData> {
+  columns: AdminColumnDef<T>[];
   data: T[];
   loading?: boolean;
   emptyState?: React.ReactNode;
@@ -27,7 +41,7 @@ interface AdminDataTableProps<T> {
   onRowClick?: (_row: T) => void;
 }
 
-export function AdminDataTable<T>({
+export function AdminDataTable<T extends RowData>({
   columns,
   data,
   loading,
@@ -37,13 +51,12 @@ export function AdminDataTable<T>({
 }: AdminDataTableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([]);
 
-  const table = useReactTable({
+  const table = useTable({
+    features,
     data: data || [],
     columns: columns || [],
     state: { sorting },
     onSortingChange: setSorting,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
     enableSorting,
   });
 
@@ -62,10 +75,6 @@ export function AdminDataTable<T>({
                     : ''
                   }`}
                   onClick={enableSorting ? header.column.getToggleSortingHandler() : undefined}
-                  style={{
-                    width:
-                      header.column.columnDef.size ? `${header.column.columnDef.size}px` : 'auto',
-                  }}
                 >
                   <div className='flex items-center gap-1'>
                     {header.isPlaceholder ? null : (
@@ -115,7 +124,7 @@ export function AdminDataTable<T>({
                 className={onRowClick ? 'cursor-pointer' : ''}
                 onClick={() => onRowClick?.(row.original)}
               >
-                {row.getVisibleCells().map(cell => (
+                {row.getAllCells().map(cell => (
                   <TableCell key={cell.id} className='text-foreground px-4 py-2 text-sm'>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>

@@ -11,8 +11,11 @@ import { eq } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { teardownWorkspace } from '../../sync/admin';
 import { cleanupProjectStorage } from '../lib/storage';
-import { notifyUsers, NotificationTypes } from '../lib/notifications';
+import { notifyUsers } from '../lib/notifications';
+import { createNotification } from '../notifications';
+import { displayName } from '../lib/displayName';
 import type { Env } from '../../types';
+import type { UserId } from '@corates/shared/ids';
 
 interface DeleteProjectActor {
   id: string;
@@ -76,18 +79,28 @@ export async function deleteProject(
   await teardownWorkspace(env, projectId);
 
   // Send notifications to all members (except the one who deleted)
+  const projectName = project?.name || 'Unknown Project';
   const userIds = members.map(m => m.userId);
   const notifiedCount = await notifyUsers(
     env,
     userIds,
     {
-      type: NotificationTypes.PROJECT_DELETED,
+      type: 'project-deleted',
       projectId,
-      projectName: project?.name || 'Unknown Project',
+      projectName,
       deletedBy: actor.name || actor.email || 'Unknown',
     },
     actor.id,
   );
+  const actorName = await displayName(db, actor.id);
+  for (const userId of userIds) {
+    if (userId === actor.id) continue;
+    await createNotification(env, {
+      userId: userId as UserId,
+      type: 'project.deleted',
+      data: { projectId, projectName, actorName },
+    });
+  }
 
   info('project.deleted', { projectId, userId: actor.id, memberCount: members.length });
 

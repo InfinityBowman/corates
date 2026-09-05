@@ -1,6 +1,6 @@
 import { createAuthClient } from 'better-auth/react';
 import {
-  magicLinkClient,
+  emailOTPClient,
   twoFactorClient,
   adminClient,
   organizationClient,
@@ -21,12 +21,19 @@ const BETTER_AUTH_ERROR_MAP: Record<string, ErrorDefinition> = {
   CREDENTIAL_ACCOUNT_NOT_FOUND: AUTH_ERRORS.INVALID,
   USER_NOT_FOUND: USER_ERRORS.NOT_FOUND,
   EMAIL_NOT_VERIFIED: USER_ERRORS.EMAIL_NOT_VERIFIED,
+  // Emailed codes: the email-otp plugin and our onboarding plugin
+  INVALID_OTP: AUTH_ERRORS.CODE_INVALID,
+  CODE_INVALID: AUTH_ERRORS.CODE_INVALID,
+  OTP_EXPIRED: AUTH_ERRORS.CODE_EXPIRED,
+  CODE_EXPIRED: AUTH_ERRORS.CODE_EXPIRED,
+  TOO_MANY_ATTEMPTS: AUTH_ERRORS.CODE_TOO_MANY_ATTEMPTS,
+  EMAIL_IN_USE: AUTH_ERRORS.EMAIL_IN_USE,
 };
 
 export const authClient = createAuthClient({
   baseURL: API_BASE,
 
-  plugins: [magicLinkClient(), twoFactorClient(), adminClient(), organizationClient()],
+  plugins: [emailOTPClient(), twoFactorClient(), adminClient(), organizationClient()],
 
   fetchOptions: {
     credentials: 'include' as globalThis.RequestCredentials,

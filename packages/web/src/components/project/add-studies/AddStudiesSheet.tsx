@@ -154,6 +154,15 @@ export function AddStudiesSheet({ open, onOpenChange, onAdded }: AddStudiesSheet
     [handleOpenChange, onAdded],
   );
 
+  // The Google Picker mounts on body, outside the sheet. Clicking its chrome or
+  // backdrop must not dismiss the sheet or the picked files have nowhere to land.
+  const handleInteractOutside = (event: Event) => {
+    const target = event.target as Element | null;
+    if (target?.closest('.picker-dialog, .picker-dialog-bg')) {
+      event.preventDefault();
+    }
+  };
+
   return (
     <>
       {isDraggingOver && (
@@ -165,7 +174,11 @@ export function AddStudiesSheet({ open, onOpenChange, onAdded }: AddStudiesSheet
       )}
 
       <Sheet open={open} onOpenChange={handleOpenChange}>
-        <SheetContent side='right' className='w-full gap-0 overflow-y-auto sm:max-w-3xl'>
+        <SheetContent
+          side='right'
+          className='w-full gap-0 overflow-y-auto sm:max-w-3xl'
+          onInteractOutside={handleInteractOutside}
+        >
           <SheetHeader>
             <SheetTitle>Add studies</SheetTitle>
             <SheetDescription>
