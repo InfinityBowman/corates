@@ -226,14 +226,23 @@ export function studyCardTitle(page: Page, studyName = 'Petrie2019') {
 export async function addStudyViaPdf(page: Page, fixture = 'Petrie2019.pdf') {
   await page.getByRole('tab', { name: /All Studies/i }).click();
 
-  const fileInput = page.locator('input[type="file"][accept*="pdf"]');
+  // The owner's empty project shows the setup hero, not an inline form, so
+  // upload through the Add studies sheet (offered by both header and hero).
+  await page.getByRole('button', { name: 'Add studies' }).first().click();
+  const sheet = page.getByRole('dialog');
+  await expect(sheet.getByRole('heading', { name: 'Add studies' })).toBeVisible({
+    timeout: 10_000,
+  });
+
+  const fileInput = sheet.locator('input[type="file"][accept*="pdf"]');
   await fileInput.setInputFiles(path.join(FIXTURES_DIR, fixture));
 
   // Wait for metadata extraction to finish and the study to appear in staged list
-  await expect(page.getByRole('button', { name: /Upload 1 Stud/i })).toBeVisible({
+  await expect(sheet.getByRole('button', { name: /Upload 1 Stud/i })).toBeVisible({
     timeout: 30_000,
   });
-  await page.getByRole('button', { name: /Upload 1 Stud/i }).click();
+  await sheet.getByRole('button', { name: /Upload 1 Stud/i }).click();
+  await expect(sheet).toBeHidden({ timeout: 10_000 });
 
   await expect(studyCardTitle(page, fixture.replace(/\.pdf$/i, ''))).toBeVisible({
     timeout: 15_000,
