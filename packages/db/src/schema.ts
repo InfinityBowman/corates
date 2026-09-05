@@ -177,7 +177,6 @@ export const projects = sqliteTable(
   {
     id: text('id').primaryKey().$type<ProjectId>(),
     name: text('name').notNull(),
-    description: text('description'),
     // Organization that owns this project
     orgId: text('orgId')
       .notNull()

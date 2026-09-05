@@ -17,7 +17,6 @@ const EMPTY_STUDIES: never[] = [];
 const EMPTY_MEMBERS: never[] = [];
 const EMPTY_META: ProjectMetaInfo = {
   name: null,
-  description: null,
   orgId: null,
   role: null,
   setupStep: null,

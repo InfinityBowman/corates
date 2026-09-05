@@ -188,7 +188,6 @@ export async function seedProject(params: SeedProjectInput): Promise<void> {
   await db.insert(projects).values({
     id: validated.id,
     name: validated.name,
-    description: validated.description,
     orgId: validated.orgId!,
     createdBy: validated.createdBy,
     createdAt: new Date(validated.createdAt * 1000),

@@ -23,7 +23,6 @@ export const createProject = createServerFn({ method: 'POST' })
     z.object({
       orgId: z.string(),
       name: z.string().trim().min(1).max(255),
-      description: z.string().trim().max(2000).optional(),
     }),
   )
   .handler(async ({ data, context: { session, db } }) => {
@@ -38,7 +37,6 @@ export const updateProject = createServerFn({ method: 'POST' })
       orgId: z.string(),
       projectId: z.string(),
       name: z.string().min(1).max(255).optional(),
-      description: z.string().max(2000).optional(),
     }),
   )
   .handler(async ({ data, context: { session, db } }) => {
