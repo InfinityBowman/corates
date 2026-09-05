@@ -158,10 +158,11 @@ export function AddStudiesForm({
             {isSubmitting ?
               <>
                 <Spinner size='sm' variant='current' />
-                Adding...
+                Uploading...
               </>
             : <>
-                Add {studies.totalStudyCount} {studies.totalStudyCount === 1 ? 'study' : 'studies'}
+                Upload {studies.totalStudyCount}{' '}
+                {studies.totalStudyCount === 1 ? 'study' : 'studies'}
               </>
             }
           </Button>

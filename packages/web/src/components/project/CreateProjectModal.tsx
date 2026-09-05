@@ -2,7 +2,7 @@
  * CreateProjectModal - Composer-style dialog for creating a new project.
  *
  * Collects project name and organization (if user has multiple), then lands
- * the owner in first-run setup.
+ * the owner on the Studies tab where first-run setup lives.
  */
 
 import { useState, useEffect } from 'react';
@@ -127,7 +127,11 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
       onOpenChange(false);
 
-      navigate({ to: '/projects/$projectId/setup', params: { projectId: newProject.id } });
+      navigate({
+        to: '/projects/$projectId',
+        params: { projectId: newProject.id },
+        search: { tab: 'all-studies' },
+      });
     } catch (error: unknown) {
       const domainError = getDomainError(error);
       const details = domainError?.details as Record<string, unknown> | undefined;
@@ -163,7 +167,7 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='gap-0 overflow-hidden p-0 sm:max-w-[620px]' showCloseButton={false}>
+      <DialogContent className='gap-0 overflow-hidden p-0 sm:max-w-155' showCloseButton={false}>
         <DialogTitle className='sr-only'>Create a new project</DialogTitle>
 
         <form onSubmit={handleSubmit} onKeyDown={handleKeyDown}>
@@ -270,7 +274,7 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
                 <span className='ml-0.5 inline-flex items-center gap-0.5 opacity-70' aria-hidden>
                   {isMac ?
                     <CommandIcon className='size-2.5' />
-                  : <span className='text-[10px]'>Ctrl</span>}
+                  : <span className='text-2xs'>Ctrl</span>}
                   <CornerDownLeftIcon className='size-2.5' />
                 </span>
               )}

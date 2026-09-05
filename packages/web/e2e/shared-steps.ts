@@ -201,9 +201,6 @@ export async function createProject(page: Page, name: string): Promise<string> {
   await expect(createBtn).toBeEnabled({ timeout: 10_000 });
   await createBtn.click();
 
-  // New projects land in first-run setup; leave it so callers get the project view.
-  await expect(page).toHaveURL(/\/projects\/[^/]+\/setup/, { timeout: 15_000 });
-  await page.getByRole('button', { name: 'Finish later' }).click();
   await expect(page).toHaveURL(/\/projects\/[^/]+\/?(\?.*)?$/, { timeout: 15_000 });
 
   const projectId = page.url().match(/\/projects\/([^/?]+)/)?.[1];
@@ -233,8 +230,10 @@ export async function addStudyViaPdf(page: Page, fixture = 'Petrie2019.pdf') {
   await fileInput.setInputFiles(path.join(FIXTURES_DIR, fixture));
 
   // Wait for metadata extraction to finish and the study to appear in staged list
-  await expect(page.getByRole('button', { name: /Add 1 Stud/i })).toBeVisible({ timeout: 30_000 });
-  await page.getByRole('button', { name: /Add 1 Stud/i }).click();
+  await expect(page.getByRole('button', { name: /Upload 1 Stud/i })).toBeVisible({
+    timeout: 30_000,
+  });
+  await page.getByRole('button', { name: /Upload 1 Stud/i }).click();
 
   await expect(studyCardTitle(page, fixture.replace(/\.pdf$/i, ''))).toBeVisible({
     timeout: 15_000,

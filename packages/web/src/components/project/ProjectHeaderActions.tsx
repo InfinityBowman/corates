@@ -3,7 +3,7 @@
  * project header, with the sheets they open.
  */
 
-import { useState, useMemo, useCallback, type ReactNode } from 'react';
+import { useMemo, useCallback, type ReactNode } from 'react';
 import {
   PlusIcon,
   UsersIcon,
@@ -48,10 +48,16 @@ function DisabledActionButton({ reason, children }: { reason: string; children: 
 }
 
 export function ProjectHeaderActions() {
-  const { projectId, isOwner, outcomesSheetOpen, setOutcomesSheetOpen } = useProjectContext();
-
-  const [addOpen, setAddOpen] = useState(false);
-  const [assignOpen, setAssignOpen] = useState(false);
+  const {
+    projectId,
+    isOwner,
+    addStudiesSheetOpen,
+    setAddStudiesSheetOpen,
+    assignSheetOpen,
+    setAssignSheetOpen,
+    outcomesSheetOpen,
+    setOutcomesSheetOpen,
+  } = useProjectContext();
 
   const studies = useAllStudies(projectId);
   const members = useProjectMembers(projectId);
@@ -72,11 +78,11 @@ export function ProjectHeaderActions() {
         duration: 10000,
         action: {
           label: 'Assign reviewers',
-          onClick: () => setAssignOpen(true),
+          onClick: () => setAssignSheetOpen(true),
         },
       });
     },
-    [isOwner, members.length],
+    [isOwner, members.length, setAssignSheetOpen],
   );
 
   const assignBlockedReason =
@@ -116,7 +122,7 @@ export function ProjectHeaderActions() {
 
       {assignBlockedReason ?
         <DisabledActionButton reason={assignBlockedReason}>{assignButton}</DisabledActionButton>
-      : <Button variant='outline' onClick={() => setAssignOpen(true)}>
+      : <Button variant='outline' onClick={() => setAssignSheetOpen(true)}>
           {assignButton}
         </Button>
       }
@@ -146,13 +152,17 @@ export function ProjectHeaderActions() {
         </DropdownMenu>
       }
 
-      <Button onClick={() => setAddOpen(true)}>
+      <Button onClick={() => setAddStudiesSheetOpen(true)}>
         <PlusIcon className='size-4' />
         Add studies
       </Button>
 
-      <AddStudiesSheet open={addOpen} onOpenChange={setAddOpen} onAdded={handleAdded} />
-      {isOwner && <AssignReviewersSheet open={assignOpen} onOpenChange={setAssignOpen} />}
+      <AddStudiesSheet
+        open={addStudiesSheetOpen}
+        onOpenChange={setAddStudiesSheetOpen}
+        onAdded={handleAdded}
+      />
+      {isOwner && <AssignReviewersSheet open={assignSheetOpen} onOpenChange={setAssignSheetOpen} />}
       <OutcomesSheet open={outcomesSheetOpen} onOpenChange={setOutcomesSheetOpen} />
     </div>
   );

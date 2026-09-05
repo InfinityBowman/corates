@@ -21,7 +21,6 @@ flowchart TD
             admin["/admin/*"]
             createorg["/orgs/new"]
             projectview["/projects/:projectId"]
-            projectsetup["/projects/:projectId/setup"]
             checklistview["/projects/:projectId/studies/:studyId/checklists/:checklistId"]
             reconcile["/projects/:projectId/studies/:studyId/reconcile/:c1/:c2"]
         end
@@ -62,7 +61,6 @@ TanStack file-based conventions: an underscore prefix (`_app`, `_auth`) denotes 
 | `/dashboard`                                                    | Project list                                |
 | `/orgs/new`                                                     | Create a new organization                   |
 | `/projects/:projectId`                                          | Project overview (studies, members)         |
-| `/projects/:projectId/setup`                                    | First-run project setup (owner only)        |
 | `/projects/:projectId/studies/:studyId/checklists/:checklistId` | Checklist assessment                        |
 | `/projects/:projectId/studies/:studyId/reconcile/:c1Id/:c2Id`   | Reconcile two reviewers' checklists         |
 | `/settings/*`                                                   | Profile, billing, plans, notifications, 2FA |

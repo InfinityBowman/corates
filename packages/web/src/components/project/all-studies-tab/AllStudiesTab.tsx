@@ -10,15 +10,16 @@ import { StudyCard } from './study-card/StudyCard';
 import { AssignReviewersModal } from './AssignReviewersModal';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import type { StudyInfo } from '@/stores/projectStore';
-import { useAllStudies } from '@/project/workspace-data';
+import { useAllStudies, useProjectMeta } from '@/project/workspace-data';
 import { useAddStudies } from '@/hooks/useAddStudies';
 import { useProjectExport } from '@/hooks/useProjectExport';
 import { project } from '@/project';
 import { useProjectContext } from '../ProjectContext';
 import { saveFormState } from '@/lib/formStatePersistence.js';
+import { ProjectSetupPanel } from '../setup/ProjectSetupPanel';
 
 export function AllStudiesTab() {
-  const { projectId, getMember } = useProjectContext();
+  const { projectId, getMember, isOwner } = useProjectContext();
 
   const [showGoogleDriveModal, setShowGoogleDriveModal] = useState(false);
   const [googleDriveTargetStudyId, setGoogleDriveTargetStudyId] = useState<string | null>(null);
@@ -31,6 +32,8 @@ export function AllStudiesTab() {
   const { exportStudyCsv, exportStudyPdf } = useProjectExport(projectId);
   const connectionState = useProjectStore(s => selectConnectionPhase(s, projectId));
   const hasData = connectionState.phase === 'synced' || studies.length > 0;
+  const meta = useProjectMeta(projectId);
+  const showSetup = isOwner && meta.setupStep !== null;
 
   const handleSaveState = useCallback(
     async (state: AddStudiesFormState) => {
@@ -68,9 +71,11 @@ export function AllStudiesTab() {
 
   return (
     <div>
+      {hasData && studies.length === 0 && showSetup && <ProjectSetupPanel />}
+
       {/* Empty project: the add form is the centerpiece. Once studies exist it
           moves to the Add studies sheet in the project header. */}
-      {hasData && studies.length === 0 && (
+      {hasData && studies.length === 0 && !showSetup && (
         <>
           <div className='mb-4'>
             <h2 className='text-foreground text-lg font-semibold'>Add your first study</h2>
