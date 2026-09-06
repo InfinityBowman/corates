@@ -94,8 +94,8 @@ Merge to main. Staging deploys first, then e2e, then production.
 - **Project archiving.** Needed before the cards can say "concurrent
   projects".
 - **Free projects per user.** Each org gets a free project, and users can
-  create extra orgs. Decide whether to cap free projects per user or restrict
-  the free project to personal orgs.
+  create extra orgs. Decided in #671: the free project is capped per user
+  across the Free orgs they own, enforced at project creation.
 - **`stripe-purchases` worker.** It only fulfils single-project checkout
   sessions, which can no longer be created. It can be retired along with its
   CI deploy steps and `STRIPE_WEBHOOK_SECRET_PURCHASES`.

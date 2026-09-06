@@ -27,6 +27,7 @@ import {
 } from '@corates/workers/commands/members';
 import { createInvitation } from '@corates/workers/commands/invitations';
 import { requireMemberRemoval } from '@corates/workers/policies';
+import { checkFreeProjectCap } from '@corates/workers/free-project-cap';
 import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 import { requireProjectAccess } from '@/server/guards/requireProjectAccess';
 import { requireOrgWriteAccess } from '@/server/guards/requireOrgWriteAccess';
@@ -94,6 +95,9 @@ export async function createOrgProject(
 
   const quota = await requireQuota(db, orgId, 'projects.max', getProjectCount, 1);
   if (!quota.ok) throw quota.error;
+
+  const freeCap = await checkFreeProjectCap(db, membership.context.userId, orgId, quota.orgBilling);
+  if (!freeCap.allowed) throw new DomainErrorException(freeCap.error);
 
   try {
     const { project } = await createProject(

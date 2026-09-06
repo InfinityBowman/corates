@@ -141,6 +141,12 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
             'Not included in your plan',
             `Creating this project needs the '${details.entitlement}' entitlement. Upgrade your plan to continue.`,
           );
+        } else if (details?.reason === 'free_project_cap') {
+          const { limit } = details as Record<string, number>;
+          showToast.error(
+            'Free plan limit reached',
+            `Free includes ${limit} project across all the workspaces you own. Upgrade this workspace to add more.`,
+          );
         } else if (details?.reason === 'quota_exceeded') {
           const { quotaKey, used, limit, requested } = details as Record<string, number>;
           showToast.error(

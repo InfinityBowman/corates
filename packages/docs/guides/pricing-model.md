@@ -44,6 +44,11 @@ term.
 Collaborators never pay. A collaborator is any non-owner member of the owning
 organization.
 
+The Free project is per user, not per organization. Projects in every Free org
+a user owns count toward one limit, so creating extra orgs does not add free
+projects. Orgs on a paid plan or a grant never consume their owner's free slot.
+See `checkFreeProjectCap` in `packages/workers/src/lib/freeProjectCap.ts`.
+
 ## What every tier keeps
 
 - Solo appraisals in the browser stay unlimited and free, with no account.
@@ -90,5 +95,3 @@ ship:
 - Project archiving. Quotas count every project in the org. "Concurrent
   projects" wording waits on an archive feature.
 - Roles beyond owner/member, audit log export, SSO, invoicing automation.
-- A cross-org cap on free projects. Each org resolves billing separately, so a
-  user who creates extra organizations gets a free project in each.
