@@ -1,22 +1,38 @@
 name: Setup workspace
-description: pnpm, Node, install, and build the shared workspace packages.
+description: pnpm, Node, install, and optionally build the shared workspace packages.
+
+inputs:
+  build-workspace:
+    description: Build @corates/shared and @corates/db after installing
+    default: 'true'
 
 runs:
   using: composite
   steps:
+    # The action wipes dest at the start of every job. Runners that share a
+    # host also share HOME, so the default ~/setup-pnpm races between jobs.
     - name: Setup pnpm
       uses: pnpm/action-setup@v4
+      with:
+        dest: ${{ runner.temp }}/setup-pnpm
 
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '24'
-        cache: 'pnpm'
+
+    # pnpm 10 keeps its store under PNPM_HOME, which is the wiped dest above.
+    # The runner's _work directory outlives jobs and belongs to one runner, so
+    # a store there stays warm and is never touched by a concurrent job.
+    - name: Use a persistent per-runner pnpm store
+      shell: bash
+      run: echo "npm_config_store_dir=$(dirname "$RUNNER_WORKSPACE")/pnpm-store" >> "$GITHUB_ENV"
 
     - name: Install dependencies
       shell: bash
       run: pnpm install --frozen-lockfile
 
     - name: Build workspace dependencies
+      if: inputs.build-workspace == 'true'
       shell: bash
       run: pnpm --filter @corates/shared --filter @corates/db build

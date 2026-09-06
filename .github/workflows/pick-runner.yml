@@ -1,0 +1,35 @@
+name: Pick runner
+
+# GitHub hands a job to any idle runner with matching labels and has no notion
+# of preference, so the choice is made here: the desktop when any of its
+# runners is online, otherwise the homelab. Callers feed the output into their
+# runs-on. Listing runners needs an admin-scoped token; GITHUB_TOKEN cannot.
+on:
+  workflow_call:
+    outputs:
+      label:
+        value: ${{ jobs.pick.outputs.label }}
+
+jobs:
+  pick:
+    runs-on: self-hosted
+    permissions: {}
+    outputs:
+      label: ${{ steps.pick.outputs.label }}
+    steps:
+      - id: pick
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.RUNNER_STATUS_TOKEN }}
+          script: |
+            const { data } = await github.rest.actions.listSelfHostedRunnersForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100,
+            });
+            const desktopOnline = data.runners.some(
+              r => r.status === 'online' && r.labels.some(l => l.name === 'desktop'),
+            );
+            const label = desktopOnline ? 'desktop' : 'homelab';
+            core.notice(`Jobs run on ${label} runners`);
+            core.setOutput('label', label);
