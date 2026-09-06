@@ -71,12 +71,16 @@ purchase were removed when Free gained a project.
 
 ## Stripe
 
-Two products, each with a monthly and a yearly price:
+Two products, each with a monthly and a yearly price, addressed by lookup key
+rather than price id:
 
-| Plan | Product name | Env vars                                                      |
-| ---- | ------------ | ------------------------------------------------------------- |
-| Team | CoRATES Team | `STRIPE_PRICE_ID_TEAM_MONTHLY`, `STRIPE_PRICE_ID_TEAM_YEARLY` |
-| Lab  | CoRATES Lab  | `STRIPE_PRICE_ID_LAB_MONTHLY`, `STRIPE_PRICE_ID_LAB_YEARLY`   |
+| Plan | Product name | Lookup keys                   |
+| ---- | ------------ | ----------------------------- |
+| Team | CoRATES Team | `team_monthly`, `team_yearly` |
+| Lab  | CoRATES Lab  | `lab_monthly`, `lab_yearly`   |
+
+Changing a price means creating a new Stripe price and moving the lookup key to
+it. The setup script does that; no code or secrets change.
 
 Test mode products are created by `pnpm stripe:setup` in `packages/web`, which
 reads the price amounts from `@corates/shared/plans`. See

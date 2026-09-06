@@ -16,7 +16,7 @@ import { and, count, desc, eq, or } from 'drizzle-orm';
 import {
   getPlan,
   getGrantPlan,
-  getStripeProductConfig,
+  getPriceLookupKey,
   CHECKOUT_ELIGIBLE_TIERS,
   type GrantType,
   type PlanId,
@@ -337,20 +337,21 @@ async function changeSubscriptionPrice(
   },
 ) {
   const { orgId, userId, tier, interval, stripeCustomerId, stripeSubscriptionId } = args;
-  const envKey = getStripeProductConfig(tier as PlanId).envKeys[interval];
-  const priceId = envKey ? (env as unknown as Record<string, string | undefined>)[envKey] : null;
-  if (!priceId) {
-    captureError(new Error(`Missing Stripe price id for ${tier} ${interval}`), {
-      tags: { component: 'billing', action: 'change-price' },
-      extra: { orgId, tier, interval },
-    });
-    throwDomainError(VALIDATION_ERRORS.INVALID_INPUT, { field: 'tier', value: tier });
-  }
+  const lookupKey = getPriceLookupKey(tier as PlanId, interval);
 
   info('billing.price_change_initiated', { orgId, userId, plan: tier, interval });
 
   const stripe = createStripeClient(env.STRIPE_SECRET_KEY);
   try {
+    const priceId = (await stripe.prices.list({ lookup_keys: [lookupKey], active: true, limit: 1 }))
+      .data[0]?.id;
+    if (!priceId) {
+      captureError(new Error(`No active Stripe price with lookup key ${lookupKey}`), {
+        tags: { component: 'billing', action: 'change-price' },
+        extra: { orgId, tier, interval },
+      });
+      throwDomainError(VALIDATION_ERRORS.INVALID_INPUT, { field: 'tier', value: tier });
+    }
     const current = await stripe.subscriptions.retrieve(stripeSubscriptionId);
     const item = current.items.data[0];
     if (!item) {

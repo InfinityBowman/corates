@@ -33,14 +33,14 @@ For each product, configure:
 
 Enterprise has no Stripe product. Admins create the subscription row from the org page in the admin UI.
 
-### Price IDs
+### Lookup keys
 
-After creating products, add prices and copy the Price IDs:
+| Plan | Monthly        | Yearly        |
+| ---- | -------------- | ------------- |
+| Team | `team_monthly` | `team_yearly` |
+| Lab  | `lab_monthly`  | `lab_yearly`  |
 
-| Plan | Monthly Price ID               | Yearly Price ID               |
-| ---- | ------------------------------ | ----------------------------- |
-| Team | `STRIPE_PRICE_ID_TEAM_MONTHLY` | `STRIPE_PRICE_ID_TEAM_YEARLY` |
-| Lab  | `STRIPE_PRICE_ID_LAB_MONTHLY`  | `STRIPE_PRICE_ID_LAB_YEARLY`  |
+Lookup keys are unique per account and per mode, so test mode and live mode each need their own set. Staging uses the main account's test mode; local development uses the sandbox.
 
 ## 2. Create Webhooks
 
@@ -92,12 +92,6 @@ wrangler secret put STRIPE_SECRET_KEY --env production
 # Webhook secrets (one for each endpoint)
 wrangler secret put STRIPE_WEBHOOK_SECRET_AUTH --env production
 wrangler secret put STRIPE_WEBHOOK_SECRET_PURCHASES --env production
-
-# Price IDs
-wrangler secret put STRIPE_PRICE_ID_TEAM_MONTHLY --env production
-wrangler secret put STRIPE_PRICE_ID_TEAM_YEARLY --env production
-wrangler secret put STRIPE_PRICE_ID_LAB_MONTHLY --env production
-wrangler secret put STRIPE_PRICE_ID_LAB_YEARLY --env production
 ```
 
 ## 5. Configure Customer Portal
@@ -137,7 +131,3 @@ The portal URL is generated dynamically via the `/api/billing/portal` endpoint.
 | `STRIPE_SECRET_KEY`               | Stripe API secret key (`sk_live_*` or `sk_test_*`) |
 | `STRIPE_WEBHOOK_SECRET_AUTH`      | Signing secret for auth webhook endpoint           |
 | `STRIPE_WEBHOOK_SECRET_PURCHASES` | Signing secret for purchases webhook endpoint      |
-| `STRIPE_PRICE_ID_TEAM_MONTHLY`    | Price ID for Team monthly plan                     |
-| `STRIPE_PRICE_ID_TEAM_YEARLY`     | Price ID for Team yearly plan                      |
-| `STRIPE_PRICE_ID_LAB_MONTHLY`     | Price ID for Lab monthly plan                      |
-| `STRIPE_PRICE_ID_LAB_YEARLY`      | Price ID for Lab yearly plan                       |

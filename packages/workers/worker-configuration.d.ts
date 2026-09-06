@@ -25,10 +25,6 @@ declare namespace Cloudflare {
     STRIPE_SECRET_KEY: string;
     STRIPE_WEBHOOK_SECRET_AUTH: string;
     STRIPE_WEBHOOK_SECRET_PURCHASES: string;
-    STRIPE_PRICE_ID_TEAM_MONTHLY: string;
-    STRIPE_PRICE_ID_TEAM_YEARLY: string;
-    STRIPE_PRICE_ID_LAB_MONTHLY: string;
-    STRIPE_PRICE_ID_LAB_YEARLY: string;
     USER_SESSION: DurableObjectNamespace<import('./src/test-worker').UserSession>;
     WORKSPACE: DurableObjectNamespace<import('./src/test-worker').WorkspaceDO>;
   }
@@ -52,10 +48,6 @@ declare namespace Cloudflare {
     STRIPE_SECRET_KEY: string;
     STRIPE_WEBHOOK_SECRET_AUTH: string;
     STRIPE_WEBHOOK_SECRET_PURCHASES: string;
-    STRIPE_PRICE_ID_TEAM_MONTHLY: string;
-    STRIPE_PRICE_ID_TEAM_YEARLY: string;
-    STRIPE_PRICE_ID_LAB_MONTHLY: string;
-    STRIPE_PRICE_ID_LAB_YEARLY: string;
     USER_SESSION: DurableObjectNamespace<import('./src/test-worker').UserSession>;
     WORKSPACE: DurableObjectNamespace<import('./src/test-worker').WorkspaceDO>;
     CF_VERSION_METADATA?: WorkerVersionMetadata;
@@ -86,10 +78,6 @@ declare namespace NodeJS {
       | 'STRIPE_SECRET_KEY'
       | 'STRIPE_WEBHOOK_SECRET_AUTH'
       | 'STRIPE_WEBHOOK_SECRET_PURCHASES'
-      | 'STRIPE_PRICE_ID_TEAM_MONTHLY'
-      | 'STRIPE_PRICE_ID_TEAM_YEARLY'
-      | 'STRIPE_PRICE_ID_LAB_MONTHLY'
-      | 'STRIPE_PRICE_ID_LAB_YEARLY'
       | 'DEV_MODE'
       | 'SENTRY_DSN'
     >

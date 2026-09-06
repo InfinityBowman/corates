@@ -13,6 +13,7 @@ import {
 import { oAuthRelay } from './oauth-relay';
 import { stripe } from '@better-auth/stripe';
 import { createStripeClient } from '@corates/shared/stripe';
+import { STRIPE_PLAN_IDS, getPriceLookupKey } from '@corates/shared/plans';
 import { drizzle } from 'drizzle-orm/d1';
 import { eq, and, count } from 'drizzle-orm';
 import * as schema from '@corates/db/schema';
@@ -289,28 +290,12 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
     }),
   );
 
-  // Stripe plugin for org-scoped subscriptions
-  // IMPORTANT: Stripe price amounts must match prices defined in @corates/shared/plans/pricing.ts
-  // - team: $30/month, $300/year
-  // - lab: $90/month, $900/year
+  // Stripe plugin for org-scoped subscriptions. Prices are resolved by lookup
+  // key (see @corates/shared/plans/stripe.ts), so a price change in Stripe
+  // needs no config change here as long as the key moves to the new price.
   // Enterprise is provisioned by hand in the admin UI and has no Stripe price.
   if (env.STRIPE_SECRET_KEY && env.STRIPE_WEBHOOK_SECRET_AUTH) {
     const stripeClient = createStripeClient(env.STRIPE_SECRET_KEY);
-
-    const requiredPriceIds = {
-      STRIPE_PRICE_ID_TEAM_MONTHLY: env.STRIPE_PRICE_ID_TEAM_MONTHLY,
-      STRIPE_PRICE_ID_TEAM_YEARLY: env.STRIPE_PRICE_ID_TEAM_YEARLY,
-      STRIPE_PRICE_ID_LAB_MONTHLY: env.STRIPE_PRICE_ID_LAB_MONTHLY,
-      STRIPE_PRICE_ID_LAB_YEARLY: env.STRIPE_PRICE_ID_LAB_YEARLY,
-    } as const;
-
-    const missing = Object.entries(requiredPriceIds)
-      .filter(([, v]) => !v)
-      .map(([k]) => k);
-    if (missing.length > 0) {
-      // eslint-disable-next-line corates/corates-error-helpers -- startup config validation, not a domain/transport error
-      throw new Error(`Stripe is configured but missing price IDs: ${missing.join(', ')}`);
-    }
 
     plugins.push(
       stripe({
@@ -319,18 +304,11 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
         createCustomerOnSignUp: true,
         subscription: {
           enabled: true,
-          plans: [
-            {
-              name: 'team',
-              priceId: requiredPriceIds.STRIPE_PRICE_ID_TEAM_MONTHLY,
-              annualDiscountPriceId: requiredPriceIds.STRIPE_PRICE_ID_TEAM_YEARLY,
-            },
-            {
-              name: 'lab',
-              priceId: requiredPriceIds.STRIPE_PRICE_ID_LAB_MONTHLY,
-              annualDiscountPriceId: requiredPriceIds.STRIPE_PRICE_ID_LAB_YEARLY,
-            },
-          ],
+          plans: STRIPE_PLAN_IDS.map(planId => ({
+            name: planId,
+            lookupKey: getPriceLookupKey(planId, 'monthly'),
+            annualDiscountLookupKey: getPriceLookupKey(planId, 'yearly'),
+          })),
           // Real-time notifications for subscription changes
           onSubscriptionComplete: async ({ subscription }: { subscription: SubscriptionData }) => {
             // Logged outside the waitUntil block so the transition is recorded

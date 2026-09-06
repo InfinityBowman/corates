@@ -17,10 +17,6 @@ declare namespace Cloudflare {
     STRIPE_SECRET_KEY: string;
     STRIPE_WEBHOOK_SECRET_AUTH: string;
     STRIPE_WEBHOOK_SECRET_PURCHASES: string;
-    STRIPE_PRICE_ID_TEAM_MONTHLY: string;
-    STRIPE_PRICE_ID_TEAM_YEARLY: string;
-    STRIPE_PRICE_ID_LAB_MONTHLY: string;
-    STRIPE_PRICE_ID_LAB_YEARLY: string;
     CF_VERSION_METADATA?: WorkerVersionMetadata;
   }
 }

@@ -1,6 +1,8 @@
 /**
  * Stripe Test Setup Script
- * Automatically creates Stripe test products and prices, then writes to .env file
+ * Creates the Stripe products and prices from @corates/shared/plans, keyed by
+ * lookup key so the app needs no price ids, then writes the key and webhook
+ * secrets to .env
  *
  * Usage:
  *   STRIPE_SECRET_KEY=sk_test_... pnpm stripe:setup
@@ -121,10 +123,6 @@ function readEnvFile() {
 function writeEnvFile(env) {
   const stripeKeys = [
     'STRIPE_SECRET_KEY',
-    'STRIPE_PRICE_ID_TEAM_MONTHLY',
-    'STRIPE_PRICE_ID_TEAM_YEARLY',
-    'STRIPE_PRICE_ID_LAB_MONTHLY',
-    'STRIPE_PRICE_ID_LAB_YEARLY',
     'STRIPE_WEBHOOK_SECRET_AUTH',
     'STRIPE_WEBHOOK_SECRET_PURCHASES',
   ];
@@ -273,18 +271,14 @@ async function getWebhookSecret(forwardTo, timeout = 5000) {
 }
 
 async function findExistingProduct(stripe, productName) {
-  const products = await stripe.products.list({ limit: 100 });
+  // Archived products keep their names, so only look at live ones.
+  const products = await stripe.products.list({ active: true, limit: 100 });
   return products.data.find(p => p.name === productName);
 }
 
-async function findExistingPrice(stripe, productId, amount, currency, recurring) {
-  const prices = await stripe.prices.list({ product: productId, limit: 100 });
-  return prices.data.find(
-    p =>
-      p.unit_amount === amount &&
-      p.currency === currency &&
-      ((recurring && p.recurring) || (!recurring && !p.recurring)),
-  );
+async function findPriceByLookupKey(stripe, lookupKey) {
+  const prices = await stripe.prices.list({ lookup_keys: [lookupKey], active: true, limit: 1 });
+  return prices.data[0] ?? null;
 }
 
 async function createProductAndPrices(stripe, productDef, dryRun, force) {
@@ -320,64 +314,47 @@ async function createProductAndPrices(stripe, productDef, dryRun, force) {
     console.log(`✓ Product exists: ${productDef.name} (${product.id})`);
   }
 
-  // Create prices
+  // Create prices. A price whose lookup key already points at the right amount
+  // is reused; any other amount gets a new price and the key moves to it, so
+  // existing subscriptions keep their old price object untouched.
   for (const priceDef of productDef.prices) {
-    const isRecurring = priceDef.type !== 'one-time';
-    const interval = isRecurring ? priceDef.type : null;
-
     let price = null;
     if (product.id !== 'prod_dryrun') {
-      price = await findExistingPrice(
-        stripe,
-        product.id,
-        priceDef.amount,
-        priceDef.currency,
-        isRecurring,
-      );
+      price = await findPriceByLookupKey(stripe, priceDef.lookupKey);
     }
 
-    if (price && force) {
-      console.log(`🗑️  Deleting existing price: ${priceDef.type} (${price.id})`);
-      if (!dryRun) {
-        await stripe.prices.update(price.id, { active: false });
-        price = null;
-      }
+    if (price && (force || price.unit_amount !== priceDef.amount || price.product !== product.id)) {
+      console.log(
+        `↪️  ${priceDef.lookupKey} points at ${price.id} ($${(price.unit_amount / 100).toFixed(2)}); moving the key to a new price`,
+      );
+      price = null;
     }
 
     if (!price) {
-      const priceData = {
-        product: product.id,
-        unit_amount: priceDef.amount,
-        currency: priceDef.currency,
-        metadata: {
-          created_by: 'corates-setup-script',
-          price_type: priceDef.type,
-        },
-      };
-
-      if (isRecurring) {
-        priceData.recurring = {
-          interval: interval === 'monthly' ? 'month' : 'year',
-        };
-      }
-
       const amountDisplay = (priceDef.amount / 100).toFixed(2);
-      const currencySymbol = priceDef.currency === 'usd' ? '$' : '';
       console.log(
-        `💰 Creating ${priceDef.type} price: ${currencySymbol}${amountDisplay} ${priceDef.currency.toUpperCase()}`,
+        `💰 Creating ${priceDef.lookupKey}: $${amountDisplay} ${priceDef.currency.toUpperCase()}`,
       );
       if (!dryRun) {
-        price = await stripe.prices.create(priceData);
+        price = await stripe.prices.create({
+          product: product.id,
+          unit_amount: priceDef.amount,
+          currency: priceDef.currency,
+          recurring: { interval: priceDef.type === 'monthly' ? 'month' : 'year' },
+          lookup_key: priceDef.lookupKey,
+          transfer_lookup_key: true,
+          metadata: { created_by: 'corates-setup-script' },
+        });
         console.log(`   ✓ Created: ${price.id}`);
       } else {
         console.log(`   [DRY RUN] Would create price`);
         price = { id: 'price_dryrun' };
       }
     } else {
-      console.log(`✓ Price exists: ${priceDef.type} (${price.id})`);
+      console.log(`✓ ${priceDef.lookupKey} -> ${price.id}`);
     }
 
-    results[priceDef.type] = price.id;
+    results[priceDef.lookupKey] = price.id;
   }
 
   return results;
@@ -444,20 +421,11 @@ async function main() {
   }
 
   const env = readEnvFile();
-  const priceIds = {};
 
   // Create products and prices
   for (const productDef of PRODUCTS) {
     try {
-      const results = await createProductAndPrices(stripe, productDef, args.dryRun, args.force);
-
-      // Map results to env keys
-      for (const [type, priceId] of Object.entries(results)) {
-        const envKey = productDef.envKeys[type];
-        if (envKey) {
-          priceIds[envKey] = priceId;
-        }
-      }
+      await createProductAndPrices(stripe, productDef, args.dryRun, args.force);
     } catch (error) {
       console.error(`❌ Error creating ${productDef.name}:`, error.message);
       if (!args.dryRun) {
@@ -468,20 +436,12 @@ async function main() {
 
   // Update .env file
   if (!args.dryRun) {
-    const updatedEnv = {
-      ...env,
-      ...priceIds,
-    };
+    const updatedEnv = { ...env };
     if (stripeKey) {
       updatedEnv.STRIPE_SECRET_KEY = stripeKey;
     }
     writeEnvFile(updatedEnv);
     console.log(`\n✅ Updated ${envPath} with Stripe configuration`);
-  } else {
-    console.log('\n[DRY RUN] Would update .env file with:');
-    for (const [key, value] of Object.entries(priceIds)) {
-      console.log(`  ${key}=${value}`);
-    }
   }
 
   // Try to get webhook secrets automatically
@@ -532,7 +492,6 @@ async function main() {
     if (Object.keys(webhookSecrets).length > 0) {
       const updatedEnv = {
         ...env,
-        ...priceIds,
         ...webhookSecrets,
       };
       if (stripeKey) {
