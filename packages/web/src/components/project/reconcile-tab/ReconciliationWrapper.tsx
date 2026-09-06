@@ -41,7 +41,7 @@ import { Button } from '@/components/ui/button';
 import { showToast } from '@/lib/toast';
 import { Spinner } from '@/components/ui/spinner';
 import { usePdfPreviewStore } from '@/stores/pdfPreviewStore';
-import { track } from '@/lib/analytics';
+import { clientLogger } from '@/lib/clientLogger';
 import { ReconciliationEngine, registerReconciliationAdapter } from './engine';
 import { useCanReconcileChecklists } from './useCanReconcileChecklists';
 import { amstar2Adapter } from './amstar2-reconcile/adapter';
@@ -565,7 +565,7 @@ export function ReconciliationWrapper({
           status: CHECKLIST_STATUS.FINALIZED,
           title: reconciledName || 'Reconciled Checklist',
         });
-        track('Checklist:Completed', { type: checklistType });
+        clientLogger.info('client.reconciliation.finalized', { type: checklistType });
         navigate({ to: `${getProjectPath()}?tab=completed` as string });
       } catch (err) {
         const { handleError } = await import('@/lib/error-utils');

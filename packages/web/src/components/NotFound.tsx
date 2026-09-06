@@ -12,7 +12,7 @@ import { Link, useLocation } from '@tanstack/react-router';
 import { CompassIcon, Link2OffIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuthStore, selectIsLoggedIn } from '@/stores/authStore';
-import { track } from '@/lib/analytics';
+import { clientLogger } from '@/lib/clientLogger';
 
 const TITLE = 'Page not found - CoRATES';
 
@@ -21,7 +21,7 @@ function useMissedPath() {
 
   // Path only: query strings can carry tokens and search text.
   useEffect(() => {
-    track('404', { path: pathname });
+    clientLogger.info('client.route.not_found', { path: pathname });
   }, [pathname]);
 
   useEffect(() => {

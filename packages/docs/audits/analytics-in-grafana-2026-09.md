@@ -173,6 +173,15 @@ under-counting Loki mirror described in `@/lib/analytics`. Once the ClickHouse d
 exists, decide whether `track()` still needs to mirror to `clientLogger` at all, or whether the
 mirror should shrink to the failure events that Plausible never sees.
 
+> **Resolved 2026-09-06, the other way.** `track()` and `@/lib/analytics` are gone; every
+> product event now goes straight to `clientLogger`, so Loki is the single record and
+> Plausible keeps only pageviews and its own autocapture. The undercount is accepted as the
+> price of one convention. Custom-event history in ClickHouse stops at this change, and the
+> events renamed with it (`Checklist:Completed` to `client.reconciliation.finalized`,
+> `LocalAppraisal` to `client.local_appraisal.created`, `LocalAppraisal:PDF` to
+> `client.local_appraisal.pdf_attached`, `404` to `client.route.not_found`) do not join up
+> with the old series in either store.
+
 ### Fallback
 
 If coupling Grafana to Plausible's database is unwelcome, the Plausible Stats API v2

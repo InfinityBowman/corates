@@ -21,7 +21,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useFeedbackStore } from '@/stores/feedbackStore';
 import { submitFeedback } from '@/server/functions/feedback.functions';
 import { getSentryReplayId } from '@/config/sentry';
-import { track } from '@/lib/analytics';
+import { clientLogger } from '@/lib/clientLogger';
 
 type Category = 'bug' | 'idea' | 'other';
 type FormState = 'idle' | 'sending' | 'sent' | 'error';
@@ -67,7 +67,7 @@ export function FeedbackDialog() {
           },
         },
       });
-      track('Feedback:Submitted', { category });
+      clientLogger.info('client.feedback.submitted', { category });
       setFormState('sent');
       setTimeout(() => handleOpenChange(false), CLOSE_AFTER_SENT_MS);
     } catch {

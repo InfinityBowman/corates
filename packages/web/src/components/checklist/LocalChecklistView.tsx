@@ -22,7 +22,7 @@ import { useChecklistScore, WorkspaceProjectContext } from '@/project/workspace-
 import { db } from '@/primitives/db';
 import { ScoreTag } from '@/components/checklist/ScoreTag';
 import { ChecklistResourcesButton } from '@/components/checklist/ChecklistResourcesButton';
-import { track } from '@/lib/analytics';
+import { clientLogger } from '@/lib/clientLogger';
 
 interface LocalChecklistViewProps {
   checklistId?: string;
@@ -103,7 +103,9 @@ function LocalChecklistEditor({ checklistId }: { checklistId: string }) {
   const handlePdfChange = useCallback(
     async (data: ArrayBuffer, fileName: string) => {
       setPdfState({ loading: false, data, fileName, forChecklistId: checklistId });
-      track('LocalAppraisal:PDF', { type: checklistType || 'unknown' });
+      clientLogger.info('client.local_appraisal.pdf_attached', {
+        type: checklistType || 'unknown',
+      });
       try {
         await db.localChecklistPdfs.put({
           checklistId,

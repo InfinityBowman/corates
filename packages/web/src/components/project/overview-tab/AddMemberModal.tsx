@@ -32,7 +32,7 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { searchUsers } from '@/server/functions/users.functions';
 import { addMemberToProject } from '@/server/functions/org-projects.functions';
 import type { UserSearchResult } from '@/server/functions/users.server';
-import { track } from '@/lib/analytics';
+import { clientLogger } from '@/lib/clientLogger';
 import { queryClient } from '@/lib/queryClient';
 import { queryKeys } from '@/lib/queryKeys';
 
@@ -138,7 +138,7 @@ export function AddMemberModal({
           : { email: searchQuery.trim(), role: selectedRole }),
         },
       })) as { invitation?: boolean; email?: string };
-      track('Collaborator:Invited', { method: 'email' });
+      clientLogger.info('client.collaborator.invited', { method: 'email' });
       showToast.success(
         'Invitation sent',
         `${result.email || searchQuery} can join the project from the link in the email.`,

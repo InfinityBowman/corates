@@ -28,7 +28,7 @@ import { AUTH_ERRORS } from '@corates/shared';
 import type { ChecklistType } from '@corates/shared/sync';
 import { isUnlimitedQuota } from '@corates/shared/plans';
 import { createProject } from '@/server/functions/org-projects.functions';
-import { track } from '@/lib/analytics';
+import { clientLogger } from '@/lib/clientLogger';
 import { cn } from '@/lib/utils';
 
 interface CreateProjectModalProps {
@@ -123,7 +123,7 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
         },
       })) as { id: string };
 
-      track('Project:Created');
+      clientLogger.info('client.project.created');
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
       onOpenChange(false);
 
