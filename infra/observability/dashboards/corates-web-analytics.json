@@ -1,0 +1,1637 @@
+{
+  "title": "CoRATES Web Analytics",
+  "uid": "corates-web-analytics",
+  "description": "What Plausible knows about corates.org, read straight from Plausible's ClickHouse on the homelab. Visitors and pageviews come from events_v2, visits, bounce rate and duration from sessions_v2, using the same definitions as the Plausible UI. The Plausible script also runs on staging and local dev, so everything is filtered to the Host variable.",
+  "tags": [
+    "corates",
+    "plausible",
+    "production",
+    "analytics"
+  ],
+  "editable": true,
+  "graphTooltip": 1,
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
+  "refresh": "15m",
+  "schemaVersion": 39,
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "label": "Data source",
+        "type": "datasource",
+        "query": "grafana-clickhouse-datasource",
+        "current": {},
+        "options": [],
+        "refresh": 1,
+        "regex": "",
+        "hide": 0
+      },
+      {
+        "name": "host",
+        "label": "Host",
+        "type": "custom",
+        "query": "corates.org,staging.corates.org,corates.localhost",
+        "current": {
+          "selected": true,
+          "text": "corates.org",
+          "value": "corates.org"
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "corates.org",
+            "value": "corates.org"
+          },
+          {
+            "selected": false,
+            "text": "staging.corates.org",
+            "value": "staging.corates.org"
+          },
+          {
+            "selected": false,
+            "text": "corates.localhost",
+            "value": "corates.localhost"
+          }
+        ],
+        "hide": 0,
+        "multi": false,
+        "includeAll": false
+      },
+      {
+        "name": "site",
+        "label": "Plausible site id",
+        "type": "constant",
+        "query": "3",
+        "current": {
+          "selected": false,
+          "text": "3",
+          "value": "3"
+        },
+        "options": [],
+        "hide": 2,
+        "description": "corates.org is site 3 in the shared Plausible install."
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "Traffic",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Unique visitors",
+      "description": "Distinct daily-salted visitor hashes on pageviews. Plausible rotates the salt every day, so the same person on two days counts twice, exactly as in the Plausible UI.",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 1
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${datasource}"
+          },
+          "editorType": "sql",
+          "queryType": "table",
+          "format": 0,
+          "rawSql": "SELECT uniq(user_id) FROM plausible_events.events_v2 WHERE site_id = $site AND hostname = '$host' AND $__timeFilter(timestamp) AND name = 'pageview'"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "0",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#5794F2"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Total visits",
+      "description": "Sessions that started in the range. A session ends after 30 minutes without an event.",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 1
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${datasource}"
+          },
+          "editorType": "sql",
+          "queryType": "table",
+          "format": 0,
+          "rawSql": "SELECT sum(sign) FROM plausible_events.sessions_v2 WHERE site_id = $site AND hostname = '$host' AND $__timeFilter(start)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "0",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#5794F2"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Total pageviews",
+      "description": "",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 1
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${datasource}"
+          },
+          "editorType": "sql",
+          "queryType": "table",
+          "format": 0,
+          "rawSql": "SELECT count() FROM plausible_events.events_v2 WHERE site_id = $site AND hostname = '$host' AND $__timeFilter(timestamp) AND name = 'pageview'"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "0",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#5794F2"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Views per visit",
+      "description": "",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 1
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${datasource}"
+          },
+          "editorType": "sql",
+          "queryType": "table",
+          "format": 0,
+          "rawSql": "SELECT round(count() / (SELECT sum(sign) FROM plausible_events.sessions_v2 WHERE site_id = $site AND hostname = '$host' AND $__timeFilter(start)), 2) FROM plausible_events.events_v2 WHERE site_id = $site AND hostname = '$host' AND $__timeFilter(timestamp) AND name = 'pageview'"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "0",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#5794F2"
+          },
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Bounce rate",
+      "description": "Share of visits with exactly one pageview and no custom event.",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 1
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${datasource}"
+          },
+          "editorType": "sql",
+          "queryType": "table",
+          "format": 0,
+          "rawSql": "SELECT round(100 * sum(is_bounce * sign) / sum(sign), 1) FROM plausible_events.sessions_v2 WHERE site_id = $site AND hostname = '$host' AND $__timeFilter(start)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "noValue": "0",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#F2495C"
+          },
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 7,
+      "type": "stat",
+      "title": "Visit duration",
+      "description": "Mean time between the first and last event of a visit. Single-event visits count as zero, so a high bounce rate drags this down.",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 1
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${datasource}"
+          },
+          "editorType": "sql",
+          "queryType": "table",
+          "format": 0,
+          "rawSql": "SELECT round(sum(duration * sign) / sum(sign)) FROM plausible_events.sessions_v2 WHERE site_id = $site AND hostname = '$host' AND $__timeFilter(start)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "noValue": "0",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#5794F2"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Visitors and pageviews",
+      "description": "Per bucket. Visitors is distinct visitor hashes in the bucket, so summing buckets over-counts; use the stat above for the range total.",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${datasource}"
+          },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 1,
+          "rawSql": "SELECT $__timeInterval(timestamp) AS time, uniq(user_id) AS visitors, count() AS pageviews FROM plausible_events.events_v2 WHERE site_id = $site AND hostname = '$host' AND $__timeFilter(timestamp) AND name = 'pageview' GROUP BY time ORDER BY time"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "lineWidth": 2,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Visits and bounce rate",
+      "description": "",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${datasource}"
+          },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 1,
+          "rawSql": "SELECT $__timeInterval(start) AS time, sum(sign) AS visits, round(100 * sum(is_bounce * sign) / sum(sign), 1) AS bounce_rate FROM plausible_events.sessions_v2 WHERE site_id = $site AND hostname = '$host' AND $__timeFilter(start) GROUP BY time ORDER BY time"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "lineWidth": 2,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "bounce_rate"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "custom.drawStyle",
+                "value": "points"
+              },
+              {
+                "id": "custom.showPoints",
+                "value": "always"
+              },
+              {
+                "id": "max",
+                "value": 100
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 10,
+      "type": "row",
+      "title": "Pages",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 13
+      }
+    },
+    {
+      "id": 11,
+      "type": "table",
+      "title": "Top pages",
+      "description": "Project and checklist ids stay in the path on purpose so a hot project is visible. Plausible shows the same.",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 0,
+        "y": 14
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${datasource}"
+          },
+          "editorType": "sql",
+          "queryType": "table",
+          "format": 0,
+          "rawSql": "SELECT pathname AS page, uniq(user_id) AS visitors, count() AS pageviews FROM plausible_events.events_v2 WHERE site_id = $site AND hostname = '$host' AND $__timeFilter(timestamp) AND name = 'pageview' GROUP BY page ORDER BY visitors DESC LIMIT 25"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 12,
+      "type": "table",
+      "title": "Entry pages",
+      "description": "",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 8,
+        "y": 14
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${datasource}"
+          },
+          "editorType": "sql",
+          "queryType": "table",
+          "format": 0,
+          "rawSql": "SELECT entry_page AS page, uniq(user_id) AS visitors, sum(sign) AS visits, round(100 * sum(is_bounce * sign) / sum(sign), 1) AS bounce_rate FROM plausible_events.sessions_v2 WHERE site_id = $site AND hostname = '$host' AND $__timeFilter(start) GROUP BY page ORDER BY visitors DESC LIMIT 25"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "bounce_rate"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 13,
+      "type": "table",
+      "title": "Exit pages",
+      "description": "",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 16,
+        "y": 14
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${datasource}"
+          },
+          "editorType": "sql",
+          "queryType": "table",
+          "format": 0,
+          "rawSql": "SELECT exit_page AS page, uniq(user_id) AS visitors, sum(sign) AS visits FROM plausible_events.sessions_v2 WHERE site_id = $site AND hostname = '$host' AND $__timeFilter(start) GROUP BY page ORDER BY visitors DESC LIMIT 25"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 14,
+      "type": "table",
+      "title": "Time on page and scroll depth",
+      "description": "From the engagement events the Plausible script sends when a page is left or hidden. Time on page is total engaged time divided by pageviews of that path; scroll depth is the mean maximum scroll per view.",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 23
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${datasource}"
+          },
+          "editorType": "sql",
+          "queryType": "table",
+          "format": 0,
+          "rawSql": "SELECT e.pathname AS page, p.pageviews AS pageviews, round(sum(e.engagement_time) / 1000 / p.pageviews) AS time_on_page, round(avg(e.scroll_depth)) AS scroll_depth FROM (SELECT pathname, engagement_time, scroll_depth FROM plausible_events.events_v2 WHERE site_id = $site AND hostname = '$host' AND $__timeFilter(timestamp) AND name = 'engagement') AS e INNER JOIN (SELECT pathname, count() AS pageviews FROM plausible_events.events_v2 WHERE site_id = $site AND hostname = '$host' AND $__timeFilter(timestamp) AND name = 'pageview' GROUP BY pathname) AS p ON e.pathname = p.pathname GROUP BY page, p.pageviews ORDER BY pageviews DESC LIMIT 25"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "time_on_page"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "scroll_depth"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 15,
+      "type": "table",
+      "title": "Hostnames",
+      "description": "Not filtered by the Host variable. The Plausible script runs on staging and local dev too, which is why every other panel filters on hostname.",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 23
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${datasource}"
+          },
+          "editorType": "sql",
+          "queryType": "table",
+          "format": 0,
+          "rawSql": "SELECT hostname, uniq(user_id) AS visitors, count() AS pageviews FROM plausible_events.events_v2 WHERE site_id = $site AND name = 'pageview' AND $__timeFilter(timestamp) GROUP BY hostname ORDER BY visitors DESC"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 16,
+      "type": "row",
+      "title": "Acquisition",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 32
+      }
+    },
+    {
+      "id": 17,
+      "type": "table",
+      "title": "Sources",
+      "description": "Plausible's parsed referrer name, so google.com and google.co.uk both read Google. Direct / None is a typed URL, a bookmark, or a referrer stripped by the browser.",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 0,
+        "y": 33
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${datasource}"
+          },
+          "editorType": "sql",
+          "queryType": "table",
+          "format": 0,
+          "rawSql": "SELECT if(referrer_source = '', 'Direct / None', referrer_source) AS source, uniq(user_id) AS visitors, sum(sign) AS visits, round(100 * sum(is_bounce * sign) / sum(sign), 1) AS bounce_rate FROM plausible_events.sessions_v2 WHERE site_id = $site AND hostname = '$host' AND $__timeFilter(start) GROUP BY source ORDER BY visitors DESC LIMIT 25"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "bounce_rate"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 18,
+      "type": "table",
+      "title": "Channels",
+      "description": "Plausible's channel classifier over referrer and UTM tags, the same buckets Google Analytics 4 uses.",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 8,
+        "y": 33
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${datasource}"
+          },
+          "editorType": "sql",
+          "queryType": "table",
+          "format": 0,
+          "rawSql": "SELECT acquisition_channel AS channel, uniq(user_id) AS visitors, sum(sign) AS visits FROM plausible_events.sessions_v2 WHERE site_id = $site AND hostname = '$host' AND $__timeFilter(start) GROUP BY channel ORDER BY visitors DESC"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 19,
+      "type": "table",
+      "title": "Referrer URLs",
+      "description": "The full referring page where the browser sent one. Search engines send only their origin.",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 16,
+        "y": 33
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${datasource}"
+          },
+          "editorType": "sql",
+          "queryType": "table",
+          "format": 0,
+          "rawSql": "SELECT referrer, uniq(user_id) AS visitors, sum(sign) AS visits FROM plausible_events.sessions_v2 WHERE site_id = $site AND hostname = '$host' AND $__timeFilter(start) AND referrer != '' GROUP BY referrer ORDER BY visitors DESC LIMIT 25"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 20,
+      "type": "table",
+      "title": "UTM campaigns",
+      "description": "Empty until a link carrying utm_ parameters is shared. The LibGuides outreach is the obvious first use.",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 42
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${datasource}"
+          },
+          "editorType": "sql",
+          "queryType": "table",
+          "format": 0,
+          "rawSql": "SELECT utm_source, utm_medium, utm_campaign, utm_content, uniq(user_id) AS visitors, sum(sign) AS visits FROM plausible_events.sessions_v2 WHERE site_id = $site AND hostname = '$host' AND $__timeFilter(start) AND (utm_source != '' OR utm_medium != '' OR utm_campaign != '') GROUP BY utm_source, utm_medium, utm_campaign, utm_content ORDER BY visitors DESC LIMIT 25"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 21,
+      "type": "row",
+      "title": "Audience",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 49
+      }
+    },
+    {
+      "id": 22,
+      "type": "table",
+      "title": "Countries",
+      "description": "Country only. This Plausible install has no city-level MaxMind database, so region and city are always empty.",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 50
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${datasource}"
+          },
+          "editorType": "sql",
+          "queryType": "table",
+          "format": 0,
+          "rawSql": "SELECT country_name AS country, uniq(user_id) AS visitors, sum(sign) AS visits, round(100 * sum(is_bounce * sign) / sum(sign), 1) AS bounce_rate FROM plausible_events.sessions_v2 WHERE site_id = $site AND hostname = '$host' AND $__timeFilter(start) GROUP BY country ORDER BY visitors DESC LIMIT 25"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "bounce_rate"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 23,
+      "type": "table",
+      "title": "Devices",
+      "description": "",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 6,
+        "x": 12,
+        "y": 50
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${datasource}"
+          },
+          "editorType": "sql",
+          "queryType": "table",
+          "format": 0,
+          "rawSql": "SELECT if(screen_size = '', '(not set)', screen_size) AS device, uniq(user_id) AS visitors, sum(sign) AS visits, round(100 * sum(is_bounce * sign) / sum(sign), 1) AS bounce_rate FROM plausible_events.sessions_v2 WHERE site_id = $site AND hostname = '$host' AND $__timeFilter(start) GROUP BY device ORDER BY visitors DESC"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "bounce_rate"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 24,
+      "type": "table",
+      "title": "Browsers",
+      "description": "Mobile App is Plausible's bucket for in-app webviews and unidentified mobile user agents, not a CoRATES app.",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 6,
+        "x": 18,
+        "y": 50
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${datasource}"
+          },
+          "editorType": "sql",
+          "queryType": "table",
+          "format": 0,
+          "rawSql": "SELECT browser, uniq(user_id) AS visitors, sum(sign) AS visits FROM plausible_events.sessions_v2 WHERE site_id = $site AND hostname = '$host' AND $__timeFilter(start) GROUP BY browser ORDER BY visitors DESC LIMIT 15"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 25,
+      "type": "table",
+      "title": "Operating systems",
+      "description": "",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 59
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${datasource}"
+          },
+          "editorType": "sql",
+          "queryType": "table",
+          "format": 0,
+          "rawSql": "SELECT operating_system AS os, operating_system_version AS version, uniq(user_id) AS visitors FROM plausible_events.sessions_v2 WHERE site_id = $site AND hostname = '$host' AND $__timeFilter(start) GROUP BY os, version ORDER BY visitors DESC LIMIT 15"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 26,
+      "type": "timeseries",
+      "title": "Visitors by device",
+      "description": "",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 59
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${datasource}"
+          },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 1,
+          "rawSql": "SELECT $__timeInterval(start) AS time, screen_size AS device, uniq(user_id) AS visitors FROM plausible_events.sessions_v2 WHERE site_id = $site AND hostname = '$host' AND $__timeFilter(start) GROUP BY time, device ORDER BY time"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "lineWidth": 2,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 27,
+      "type": "row",
+      "title": "Goals and custom events",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 66
+      }
+    },
+    {
+      "id": 28,
+      "type": "table",
+      "title": "Goal conversions",
+      "description": "Every custom event: the Object:Action events sent by track() in src/lib/analytics.ts, plus Form: Submission and Outbound Link: Click, which the Plausible script captures on its own. Conversion rate is unique converting visitors over unique visitors in the range, as Plausible defines it.",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 67
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${datasource}"
+          },
+          "editorType": "sql",
+          "queryType": "table",
+          "format": 0,
+          "rawSql": "SELECT name AS goal, uniq(user_id) AS uniques, count() AS total, round(100 * uniq(user_id) / (SELECT uniq(user_id) FROM plausible_events.events_v2 WHERE site_id = $site AND hostname = '$host' AND $__timeFilter(timestamp) AND name = 'pageview'), 1) AS conversion_rate FROM plausible_events.events_v2 WHERE site_id = $site AND hostname = '$host' AND $__timeFilter(timestamp) AND name NOT IN ('pageview', 'engagement') GROUP BY goal ORDER BY uniques DESC"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "conversion_rate"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 29,
+      "type": "timeseries",
+      "title": "Custom events over time",
+      "description": "",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 67
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${datasource}"
+          },
+          "editorType": "sql",
+          "queryType": "timeseries",
+          "format": 1,
+          "rawSql": "SELECT $__timeInterval(timestamp) AS time, name, count() AS events FROM plausible_events.events_v2 WHERE site_id = $site AND hostname = '$host' AND $__timeFilter(timestamp) AND name NOT IN ('pageview', 'engagement') GROUP BY time, name ORDER BY time"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "lineWidth": 2,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 30,
+      "type": "table",
+      "title": "Local appraisals by tool",
+      "description": "LocalAppraisal is the standalone /checklist tool; the :PDF variant is a PDF export from it. Signed-out use, so nothing on the server side sees these.",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 0,
+        "y": 76
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${datasource}"
+          },
+          "editorType": "sql",
+          "queryType": "table",
+          "format": 0,
+          "rawSql": "SELECT name AS event, meta.value[indexOf(meta.key, 'type')] AS tool, uniq(user_id) AS uniques, count() AS total FROM plausible_events.events_v2 WHERE site_id = $site AND hostname = '$host' AND $__timeFilter(timestamp) AND name IN ('LocalAppraisal', 'LocalAppraisal:PDF') GROUP BY event, tool ORDER BY total DESC"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 31,
+      "type": "table",
+      "title": "Form submissions by page",
+      "description": "Captured by the Plausible script on any form submit. /signin submissions next to sign-in failures in Product Health is the funnel.",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 8,
+        "y": 76
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${datasource}"
+          },
+          "editorType": "sql",
+          "queryType": "table",
+          "format": 0,
+          "rawSql": "SELECT meta.value[indexOf(meta.key, 'path')] AS page, uniq(user_id) AS uniques, count() AS total FROM plausible_events.events_v2 WHERE site_id = $site AND hostname = '$host' AND $__timeFilter(timestamp) AND name = 'Form: Submission' GROUP BY page ORDER BY total DESC LIMIT 15"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 32,
+      "type": "table",
+      "title": "Outbound links",
+      "description": "",
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 16,
+        "y": 76
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${datasource}"
+          },
+          "editorType": "sql",
+          "queryType": "table",
+          "format": 0,
+          "rawSql": "SELECT meta.value[indexOf(meta.key, 'url')] AS url, uniq(user_id) AS uniques, count() AS clicks FROM plausible_events.events_v2 WHERE site_id = $site AND hostname = '$host' AND $__timeFilter(timestamp) AND name = 'Outbound Link: Click' GROUP BY url ORDER BY clicks DESC LIMIT 15"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      }
+    }
+  ]
+}
