@@ -9,6 +9,76 @@ import { BASE_URL } from './constants';
 
 const API_BASE = BASE_URL;
 
+// Cloudflare's origin-unreachable family plus the usual gateway codes. A 4xx
+// is a real answer from the route and is never retried.
+const RETRYABLE_STATUSES = new Set([502, 503, 504, 520, 521, 522, 523, 524]);
+const RETRY_DELAYS_MS = [500, 1000, 2000, 4000, 8000];
+const ATTEMPT_TIMEOUT_MS = 20_000;
+
+/**
+ * fetch against the test API with retries. The self-hosted runners reach
+ * staging through WSL2 NAT and occasionally lose a connection outright
+ * (undici's `fetch failed` with a connect timeout), which used to fail a
+ * whole spec in beforeAll. Every route this hits is idempotent, so a retry
+ * after a lost response is safe.
+ */
+export async function testApi(path: string, init?: RequestInit): Promise<Response> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
+    try {
+      const res = await fetch(`${API_BASE}${path}`, {
+        ...init,
+        signal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS),
+      });
+      if (!RETRYABLE_STATUSES.has(res.status)) return res;
+      await res.body?.cancel();
+      lastError = new Error(`${res.status} ${res.statusText}`);
+    } catch (err) {
+      lastError = err;
+    }
+    const delay = RETRY_DELAYS_MS[attempt];
+    if (delay === undefined) break;
+    console.warn(
+      `[e2e] ${init?.method ?? 'GET'} ${path} failed (${describeError(lastError)}); retrying in ${delay}ms`,
+    );
+    await new Promise(r => setTimeout(r, delay));
+  }
+  throw new Error(
+    `${init?.method ?? 'GET'} ${path} failed after retries: ${describeError(lastError)}`,
+  );
+}
+
+function describeError(err: unknown): string {
+  if (!(err instanceof Error)) return String(err);
+  const cause = (err as Error & { cause?: unknown }).cause;
+  return cause instanceof Error ? `${err.message}: ${cause.message}` : err.message;
+}
+
+const diagnosed = new WeakSet<BrowserContext>();
+
+/**
+ * Echo failed requests and uncaught page errors into the test output, so a
+ * runner-side network fault reads as `net::ERR_TIMED_OUT` next to the
+ * assertion it broke instead of as an unexplained timeout. Aborted requests
+ * are routine (route prefetches cancelled by navigation) and are skipped.
+ */
+export function attachDiagnostics(context: BrowserContext) {
+  if (diagnosed.has(context)) return;
+  diagnosed.add(context);
+  const watch = (page: Page) => {
+    page.on('requestfailed', request => {
+      const text = request.failure()?.errorText ?? 'unknown';
+      if (text === 'net::ERR_ABORTED') return;
+      console.warn(`[e2e] requestfailed ${request.method()} ${request.url()} -> ${text}`);
+    });
+    page.on('pageerror', error => {
+      console.warn(`[e2e] pageerror ${error.message}`);
+    });
+  };
+  context.pages().forEach(watch);
+  context.on('page', watch);
+}
+
 export interface SeededUser {
   id: string;
   name: string;
@@ -50,7 +120,7 @@ export async function seedDualReviewerScenario(): Promise<DualReviewerScenario> 
   const userBId = `${prefix}-user-b`;
   const orgId = `${prefix}-org`;
 
-  const seedRes = await fetch(`${API_BASE}/api/test/seed`, {
+  const seedRes = await testApi(`/api/test/seed`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -98,7 +168,7 @@ export async function seedDualReviewerScenario(): Promise<DualReviewerScenario> 
 }
 
 async function getSessionCookies(userId: string): Promise<SessionCookie[]> {
-  const res = await fetch(`${API_BASE}/api/test/session`, {
+  const res = await testApi(`/api/test/session`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ userId }),
@@ -113,6 +183,7 @@ async function getSessionCookies(userId: string): Promise<SessionCookie[]> {
 }
 
 export async function loginAs(context: BrowserContext, cookies: SessionCookie[]) {
+  attachDiagnostics(context);
   await context.addCookies(cookies);
   await context.addInitScript(() => {
     localStorage.setItem('corates-welcome-dismissed', 'true');
@@ -147,7 +218,7 @@ export async function addProjectMember(
   _sessionCookies: SessionCookie[],
   role = 'member',
 ) {
-  const res = await fetch(`${API_BASE}/api/test/add-project-member`, {
+  const res = await testApi(`/api/test/add-project-member`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ orgId, projectId, userId, role }),
@@ -216,7 +287,7 @@ export async function seedStudies(
 }
 
 export async function cleanupScenario(scenario: DualReviewerScenario) {
-  await fetch(`${API_BASE}/api/test/cleanup`, {
+  await testApi(`/api/test/cleanup`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -242,7 +313,7 @@ export async function seedAdminScenario(): Promise<AdminScenario> {
   const regularId = `${prefix}-user`;
   const orgId = `${prefix}-org`;
 
-  const seedRes = await fetch(`${API_BASE}/api/test/seed`, {
+  const seedRes = await testApi(`/api/test/seed`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -289,7 +360,7 @@ export async function seedAdminScenario(): Promise<AdminScenario> {
 }
 
 export async function cleanupAdminScenario(scenario: AdminScenario) {
-  await fetch(`${API_BASE}/api/test/cleanup`, {
+  await testApi(`/api/test/cleanup`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -329,7 +400,7 @@ export async function seedBillingScenario(
   const userId = `${prefix}-user`;
   const orgId = `${prefix}-org`;
 
-  const seedRes = await fetch(`${API_BASE}/api/test/seed`, {
+  const seedRes = await testApi(`/api/test/seed`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -369,7 +440,7 @@ export async function updateSubscription(
   orgId: string,
   opts: { plan?: string; status?: string; periodEnd?: number; cancelAtPeriodEnd?: boolean },
 ) {
-  const res = await fetch(`${API_BASE}/api/test/update-subscription`, {
+  const res = await testApi(`/api/test/update-subscription`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ orgId, ...opts }),
@@ -380,7 +451,7 @@ export async function updateSubscription(
 }
 
 export async function cleanupBillingScenario(scenario: BillingScenario) {
-  await fetch(`${API_BASE}/api/test/cleanup`, {
+  await testApi(`/api/test/cleanup`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -399,9 +470,7 @@ export async function cleanupBillingScenario(scenario: BillingScenario) {
  */
 export async function getAuthUrl(email: string, type: 'invitation'): Promise<string> {
   for (let attempt = 0; attempt < 25; attempt++) {
-    const res = await fetch(
-      `${API_BASE}/api/test/auth-url?email=${encodeURIComponent(email)}&type=${type}`,
-    );
+    const res = await testApi(`/api/test/auth-url?email=${encodeURIComponent(email)}&type=${type}`);
     if (res.ok) {
       const data = await res.json();
       return data.url;
@@ -421,8 +490,8 @@ export async function getAuthCode(
   type: 'sign-in' | 'email-verification' | 'forget-password' | 'onboarding-email',
 ): Promise<string> {
   for (let attempt = 0; attempt < 25; attempt++) {
-    const res = await fetch(
-      `${API_BASE}/api/test/auth-code?email=${encodeURIComponent(email)}&type=${type}`,
+    const res = await testApi(
+      `/api/test/auth-code?email=${encodeURIComponent(email)}&type=${type}`,
     );
     if (res.ok) {
       const data = await res.json();
@@ -472,7 +541,7 @@ export async function signUpWithEmail(email: string, password: string, name: str
  * via the test endpoint. Skips the email verification flow.
  */
 export async function verifyEmail(email: string, completeProfile = false) {
-  const res = await fetch(`${API_BASE}/api/test/verify-email`, {
+  const res = await testApi(`/api/test/verify-email`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, completeProfile }),
@@ -487,7 +556,7 @@ export async function verifyEmail(email: string, completeProfile = false) {
  * Removes user, account, session, member, and verification records.
  */
 export async function cleanupByEmail(email: string) {
-  const res = await fetch(`${API_BASE}/api/test/cleanup-user-by-email`, {
+  const res = await testApi(`/api/test/cleanup-user-by-email`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email }),

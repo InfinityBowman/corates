@@ -18,7 +18,7 @@
  *   pnpm --filter web dev  (localhost:3010)
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect } from './test';
 import { answerAllAMSTAR2, fillROB2Preliminary } from './shared-steps';
 
 const TYPE_LABELS: Record<string, string> = {

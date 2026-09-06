@@ -13,7 +13,7 @@
  * See: packages/docs/audits/yjs-persistence-redesign.md
  */
 
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page } from './test';
 import {
   seedDualReviewerScenario,
   cleanupScenario,

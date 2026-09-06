@@ -18,7 +18,7 @@
  *   pnpm --filter web dev  (localhost:3010, DEV_MODE=true)
  */
 
-import { test, expect, type Page, type Browser } from '@playwright/test';
+import { test, expect, type Page, type Browser } from './test';
 import {
   seedDualReviewerScenario,
   cleanupScenario,

@@ -7,13 +7,17 @@ export default defineConfig({
   testDir: './e2e',
   testMatch: '**/*.spec.ts',
   timeout: 180_000,
-  retries: isRemote ? 1 : 0,
+  // Remote runs cross the public internet from a self-hosted runner, so a
+  // test may lose a connection through no fault of its own. Every spec seeds
+  // its own data in beforeAll, which runs again in the retry's fresh worker.
+  retries: isRemote ? 2 : 0,
   // Test data is namespace-isolated per scenario (unique seed prefixes), so
   // spec files can run in parallel workers against the shared dev server.
   // The database is reset once per run in global-setup.ts, not per test.
   workers: isRemote ? 4 : 6,
-  // CI defaults to the dot reporter, which shows no per-spec durations.
-  reporter: 'list',
+  // CI defaults to the dot reporter, which shows no per-spec durations. The
+  // JSON file feeds scripts/e2e-summary.mjs for the job summary.
+  reporter: [['list'], ['json', { outputFile: 'test-results/results.json' }]],
   globalSetup: './e2e/global-setup.ts',
   use: {
     baseURL: BASE_URL,
