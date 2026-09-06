@@ -7,8 +7,13 @@ on:
     branches-ignore: [main]
 
 jobs:
+  pick-runner:
+    uses: ./.github/workflows/pick-runner.yml
+    secrets: inherit
+
   prettier:
-    runs-on: self-hosted
+    needs: pick-runner
+    runs-on: [self-hosted, '${{ needs.pick-runner.outputs.label }}']
     permissions:
       contents: write
       pull-requests: write

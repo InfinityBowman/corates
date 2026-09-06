@@ -58,8 +58,13 @@ concurrency:
 # ---------------------------------------------------------------
 
 jobs:
+  pick-runner:
+    uses: ./.github/workflows/pick-runner.yml
+    secrets: inherit
+
   lint:
-    runs-on: self-hosted
+    needs: pick-runner
+    runs-on: [self-hosted, '${{ needs.pick-runner.outputs.label }}']
     permissions:
       contents: read
     steps:
@@ -77,7 +82,8 @@ jobs:
         run: pnpm lint
 
   typecheck:
-    runs-on: self-hosted
+    needs: pick-runner
+    runs-on: [self-hosted, '${{ needs.pick-runner.outputs.label }}']
     permissions:
       contents: read
     steps:
@@ -94,7 +100,8 @@ jobs:
         run: pnpm typecheck
 
   test-unit:
-    runs-on: self-hosted
+    needs: pick-runner
+    runs-on: [self-hosted, '${{ needs.pick-runner.outputs.label }}']
     permissions:
       contents: read
     steps:
@@ -111,7 +118,8 @@ jobs:
         run: pnpm --filter web test:unit
 
   test-server:
-    runs-on: self-hosted
+    needs: pick-runner
+    runs-on: [self-hosted, '${{ needs.pick-runner.outputs.label }}']
     permissions:
       contents: read
     steps:
@@ -128,8 +136,9 @@ jobs:
   #   - merged PR has the `skip-e2e` label, or
   #   - commit message contains `[skip e2e]` (direct pushes / squash title)
   resolve-skip-e2e:
+    needs: pick-runner
     if: github.event_name == 'push'
-    runs-on: self-hosted
+    runs-on: [self-hosted, '${{ needs.pick-runner.outputs.label }}']
     permissions:
       pull-requests: read
     outputs:
@@ -164,7 +173,8 @@ jobs:
   # Builds on PRs as a check; on push also deploys the build to staging. Staging
   # deliberately does not wait on the check jobs; deploy-production does.
   build-web:
-    runs-on: self-hosted
+    needs: pick-runner
+    runs-on: [self-hosted, '${{ needs.pick-runner.outputs.label }}']
     permissions:
       contents: read
     steps:
@@ -233,11 +243,11 @@ jobs:
   # `playwright install-deps chromium`; the browser itself is installed per
   # job below, so it always matches @playwright/test.
   e2e:
-    needs: [build-web, resolve-skip-e2e]
+    needs: [pick-runner, build-web, resolve-skip-e2e]
     if: |
       needs.build-web.result == 'success' &&
       needs.resolve-skip-e2e.outputs.skip_e2e != 'true'
-    runs-on: self-hosted
+    runs-on: [self-hosted, '${{ needs.pick-runner.outputs.label }}']
     permissions:
       contents: read
 
@@ -278,7 +288,7 @@ jobs:
           retention-days: 7
 
   deploy-production:
-    needs: [lint, typecheck, test-unit, test-server, build-web, resolve-skip-e2e, e2e]
+    needs: [pick-runner, lint, typecheck, test-unit, test-server, build-web, resolve-skip-e2e, e2e]
     if: |
       always() && !cancelled() &&
       github.event_name == 'push' &&
@@ -288,7 +298,7 @@ jobs:
       needs.test-server.result == 'success' &&
       needs.build-web.result == 'success' &&
       (needs.e2e.result == 'success' || needs.resolve-skip-e2e.outputs.skip_e2e == 'true')
-    runs-on: self-hosted
+    runs-on: [self-hosted, '${{ needs.pick-runner.outputs.label }}']
     permissions:
       contents: read
 

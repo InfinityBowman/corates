@@ -24,8 +24,13 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  pick-runner:
+    uses: ./.github/workflows/pick-runner.yml
+    secrets: inherit
+
   deploy-staging:
-    runs-on: self-hosted
+    needs: pick-runner
+    runs-on: [self-hosted, '${{ needs.pick-runner.outputs.label }}']
     permissions:
       contents: read
 
@@ -94,3 +99,4 @@ jobs:
     if: inputs.run_e2e
     needs: deploy-staging
     uses: ./.github/workflows/e2e-staging.yml
+    secrets: inherit

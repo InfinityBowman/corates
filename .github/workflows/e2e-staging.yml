@@ -22,10 +22,15 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  pick-runner:
+    uses: ./.github/workflows/pick-runner.yml
+    secrets: inherit
+
   # On the host rather than the Playwright container, for the reasons given on
   # ci.yml's e2e job.
   e2e:
-    runs-on: self-hosted
+    needs: pick-runner
+    runs-on: [self-hosted, '${{ needs.pick-runner.outputs.label }}']
     permissions:
       contents: read
 
