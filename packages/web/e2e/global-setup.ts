@@ -8,10 +8,10 @@
  * reachable here.
  */
 
-import { BASE_URL } from './constants';
+import { testApi } from './helpers';
 
 export default async function globalSetup() {
-  const res = await fetch(`${BASE_URL}/api/test/reset`, { method: 'POST' });
+  const res = await testApi('/api/test/reset', { method: 'POST' });
   if (!res.ok) {
     throw new Error(`DB reset failed: ${res.status} ${await res.text()}`);
   }

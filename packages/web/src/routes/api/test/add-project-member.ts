@@ -1,8 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { env } from 'cloudflare:workers';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { createDb } from '@corates/db/client';
-import { user } from '@corates/db/schema';
+import { projectMembers, user } from '@corates/db/schema';
 import { addMember } from '@corates/workers/commands/members';
 import type { OrgId, ProjectId, UserId } from '@corates/shared/ids';
 import { devModeGate } from '@/server/devModeGate';
@@ -29,6 +29,18 @@ export const handler = async ({ request }: { request: Request }) => {
 
     if (!userToAdd) {
       return Response.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Idempotent so the e2e helpers can retry after a lost response.
+    const existing = await db
+      .select({ id: projectMembers.id })
+      .from(projectMembers)
+      .where(
+        and(eq(projectMembers.projectId, body.projectId), eq(projectMembers.userId, body.userId)),
+      )
+      .get();
+    if (existing) {
+      return Response.json({ success: true, alreadyMember: true });
     }
 
     const result = await addMember(
