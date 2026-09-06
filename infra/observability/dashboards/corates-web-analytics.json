@@ -2,12 +2,7 @@
   "title": "CoRATES Web Analytics",
   "uid": "corates-web-analytics",
   "description": "What Plausible knows about corates.org, read straight from Plausible's ClickHouse on the homelab. Visitors and pageviews come from events_v2, visits, bounce rate and duration from sessions_v2, using the same definitions as the Plausible UI. The Plausible script also runs on staging and local dev, so everything is filtered to the Host variable.",
-  "tags": [
-    "corates",
-    "plausible",
-    "production",
-    "analytics"
-  ],
+  "tags": ["corates", "plausible", "production", "analytics"],
   "editable": true,
   "graphTooltip": 1,
   "time": {
@@ -131,9 +126,7 @@
       },
       "options": {
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -184,9 +177,7 @@
       },
       "options": {
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -237,9 +228,7 @@
       },
       "options": {
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -291,9 +280,7 @@
       },
       "options": {
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -345,9 +332,7 @@
       },
       "options": {
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -398,9 +383,7 @@
       },
       "options": {
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
