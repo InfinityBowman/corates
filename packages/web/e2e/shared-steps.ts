@@ -286,12 +286,13 @@ export async function assignReviewers(page: Page) {
  */
 export async function addOutcome(page: Page, name: string) {
   await page.getByRole('tab', { name: /All Studies/i }).click();
-  await page.getByText('Outcomes').click();
+  // By role: the setup card's "Define outcomes" heading also matches the text.
+  await page.getByRole('button', { name: /^Outcomes/ }).click();
 
   const sheet = page.getByRole('dialog');
   await expect(sheet.getByRole('button', { name: /Add/i }).last()).toBeVisible({ timeout: 5_000 });
   await sheet.getByRole('button', { name: /Add/i }).last().click();
-  await page.getByPlaceholder(/outcome/i).fill(name);
+  await sheet.getByPlaceholder(/outcome/i).fill(name);
   await page.keyboard.press('Enter');
   await expect(sheet.getByText(name, { exact: true })).toBeVisible({ timeout: 5_000 });
 
