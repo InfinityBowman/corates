@@ -259,7 +259,9 @@ export async function assignReviewers(page: Page) {
     timeout: 5_000,
   });
 
-  const dialog = page.getByRole('dialog');
+  // By name: each reviewer picker popover is also role="dialog" while it
+  // animates out, so the bare role can match two elements.
+  const dialog = page.getByRole('dialog', { name: 'Assign reviewers' });
 
   // The sheet is scoped to this one study, so its two reviewer pickers are
   // the only comboboxes; target them by index rather than by placeholder text.
@@ -275,6 +277,7 @@ export async function assignReviewers(page: Page) {
   // lands, so wait for the option rather than requiring a page reload.
   await expect(page.getByRole('option', { name: /Bob/i })).toBeVisible({ timeout: 15_000 });
   await page.getByRole('option', { name: /Bob/i }).click();
+  await expect(page.getByRole('listbox')).toBeHidden({ timeout: 5_000 });
 
   await dialog.getByRole('button', { name: 'Save reviewers' }).click();
   await expect(dialog).toBeHidden({ timeout: 5_000 });
