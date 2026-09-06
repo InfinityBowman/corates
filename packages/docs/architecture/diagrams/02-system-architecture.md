@@ -23,10 +23,6 @@ flowchart TB
         EmailQueue[Cloudflare Queue<br/>Email delivery]
     end
 
-    subgraph StripeWorker["Stripe Purchases Worker (Hono)"]
-        StripeWebhook[POST /api/billing/purchases/webhook]
-    end
-
     subgraph Storage["Cloudflare Storage"]
         D1[(D1<br/>Users, Orgs, Projects<br/>& Access Control)]
         R2[(R2<br/>PDF Documents)]
@@ -43,7 +39,6 @@ flowchart TB
     Routes --> D1
     Routes --> R2
     Routes -->|"send notification"| UserSession
-    StripeWebhook -->|"verifies + writes"| D1
     WorkspaceDO -->|"authorize on connect<br/>reads D1 membership"| D1
 ```
 
@@ -60,14 +55,13 @@ flowchart TB
 
 ### Backend (Cloudflare Workers)
 
-Two Workers are deployed:
+One Worker is deployed:
 
-- **App Worker (`packages/web`)**: TanStack Start -- serves the SPA and all `/api/*` routes. Shared backend logic lives in `@corates/workers` (imported as a library).
-- **Stripe Purchases Worker (`packages/stripe-purchases`)**: Hono-based, isolated for deploy-cadence. Receives Stripe webhooks, verifies signatures, writes to the same D1 database.
+- **App Worker (`packages/web`)**: TanStack Start -- serves the SPA and all `/api/*` routes, including the Stripe webhook handled by the Better Auth Stripe plugin. Shared backend logic lives in `@corates/workers` (imported as a library).
 
-Both Workers share:
+It uses:
 
-- **Better Auth**: Authentication and session management (in the main app Worker; the Stripe worker does not authenticate user sessions)
+- **Better Auth**: Authentication and session management
 - **Durable Objects**:
   - **WorkspaceDO**: One per project, holds the authoritative sync-engine rows for real-time collaboration and content storage
   - **UserSession**: One per user, manages WebSocket connections for real-time notifications (e.g., project invites)

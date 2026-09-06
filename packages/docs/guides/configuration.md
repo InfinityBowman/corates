@@ -65,7 +65,6 @@ Environment variables are defined in `.env` NOT `.dev.vars`
 - `POSTMARK_API_KEY` - Email service
 - `STRIPE_SECRET_KEY` - Stripe API secret key (shared for all Stripe operations)
 - `STRIPE_WEBHOOK_SECRET_AUTH` - Stripe webhook signing secret for Better Auth subscription webhooks (`/api/auth/stripe/webhook`)
-- `STRIPE_WEBHOOK_SECRET_PURCHASES` - Stripe webhook signing secret for one-time purchase webhooks (`/api/billing/purchases/webhook`)
 - `R2_BUCKET` - R2 storage binding for PDFs
 
 ### Frontend (Web)
@@ -126,10 +125,9 @@ pnpm lint
 
 ### Stripe Local Development
 
-For local Stripe webhook testing, the project includes a `@corates/stripe-dev` package that runs two Stripe CLI listeners automatically when you run `turbo dev`:
+For local Stripe webhook testing, the project includes a `@corates/stripe-dev` package that runs a Stripe CLI listener automatically when you run `turbo dev`:
 
 - **Subscription webhooks** (Better Auth): `http://localhost:8787/api/auth/stripe/webhook`
-- **Purchase webhooks** (one-time): `http://localhost:8787/api/billing/purchases/webhook`
 
 **Quick Setup (Automated):**
 
@@ -143,10 +141,8 @@ For local Stripe webhook testing, the project includes a `@corates/stripe-dev` p
 3. Install Stripe CLI: https://stripe.com/docs/stripe-cli
 4. Authenticate: `stripe login`
 5. Run `turbo dev` - the Stripe listeners will start automatically
-6. Copy the two `whsec_...` signing secrets printed by each listener
-7. Add them to `packages/workers/.env`:
-   - `STRIPE_WEBHOOK_SECRET_AUTH=whsec_...` (from the auth listener)
-   - `STRIPE_WEBHOOK_SECRET_PURCHASES=whsec_...` (from the purchases listener)
+6. Copy the `whsec_...` signing secret printed by the listener
+7. Add it to `packages/workers/.env` as `STRIPE_WEBHOOK_SECRET_AUTH=whsec_...`
 
 **Manual Setup (Alternative):**
 
@@ -155,14 +151,13 @@ If you prefer to set up manually:
 1. Install Stripe CLI: https://stripe.com/docs/stripe-cli
 2. Authenticate: `stripe login`
 3. Run `turbo dev` - the Stripe listeners will start automatically
-4. Copy the two `whsec_...` signing secrets printed by each listener
+4. Copy the `whsec_...` signing secret printed by the listener
 5. Run `pnpm stripe:setup` from `packages/web` to create the products and prices (keyed by lookup key, so no price ids are needed)
 6. Add all configuration to `packages/workers/.env`:
    - `STRIPE_SECRET_KEY=sk_test_...`
-   - `STRIPE_WEBHOOK_SECRET_AUTH=whsec_...` (from the auth listener)
-   - `STRIPE_WEBHOOK_SECRET_PURCHASES=whsec_...` (from the purchases listener)
+   - `STRIPE_WEBHOOK_SECRET_AUTH=whsec_...` (from the listener)
 
-**Note:** The webhook signing secrets are printed when the listeners start. You only need to copy them once into `.env` - they remain valid for that Stripe CLI session.
+**Note:** The webhook signing secret is printed when the listener starts. You only need to copy it once into `.env` - it remains valid for that Stripe CLI session.
 
 ## Package-Specific Configuration
 
@@ -187,12 +182,6 @@ If you prefer to set up manually:
 - **Storage**: Cloudflare R2
 
 The main app Worker is `packages/web`; `packages/workers` is imported as a library.
-
-### Stripe Purchases Worker (`packages/stripe-purchases`)
-
-- **Runtime**: Cloudflare Workers
-- **Framework**: Hono
-- **Role**: Isolated Stripe webhook receiver, deployed separately from the main app
 
 ## Import Patterns
 

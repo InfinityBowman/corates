@@ -16,7 +16,7 @@ CoRATES is a web application designed to streamline the entire quality and risk-
 - **Storage**: Cloudflare R2 (PDF documents)
 - **Sync**: Yjs (CRDT), y-dexie for local persistence (Y.Doc stored alongside app data in a single IndexedDB via Dexie)
 - **Auth**: Better Auth
-- **Payments**: Stripe (isolated `stripe-purchases` Worker using Hono for webhook delivery)
+- **Payments**: Stripe (Better Auth Stripe plugin, webhooks at `/api/auth/stripe/webhook`)
 
 ## Documentation Sections
 

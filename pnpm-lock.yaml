@@ -184,42 +184,7 @@ importers:
         specifier: ^4.1.11
         version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@26.4.1)(jsdom@30.0.1(@noble/hashes@2.3.0))(msw@2.12.10(@types/node@26.4.1)(typescript@7.0.2))(vite@8.2.2(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.46.0)(tsx@4.23.13)(yaml@2.8.2))
 
-  packages/stripe-dev:
-    devDependencies:
-      concurrently:
-        specifier: ^10.0.5
-        version: 10.0.5
-
-  packages/stripe-purchases:
-    dependencies:
-      '@corates/db':
-        specifier: workspace:*
-        version: link:../db
-      '@corates/shared':
-        specifier: workspace:*
-        version: link:../shared
-      '@sentry/cloudflare':
-        specifier: ^10.73.0
-        version: 10.73.0(@cloudflare/workers-types@5.20260902.1)(wrangler@4.128.0(@cloudflare/workers-types@5.20260902.1))
-      drizzle-orm:
-        specifier: ^0.45.2
-        version: 0.45.2(@cloudflare/workers-types@5.20260902.1)(@electric-sql/pglite@0.3.15)(@opentelemetry/api@1.9.1)(@prisma/client@7.4.2(prisma@7.4.2(@types/react@19.2.18)(better-sqlite3@13.0.3)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@7.0.2))(typescript@7.0.2))(@types/better-sqlite3@7.6.13)(better-sqlite3@13.0.3)(gel@2.2.0(supports-color@10.2.2))(kysely@0.29.4)(mysql2@3.15.3)(postgres@3.4.7)(prisma@7.4.2(@types/react@19.2.18)(better-sqlite3@13.0.3)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@7.0.2))
-      hono:
-        specifier: ^4.13.5
-        version: 4.13.5
-      stripe:
-        specifier: ^22.6.1
-        version: 22.6.1(@types/node@26.4.1)
-    devDependencies:
-      '@cloudflare/workers-types':
-        specifier: ^5.20260902.1
-        version: 5.20260902.1
-      typescript:
-        specifier: ^7.0.2
-        version: 7.0.2
-      wrangler:
-        specifier: ^4.128.0
-        version: 4.128.0(@cloudflare/workers-types@5.20260902.1)
+  packages/stripe-dev: {}
 
   packages/web:
     dependencies:

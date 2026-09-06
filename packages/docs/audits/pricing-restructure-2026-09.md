@@ -98,9 +98,10 @@ lookup keys. Production verified after each deploy.
 - **Free projects per user.** Each org gets a free project, and users can
   create extra orgs. Decide whether to cap free projects per user or restrict
   the free project to personal orgs.
-- **`stripe-purchases` worker.** It only fulfils single-project checkout
-  sessions, which can no longer be created. It can be retired along with its
-  CI deploy steps and `STRIPE_WEBHOOK_SECRET_PURCHASES`.
+- **`stripe-purchases` worker.** Retired in #672 along with its CI deploy
+  steps and `STRIPE_WEBHOOK_SECRET_PURCHASES`. Subscription status already
+  synced through Better Auth; the worker's dunning email and Stripe customer
+  sync went with it.
 - **Grafana billing dashboard.** Panels for
   `billing.single_project_checkout_initiated` and `billing.trial_started`
   will go flat and can be removed.

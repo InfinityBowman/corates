@@ -49,14 +49,13 @@ from the request scope; anything else is per-call data or scope context.
 
 ## Which logger to use
 
-| Package                     | Import                          | Notes                                                                                    |
-| --------------------------- | ------------------------------- | ---------------------------------------------------------------------------------------- |
-| `workers`                   | `@corates/workers/logger`       | `info` / `warn` / `captureError`. The default for all server code.                       |
-| sync engine                 | `createWorkspaceDO({ logger })` | Engine diagnostics; the hook in `sync/workspace.ts` forwards them to the same logger.    |
-| `stripe-purchases`          | `src/lib/observability/logger`  | Hono-request-scoped wrapper adding `.stripe(action, data)` with a typed field whitelist. |
-| `web` (server)              | `@corates/workers/logger`       | Same as workers - server functions, route handlers, middleware.                          |
-| `web` (browser)             | `@/lib/clientLogger`            | Named events batched to `POST /api/client-logs`, relayed into Loki. Production only.     |
-| `web` (browser, exceptions) | `@/config/sentry`               | Uncaught errors and existing `captureException` call sites only.                         |
+| Package                     | Import                          | Notes                                                                                 |
+| --------------------------- | ------------------------------- | ------------------------------------------------------------------------------------- |
+| `workers`                   | `@corates/workers/logger`       | `info` / `warn` / `captureError`. The default for all server code.                    |
+| sync engine                 | `createWorkspaceDO({ logger })` | Engine diagnostics; the hook in `sync/workspace.ts` forwards them to the same logger. |
+| `web` (server)              | `@corates/workers/logger`       | Same as workers - server functions, route handlers, middleware.                       |
+| `web` (browser)             | `@/lib/clientLogger`            | Named events batched to `POST /api/client-logs`, relayed into Loki. Production only.  |
+| `web` (browser, exceptions) | `@/config/sentry`               | Uncaught errors and existing `captureException` call sites only.                      |
 
 Only reach for `createLogger` directly when you need a distinct `service` name, as the web
 Stripe webhook route does.
@@ -149,7 +148,6 @@ info('Created personal org %s for user %s', [orgId, userId]);
 | Browser        | `packages/web/src/config/sentry.ts` - replay (masked text, blocked media), feedback widget, TanStack Router tracing |
 | Web Worker     | `packages/web/src/server.ts` - `Sentry.withSentry` over `fetch` + `queue`                                           |
 | Durable Object | `packages/workers/src/durable-objects/UserSession.ts` - `instrumentDurableObjectWithSentry`                         |
-| Stripe worker  | `packages/stripe-purchases/src/index.ts` - `Sentry.withSentry`                                                      |
 | Sourcemaps     | `sentryVitePlugin` in `packages/web/vite.config.ts`                                                                 |
 
 Every browser-side helper no-ops without a DSN, so local development stays quiet.

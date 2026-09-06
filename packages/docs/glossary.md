@@ -168,14 +168,6 @@ Full-stack React framework with file-based server routing, used for the main app
 
 **Related:** `packages/web/src/routes/api/`
 
-### Hono (Stripe purchases only)
-
-Lightweight Workers framework used exclusively by the `packages/stripe-purchases` Worker for Stripe one-time-purchase webhooks. Kept isolated for deploy-cadence so frontend changes don't disturb payment retry windows.
-
-**Related:** `packages/stripe-purchases/src/routes/webhook.ts`
-
----
-
 ## Systematic Review Terminology
 
 ### AMSTAR2
@@ -344,7 +336,7 @@ Idempotency tracking for Stripe webhooks:
 - Prevents duplicate processing
 - Two-phase verification pattern (verify signature, then check ledger)
 
-**Related:** `packages/web/src/routes/api/billing/*` (main app), `packages/stripe-purchases/src/routes/webhook.ts` (webhook worker)
+**Related:** `packages/web/src/routes/api/billing/*`
 
 ### Billing Resolver
 

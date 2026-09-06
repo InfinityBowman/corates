@@ -1,6 +1,6 @@
 # @corates/workers
 
-**Shared backend library for CoRATES.** This package no longer deploys as its own Worker -- it is consumed by `packages/web` (the main TanStack Start app) and by `packages/stripe-purchases` (the isolated Stripe webhook Worker). It holds everything the backend needs but that is not route-specific: Durable Objects, auth configuration, authorization policies, billing resolvers, commands, and shared lib helpers.
+**Shared backend library for CoRATES.** This package no longer deploys as its own Worker -- it is consumed by `packages/web` (the main TanStack Start app). It holds everything the backend needs but that is not route-specific: Durable Objects, auth configuration, authorization policies, billing resolvers, commands, and shared lib helpers.
 
 ## Purpose
 
@@ -14,7 +14,7 @@ This package provides:
 - **Lib helpers** -- Stripe client, SSRF protection, media file handling, sync-with-retry, Yjs project sync helpers.
 - **Queue handler** -- Cloudflare Queue consumer for async email delivery via Postmark.
 
-The actual HTTP routes live in `packages/web/src/routes/api/` (TanStack Start) and `packages/stripe-purchases/src/routes/` (Hono, webhooks only).
+The actual HTTP routes live in `packages/web/src/routes/api/` (TanStack Start).
 
 ## Entry points
 
@@ -109,7 +109,7 @@ Organization
 - **Org-scoped:** One active subscription or grant per organization.
 - **Access hierarchy:** Subscription > Access Grant > Free tier.
 - **Access grants:** Trial (14 days) or Single Project (6 months).
-- **Webhook processing:** Two-phase verification with ledger (signature check, then idempotent application). The subscription webhook is handled by the main app; the one-time purchase webhook is handled by `packages/stripe-purchases`.
+- **Webhook processing:** Two-phase verification with ledger (signature check, then idempotent application). The Stripe webhook is handled by the Better Auth Stripe plugin in the main app.
 
 ## Important patterns
 
@@ -166,4 +166,4 @@ Extra caution required when modifying:
 - `src/auth/config.ts` -- authentication configuration for the whole app.
 - `src/policies/` -- authorization decisions.
 
-Read file header warnings before modifying. Webhook processing for one-time purchases lives in `packages/stripe-purchases/src/routes/webhook.ts` -- it is in a separate worker for deploy isolation.
+Read file header warnings before modifying.

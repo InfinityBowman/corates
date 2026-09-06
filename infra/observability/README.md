@@ -73,7 +73,7 @@ Grafana talks to Loki internally over the docker network without auth.
 - Workers Observability > destinations: type Logs, endpoint
   `https://loki.jacobmaynard.dev/otlp/v1/logs`, header `Authorization: Basic <see .env>`
 - Worker configs reference the destination by name in `observability.logs.destinations`
-  (see `packages/web/wrangler.jsonc` and `packages/stripe-purchases/wrangler.jsonc`).
+  (see `packages/web/wrangler.jsonc`).
   Only the `production` envs export; staging logs stay in Cloudflare Workers Logs so the
   Grafana views are production-only.
 - Retention is unlimited. `limits_config.retention_period` is `0s`, which Loki reads as

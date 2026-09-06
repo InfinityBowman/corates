@@ -60,10 +60,9 @@ This is a pnpm monorepo with the following packages:
 
 ### Stripe Local Development
 
-For local Stripe webhook testing, the project includes a `@corates/stripe-dev` package that runs two Stripe CLI listeners automatically when you run `turbo dev`:
+For local Stripe webhook testing, the project includes a `@corates/stripe-dev` package that runs a Stripe CLI listener automatically when you run `turbo dev`:
 
 - **Subscription webhooks** (Better Auth): `http://localhost:8787/api/auth/stripe/webhook`
-- **Purchase webhooks** (one-time): `http://localhost:8787/api/billing/purchases/webhook`
 
 **Quick Setup (Automated):**
 
@@ -77,10 +76,8 @@ For local Stripe webhook testing, the project includes a `@corates/stripe-dev` p
 3. Install Stripe CLI: https://stripe.com/docs/stripe-cli
 4. Authenticate: `stripe login`
 5. Run `turbo dev` - the Stripe listeners will start automatically
-6. Copy the two `whsec_...` signing secrets printed by each listener
-7. Add them to `packages/workers/.env`:
-   - `STRIPE_WEBHOOK_SECRET_AUTH=whsec_...` (from the auth listener)
-   - `STRIPE_WEBHOOK_SECRET_PURCHASES=whsec_...` (from the purchases listener)
+6. Copy the `whsec_...` signing secret printed by the listener
+7. Add it to `packages/workers/.env` as `STRIPE_WEBHOOK_SECRET_AUTH=whsec_...`
 
 **Manual Setup (Alternative):**
 
@@ -89,12 +86,11 @@ If you prefer to set up manually:
 1. Install Stripe CLI: https://stripe.com/docs/stripe-cli
 2. Authenticate: `stripe login`
 3. Run `turbo dev` - the Stripe listeners will start automatically
-4. Copy the two `whsec_...` signing secrets printed by each listener
+4. Copy the `whsec_...` signing secret printed by the listener
 5. Create products and prices in Stripe Dashboard (Test mode)
 6. Add all configuration to `packages/workers/.env`:
    - `STRIPE_SECRET_KEY=sk_test_...`
-   - `STRIPE_WEBHOOK_SECRET_AUTH=whsec_...` (from the auth listener)
-   - `STRIPE_WEBHOOK_SECRET_PURCHASES=whsec_...` (from the purchases listener)
+   - `STRIPE_WEBHOOK_SECRET_AUTH=whsec_...` (from the listener)
    - `STRIPE_PRICE_ID_STARTER_TEAM_MONTHLY=price_...`
    - `STRIPE_PRICE_ID_STARTER_TEAM_YEARLY=price_...`
    - `STRIPE_PRICE_ID_TEAM_MONTHLY=price_...`
