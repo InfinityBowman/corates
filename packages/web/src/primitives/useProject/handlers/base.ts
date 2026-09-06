@@ -3,7 +3,7 @@
  */
 
 import * as Y from 'yjs';
-import { applyYTextDiff } from '@/hooks/useYText';
+import { applyYTextDiff } from '@/lib/yTextDiff';
 
 export type TextGetterFn = (
   studyId: string,

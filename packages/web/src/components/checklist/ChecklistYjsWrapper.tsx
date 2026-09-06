@@ -23,7 +23,7 @@ import type { PdfUploadResponse } from '@/api/pdf-api';
 import { getCachedPdf, cachePdf } from '@/primitives/pdfCache.js';
 import { showToast } from '@/lib/toast';
 import { clientLogger } from '@/lib/clientLogger';
-import { parseError } from '@/lib/error-utils';
+import { normalizeError } from '@corates/shared';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -145,7 +145,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
           projectId,
           studyId,
           fileName,
-          code: parseError(err).code,
+          code: normalizeError(err).code,
         });
       })
       .finally(() => setPdfLoading(false));
@@ -200,7 +200,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
           projectId,
           studyId,
           fileName,
-          code: parseError(err).code,
+          code: normalizeError(err).code,
         });
         if (uploadResult?.fileName) {
           deletePdf(orgId, projectId, studyId, uploadResult.fileName).catch((e: unknown) =>

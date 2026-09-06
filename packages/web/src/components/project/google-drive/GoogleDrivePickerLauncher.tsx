@@ -5,11 +5,8 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import {
-  getGoogleDriveStatus,
-  getGoogleDrivePickerToken,
-  connectGoogleAccount,
-} from '@/api/google-drive';
+import { connectGoogleAccount } from '@/api/google-drive';
+import { getDriveStatus, getDrivePickerToken } from '@/server/functions/google-drive.functions';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -17,8 +14,7 @@ import { GOOGLE_PICKER_API_KEY, GOOGLE_PICKER_APP_ID } from '@/config/google';
 import { pickGooglePdfFiles } from '@/lib/googlePicker.js';
 import { buildRestoreCallbackUrl } from '@/lib/formStatePersistence.js';
 import { clientLogger } from '@/lib/clientLogger';
-import { parseError } from '@/lib/error-utils';
-import { AUTH_ERRORS } from '@corates/shared';
+import { AUTH_ERRORS, normalizeError } from '@corates/shared';
 
 interface GoogleDrivePickerLauncherProps {
   active?: boolean;
@@ -58,7 +54,7 @@ export function GoogleDrivePickerLauncher({
     setError(null);
     setLoading(true);
     try {
-      const status = await getGoogleDriveStatus();
+      const status = await getDriveStatus();
       setConnected(status.connected);
     } catch (err) {
       const { handleError } = await import('@/lib/error-utils.js');
@@ -115,7 +111,7 @@ export function GoogleDrivePickerLauncher({
 
       setError(null);
       try {
-        const result = await getGoogleDrivePickerToken();
+        const result = await getDrivePickerToken();
         if (!result?.accessToken) {
           setConnected(false);
           setError('Your Google connection expired. Reconnect your Google account to continue.');
@@ -130,7 +126,7 @@ export function GoogleDrivePickerLauncher({
       } catch (err) {
         // Expired or revoked Google grant: the stored connection is dead, so
         // show the connect card again instead of a generic failure
-        if (parseError(err).code === AUTH_ERRORS.PROVIDER_NOT_CONNECTED.code) {
+        if (normalizeError(err).code === AUTH_ERRORS.PROVIDER_NOT_CONNECTED.code) {
           setConnected(false);
           setError('Your Google connection expired. Reconnect your Google account to continue.');
           return null;
@@ -154,7 +150,7 @@ export function GoogleDrivePickerLauncher({
       await connect();
     } catch (err: unknown) {
       console.warn('Google Drive connect failed:', err);
-      clientLogger.warn('client.drive.connect_failed', { code: parseError(err).code });
+      clientLogger.warn('client.drive.connect_failed', { code: normalizeError(err).code });
     }
   }, [connect]);
 
@@ -170,7 +166,7 @@ export function GoogleDrivePickerLauncher({
       await onPick?.(picked, studyIdRef.current);
     } catch (err: unknown) {
       console.warn('Google Drive picker failed:', err);
-      clientLogger.warn('client.drive.picker_failed', { code: parseError(err).code });
+      clientLogger.warn('client.drive.picker_failed', { code: normalizeError(err).code });
     }
   }, [disabled, busy, onBeforeOpenPicker, openPicker, multiselect, onPick]);
 

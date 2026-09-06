@@ -1,5 +1,5 @@
 import { useMemo, useId } from 'react';
-import { SECTION_C } from './checklist-map';
+import { SECTION_C } from '@corates/shared/checklists/robins-i';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
 import { useWorkspaceProjectId, useAnswerValue, useAnswerWriters } from '@/project/workspace-data';
 

@@ -7,7 +7,7 @@ import { cachePdf, removeCachedPdf, getCachedPdf } from '@/primitives/pdfCache.j
 import { bestEffort } from '@/lib/errorLogger.js';
 import { captureException } from '@/config/sentry';
 import { clientLogger } from '@/lib/clientLogger';
-import { parseError } from '@/lib/error-utils';
+import { normalizeError } from '@corates/shared';
 import { extractPdfDoi, extractPdfTitle } from '@/lib/pdfUtils.js';
 import { fetchFromDOI } from '@/lib/referenceLookup.js';
 import type { PdfCitationMetadata, PdfRow, PdfTag } from '@corates/shared/sync';
@@ -107,7 +107,7 @@ export const pdfActions = {
         projectId,
         studyId,
         fileName: pdf.fileName,
-        code: parseError(err).code,
+        code: normalizeError(err).code,
       });
       captureException(err, {
         component: 'pdfActions',
@@ -219,7 +219,7 @@ export const pdfActions = {
         studyId,
         fileName: file.name,
         size: file.size,
-        code: parseError(err).code,
+        code: normalizeError(err).code,
       });
       captureException(err, {
         component: 'pdfActions',

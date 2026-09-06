@@ -5,7 +5,11 @@
  */
 
 import { useMemo } from 'react';
-import { ROB_JUDGEMENTS, BIAS_DIRECTIONS, DOMAIN1_DIRECTIONS } from './checklist-map';
+import {
+  ROB_JUDGEMENTS,
+  BIAS_DIRECTIONS,
+  DOMAIN1_DIRECTIONS,
+} from '@corates/shared/checklists/robins-i';
 
 interface DomainJudgementProps {
   domainId: string;

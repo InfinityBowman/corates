@@ -51,7 +51,7 @@ interface OnboardingUser {
 
 const CODE_IDENTIFIER_PREFIX = 'onboarding-email-otp-';
 
-export function onboardingCodeIdentifier(email: string): string {
+function onboardingCodeIdentifier(email: string): string {
   return `${CODE_IDENTIFIER_PREFIX}${email}`;
 }
 

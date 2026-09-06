@@ -56,7 +56,7 @@ export interface LocalChecklistRow {
  *
  * Leaves the source rows in place for one release as rollback insurance.
  */
-export function migrateLocalChecklistsToYDoc(ydoc: Y.Doc): Promise<void> {
+function migrateLocalChecklistsToYDoc(ydoc: Y.Doc): Promise<void> {
   const meta = ydoc.getMap('meta');
   if (meta.get(MIGRATION_FLAG)) return Promise.resolve();
 

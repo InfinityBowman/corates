@@ -6,7 +6,7 @@ import { createDomainError, DomainErrorException, AUTH_ERRORS } from '@corates/s
 import type { OrgId, UserId } from '@corates/shared/ids';
 import type { Session } from '@/server/middleware/auth';
 
-export interface OrgContext {
+interface OrgContext {
   userId: UserId;
   userEmail: string;
   orgId: OrgId;

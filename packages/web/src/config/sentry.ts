@@ -1,5 +1,4 @@
 import * as Sentry from '@sentry/react';
-import type { SeverityLevel } from '@sentry/react';
 import type { Router } from '@tanstack/react-router';
 
 const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN || '';
@@ -54,23 +53,6 @@ export function captureException(error: unknown, context: CaptureContext = {}): 
     tags: { component: context.component, action: context.action },
     extra: context,
   });
-}
-
-export function captureMessage(
-  message: string,
-  level: SeverityLevel = 'info',
-  context: CaptureContext = {},
-): void {
-  if (!SENTRY_DSN) return;
-  Sentry.captureMessage(message, {
-    level,
-    tags: { component: context.component, action: context.action },
-    extra: context,
-  });
-}
-
-export function isSentryEnabled(): boolean {
-  return !!SENTRY_DSN;
 }
 
 export function getSentryReplayId(): string | undefined {

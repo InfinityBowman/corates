@@ -8,7 +8,6 @@ import {
   getAdminOrgBilling,
   reconcileAdminOrgBilling,
   createAdminGrant,
-  updateAdminGrant,
   revokeAdminGrant,
   grantAdminTrial,
   grantAdminSingleProject,
@@ -72,21 +71,6 @@ export const createGrantAction = createServerFn({ method: 'POST' })
   .handler(async ({ data, context: { session, db } }) => {
     const { orgId, ...grantData } = data;
     return createAdminGrant(session, db, orgId as OrgId, grantData);
-  });
-
-export const updateGrantAction = createServerFn({ method: 'POST' })
-  .middleware([authMiddleware])
-  .validator(
-    z.object({
-      orgId: z.string(),
-      grantId: z.string(),
-      expiresAt: z.coerce.date().optional(),
-      revokedAt: z.coerce.date().optional().nullable(),
-    }),
-  )
-  .handler(async ({ data, context: { session, db } }) => {
-    const { orgId, grantId, ...updateData } = data;
-    return updateAdminGrant(session, db, orgId as OrgId, grantId as OrgAccessGrantId, updateData);
   });
 
 export const revokeGrantAction = createServerFn({ method: 'POST' })

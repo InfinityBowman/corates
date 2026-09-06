@@ -5,7 +5,6 @@ import {
   fetchUsage,
   fetchSubscription,
   fetchMembers,
-  validateCoupon,
   fetchPlanValidation,
   createCheckout,
   fetchInvoices,
@@ -26,11 +25,6 @@ export const getMembers = createServerFn({ method: 'GET' })
   .handler(async ({ context: { db, session, request } }) =>
     fetchMembers(db, session, request.headers),
   );
-
-export const checkCoupon = createServerFn({ method: 'POST' })
-  .middleware([authMiddleware])
-  .validator(z.object({ code: z.string() }))
-  .handler(async ({ data }) => validateCoupon(data.code.trim()));
 
 export const checkPlanChange = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])

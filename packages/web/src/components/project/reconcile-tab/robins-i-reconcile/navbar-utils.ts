@@ -7,7 +7,7 @@ import {
   getDomainQuestions,
   getActiveDomainKeys,
   ROBINS_I_CHECKLIST,
-} from '@/components/checklist/ROBINSIChecklist/checklist-map';
+} from '@corates/shared/checklists/robins-i';
 import {
   getReachableQuestions,
   getSkippedQuestions,

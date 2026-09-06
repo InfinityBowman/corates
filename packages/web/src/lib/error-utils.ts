@@ -238,10 +238,6 @@ export async function handleError(
   return normalizedError;
 }
 
-export function parseError(error: unknown): AppError {
-  return normalizeError(error);
-}
-
 export function isErrorCode(error: AppError | null | undefined, code: string): boolean {
   return error?.code === code;
 }

@@ -19,8 +19,3 @@ export const TIME_DURATIONS = {
   ONE_HOUR_MS: 60 * 60 * 1000,
   ONE_HOUR_SEC: 60 * 60,
 } as const;
-
-export const GRANT_CONFIG = {
-  DURATION_MONTHS: 6,
-  TRIAL_DAYS: 14,
-} as const;

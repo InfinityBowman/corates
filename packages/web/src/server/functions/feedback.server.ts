@@ -10,7 +10,7 @@ import type { Session } from '@/server/middleware/auth';
 
 const MAX_SUBMISSIONS_PER_HOUR = 5;
 
-export interface FeedbackContext {
+interface FeedbackContext {
   route?: string;
   userAgent?: string;
   viewport?: string;

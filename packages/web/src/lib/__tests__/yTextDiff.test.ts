@@ -8,7 +8,7 @@
 
 import { describe, it, expect } from 'vitest';
 import * as Y from 'yjs';
-import { applyYTextDiff } from '@/hooks/useYText';
+import { applyYTextDiff } from '@/lib/yTextDiff';
 
 /** Exchange all pending updates between two docs so they converge. */
 function syncDocs(docA: Y.Doc, docB: Y.Doc) {

@@ -5,7 +5,7 @@
  */
 
 import type { AMSTAR2Checklist, AMSTAR2Question } from '../types.js';
-import { AMSTAR_CHECKLIST, AMSTAR2_QUESTION_KEYS } from './schema.js';
+import { AMSTAR2_QUESTION_KEYS } from './schema.js';
 import { getFinalAnswer, answersMatch } from './answers.js';
 
 export interface QuestionComparison {
@@ -333,20 +333,4 @@ export function getReconciliationSummary(comparison: ComparisonResult): {
     needsReconciliation: disagreements.length > 0,
     disagreementsByQuestion: disagreements.map(d => d.key),
   };
-}
-
-/**
- * Get readable question text from question key.
- */
-export function getQuestionText(questionKey: string): string {
-  return AMSTAR_CHECKLIST[questionKey]?.text || questionKey;
-}
-
-/**
- * Get the question definition from checklist map.
- */
-export function getQuestionDef(
-  questionKey: string,
-): (typeof AMSTAR_CHECKLIST)[keyof typeof AMSTAR_CHECKLIST] | undefined {
-  return AMSTAR_CHECKLIST[questionKey];
 }

@@ -5,10 +5,6 @@ import {
   listAdminDatabaseTables,
   getAdminTableSchema,
   getAdminTableRows,
-  getAdminPdfsByOrg,
-  getAdminPdfsByProject,
-  getAdminPdfsByUser,
-  getAdminRecentUploads,
 } from './admin-database.server';
 
 export const listAdminDatabaseTablesAction = createServerFn({ method: 'GET' })
@@ -37,20 +33,3 @@ export const getAdminTableRowsAction = createServerFn({ method: 'GET' })
     const { tableName, ...params } = data;
     return getAdminTableRows(session, db, tableName, params);
   });
-
-export const getAdminPdfsByOrgAction = createServerFn({ method: 'GET' })
-  .middleware([authMiddleware])
-  .handler(async ({ context: { session, db } }) => getAdminPdfsByOrg(session, db));
-
-export const getAdminPdfsByProjectAction = createServerFn({ method: 'GET' })
-  .middleware([authMiddleware])
-  .handler(async ({ context: { session, db } }) => getAdminPdfsByProject(session, db));
-
-export const getAdminPdfsByUserAction = createServerFn({ method: 'GET' })
-  .middleware([authMiddleware])
-  .handler(async ({ context: { session, db } }) => getAdminPdfsByUser(session, db));
-
-export const getAdminRecentUploadsAction = createServerFn({ method: 'GET' })
-  .middleware([authMiddleware])
-  .validator(z.object({ limit: z.number().optional() }))
-  .handler(async ({ data, context: { session, db } }) => getAdminRecentUploads(session, db, data));

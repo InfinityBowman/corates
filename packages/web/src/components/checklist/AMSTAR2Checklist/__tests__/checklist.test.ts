@@ -15,7 +15,11 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import type { AMSTAR2Checklist, AMSTAR2Question } from '@corates/shared';
-import { createChecklist, scoreChecklist, getAnswers } from '../checklist.js';
+import {
+  createAMSTAR2Checklist as createChecklist,
+  scoreAMSTAR2Checklist as scoreChecklist,
+  getAnswers,
+} from '@corates/shared/checklists/amstar2';
 
 // AMSTAR2Checklist has a fixed keyset (q1..q16 plus q9a/b/q11a/b); the test
 // loops over question keys as strings, so treat the checklist as a keyed

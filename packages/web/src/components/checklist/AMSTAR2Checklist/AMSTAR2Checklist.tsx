@@ -1,5 +1,5 @@
 import { InfoIcon } from 'lucide-react';
-import { AMSTAR_CHECKLIST } from './checklist-map';
+import { AMSTAR_CHECKLIST } from '@corates/shared/checklists/amstar2';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';

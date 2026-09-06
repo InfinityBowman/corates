@@ -7,7 +7,7 @@ import { cachePdf, clearStudyCache } from '@/primitives/pdfCache.js';
 import { bestEffort } from '@/lib/errorLogger.js';
 import { captureException } from '@/config/sentry';
 import { showToast } from '@/lib/toast';
-import { importFromGoogleDrive } from '@/api/google-drive';
+import { importFromDrive } from '@/server/functions/google-drive.functions';
 import { extractPdfDoi, extractPdfTitle } from '@/lib/pdfUtils.js';
 import { fetchFromDOI } from '@/lib/referenceLookup.js';
 import type { StudyMetadata } from '@corates/shared/sync';
@@ -135,11 +135,9 @@ async function handleGoogleDrivePdf(
   if (!study.googleDriveFileId) return false;
 
   try {
-    const result = await importFromGoogleDrive(
-      study.googleDriveFileId as string,
-      projectId,
-      studyId,
-    );
+    const result = await importFromDrive({
+      data: { fileId: study.googleDriveFileId as string, projectId, studyId },
+    });
     const importedFile = result.file;
     if (!importedFile?.fileName) return false;
 

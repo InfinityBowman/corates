@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { ROBINS_I_CHECKLIST, getDomainQuestions } from './checklist-map';
+import { ROBINS_I_CHECKLIST, getDomainQuestions } from '@corates/shared/checklists/robins-i';
 import { SignallingQuestion } from './SignallingQuestion';
 import { DomainJudgement, JudgementBadge } from './DomainJudgement';
 import {

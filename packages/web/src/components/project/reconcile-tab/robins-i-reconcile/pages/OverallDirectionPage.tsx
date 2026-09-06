@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { CheckIcon, XIcon, InfoIcon } from 'lucide-react';
-import { scoreAllDomains } from '@/components/checklist/ROBINSIChecklist/scoring/robins-scoring.js';
+import { scoreAllDomains } from '@corates/shared/checklists/robins-i';
 import { JudgementBadge } from '@/components/checklist/ROBINSIChecklist/DomainJudgement';
 import { DirectionPanel } from '../panels/DirectionPanel';
 

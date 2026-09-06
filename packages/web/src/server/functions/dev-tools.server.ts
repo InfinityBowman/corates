@@ -42,7 +42,7 @@ async function assertProjectDevAccess(
 }
 
 /** JSON-shaped view of the engine snapshot, for the server-fn serializer. */
-export type WorkspaceSnapshot = Record<string, JsonValue>;
+type WorkspaceSnapshot = Record<string, JsonValue>;
 
 export async function devExportState(
   session: Session,

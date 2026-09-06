@@ -4,7 +4,7 @@ import {
   AIM_OPTIONS,
   DEVIATION_OPTIONS,
   INFORMATION_SOURCES,
-} from './checklist-map';
+} from '@corates/shared/checklists/rob2';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
 import { useWorkspaceProjectId, useAnswerValue, useAnswerWriters } from '@/project/workspace-data';
 

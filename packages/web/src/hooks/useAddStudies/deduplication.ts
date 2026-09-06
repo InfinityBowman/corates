@@ -20,7 +20,7 @@ export interface StudyMetadata {
   importSource?: string | null;
 }
 
-export interface FileInfo {
+interface FileInfo {
   name: string;
   type?: string;
   size?: number;
@@ -93,7 +93,7 @@ export interface DriveFile {
   name: string;
 }
 
-export interface StudySource {
+interface StudySource {
   type: 'pdf' | 'ref' | 'lookup' | 'drive';
   sourceId: string;
 }

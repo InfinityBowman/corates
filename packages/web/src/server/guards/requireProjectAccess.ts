@@ -12,7 +12,7 @@ import {
 import type { OrgId, ProjectId, UserId } from '@corates/shared/ids';
 import type { Session } from '@/server/middleware/auth';
 
-export interface ProjectContext {
+interface ProjectContext {
   userId: UserId;
   userEmail: string;
   orgId: OrgId;
