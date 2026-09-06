@@ -59,7 +59,7 @@ concurrency:
 
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     permissions:
       contents: read
     steps:
@@ -77,7 +77,7 @@ jobs:
         run: pnpm lint
 
   typecheck:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     permissions:
       contents: read
     steps:
@@ -94,7 +94,7 @@ jobs:
         run: pnpm typecheck
 
   test-unit:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     permissions:
       contents: read
     steps:
@@ -111,7 +111,7 @@ jobs:
         run: pnpm --filter web test:unit
 
   test-server:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     permissions:
       contents: read
     steps:
@@ -129,7 +129,7 @@ jobs:
   #   - commit message contains `[skip e2e]` (direct pushes / squash title)
   resolve-skip-e2e:
     if: github.event_name == 'push'
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     permissions:
       pull-requests: read
     outputs:
@@ -164,7 +164,7 @@ jobs:
   # Builds on PRs as a check; on push also deploys the build to staging. Staging
   # deliberately does not wait on the check jobs; deploy-production does.
   build-web:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     permissions:
       contents: read
     outputs:
@@ -244,7 +244,7 @@ jobs:
     if: |
       needs.build-web.result == 'success' &&
       needs.resolve-skip-e2e.outputs.skip_e2e != 'true'
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     container:
       image: mcr.microsoft.com/playwright:v${{ needs.build-web.outputs.playwright-version }}-noble
     permissions:
@@ -302,7 +302,7 @@ jobs:
       needs.test-server.result == 'success' &&
       needs.build-web.result == 'success' &&
       (needs.e2e.result == 'success' || needs.resolve-skip-e2e.outputs.skip_e2e == 'true')
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     permissions:
       contents: read
 
