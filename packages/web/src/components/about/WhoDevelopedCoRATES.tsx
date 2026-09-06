@@ -20,10 +20,11 @@ export default function WhoDevelopedCoRATES() {
           <div className='mb-6 flex flex-col items-center text-center'>
             <img
               src='/brandy.jpg'
-              alt='Brandy Maynard'
+              alt='Brandy Maynard, research synthesis expert and co-creator of CoRATES'
               className='mb-4 size-28 rounded-full object-cover ring-4 ring-blue-50'
               width={1990}
               height={2984}
+              loading='lazy'
             />
             <h3 className='text-xl font-semibold text-gray-900'>Brandy Maynard</h3>
             <p className='mt-1 text-sm font-medium text-blue-600'>Research Synthesis Expert</p>
@@ -75,10 +76,11 @@ export default function WhoDevelopedCoRATES() {
           <div className='mb-6 flex flex-col items-center text-center'>
             <img
               src='/jacob.jpeg'
-              alt='Jacob Maynard'
+              alt='Jacob Maynard, software engineer and technical lead for CoRATES'
               className='mb-4 size-28 rounded-full object-cover ring-4 ring-blue-50'
               width={460}
               height={460}
+              loading='lazy'
             />
             <h3 className='text-xl font-semibold text-gray-900'>Jacob Maynard</h3>
             <p className='mt-1 text-sm font-medium text-blue-600'>

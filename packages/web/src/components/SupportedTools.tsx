@@ -14,10 +14,11 @@ export default function SupportedTools() {
     <section className='mx-auto max-w-6xl px-6 py-16'>
       <div className='mb-10 text-center'>
         <h2 className='mb-4 text-2xl font-bold text-gray-900 md:text-3xl'>
-          Supported Appraisal tools
+          The instruments you already use
         </h2>
         <p className='mx-auto max-w-xl text-gray-600'>
-          Get started with AMSTAR 2, ROBINS-I, or RoB 2 today.
+          AMSTAR 2, ROBINS-I, and RoB 2 are built in as guided checklists, with each instrument's
+          scoring rules applied for you.
         </p>
       </div>
 

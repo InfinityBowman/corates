@@ -14,25 +14,27 @@ export default function HowItWorks() {
       number: 1,
       icon: <FolderPlusIcon className='size-6' />,
       title: 'Create a Project',
-      description: 'Set up a review project and invite your team members to collaborate.',
+      description: 'Name your review, invite your team, and give everyone the same workspace.',
     },
     {
       number: 2,
       icon: <FilePlusIcon className='size-6' />,
       title: 'Add Studies',
-      description: 'Upload PDFs and easily assign reviewers.',
+      description:
+        'Bring in PDFs by upload, DOI, Google Drive, or reference import, then assign reviewers.',
     },
     {
       number: 3,
       icon: <PencilIcon className='size-6' />,
       title: 'Appraise Independently',
-      description: 'Complete assessments independently with guided checklists and PDF annotations.',
+      description: 'Each reviewer works the guided appraisal with the study PDF open beside it.',
     },
     {
       number: 4,
       icon: <UsersIcon className='size-6' />,
-      title: 'Resolve Collaboratively',
-      description: 'Resolve discrepancies together with automatic scoring and summaries.',
+      title: 'Resolve Together',
+      description:
+        'Compare ratings side by side, settle disagreements, and watch scores and figures update.',
     },
   ];
 
@@ -40,9 +42,11 @@ export default function HowItWorks() {
     <section className='mx-auto max-w-6xl px-6 py-16 md:py-24'>
       <div className='mb-12 text-center'>
         <h2 className='mb-4 text-3xl font-bold text-gray-900 md:text-4xl'>
-          Simple workflow, powerful results
+          Four steps from PDF to finished appraisal
         </h2>
-        <p className='text-lg text-gray-600'>Get started in minutes, not hours.</p>
+        <p className='text-lg text-gray-600'>
+          The process your team already follows, with the file juggling taken out.
+        </p>
       </div>
 
       <div className='grid gap-8 md:grid-cols-4'>

@@ -13,7 +13,7 @@ export default function WhoIsCoRATESFor() {
       icon: <SchoolIcon className='size-6' />,
       title: 'Students learning to appraise research',
       description:
-        'Learn study appraisal by using validated tools in a guided interface, with free single-study assessments for easy practice.',
+        'Learn study appraisal by using validated tools in a guided interface, with free single-study appraisals for easy practice.',
       color: 'emerald',
     },
     {
