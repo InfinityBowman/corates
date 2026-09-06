@@ -12,8 +12,6 @@ export const LOGIN_METHODS = {
   EMAIL_CODE: 'email_code',
 } as const;
 
-export type LoginMethod = (typeof LOGIN_METHODS)[keyof typeof LOGIN_METHODS];
-
 export const LOGIN_METHOD_LABELS: Record<string, string> = {
   [LOGIN_METHODS.EMAIL]: 'email and password',
   [LOGIN_METHODS.GOOGLE]: 'Google',

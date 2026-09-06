@@ -16,7 +16,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import type { YjsFieldHandle, YjsFields } from '@cf-sync/yjs/client';
 import { answerRowId, textAnswerKeys, type ChecklistType } from '@corates/shared/sync';
-import { applyYTextDiff } from '@/hooks/useYText';
+import { applyYTextDiff } from '@/lib/yTextDiff';
 import { useAnswerValue, useAnswerWriters } from '@/project/workspace-data';
 
 /**
@@ -228,7 +228,7 @@ export function useReconciledTextMap(
 }
 
 /** The finalize-time field read window; beyond this we assume we are offline. */
-export const FINALIZE_SYNC_TIMEOUT_MS = 8_000;
+const FINALIZE_SYNC_TIMEOUT_MS = 8_000;
 
 /**
  * Serialize every text field's current content into its `answers` row —

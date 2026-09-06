@@ -5,9 +5,6 @@
 
 import { PDF_LIMITS, isValidPdfFilename, isPdfSignature, formatFileSize } from '@corates/shared';
 
-// Re-export for convenience
-export { PDF_LIMITS, formatFileSize };
-
 interface ValidationSuccess {
   valid: true;
 }

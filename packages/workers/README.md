@@ -6,12 +6,12 @@
 
 This package provides:
 
-- **Durable Objects** (`ProjectDoc`, `UserSession`) that the main app Worker registers and routes to.
+- **Durable Objects** (`UserSession`, `WorkspaceDO`) that the main app Worker registers and routes to.
 - **Authentication** configuration and session helpers for Better Auth (multi-provider, admin, organization, Stripe plugins).
 - **Authorization policies** (`requireOrgOwner`, project/billing policies) used by API route handlers.
 - **Billing resolvers** and plan-change validation used by billing routes and webhook handlers.
 - **Commands** -- domain-level operations (invitations, projects, members, billing) that compose DB work + notifications + policy checks.
-- **Lib helpers** -- Stripe client, SSRF protection, media file handling, sync-with-retry, Yjs project sync helpers.
+- **Lib helpers** -- SSRF protection, media file handling, quota transactions, notifications, logging.
 - **Queue handler** -- Cloudflare Queue consumer for async email delivery via Postmark.
 
 The actual HTTP routes live in `packages/web/src/routes/api/` (TanStack Start).
@@ -20,29 +20,28 @@ The actual HTTP routes live in `packages/web/src/routes/api/` (TanStack Start).
 
 The package exposes subpath exports (see `package.json`):
 
-| Import                                  | What it provides                                                   |
-| --------------------------------------- | ------------------------------------------------------------------ |
-| `@corates/workers/auth`                 | `getSession(request, env)` session helper                          |
-| `@corates/workers/auth-config`          | `createAuth(env)` -- Better Auth instance                          |
-| `@corates/workers/auth-admin`           | Admin plugin helpers                                               |
-| `@corates/workers/durable-objects`      | `ProjectDoc`, `UserSession` classes (registered by `packages/web`) |
-| `@corates/workers/policies`             | Authorization policies                                             |
-| `@corates/workers/billing-resolver`     | `resolveOrgAccess`, `validatePlanChange`                           |
-| `@corates/workers/commands/invitations` | Invitation create/accept/resend commands                           |
-| `@corates/workers/commands/projects`    | Project create/update commands                                     |
-| `@corates/workers/commands/members`     | Member add/remove commands                                         |
-| `@corates/workers/commands/billing`     | Billing-related commands (grant handling, etc.)                    |
-| `@corates/workers/stripe`               | Stripe client factory and helpers                                  |
-| `@corates/workers/queue`                | Queue consumer for email delivery                                  |
-| `@corates/workers/project-sync`         | Yjs project sync utilities                                         |
-| `@corates/workers/project-doc-id`       | Project DO ID derivation                                           |
-| `@corates/workers/notify`               | Notification dispatch (to `UserSession` DOs)                       |
-| `@corates/workers/media-files`          | R2 media file helpers                                              |
-| `@corates/workers/ssrf-protection`      | SSRF protection for outbound fetches                               |
-| `@corates/workers/quota-transaction`    | Transactional quota checks                                         |
-| `@corates/workers/constants`            | Shared backend constants                                           |
-| `@corates/workers/email-templates`      | Email template rendering                                           |
-| `@corates/workers/config/origins`       | Allowed origins config                                             |
+| Import                                  | What it provides                                   |
+| --------------------------------------- | -------------------------------------------------- |
+| `@corates/workers/auth`                 | `getSession(request, env)` session helper          |
+| `@corates/workers/auth-config`          | `createAuth(env)` -- Better Auth instance          |
+| `@corates/workers/auth-admin`           | Admin plugin helpers                               |
+| `@corates/workers/auth-events`          | Better Auth lifecycle hooks                        |
+| `@corates/workers/durable-objects`      | `UserSession` class (registered by `packages/web`) |
+| `@corates/workers/sync`                 | `WorkspaceDO` and the sync-plane admin seams       |
+| `@corates/workers/policies`             | Authorization policies                             |
+| `@corates/workers/policies/projects`    | Project-scoped policies                            |
+| `@corates/workers/billing-resolver`     | `resolveOrgAccess`, `validatePlanChange`           |
+| `@corates/workers/commands/invitations` | Invitation create/accept/resend commands           |
+| `@corates/workers/commands/projects`    | Project create/update commands                     |
+| `@corates/workers/commands/members`     | Member add/remove commands                         |
+| `@corates/workers/commands/billing`     | Billing-related commands (grant handling, etc.)    |
+| `@corates/workers/queue`                | Queue consumer for email delivery                  |
+| `@corates/workers/notify`               | Notification dispatch (to `UserSession` DOs)       |
+| `@corates/workers/media-files`          | R2 media file helpers                              |
+| `@corates/workers/ssrf-protection`      | SSRF protection for outbound fetches               |
+| `@corates/workers/constants`            | Shared backend constants                           |
+| `@corates/workers/email-templates`      | Email template rendering                           |
+| `@corates/workers/logger`               | Structured logger and request scoping              |
 
 ## Development
 
@@ -78,7 +77,7 @@ Bindings used across the codebase:
 
 - D1: `corates-db` (local), `corates-db-prod` (production)
 - R2: `corates-storage` (PDFs and media)
-- Durable Objects: `PROJECT_DOC`, `USER_SESSION`
+- Durable Objects: `WORKSPACE`, `USER_SESSION`
 
 ## Testing
 
@@ -101,7 +100,7 @@ Organization
       ├─ Studies
       │   ├─ Checklists (AMSTAR2, ROBINS-I, etc.)
       │   └─ PDFs (stored in R2)
-      └─ Yjs Document (real-time sync via ProjectDoc Durable Object)
+      └─ Workspace (real-time sync via the WorkspaceDO Durable Object)
 ```
 
 ## Billing model
@@ -161,7 +160,7 @@ await requireOrgOwner(db, session.user.id, orgId);
 
 Extra caution required when modifying:
 
-- `src/durable-objects/ProjectDoc.ts` -- all real-time collaboration flows through here.
+- `src/sync/workspace.ts` -- all real-time collaboration flows through here.
 - `src/lib/billingResolver.ts` -- determines access for every org request.
 - `src/auth/config.ts` -- authentication configuration for the whole app.
 - `src/policies/` -- authorization decisions.

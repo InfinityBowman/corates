@@ -9,7 +9,7 @@ import {
 } from '@corates/shared';
 import type { OrgId } from '@corates/shared/ids';
 
-export interface WriteAccessResult {
+interface WriteAccessResult {
   ok: true;
   orgBilling: Awaited<ReturnType<typeof resolveOrgAccess>>;
 }

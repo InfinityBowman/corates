@@ -58,7 +58,7 @@ export interface SeedContext {
   id: (prefix: string) => string;
 }
 
-export function defaultSeedContext(): SeedContext {
+function defaultSeedContext(): SeedContext {
   return {
     now: Date.now(),
     id: prefix => `gen_${prefix}_${crypto.randomUUID().slice(0, 8)}`,

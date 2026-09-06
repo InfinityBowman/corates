@@ -25,7 +25,7 @@ interface OrgMembership {
 /**
  * Get user's membership for an organization
  */
-export async function getOrgMembership(
+async function getOrgMembership(
   db: Database,
   userId: string,
   orgId: string,

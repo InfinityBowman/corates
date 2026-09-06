@@ -1,6 +1,6 @@
 import { resolveNestedTextValue, textAnswerKeys, type ChecklistType } from '@corates/shared/sync';
 
-export function getAmstar2SchemaKey(dataKey: string): string {
+function getAmstar2SchemaKey(dataKey: string): string {
   if (dataKey === 'q9a' || dataKey === 'q9b') return 'q9';
   if (dataKey === 'q11a' || dataKey === 'q11b') return 'q11';
   return dataKey;

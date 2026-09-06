@@ -76,21 +76,5 @@ export async function authFetch<T>(
   return result.data;
 }
 
-export const {
-  signIn,
-  signUp,
-  signOut,
-  useSession,
-  getSession,
-  updateUser,
-  changePassword,
-  resetPassword,
-  requestPasswordReset,
-  verifyEmail,
-  admin,
-  organization,
-  listSessions,
-  revokeSession,
-  revokeOtherSessions,
-  revokeSessions,
-} = authClient;
+export const { useSession, listSessions, revokeSession, revokeOtherSessions, revokeSessions } =
+  authClient;

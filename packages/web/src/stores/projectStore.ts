@@ -52,7 +52,7 @@ export interface ChecklistEntry {
   consolidatedAnswers?: Record<string, string | null> | null;
 }
 
-export interface ReconciliationEntry {
+interface ReconciliationEntry {
   checklist1Id: string;
   checklist2Id: string;
   reconciledChecklistId: string | null;

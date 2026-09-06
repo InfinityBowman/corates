@@ -24,13 +24,13 @@ export interface ChartCategory {
 
 // lucide-react path data: plus, minus, x, the question mark from circle-help,
 // and the exclamation mark from circle-alert
-export const ICON_PLUS = ['M5 12h14', 'M12 5v14'];
-export const ICON_MINUS = ['M5 12h14'];
-export const ICON_X = ['M18 6 6 18', 'm6 6 12 12'];
-export const ICON_QUESTION = ['M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3', 'M12 17h.01'];
-export const ICON_EXCLAMATION = ['M12 8v4', 'M12 16h.01'];
+const ICON_PLUS = ['M5 12h14', 'M12 5v14'];
+const ICON_MINUS = ['M5 12h14'];
+const ICON_X = ['M18 6 6 18', 'm6 6 12 12'];
+const ICON_QUESTION = ['M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3', 'M12 17h.01'];
+const ICON_EXCLAMATION = ['M12 8v4', 'M12 16h.01'];
 
-export interface ChartColumn {
+interface ChartColumn {
   /** Key into a checklist's consolidatedAnswers record */
   id: string;
   /** Short label used for traffic light column headers */

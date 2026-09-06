@@ -5,7 +5,6 @@ import { runWithContext } from '@corates/workers/logger';
 import { throwDomainError, AUTH_ERRORS } from '@corates/shared';
 import { dbMiddleware } from './db';
 
-export type { AuthUser, AuthSession } from '@corates/workers/auth';
 export type Session = NonNullable<Awaited<ReturnType<typeof getSession>>>;
 
 export const authMiddleware = createMiddleware()

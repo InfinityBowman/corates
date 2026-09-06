@@ -46,30 +46,6 @@ export function getTodoChecklists(
 }
 
 /**
- * Gets checklists for the completed tab (finalized checklists)
- * @param study - The study object
- * @returns Array of checklists for completed tab
- */
-export function getCompletedChecklists(study: Study | null | undefined): StudyChecklist[] {
-  if (!study) return [];
-  const checklists = study.checklists || [];
-  return checklists.filter(c => c.status === CHECKLIST_STATUS.FINALIZED);
-}
-
-/**
- * Gets checklists in the reconciliation workflow (individual reviewer checklists that are completed)
- * @param study - The study object
- * @returns Array of checklists in reconciliation workflow
- */
-export function getReconciliationChecklists(study: Study | null | undefined): StudyChecklist[] {
-  if (!study) return [];
-  const checklists = study.checklists || [];
-  return checklists.filter(
-    c => !isReconciledChecklist(c) && c.status === CHECKLIST_STATUS.REVIEWER_COMPLETED,
-  );
-}
-
-/**
  * Determines if a study should appear in a specific tab
  * @param study - The study object
  * @param tab - The tab name ('todo', 'reconcile', 'completed')

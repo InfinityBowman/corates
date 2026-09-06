@@ -11,8 +11,6 @@ vi.mock('@/config/sentry', () => ({
   initSentryRouterTracing: vi.fn(),
   setSentryUser: vi.fn(),
   captureException: vi.fn(),
-  captureMessage: vi.fn(),
-  isSentryEnabled: vi.fn(() => false),
 }));
 
 // Mock window.matchMedia

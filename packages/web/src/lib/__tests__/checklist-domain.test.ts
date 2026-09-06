@@ -9,8 +9,6 @@ import { describe, it, expect } from 'vitest';
 import {
   isReconciledChecklist,
   getTodoChecklists,
-  getCompletedChecklists,
-  getReconciliationChecklists,
   shouldShowInTab,
   getStudiesForTab,
   getChecklistCount,
@@ -48,8 +46,6 @@ describe('checklist-domain', () => {
       expect(isReconciledChecklist(undefined)).toBe(false);
       expect(getTodoChecklists(null, 'user-1')).toEqual([]);
       expect(getTodoChecklists(createStudy(), null)).toEqual([]);
-      expect(getCompletedChecklists(null)).toEqual([]);
-      expect(getReconciliationChecklists(null)).toEqual([]);
       expect(getStudiesForTab(null, 'todo', 'user-1')).toEqual([]);
       expect(getStudiesForTab([], 'todo', 'user-1')).toEqual([]);
       expect(isDualReviewerStudy(null)).toBe(false);
@@ -116,63 +112,6 @@ describe('checklist-domain', () => {
         ],
       });
       const result = getTodoChecklists(study, userId);
-      expect(result).toHaveLength(0);
-    });
-  });
-
-  describe('getCompletedChecklists', () => {
-    it('returns checklists with FINALIZED status', () => {
-      const study = createStudy({
-        checklists: [
-          createChecklist({ id: 'cl-1', status: CHECKLIST_STATUS.FINALIZED }),
-          createChecklist({ id: 'cl-2', status: CHECKLIST_STATUS.REVIEWER_COMPLETED }),
-          createChecklist({ id: 'cl-3', status: CHECKLIST_STATUS.FINALIZED }),
-        ],
-      });
-      const result = getCompletedChecklists(study);
-      expect(result).toHaveLength(2);
-      expect(result.map(c => c.id)).toEqual(['cl-1', 'cl-3']);
-    });
-  });
-
-  describe('getReconciliationChecklists', () => {
-    it('returns individual checklists with REVIEWER_COMPLETED status', () => {
-      const study = createStudy({
-        checklists: [
-          createChecklist({
-            id: 'cl-1',
-            assignedTo: 'user-1',
-            status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
-          }),
-          createChecklist({
-            id: 'cl-2',
-            assignedTo: 'user-2',
-            status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
-          }),
-          createChecklist({
-            id: 'cl-3',
-            assignedTo: null, // Reconciled - should be excluded
-            status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
-          }),
-        ],
-      });
-      const result = getReconciliationChecklists(study);
-      expect(result).toHaveLength(2);
-      expect(result.map(c => c.id)).toEqual(['cl-1', 'cl-2']);
-    });
-
-    it('excludes pending and in-progress checklists', () => {
-      const study = createStudy({
-        checklists: [
-          createChecklist({ id: 'cl-1', assignedTo: 'user-1', status: CHECKLIST_STATUS.PENDING }),
-          createChecklist({
-            id: 'cl-2',
-            assignedTo: 'user-2',
-            status: CHECKLIST_STATUS.IN_PROGRESS,
-          }),
-        ],
-      });
-      const result = getReconciliationChecklists(study);
       expect(result).toHaveLength(0);
     });
   });

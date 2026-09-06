@@ -18,7 +18,7 @@ import { queryKeys } from '@/lib/queryKeys';
 import { getInvitations, updateProjectSetupStep } from '@/server/functions/org-projects.functions';
 import { useProjectContext } from '../ProjectContext';
 
-export type SetupStepKey = 'studies' | 'outcomes' | 'team' | 'assign';
+type SetupStepKey = 'studies' | 'outcomes' | 'team' | 'assign';
 
 export interface SetupStep {
   key: SetupStepKey;

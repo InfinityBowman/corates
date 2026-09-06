@@ -68,33 +68,4 @@ export const showToast = {
       toast.dismiss();
     }
   },
-  update: (
-    id: string | number,
-    options: {
-      title?: string;
-      description?: string;
-      type?: 'success' | 'error' | 'warning' | 'info';
-    },
-  ) => {
-    // Sonner merges options when updating an existing toast, so an explicit
-    // duration is required or a loading toast's Infinity duration would
-    // persist and the updated toast would never auto-dismiss.
-    const title = options.title ?? '';
-    const opts = {
-      id,
-      description: options.description,
-      duration: options.type === 'error' ? 5000 : 3000,
-    };
-    if (options.type === 'success') {
-      toast.success(title, opts);
-    } else if (options.type === 'error') {
-      toast.error(title, opts);
-    } else if (options.type === 'warning') {
-      toast.warning(title, opts);
-    } else if (options.type === 'info') {
-      toast.info(title, opts);
-    } else {
-      toast(title, opts);
-    }
-  },
 };
