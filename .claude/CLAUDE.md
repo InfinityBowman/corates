@@ -85,7 +85,7 @@ pnpm --filter workers test              # Backend tests only
 pnpm --filter web test:e2e      # e2e tests, ask user to make sure dev server is running first unless asked then assume server is running
 
 # Code Quality
-pnpm lint             # ESLint check
+pnpm lint             # oxlint check
 pnpm lint:fix         # Auto-fix lint issues
 pnpm format           # Prettier format
 pnpm typecheck        # TypeScript check

@@ -46,7 +46,7 @@
     "test": "pnpm db:generate:test && vitest run",
     "test:watch": "vitest",
     "db:generate:test": "node ./scripts/generate-test-sql.mjs",
-    "lint": "eslint .",
+    "lint": "oxlint",
     "typecheck": "tsc --noEmit",
     "localflare": "localflare"
   },
@@ -73,7 +73,7 @@
     "better-sqlite3": "^13.0.2",
     "dotenv": "^17.4.2",
     "localflare": "^0.5.0",
-    "typescript": "^5.9.3",
+    "typescript": "^7.0.2",
     "vitest": "^4.1.11",
     "wrangler": "^4.128.0"
   }

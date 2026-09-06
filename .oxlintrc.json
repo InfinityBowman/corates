@@ -1,0 +1,152 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "react"],
+  "jsPlugins": [
+    {
+      "name": "corates",
+      "specifier": "./eslint-rules/index.js"
+    }
+  ],
+  "env": {
+    "browser": true,
+    "node": true,
+    "es2024": true,
+    "worker": true
+  },
+  "rules": {
+    "no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_"
+      }
+    ],
+    "no-throw-literal": "error",
+    "react/rules-of-hooks": "off",
+    "react/exhaustive-deps": "off",
+    "react/set-state-in-effect": "off",
+    "react/preserve-manual-memoization": "off",
+    "react/refs": "off",
+    "react/purity": "off",
+    "no-unused-expressions": "off",
+    "no-unsafe-optional-chaining": "off",
+    "typescript/no-useless-empty-export": "off"
+  },
+  "overrides": [
+    {
+      "files": ["packages/workers/src/**/*.{js,ts}"],
+      "rules": {
+        "corates/corates-error-helpers": "warn",
+        "corates/enforce-delete-with-where": [
+          "error",
+          {
+            "drizzleObjectName": "db"
+          }
+        ],
+        "corates/enforce-update-with-where": [
+          "error",
+          {
+            "drizzleObjectName": "db"
+          }
+        ],
+        "no-console": [
+          "error",
+          {
+            "allow": ["log"]
+          }
+        ],
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "@sentry/cloudflare",
+                "message": "Use @corates/workers/logger (captureError, warn, info) instead."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "packages/workers/src/lib/logger.ts",
+        "packages/workers/src/durable-objects/ProjectDoc.ts",
+        "packages/workers/src/durable-objects/UserSession.ts"
+      ],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    },
+    {
+      "files": ["packages/workers/src/routes/**/*.{js,ts}"],
+      "excludeFiles": ["**/__tests__/**", "**/*.test.*", "**/*.spec.*"],
+      "rules": {
+        "corates/chain-hono-calls": "error"
+      }
+    },
+    {
+      "files": ["packages/web/**/*.{js,jsx,ts,tsx}"],
+      "excludeFiles": ["packages/web/e2e/**"],
+      "rules": {
+        "react/rules-of-hooks": "error",
+        "react/exhaustive-deps": "warn",
+        "react/set-state-in-render": "error"
+      }
+    },
+    {
+      "files": ["packages/web/src/server/**/*.{js,ts}", "packages/web/src/routes/api/**/*.{js,ts}"],
+      "rules": {
+        "no-console": [
+          "error",
+          {
+            "allow": ["log"]
+          }
+        ],
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "@sentry/cloudflare",
+                "message": "Use @corates/workers/logger (captureError, warn, info) instead."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "packages/workers/src/lib/logger.ts",
+        "packages/workers/src/durable-objects/dev-handlers.ts",
+        "**/__tests__/**/*.{js,jsx,ts,tsx}",
+        "**/*.test.{js,jsx,ts,tsx}",
+        "**/*.spec.{js,jsx,ts,tsx}"
+      ],
+      "rules": {
+        "no-console": "off"
+      }
+    }
+  ],
+  "ignorePatterns": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/.wrangler/**",
+    "**/build/**",
+    "**/.vinxi/**",
+    "**/.output/**",
+    "**/coverage/**",
+    "**/mocks/**",
+    "packages/learn/.astro/**",
+    "**/.vitepress/cache/**",
+    "**/.vitepress/dist/**",
+    "reference/**",
+    "**/.localflare/**",
+    ".claude/skills/**/examples/**",
+    ".claude/worktrees/**",
+    "packages/ai/**",
+    "**/worker-configuration.d.ts"
+  ]
+}
