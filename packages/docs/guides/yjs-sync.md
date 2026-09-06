@@ -74,7 +74,7 @@ rows once on first load (`loadLegacyLocalRows`).
 
 ## Related
 
-- `packages/docs/plans/sync-engine-cutover.md` - the one-time migration
-  runbook (exporter patch, transformer, invariant gate)
+- `packages/docs/plans/sync-engine-cutover.md` - the completed one-time
+  migration runbook, kept as a historical record
 - [State Management Guide](/guides/state-management) - store patterns
 - [Architecture Diagrams](/architecture/diagrams) - visual architecture

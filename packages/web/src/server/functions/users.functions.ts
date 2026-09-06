@@ -1,12 +1,7 @@
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
 import { authMiddleware } from '@/server/middleware/auth';
-import {
-  deleteAccount,
-  fetchMyProjects,
-  fetchUserProjects,
-  searchUsers as searchUsersImpl,
-} from './users.server';
+import { deleteAccount, fetchMyProjects, searchUsers as searchUsersImpl } from './users.server';
 
 export const deleteMyAccount = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
@@ -15,13 +10,6 @@ export const deleteMyAccount = createServerFn({ method: 'POST' })
 export const getMyProjects = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
   .handler(async ({ context: { db, session } }) => fetchMyProjects(db, session));
-
-export const getUserProjects = createServerFn({ method: 'GET' })
-  .middleware([authMiddleware])
-  .validator(z.object({ userId: z.string() }))
-  .handler(async ({ data, context: { db, session } }) =>
-    fetchUserProjects(db, session, data.userId),
-  );
 
 export const searchUsers = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])

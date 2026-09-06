@@ -10,8 +10,6 @@ export const queryKeys = {
   orgs: {
     /** All orgs for current user */
     list: ['orgs'] as const,
-    /** Details for a specific organization */
-    detail: (orgId: string) => ['org', orgId] as const,
   },
 
   // Project queries
@@ -87,7 +85,6 @@ export const queryKeys = {
       ['adminWorkspaceStats', projectId] as const,
     storageDocuments: (cursor: string | null, limit: number, prefix: string, search: string) =>
       ['storageDocuments', cursor, limit, prefix, search] as const,
-    storageStats: ['storageStats'] as const,
     billingLedger: (params: Record<string, unknown>) => ['adminBillingLedger', params] as const,
     billingStuckStates: (params: Record<string, unknown>) =>
       ['adminBillingStuckStates', params] as const,

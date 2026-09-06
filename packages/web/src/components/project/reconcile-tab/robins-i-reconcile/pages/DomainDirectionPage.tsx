@@ -3,8 +3,8 @@ import { CheckIcon, XIcon, InfoIcon } from 'lucide-react';
 import {
   ROBINS_I_CHECKLIST,
   BIAS_DIRECTIONS,
-} from '@/components/checklist/ROBINSIChecklist/checklist-map';
-import { scoreRobinsDomain } from '@/components/checklist/ROBINSIChecklist/scoring/robins-scoring.js';
+  scoreRobinsDomain,
+} from '@corates/shared/checklists/robins-i';
 import { JudgementBadge } from '@/components/checklist/ROBINSIChecklist/DomainJudgement';
 import { DirectionPanel } from '../panels/DirectionPanel';
 

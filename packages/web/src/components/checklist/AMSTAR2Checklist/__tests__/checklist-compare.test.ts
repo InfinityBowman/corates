@@ -19,8 +19,8 @@ import {
   createReconciledChecklist as createReconciledChecklistStrict,
   getReconciliationSummary as getReconciliationSummaryStrict,
   getQuestionKeys,
-} from '../checklist-compare.js';
-import { createChecklist } from '../checklist.js';
+  createAMSTAR2Checklist as createChecklist,
+} from '@corates/shared/checklists/amstar2';
 import type { AMSTAR2Checklist } from '@corates/shared';
 
 // Tests pass null inputs and partial ComparisonResult fixtures to verify

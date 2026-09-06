@@ -6,7 +6,6 @@
 
 import {
   ROB2_CHECKLIST,
-  PRELIMINARY_SECTION,
   getActiveDomainKeys,
   getDomainQuestions as getDomainQuestionsFromSchema,
   type DomainKey,
@@ -412,30 +411,6 @@ export function getReconciliationSummary(comparison: ComparisonResult): {
 }
 
 /**
- * Get the domain definition from the schema
- */
-export function getDomainDef(domainKey: string): ROB2Domain | undefined {
-  return ROB2_CHECKLIST[domainKey as keyof typeof ROB2_CHECKLIST] as ROB2Domain | undefined;
-}
-
-/**
- * Get the domain name/title
- */
-export function getDomainName(domainKey: string): string {
-  const domain = getDomainDef(domainKey);
-  return domain?.name || domainKey;
-}
-
-/**
  * Get questions for a domain (re-exported from schema)
  */
 export { getDomainQuestionsFromSchema as getComparisonDomainQuestions };
-
-/**
- * Get a preliminary field definition
- */
-export function getPreliminaryFieldDef(
-  fieldKey: string,
-): (typeof PRELIMINARY_SECTION)[keyof typeof PRELIMINARY_SECTION] | undefined {
-  return PRELIMINARY_SECTION[fieldKey as keyof typeof PRELIMINARY_SECTION];
-}

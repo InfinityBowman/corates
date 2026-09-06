@@ -19,49 +19,6 @@ function parseKey(key: string): { projectId: string; studyId: string; fileName: 
   return { projectId: match[1], studyId: match[2], fileName: match[3] };
 }
 
-export async function getAdminStorageStats(session: Session) {
-  assertAdmin(session);
-
-  let cursor: string | undefined = undefined;
-  let totalFiles = 0;
-  let totalSize = 0;
-  const filesByProject: Record<string, number> = {};
-
-  let done = false;
-  while (!done) {
-    const listed = (await env.PDF_BUCKET.list({ limit: 1000, cursor })) as {
-      objects: Array<{ key: string; size: number }>;
-      truncated: boolean;
-      cursor?: string;
-    };
-
-    for (const obj of listed.objects) {
-      totalFiles++;
-      totalSize += obj.size;
-
-      const parsed = parseKey(obj.key);
-      if (parsed) {
-        filesByProject[parsed.projectId] = (filesByProject[parsed.projectId] || 0) + 1;
-      }
-    }
-
-    if (listed.truncated) {
-      cursor = listed.cursor;
-    } else {
-      done = true;
-    }
-  }
-
-  return {
-    totalFiles,
-    totalSize,
-    filesByProject: Object.entries(filesByProject).map(([projectId, count]) => ({
-      projectId,
-      count,
-    })),
-  };
-}
-
 interface StorageDoc {
   key: string;
   fileName: string;

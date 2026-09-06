@@ -10,7 +10,7 @@
  * verbatim content from the official publications.
  */
 
-export interface ReferenceLink {
+interface ReferenceLink {
   href: string;
   text: string;
 }
@@ -32,7 +32,7 @@ export interface FaqEntry {
   answer: string;
 }
 
-export interface Citation {
+interface Citation {
   authors: string;
   year: string;
   title: string;

@@ -14,7 +14,6 @@ import type { Session } from '@/server/middleware/auth';
 import { DomainErrorException } from '@corates/shared';
 import {
   listProjectInvitations,
-  createProjectInvitation,
   cancelProjectInvitation,
 } from '@/server/functions/org-projects.server';
 
@@ -57,129 +56,6 @@ beforeEach(async () => {
   vi.clearAllMocks();
   resetCounter();
   currentUser = { id: 'user-1', email: 'user1@example.com' };
-});
-
-describe('createProjectInvitation', () => {
-  it('creates a new invitation', async () => {
-    const { project, org, owner } = await buildProject();
-    currentUser = { id: owner.id, email: owner.email };
-
-    const result = await createProjectInvitation(
-      mockSession(),
-      createDb(env.DB),
-      org.id,
-      project.id,
-      { email: 'invitee@example.com', role: 'member' },
-    );
-
-    expect(result.success).toBe(true);
-    expect(result.email).toBe('invitee@example.com');
-
-    const db = createDb(env.DB);
-    const invitation = await db
-      .select()
-      .from(projectInvitations)
-      .where(eq(projectInvitations.email, 'invitee@example.com'))
-      .get();
-
-    expect(invitation).toBeDefined();
-    expect(invitation!.orgId).toBe(org.id);
-    expect(invitation!.projectId).toBe(project.id);
-    expect(invitation!.invitedBy).toBe(owner.id);
-    expect(invitation!.acceptedAt).toBeNull();
-    expect(invitation!.role).toBe('member');
-    expect(invitation!.orgRole).toBe('member');
-    expect(invitation!.grantOrgMembership).toBe(true);
-  });
-
-  it('lowercases email when creating invitation', async () => {
-    const { project, org, owner } = await buildProject();
-    currentUser = { id: owner.id, email: owner.email };
-
-    await createProjectInvitation(mockSession(), createDb(env.DB), org.id, project.id, {
-      email: 'UPPERCASE@EXAMPLE.COM',
-      role: 'member',
-    });
-
-    const db = createDb(env.DB);
-    const invitation = await db
-      .select()
-      .from(projectInvitations)
-      .where(eq(projectInvitations.projectId, project.id))
-      .get();
-
-    expect(invitation!.email).toBe('uppercase@example.com');
-  });
-
-  it('resends existing pending invitation with updated role', async () => {
-    const { project, org, owner } = await buildProject();
-    const token = 'existing-token';
-
-    const invitation = await buildProjectInvitation({
-      id: 'inv-1',
-      orgId: org.id,
-      projectId: project.id,
-      email: 'invitee@example.com',
-      token,
-      invitedBy: owner.id,
-    });
-
-    currentUser = { id: owner.id, email: owner.email };
-
-    await createProjectInvitation(mockSession(), createDb(env.DB), org.id, project.id, {
-      email: 'invitee@example.com',
-      role: 'owner',
-    });
-
-    const db = createDb(env.DB);
-    const invitations = await db
-      .select()
-      .from(projectInvitations)
-      .where(eq(projectInvitations.email, 'invitee@example.com'))
-      .all();
-
-    expect(invitations).toHaveLength(1);
-    expect(invitations[0].id).toBe(invitation.id);
-    expect(invitations[0].token).toBe(token);
-    expect(invitations[0].role).toBe('owner');
-  });
-
-  it('resets an accepted invitation with a fresh token so the person can be re-invited', async () => {
-    const { project, org, owner } = await buildProject();
-
-    const accepted = await buildProjectInvitation({
-      orgId: org.id,
-      projectId: project.id,
-      email: 'invitee@example.com',
-      invitedBy: owner.id,
-      status: 'accepted',
-    });
-
-    currentUser = { id: owner.id, email: owner.email };
-
-    const result = await createProjectInvitation(
-      mockSession(),
-      createDb(env.DB),
-      org.id,
-      project.id,
-      { email: 'invitee@example.com', role: 'member' },
-    );
-
-    expect(result.success).toBe(true);
-
-    const db = createDb(env.DB);
-    const invitations = await db
-      .select()
-      .from(projectInvitations)
-      .where(eq(projectInvitations.email, 'invitee@example.com'))
-      .all();
-
-    expect(invitations).toHaveLength(1);
-    expect(invitations[0].id).toBe(accepted.id);
-    expect(invitations[0].acceptedAt).toBeNull();
-    // The old emailed link must go dead
-    expect(invitations[0].token).not.toBe(accepted.token);
-  });
 });
 
 describe('listProjectInvitations', () => {

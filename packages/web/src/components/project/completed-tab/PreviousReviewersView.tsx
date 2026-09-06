@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getOriginalReviewerChecklists } from '@corates/shared/checklists';
-import { getChecklistMetadata } from '@/checklist-registry/index';
+import { getChecklistMetadata } from '@/checklist-registry';
 import { GenericChecklist } from '@/components/checklist/GenericChecklist';
 import type { StudyInfo } from '@/stores/projectStore';
 import type { ReconciliationProgressEntry } from '@/project/workspace-data';

@@ -41,31 +41,6 @@ export function PrimaryButton({
   );
 }
 
-interface SecondaryButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  loading?: boolean;
-}
-
-export function SecondaryButton({
-  children,
-  className,
-  type = 'button',
-  ...props
-}: SecondaryButtonProps) {
-  return (
-    <Button
-      variant='outline'
-      type={type}
-      className={cn(
-        'h-auto w-full rounded-lg py-2 text-sm font-semibold transition sm:rounded-xl sm:py-3 sm:text-base',
-        className,
-      )}
-      {...props}
-    >
-      {children}
-    </Button>
-  );
-}
-
 interface AuthLinkProps extends React.AnchorHTMLAttributes<globalThis.HTMLAnchorElement> {
   children: React.ReactNode;
 }

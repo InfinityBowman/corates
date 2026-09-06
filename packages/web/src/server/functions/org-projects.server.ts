@@ -21,10 +21,7 @@ import {
   updateProjectSetupStep as updateProjectSetupStepCmd,
   deleteProject as deleteProjectCmd,
 } from '@corates/workers/commands/projects';
-import {
-  updateMemberRole as updateMemberRoleCmd,
-  removeMember as removeMemberCmd,
-} from '@corates/workers/commands/members';
+import { removeMember as removeMemberCmd } from '@corates/workers/commands/members';
 import { createInvitation } from '@corates/workers/commands/invitations';
 import { requireMemberRemoval } from '@corates/workers/policies';
 import { checkFreeProjectCap } from '@corates/workers/free-project-cap';
@@ -36,38 +33,6 @@ import { requireQuota } from '@/server/guards/requireQuota';
 import type { Session } from '@/server/middleware/auth';
 
 // -- Projects --
-
-export async function listOrgProjects(session: Session, db: Database, orgId: OrgId) {
-  const membership = await requireOrgMembership(session, db, orgId);
-  if (!membership.ok) throw membership.error;
-
-  try {
-    const results = await db
-      .select({
-        id: projects.id,
-        name: projects.name,
-        description: projects.description,
-        orgId: projects.orgId,
-        role: projectMembers.role,
-        createdAt: projects.createdAt,
-        updatedAt: projects.updatedAt,
-        createdBy: projects.createdBy,
-      })
-      .from(projects)
-      .innerJoin(projectMembers, eq(projects.id, projectMembers.projectId))
-      .where(and(eq(projects.orgId, orgId), eq(projectMembers.userId, membership.context.userId)))
-      .orderBy(desc(projects.updatedAt));
-
-    return results;
-  } catch (err) {
-    const error = err as Error;
-    captureError(error, { tags: { component: 'org-projects', action: 'list' } });
-    throwDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'list_org_projects',
-      originalError: error.message,
-    });
-  }
-}
 
 export async function createOrgProject(
   session: Session,
@@ -120,49 +85,6 @@ export async function createOrgProject(
     captureError(error, { tags: { component: 'org-projects', action: 'create' } });
     throwDomainError(SYSTEM_ERRORS.DB_TRANSACTION_FAILED, {
       operation: 'create_project',
-      originalError: error.message,
-    });
-  }
-}
-
-export async function getProject(
-  session: Session,
-  db: Database,
-  orgId: OrgId,
-  projectId: ProjectId,
-) {
-  const orgMembership = await requireOrgMembership(session, db, orgId);
-  if (!orgMembership.ok) throw orgMembership.error;
-
-  const access = await requireProjectAccess(session, db, orgId, projectId);
-  if (!access.ok) throw access.error;
-
-  try {
-    const result = await db
-      .select({
-        id: projects.id,
-        name: projects.name,
-        description: projects.description,
-        orgId: projects.orgId,
-        createdAt: projects.createdAt,
-        updatedAt: projects.updatedAt,
-        createdBy: projects.createdBy,
-      })
-      .from(projects)
-      .where(eq(projects.id, projectId))
-      .get();
-
-    if (!result) {
-      throwDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId });
-    }
-
-    return { ...result, role: access.context.projectRole };
-  } catch (err) {
-    if (err instanceof DomainErrorException) throw err;
-    const error = err as Error;
-    captureError(error, { tags: { component: 'org-projects', action: 'get' } });
-    throwDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'fetch_project',
       originalError: error.message,
     });
   }
@@ -412,48 +334,6 @@ export async function addProjectMember(
   }
 }
 
-export async function updateProjectMemberRole(
-  session: Session,
-  db: Database,
-  orgId: OrgId,
-  projectId: ProjectId,
-  targetUserId: UserId,
-  data: { role: 'owner' | 'member' },
-) {
-  const orgMembership = await requireOrgMembership(session, db, orgId);
-  if (!orgMembership.ok) throw orgMembership.error;
-
-  const writeAccess = await requireOrgWriteAccess('PUT', db, orgId);
-  if (!writeAccess.ok) throw writeAccess.error;
-
-  const access = await requireProjectAccess(session, db, orgId, projectId, 'owner');
-  if (!access.ok) throw access.error;
-
-  try {
-    const result = await updateMemberRoleCmd(
-      env,
-      { id: access.context.userId },
-      {
-        orgId,
-        projectId,
-        userId: targetUserId,
-        role: data.role,
-      },
-    );
-    return { success: true as const, userId: result.userId, role: result.role };
-  } catch (err) {
-    if (isDomainError(err)) {
-      throw new DomainErrorException(err);
-    }
-    const error = err as Error;
-    captureError(error, { tags: { component: 'org-projects', action: 'update-member-role' } });
-    throwDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'update_project_member_role',
-      originalError: error.message,
-    });
-  }
-}
-
 export async function removeProjectMember(
   session: Session,
   db: Database,
@@ -544,51 +424,6 @@ export async function listProjectInvitations(
     captureError(error, { tags: { component: 'org-projects', action: 'list-invitations' } });
     throwDomainError(SYSTEM_ERRORS.DB_ERROR, {
       operation: 'list_invitations',
-      originalError: error.message,
-    });
-  }
-}
-
-export async function createProjectInvitation(
-  session: Session,
-  db: Database,
-  orgId: OrgId,
-  projectId: ProjectId,
-  data: { email: string; role: 'owner' | 'member' },
-) {
-  const orgMembership = await requireOrgMembership(session, db, orgId);
-  if (!orgMembership.ok) throw orgMembership.error;
-
-  const writeAccess = await requireOrgWriteAccess('POST', db, orgId);
-  if (!writeAccess.ok) throw writeAccess.error;
-
-  const access = await requireProjectAccess(session, db, orgId, projectId, 'owner');
-  if (!access.ok) throw access.error;
-
-  try {
-    const result = await createInvitation(
-      env,
-      { id: access.context.userId },
-      { orgId, projectId, email: data.email, role: data.role },
-    );
-
-    return {
-      success: true,
-      invitationId: result.invitationId,
-      message:
-        result.emailQueued ?
-          'Invitation sent successfully'
-        : 'Invitation created but email delivery may be delayed',
-      email: data.email,
-    };
-  } catch (err) {
-    if (isDomainError(err)) {
-      throw new DomainErrorException(err as DomainError);
-    }
-    const error = err as Error;
-    captureError(error, { tags: { component: 'org-projects', action: 'create-invitation' } });
-    throwDomainError(SYSTEM_ERRORS.DB_ERROR, {
-      operation: 'create_invitation',
       originalError: error.message,
     });
   }

@@ -1,6 +1,6 @@
 import { InfoIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { CHECKLIST_TYPES } from '@/checklist-registry/types';
+import { CHECKLIST_TYPES } from '@/checklist-registry';
 import { ResourcesPopover, type ChecklistResources } from './ResourcesPopover';
 import { AMSTAR2_RESOURCES } from './AMSTAR2Checklist/resources';
 import { ROB2_RESOURCES } from './ROB2Checklist/resources';

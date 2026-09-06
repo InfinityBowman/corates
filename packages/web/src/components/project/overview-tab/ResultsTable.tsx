@@ -4,7 +4,7 @@
 
 import { JUDGEMENT_PILLS } from './judgementPills';
 
-export function JudgementPill({ value }: { value: string }) {
+function JudgementPill({ value }: { value: string }) {
   const pill = JUDGEMENT_PILLS[value.toLowerCase()];
   if (!pill) return <span className='text-[13.5px] text-[#98a2b3]'>-</span>;
   return (

@@ -127,9 +127,6 @@ importers:
       prettier-plugin-tailwindcss:
         specifier: ^0.8.1
         version: 0.8.1(prettier@3.9.6)
-      tsx:
-        specifier: ^4.23.13
-        version: 4.23.13
       turbo:
         specifier: ^2.10.12
         version: 2.10.12
@@ -492,15 +489,9 @@ importers:
       drizzle-orm:
         specifier: ^0.45.2
         version: 0.45.2(@cloudflare/workers-types@5.20260902.1)(@electric-sql/pglite@0.3.15)(@opentelemetry/api@1.9.1)(@prisma/client@7.4.2(prisma@7.4.2(@types/react@19.2.18)(better-sqlite3@13.0.3)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@7.0.2))(typescript@7.0.2))(@types/better-sqlite3@7.6.13)(better-sqlite3@13.0.3)(gel@2.2.0(supports-color@10.2.2))(kysely@0.29.4)(mysql2@3.15.3)(postgres@3.4.7)(prisma@7.4.2(@types/react@19.2.18)(better-sqlite3@13.0.3)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@7.0.2))
-      lib0:
-        specifier: ^0.2.117
-        version: 0.2.117
       postmark:
         specifier: ^5.1.0
         version: 5.1.0
-      y-protocols:
-        specifier: ^1.0.7
-        version: 1.0.7(yjs@13.6.32)
       yjs:
         specifier: ^13.6.32
         version: 13.6.32
@@ -8379,12 +8370,6 @@ packages:
     peerDependencies:
       dexie: '>=4.2.0-alpha.1 <5.0.0'
       yjs: ^13.6.27
-
-  y-protocols@1.0.7:
-    resolution: {integrity: sha512-YSVsLoXxO67J6eE/nV4AtFtT3QEotZf5sK5BHxFBXso7VDUT3Tx07IfA6hsu5Q5OmBdMkQVmFZ9QOA7fikWvnw==}
-    engines: {node: '>=16.0.0', npm: '>=8.0.0'}
-    peerDependencies:
-      yjs: ^13.0.0
 
   y18n@5.0.8:
     resolution: {integrity: sha512-0pfFzegeDWJHJIAmTLRP2DwHjdF5s7jo9tuztdQxAhINCdvS+3nGINqPd00AphqJR/0LhANUS6/+7SCb98YOfA==}
@@ -16655,11 +16640,6 @@ snapshots:
   y-dexie@4.4.0(dexie@4.4.5)(yjs@13.6.32):
     dependencies:
       dexie: 4.4.5
-      yjs: 13.6.32
-
-  y-protocols@1.0.7(yjs@13.6.32):
-    dependencies:
-      lib0: 0.2.117
       yjs: 13.6.32
 
   y18n@5.0.8: {}

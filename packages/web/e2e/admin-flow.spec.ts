@@ -9,7 +9,7 @@
  *   - Dev server running: pnpm --filter web dev (localhost:3010, DEV_MODE=true)
  */
 
-import { test, expect, type Page, type BrowserContext } from '@playwright/test';
+import { test, expect, type Page, type BrowserContext } from './test';
 import {
   loginAs,
   seedAdminScenario,
@@ -25,7 +25,7 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-  await cleanupAdminScenario(scenario);
+  if (scenario) await cleanupAdminScenario(scenario);
 });
 
 async function loginAndGoto(
@@ -83,9 +83,12 @@ test('Admin dashboard, user detail (loader pilot), and access control', async ({
   // ── Search for the regular user and navigate via click (client-side loader) ──
   const searchInput = page.getByPlaceholder('Search by name or email...');
   await searchInput.fill(scenario.regularUser.email);
-  await expect(page.getByText(scenario.regularUser.name)).toBeVisible({ timeout: 10_000 });
+  // By href, not name: the search is debounced, and a retry of this spec
+  // leaves an earlier "Regular User" in the list that the bare name matches.
+  const regularRowLink = page.locator(`a[href*="/admin/users/${scenario.regularUser.id}"]`).first();
+  await expect(regularRowLink).toBeVisible({ timeout: 10_000 });
 
-  await page.getByRole('link', { name: scenario.regularUser.name }).click();
+  await regularRowLink.click();
   await expect(page).toHaveURL(new RegExp(`/admin/users/${scenario.regularUser.id}`), {
     timeout: 10_000,
   });

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { RESPONSE_LABELS, getResponseOptions } from './checklist-map';
+import { RESPONSE_LABELS, getResponseOptions } from '@corates/shared/checklists/robins-i';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
 import { useWorkspaceProjectId, useAnswerValue, useAnswerWriters } from '@/project/workspace-data';
 import type { ChecklistAnswerInput } from '@corates/shared/sync';

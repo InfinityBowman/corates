@@ -14,7 +14,6 @@ import {
   updateAdminSubscription,
   cancelAdminSubscription,
   createAdminGrant,
-  updateAdminGrant,
   revokeAdminGrant,
   grantAdminTrial,
   grantAdminSingleProject,
@@ -249,110 +248,6 @@ describe('POST /api/admin/orgs/:orgId/grants', () => {
     });
     expect(result.grant.type).toBe('single_project');
     expect(result.grant.orgId).toBe(org.id);
-  });
-});
-
-describe('PUT /api/admin/orgs/:orgId/grants/:grantId', () => {
-  it('throws 400 when no actionable fields', async () => {
-    const { org } = await buildOrg();
-    const db = createDb(env.DB);
-    await db.insert(grantsTable).values({
-      id: 'gr-empty',
-      orgId: org.id,
-      type: 'trial',
-      startsAt: new Date(),
-      expiresAt: new Date(Date.now() + 86400000),
-      createdAt: new Date(),
-      revokedAt: null,
-      stripeCheckoutSessionId: null,
-      metadata: null,
-    });
-
-    try {
-      await updateAdminGrant(
-        mockAdminSession(),
-        createDb(env.DB),
-        org.id as OrgId,
-        'gr-empty' as OrgAccessGrantId,
-        {},
-      );
-      expect.unreachable('should have thrown');
-    } catch (err) {
-      expect((err as DomainErrorException).statusCode).toBe(400);
-    }
-  });
-
-  it('updates expiresAt', async () => {
-    const { org } = await buildOrg();
-    const db = createDb(env.DB);
-    await db.insert(grantsTable).values({
-      id: 'gr-ext',
-      orgId: org.id,
-      type: 'single_project',
-      startsAt: new Date(),
-      expiresAt: new Date(Date.now() + 86400000),
-      createdAt: new Date(),
-      revokedAt: null,
-      stripeCheckoutSessionId: null,
-      metadata: null,
-    });
-    const newExpires = new Date(Date.now() + 60 * 86400000);
-    const result = await updateAdminGrant(
-      mockAdminSession(),
-      createDb(env.DB),
-      org.id as OrgId,
-      'gr-ext' as OrgAccessGrantId,
-      {
-        expiresAt: newExpires,
-      },
-    );
-    expect(result.success).toBe(true);
-  });
-
-  it('revokes and unrevokes', async () => {
-    const { org } = await buildOrg();
-    const db = createDb(env.DB);
-    await db.insert(grantsTable).values({
-      id: 'gr-rev',
-      orgId: org.id,
-      type: 'single_project',
-      startsAt: new Date(),
-      expiresAt: new Date(Date.now() + 86400000),
-      createdAt: new Date(),
-      revokedAt: null,
-      stripeCheckoutSessionId: null,
-      metadata: null,
-    });
-
-    await updateAdminGrant(
-      mockAdminSession(),
-      createDb(env.DB),
-      org.id as OrgId,
-      'gr-rev' as OrgAccessGrantId,
-      {
-        revokedAt: new Date(),
-      },
-    );
-    const [revoked] = await db
-      .select({ revokedAt: grantsTable.revokedAt })
-      .from(grantsTable)
-      .where(eq(grantsTable.id, 'gr-rev'));
-    expect(revoked.revokedAt).toBeInstanceOf(Date);
-
-    await updateAdminGrant(
-      mockAdminSession(),
-      createDb(env.DB),
-      org.id as OrgId,
-      'gr-rev' as OrgAccessGrantId,
-      {
-        revokedAt: null,
-      },
-    );
-    const [unrevoked] = await db
-      .select({ revokedAt: grantsTable.revokedAt })
-      .from(grantsTable)
-      .where(eq(grantsTable.id, 'gr-rev'));
-    expect(unrevoked.revokedAt).toBeNull();
   });
 });
 

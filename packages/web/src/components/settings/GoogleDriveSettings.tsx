@@ -16,11 +16,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {
-  getGoogleDriveStatus,
-  disconnectGoogleDrive,
-  connectGoogleAccount,
-} from '@/api/google-drive';
+import { connectGoogleAccount } from '@/api/google-drive';
+import { getDriveStatus, disconnectDrive } from '@/server/functions/google-drive.functions';
 
 export function GoogleDriveSettings() {
   const [loading, setLoading] = useState(true);
@@ -33,7 +30,7 @@ export function GoogleDriveSettings() {
     let cancelled = false;
     (async () => {
       try {
-        const status = await getGoogleDriveStatus();
+        const status = await getDriveStatus();
         if (!cancelled) setConnected(status.connected);
       } catch (err) {
         const { handleError } = await import('@/lib/error-utils');
@@ -73,7 +70,7 @@ export function GoogleDriveSettings() {
   const handleDisconnect = useCallback(async () => {
     setDisconnecting(true);
     try {
-      await disconnectGoogleDrive();
+      await disconnectDrive();
       setConnected(false);
       showToast.success('Disconnected', 'Google Drive is no longer connected.');
     } catch (err) {

@@ -16,8 +16,6 @@ const LINK_ERROR_MESSAGES: Record<string, string | null> = {
   // OAuth provider errors
   OAUTH_ERROR: 'Connecting to that provider did not complete. Try again.',
   OAUTH_CANCELLED: null, // Silent - user cancelled intentionally
-  ACCESS_DENIED: null, // Silent - user denied permission
-  USER_CANCELLED: null, // Silent - user cancelled
   // Email verification errors
   EMAIL_NOT_VERIFIED: 'Verify your email with that provider, then link the account again.',
   EMAIL_DOESNT_MATCH:
@@ -52,6 +50,14 @@ const LINK_ERROR_MESSAGES: Record<string, string | null> = {
   UNKNOWN: 'An unexpected error occurred. Try again, and contact support if it keeps happening.',
 };
 
+// Better Auth and the OAuth providers spell some of the codes above differently.
+const OAUTH_CODE_ALIASES: Record<string, string> = {
+  ACCESS_DENIED: 'OAUTH_CANCELLED',
+  USER_CANCELLED: 'OAUTH_CANCELLED',
+  ACCOUNT_EXISTS: 'ACCOUNT_ALREADY_LINKED',
+  EMAIL_DOES_NOT_MATCH: 'EMAIL_DOESNT_MATCH',
+};
+
 /**
  * Get a user-friendly error message for account linking errors
  */
@@ -78,40 +84,9 @@ export function parseOAuthError(params: URLSearchParams): ParsedOAuthError | nul
   if (!error) return null;
 
   // Normalize error code to uppercase with underscores (our convention)
-  let code = error.toUpperCase().replace(/-/g, '_');
+  const normalized = error.toUpperCase().replace(/-/g, '_');
+  const code = OAUTH_CODE_ALIASES[normalized] ?? normalized;
 
-  // Map common OAuth/Better Auth error codes to our standardized codes
-  const errorMappings: Record<string, string> = {
-    ACCESS_DENIED: 'OAUTH_CANCELLED',
-    USER_CANCELLED: 'OAUTH_CANCELLED',
-    ACCOUNT_ALREADY_LINKED: 'ACCOUNT_ALREADY_LINKED',
-    ACCOUNT_EXISTS: 'ACCOUNT_ALREADY_LINKED',
-    ACCOUNT_ALREADY_LINKED_TO_DIFFERENT_USER: 'ACCOUNT_ALREADY_LINKED_TO_DIFFERENT_USER',
-    EMAIL_DOESNT_MATCH: 'EMAIL_DOESNT_MATCH',
-    EMAIL_DOES_NOT_MATCH: 'EMAIL_DOESNT_MATCH',
-    EMAIL_NOT_FOUND: 'EMAIL_NOT_FOUND',
-    STATE_MISMATCH: 'STATE_MISMATCH',
-    STATE_NOT_FOUND: 'STATE_NOT_FOUND',
-    INVALID_CALLBACK_REQUEST: 'INVALID_CALLBACK_REQUEST',
-    OAUTH_PROVIDER_NOT_FOUND: 'OAUTH_PROVIDER_NOT_FOUND',
-    UNABLE_TO_LINK_ACCOUNT: 'UNABLE_TO_LINK_ACCOUNT',
-    PLEASE_RESTART_THE_PROCESS: 'PLEASE_RESTART_THE_PROCESS',
-    NO_CALLBACK_URL: 'NO_CALLBACK_URL',
-    NO_CODE: 'NO_CODE',
-    UNABLE_TO_GET_USER_INFO: 'UNABLE_TO_GET_USER_INFO',
-    SIGNUP_DISABLED: 'SIGNUP_DISABLED',
-  };
-
-  // Apply mapping if exists
-  if (errorMappings[code]) {
-    code = errorMappings[code];
-  }
-
-  const message = getLinkErrorMessage(code);
-
-  // Return null message for silent errors (user cancelled)
-  return {
-    code,
-    message,
-  };
+  // Message is null for silent errors (user cancelled)
+  return { code, message: getLinkErrorMessage(code) };
 }

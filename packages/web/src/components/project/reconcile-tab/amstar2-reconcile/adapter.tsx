@@ -28,9 +28,9 @@ import {
   getQuestionKeys,
   getDataKeysForQuestion,
   isMultiPartQuestion,
-} from '@/components/checklist/AMSTAR2Checklist/checklist-compare.js';
-import type { ComparisonResult } from '@corates/shared/checklists/amstar2';
-import { createChecklist } from '@/components/checklist/AMSTAR2Checklist/checklist.js';
+  createAMSTAR2Checklist,
+  type ComparisonResult,
+} from '@corates/shared/checklists/amstar2';
 import { AMSTAR2_RESOURCES } from '@/components/checklist/AMSTAR2Checklist/resources';
 import { hasQuestionAnswer } from './navbar-utils.js';
 import { ReconciliationQuestionPage } from './ReconciliationQuestionPage';
@@ -181,7 +181,7 @@ function autoFillFromReviewer1(
 }
 
 function resetAllAnswers(updateChecklistAnswer: (sectionKey: string, data: unknown) => void): void {
-  const defaultChecklist = createChecklist({ name: 'temp', id: 'temp' });
+  const defaultChecklist = createAMSTAR2Checklist({ name: 'temp', id: 'temp' });
   for (const key of questionKeys) {
     if (isMultiPartQuestion(key)) {
       const dataKeys = getDataKeysForQuestion(key);

@@ -4,14 +4,6 @@
  * Map the checklist state to actual checklist data for plotting and import/export
  */
 
-// Available checklist types
-export const AMSTAR2_CHECKLIST_TYPES = {
-  AMSTAR2: {
-    name: 'AMSTAR 2',
-    description: 'A MeaSurement Tool to Assess systematic Reviews (version 2)',
-  },
-};
-
 export interface AMSTAR2Column {
   label: string;
   description?: string;
@@ -435,19 +427,4 @@ export const AMSTAR2_CRITICAL_QUESTIONS = [
   'q11b',
   'q13',
   'q15',
-];
-
-/**
- * Non-critical questions
- */
-export const AMSTAR2_NON_CRITICAL_QUESTIONS = [
-  'q1',
-  'q3',
-  'q5',
-  'q6',
-  'q8',
-  'q10',
-  'q12',
-  'q14',
-  'q16',
 ];

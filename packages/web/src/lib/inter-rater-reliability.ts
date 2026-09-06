@@ -7,8 +7,7 @@
 
 import { CHECKLIST_STATUS } from '@corates/shared/checklists';
 import type { Study } from '@corates/shared/checklists';
-import { getAnswers } from '@/components/checklist/AMSTAR2Checklist/checklist.js';
-import { getQuestionKeys } from '@/components/checklist/AMSTAR2Checklist/checklist-compare.js';
+import { getAnswers, getQuestionKeys } from '@corates/shared/checklists/amstar2';
 import type { AMSTAR2Checklist } from '@corates/shared/checklists';
 
 interface ChecklistData {

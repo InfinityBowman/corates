@@ -3,7 +3,8 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { validatePdfFile, PDF_LIMITS } from '../pdfValidation.js';
+import { PDF_LIMITS } from '@corates/shared';
+import { validatePdfFile } from '../pdfValidation.js';
 
 interface MockFileOptions {
   name?: string;

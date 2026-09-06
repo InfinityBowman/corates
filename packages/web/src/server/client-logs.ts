@@ -2,9 +2,9 @@ import { z } from 'zod';
 import { info, warn } from '@corates/workers/logger';
 import { sanitizeClientLogData } from '@/lib/clientLogSanitize';
 
-export const CLIENT_LOG_SERVICE = 'corates-web-client';
+const CLIENT_LOG_SERVICE = 'corates-web-client';
 
-export const clientLogEntrySchema = z.object({
+const clientLogEntrySchema = z.object({
   level: z.enum(['info', 'warn', 'error']),
   message: z.string().min(1).max(200),
   ts: z.string().max(40).optional(),

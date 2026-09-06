@@ -3,7 +3,7 @@ import {
   getDomainQuestions,
   RESPONSE_TYPES,
   ROBINS_I_CHECKLIST,
-} from '@/components/checklist/ROBINSIChecklist/checklist-map';
+} from '@corates/shared/checklists/robins-i';
 import { RobinsAnswerPanel } from '../panels/RobinsAnswerPanel';
 
 interface DomainQuestionPageProps {

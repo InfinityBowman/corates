@@ -43,7 +43,6 @@
     "oxlint": "^1.81.0",
     "prettier": "^3.9.6",
     "prettier-plugin-tailwindcss": "^0.8.1",
-    "tsx": "^4.23.13",
     "turbo": "^2.10.12",
     "wrangler": "^4.128.0"
   },

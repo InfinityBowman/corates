@@ -14,7 +14,12 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/spinner';
-import { initiateMerge, verifyMergeCode, completeMerge, cancelMerge } from '@/api/account-merge';
+import {
+  initiateAccountMerge,
+  verifyAccountMergeCode,
+  completeAccountMerge,
+  cancelAccountMerge,
+} from '@/server/functions/account-merge.functions';
 
 const STEPS = {
   PROMPT: 'prompt',
@@ -108,10 +113,12 @@ export function MergeAccountsDialog({
       const isOrcid = isOrcidId(input);
       const isOrcidInput = isOrcid;
       const normalizedOrcidId = isOrcidInput ? normalizeOrcidInput(input) : null;
-      const result = await initiateMerge(
-        isOrcidInput ? null : input,
-        isOrcidInput ? normalizedOrcidId : null,
-      );
+      const result = await initiateAccountMerge({
+        data:
+          isOrcidInput && normalizedOrcidId ?
+            { targetOrcidId: normalizedOrcidId }
+          : { targetEmail: input },
+      });
       if (isOrcidInput) {
         setTargetOrcidId(normalizedOrcidId);
       } else {
@@ -141,7 +148,7 @@ export function MergeAccountsDialog({
       setLoading(true);
       setError(null);
       try {
-        const result = await verifyMergeCode(mergeToken!, code);
+        const result = await verifyAccountMergeCode({ data: { mergeToken: mergeToken!, code } });
         if (result.preview) setMergePreview(result.preview);
         setStep(STEPS.CONFIRM);
       } catch (err) {
@@ -159,7 +166,7 @@ export function MergeAccountsDialog({
     setLoading(true);
     setError(null);
     try {
-      const result = await completeMerge(mergeToken!);
+      const result = await completeAccountMerge({ data: { mergeToken: mergeToken! } });
       setStep(STEPS.SUCCESS);
       const linkedInfo =
         result.mergedProviders.length ?
@@ -182,7 +189,7 @@ export function MergeAccountsDialog({
   const handleCancel = useCallback(async () => {
     if (mergeToken) {
       try {
-        await cancelMerge(mergeToken);
+        await cancelAccountMerge({ data: { mergeToken } });
       } catch (err: unknown) {
         console.warn('Failed to cancel merge:', err);
       }
@@ -193,7 +200,7 @@ export function MergeAccountsDialog({
   const handleResendCode = useCallback(async () => {
     if (mergeToken) {
       try {
-        await cancelMerge(mergeToken);
+        await cancelAccountMerge({ data: { mergeToken } });
       } catch {
         // Best-effort cleanup
       }

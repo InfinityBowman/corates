@@ -22,9 +22,8 @@ import { session } from '@corates/db/schema';
 import type { Session } from '@/server/middleware/auth';
 import { DomainErrorException } from '@corates/shared';
 import {
-  listOrgProjects,
+  listProjectMembers,
   createOrgProject,
-  getProject,
   updateProjectById,
   deleteProjectById,
 } from '@/server/functions/org-projects.server';
@@ -49,50 +48,6 @@ beforeEach(async () => {
   await resetTestDatabase();
   resetCounter();
   currentUser = { id: 'user-1', email: 'user1@example.com' };
-});
-
-describe('getProject', () => {
-  it('returns project when user is a member of org and project', async () => {
-    const { project, org, owner } = await buildProject();
-    currentUser = { id: owner.id, email: owner.email };
-
-    const result = await getProject(mockSession(), createDb(env.DB), org.id, project.id);
-    expect(result.id).toBe(project.id);
-    expect(result.name).toBe(project.name);
-    expect(result.role).toBe('owner');
-    expect(result.createdBy).toBe(owner.id);
-  });
-
-  it('returns 403 when user is not a project member (but is in org)', async () => {
-    const { project, org } = await buildProject();
-    const { user: orgOnlyMember } = await buildOrgMember({ orgId: org.id, role: 'member' });
-    currentUser = { id: orgOnlyMember.id, email: orgOnlyMember.email };
-
-    try {
-      await getProject(mockSession(), createDb(env.DB), org.id, project.id);
-      expect.unreachable('should have thrown');
-    } catch (err) {
-      expect(err).toBeInstanceOf(DomainErrorException);
-      const res = err as DomainErrorException;
-      expect(res.statusCode).toBe(403);
-      const body = res.toDomainError() as { code: string };
-      expect(body.code).toBe('PROJECT_ACCESS_DENIED');
-    }
-  });
-
-  it('returns 403 when user is not authenticated (not in org/project)', async () => {
-    const { project, org } = await buildProject();
-    const nonOrgUser = await buildUser();
-    currentUser = { id: nonOrgUser.id, email: nonOrgUser.email };
-
-    try {
-      await getProject(mockSession(), createDb(env.DB), org.id, project.id);
-      expect.unreachable('should have thrown');
-    } catch (err) {
-      expect(err).toBeInstanceOf(DomainErrorException);
-      expect((err as DomainErrorException).statusCode).toBe(403);
-    }
-  });
 });
 
 describe('createOrgProject', () => {
@@ -267,7 +222,7 @@ describe('Org authorization edge cases', () => {
     currentUser = { id: formerMember.id, email: formerMember.email };
 
     try {
-      await getProject(mockSession(), createDb(env.DB), org.id, project.id);
+      await listProjectMembers(mockSession(), createDb(env.DB), org.id, project.id);
       expect.unreachable('should have thrown');
     } catch (err) {
       expect(err).toBeInstanceOf(DomainErrorException);
@@ -287,7 +242,7 @@ describe('Org authorization edge cases', () => {
     currentUser = { id: user.id, email: user.email };
 
     try {
-      await getProject(mockSession(), createDb(env.DB), orgB.id, projectInOrgA.id);
+      await listProjectMembers(mockSession(), createDb(env.DB), orgB.id, projectInOrgA.id);
       expect.unreachable('should have thrown');
     } catch (err) {
       expect(err).toBeInstanceOf(DomainErrorException);
@@ -309,7 +264,12 @@ describe('Org authorization edge cases', () => {
     currentUser = { id: owner.id, email: owner.email };
 
     try {
-      await getProject(mockSession(), createDb(env.DB), org.id, asProjectId('nonexistent-project'));
+      await listProjectMembers(
+        mockSession(),
+        createDb(env.DB),
+        org.id,
+        asProjectId('nonexistent-project'),
+      );
       expect.unreachable('should have thrown');
     } catch (err) {
       expect(err).toBeInstanceOf(DomainErrorException);
@@ -372,33 +332,10 @@ describe('Read-only access enforcement', () => {
 
   it('allows GET requests for read-only org', async () => {
     const { org, owner } = await createReadOnlyOrg();
+    const { project } = await buildProject({ org, owner });
     currentUser = { id: owner.id, email: owner.email };
 
-    const result = await listOrgProjects(mockSession(), createDb(env.DB), org.id);
+    const result = await listProjectMembers(mockSession(), createDb(env.DB), org.id, project.id);
     expect(Array.isArray(result)).toBe(true);
-  });
-});
-
-describe('listOrgProjects', () => {
-  it('lists projects for user in org', async () => {
-    const { project, org, owner } = await buildProject();
-    currentUser = { id: owner.id, email: owner.email };
-
-    const result = await listOrgProjects(mockSession(), createDb(env.DB), org.id);
-    expect(result.find(p => p.id === project.id)?.role).toBe('owner');
-  });
-
-  it('returns 403 when not org member', async () => {
-    const { org } = await buildOrg();
-    const outsider = await buildUser();
-    currentUser = { id: outsider.id, email: outsider.email };
-
-    try {
-      await listOrgProjects(mockSession(), createDb(env.DB), org.id);
-      expect.unreachable('should have thrown');
-    } catch (err) {
-      expect(err).toBeInstanceOf(DomainErrorException);
-      expect((err as DomainErrorException).statusCode).toBe(403);
-    }
   });
 });

@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { InfoIcon } from 'lucide-react';
-import { getActiveDomainKeys } from './checklist-map';
+import { getActiveDomainKeys } from '@corates/shared/checklists/robins-i';
 import { PlanningSection } from './PlanningSection';
 import { SectionA } from './SectionA';
 import { SectionB } from './SectionB';

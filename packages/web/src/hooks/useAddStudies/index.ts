@@ -66,7 +66,7 @@ interface CollectedDriveFile {
   };
 }
 
-export interface CollectedStudies {
+interface CollectedStudies {
   pdfs: CollectedPdf[];
   refs: CollectedRef[];
   lookups: never[];
@@ -77,8 +77,6 @@ interface UseAddStudiesOptions {
   collectMode?: boolean;
   onStudiesChange?: (data: CollectedStudies) => void;
 }
-
-export type AddStudiesHandle = ReturnType<typeof useAddStudies>;
 
 export function useAddStudies(options: UseAddStudiesOptions = {}) {
   const pdfOps = usePdfOperations();

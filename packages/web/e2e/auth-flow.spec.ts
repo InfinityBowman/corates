@@ -8,7 +8,7 @@
  *   - Dev server running: pnpm --filter web dev (localhost:3010, DEV_MODE=true)
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect } from './test';
 import {
   getAuthCode,
   submitEmailCodeSignIn,
@@ -258,7 +258,7 @@ test.describe('Auth flows', () => {
     });
 
     test.afterAll(async () => {
-      await cleanupScenario(scenario);
+      if (scenario) await cleanupScenario(scenario);
     });
 
     test('sign out clears session and redirects', async ({ page, context }) => {

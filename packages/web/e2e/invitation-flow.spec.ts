@@ -17,7 +17,7 @@
  *   - Dev server running: pnpm --filter web dev (localhost:3010, DEV_MODE=true)
  */
 
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page } from './test';
 import {
   getAuthUrl,
   submitEmailCodeSignIn,

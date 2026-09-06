@@ -274,6 +274,13 @@ Prefer e2e coverage on:
 
 Do not use e2e for what a unit or server test can cover. They are the slowest and most brittle layer.
 
+### Harness conventions
+
+- Import `test` and `expect` from `./test`, not `@playwright/test`. The wrapper logs failed requests and uncaught page errors into the test output, so a runner network fault reads as `net::ERR_TIMED_OUT` next to the assertion it broke. `loginAs` does the same for contexts a spec creates itself.
+- Call the test API through `testApi()` in `e2e/helpers.ts`. It retries connection failures and Cloudflare 5xx with backoff; every `/api/test/*` route it reaches is idempotent, so a retry after a lost response is safe. Keep new routes that way.
+- Every spec must be safe to run twice. Remote runs retry a failed test in a fresh worker, which re-runs `beforeAll` and seeds again while the earlier data is still there. Seed with `uniquePrefix`, guard `afterAll` cleanup with `if (scenario)`, and scope locators on shared seeded names (Alice Reviewer, Regular User) to a row or href rather than the bare text.
+- CI runs `scripts/e2e-ci.sh`: a full pass, then one re-run of up to three failed specs after the suite has finished, then a job summary from the JSON reporter output. The first pass's traces land in `test-results-first-pass/` in the artifact when that re-run happened.
+
 ## Common patterns
 
 ### Async

@@ -50,13 +50,13 @@ export function buildChecklistAnswerInput(
 // importing the hook's internals into the adapter contract)
 // ---------------------------------------------------------------------------
 
-export interface PresenceUser {
+interface PresenceUser {
   id: string;
   name: string;
   image?: string | null;
 }
 
-export interface RemoteUser {
+interface RemoteUser {
   clientId: string;
   userId: string;
   name: string;

@@ -2,13 +2,13 @@ import { useState, useRef, useCallback, useEffect, useLayoutEffect } from 'react
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { z } from 'zod';
 import { useAuthStore } from '@/stores/authStore';
-import { handleError, parseError } from '@/lib/error-utils';
+import { handleError } from '@/lib/error-utils';
 import { getPendingInvitationToken, setPendingInvitationToken } from '@/lib/pendingInvitation';
 import { clientLogger } from '@/lib/clientLogger';
 import { useOAuthError } from '@/hooks/useOAuthError';
 import { useBfcacheReset } from '@/hooks/useBfcacheReset';
 import { getLastLoginMethod, LOGIN_METHODS } from '@/lib/lastLoginMethod';
-import { USER_ERRORS } from '@corates/shared';
+import { USER_ERRORS, normalizeError } from '@corates/shared';
 import { PasswordInput } from '@/components/ui/password-input';
 import { Input } from '@/components/ui/input';
 import { ErrorMessage } from '@/components/auth/ErrorMessage';
@@ -122,7 +122,7 @@ function SignInPage() {
       console.error('Google sign-in error:', err);
       clientLogger.info('client.auth.sign_in_failed', {
         provider: 'google',
-        code: parseError(err).code,
+        code: normalizeError(err).code,
       });
       setError('Failed to sign in with Google. Please try again.');
       localStorage.removeItem('oauthSignup');
@@ -140,7 +140,7 @@ function SignInPage() {
       console.error('ORCID sign-in error:', err);
       clientLogger.info('client.auth.sign_in_failed', {
         provider: 'orcid',
-        code: parseError(err).code,
+        code: normalizeError(err).code,
       });
       setError('Failed to sign in with ORCID. Please try again.');
       localStorage.removeItem('oauthSignup');
@@ -185,7 +185,7 @@ function SignInPage() {
 
       navigate({ to: '/dashboard', replace: true });
     } catch (err) {
-      const code = parseError(err).code;
+      const code = normalizeError(err).code;
       clientLogger.info('client.auth.sign_in_failed', { provider: 'password', code });
       if (code === USER_ERRORS.EMAIL_NOT_VERIFIED.code) {
         navigate({ to: '/verify-email', search: { email }, replace: true });

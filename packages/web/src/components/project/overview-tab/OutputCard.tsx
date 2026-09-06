@@ -31,7 +31,7 @@ interface OutputNumberChipProps {
   number: number;
 }
 
-export function OutputNumberChip({ prefix, number }: OutputNumberChipProps) {
+function OutputNumberChip({ prefix, number }: OutputNumberChipProps) {
   return (
     <span className='rounded-[5px] bg-[#f2f4f7] px-[7px] py-1 font-mono text-[10.5px] leading-none font-semibold tracking-[0.07em] text-[#667085]'>
       {prefix} {number}
@@ -44,7 +44,7 @@ interface InstrumentPillProps {
   kind: InstrumentKind;
 }
 
-export function InstrumentPill({ label, kind }: InstrumentPillProps) {
+function InstrumentPill({ label, kind }: InstrumentPillProps) {
   return (
     <span
       className={cn(

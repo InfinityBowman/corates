@@ -1,4 +1,4 @@
-import { CHECKLIST_TYPES } from '@/checklist-registry/index';
+import { CHECKLIST_TYPES } from '@/checklist-registry';
 import { AMSTAR2Checklist } from '@/components/checklist/AMSTAR2Checklist/AMSTAR2Checklist';
 import { ROBINSIChecklist } from '@/components/checklist/ROBINSIChecklist/ROBINSIChecklist';
 import { ROB2Checklist } from '@/components/checklist/ROB2Checklist/ROB2Checklist';

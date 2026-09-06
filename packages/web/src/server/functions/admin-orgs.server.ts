@@ -1,7 +1,7 @@
 import { captureError, info } from '@corates/workers/logger';
 import { env } from 'cloudflare:workers';
 import type { Database } from '@corates/db/client';
-import { organization, member, projects, subscription, orgAccessGrants } from '@corates/db/schema';
+import { organization, member, projects, subscription } from '@corates/db/schema';
 import { and, count, desc, eq, or, sql } from 'drizzle-orm';
 import { containsInsensitive } from '@/server/lib/sqlSearch';
 import {
@@ -543,48 +543,6 @@ export async function createAdminGrant(
   });
 
   return { success: true, grant: created };
-}
-
-export async function updateAdminGrant(
-  session: Session,
-  db: Database,
-  orgId: OrgId,
-  grantId: OrgAccessGrantId,
-  data: { expiresAt?: Date; revokedAt?: Date | null },
-) {
-  assertAdmin(session);
-
-  const existing = await getGrantById(db, grantId);
-  if (!existing || existing.orgId !== orgId) {
-    throwDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
-      field: 'grantId',
-      value: grantId,
-    });
-  }
-
-  if (data.expiresAt !== undefined) {
-    const updated = await updateGrantExpiresAt(db, grantId, data.expiresAt);
-    return { success: true, grant: updated };
-  }
-
-  if (data.revokedAt !== undefined) {
-    if (data.revokedAt === null) {
-      const result = (await db
-        .update(orgAccessGrants)
-        .set({ revokedAt: null })
-        .where(eq(orgAccessGrants.id, grantId))
-        .returning()
-        .get())!;
-      return { success: true, grant: result };
-    }
-    const revoked = await revokeGrant(db, grantId);
-    return { success: true, grant: revoked };
-  }
-
-  throwDomainError(VALIDATION_ERRORS.INVALID_INPUT, {
-    field: 'body',
-    value: 'At least one field (expiresAt or revokedAt) must be provided',
-  });
 }
 
 export async function revokeAdminGrant(

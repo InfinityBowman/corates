@@ -19,10 +19,6 @@ import {
   listAdminDatabaseTables,
   getAdminTableSchema,
   getAdminTableRows,
-  getAdminPdfsByOrg,
-  getAdminPdfsByUser,
-  getAdminPdfsByProject,
-  getAdminRecentUploads,
 } from '@/server/functions/admin-database.server';
 
 beforeEach(async () => {
@@ -130,113 +126,6 @@ describe('getAdminTableRows', () => {
     });
     expect(result.rows.length).toBe(0);
     expect(result.pagination.totalRows).toBe(0);
-  });
-});
-
-describe('analytics', () => {
-  it('pdfs-by-org returns count + total bytes per org', async () => {
-    const admin = await buildAdminUser();
-    const { project, org } = await buildProject();
-    await seedMediaFile({
-      id: 'mf-an-1',
-      filename: 'a.pdf',
-      fileSize: 1000,
-      bucketKey: `projects/${project.id}/studies/s1/a.pdf`,
-      orgId: org.id,
-      projectId: project.id,
-      studyId: 's1',
-      uploadedBy: admin.id,
-      createdAt: Math.floor(Date.now() / 1000),
-    });
-    await seedMediaFile({
-      id: 'mf-an-2',
-      filename: 'b.pdf',
-      fileSize: 2500,
-      bucketKey: `projects/${project.id}/studies/s1/b.pdf`,
-      orgId: org.id,
-      projectId: project.id,
-      studyId: 's1',
-      uploadedBy: admin.id,
-      createdAt: Math.floor(Date.now() / 1000),
-    });
-
-    const result = await getAdminPdfsByOrg(mockAdminSession(), createDb(env.DB));
-    const found = result.analytics.find(a => a.orgId === org.id);
-    expect(found?.pdfCount).toBe(2);
-    expect(found?.totalStorage).toBe(3500);
-  });
-
-  it('pdfs-by-user filters out null uploaders', async () => {
-    const admin = await buildAdminUser();
-    const { project, org } = await buildProject();
-    await seedMediaFile({
-      id: 'mf-an-u',
-      filename: 'a.pdf',
-      bucketKey: `projects/${project.id}/studies/s1/a.pdf`,
-      orgId: org.id,
-      projectId: project.id,
-      studyId: 's1',
-      uploadedBy: admin.id,
-      createdAt: Math.floor(Date.now() / 1000),
-    });
-
-    const result = await getAdminPdfsByUser(mockAdminSession(), createDb(env.DB));
-    expect(result.analytics.length).toBeGreaterThanOrEqual(1);
-    result.analytics.forEach(a => expect(a.userId).toBeDefined());
-  });
-
-  it('pdfs-by-project groups counts by project', async () => {
-    const admin = await buildAdminUser();
-    const { project, org } = await buildProject();
-    await seedMediaFile({
-      id: 'mf-an-p',
-      filename: 'a.pdf',
-      bucketKey: `projects/${project.id}/studies/s1/a.pdf`,
-      orgId: org.id,
-      projectId: project.id,
-      studyId: 's1',
-      uploadedBy: admin.id,
-      createdAt: Math.floor(Date.now() / 1000),
-    });
-
-    const result = await getAdminPdfsByProject(mockAdminSession(), createDb(env.DB));
-    const found = result.analytics.find(a => a.projectId === project.id);
-    expect(found?.pdfCount).toBe(1);
-    expect(found?.orgId).toBe(org.id);
-  });
-
-  it('recent-uploads returns newest first with org/project/user join', async () => {
-    const admin = await buildAdminUser();
-    const { project, org } = await buildProject();
-    const base = Math.floor(Date.now() / 1000);
-    await seedMediaFile({
-      id: 'mf-recent-old',
-      filename: 'old.pdf',
-      bucketKey: `projects/${project.id}/studies/s1/old.pdf`,
-      orgId: org.id,
-      projectId: project.id,
-      studyId: 's1',
-      uploadedBy: admin.id,
-      createdAt: base - 1000,
-    });
-    await seedMediaFile({
-      id: 'mf-recent-new',
-      filename: 'new.pdf',
-      bucketKey: `projects/${project.id}/studies/s1/new.pdf`,
-      orgId: org.id,
-      projectId: project.id,
-      studyId: 's1',
-      uploadedBy: admin.id,
-      createdAt: base,
-    });
-
-    const result = await getAdminRecentUploads(mockAdminSession(), createDb(env.DB), { limit: 10 });
-    const filenames = result.uploads.map(u => u.filename);
-    expect(filenames.indexOf('new.pdf')).toBeLessThan(filenames.indexOf('old.pdf'));
-    const newUpload = result.uploads.find(u => u.filename === 'new.pdf')!;
-    expect(newUpload.org.id).toBe(org.id);
-    expect(newUpload.project.id).toBe(project.id);
-    expect(newUpload.uploadedBy?.id).toBe(admin.id);
   });
 });
 

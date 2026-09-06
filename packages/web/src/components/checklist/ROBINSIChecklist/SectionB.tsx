@@ -1,6 +1,6 @@
 import { useMemo, useId } from 'react';
 import { InfoIcon } from 'lucide-react';
-import { SECTION_B, RESPONSE_LABELS } from './checklist-map';
+import { SECTION_B, RESPONSE_LABELS } from '@corates/shared/checklists/robins-i';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
 import {
   useWorkspaceProjectId,

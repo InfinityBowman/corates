@@ -20,7 +20,7 @@
  */
 
 import path from 'node:path';
-import { test, expect } from '@playwright/test';
+import { test, expect } from './test';
 import { answerAllAMSTAR2, fillROB2Preliminary } from './shared-steps';
 
 const FIXTURES_DIR = path.join(import.meta.dirname, 'fixtures');

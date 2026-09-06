@@ -16,10 +16,8 @@ import { alias } from 'drizzle-orm/sqlite-core';
 import { containsInsensitive } from '@/server/lib/sqlSearch';
 import { kickWorkspaceUser } from '@corates/workers/sync';
 import {
-  throwDomainError,
   DomainErrorException,
   createValidationError,
-  AUTH_ERRORS,
   VALIDATION_ERRORS,
   type ProjectSetupStep,
 } from '@corates/shared';
@@ -114,30 +112,6 @@ export async function fetchMyProjects(db: Database, session: Session) {
     .orderBy(desc(projects.updatedAt));
 
   return results as unknown as UserProjectWithMemberCount[];
-}
-
-export async function fetchUserProjects(db: Database, session: Session, userId: string) {
-  if (session.user.id !== userId) {
-    throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'view_other_user_projects' });
-  }
-
-  const results = await db
-    .select({
-      id: projects.id,
-      name: projects.name,
-      description: projects.description,
-      orgId: projects.orgId,
-      role: projectMembers.role,
-      createdAt: projects.createdAt,
-      updatedAt: projects.updatedAt,
-      setupStep: projects.setupStep,
-    })
-    .from(projects)
-    .innerJoin(projectMembers, eq(projects.id, projectMembers.projectId))
-    .where(eq(projectMembers.userId, userId))
-    .orderBy(desc(projects.updatedAt));
-
-  return results as unknown as UserProject[];
 }
 
 export async function searchUsers(

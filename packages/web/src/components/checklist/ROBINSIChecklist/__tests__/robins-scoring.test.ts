@@ -4,7 +4,7 @@ import {
   scoreAllDomains,
   mapOverallJudgementToDisplay,
   JUDGEMENTS,
-} from '../scoring/robins-scoring.js';
+} from '@corates/shared/checklists/robins-i';
 
 // Helper to create answer objects
 const ans = (answer: string | null) => ({ answer, comment: '' });

@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import { BIAS_DIRECTIONS } from '@/components/checklist/ROBINSIChecklist/checklist-map';
+import { BIAS_DIRECTIONS } from '@corates/shared/checklists/robins-i';
 
 /**
  * Get button style for direction options

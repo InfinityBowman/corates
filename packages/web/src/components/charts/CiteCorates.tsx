@@ -7,12 +7,6 @@ import { CheckIcon, CopyIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { APP_FULL_NAME, APP_NAME, APP_PUBLISHER } from '@/config/app';
 import {
-  DropdownMenuItem,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
   Popover,
   PopoverContent,
   PopoverDescription,
@@ -24,7 +18,7 @@ import { showToast } from '@/lib/toast';
 
 export type CitationStyle = 'apa' | 'ama';
 
-export function getCoratesCitations() {
+function getCoratesCitations() {
   const now = new Date();
   const year = now.getFullYear();
   // AMA access dates are always US-style ("August 31, 2026"), so pin the locale
@@ -41,28 +35,12 @@ export function getCoratesCitations() {
   };
 }
 
-export function copyCoratesCitation(style: CitationStyle, options?: { toast?: boolean }) {
+function copyCoratesCitation(style: CitationStyle, options?: { toast?: boolean }) {
   const text = getCoratesCitations()[style];
   navigator.clipboard.writeText(text);
   if (options?.toast !== false) {
     showToast.success(`${style.toUpperCase()} citation copied`);
   }
-}
-
-export function CiteCoratesMenuItems() {
-  return (
-    <DropdownMenuSub>
-      <DropdownMenuSubTrigger>Cite CoRATES</DropdownMenuSubTrigger>
-      <DropdownMenuSubContent>
-        <DropdownMenuItem onClick={() => copyCoratesCitation('apa')}>
-          Copy APA citation
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => copyCoratesCitation('ama')}>
-          Copy AMA citation
-        </DropdownMenuItem>
-      </DropdownMenuSubContent>
-    </DropdownMenuSub>
-  );
 }
 
 export function CiteCoratesButton() {
@@ -79,47 +57,6 @@ export function CiteCoratesButton() {
     <Popover>
       <PopoverTrigger asChild>
         <Button variant='outline'>Cite CoRATES</Button>
-      </PopoverTrigger>
-      <PopoverContent align='end' className='w-96'>
-        <PopoverHeader>
-          <PopoverTitle>How to cite CoRATES</PopoverTitle>
-          <PopoverDescription className='text-xs'>
-            Use this citation when you reference CoRATES as the software used for study appraisal.
-          </PopoverDescription>
-        </PopoverHeader>
-        <CitationBlock
-          styleLabel='APA'
-          text={citations.apa}
-          copied={copied === 'apa'}
-          onCopy={() => copy('apa')}
-        />
-        <CitationBlock
-          styleLabel='AMA'
-          text={citations.ama}
-          copied={copied === 'ama'}
-          onCopy={() => copy('ama')}
-        />
-      </PopoverContent>
-    </Popover>
-  );
-}
-
-export function CiteCoratesPopover() {
-  const [copied, setCopied] = useState<CitationStyle | null>(null);
-  const citations = getCoratesCitations();
-
-  const copy = (style: CitationStyle) => {
-    copyCoratesCitation(style, { toast: false });
-    setCopied(style);
-    setTimeout(() => setCopied(null), 2000);
-  };
-
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button variant='ghost' size='sm'>
-          Cite CoRATES
-        </Button>
       </PopoverTrigger>
       <PopoverContent align='end' className='w-96'>
         <PopoverHeader>

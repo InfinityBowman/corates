@@ -4,7 +4,7 @@
  * Creates new checklist objects with proper structure and defaults.
  */
 
-import type { AMSTAR2Checklist, AMSTAR2Question } from '../types.js';
+import type { AMSTAR2Checklist } from '../types.js';
 
 interface CreateChecklistOptions {
   name: string;
@@ -162,15 +162,5 @@ export function createAMSTAR2Checklist({
       ],
       critical: false,
     },
-  };
-}
-
-/**
- * Create an empty question object with the correct answer structure
- */
-export function createEmptyQuestion(critical: boolean, answerStructure: number[]): AMSTAR2Question {
-  return {
-    answers: answerStructure.map(len => Array(len).fill(false)),
-    critical,
   };
 }

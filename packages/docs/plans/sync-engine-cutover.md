@@ -1,5 +1,11 @@
 # Sync-engine cutover runbook
 
+> Status: completed. Wrangler migration `v5` deleted the `ProjectDoc` class,
+> and the machinery listed below (`scripts/sync-cutover/`, `sync/transform.ts`,
+> `sync/verify.ts`, and the transform rehearsal test) was removed from the
+> repo afterwards. This runbook is kept as a historical record; the file paths
+> it names resolve in git history only.
+
 The one-time migration from the ProjectDoc Yjs plane to the sync-engine
 workspace plane. One PR, one cutover, no coexistence window: the deploy that
 ships the engine also deletes the old DO class (`deleted_classes` destroys
