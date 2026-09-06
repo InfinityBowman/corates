@@ -15,6 +15,12 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Both runner hosts have 12 threads, and the Cloudflare vitest pool starts one
+# workerd per test file up to this limit. Uncapped, the instances starve each
+# other and the heavier workers tests blow their 10s budget.
+env:
+  VITEST_MAX_WORKERS: 4
+
 # ---------------------------------------------------------------
 # Prerequisites (one-time setup):
 #
