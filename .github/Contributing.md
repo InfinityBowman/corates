@@ -64,8 +64,8 @@ Prices are addressed by Stripe lookup key (`team_monthly`, `team_yearly`, `lab_m
 1. Get a test secret key from https://dashboard.stripe.com/test/apikeys
 2. From `packages/web`, run `STRIPE_SECRET_KEY=sk_test_... pnpm stripe:setup`. It writes the key to `packages/web/.env`. Re-run it after changing prices in `@corates/shared/plans`; it moves each lookup key to a new price.
 3. Install the Stripe CLI (https://stripe.com/docs/stripe-cli) and run `stripe login`.
-4. Forward webhooks to the app with `stripe listen --forward-to <app url>/api/auth/stripe/webhook`. `pnpm dev:test` in `packages/web` starts this listener for you against port 3010.
-5. Copy the `whsec_...` value the listener prints into `packages/web/.env` as `STRIPE_WEBHOOK_SECRET_AUTH`. It stays valid for that Stripe CLI session.
+4. Forward webhooks to the app. `turbo dev` starts a listener against the portless dev server through `packages/stripe-dev`, and `pnpm dev:test` in `packages/web` starts one against port 3010 for e2e. To run one by hand: `stripe listen --forward-to https://corates.localhost/api/auth/stripe/webhook --skip-verify`.
+5. Copy the `whsec_...` value the listener prints into `packages/web/.env` as `STRIPE_WEBHOOK_SECRET_AUTH`. The secret is per Stripe CLI session, not per target, so both listeners share it.
 
 ## Development Workflow
 

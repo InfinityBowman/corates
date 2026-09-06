@@ -6,6 +6,6 @@
   "license": "PolyForm-Noncommercial-1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "stripe listen --forward-to http://localhost:3010/api/auth/stripe/webhook"
+    "dev": "stripe listen --forward-to https://corates.localhost/api/auth/stripe/webhook --skip-verify"
   }
 }
