@@ -163,7 +163,7 @@ Org-level subscriptions managed by Better Auth Stripe plugin:
 ```js
 export const subscription = sqliteTable('subscription', {
   id: text('id').primaryKey(),
-  plan: text('plan').notNull(), // Plan name (e.g., 'starter_team', 'team', 'unlimited_team')
+  plan: text('plan').notNull(), // Plan id (e.g., 'team', 'lab', 'enterprise')
   referenceId: text('referenceId').notNull(), // Org ID (orgId) for org-scoped billing
   stripeCustomerId: text('stripeCustomerId'),
   stripeSubscriptionId: text('stripeSubscriptionId'),
@@ -205,7 +205,9 @@ export const orgAccessGrants = sqliteTable('org_access_grants', {
 **Grant types:**
 
 - `trial`: Time-limited trial access (e.g., 14 days)
-- `single_project`: One-time purchase granting access for a specific project
+- `single_project`: Six months of access for a single project
+
+Grants are issued by admins from the org page; neither type is sold self-serve.
 
 #### Two-Factor Authentication
 

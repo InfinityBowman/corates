@@ -20,12 +20,10 @@ import type { Env } from '../../types';
 function resolvePlanFromPriceId(env: Env, priceId: string | null | undefined): string | null {
   if (!priceId) return null;
   const mapping: Record<string, string> = {
-    [env.STRIPE_PRICE_ID_STARTER_TEAM_MONTHLY]: 'starter_team',
-    [env.STRIPE_PRICE_ID_STARTER_TEAM_YEARLY]: 'starter_team',
     [env.STRIPE_PRICE_ID_TEAM_MONTHLY]: 'team',
     [env.STRIPE_PRICE_ID_TEAM_YEARLY]: 'team',
-    [env.STRIPE_PRICE_ID_UNLIMITED_TEAM_MONTHLY]: 'unlimited_team',
-    [env.STRIPE_PRICE_ID_UNLIMITED_TEAM_YEARLY]: 'unlimited_team',
+    [env.STRIPE_PRICE_ID_LAB_MONTHLY]: 'lab',
+    [env.STRIPE_PRICE_ID_LAB_YEARLY]: 'lab',
   };
   return mapping[priceId] ?? null;
 }

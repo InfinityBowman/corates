@@ -252,7 +252,7 @@ export const subscription = sqliteTable(
   'subscription',
   {
     id: text('id').primaryKey().$type<SubscriptionId>(),
-    plan: text('plan').notNull(), // Plan name (e.g., 'starter_team', 'team', 'unlimited_team')
+    plan: text('plan').notNull(), // Plan id (e.g., 'team', 'lab', 'enterprise')
     referenceId: text('referenceId').notNull(), // Org ID (orgId) for org-scoped billing
     stripeCustomerId: text('stripeCustomerId'),
     stripeSubscriptionId: text('stripeSubscriptionId'),

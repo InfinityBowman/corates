@@ -66,10 +66,8 @@ Environment variables are defined in `.env` NOT `.dev.vars`
 - `STRIPE_SECRET_KEY` - Stripe API secret key (shared for all Stripe operations)
 - `STRIPE_WEBHOOK_SECRET_AUTH` - Stripe webhook signing secret for Better Auth subscription webhooks (`/api/auth/stripe/webhook`)
 - `STRIPE_WEBHOOK_SECRET_PURCHASES` - Stripe webhook signing secret for one-time purchase webhooks (`/api/billing/purchases/webhook`)
-- `STRIPE_PRICE_ID_STARTER_TEAM_MONTHLY` / `STRIPE_PRICE_ID_STARTER_TEAM_YEARLY` - Subscription plan price IDs
-- `STRIPE_PRICE_ID_TEAM_MONTHLY` / `STRIPE_PRICE_ID_TEAM_YEARLY` - Subscription plan price IDs
-- `STRIPE_PRICE_ID_UNLIMITED_TEAM_MONTHLY` / `STRIPE_PRICE_ID_UNLIMITED_TEAM_YEARLY` - Subscription plan price IDs
-- `STRIPE_PRICE_ID_SINGLE_PROJECT` - One-time purchase price ID
+- `STRIPE_PRICE_ID_TEAM_MONTHLY` / `STRIPE_PRICE_ID_TEAM_YEARLY` - Team plan price IDs
+- `STRIPE_PRICE_ID_LAB_MONTHLY` / `STRIPE_PRICE_ID_LAB_YEARLY` - Lab plan price IDs
 - `R2_BUCKET` - R2 storage binding for PDFs
 
 ### Frontend (Web)
@@ -165,13 +163,10 @@ If you prefer to set up manually:
    - `STRIPE_SECRET_KEY=sk_test_...`
    - `STRIPE_WEBHOOK_SECRET_AUTH=whsec_...` (from the auth listener)
    - `STRIPE_WEBHOOK_SECRET_PURCHASES=whsec_...` (from the purchases listener)
-   - `STRIPE_PRICE_ID_STARTER_TEAM_MONTHLY=price_...`
-   - `STRIPE_PRICE_ID_STARTER_TEAM_YEARLY=price_...`
    - `STRIPE_PRICE_ID_TEAM_MONTHLY=price_...`
    - `STRIPE_PRICE_ID_TEAM_YEARLY=price_...`
-   - `STRIPE_PRICE_ID_UNLIMITED_TEAM_MONTHLY=price_...`
-   - `STRIPE_PRICE_ID_UNLIMITED_TEAM_YEARLY=price_...`
-   - `STRIPE_PRICE_ID_SINGLE_PROJECT=price_...`
+   - `STRIPE_PRICE_ID_LAB_MONTHLY=price_...`
+   - `STRIPE_PRICE_ID_LAB_YEARLY=price_...`
 
 **Note:** The webhook signing secrets are printed when the listeners start. You only need to copy them once into `.env` - they remain valid for that Stripe CLI session.
 

@@ -112,7 +112,7 @@ function OrgDetailPage() {
   const [editingSubscription, setEditingSubscription] = useState<SubscriptionRecord | null>(null);
 
   // Subscription form state
-  const [subPlan, setSubPlan] = useState('starter_team');
+  const [subPlan, setSubPlan] = useState('team');
   const [subStatus, setSubStatus] = useState('active');
   const [subPeriodStart, setSubPeriodStart] = useState('');
   const [subPeriodEnd, setSubPeriodEnd] = useState('');
@@ -133,7 +133,7 @@ function OrgDetailPage() {
   }, [queryClient, orgId]);
 
   const resetSubscriptionForm = () => {
-    setSubPlan('starter_team');
+    setSubPlan('team');
     setSubStatus('active');
     setSubPeriodStart('');
     setSubPeriodEnd('');

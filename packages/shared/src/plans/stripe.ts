@@ -6,96 +6,63 @@
 import type { PlanId } from './types.js';
 import { getPlanPricing } from './pricing.js';
 import { getPlan } from './plans.js';
-import { getBillingPlanCatalog } from './catalog.js';
 
 export interface StripeProductConfig {
-  planId: PlanId | 'single_project';
+  planId: PlanId;
   name: string;
   description: string;
   prices: Array<{
-    type: 'monthly' | 'yearly' | 'one-time';
+    type: 'monthly' | 'yearly';
     amount: number;
     currency: string;
   }>;
   envKeys: {
     monthly?: string;
     yearly?: string;
-    'one-time'?: string;
   };
 }
 
 /**
  * Product descriptions for Stripe products
  */
-const PRODUCT_DESCRIPTIONS: Record<PlanId | 'single_project', string> = {
+const PRODUCT_DESCRIPTIONS: Record<PlanId, string> = {
   free: 'Free tier (no subscription)',
-  starter_team: 'For small teams',
-  team: 'For collaborative research teams',
-  unlimited_team: 'For large organizations',
-  single_project: 'One-time purchase for a single project',
+  team: 'For small teams running a few reviews',
+  lab: 'For active labs and review groups',
+  enterprise: 'Quoted per customer (no self-serve price)',
 };
 
 /**
  * Environment variable key mappings for Stripe price IDs
  */
-const ENV_KEY_MAPPINGS: Record<PlanId | 'single_project', StripeProductConfig['envKeys']> = {
+const ENV_KEY_MAPPINGS: Record<PlanId, StripeProductConfig['envKeys']> = {
   free: {},
-  starter_team: {
-    monthly: 'STRIPE_PRICE_ID_STARTER_TEAM_MONTHLY',
-    yearly: 'STRIPE_PRICE_ID_STARTER_TEAM_YEARLY',
-  },
   team: {
     monthly: 'STRIPE_PRICE_ID_TEAM_MONTHLY',
     yearly: 'STRIPE_PRICE_ID_TEAM_YEARLY',
   },
-  unlimited_team: {
-    monthly: 'STRIPE_PRICE_ID_UNLIMITED_TEAM_MONTHLY',
-    yearly: 'STRIPE_PRICE_ID_UNLIMITED_TEAM_YEARLY',
+  lab: {
+    monthly: 'STRIPE_PRICE_ID_LAB_MONTHLY',
+    yearly: 'STRIPE_PRICE_ID_LAB_YEARLY',
   },
-  single_project: {
-    'one-time': 'STRIPE_PRICE_ID_SINGLE_PROJECT',
-  },
+  enterprise: {},
 };
 
 /**
  * Get Stripe product configuration for a plan
  * Converts pricing from dollars to cents for Stripe API
  */
-export function getStripeProductConfig(planId: PlanId | 'single_project'): StripeProductConfig {
-  const name = planId === 'single_project' ? 'Single Project' : getPlan(planId).name;
+export function getStripeProductConfig(planId: PlanId): StripeProductConfig {
+  const name = getPlan(planId).name;
   const description = PRODUCT_DESCRIPTIONS[planId];
   const envKeys = ENV_KEY_MAPPINGS[planId];
-
-  if (planId === 'single_project') {
-    const catalog = getBillingPlanCatalog();
-    const singleProjectPlan = catalog.plans.find(p => p.tier === 'single_project');
-    const oneTimeAmount = singleProjectPlan?.oneTime?.amount || 39;
-
-    return {
-      planId: 'single_project',
-      name,
-      description,
-      prices: [
-        {
-          type: 'one-time',
-          amount: Math.round(oneTimeAmount * 100),
-          currency: 'usd',
-        },
-      ],
-      envKeys,
-    };
-  }
 
   const pricing = getPlanPricing(planId);
   if (!pricing) {
     throw new Error(`No pricing found for plan: ${planId}`);
   }
 
-  const prices: Array<{
-    type: 'monthly' | 'yearly' | 'one-time';
-    amount: number;
-    currency: string;
-  }> = [];
+  const prices: StripeProductConfig['prices'] = [];
 
   if (pricing.monthly !== null && pricing.monthly > 0) {
     prices.push({
@@ -123,12 +90,10 @@ export function getStripeProductConfig(planId: PlanId | 'single_project'): Strip
 }
 
 /**
- * Get all Stripe product configurations for subscription plans and single project
+ * Get all Stripe product configurations for self-serve subscription plans
  * Returns products in the order they should be created
  */
 export function getAllStripeProductConfigs(): StripeProductConfig[] {
-  const subscriptionPlans: PlanId[] = ['starter_team', 'team', 'unlimited_team'];
-  const configs = subscriptionPlans.map(planId => getStripeProductConfig(planId));
-  configs.push(getStripeProductConfig('single_project'));
-  return configs;
+  const subscriptionPlans: PlanId[] = ['team', 'lab'];
+  return subscriptionPlans.map(planId => getStripeProductConfig(planId));
 }

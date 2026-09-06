@@ -5,8 +5,9 @@
 
 /**
  * Plan ID - identifies a subscription tier
+ * Enterprise is provisioned by hand through the admin UI, never via checkout.
  */
-export type PlanId = 'free' | 'starter_team' | 'team' | 'unlimited_team';
+export type PlanId = 'free' | 'team' | 'lab' | 'enterprise';
 
 /**
  * Entitlement keys - boolean capabilities that can be enabled/disabled per plan

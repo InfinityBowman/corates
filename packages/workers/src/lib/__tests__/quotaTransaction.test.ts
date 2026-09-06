@@ -56,7 +56,7 @@ describe('checkQuotaForInsert', () => {
     // Create subscription with 3 project limit
     await seedSubscription({
       id: 'sub-1',
-      plan: 'starter_team',
+      plan: 'team',
       referenceId: orgId,
       status: 'active',
       createdAt: nowSec,
@@ -104,7 +104,7 @@ describe('checkQuotaForInsert', () => {
     // Create subscription with 3 project limit
     await seedSubscription({
       id: 'sub-1',
-      plan: 'starter_team',
+      plan: 'team',
       referenceId: orgId,
       status: 'active',
       createdAt: nowSec,
@@ -166,7 +166,7 @@ describe('checkQuotaForInsert', () => {
     // Create unlimited subscription
     await seedSubscription({
       id: 'sub-1',
-      plan: 'unlimited_team',
+      plan: 'enterprise',
       referenceId: orgId,
       status: 'active',
       createdAt: nowSec,
@@ -214,7 +214,7 @@ describe('insertWithQuotaCheck', () => {
 
     await seedSubscription({
       id: 'sub-1',
-      plan: 'starter_team',
+      plan: 'team',
       referenceId: orgId,
       status: 'active',
       createdAt: nowSec,
@@ -286,7 +286,7 @@ describe('insertWithQuotaCheck', () => {
 
     await seedSubscription({
       id: 'sub-1',
-      plan: 'starter_team',
+      plan: 'team',
       referenceId: orgId,
       status: 'active',
       createdAt: nowSec,
@@ -391,7 +391,7 @@ describe('checkCollaboratorQuota', () => {
 
     await seedSubscription({
       id: 'sub-1',
-      plan: 'starter_team', // 10 collaborators limit
+      plan: 'free', // 3 collaborators limit
       referenceId: orgId,
       status: 'active',
       createdAt: nowSec,
@@ -405,7 +405,7 @@ describe('checkCollaboratorQuota', () => {
 
     expect(result.allowed).toBe(true);
     expect(result.used).toBe(2); // Only non-owners counted
-    expect(result.limit).toBe(10);
+    expect(result.limit).toBe(3);
   });
 
   it('should block when collaborator limit reached', async () => {
@@ -436,8 +436,8 @@ describe('checkCollaboratorQuota', () => {
       createdAt: nowSec,
     });
 
-    // Create 10 regular members (at limit for starter_team)
-    for (let i = 0; i < 10; i++) {
+    // Create 3 regular members (at limit for free)
+    for (let i = 0; i < 3; i++) {
       await seedUser({
         id: `member-${i}`,
         name: `Member ${i}`,
@@ -457,7 +457,7 @@ describe('checkCollaboratorQuota', () => {
 
     await seedSubscription({
       id: 'sub-1',
-      plan: 'starter_team', // 10 collaborators limit
+      plan: 'free', // 3 collaborators limit
       referenceId: orgId,
       status: 'active',
       createdAt: nowSec,
@@ -470,8 +470,8 @@ describe('checkCollaboratorQuota', () => {
     const result = await checkCollaboratorQuota(db, orgId);
 
     expect(result.allowed).toBe(false);
-    expect(result.used).toBe(10);
-    expect(result.limit).toBe(10);
+    expect(result.used).toBe(3);
+    expect(result.limit).toBe(3);
     expect(result.error).toBeDefined();
   });
 });

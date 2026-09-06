@@ -291,19 +291,17 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
 
   // Stripe plugin for org-scoped subscriptions
   // IMPORTANT: Stripe price amounts must match prices defined in @corates/shared/plans/pricing.ts
-  // - starter_team: $8/month, $80/year
-  // - team: $29/month, $290/year
-  // - unlimited_team: $59/month, $590/year
+  // - team: $30/month, $300/year
+  // - lab: $90/month, $900/year
+  // Enterprise is provisioned by hand in the admin UI and has no Stripe price.
   if (env.STRIPE_SECRET_KEY && env.STRIPE_WEBHOOK_SECRET_AUTH) {
     const stripeClient = createStripeClient(env.STRIPE_SECRET_KEY);
 
     const requiredPriceIds = {
-      STRIPE_PRICE_ID_STARTER_TEAM_MONTHLY: env.STRIPE_PRICE_ID_STARTER_TEAM_MONTHLY,
-      STRIPE_PRICE_ID_STARTER_TEAM_YEARLY: env.STRIPE_PRICE_ID_STARTER_TEAM_YEARLY,
       STRIPE_PRICE_ID_TEAM_MONTHLY: env.STRIPE_PRICE_ID_TEAM_MONTHLY,
       STRIPE_PRICE_ID_TEAM_YEARLY: env.STRIPE_PRICE_ID_TEAM_YEARLY,
-      STRIPE_PRICE_ID_UNLIMITED_TEAM_MONTHLY: env.STRIPE_PRICE_ID_UNLIMITED_TEAM_MONTHLY,
-      STRIPE_PRICE_ID_UNLIMITED_TEAM_YEARLY: env.STRIPE_PRICE_ID_UNLIMITED_TEAM_YEARLY,
+      STRIPE_PRICE_ID_LAB_MONTHLY: env.STRIPE_PRICE_ID_LAB_MONTHLY,
+      STRIPE_PRICE_ID_LAB_YEARLY: env.STRIPE_PRICE_ID_LAB_YEARLY,
     } as const;
 
     const missing = Object.entries(requiredPriceIds)
@@ -323,19 +321,14 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
           enabled: true,
           plans: [
             {
-              name: 'starter_team',
-              priceId: requiredPriceIds.STRIPE_PRICE_ID_STARTER_TEAM_MONTHLY,
-              annualDiscountPriceId: requiredPriceIds.STRIPE_PRICE_ID_STARTER_TEAM_YEARLY,
-            },
-            {
               name: 'team',
               priceId: requiredPriceIds.STRIPE_PRICE_ID_TEAM_MONTHLY,
               annualDiscountPriceId: requiredPriceIds.STRIPE_PRICE_ID_TEAM_YEARLY,
             },
             {
-              name: 'unlimited_team',
-              priceId: requiredPriceIds.STRIPE_PRICE_ID_UNLIMITED_TEAM_MONTHLY,
-              annualDiscountPriceId: requiredPriceIds.STRIPE_PRICE_ID_UNLIMITED_TEAM_YEARLY,
+              name: 'lab',
+              priceId: requiredPriceIds.STRIPE_PRICE_ID_LAB_MONTHLY,
+              annualDiscountPriceId: requiredPriceIds.STRIPE_PRICE_ID_LAB_YEARLY,
             },
           ],
           // Real-time notifications for subscription changes

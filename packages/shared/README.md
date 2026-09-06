@@ -244,17 +244,17 @@ export const PLANS = {
   free: {
     name: 'Free',
     entitlements: {
-      'project.create': false,
+      'project.create': true,
     },
     quotas: {
-      'projects.max': 0,
-      'collaborators.org.max': 0,
+      'projects.max': 1,
+      'collaborators.org.max': 3,
     },
   },
-  starter_team: {/* ... */},
   team: {/* ... */},
-  unlimited_team: {
-    name: 'Unlimited Team',
+  lab: {/* ... */},
+  enterprise: {
+    name: 'Enterprise',
     quotas: {
       'projects.max': -1, // -1 = unlimited
       'collaborators.org.max': -1,
@@ -269,9 +269,9 @@ Pricing is defined separately in [src/plans/pricing.ts](src/plans/pricing.ts):
 
 ```typescript
 export const PLAN_PRICING = {
-  starter_team: {
-    monthly: { amount: 4900, currency: 'usd' }, // $49/month
-    yearly: { amount: 49900, currency: 'usd' }, // $499/year
+  team: {
+    monthly: 30, // USD per month
+    yearly: 300, // USD per year
   },
   // ...
 };
@@ -279,7 +279,7 @@ export const PLAN_PRICING = {
 
 ### Grant-Based Access
 
-CoRATES supports time-limited grants (trial, single_project) that temporarily upgrade plan access:
+CoRATES supports admin-issued, time-limited grants (trial, single_project) that temporarily upgrade plan access:
 
 ```typescript
 import { getGrantPlan } from '@corates/shared/plans';

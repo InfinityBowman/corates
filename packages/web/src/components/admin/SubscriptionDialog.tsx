@@ -86,9 +86,9 @@ export function SubscriptionDialog({
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value='starter_team'>Starter Team</SelectItem>
                   <SelectItem value='team'>Team</SelectItem>
-                  <SelectItem value='unlimited_team'>Unlimited Team</SelectItem>
+                  <SelectItem value='lab'>Lab</SelectItem>
+                  <SelectItem value='enterprise'>Enterprise</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>

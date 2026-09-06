@@ -18,37 +18,29 @@ For each product, configure:
 
 ### Example Product Setup
 
-**Starter Team**
-
-- Name: `CoRATES Starter Team`
-- Description: `For small teams running a few projects. Up to 3 projects and 10 collaborators.`
-- Image: Your logo or a plan-specific icon
-
 **Team**
 
 - Name: `CoRATES Team`
-- Description: `For active labs and review groups. Up to 10 projects and 25 collaborators.`
+- Description: `For small teams running a few reviews. Up to 3 projects, unlimited collaborators.`
+- Prices: $30/month, $300/year
+- Image: Your logo or a plan-specific icon
 
-**Unlimited Team**
+**Lab**
 
-- Name: `CoRATES Unlimited`
-- Description: `Unlimited projects and collaborators for large research groups.`
+- Name: `CoRATES Lab`
+- Description: `For active labs and review groups. Up to 10 projects, unlimited collaborators.`
+- Prices: $90/month, $900/year
 
-**Single Project**
-
-- Name: `CoRATES Single Project`
-- Description: `One-time purchase for a single project. 1 project and up to 25 collaborators for 6 months.`
+Enterprise has no Stripe product. Admins create the subscription row from the org page in the admin UI.
 
 ### Price IDs
 
 After creating products, add prices and copy the Price IDs:
 
-| Plan           | Monthly Price ID                         | Yearly Price ID                         |
-| -------------- | ---------------------------------------- | --------------------------------------- |
-| Starter Team   | `STRIPE_PRICE_ID_STARTER_TEAM_MONTHLY`   | `STRIPE_PRICE_ID_STARTER_TEAM_YEARLY`   |
-| Team           | `STRIPE_PRICE_ID_TEAM_MONTHLY`           | `STRIPE_PRICE_ID_TEAM_YEARLY`           |
-| Unlimited Team | `STRIPE_PRICE_ID_UNLIMITED_TEAM_MONTHLY` | `STRIPE_PRICE_ID_UNLIMITED_TEAM_YEARLY` |
-| Single Project | `STRIPE_PRICE_ID_SINGLE_PROJECT`         | -                                       |
+| Plan | Monthly Price ID               | Yearly Price ID               |
+| ---- | ------------------------------ | ----------------------------- |
+| Team | `STRIPE_PRICE_ID_TEAM_MONTHLY` | `STRIPE_PRICE_ID_TEAM_YEARLY` |
+| Lab  | `STRIPE_PRICE_ID_LAB_MONTHLY`  | `STRIPE_PRICE_ID_LAB_YEARLY`  |
 
 ## 2. Create Webhooks
 
@@ -102,13 +94,10 @@ wrangler secret put STRIPE_WEBHOOK_SECRET_AUTH --env production
 wrangler secret put STRIPE_WEBHOOK_SECRET_PURCHASES --env production
 
 # Price IDs
-wrangler secret put STRIPE_PRICE_ID_STARTER_TEAM_MONTHLY --env production
-wrangler secret put STRIPE_PRICE_ID_STARTER_TEAM_YEARLY --env production
 wrangler secret put STRIPE_PRICE_ID_TEAM_MONTHLY --env production
 wrangler secret put STRIPE_PRICE_ID_TEAM_YEARLY --env production
-wrangler secret put STRIPE_PRICE_ID_UNLIMITED_TEAM_MONTHLY --env production
-wrangler secret put STRIPE_PRICE_ID_UNLIMITED_TEAM_YEARLY --env production
-wrangler secret put STRIPE_PRICE_ID_SINGLE_PROJECT --env production
+wrangler secret put STRIPE_PRICE_ID_LAB_MONTHLY --env production
+wrangler secret put STRIPE_PRICE_ID_LAB_YEARLY --env production
 ```
 
 ## 5. Configure Customer Portal
@@ -143,15 +132,12 @@ The portal URL is generated dynamically via the `/api/billing/portal` endpoint.
 
 ## Environment Variables Reference
 
-| Variable                                 | Description                                        |
-| ---------------------------------------- | -------------------------------------------------- |
-| `STRIPE_SECRET_KEY`                      | Stripe API secret key (`sk_live_*` or `sk_test_*`) |
-| `STRIPE_WEBHOOK_SECRET_AUTH`             | Signing secret for auth webhook endpoint           |
-| `STRIPE_WEBHOOK_SECRET_PURCHASES`        | Signing secret for purchases webhook endpoint      |
-| `STRIPE_PRICE_ID_STARTER_TEAM_MONTHLY`   | Price ID for Starter Team monthly plan             |
-| `STRIPE_PRICE_ID_STARTER_TEAM_YEARLY`    | Price ID for Starter Team yearly plan              |
-| `STRIPE_PRICE_ID_TEAM_MONTHLY`           | Price ID for Team monthly plan                     |
-| `STRIPE_PRICE_ID_TEAM_YEARLY`            | Price ID for Team yearly plan                      |
-| `STRIPE_PRICE_ID_UNLIMITED_TEAM_MONTHLY` | Price ID for Unlimited Team monthly plan           |
-| `STRIPE_PRICE_ID_UNLIMITED_TEAM_YEARLY`  | Price ID for Unlimited Team yearly plan            |
-| `STRIPE_PRICE_ID_SINGLE_PROJECT`         | Price ID for single project purchase               |
+| Variable                          | Description                                        |
+| --------------------------------- | -------------------------------------------------- |
+| `STRIPE_SECRET_KEY`               | Stripe API secret key (`sk_live_*` or `sk_test_*`) |
+| `STRIPE_WEBHOOK_SECRET_AUTH`      | Signing secret for auth webhook endpoint           |
+| `STRIPE_WEBHOOK_SECRET_PURCHASES` | Signing secret for purchases webhook endpoint      |
+| `STRIPE_PRICE_ID_TEAM_MONTHLY`    | Price ID for Team monthly plan                     |
+| `STRIPE_PRICE_ID_TEAM_YEARLY`     | Price ID for Team yearly plan                      |
+| `STRIPE_PRICE_ID_LAB_MONTHLY`     | Price ID for Lab monthly plan                      |
+| `STRIPE_PRICE_ID_LAB_YEARLY`      | Price ID for Lab yearly plan                       |

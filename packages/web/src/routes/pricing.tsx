@@ -11,17 +11,15 @@ const catalog = getBillingPlanCatalog();
 
 // The catalog lists subscriptions cheapest-first, so the first one is the entry price.
 const entryPlan = catalog.plans.find(p => p.cta === 'subscribe');
-const singleProjectPlan = catalog.plans.find(p => p.tier === 'single_project');
+const freePlan = catalog.plans.find(p => p.tier === 'free');
 
 // Prices are stated in the description as text so that the crawlers and assistants people
 // use to shortlist tools can quote them without rendering the page.
 const pageDescription = [
   'Appraise a single study with AMSTAR 2, RoB 2, or ROBINS-I free in your browser, with no account.',
-  entryPlan?.price?.monthly != null ?
-    `Team plans start at $${entryPlan.price.monthly} per month.`
-  : '',
-  singleProjectPlan?.oneTime ?
-    `A single review project is $${singleProjectPlan.oneTime.amount} once for ${singleProjectPlan.oneTime.durationMonths} months.`
+  freePlan ? `A free account includes ${freePlan.features[0].toLowerCase()}.` : '',
+  entryPlan?.price?.yearly != null ?
+    `Team plans start at $${entryPlan.price.yearly} per year with unlimited collaborators.`
   : '',
   'The co-reviewers you invite never pay.',
 ]
@@ -78,7 +76,7 @@ function PricingPage() {
           <p className='text-muted-foreground mt-4 text-lg'>
             Individual appraisals with PDF annotation and export are always free.
             <br />
-            Choose a plan when you're ready to collaborate with your team.
+            Start a shared project for free, and upgrade when your team needs more.
           </p>
         </div>
 
@@ -86,16 +84,16 @@ function PricingPage() {
           <PricingTable mode='marketing' getSignUpUrl={urls.signUp} />
         </div>
 
-        <PlanFAQ context='marketing' />
+        <PlanFAQ />
 
         {/* Contact section */}
         <div className='mt-12 text-center'>
           <p className='text-muted-foreground text-sm'>
-            Need a custom plan for your institution?{' '}
+            Teaching a course? Course licenses are $200 per semester.{' '}
             <Link to='/contact' className='text-primary hover:text-primary/80'>
               Contact us
             </Link>{' '}
-            for enterprise pricing.
+            with your class size and dates.
           </p>
         </div>
       </main>
