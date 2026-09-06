@@ -118,7 +118,7 @@ test.describe('Billing flows', () => {
     await signUpViaUI(page);
 
     // --- Cancel checkout ---
-    await clickPlanButton(page, 'Starter Team');
+    await clickPlanButton(page, 'Team');
     await page.waitForURL(/checkout\.stripe\.com/, { timeout: 30_000 });
 
     await waitForCheckoutFramesToSettle(page);
@@ -132,18 +132,18 @@ test.describe('Billing flows', () => {
     await expect(page.getByText('No changes were made to your subscription.')).toBeVisible();
 
     // --- Complete checkout ---
-    await clickPlanButton(page, 'Starter Team');
+    await clickPlanButton(page, 'Team');
     await fillStripeCheckout(page);
 
     await expect(page.getByText('Payment successful!')).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText('Your subscription has been activated.')).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Starter Team' })).toBeVisible({
+    await expect(page.getByRole('heading', { name: 'Team', exact: true })).toBeVisible({
       timeout: 15_000,
     });
     await expect(page.getByText('Active')).toBeVisible();
 
-    // --- Upgrade to Team ---
-    await clickPlanButton(page, 'Team');
+    // --- Upgrade to Lab ---
+    await clickPlanButton(page, 'Lab');
 
     // Upgrade uses Stripe's confirmation page (card already on file)
     await page.waitForURL(/checkout\.stripe\.com|billing\.stripe\.com/, { timeout: 30_000 });
@@ -153,7 +153,9 @@ test.describe('Billing flows', () => {
     });
 
     await expect(page.getByText('Payment successful!')).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByRole('heading', { name: 'Team' })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('heading', { name: 'Lab', exact: true })).toBeVisible({
+      timeout: 15_000,
+    });
     await expect(page.getByText('Active')).toBeVisible();
   });
 });
