@@ -131,6 +131,7 @@ describe('createCheckout', () => {
   });
 });
 
+const stripePricesListMock = vi.fn();
 const stripeRetrieveMock = vi.fn();
 const stripeUpdateMock = vi.fn();
 const syncStripeSubscriptionMock = vi.fn();
@@ -138,6 +139,7 @@ const syncStripeSubscriptionMock = vi.fn();
 vi.mock('@corates/shared/stripe', async importOriginal => ({
   ...(await importOriginal<typeof import('@corates/shared/stripe')>()),
   createStripeClient: () => ({
+    prices: { list: (...args: unknown[]) => stripePricesListMock(...args) },
     subscriptions: {
       retrieve: (...args: unknown[]) => stripeRetrieveMock(...args),
       update: (...args: unknown[]) => stripeUpdateMock(...args),
@@ -163,10 +165,7 @@ describe('createCheckout for an existing Stripe subscriber', () => {
       stripeSubscriptionId: 'sub_123',
       periodEnd: new Date(Date.now() + 86_400_000),
     });
-    // CI has no Stripe price ids in the worker env; the local .env does.
-    const testEnv = env as unknown as Record<string, string | undefined>;
-    const previousPriceId = testEnv.STRIPE_PRICE_ID_LAB_YEARLY;
-    testEnv.STRIPE_PRICE_ID_LAB_YEARLY = 'price_lab_yearly';
+    stripePricesListMock.mockResolvedValueOnce({ data: [{ id: 'price_lab_yearly' }] });
     stripeRetrieveMock.mockResolvedValueOnce({ items: { data: [{ id: 'si_123' }] } });
     stripeUpdateMock.mockResolvedValueOnce({});
     syncStripeSubscriptionMock.mockResolvedValueOnce({ status: 'active' });
@@ -177,14 +176,14 @@ describe('createCheckout for an existing Stripe subscriber', () => {
       name: owner.name,
       activeOrganizationId: org.id,
     });
-    let result: unknown;
-    try {
-      result = await createCheckout(db, session, dummyRequest, 'lab', 'yearly');
-    } finally {
-      testEnv.STRIPE_PRICE_ID_LAB_YEARLY = previousPriceId;
-    }
+    const result = await createCheckout(db, session, dummyRequest, 'lab', 'yearly');
 
     expect((result as { url: string }).url).toContain('/settings/billing?success=true');
+    expect(stripePricesListMock).toHaveBeenCalledWith({
+      lookup_keys: ['lab_yearly'],
+      active: true,
+      limit: 1,
+    });
     expect(stripeUpdateMock).toHaveBeenCalledWith('sub_123', {
       items: [{ id: 'si_123', price: 'price_lab_yearly' }],
       proration_behavior: 'always_invoice',

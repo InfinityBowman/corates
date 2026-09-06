@@ -66,8 +66,6 @@ Environment variables are defined in `.env` NOT `.dev.vars`
 - `STRIPE_SECRET_KEY` - Stripe API secret key (shared for all Stripe operations)
 - `STRIPE_WEBHOOK_SECRET_AUTH` - Stripe webhook signing secret for Better Auth subscription webhooks (`/api/auth/stripe/webhook`)
 - `STRIPE_WEBHOOK_SECRET_PURCHASES` - Stripe webhook signing secret for one-time purchase webhooks (`/api/billing/purchases/webhook`)
-- `STRIPE_PRICE_ID_TEAM_MONTHLY` / `STRIPE_PRICE_ID_TEAM_YEARLY` - Team plan price IDs
-- `STRIPE_PRICE_ID_LAB_MONTHLY` / `STRIPE_PRICE_ID_LAB_YEARLY` - Lab plan price IDs
 - `R2_BUCKET` - R2 storage binding for PDFs
 
 ### Frontend (Web)
@@ -158,15 +156,11 @@ If you prefer to set up manually:
 2. Authenticate: `stripe login`
 3. Run `turbo dev` - the Stripe listeners will start automatically
 4. Copy the two `whsec_...` signing secrets printed by each listener
-5. Create products and prices in Stripe Dashboard (Test mode)
+5. Run `pnpm stripe:setup` from `packages/web` to create the products and prices (keyed by lookup key, so no price ids are needed)
 6. Add all configuration to `packages/workers/.env`:
    - `STRIPE_SECRET_KEY=sk_test_...`
    - `STRIPE_WEBHOOK_SECRET_AUTH=whsec_...` (from the auth listener)
    - `STRIPE_WEBHOOK_SECRET_PURCHASES=whsec_...` (from the purchases listener)
-   - `STRIPE_PRICE_ID_TEAM_MONTHLY=price_...`
-   - `STRIPE_PRICE_ID_TEAM_YEARLY=price_...`
-   - `STRIPE_PRICE_ID_LAB_MONTHLY=price_...`
-   - `STRIPE_PRICE_ID_LAB_YEARLY=price_...`
 
 **Note:** The webhook signing secrets are printed when the listeners start. You only need to copy them once into `.env` - they remain valid for that Stripe CLI session.
 

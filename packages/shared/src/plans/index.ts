@@ -32,5 +32,11 @@ export type { PlanPricing } from './pricing.js';
 export { getBillingPlanCatalog, CHECKOUT_ELIGIBLE_TIERS } from './catalog.js';
 
 // Stripe setup
-export { getStripeProductConfig, getAllStripeProductConfigs } from './stripe.js';
-export type { StripeProductConfig } from './stripe.js';
+export {
+  STRIPE_PLAN_IDS,
+  getStripeProductConfig,
+  getAllStripeProductConfigs,
+  getPriceLookupKey,
+  parsePriceLookupKey,
+} from './stripe.js';
+export type { StripeProductConfig, BillingInterval } from './stripe.js';

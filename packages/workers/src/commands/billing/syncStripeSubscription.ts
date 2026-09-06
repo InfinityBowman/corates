@@ -13,20 +13,10 @@
 import { eq } from 'drizzle-orm';
 import { subscription } from '@corates/db/schema';
 import { createStripeClient } from '@corates/shared/stripe';
+import { parsePriceLookupKey } from '@corates/shared/plans';
 import { info, warn } from '../../lib/logger';
 import type { createDb } from '@corates/db/client';
 import type { Env } from '../../types';
-
-function resolvePlanFromPriceId(env: Env, priceId: string | null | undefined): string | null {
-  if (!priceId) return null;
-  const mapping: Record<string, string> = {
-    [env.STRIPE_PRICE_ID_TEAM_MONTHLY]: 'team',
-    [env.STRIPE_PRICE_ID_TEAM_YEARLY]: 'team',
-    [env.STRIPE_PRICE_ID_LAB_MONTHLY]: 'lab',
-    [env.STRIPE_PRICE_ID_LAB_YEARLY]: 'lab',
-  };
-  return mapping[priceId] ?? null;
-}
 
 // Written to the plan column when no price mapping matches, so the bad row is
 // findable in the DB as well as the logs.
@@ -93,8 +83,7 @@ export async function syncStripeSubscription(
 
   const values = {
     plan:
-      item?.price?.lookup_key ??
-      resolvePlanFromPriceId(env, item?.price?.id) ??
+      parsePriceLookupKey(item?.price?.lookup_key)?.planId ??
       (sub.metadata as Record<string, string> | undefined)?.plan ??
       existing?.plan ??
       UNRESOLVED_PLAN,
