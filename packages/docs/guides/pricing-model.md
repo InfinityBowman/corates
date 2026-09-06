@@ -47,6 +47,7 @@ organization.
 The Free project is per user, not per organization. Projects in every Free org
 a user owns count toward one limit, so creating extra orgs does not add free
 projects. Orgs on a paid plan or a grant never consume their owner's free slot.
+Only org owners create projects; collaborators work inside them.
 See `checkFreeProjectCap` in `packages/workers/src/lib/freeProjectCap.ts`.
 
 ## What every tier keeps

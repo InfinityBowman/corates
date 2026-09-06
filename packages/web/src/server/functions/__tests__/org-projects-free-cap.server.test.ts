@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { env } from 'cloudflare:workers';
 import { createDb } from '@corates/db/client';
 import { resetTestDatabase } from '@/__tests__/server/helpers';
-import { buildOrg, buildProject, resetCounter } from '@/__tests__/server/factories';
+import { buildOrg, buildOrgMember, buildProject, resetCounter } from '@/__tests__/server/factories';
 import type { Session } from '@/server/middleware/auth';
 import { DomainErrorException } from '@corates/shared';
 import { createOrgProject } from '@/server/functions/org-projects.server';
@@ -49,6 +49,24 @@ describe('free project cap', () => {
         reason: 'free_project_cap',
         used: 1,
         limit: 1,
+      });
+    }
+  });
+
+  it('rejects non-owner members, so the cap always attributes to an owner', async () => {
+    const { org } = await buildOrg();
+    const { user: member } = await buildOrgMember({ orgId: org.id, role: 'member' });
+
+    try {
+      await createOrgProject(sessionFor(member), createDb(env.DB), org.id, {
+        name: 'Member project',
+      });
+      expect.fail('expected the owner role check to reject');
+    } catch (err) {
+      expect(err).toBeInstanceOf(DomainErrorException);
+      expect((err as DomainErrorException).details).toMatchObject({
+        reason: 'insufficient_org_role',
+        required: 'owner',
       });
     }
   });

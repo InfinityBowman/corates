@@ -75,7 +75,8 @@ export async function createOrgProject(
   orgId: OrgId,
   data: { name: string; description?: string },
 ) {
-  const membership = await requireOrgMembership(session, db, orgId);
+  // Projects are billed to the org owner, so only owners create them
+  const membership = await requireOrgMembership(session, db, orgId, 'owner');
   if (!membership.ok) throw membership.error;
 
   const writeAccess = await requireOrgWriteAccess('POST', db, orgId);
