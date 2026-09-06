@@ -89,7 +89,8 @@ function PricingPage() {
         {/* Contact section */}
         <div className='mt-12 text-center'>
           <p className='text-muted-foreground text-sm'>
-            Teaching a course? Course licenses are $200 per semester.{' '}
+            Teaching a course? Discounted course licenses give your class shared projects for the
+            term.{' '}
             <Link to='/contact' className='text-primary hover:text-primary/80'>
               Contact us
             </Link>{' '}

@@ -36,7 +36,8 @@ anchors:
 - **Institution**, around $6,000/year. Site-wide access for every lab and
   course. Room to discount for smaller schools and go higher for large ones.
 
-A **course license** is $200/semester and is arranged by contact. It can be
+A **course license** is arranged by contact and presented as discounted, with
+$200/semester as the internal anchor. It can be
 provisioned as an Enterprise or Lab subscription with a period end matching the
 term.
 

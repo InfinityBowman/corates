@@ -36,7 +36,7 @@ const FAQ_ITEMS: FAQItemData[] = [
   {
     question: 'Do you offer course licenses?',
     answer:
-      'Yes. If you teach evidence appraisal, a course license is $200 per semester and gives your class shared projects for the term. Contact us with your course size and dates.',
+      'Yes. If you teach evidence appraisal, a discounted course license gives your class shared projects for the term. Contact us with your course size and dates and we will set it up.',
   },
   {
     question: 'Can I switch plans at any time?',
