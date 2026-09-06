@@ -44,7 +44,7 @@ export function useProjectExport(projectId: string) {
     const date = new Date().toISOString().slice(0, 10);
     const projectName = safeFilename(projectMeta.name || 'project');
     downloadCsv(csv, `corates-${projectName}-${date}.csv`);
-    clientLogger.info('client.export.project', { format: 'csv' });
+    clientLogger.info('client.export.project', { format: 'csv', scope: 'all' });
   }, [studies, enrich, members, exportMeta, projectMeta.name]);
 
   const exportAllPdf = useCallback(() => {
@@ -57,7 +57,7 @@ export function useProjectExport(projectId: string) {
     const date = new Date().toISOString().slice(0, 10);
     const projectName = safeFilename(projectMeta.name || 'project');
     downloadPdf(doc, `corates-${projectName}-${date}.pdf`);
-    clientLogger.info('client.export.project', { format: 'pdf' });
+    clientLogger.info('client.export.project', { format: 'pdf', scope: 'all' });
   }, [studies, enrich, projectMeta.name, members, exportMeta]);
 
   const exportStudyCsv = useCallback(
@@ -66,7 +66,7 @@ export function useProjectExport(projectId: string) {
       if (!study) return;
       const csv = buildProjectCsv({ studies: enrich([study]), members, meta: exportMeta });
       downloadCsv(csv, `${safeFilename(study.name || 'study')}.csv`);
-      clientLogger.info('client.export.study', { format: 'csv' });
+      clientLogger.info('client.export.project', { format: 'csv', scope: 'single' });
     },
     [studies, enrich, members, exportMeta],
   );
@@ -82,7 +82,7 @@ export function useProjectExport(projectId: string) {
         meta: exportMeta,
       });
       downloadPdf(doc, `${safeFilename(study.name || 'study')}.pdf`);
-      clientLogger.info('client.export.study', { format: 'pdf' });
+      clientLogger.info('client.export.project', { format: 'pdf', scope: 'single' });
     },
     [studies, enrich, members, exportMeta],
   );
