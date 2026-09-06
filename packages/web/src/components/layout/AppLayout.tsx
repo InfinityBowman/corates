@@ -12,6 +12,7 @@ import { useMembershipSync } from '@/hooks/useMembershipSync';
 import { connectionPool } from '@/project/ConnectionPool';
 import { LOCAL_PROJECT_ID } from '@/project/localProject';
 import { AppNavbar } from './AppNavbar';
+import { PaymentIssueBanner } from '@/components/billing/PaymentIssueBanner';
 import { Sidebar } from './Sidebar';
 
 const SIDEBAR_MODE_KEY = 'corates-sidebar-mode';
@@ -120,6 +121,7 @@ export function AppLayout() {
         )}
 
         <main className='text-foreground flex flex-1 flex-col overflow-auto'>
+          <PaymentIssueBanner />
           <Outlet />
         </main>
       </div>

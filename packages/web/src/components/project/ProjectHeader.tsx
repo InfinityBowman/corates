@@ -1,5 +1,5 @@
 /**
- * ProjectHeader - Inline-editable project name and description
+ * ProjectHeader - Inline-editable project name
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -13,34 +13,21 @@ import { SyncStatusIndicator } from './SyncStatusIndicator';
 
 interface ProjectHeaderProps {
   name?: string;
-  description?: string;
   onRename?: (name: string) => Promise<void> | void;
-  onUpdateDescription?: (desc: string) => Promise<void> | void;
   onBack?: () => void;
 }
 
-export function ProjectHeader({
-  name,
-  description,
-  onRename,
-  onUpdateDescription,
-  onBack,
-}: ProjectHeaderProps) {
+export function ProjectHeader({ name, onRename, onBack }: ProjectHeaderProps) {
   const { userRole } = useProjectContext();
 
   const canEdit = useMemo(() => userRole === 'owner' || userRole === 'collaborator', [userRole]);
 
   const [localName, setLocalName] = useState(name || '');
-  const [localDescription, setLocalDescription] = useState(description || '');
 
   // Sync local state when external data loads
   useEffect(() => {
     if (name) setLocalName(name);
   }, [name]);
-
-  useEffect(() => {
-    setLocalDescription(description || '');
-  }, [description]);
 
   const handleNameCommit = useCallback(
     async (value: string) => {
@@ -59,24 +46,6 @@ export function ProjectHeader({
       }
     },
     [name, onRename],
-  );
-
-  const handleDescriptionCommit = useCallback(
-    async (value: string) => {
-      const newDesc = value.trim();
-      const currentDesc = description || '';
-      if (newDesc !== currentDesc) {
-        setLocalDescription(newDesc);
-        try {
-          await onUpdateDescription?.(newDesc);
-        } catch (error) {
-          const { handleError } = await import('@/lib/error-utils');
-          await handleError(error, { toastTitle: 'Failed to update description' });
-          setLocalDescription(description || '');
-        }
-      }
-    },
-    [description, onUpdateDescription],
   );
 
   return (
@@ -108,20 +77,6 @@ export function ProjectHeader({
                 {userRole}
               </Badge>
             )}
-          </div>
-
-          {/* Project Description */}
-          <div className='mt-0.5 w-full max-w-2xl'>
-            <InlineEdit
-              value={localDescription}
-              onCommit={handleDescriptionCommit}
-              disabled={!canEdit}
-              showEditIcon={canEdit}
-              multiline
-              placeholder='Add a project description...'
-              ariaLabel='Edit project description'
-              className='text-muted-foreground text-sm'
-            />
           </div>
         </div>
       </div>
