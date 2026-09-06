@@ -12,7 +12,7 @@
     "deploy:staging": "pnpm --filter @corates/shared build && wrangler deploy --env staging",
     "tail": "wrangler tail corates-stripe-purchases-prod",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint ."
+    "lint": "oxlint"
   },
   "dependencies": {
     "@corates/db": "workspace:*",
@@ -24,7 +24,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260902.1",
-    "typescript": "^5.9.3",
+    "typescript": "^7.0.2",
     "wrangler": "^4.128.0"
   }
 }

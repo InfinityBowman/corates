@@ -15,17 +15,18 @@ minimumReleaseAgeExclude:
 overrides:
   better-sqlite3: ^13.0.2
 
-onlyBuiltDependencies:
-  - '@parcel/watcher'
-  - '@prisma/engines'
-  - '@sentry/cli'
-  - agent-browser
-  - better-sqlite3
-  - esbuild
-  - msw
-  - prisma
-  - protobufjs
-  - puppeteer
-  - sharp
-  - unrs-resolver
-  - workerd
+allowBuilds:
+  '@parcel/watcher': true
+  '@prisma/engines': true
+  '@sentry/cli': true
+  agent-browser: true
+  better-sqlite3: true
+  esbuild: true
+  msw: true
+  prisma: true
+  protobufjs: true
+  puppeteer: true
+  sharp: true
+  unrs-resolver: true
+  workerd: true
+  core-js: false
