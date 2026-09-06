@@ -169,7 +169,8 @@ with a past-tense action (`client.checklist.created`, `client.project.exported`)
 only record: the events are production-only and batched, so they undercount, and prop keys
 matching `/email|password|token|secret|authorization|cookie|userid/i` are dropped by
 `sanitizeClientLogData`. Plausible still loads in `__root.tsx` for pageviews, but nothing
-sends it custom events.
+sends it custom events. Its custom-event history from May to August 2026 was copied into
+Loki with `source: plausible` and no `userId` (see `infra/observability/README.md`).
 
 `bestEffort` in `@/lib/errorLogger` follows the same split: it warns by default and only reports
 when the call site passes `capture: true`. IndexedDB cache writes fail routinely under Safari

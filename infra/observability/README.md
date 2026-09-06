@@ -56,6 +56,22 @@ docker --context homelab exec homelab-plausible-clickhouse clickhouse-client --q
   "SELECT name, count() FROM plausible_events.events_v2 WHERE site_id = 3 GROUP BY name"
 ```
 
+### Custom-event history lives in Loki
+
+Product events stopped going to Plausible on 2026-09-06 and go only to `clientLogger`
+now. The Plausible custom events from 2026-05-11 to the first mirrored `client.*` entry in
+Loki (2026-08-31T23:14:18Z) were copied into Loki by
+`scripts/backfill-plausible-events.mjs` under the current event names, so the product-usage
+panels read continuously from May. Backfilled rows carry `source=plausible` (mirrored rows
+say `source=browser`), the extra stream label `backfill=plausible`, and no `userId`, because
+Plausible only has a daily-rotating anonymous hash. They count under the All user filter and
+drop out when a specific user is selected.
+
+The script is a one-off. Running it again is harmless (Loki ignores duplicate timestamp
+and line pairs) but needs `reject_old_samples: false` temporarily in `limits_config`,
+a redeploy and a `compose restart loki`, then the same again to remove it; the schema
+`from` date already covers May.
+
 ## Operating
 
 ```bash
