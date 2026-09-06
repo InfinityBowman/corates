@@ -31,6 +31,7 @@ The package exposes subpath exports (see `package.json`):
 | `@corates/workers/policies`             | Authorization policies                             |
 | `@corates/workers/policies/projects`    | Project-scoped policies                            |
 | `@corates/workers/billing-resolver`     | `resolveOrgAccess`, `validatePlanChange`           |
+| `@corates/workers/free-project-cap`     | Per-user free project cap across owned orgs        |
 | `@corates/workers/commands/invitations` | Invitation create/accept/resend commands           |
 | `@corates/workers/commands/projects`    | Project create/update commands                     |
 | `@corates/workers/commands/members`     | Member add/remove commands                         |
