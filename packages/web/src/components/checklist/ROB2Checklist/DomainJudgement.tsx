@@ -2,7 +2,7 @@
  * DomainJudgement - Judgement selector and badge for ROB2 domains
  */
 
-import { JUDGEMENTS, BIAS_DIRECTIONS } from './checklist-map';
+import { JUDGEMENTS, BIAS_DIRECTIONS } from '@corates/shared/checklists/rob2';
 
 export function JudgementBadge({ judgement }: { judgement: string }) {
   const getColor = () => {

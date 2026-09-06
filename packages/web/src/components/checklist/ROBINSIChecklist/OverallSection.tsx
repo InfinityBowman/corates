@@ -1,6 +1,9 @@
 import { useMemo } from 'react';
-import { OVERALL_ROB_JUDGEMENTS, BIAS_DIRECTIONS } from './checklist-map';
-import { mapOverallJudgementToDisplay } from './checklist.js';
+import {
+  OVERALL_ROB_JUDGEMENTS,
+  BIAS_DIRECTIONS,
+  mapOverallJudgementToDisplay,
+} from '@corates/shared/checklists/robins-i';
 import {
   useWorkspaceProjectId,
   useAnswerValue,

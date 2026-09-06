@@ -13,7 +13,8 @@
 
 import { describe, it, expect } from 'vitest';
 import * as Y from 'yjs';
-import { createChecklistOfType, CHECKLIST_TYPES } from '@/checklist-registry';
+import { amstar2, robinsI, rob2 } from '@corates/shared';
+import { CHECKLIST_TYPES } from '@/checklist-registry';
 import { AMSTAR2Handler } from '@/primitives/useProject/handlers/amstar2';
 import { ROBINSIHandler } from '@/primitives/useProject/handlers/robins-i';
 import { ROB2Handler } from '@/primitives/useProject/handlers/rob2';
@@ -26,16 +27,21 @@ import {
 
 type AnyRecord = Record<string, unknown>;
 
+const CREATE_CHECKLIST: Record<
+  string,
+  (opts: { id: string; name: string; createdAt: number; reviewerName: string }) => AnyRecord
+> = {
+  [CHECKLIST_TYPES.AMSTAR2]: opts => amstar2.createAMSTAR2Checklist(opts),
+  [CHECKLIST_TYPES.ROBINS_I]: opts => robinsI.createROBINSIChecklist(opts),
+  [CHECKLIST_TYPES.ROB2]: opts => rob2.createROB2Checklist(opts),
+};
+
 function buildLegacyRow(type: string, id: string, name: string): LocalChecklistRow {
   const now = 1700000000000;
-  const template = createChecklistOfType(type, {
-    id,
-    name,
-    createdAt: now,
-    reviewerName: '',
-  }) as AnyRecord;
+  const template = CREATE_CHECKLIST[type]({ id, name, createdAt: now, reviewerName: '' });
   return {
     ...template,
+    type,
     id,
     name,
     checklistType: type,

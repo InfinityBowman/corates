@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { ROBINS_I_CHECKLIST, getActiveDomainKeys } from './checklist-map';
+import { ROBINS_I_CHECKLIST, getActiveDomainKeys } from '@corates/shared/checklists/robins-i';
 import {
   useWorkspaceProjectId,
   useAnswerValue,

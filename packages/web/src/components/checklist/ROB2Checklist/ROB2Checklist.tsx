@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
-import { getActiveDomainKeys } from './checklist-map';
+import { getActiveDomainKeys } from '@corates/shared/checklists/rob2';
 import { PreliminarySection } from './PreliminarySection';
 import { DomainSection } from './DomainSection';
 import { OverallSection } from './OverallSection';

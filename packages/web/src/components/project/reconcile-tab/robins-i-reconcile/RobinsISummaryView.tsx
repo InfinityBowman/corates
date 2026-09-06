@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { CheckIcon, ArrowLeftIcon, ArrowRightIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { RESPONSE_LABELS } from '@/components/checklist/ROBINSIChecklist/checklist-map';
+import { RESPONSE_LABELS } from '@corates/shared/checklists/robins-i';
 import {
   getConsensusSkippedQuestionsCached,
   hasNavItemValue,

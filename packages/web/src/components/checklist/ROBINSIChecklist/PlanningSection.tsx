@@ -1,4 +1,4 @@
-import { PLANNING_SECTION } from './checklist-map';
+import { PLANNING_SECTION } from '@corates/shared/checklists/robins-i';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
 import { useWorkspaceProjectId, useAnswerValue, useAnswerWriters } from '@/project/workspace-data';
 

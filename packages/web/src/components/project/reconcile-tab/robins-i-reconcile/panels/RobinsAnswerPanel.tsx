@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import { RESPONSE_LABELS } from '@/components/checklist/ROBINSIChecklist/checklist-map';
+import { RESPONSE_LABELS } from '@corates/shared/checklists/robins-i';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
 import { useReconciledText } from '../../fields';
 

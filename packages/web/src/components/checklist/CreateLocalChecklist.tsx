@@ -24,7 +24,7 @@ import { Label } from '@/components/ui/label';
 import { FileUpload, FileUploadDropzone, FileUploadHiddenInput } from '@/components/ui/file-upload';
 import { LANDING_URL } from '@/config/api.js';
 import { track } from '@/lib/analytics';
-import { getChecklistTypeOptions, DEFAULT_CHECKLIST_TYPE } from '@/checklist-registry/index';
+import { getChecklistTypeOptions, DEFAULT_CHECKLIST_TYPE } from '@/checklist-registry';
 import { validatePdfFile } from '@/lib/pdfValidation.js';
 
 export function CreateLocalChecklist({ type: typeParam }: { type?: string }) {

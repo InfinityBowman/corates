@@ -9,7 +9,7 @@ import {
   PopoverDescription,
 } from '@/components/ui/popover';
 
-export interface ChecklistResourceLink {
+interface ChecklistResourceLink {
   title: string;
   description: string;
   url: string;

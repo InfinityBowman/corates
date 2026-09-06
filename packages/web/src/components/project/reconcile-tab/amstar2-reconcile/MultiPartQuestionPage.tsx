@@ -4,11 +4,11 @@
  */
 
 import { useState, useEffect, useMemo } from 'react';
-import { AMSTAR_CHECKLIST } from '@/components/checklist/AMSTAR2Checklist/checklist-map.js';
 import {
+  AMSTAR_CHECKLIST,
   getDataKeysForQuestion,
   getFinalAnswer,
-} from '@/components/checklist/AMSTAR2Checklist/checklist-compare.js';
+} from '@corates/shared/checklists/amstar2';
 import { AnswerPanel } from './AnswerPanel';
 import { NotesCompareSection } from './NotesCompareSection';
 

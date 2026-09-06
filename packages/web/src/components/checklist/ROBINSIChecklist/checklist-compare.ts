@@ -3,8 +3,10 @@
  * Compares two reviewer checklists and helps create a finalized consensus version
  */
 
-import { ROBINS_I_CHECKLIST, getDomainQuestions, getActiveDomainKeys } from './checklist-map';
 import {
+  ROBINS_I_CHECKLIST,
+  getDomainQuestions,
+  getActiveDomainKeys,
   getSkippedDomainQuestions,
   isEffectivelyNotApplicable,
 } from '@corates/shared/checklists/robins-i';

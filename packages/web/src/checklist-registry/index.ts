@@ -1,84 +1,90 @@
+import { LANDING_URL } from '@/config/api';
+
 /**
- * Checklist Registry
- *
- * Central registry that maps checklist types to their components, scoring functions,
- * and creation utilities. This enables the modular checklist architecture.
+ * Checklist Type Constants and Metadata
  */
 
-import { CHECKLIST_TYPES, DEFAULT_CHECKLIST_TYPE } from './types';
-import { amstar2, robinsI, rob2 } from '@corates/shared';
-import type { AMSTAR2Checklist, ROBINSIChecklist, ROB2Checklist } from '@corates/shared/checklists';
+export const CHECKLIST_TYPES = {
+  AMSTAR2: 'AMSTAR2',
+  ROBINS_I: 'ROBINS_I',
+  ROB2: 'ROB2',
+} as const;
 
-interface CreateChecklistOptions {
+interface ScoreColorConfig {
+  bg: string;
+  text: string;
+}
+
+interface ChecklistMetadata {
   name: string;
-  id: string;
-  createdAt?: number | Date;
-  reviewerName?: string;
+  shortName: string;
+  description: string;
+  version: string;
+  url: string;
+  scoreLevels: string[];
+  scoreColors: Record<string, ScoreColorConfig>;
 }
 
-interface ChecklistConfig {
-  createChecklist: (options: CreateChecklistOptions) => Record<string, unknown>;
-  scoreChecklist: (state: Record<string, unknown>) => string;
-  getAnswers: (state: Record<string, unknown>) => Record<string, unknown> | null;
-}
-
-const CHECKLIST_REGISTRY: Record<string, ChecklistConfig> = {
+const CHECKLIST_METADATA: Record<string, ChecklistMetadata> = {
   [CHECKLIST_TYPES.AMSTAR2]: {
-    createChecklist: opts => amstar2.createAMSTAR2Checklist(opts),
-    scoreChecklist: state => amstar2.scoreAMSTAR2Checklist(state as AMSTAR2Checklist),
-    getAnswers:
-      amstar2.getAnswers ? state => amstar2.getAnswers(state as AMSTAR2Checklist) : state => state,
+    name: 'AMSTAR 2',
+    shortName: 'AMSTAR 2',
+    description: 'Quality assessment of systematic reviews',
+    version: '2017',
+    url: `${LANDING_URL}/resources/amstar2`,
+    scoreLevels: ['High', 'Moderate', 'Low', 'Critically Low'],
+    scoreColors: {
+      High: { bg: 'bg-green-100', text: 'text-green-800' },
+      Moderate: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
+      Low: { bg: 'bg-orange-100', text: 'text-orange-800' },
+      'Critically Low': { bg: 'bg-red-100', text: 'text-red-800' },
+    },
   },
-
   [CHECKLIST_TYPES.ROBINS_I]: {
-    createChecklist: opts => robinsI.createROBINSIChecklist(opts),
-    scoreChecklist: state => robinsI.scoreROBINSIChecklist(state as ROBINSIChecklist),
-    getAnswers: state => robinsI.getAnswers(state as ROBINSIChecklist),
+    name: 'ROBINS-I V2',
+    shortName: 'ROBINS-I',
+    description: 'Risk of bias in non-randomized studies of interventions',
+    version: 'V2',
+    url: `${LANDING_URL}/resources/robins-i`,
+    scoreLevels: ['Low', 'Moderate', 'Serious', 'Critical', 'Incomplete'],
+    scoreColors: {
+      Low: { bg: 'bg-green-100', text: 'text-green-800' },
+      Moderate: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
+      Serious: { bg: 'bg-orange-100', text: 'text-orange-800' },
+      Critical: { bg: 'bg-red-100', text: 'text-red-800' },
+      Incomplete: { bg: 'bg-gray-100', text: 'text-gray-600' },
+    },
   },
-
   [CHECKLIST_TYPES.ROB2]: {
-    createChecklist: opts => rob2.createROB2Checklist(opts),
-    scoreChecklist: state => rob2.scoreROB2Checklist(state as ROB2Checklist),
-    getAnswers: state => rob2.getAnswers(state as ROB2Checklist),
+    name: 'RoB 2',
+    shortName: 'RoB 2',
+    description: 'Risk of bias in randomized trials',
+    version: '2.0',
+    url: `${LANDING_URL}/resources/rob2`,
+    scoreLevels: ['Low', 'Some concerns', 'High', 'Incomplete'],
+    scoreColors: {
+      Low: { bg: 'bg-green-100', text: 'text-green-800' },
+      'Some concerns': { bg: 'bg-yellow-100', text: 'text-yellow-800' },
+      High: { bg: 'bg-red-100', text: 'text-red-800' },
+      Incomplete: { bg: 'bg-gray-100', text: 'text-gray-600' },
+    },
   },
 };
 
-function getChecklistConfig(type: string): ChecklistConfig {
-  const config = CHECKLIST_REGISTRY[type];
-  if (!config) {
-    console.warn(`Unknown checklist type: ${type}, falling back to ${DEFAULT_CHECKLIST_TYPE}`);
-    return CHECKLIST_REGISTRY[DEFAULT_CHECKLIST_TYPE];
-  }
-  return config;
+export const DEFAULT_CHECKLIST_TYPE = CHECKLIST_TYPES.AMSTAR2;
+
+export function getChecklistMetadata(type: string): ChecklistMetadata {
+  return CHECKLIST_METADATA[type] || CHECKLIST_METADATA[DEFAULT_CHECKLIST_TYPE];
 }
 
-export function createChecklistOfType(
-  type: string,
-  options: CreateChecklistOptions,
-): Record<string, unknown> {
-  const config = getChecklistConfig(type);
-  const checklist = config.createChecklist(options);
-  return { ...checklist, type };
+export function getChecklistTypeOptions(): Array<{
+  value: string;
+  label: string;
+  description: string;
+}> {
+  return Object.entries(CHECKLIST_METADATA).map(([type, meta]) => ({
+    value: type,
+    label: meta.name,
+    description: meta.description,
+  }));
 }
-
-export function scoreChecklistOfType(type: string, state: Record<string, unknown>): string {
-  const config = getChecklistConfig(type);
-  return config.scoreChecklist(state);
-}
-
-export function getChecklistTypeFromState(checklistState: Record<string, unknown>): string {
-  if (checklistState?.type) return checklistState.type as string;
-  if (checklistState?.domain2a || checklistState?.domain2b) return CHECKLIST_TYPES.ROB2;
-  if (checklistState?.sectionB || checklistState?.domain1a || checklistState?.domain1b)
-    return CHECKLIST_TYPES.ROBINS_I;
-  if (checklistState?.q1 || checklistState?.q2) return CHECKLIST_TYPES.AMSTAR2;
-  return DEFAULT_CHECKLIST_TYPE;
-}
-
-// Re-export types for convenience
-export {
-  CHECKLIST_TYPES,
-  DEFAULT_CHECKLIST_TYPE,
-  getChecklistTypeOptions,
-  getChecklistMetadata,
-} from './types';

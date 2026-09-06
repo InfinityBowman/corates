@@ -9,7 +9,7 @@ import {
   isMultiPartQuestion,
   getDataKeysForQuestion,
   getReconciliationSummary,
-} from '@/components/checklist/AMSTAR2Checklist/checklist-compare.js';
+} from '@corates/shared/checklists/amstar2';
 import { Footer } from './Footer';
 
 type ReconciliationSummary = ReturnType<typeof getReconciliationSummary>;

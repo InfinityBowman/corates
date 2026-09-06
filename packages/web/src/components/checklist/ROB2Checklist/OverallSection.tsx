@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { BIAS_DIRECTIONS } from './checklist-map';
+import { BIAS_DIRECTIONS } from '@corates/shared/checklists/rob2';
 import { mapOverallJudgementToDisplay } from './checklist.js';
 import {
   useWorkspaceProjectId,

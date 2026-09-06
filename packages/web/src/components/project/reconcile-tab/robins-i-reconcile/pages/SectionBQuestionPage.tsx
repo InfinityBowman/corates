@@ -1,4 +1,4 @@
-import { SECTION_B, RESPONSE_TYPES } from '@/components/checklist/ROBINSIChecklist/checklist-map';
+import { SECTION_B, RESPONSE_TYPES } from '@corates/shared/checklists/robins-i';
 import { RobinsAnswerPanel } from '../panels/RobinsAnswerPanel';
 
 interface SectionBQuestionPageProps {

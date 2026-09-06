@@ -4,7 +4,7 @@
  */
 
 import { useId } from 'react';
-import { AMSTAR_CHECKLIST } from '@/components/checklist/AMSTAR2Checklist/checklist-map.js';
+import { AMSTAR_CHECKLIST } from '@corates/shared/checklists/amstar2';
 import type { AMSTAR2Column } from '@corates/shared/checklists/amstar2';
 import type { AMSTAR2QuestionAnswer } from '@corates/shared/checklists';
 

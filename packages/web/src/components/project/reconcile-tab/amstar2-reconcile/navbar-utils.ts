@@ -2,10 +2,7 @@
  * Utility functions for Navbar component
  * Handles question state calculations and styling logic
  */
-import {
-  isMultiPartQuestion,
-  getDataKeysForQuestion,
-} from '@/components/checklist/AMSTAR2Checklist/checklist-compare';
+import { isMultiPartQuestion, getDataKeysForQuestion } from '@corates/shared/checklists/amstar2';
 
 interface AnswerColumn {
   answers?: boolean[][];
