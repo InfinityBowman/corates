@@ -83,7 +83,7 @@ describe('createCheckout', () => {
       activeOrganizationId: org.id,
     });
     try {
-      await createCheckout(createDb(env.DB), session, dummyRequest, 'starter_team', 'monthly');
+      await createCheckout(createDb(env.DB), session, dummyRequest, 'team', 'monthly');
       expect.unreachable('should have thrown');
     } catch (err) {
       const res = err as DomainErrorException;

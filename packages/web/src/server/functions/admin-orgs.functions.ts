@@ -115,7 +115,7 @@ export const createSubscriptionAction = createServerFn({ method: 'POST' })
   .validator(
     z.object({
       orgId: z.string(),
-      plan: z.enum(['starter_team', 'team', 'unlimited_team']),
+      plan: z.enum(['team', 'lab', 'enterprise']),
       status: z.enum(['active', 'trialing', 'past_due', 'paused', 'canceled', 'unpaid']),
       periodStart: z.coerce.date().optional(),
       periodEnd: z.coerce.date().optional(),
@@ -135,7 +135,7 @@ export const updateSubscriptionAction = createServerFn({ method: 'POST' })
     z.object({
       orgId: z.string(),
       subscriptionId: z.string(),
-      plan: z.enum(['starter_team', 'team', 'unlimited_team']).optional(),
+      plan: z.enum(['team', 'lab', 'enterprise']).optional(),
       status: z
         .enum(['active', 'trialing', 'past_due', 'paused', 'canceled', 'unpaid', 'incomplete'])
         .optional(),

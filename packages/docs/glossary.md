@@ -280,10 +280,10 @@ UI components that provide behavior/state without styling:
 
 ### Plan
 
-A subscription tier (free, starter_team, team, unlimited_team) defining:
+A subscription tier (free, team, lab, enterprise) defining:
 
 - **Entitlements** - Boolean feature flags (e.g., `project.create`)
-- **Quotas** - Numeric limits (e.g., `projects.max: 10`)
+- **Quotas** - Numeric limits (e.g., `projects.max: 3`)
 - **Pricing** - Monthly/yearly cost in cents
 
 **Related:** [@corates/shared/plans](../shared/src/plans/), [PLANS configuration](../shared/src/plans/plans.ts)
@@ -292,6 +292,7 @@ A subscription tier (free, starter_team, team, unlimited_team) defining:
 
 Time-limited access upgrade (trial, single_project) that:
 
+- Is issued by admins only; no longer sold self-serve
 - Temporarily overrides the base plan
 - Has an expiration date
 - Is org-scoped (one per organization)
@@ -304,7 +305,7 @@ Time-limited access upgrade (trial, single_project) that:
 Stripe subscription providing ongoing access:
 
 - Org-scoped (one per organization)
-- Has a `planId` (starter_team, team, unlimited_team)
+- Has a `planId` (team, lab, enterprise)
 - Synced via Stripe webhooks
 - Stored in `orgSubscriptions` table
 

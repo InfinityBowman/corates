@@ -13,21 +13,11 @@ export const PLANS: Plans = {
   free: {
     name: 'Free',
     entitlements: {
-      'project.create': false,
-    },
-    quotas: {
-      'projects.max': 0,
-      'collaborators.org.max': 0,
-    },
-  },
-  starter_team: {
-    name: 'Starter Team',
-    entitlements: {
       'project.create': true,
     },
     quotas: {
-      'projects.max': 3,
-      'collaborators.org.max': 10,
+      'projects.max': 1,
+      'collaborators.org.max': 3,
     },
   },
   team: {
@@ -36,12 +26,22 @@ export const PLANS: Plans = {
       'project.create': true,
     },
     quotas: {
-      'projects.max': 10,
-      'collaborators.org.max': 25,
+      'projects.max': 3,
+      'collaborators.org.max': -1,
     },
   },
-  unlimited_team: {
-    name: 'Unlimited Team',
+  lab: {
+    name: 'Lab',
+    entitlements: {
+      'project.create': true,
+    },
+    quotas: {
+      'projects.max': 10,
+      'collaborators.org.max': -1,
+    },
+  },
+  enterprise: {
+    name: 'Enterprise',
     entitlements: {
       'project.create': true,
     },
@@ -59,7 +59,7 @@ export const DEFAULT_PLAN: PlanId = 'free';
 
 /**
  * Get plan configuration by plan ID
- * @param planId - Plan ID (e.g., 'free', 'pro', 'unlimited')
+ * @param planId - Plan ID (e.g., 'free', 'team', 'lab')
  * @returns Plan configuration, or default plan if planId is invalid
  */
 export function getPlan(planId: PlanId | string): Plans[PlanId] {
@@ -79,7 +79,8 @@ export function isUnlimitedQuota(quota: number): boolean {
 }
 
 /**
- * Grant types - not plans, but provide access similar to plans
+ * Grant types - not plans, but provide access similar to plans.
+ * Grants are no longer sold; admins can still issue them for support cases.
  */
 export type GrantType = 'trial' | 'single_project';
 

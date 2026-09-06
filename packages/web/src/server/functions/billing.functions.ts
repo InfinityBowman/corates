@@ -10,8 +10,6 @@ import {
   createCheckout,
   fetchInvoices,
   createPortalSession,
-  createSPCheckout,
-  beginTrial,
   syncAfterCheckout,
 } from './billing.server';
 
@@ -62,14 +60,6 @@ export const openBillingPortal = createServerFn({ method: 'POST' })
   .handler(async ({ context: { db, session, request } }) =>
     createPortalSession(db, session, request),
   );
-
-export const checkoutSingleProject = createServerFn({ method: 'POST' })
-  .middleware([authMiddleware])
-  .handler(async ({ context: { db, session, request } }) => createSPCheckout(db, session, request));
-
-export const startTrialGrant = createServerFn({ method: 'POST' })
-  .middleware([authMiddleware])
-  .handler(async ({ context: { db, session } }) => beginTrial(db, session));
 
 export const syncAfterSuccess = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])

@@ -1,5 +1,5 @@
 /**
- * PricingTable - Subscription plan cards with billing interval toggle
+ * PricingTable - Plan cards with billing interval toggle
  *
  * Supports two modes:
  * - 'authenticated' (default): For logged-in users. Shows current plan badges,
@@ -8,10 +8,9 @@
  *   no auth state, no API calls.
  */
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { CheckIcon, StarIcon, ZapIcon, AlertCircleIcon, ArrowDownIcon } from 'lucide-react';
-import { showToast } from '@/lib/toast';
+import { CheckIcon, ZapIcon, AlertCircleIcon, ArrowDownIcon } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -24,12 +23,11 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { redirectToCheckout, redirectToSingleProjectCheckout, startTrial } from '@/api/billing';
+import { redirectToCheckout, redirectToPortal } from '@/api/billing';
 import { checkPlanChange } from '@/server/functions/billing.functions';
-import { useSubscription } from '@/hooks/useSubscription';
 import { getBillingPlanCatalog } from '@corates/shared/plans';
 import type { BillingCatalogPlan } from '@corates/shared/plans';
-import { formatUsd, getAnnualSavings } from './utils';
+import { formatUsd } from './utils';
 
 interface PlanValidationResult {
   valid: boolean;
@@ -38,16 +36,16 @@ interface PlanValidationResult {
 
 const TIER_ORDER: Record<string, number> = {
   free: 0,
-  trial: 1,
-  single_project: 2,
-  starter_team: 3,
-  team: 4,
-  unlimited_team: 5,
+  team: 1,
+  lab: 2,
+  enterprise: 3,
 };
 
 function isDowngrade(fromTier: string, toTier: string) {
   return (TIER_ORDER[toTier] ?? 0) < (TIER_ORDER[fromTier] ?? 0);
 }
+
+type BillingInterval = 'monthly' | 'yearly';
 
 interface PricingTableProps {
   currentTier?: string;
@@ -55,205 +53,87 @@ interface PricingTableProps {
   getSignUpUrl?: (tier: string, interval?: string) => string;
 }
 
+const catalog = getBillingPlanCatalog();
+
 export function PricingTable({
   currentTier: currentTierProp,
   mode = 'authenticated',
   getSignUpUrl,
 }: PricingTableProps) {
-  const catalog = useMemo(() => getBillingPlanCatalog(), []);
-  const trialPlan = useMemo(() => catalog.plans.find(p => p.tier === 'trial'), [catalog]);
-  const singleProjectPlan = useMemo(
-    () => catalog.plans.find(p => p.tier === 'single_project'),
-    [catalog],
-  );
-  const subscriptionPlans = useMemo(
-    () => catalog.plans.filter(p => p.cta === 'subscribe'),
-    [catalog],
-  );
-
-  const [billingInterval, setBillingInterval] = useState<'monthly' | 'yearly'>('monthly');
+  const [billingInterval, setBillingInterval] = useState<BillingInterval>('yearly');
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<PlanValidationResult | null>(null);
   const [pendingDowngrade, setPendingDowngrade] = useState<BillingCatalogPlan | null>(null);
 
   const isMarketing = mode === 'marketing';
-
-  const { subscription: subData, refetch } = useSubscription();
-  const subscription = isMarketing ? null : subData;
-
-  const isTrialing = subscription?.status === 'trialing';
   const currentTier = currentTierProp ?? 'free';
-  const canStartTrial = currentTier === 'free';
 
-  const buildSignUpUrl = useCallback(
-    (plan: BillingCatalogPlan) => {
-      if (getSignUpUrl) {
-        return plan.cta === 'subscribe' ?
-            getSignUpUrl(plan.tier, billingInterval)
-          : getSignUpUrl(plan.tier);
-      }
-      return '/signup';
-    },
-    [getSignUpUrl, billingInterval],
-  );
+  const buildSignUpUrl = (plan: BillingCatalogPlan) => {
+    if (!getSignUpUrl) return '/signup';
+    return plan.cta === 'subscribe' ? getSignUpUrl(plan.tier, billingInterval) : '/signup';
+  };
 
-  const proceedWithPlanChange = useCallback(
-    async (plan: BillingCatalogPlan) => {
-      setLoadingTier(plan.tier);
-      try {
-        const validation = await checkPlanChange({ data: { targetPlan: plan.tier } });
-        if (!validation.valid) {
-          setValidationError(validation as PlanValidationResult);
-          setLoadingTier(null);
-          return;
-        }
-        await redirectToCheckout(plan.tier, billingInterval);
-      } catch (error) {
-        const { handleError } = await import('@/lib/error-utils');
-        await handleError(error, { toastTitle: 'Checkout Error' });
-        setLoadingTier(null);
-      }
-    },
-    [billingInterval],
-  );
-
-  const handleAction = useCallback(
-    async (plan: BillingCatalogPlan) => {
-      if (!plan || plan.tier === currentTier) return;
-      setLoadingTier(plan.tier);
-      try {
-        if (plan.cta === 'start_trial') {
-          await startTrial();
-          showToast.success('Trial started', 'Your 14-day trial is now active.');
-          await refetch();
-          setLoadingTier(null);
-          return;
-        }
-        if (plan.cta === 'buy_single_project') {
-          await redirectToSingleProjectCheckout();
-          return;
-        }
-        if (plan.cta === 'subscribe') {
-          if (isDowngrade(currentTier, plan.tier)) {
-            setPendingDowngrade(plan);
-            setLoadingTier(null);
-            return;
-          }
-          await proceedWithPlanChange(plan);
-          return;
-        }
-      } catch (error) {
-        const { handleError } = await import('@/lib/error-utils');
-        await handleError(error, { toastTitle: 'Checkout Error' });
-        setLoadingTier(null);
-      }
-    },
-    [currentTier, refetch, proceedWithPlanChange],
-  );
-
-  const getButtonText = useCallback(
-    (plan: BillingCatalogPlan) => {
-      if (!isMarketing && plan.tier === currentTier) return 'Current Plan';
-      if (plan.cta === 'start_trial') return 'Start Free Trial';
-      if (plan.cta === 'buy_single_project') return 'Buy Now';
-      if (!isMarketing && isTrialing) return 'Upgrade Now';
-      return 'Get Started';
-    },
-    [currentTier, isTrialing, isMarketing],
-  );
-
-  const isButtonDisabled = useCallback(
-    (plan: BillingCatalogPlan) => {
-      if (isMarketing) return false;
-      if (!plan || plan.tier === currentTier) return true;
-      if (loadingTier !== null) return true;
-      if (plan.cta === 'none') return true;
-      if (plan.cta === 'start_trial' && currentTier !== 'free') return true;
-      return false;
-    },
-    [currentTier, loadingTier, isMarketing],
-  );
-
-  const handleStartTrial = useCallback(async () => {
-    setLoadingTier('trial');
+  const proceedWithPlanChange = async (plan: BillingCatalogPlan) => {
+    setLoadingTier(plan.tier);
     try {
-      await startTrial();
-      showToast.success('Trial started', 'Your 14-day trial is now active.');
-      await refetch();
-    } catch (error) {
-      const { handleError } = await import('@/lib/error-utils');
-      await handleError(error, { toastTitle: 'Trial Error' });
-    } finally {
-      setLoadingTier(null);
-    }
-  }, [refetch]);
-
-  const handleBuySingleProject = useCallback(async () => {
-    setLoadingTier('single_project');
-    try {
-      await redirectToSingleProjectCheckout();
+      const validation = await checkPlanChange({ data: { targetPlan: plan.tier } });
+      if (!validation.valid) {
+        setValidationError(validation as PlanValidationResult);
+        setLoadingTier(null);
+        return;
+      }
+      await redirectToCheckout(plan.tier, billingInterval);
     } catch (error) {
       const { handleError } = await import('@/lib/error-utils');
       await handleError(error, { toastTitle: 'Checkout Error' });
       setLoadingTier(null);
     }
-  }, []);
+  };
 
-  // Shared sub-components to avoid duplication between modes
-  const renderTrialBanner = () => {
-    if (!canStartTrial || !trialPlan) return null;
+  const handleAction = async (plan: BillingCatalogPlan) => {
+    if (plan.tier === currentTier) return;
+    if (plan.cta === 'free') {
+      setLoadingTier(plan.tier);
+      try {
+        await redirectToPortal();
+      } catch (error) {
+        const { handleError } = await import('@/lib/error-utils');
+        await handleError(error, { toastTitle: 'Billing Portal Error' });
+        setLoadingTier(null);
+      }
+      return;
+    }
+    if (plan.cta !== 'subscribe') return;
+    if (isDowngrade(currentTier, plan.tier)) {
+      setPendingDowngrade(plan);
+      return;
+    }
+    await proceedWithPlanChange(plan);
+  };
 
-    return (
-      <div className='mb-10 rounded-2xl border-2 border-blue-200 bg-linear-to-r from-blue-50 to-indigo-50 p-6'>
-        <div className='flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left'>
-          <div className='flex size-12 shrink-0 items-center justify-center rounded-full bg-blue-100'>
-            <ZapIcon className='size-6 text-blue-600' />
-          </div>
-          <div className='flex-1'>
-            <h3 className='text-foreground text-lg font-bold'>Start your 14-day free trial</h3>
-            <p className='text-muted-foreground mt-1 text-sm'>
-              {trialPlan.features[0]}. {trialPlan.features[1]}. No credit card required.
-            </p>
-          </div>
-          {isMarketing ?
-            <Button asChild size='lg' className='h-auto shrink-0 rounded-xl py-2.5 font-semibold'>
-              <Link to={buildSignUpUrl(trialPlan)}>Start Free Trial</Link>
-            </Button>
-          : <Button
-              size='lg'
-              className='h-auto shrink-0 rounded-xl py-2.5 font-semibold'
-              onClick={handleStartTrial}
-              disabled={loadingTier !== null}
-            >
-              {loadingTier === 'trial' ?
-                <span className='flex items-center gap-2'>
-                  <Spinner size='sm' variant='current' />
-                  Starting...
-                </span>
-              : 'Start Free Trial'}
-            </Button>
-          }
-        </div>
-      </div>
-    );
+  const getButtonText = (plan: BillingCatalogPlan) => {
+    if (!isMarketing && plan.tier === currentTier) return 'Current Plan';
+    if (plan.cta === 'contact') return 'Contact us';
+    // Moving to Free means cancelling, which Stripe's portal handles.
+    if (plan.cta === 'free' && !isMarketing) return 'Manage in billing portal';
+    return 'Get Started';
+  };
+
+  const isButtonDisabled = (plan: BillingCatalogPlan) => {
+    if (isMarketing) return false;
+    if (plan.tier === currentTier) return true;
+    return loadingTier !== null;
   };
 
   const renderBillingToggle = () => (
-    <div className='mb-6 flex flex-col items-center gap-2'>
+    <div className='mb-6 flex justify-center'>
       <div className='bg-muted relative inline-flex rounded-xl p-1.5'>
         <div
           className='bg-card absolute top-1.5 h-[calc(100%-12px)] w-[calc(50%-6px)] rounded-lg shadow-sm transition-transform duration-200 ease-out'
           style={{
-            transform: billingInterval === 'yearly' ? 'translateX(100%)' : 'translateX(0)',
+            transform: billingInterval === 'monthly' ? 'translateX(100%)' : 'translateX(0)',
           }}
         />
-        <button
-          type='button'
-          className={`relative z-10 rounded-lg px-5 py-2.5 text-sm font-semibold transition-colors duration-200 ${billingInterval === 'monthly' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-          onClick={() => setBillingInterval('monthly')}
-        >
-          Monthly
-        </button>
         <button
           type='button'
           className={`relative z-10 rounded-lg px-5 py-2.5 text-sm font-semibold transition-colors duration-200 ${billingInterval === 'yearly' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
@@ -261,18 +141,101 @@ export function PricingTable({
         >
           Annual
         </button>
+        <button
+          type='button'
+          className={`relative z-10 rounded-lg px-5 py-2.5 text-sm font-semibold transition-colors duration-200 ${billingInterval === 'monthly' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+          onClick={() => setBillingInterval('monthly')}
+        >
+          Monthly
+        </button>
       </div>
-      <Badge variant='success' className='h-auto gap-1.5 px-3 py-1 text-xs [&>svg]:size-3!'>
-        <StarIcon />
-        Save 2 months with annual billing
-      </Badge>
     </div>
   );
+
+  const renderPrice = (plan: BillingCatalogPlan) => {
+    if (plan.cta === 'contact') {
+      return (
+        <>
+          <div className='text-foreground text-4xl font-bold'>Custom</div>
+          {plan.priceNote && <p className='text-muted-foreground mt-1 text-sm'>{plan.priceNote}</p>}
+        </>
+      );
+    }
+    if (!plan.price?.monthly) {
+      return (
+        <>
+          <div className='flex items-baseline gap-1'>
+            <span className='text-foreground text-4xl font-bold'>$0</span>
+          </div>
+          <p className='text-muted-foreground mt-1 text-sm'>Free for everyone</p>
+        </>
+      );
+    }
+    return (
+      <>
+        <div className='flex items-baseline gap-1'>
+          <FlipNumber
+            value={
+              billingInterval === 'monthly' ? plan.price.monthly : (plan.price.yearly ?? 0) / 12
+            }
+            prefix='$'
+            decimals={0}
+            className='text-foreground text-4xl font-bold'
+          />
+          <span className='text-muted-foreground'>/month</span>
+        </div>
+        {/* min-h keeps the card the same height when the annual line is hidden */}
+        <p className='text-muted-foreground mt-1 min-h-5 text-sm'>
+          {billingInterval === 'yearly' && `${formatUsd(plan.price.yearly ?? 0)} billed annually`}
+        </p>
+      </>
+    );
+  };
+
+  const renderCta = (plan: BillingCatalogPlan) => {
+    const isCurrent = !isMarketing && plan.tier === currentTier;
+    const muted = !plan.isPopular;
+    const className = `mt-6 h-auto w-full rounded-xl px-4 py-2.5 font-semibold ${
+      !isCurrent && muted ? 'bg-foreground text-background hover:bg-foreground/90' : ''
+    }`;
+
+    if (plan.cta === 'contact') {
+      return (
+        <Button asChild size='lg' className={className}>
+          <Link to='/contact'>{getButtonText(plan)}</Link>
+        </Button>
+      );
+    }
+
+    if (isMarketing) {
+      return (
+        <Button asChild size='lg' className={className}>
+          <Link to={buildSignUpUrl(plan)}>{getButtonText(plan)}</Link>
+        </Button>
+      );
+    }
+
+    return (
+      <Button
+        size='lg'
+        variant={isCurrent ? 'secondary' : 'default'}
+        className={className}
+        onClick={() => handleAction(plan)}
+        disabled={isButtonDisabled(plan)}
+      >
+        {loadingTier === plan.tier ?
+          <span className='flex items-center justify-center gap-2'>
+            <Spinner size='sm' variant='current' />
+            Processing...
+          </span>
+        : getButtonText(plan)}
+      </Button>
+    );
+  };
 
   const renderPlanCard = (plan: BillingCatalogPlan) => {
     const isCurrent = !isMarketing && plan.tier === currentTier;
     const isPopular = plan.isPopular;
-    const savings = getAnnualSavings(plan);
 
     return (
       <div
@@ -305,87 +268,7 @@ export function PricingTable({
           <p className='text-muted-foreground mt-1 text-sm'>{plan.description}</p>
         </div>
 
-        <div className='mb-6'>
-          {plan.oneTime ?
-            <>
-              <div className='flex items-baseline gap-1'>
-                <span className='text-foreground text-4xl font-bold'>
-                  {formatUsd(plan.oneTime.amount)}
-                </span>
-                <span className='text-muted-foreground'>one-time</span>
-              </div>
-              <p className='text-muted-foreground mt-1 text-sm'>
-                Valid for {plan.oneTime.durationMonths} months
-              </p>
-            </>
-          : plan.price ?
-            <>
-              <div className='flex items-baseline gap-1'>
-                <FlipNumber
-                  value={
-                    billingInterval === 'monthly' ?
-                      (plan.price.monthly ?? 0)
-                    : (plan.price.yearly ?? 0) / 12
-                  }
-                  prefix='$'
-                  decimals={billingInterval === 'yearly' ? 2 : 0}
-                  className='text-foreground text-4xl font-bold'
-                />
-                <span className='text-muted-foreground'>/month</span>
-              </div>
-              <div
-                className='mt-1 grid transition-[grid-template-rows] duration-300 ease-out'
-                style={{
-                  gridTemplateRows: billingInterval === 'yearly' ? '1fr' : '0fr',
-                }}
-              >
-                <div className='overflow-hidden'>
-                  {plan.price.yearly != null && plan.price.yearly > 0 && (
-                    <p className='text-muted-foreground text-sm'>
-                      {formatUsd(plan.price.yearly)} billed annually
-                    </p>
-                  )}
-                  {savings && (
-                    <p className='text-success text-sm font-medium'>
-                      Save {formatUsd(savings)} per year
-                    </p>
-                  )}
-                </div>
-              </div>
-            </>
-          : <div className='text-foreground text-3xl font-bold'>Free</div>}
-        </div>
-
-        {/* CTA */}
-        {plan.cta !== 'none' &&
-          (isMarketing ?
-            <Button
-              asChild
-              size='lg'
-              className={`mb-6 h-auto w-full rounded-xl px-4 py-2.5 font-semibold ${
-                !isPopular ? 'bg-foreground text-background hover:bg-foreground/90' : ''
-              }`}
-            >
-              <Link to={buildSignUpUrl(plan)}>{getButtonText(plan)}</Link>
-            </Button>
-          : <Button
-              size='lg'
-              variant={isCurrent ? 'secondary' : 'default'}
-              className={`mb-6 h-auto w-full rounded-xl px-4 py-2.5 font-semibold ${
-                !isCurrent && !isPopular ?
-                  'bg-foreground text-background hover:bg-foreground/90'
-                : ''
-              }`}
-              onClick={() => handleAction(plan)}
-              disabled={isButtonDisabled(plan)}
-            >
-              {loadingTier === plan.tier ?
-                <span className='flex items-center justify-center gap-2'>
-                  <Spinner size='sm' variant='current' />
-                  Processing...
-                </span>
-              : getButtonText(plan)}
-            </Button>)}
+        <div className='mb-6'>{renderPrice(plan)}</div>
 
         <div className='flex-1'>
           <p className='text-muted-foreground mb-3 text-xs font-semibold tracking-wide uppercase'>
@@ -402,99 +285,22 @@ export function PricingTable({
             ))}
           </ul>
         </div>
-      </div>
-    );
-  };
 
-  const renderSingleProject = () => {
-    if (!singleProjectPlan) return null;
-
-    return (
-      <div className='border-border bg-card mt-12 rounded-2xl border-2 p-6'>
-        <div className='flex flex-col gap-6 md:flex-row md:items-center md:justify-between'>
-          <div className='flex-1'>
-            <div className='mb-2 flex items-center gap-2'>
-              <h3 className='text-foreground text-lg font-bold'>{singleProjectPlan.name}</h3>
-              <Badge variant='secondary'>One-time purchase</Badge>
-            </div>
-            <p className='text-muted-foreground text-sm'>{singleProjectPlan.description}</p>
-            <ul className='mt-3 flex flex-wrap gap-x-4 gap-y-1'>
-              {singleProjectPlan.features.map((feature: string, i: number) => (
-                <li key={i} className='text-muted-foreground flex items-center gap-1.5 text-sm'>
-                  <CheckIcon className='text-success size-3.5' />
-                  {feature}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className='flex shrink-0 items-center gap-4'>
-            <div className='text-right'>
-              <div className='text-foreground text-2xl font-bold'>
-                {formatUsd(singleProjectPlan.oneTime!.amount)}
-              </div>
-              <p className='text-muted-foreground text-xs'>
-                {singleProjectPlan.oneTime!.durationMonths} months access
-              </p>
-            </div>
-            {isMarketing ?
-              <Button
-                asChild
-                size='lg'
-                className='bg-foreground text-background hover:bg-foreground/90 h-auto rounded-xl px-5 py-2.5 font-semibold'
-              >
-                <Link to={buildSignUpUrl(singleProjectPlan)}>Buy Now</Link>
-              </Button>
-            : <Button
-                size='lg'
-                className='bg-foreground text-background hover:bg-foreground/90 h-auto rounded-xl px-5 py-2.5 font-semibold'
-                onClick={handleBuySingleProject}
-                disabled={loadingTier !== null || currentTier === 'single_project'}
-              >
-                {loadingTier === 'single_project' ?
-                  <span className='flex items-center gap-2'>
-                    <Spinner size='sm' variant='current' />
-                    Processing...
-                  </span>
-                : currentTier === 'single_project' ?
-                  'Current Plan'
-                : 'Buy Now'}
-              </Button>
-            }
-          </div>
-        </div>
+        {renderCta(plan)}
       </div>
     );
   };
 
   return (
     <div className='pb-6'>
-      {renderTrialBanner()}
       {renderBillingToggle()}
 
-      {/* Trial upgrade prompt (authenticated only) */}
-      {!isMarketing && isTrialing && (
-        <Alert variant='info' className='mb-6'>
-          <ZapIcon />
-          <div>
-            <AlertTitle>Enjoying your trial?</AlertTitle>
-            <AlertDescription>
-              Upgrade now to keep your projects and avoid any interruption when your trial ends.
-            </AlertDescription>
-          </div>
-        </Alert>
-      )}
-
-      {/* Plans grid */}
-      <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
-        {subscriptionPlans.map(plan => renderPlanCard(plan))}
+      <div className='grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4'>
+        {catalog.plans.map(plan => renderPlanCard(plan))}
       </div>
 
-      {renderSingleProject()}
-
-      {/* Dialogs (authenticated only) */}
       {!isMarketing && (
         <>
-          {/* Validation Error Dialog */}
           <Dialog
             open={validationError !== null}
             onOpenChange={open => !open && setValidationError(null)}
@@ -531,7 +337,6 @@ export function PricingTable({
             </DialogContent>
           </Dialog>
 
-          {/* Downgrade Confirmation Dialog */}
           <Dialog
             open={pendingDowngrade !== null}
             onOpenChange={open => !open && setPendingDowngrade(null)}

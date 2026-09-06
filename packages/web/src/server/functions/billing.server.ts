@@ -2,7 +2,7 @@ import { captureError, info, warn } from '@corates/workers/logger';
 import { env } from 'cloudflare:workers';
 import type Stripe from 'stripe';
 import type { Database } from '@corates/db/client';
-import type { OrgId, OrgAccessGrantId } from '@corates/shared/ids';
+import type { OrgId } from '@corates/shared/ids';
 import {
   resolveOrgAccess,
   getOrgResourceUsage,
@@ -10,15 +10,15 @@ import {
 } from '@corates/workers/billing-resolver';
 import { createStripeClient, isStripeConfigured } from '@corates/shared/stripe';
 import { createAuth } from '@corates/workers/auth-config';
-import {
-  createSingleProjectCheckout as createSPCheckoutCmd,
-  syncStripeSubscription,
-} from '@corates/workers/commands/billing';
-import { createGrant, getGrantByOrgIdAndType } from '@corates/db/org-access-grants';
-import { GRANT_CONFIG } from '@corates/workers/constants';
-import { projects, subscription, user as userTable } from '@corates/db/schema';
+import { syncStripeSubscription } from '@corates/workers/commands/billing';
+import { projects, subscription } from '@corates/db/schema';
 import { and, count, desc, eq, or } from 'drizzle-orm';
-import { getPlan, getGrantPlan, DEFAULT_PLAN, type GrantType } from '@corates/shared/plans';
+import {
+  getPlan,
+  getGrantPlan,
+  CHECKOUT_ELIGIBLE_TIERS,
+  type GrantType,
+} from '@corates/shared/plans';
 import { throwDomainError, AUTH_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import { resolveOrgId, resolveOrgIdWithRole } from '@/server/billing-context';
 
@@ -224,7 +224,7 @@ export async function createCheckout(
   });
   requireOwnerOrg(orgId, role, 'checkout', session.user.id);
 
-  if (tier === DEFAULT_PLAN) {
+  if (!(CHECKOUT_ELIGIBLE_TIERS as readonly string[]).includes(tier)) {
     warn('billing.checkout_rejected', {
       orgId,
       userId: session.user.id,
@@ -415,89 +415,6 @@ export async function createPortalSession(db: Database, session: Session, reques
   }
   info('billing.portal_opened', { orgId, userId: session.user.id });
   return result;
-}
-
-// --- Single-project checkout ---
-
-export async function createSPCheckout(db: Database, session: Session, _request: Request) {
-  const { orgId, role } = await resolveOrgIdWithRole({
-    db,
-    session: session.session,
-    userId: session.user.id,
-  });
-  requireOwnerOrg(orgId, role, 'single_project_checkout', session.user.id);
-
-  info('billing.single_project_checkout_initiated', { orgId, userId: session.user.id });
-
-  const userRecord = await db
-    .select({ stripeCustomerId: userTable.stripeCustomerId })
-    .from(userTable)
-    .where(eq(userTable.id, session.user.id))
-    .get();
-
-  try {
-    return await createSPCheckoutCmd(
-      env,
-      {
-        id: session.user.id,
-        stripeCustomerId: userRecord?.stripeCustomerId || null,
-      },
-      { orgId: orgId as string },
-    );
-  } catch (err) {
-    captureError(err, {
-      tags: { component: 'billing', action: 'single-project-checkout' },
-      extra: { orgId, userId: session.user.id },
-    });
-    throw err;
-  }
-}
-
-// --- Trial ---
-
-export async function beginTrial(db: Database, session: Session) {
-  const { orgId, role } = await resolveOrgIdWithRole({
-    db,
-    session: session.session,
-    userId: session.user.id,
-  });
-  requireOwnerOrg(orgId, role, 'trial', session.user.id);
-
-  const existingTrial = await getGrantByOrgIdAndType(db, orgId as OrgId, 'trial');
-  if (existingTrial) {
-    warn('billing.trial_rejected', {
-      orgId,
-      userId: session.user.id,
-      reason: 'trial_already_exists',
-      existingGrantId: existingTrial.id,
-    });
-    throwDomainError(
-      VALIDATION_ERRORS.INVALID_INPUT,
-      { field: 'trial', value: 'already_exists' },
-      'Trial grant already exists for this organization. Each organization can only have one trial grant.',
-    );
-  }
-
-  const now = new Date();
-  const expiresAt = new Date(now);
-  expiresAt.setDate(expiresAt.getDate() + GRANT_CONFIG.TRIAL_DAYS);
-
-  const grantId = crypto.randomUUID() as OrgAccessGrantId;
-  await createGrant(db, {
-    id: grantId,
-    orgId: orgId as OrgId,
-    type: 'trial',
-    startsAt: now,
-    expiresAt,
-  });
-
-  info('billing.trial_started', { orgId, userId: session.user.id, grantId });
-
-  return {
-    success: true as const,
-    grantId,
-    expiresAt: Math.floor(expiresAt.getTime() / 1000),
-  };
 }
 
 // --- Sync after checkout ---

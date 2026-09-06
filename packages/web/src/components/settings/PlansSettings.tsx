@@ -20,7 +20,7 @@ import {
 } from '@/lib/plan-redirect-utils';
 
 export function PlansSettings() {
-  const { subscription, refetch, isLoading } = useSubscription();
+  const { subscription, isLoading } = useSubscription();
   const tier = subscription?.tier;
   const navigate = useNavigate();
 
@@ -30,13 +30,13 @@ export function PlansSettings() {
 
   const processPendingPlan = useCallback(async () => {
     setPageState('redirecting');
-    const { handled, error } = await handlePendingPlanRedirect({ navigate, refetch });
+    const { handled, error } = await handlePendingPlanRedirect({ navigate });
     if (!handled) {
       setPageState('ready');
       return;
     }
     if (error) setPageState('error');
-  }, [navigate, refetch]);
+  }, [navigate]);
 
   useEffect(() => {
     if (isLoading || !hasPendingPlan()) return;
@@ -103,14 +103,14 @@ export function PlansSettings() {
             Choose the right plan for your team
           </h1>
           <p className='text-muted-foreground mx-auto mt-4 max-w-2xl text-lg'>
-            Start with a free trial, then pick the plan that fits your workflow. All plans include
-            our core features.
+            Start free, then pick the plan that fits your workflow. All plans include our core
+            features.
           </p>
         </div>
 
         <PricingTable currentTier={tier} />
 
-        <PlanFAQ context='settings' />
+        <PlanFAQ />
 
         {/* Bottom CTA */}
         <div className='from-primary to-primary/90 mt-16 rounded-2xl bg-gradient-to-r px-8 py-12 text-center'>

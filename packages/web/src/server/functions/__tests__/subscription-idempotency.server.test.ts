@@ -19,7 +19,7 @@ function insertSub(
   referenceId: string,
   status: string,
 ) {
-  return db.insert(subscription).values({ id, plan: 'starter_team', referenceId, status });
+  return db.insert(subscription).values({ id, plan: 'team', referenceId, status });
 }
 
 beforeEach(async () => {

@@ -148,8 +148,8 @@ describe('resolveOrgAccess', () => {
       expect(result.effectivePlanId).toBe('free');
       expect(result.source).toBe('free');
       expect(result.accessMode).toBe('free');
-      expect(result.entitlements['project.create']).toBe(false);
-      expect(result.quotas['projects.max']).toBe(0);
+      expect(result.entitlements['project.create']).toBe(true);
+      expect(result.quotas['projects.max']).toBe(1);
       expect(result.subscription).toBeNull();
       expect(result.grant).toBeNull();
     });
@@ -196,7 +196,7 @@ describe('resolveOrgAccess', () => {
       // Create two active subscriptions (should not happen in production)
       await seedSubscription({
         id: 'sub-1',
-        plan: 'starter_team',
+        plan: 'team',
         referenceId: orgId,
         status: 'active',
         createdAt: nowSec - 100,
@@ -513,7 +513,7 @@ describe('validatePlanChange', () => {
     const { nowSec, orgId, userId } = await createTestOrg();
     const db = createDb(env.DB);
 
-    // Create 2 projects (within starter_team limit of 3)
+    // Create 2 projects (within team limit of 3)
     await seedProject({
       id: 'project-1',
       name: 'Project 1',
@@ -532,7 +532,7 @@ describe('validatePlanChange', () => {
       updatedAt: nowSec,
     });
 
-    const result = await validatePlanChange(db, orgId, 'starter_team');
+    const result = await validatePlanChange(db, orgId, 'team');
 
     expect(result.valid).toBe(true);
     expect(result.violations).toHaveLength(0);
@@ -543,7 +543,7 @@ describe('validatePlanChange', () => {
     const { nowSec, orgId, userId } = await createTestOrg();
     const db = createDb(env.DB);
 
-    // Create 5 projects (exceeds starter_team limit of 3)
+    // Create 5 projects (exceeds team limit of 3)
     for (let i = 1; i <= 5; i++) {
       await seedProject({
         id: `project-${i}`,
@@ -555,7 +555,7 @@ describe('validatePlanChange', () => {
       });
     }
 
-    const result = await validatePlanChange(db, orgId, 'starter_team');
+    const result = await validatePlanChange(db, orgId, 'team');
 
     expect(result.valid).toBe(false);
     expect(result.violations).toHaveLength(1);
@@ -569,8 +569,8 @@ describe('validatePlanChange', () => {
     const { nowSec, orgId } = await createTestOrg('org-1' as OrgId, 'owner-1' as UserId);
     const db = createDb(env.DB);
 
-    // Add 11 members (exceeds starter_team limit of 10 collaborators)
-    for (let i = 1; i <= 11; i++) {
+    // Add 4 members (exceeds free limit of 3 collaborators)
+    for (let i = 1; i <= 4; i++) {
       await seedUser({
         id: `member-${i}`,
         name: `Member ${i}`,
@@ -588,21 +588,21 @@ describe('validatePlanChange', () => {
       });
     }
 
-    const result = await validatePlanChange(db, orgId, 'starter_team');
+    const result = await validatePlanChange(db, orgId, 'free');
 
     expect(result.valid).toBe(false);
     expect(result.violations.some(v => v.quotaKey === 'collaborators.org.max')).toBe(true);
 
     const collabViolation = result.violations.find(v => v.quotaKey === 'collaborators.org.max')!;
-    expect(collabViolation.used).toBe(11);
-    expect(collabViolation.limit).toBe(10);
+    expect(collabViolation.used).toBe(4);
+    expect(collabViolation.limit).toBe(3);
   });
 
   it('should report multiple violations when both quotas exceeded', async () => {
     const { nowSec, orgId, userId } = await createTestOrg('org-1' as OrgId, 'owner-1' as UserId);
     const db = createDb(env.DB);
 
-    // Create 5 projects (exceeds starter_team limit of 3)
+    // Create 5 projects (exceeds free limit of 1)
     for (let i = 1; i <= 5; i++) {
       await seedProject({
         id: `project-${i}`,
@@ -614,8 +614,8 @@ describe('validatePlanChange', () => {
       });
     }
 
-    // Add 11 collaborators (exceeds starter_team limit of 10)
-    for (let i = 1; i <= 11; i++) {
+    // Add 4 collaborators (exceeds free limit of 3)
+    for (let i = 1; i <= 4; i++) {
       await seedUser({
         id: `member-${i}`,
         name: `Member ${i}`,
@@ -633,7 +633,7 @@ describe('validatePlanChange', () => {
       });
     }
 
-    const result = await validatePlanChange(db, orgId, 'starter_team');
+    const result = await validatePlanChange(db, orgId, 'free');
 
     expect(result.valid).toBe(false);
     expect(result.violations).toHaveLength(2);
@@ -641,7 +641,7 @@ describe('validatePlanChange', () => {
     expect(result.violations.some(v => v.quotaKey === 'collaborators.org.max')).toBe(true);
   });
 
-  it('should allow any usage for unlimited_team plan', async () => {
+  it('should allow any usage for enterprise plan', async () => {
     const { nowSec, orgId, userId } = await createTestOrg('org-1' as OrgId, 'owner-1' as UserId);
     const db = createDb(env.DB);
 
@@ -676,25 +676,26 @@ describe('validatePlanChange', () => {
       });
     }
 
-    const result = await validatePlanChange(db, orgId, 'unlimited_team');
+    const result = await validatePlanChange(db, orgId, 'enterprise');
 
     expect(result.valid).toBe(true);
     expect(result.violations).toHaveLength(0);
   });
 
-  it('should block downgrade to free plan with any resources', async () => {
+  it('should block downgrade to free plan beyond one project', async () => {
     const { nowSec, orgId, userId } = await createTestOrg();
     const db = createDb(env.DB);
 
-    // Create just 1 project
-    await seedProject({
-      id: 'project-1',
-      name: 'Project 1',
-      orgId,
-      createdBy: userId,
-      createdAt: nowSec,
-      updatedAt: nowSec,
-    });
+    for (let i = 1; i <= 2; i++) {
+      await seedProject({
+        id: `project-${i}`,
+        name: `Project ${i}`,
+        orgId,
+        createdBy: userId,
+        createdAt: nowSec,
+        updatedAt: nowSec,
+      });
+    }
 
     const result = await validatePlanChange(db, orgId, 'free');
 
@@ -710,7 +711,7 @@ describe('validatePlanChange', () => {
 
     expect(result.targetPlan.id).toBe('team');
     expect(result.targetPlan.name).toBe('Team');
-    expect(result.targetPlan.quotas['projects.max']).toBe(10);
-    expect(result.targetPlan.quotas['collaborators.org.max']).toBe(25);
+    expect(result.targetPlan.quotas['projects.max']).toBe(3);
+    expect(result.targetPlan.quotas['collaborators.org.max']).toBe(-1);
   });
 });

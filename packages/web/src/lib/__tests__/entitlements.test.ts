@@ -132,7 +132,7 @@ describe('entitlements', () => {
   describe('getEffectiveEntitlements', () => {
     it('returns free plan entitlements for null subscription', () => {
       const entitlements = getEffectiveEntitlements(null);
-      expect(entitlements['project.create']).toBe(false);
+      expect(entitlements['project.create']).toBe(true);
     });
 
     it('returns free plan entitlements for expired subscription', () => {
@@ -141,7 +141,7 @@ describe('entitlements', () => {
         tier: 'team',
         currentPeriodEnd: pastEnd,
       });
-      expect(entitlements['project.create']).toBe(false);
+      expect(entitlements).toEqual(getEffectiveEntitlements(null));
     });
 
     it('returns team plan entitlements for active team subscription', () => {
@@ -159,13 +159,13 @@ describe('entitlements', () => {
         tier: 'team',
         currentPeriodEnd: futureEnd,
       });
-      expect(entitlements['project.create']).toBe(false);
+      expect(entitlements).toEqual(getEffectiveEntitlements(null));
     });
 
     it('returns entitlements for trialing subscription', () => {
       const entitlements = getEffectiveEntitlements({
         status: 'trialing',
-        tier: 'starter_team',
+        tier: 'lab',
         currentPeriodEnd: futureEnd,
       });
       expect(entitlements['project.create']).toBe(true);
@@ -175,8 +175,8 @@ describe('entitlements', () => {
   describe('getEffectiveQuotas', () => {
     it('returns free plan quotas for null subscription', () => {
       const quotas = getEffectiveQuotas(null);
-      expect(quotas['projects.max']).toBe(0);
-      expect(quotas['collaborators.org.max']).toBe(0);
+      expect(quotas['projects.max']).toBe(1);
+      expect(quotas['collaborators.org.max']).toBe(3);
     });
 
     it('returns team plan quotas for active team subscription', () => {
@@ -185,14 +185,14 @@ describe('entitlements', () => {
         tier: 'team',
         currentPeriodEnd: futureEnd,
       });
-      expect(quotas['projects.max']).toBe(10);
-      expect(quotas['collaborators.org.max']).toBe(25);
+      expect(quotas['projects.max']).toBe(3);
+      expect(quotas['collaborators.org.max']).toBe(-1);
     });
 
-    it('returns unlimited quotas for unlimited_team plan', () => {
+    it('returns unlimited quotas for enterprise plan', () => {
       const quotas = getEffectiveQuotas({
         status: 'active',
-        tier: 'unlimited_team',
+        tier: 'enterprise',
         currentPeriodEnd: futureEnd,
       });
       expect(quotas['projects.max']).toBe(-1);
@@ -205,7 +205,7 @@ describe('entitlements', () => {
         tier: 'team',
         currentPeriodEnd: pastEnd,
       });
-      expect(quotas['projects.max']).toBe(0);
+      expect(quotas['projects.max']).toBe(1);
     });
   });
 
@@ -219,8 +219,8 @@ describe('entitlements', () => {
       ).toBe(true);
     });
 
-    it('returns false for free plan with project.create', () => {
-      expect(hasEntitlement(null, 'project.create')).toBe(false);
+    it('returns true for free plan with project.create', () => {
+      expect(hasEntitlement(null, 'project.create')).toBe(true);
     });
 
     it('returns false for nonexistent entitlement', () => {
@@ -234,29 +234,30 @@ describe('entitlements', () => {
   });
 
   describe('hasQuota', () => {
-    it('returns false for free plan creating a project', () => {
-      expect(hasQuota(null, 'projects.max', { used: 0, requested: 1 })).toBe(false);
+    it('allows the free plan a single project', () => {
+      expect(hasQuota(null, 'projects.max', { used: 0, requested: 1 })).toBe(true);
+      expect(hasQuota(null, 'projects.max', { used: 1, requested: 1 })).toBe(false);
     });
 
     it('returns true for team plan under quota', () => {
       const sub = { status: 'active', tier: 'team', currentPeriodEnd: futureEnd };
-      expect(hasQuota(sub, 'projects.max', { used: 5, requested: 1 })).toBe(true);
+      expect(hasQuota(sub, 'projects.max', { used: 2, requested: 1 })).toBe(true);
     });
 
     it('returns false for team plan at quota limit', () => {
       const sub = { status: 'active', tier: 'team', currentPeriodEnd: futureEnd };
-      expect(hasQuota(sub, 'projects.max', { used: 10, requested: 1 })).toBe(false);
+      expect(hasQuota(sub, 'projects.max', { used: 3, requested: 1 })).toBe(false);
     });
 
     it('returns true for unlimited plan regardless of usage', () => {
-      const sub = { status: 'active', tier: 'unlimited_team', currentPeriodEnd: futureEnd };
+      const sub = { status: 'active', tier: 'enterprise', currentPeriodEnd: futureEnd };
       expect(hasQuota(sub, 'projects.max', { used: 9999, requested: 1 })).toBe(true);
     });
 
     it('defaults requested to 1', () => {
       const sub = { status: 'active', tier: 'team', currentPeriodEnd: futureEnd };
-      expect(hasQuota(sub, 'projects.max', { used: 9 })).toBe(true);
-      expect(hasQuota(sub, 'projects.max', { used: 10 })).toBe(false);
+      expect(hasQuota(sub, 'projects.max', { used: 2 })).toBe(true);
+      expect(hasQuota(sub, 'projects.max', { used: 3 })).toBe(false);
     });
   });
 });

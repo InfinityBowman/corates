@@ -320,7 +320,7 @@ export interface SubscriptionOptions {
 
 /**
  * Seeds a single user + org with a customizable subscription.
- * Defaults to starter_team/active if no subscription options are provided.
+ * Defaults to team/active if no subscription options are provided.
  */
 export async function seedBillingScenario(
   subscriptionOpts?: SubscriptionOptions,

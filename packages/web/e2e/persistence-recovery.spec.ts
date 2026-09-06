@@ -27,7 +27,7 @@ let scenario: DualReviewerScenario;
 
 test.beforeAll(async () => {
   scenario = await seedDualReviewerScenario();
-  await updateSubscription(scenario.orgId, { plan: 'unlimited_team' });
+  await updateSubscription(scenario.orgId, { plan: 'enterprise' });
 });
 
 test.afterAll(async () => {

@@ -5,7 +5,7 @@
  */
 
 import { CHECKOUT_ELIGIBLE_TIERS } from '@corates/shared/plans';
-import { startTrial, redirectToCheckout, redirectToSingleProjectCheckout } from '@/api/billing';
+import { redirectToCheckout } from '@/api/billing';
 import { showToast } from '@/lib/toast';
 
 type BillingInterval = 'monthly' | 'yearly';
@@ -27,7 +27,6 @@ interface NavigateOptions {
 
 interface HandlePendingPlanRedirectOptions {
   navigate?: (_opts: NavigateOptions) => void;
-  refetch?: () => Promise<unknown>;
 }
 
 interface PlanRedirectResult {
@@ -35,7 +34,7 @@ interface PlanRedirectResult {
   error: PlanRedirectError | null;
 }
 
-const DEFAULT_INTERVAL: BillingInterval = 'monthly';
+const DEFAULT_INTERVAL: BillingInterval = 'yearly';
 
 const STORAGE_KEYS = {
   PENDING_PLAN: 'pendingPlan',
@@ -43,14 +42,6 @@ const STORAGE_KEYS = {
 } as const;
 
 export const BILLING_MESSAGES = {
-  TRIAL_STARTED: {
-    title: 'Trial Started',
-    message: 'Your 14-day trial is now active.',
-  },
-  TRIAL_ALREADY_USED: {
-    title: 'Trial Already Used',
-    message: 'You have already used your free trial. Please select a paid plan.',
-  },
   ALREADY_ON_PLAN: {
     title: 'Already on This Plan',
     message: 'You are already subscribed to this plan.',
@@ -66,7 +57,7 @@ export const BILLING_MESSAGES = {
 } as const;
 
 function validateInterval(interval: string | null): BillingInterval {
-  return interval === 'yearly' ? 'yearly' : DEFAULT_INTERVAL;
+  return interval === 'monthly' ? 'monthly' : DEFAULT_INTERVAL;
 }
 
 /**
@@ -121,15 +112,6 @@ export function clearPendingPlan(): void {
   }
 }
 
-function isTrialAlreadyUsedError(err: unknown): boolean {
-  const e = err as PlanRedirectError | undefined;
-  return (
-    !!e?.code?.startsWith?.('VALIDATION_') &&
-    e?.details?.field === 'trial' &&
-    e?.details?.value === 'already_exists'
-  );
-}
-
 function isAlreadyOnPlanError(err: unknown): boolean {
   const e = err as PlanRedirectError | undefined;
   return !!e?.code?.startsWith?.('VALIDATION_') && e?.details?.reason === 'already_on_plan';
@@ -144,12 +126,12 @@ function isPlanChangeBlockedError(err: unknown): boolean {
 
 /**
  * Handle pending plan redirect from localStorage.
- * Processes plan param and redirects to appropriate checkout or starts trial.
+ * Processes plan param and redirects to checkout.
  */
 export async function handlePendingPlanRedirect(
   options: HandlePendingPlanRedirectOptions = {},
 ): Promise<PlanRedirectResult> {
-  const { navigate, refetch } = options;
+  const { navigate } = options;
   const { plan: pendingPlan, interval: pendingInterval } = getPendingPlan();
 
   if (!pendingPlan) {
@@ -157,40 +139,11 @@ export async function handlePendingPlanRedirect(
   }
 
   try {
-    if (pendingPlan === 'trial') {
-      await startTrial();
-      clearPendingPlan();
-      showToast.success(
-        BILLING_MESSAGES.TRIAL_STARTED.title,
-        BILLING_MESSAGES.TRIAL_STARTED.message,
-      );
-      if (refetch) await refetch();
-      if (navigate) navigate({ to: '/dashboard', replace: true });
-      return { handled: true, error: null };
-    }
-
-    if (pendingPlan === 'single_project') {
-      await redirectToSingleProjectCheckout();
-      clearPendingPlan();
-      return { handled: true, error: null };
-    }
-
-    // Subscription plans (starter_team, team, unlimited_team)
     await redirectToCheckout(pendingPlan, pendingInterval);
     clearPendingPlan();
     return { handled: true, error: null };
   } catch (err) {
     console.error('Plan redirect error:', err);
-
-    if (isTrialAlreadyUsedError(err)) {
-      clearPendingPlan();
-      showToast.info(
-        BILLING_MESSAGES.TRIAL_ALREADY_USED.title,
-        BILLING_MESSAGES.TRIAL_ALREADY_USED.message,
-      );
-      if (navigate) navigate({ to: '/settings/plans', replace: true });
-      return { handled: true, error: null };
-    }
 
     if (isAlreadyOnPlanError(err)) {
       clearPendingPlan();
@@ -212,15 +165,8 @@ export async function handlePendingPlanRedirect(
       return { handled: true, error: null };
     }
 
-    // For other trial errors, clear and let caller handle
-    // Trial activation is a direct API call - if it fails for other reasons,
-    // retrying likely won't help (e.g., server error, auth issue)
-    if (pendingPlan === 'trial') {
-      clearPendingPlan();
-    }
-    // For checkout redirects, keep pending plan for retry
-    // These can fail transiently (network issues, Stripe API timeouts)
-
+    // Keep the pending plan so the caller can retry; checkout redirects fail
+    // transiently (network issues, Stripe API timeouts).
     return { handled: true, error: err as PlanRedirectError };
   }
 }

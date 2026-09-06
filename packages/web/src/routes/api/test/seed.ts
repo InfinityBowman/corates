@@ -63,7 +63,7 @@ export const handler = async ({ request }: { request: Request }) => {
     const subOpts = body.subscription ?? {};
     await db.insert(subscription).values({
       id: `${body.org.id}-sub`,
-      plan: subOpts.plan ?? 'starter_team',
+      plan: subOpts.plan ?? 'team',
       referenceId: body.org.id,
       status: subOpts.status ?? 'active',
       periodStart: new Date(),
