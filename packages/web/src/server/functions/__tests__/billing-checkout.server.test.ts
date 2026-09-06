@@ -163,6 +163,10 @@ describe('createCheckout for an existing Stripe subscriber', () => {
       stripeSubscriptionId: 'sub_123',
       periodEnd: new Date(Date.now() + 86_400_000),
     });
+    // CI has no Stripe price ids in the worker env; the local .env does.
+    const testEnv = env as unknown as Record<string, string | undefined>;
+    const previousPriceId = testEnv.STRIPE_PRICE_ID_LAB_YEARLY;
+    testEnv.STRIPE_PRICE_ID_LAB_YEARLY = 'price_lab_yearly';
     stripeRetrieveMock.mockResolvedValueOnce({ items: { data: [{ id: 'si_123' }] } });
     stripeUpdateMock.mockResolvedValueOnce({});
     syncStripeSubscriptionMock.mockResolvedValueOnce({ status: 'active' });
@@ -173,11 +177,16 @@ describe('createCheckout for an existing Stripe subscriber', () => {
       name: owner.name,
       activeOrganizationId: org.id,
     });
-    const result = await createCheckout(db, session, dummyRequest, 'lab', 'yearly');
+    let result: unknown;
+    try {
+      result = await createCheckout(db, session, dummyRequest, 'lab', 'yearly');
+    } finally {
+      testEnv.STRIPE_PRICE_ID_LAB_YEARLY = previousPriceId;
+    }
 
     expect((result as { url: string }).url).toContain('/settings/billing?success=true');
     expect(stripeUpdateMock).toHaveBeenCalledWith('sub_123', {
-      items: [{ id: 'si_123', price: env.STRIPE_PRICE_ID_LAB_YEARLY }],
+      items: [{ id: 'si_123', price: 'price_lab_yearly' }],
       proration_behavior: 'always_invoice',
     });
     expect(syncStripeSubscriptionMock).toHaveBeenCalledWith(expect.anything(), db, 'cus_123');
