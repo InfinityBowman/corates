@@ -10,7 +10,6 @@ import {
   buildProjectWithMembers,
   buildProject,
   buildSelfRemovalScenario,
-  buildMultipleOwnersScenario,
   buildOrgMember,
   resetCounter,
   asUserId,
@@ -20,7 +19,6 @@ import { DomainErrorException } from '@corates/shared';
 import {
   listProjectMembers,
   addProjectMember,
-  updateProjectMemberRole,
   removeProjectMember,
 } from '@/server/functions/org-projects.server';
 
@@ -210,58 +208,6 @@ describe('addProjectMember', () => {
       )
       .get();
     expect(invitationRow?.role).toBe('member');
-  });
-});
-
-describe('updateProjectMemberRole', () => {
-  it('allows owner to update member role', async () => {
-    const { project, org, owner, members } = await buildProjectWithMembers({ memberCount: 1 });
-    const memberToUpdate = members[1].user;
-    currentUser = { id: owner.id, email: owner.email };
-
-    const result = await updateProjectMemberRole(
-      mockSession(),
-      createDb(env.DB),
-      org.id,
-      project.id,
-      memberToUpdate.id,
-      { role: 'member' },
-    );
-    expect(result.success).toBe(true);
-    expect(result.role).toBe('member');
-  });
-
-  it('prevents removing the last owner', async () => {
-    const { project, org, owner } = await buildProject();
-    currentUser = { id: owner.id, email: owner.email };
-
-    try {
-      await updateProjectMemberRole(mockSession(), createDb(env.DB), org.id, project.id, owner.id, {
-        role: 'member',
-      });
-      expect.unreachable('should have thrown');
-    } catch (err) {
-      expect(err).toBeInstanceOf(DomainErrorException);
-      const res = err as DomainErrorException;
-      expect(res.statusCode).toBe(400);
-      const body = res.toDomainError() as { code: string };
-      expect(body.code).toMatch(/LAST_OWNER/);
-    }
-  });
-
-  it('allows demoting owner if multiple owners exist', async () => {
-    const { project, org, owner1, owner2 } = await buildMultipleOwnersScenario();
-    currentUser = { id: owner2.id, email: owner2.email };
-
-    const result = await updateProjectMemberRole(
-      mockSession(),
-      createDb(env.DB),
-      org.id,
-      project.id,
-      owner1.id,
-      { role: 'member' },
-    );
-    expect(result.success).toBe(true);
   });
 });
 

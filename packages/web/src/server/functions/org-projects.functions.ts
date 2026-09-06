@@ -4,29 +4,18 @@ import type { OrgId, ProjectId, UserId, ProjectInvitationId } from '@corates/sha
 import { PROJECT_SETUP_STEPS } from '@corates/shared';
 import { authMiddleware } from '@/server/middleware/auth';
 import {
-  listOrgProjects,
   createOrgProject,
-  getProject,
   updateProjectById,
   updateProjectSetupStepById,
   deleteProjectById,
   listProjectMembers,
   addProjectMember,
-  updateProjectMemberRole,
   removeProjectMember,
   listProjectInvitations,
-  createProjectInvitation,
   cancelProjectInvitation,
 } from './org-projects.server';
 
 // -- Projects --
-
-export const getOrgProjects = createServerFn({ method: 'GET' })
-  .middleware([authMiddleware])
-  .validator(z.object({ orgId: z.string() }))
-  .handler(async ({ data, context: { session, db } }) =>
-    listOrgProjects(session, db, data.orgId as OrgId),
-  );
 
 export const createProject = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
@@ -41,13 +30,6 @@ export const createProject = createServerFn({ method: 'POST' })
     const { orgId, ...projectData } = data;
     return createOrgProject(session, db, orgId as OrgId, projectData);
   });
-
-export const getProjectById = createServerFn({ method: 'GET' })
-  .middleware([authMiddleware])
-  .validator(z.object({ orgId: z.string(), projectId: z.string() }))
-  .handler(async ({ data, context: { session, db } }) =>
-    getProject(session, db, data.orgId as OrgId, data.projectId as ProjectId),
-  );
 
 export const updateProject = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
@@ -115,27 +97,6 @@ export const addMemberToProject = createServerFn({ method: 'POST' })
     return addProjectMember(session, db, orgId as OrgId, projectId as ProjectId, memberData);
   });
 
-export const updateMemberRole = createServerFn({ method: 'POST' })
-  .middleware([authMiddleware])
-  .validator(
-    z.object({
-      orgId: z.string(),
-      projectId: z.string(),
-      userId: z.string(),
-      role: z.enum(['owner', 'member']),
-    }),
-  )
-  .handler(async ({ data, context: { session, db } }) =>
-    updateProjectMemberRole(
-      session,
-      db,
-      data.orgId as OrgId,
-      data.projectId as ProjectId,
-      data.userId as UserId,
-      { role: data.role },
-    ),
-  );
-
 export const removeMember = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
   .validator(
@@ -163,21 +124,6 @@ export const getInvitations = createServerFn({ method: 'GET' })
   .handler(async ({ data, context: { session, db } }) =>
     listProjectInvitations(session, db, data.orgId as OrgId, data.projectId as ProjectId),
   );
-
-export const createInvitation = createServerFn({ method: 'POST' })
-  .middleware([authMiddleware])
-  .validator(
-    z.object({
-      orgId: z.string(),
-      projectId: z.string(),
-      email: z.string().email(),
-      role: z.enum(['owner', 'member']),
-    }),
-  )
-  .handler(async ({ data, context: { session, db } }) => {
-    const { orgId, projectId, ...inviteData } = data;
-    return createProjectInvitation(session, db, orgId as OrgId, projectId as ProjectId, inviteData);
-  });
 
 export const cancelInvitation = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])

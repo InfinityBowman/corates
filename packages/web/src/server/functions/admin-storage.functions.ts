@@ -1,15 +1,7 @@
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
 import { authMiddleware } from '@/server/middleware/auth';
-import {
-  getAdminStorageStats,
-  listAdminStorageDocuments,
-  deleteAdminStorageDocuments,
-} from './admin-storage.server';
-
-export const getAdminStorageStatsAction = createServerFn({ method: 'GET' })
-  .middleware([authMiddleware])
-  .handler(async ({ context: { session } }) => getAdminStorageStats(session));
+import { listAdminStorageDocuments, deleteAdminStorageDocuments } from './admin-storage.server';
 
 export const listAdminStorageDocumentsAction = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])

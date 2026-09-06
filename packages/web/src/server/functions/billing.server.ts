@@ -1,6 +1,5 @@
 import { captureError, info, warn } from '@corates/workers/logger';
 import { env } from 'cloudflare:workers';
-import type Stripe from 'stripe';
 import type { Database } from '@corates/db/client';
 import type { OrgId } from '@corates/shared/ids';
 import {
@@ -8,7 +7,7 @@ import {
   getOrgResourceUsage,
   validatePlanChange,
 } from '@corates/workers/billing-resolver';
-import { createStripeClient, isStripeConfigured } from '@corates/shared/stripe';
+import { createStripeClient } from '@corates/shared/stripe';
 import { createAuth } from '@corates/workers/auth-config';
 import { syncStripeSubscription } from '@corates/workers/commands/billing';
 import { projects, subscription } from '@corates/db/schema';
@@ -116,54 +115,6 @@ export async function fetchMembers(db: Database, session: Session, headers: Head
 
   const members = result.members || [];
   return { members, count: members.length };
-}
-
-export async function validateCoupon(code: string) {
-  if (!code) {
-    return { valid: false as const, error: 'Promo code is required' };
-  }
-
-  if (!isStripeConfigured(env)) {
-    captureError(new Error('validate_coupon_failed: Stripe not configured'), {
-      tags: { component: 'billing', action: 'validate-coupon' },
-    });
-    return { valid: false as const, error: 'Payment system not available' };
-  }
-
-  try {
-    const stripe = createStripeClient(env.STRIPE_SECRET_KEY);
-    const promoCodes = await stripe.promotionCodes.list({ code, active: true, limit: 1 });
-
-    if (promoCodes.data.length === 0) {
-      return { valid: false as const, error: 'Invalid or expired promo code' };
-    }
-
-    const promo = promoCodes.data[0];
-    const coupon = (promo as unknown as { coupon: Stripe.Coupon }).coupon;
-
-    if (promo.expires_at && promo.expires_at < Math.floor(Date.now() / 1000)) {
-      return { valid: false as const, error: 'This promo code has expired' };
-    }
-    if (promo.max_redemptions && promo.times_redeemed >= promo.max_redemptions) {
-      return { valid: false as const, error: 'This promo code is no longer available' };
-    }
-
-    info('billing.coupon_validated', { code: promo.code, promoCodeId: promo.id });
-    return {
-      valid: true as const,
-      promoCodeId: promo.id,
-      code: promo.code,
-      percentOff: coupon.percent_off,
-      amountOff: coupon.amount_off,
-      currency: coupon.currency,
-      duration: coupon.duration,
-      durationMonths: coupon.duration_in_months,
-      name: coupon.name,
-    };
-  } catch (err) {
-    captureError(err, { tags: { component: 'billing', action: 'validate-coupon' } });
-    return { valid: false as const, error: 'Failed to validate promo code' };
-  }
 }
 
 export async function fetchPlanValidation(db: Database, session: Session, targetPlan: string) {

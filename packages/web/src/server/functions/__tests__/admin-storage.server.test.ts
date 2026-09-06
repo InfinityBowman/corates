@@ -11,7 +11,6 @@ import { resetTestDatabase, seedMediaFile } from '@/__tests__/server/helpers';
 import { buildAdminUser, resetCounter } from '@/__tests__/server/factories';
 import type { Session } from '@/server/middleware/auth';
 import {
-  getAdminStorageStats,
   listAdminStorageDocuments,
   deleteAdminStorageDocuments,
 } from '@/server/functions/admin-storage.server';
@@ -178,23 +177,6 @@ describe('deleteAdminStorageDocuments', () => {
 
     const remaining = await env.PDF_BUCKET.list({ prefix: 'projects/p1/' });
     expect(remaining.objects.length).toBe(0);
-  });
-});
-
-describe('getAdminStorageStats', () => {
-  it('returns storage statistics aggregated from R2', async () => {
-    await putR2('projects/p1/studies/s1/file1.pdf', 'a'.repeat(100));
-    await putR2('projects/p1/studies/s1/file2.pdf', 'b'.repeat(200));
-    await putR2('projects/p2/studies/s1/file3.pdf', 'c'.repeat(300));
-
-    const result = await getAdminStorageStats(mockAdminSession());
-    expect(result.totalFiles).toBe(3);
-    expect(result.totalSize).toBe(600);
-    expect(result.filesByProject.length).toBeGreaterThan(0);
-    const p1Count = result.filesByProject.find(p => p.projectId === 'p1')?.count;
-    const p2Count = result.filesByProject.find(p => p.projectId === 'p2')?.count;
-    expect(p1Count).toBe(2);
-    expect(p2Count).toBe(1);
   });
 });
 
