@@ -125,39 +125,13 @@ pnpm lint
 
 ### Stripe Local Development
 
-For local Stripe webhook testing, the project includes a `@corates/stripe-dev` package that runs a Stripe CLI listener automatically when you run `turbo dev`:
+Prices are addressed by Stripe lookup key (`team_monthly`, `team_yearly`, `lab_monthly`, `lab_yearly`), so local development needs no price ids. The setup script creates the products and prices in your Stripe test account from `@corates/shared/plans`.
 
-- **Subscription webhooks** (Better Auth): `http://localhost:8787/api/auth/stripe/webhook`
-
-**Quick Setup (Automated):**
-
-1. Get your Stripe test secret key from https://dashboard.stripe.com/test/apikeys
-2. Run the setup script:
-   ```bash
-   cd packages/workers
-   STRIPE_SECRET_KEY=sk_test_... pnpm stripe:setup
-   ```
-   This automatically creates all required products and prices, and writes them to `.env`
-3. Install Stripe CLI: https://stripe.com/docs/stripe-cli
-4. Authenticate: `stripe login`
-5. Run `turbo dev` - the Stripe listeners will start automatically
-6. Copy the `whsec_...` signing secret printed by the listener
-7. Add it to `packages/workers/.env` as `STRIPE_WEBHOOK_SECRET_AUTH=whsec_...`
-
-**Manual Setup (Alternative):**
-
-If you prefer to set up manually:
-
-1. Install Stripe CLI: https://stripe.com/docs/stripe-cli
-2. Authenticate: `stripe login`
-3. Run `turbo dev` - the Stripe listeners will start automatically
-4. Copy the `whsec_...` signing secret printed by the listener
-5. Run `pnpm stripe:setup` from `packages/web` to create the products and prices (keyed by lookup key, so no price ids are needed)
-6. Add all configuration to `packages/workers/.env`:
-   - `STRIPE_SECRET_KEY=sk_test_...`
-   - `STRIPE_WEBHOOK_SECRET_AUTH=whsec_...` (from the listener)
-
-**Note:** The webhook signing secret is printed when the listener starts. You only need to copy it once into `.env` - it remains valid for that Stripe CLI session.
+1. Get a test secret key from https://dashboard.stripe.com/test/apikeys
+2. From `packages/web`, run `STRIPE_SECRET_KEY=sk_test_... pnpm stripe:setup`. It writes the key to `packages/web/.env`. Re-run it after changing prices in `@corates/shared/plans`; it moves each lookup key to a new price.
+3. Install the Stripe CLI (https://stripe.com/docs/stripe-cli) and run `stripe login`.
+4. Forward webhooks to the app with `stripe listen --forward-to <app url>/api/auth/stripe/webhook`. `pnpm dev:test` in `packages/web` starts this listener for you against port 3010.
+5. Copy the `whsec_...` value the listener prints into `packages/web/.env` as `STRIPE_WEBHOOK_SECRET_AUTH`. It stays valid for that Stripe CLI session.
 
 ## Package-Specific Configuration
 

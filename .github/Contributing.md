@@ -41,7 +41,6 @@ This is a pnpm monorepo with the following packages:
 3. **Set up environment files:**
 
    ```sh
-   cp packages/workers/.env.example packages/workers/.env
    cp packages/web/.env.example packages/web/.env
    ```
 
@@ -60,46 +59,13 @@ This is a pnpm monorepo with the following packages:
 
 ### Stripe Local Development
 
-For local Stripe webhook testing, the project includes a `@corates/stripe-dev` package that runs a Stripe CLI listener automatically when you run `turbo dev`:
+Prices are addressed by Stripe lookup key (`team_monthly`, `team_yearly`, `lab_monthly`, `lab_yearly`), so local development needs no price ids. The setup script creates the products and prices in your Stripe test account from `@corates/shared/plans`.
 
-- **Subscription webhooks** (Better Auth): `http://localhost:8787/api/auth/stripe/webhook`
-
-**Quick Setup (Automated):**
-
-1. Get your Stripe test secret key from https://dashboard.stripe.com/test/apikeys
-2. Run the automated setup script:
-   ```sh
-   cd packages/workers
-   STRIPE_SECRET_KEY=sk_test_... pnpm stripe:setup
-   ```
-   This automatically creates all required products and prices, and writes them to `.env`
-3. Install Stripe CLI: https://stripe.com/docs/stripe-cli
-4. Authenticate: `stripe login`
-5. Run `turbo dev` - the Stripe listeners will start automatically
-6. Copy the `whsec_...` signing secret printed by the listener
-7. Add it to `packages/workers/.env` as `STRIPE_WEBHOOK_SECRET_AUTH=whsec_...`
-
-**Manual Setup (Alternative):**
-
-If you prefer to set up manually:
-
-1. Install Stripe CLI: https://stripe.com/docs/stripe-cli
-2. Authenticate: `stripe login`
-3. Run `turbo dev` - the Stripe listeners will start automatically
-4. Copy the `whsec_...` signing secret printed by the listener
-5. Create products and prices in Stripe Dashboard (Test mode)
-6. Add all configuration to `packages/workers/.env`:
-   - `STRIPE_SECRET_KEY=sk_test_...`
-   - `STRIPE_WEBHOOK_SECRET_AUTH=whsec_...` (from the listener)
-   - `STRIPE_PRICE_ID_STARTER_TEAM_MONTHLY=price_...`
-   - `STRIPE_PRICE_ID_STARTER_TEAM_YEARLY=price_...`
-   - `STRIPE_PRICE_ID_TEAM_MONTHLY=price_...`
-   - `STRIPE_PRICE_ID_TEAM_YEARLY=price_...`
-   - `STRIPE_PRICE_ID_UNLIMITED_TEAM_MONTHLY=price_...`
-   - `STRIPE_PRICE_ID_UNLIMITED_TEAM_YEARLY=price_...`
-   - `STRIPE_PRICE_ID_SINGLE_PROJECT=price_...`
-
-**Note:** The webhook signing secrets are printed when the listeners start. You only need to copy them once into `.env` - they remain valid for that Stripe CLI session.
+1. Get a test secret key from https://dashboard.stripe.com/test/apikeys
+2. From `packages/web`, run `STRIPE_SECRET_KEY=sk_test_... pnpm stripe:setup`. It writes the key to `packages/web/.env`. Re-run it after changing prices in `@corates/shared/plans`; it moves each lookup key to a new price.
+3. Install the Stripe CLI (https://stripe.com/docs/stripe-cli) and run `stripe login`.
+4. Forward webhooks to the app with `stripe listen --forward-to <app url>/api/auth/stripe/webhook`. `pnpm dev:test` in `packages/web` starts this listener for you against port 3010.
+5. Copy the `whsec_...` value the listener prints into `packages/web/.env` as `STRIPE_WEBHOOK_SECRET_AUTH`. It stays valid for that Stripe CLI session.
 
 ## Development Workflow
 
