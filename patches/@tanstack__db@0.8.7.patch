@@ -1,0 +1,102 @@
+diff --git a/dist/cjs/query/live/collection-subscriber.cjs b/dist/cjs/query/live/collection-subscriber.cjs
+index 7e5e91e01fa56f29c652defce8c1a195e89ee755..4b9a93778382ddc4509cd528e862bc980f1ffc1b 100644
+--- a/dist/cjs/query/live/collection-subscriber.cjs
++++ b/dist/cjs/query/live/collection-subscriber.cjs
+@@ -14,7 +14,7 @@ class CollectionSubscriber {
+     this.collectionConfigBuilder = collectionConfigBuilder;
+     this.biggest = void 0;
+     this.subscriptionLoadingPromises = /* @__PURE__ */ new Map();
+-    this.sentToD2Keys = /* @__PURE__ */ new Set();
++    this.sentToD2Keys = /* @__PURE__ */ new Map();
+     this.demand = new subsetDemandController.SubsetDemandController();
+   }
+   subscribe() {
+diff --git a/dist/cjs/query/live/utils.cjs b/dist/cjs/query/live/utils.cjs
+index 08ea631c61504da92065ad24127698c479dd413a..c9b81259391f973d576c09d0642e2d06e42b1ef8 100644
+--- a/dist/cjs/query/live/utils.cjs
++++ b/dist/cjs/query/live/utils.cjs
+@@ -68,20 +68,21 @@ function* splitUpdates(changes) {
+     }
+   }
+ }
+-function filterDuplicateInserts(changes, sentKeys) {
+-  const filtered = [];
+-  for (const change of changes) {
++function filterDuplicateInserts(changes, sentRows) {
++  return changes.flatMap((change) => {
+     if (change.type === `insert`) {
+-      if (sentKeys.has(change.key)) {
+-        continue;
+-      }
+-      sentKeys.add(change.key);
+-    } else if (change.type === `delete`) {
+-      sentKeys.delete(change.key);
++      if (sentRows.has(change.key)) return [];
++      sentRows.set(change.key, change.value);
++      return [change];
+     }
+-    filtered.push(change);
+-  }
+-  return filtered;
++    const previousValue = sentRows.get(change.key);
++    if (change.type === `delete`) {
++      sentRows.delete(change.key);
++      return [previousValue === void 0 ? change : { ...change, value: previousValue }];
++    }
++    sentRows.set(change.key, change.value);
++    return [previousValue === void 0 ? change : { ...change, previousValue }];
++  });
+ }
+ function trackBiggestSentValue(changes, current, sentKeys, comparator) {
+   let biggest = current;
+diff --git a/dist/esm/query/live/collection-subscriber.js b/dist/esm/query/live/collection-subscriber.js
+index 20d94a649bb35909f803915c3dcc2d8a49f96dd2..1ad926d86fa1db1cb7eec3c8ae1a6371bfee822e 100644
+--- a/dist/esm/query/live/collection-subscriber.js
++++ b/dist/esm/query/live/collection-subscriber.js
+@@ -12,7 +12,7 @@ class CollectionSubscriber {
+     this.collectionConfigBuilder = collectionConfigBuilder;
+     this.biggest = void 0;
+     this.subscriptionLoadingPromises = /* @__PURE__ */ new Map();
+-    this.sentToD2Keys = /* @__PURE__ */ new Set();
++    this.sentToD2Keys = /* @__PURE__ */ new Map();
+     this.demand = new SubsetDemandController();
+   }
+   subscribe() {
+diff --git a/dist/esm/query/live/utils.js b/dist/esm/query/live/utils.js
+index 39ce93c9efbdd2708c14143706af2d7e0f76aec5..b6061f96d470c1438a1ed8ba422139d961ed204b 100644
+--- a/dist/esm/query/live/utils.js
++++ b/dist/esm/query/live/utils.js
+@@ -66,20 +66,21 @@ function* splitUpdates(changes) {
+     }
+   }
+ }
+-function filterDuplicateInserts(changes, sentKeys) {
+-  const filtered = [];
+-  for (const change of changes) {
++function filterDuplicateInserts(changes, sentRows) {
++  return changes.flatMap((change) => {
+     if (change.type === `insert`) {
+-      if (sentKeys.has(change.key)) {
+-        continue;
+-      }
+-      sentKeys.add(change.key);
+-    } else if (change.type === `delete`) {
+-      sentKeys.delete(change.key);
++      if (sentRows.has(change.key)) return [];
++      sentRows.set(change.key, change.value);
++      return [change];
+     }
+-    filtered.push(change);
+-  }
+-  return filtered;
++    const previousValue = sentRows.get(change.key);
++    if (change.type === `delete`) {
++      sentRows.delete(change.key);
++      return [previousValue === void 0 ? change : { ...change, value: previousValue }];
++    }
++    sentRows.set(change.key, change.value);
++    return [previousValue === void 0 ? change : { ...change, previousValue }];
++  });
+ }
+ function trackBiggestSentValue(changes, current, sentKeys, comparator) {
+   let biggest = current;
