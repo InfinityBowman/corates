@@ -1,6 +1,6 @@
 # Pricing restructure rollout (issue #659)
 
-Status: in progress
+Status: in progress (Stripe products and secrets done, subscriber and D1 pending)
 Branch: `feat/pricing-restructure`
 Last updated: 2026-09-06
 
@@ -24,32 +24,44 @@ Live Stripe has `CoRATES Team` (`prod_Tp18uRBS70fvE9`) at the old $29/month
 and $290/year. The new Team prices are $30/month and $300/year, so both
 products need new prices. It has no Lab product.
 
-## 1. Stripe live
+## 1. Stripe products (done 2026-09-06)
 
-Run from `packages/web` with the live key from `.env.production`. Prefer the
-setup script over the dashboard so names and amounts match the shared config:
+Live account, used by production:
+
+| Product      | Id                    | Monthly price                    | Yearly price                     |
+| ------------ | --------------------- | -------------------------------- | -------------------------------- |
+| CoRATES Team | `prod_VD9Z0ODxvxyMHb` | `price_1UCjFxCoCKvs2wg8NKRgIKN8` | `price_1UCjFxCoCKvs2wg8f21qUW7i` |
+| CoRATES Lab  | `prod_VD9Z9paysc7tka` | `price_1UCjFyCoCKvs2wg8uUrGc7Fz` | `price_1UCjFyCoCKvs2wg8KiVL460U` |
+
+Main account test mode, used by staging (its key is the main account's test
+key, not the sandbox that local dev uses):
+
+| Product      | Id                    | Monthly price                    | Yearly price                     |
+| ------------ | --------------------- | -------------------------------- | -------------------------------- |
+| CoRATES Team | `prod_VD9agijHO2DXpA` | `price_1UCjH5CoCKvs2wg8sh7X4pV4` | `price_1UCjH5CoCKvs2wg8Ez5zFzZv` |
+| CoRATES Lab  | `prod_VD9ajygT85CDKY` | `price_1UCjH6CoCKvs2wg8c0xnVt4i` | `price_1UCjH6CoCKvs2wg8cyXrwP63` |
+
+The old live products (`CoRATES Starter Team`, the $29/$290 `CoRATES Team`,
+`CoRATES Unlimited`, `CoRATES Single Project`) are still active. Archive them
+in the dashboard after the subscriber below has been moved; archiving keeps
+existing subscriptions alive.
+
+## 2. Secrets (done 2026-09-06)
+
+The four `STRIPE_PRICE_ID_TEAM_*` and `STRIPE_PRICE_ID_LAB_*` secrets are set
+on the web worker for staging and production, and both env files carry them.
+The retired `STARTER_TEAM`, `UNLIMITED_TEAM`, and `SINGLE_PROJECT` secrets are
+still present on Cloudflare because the currently deployed worker throws
+without them. Delete them once the branch is in production:
 
 ```bash
-node scripts/setup-stripe-test.mjs --key sk_live_...
+for k in STRIPE_PRICE_ID_STARTER_TEAM_MONTHLY STRIPE_PRICE_ID_STARTER_TEAM_YEARLY \
+         STRIPE_PRICE_ID_UNLIMITED_TEAM_MONTHLY STRIPE_PRICE_ID_UNLIMITED_TEAM_YEARLY \
+         STRIPE_PRICE_ID_SINGLE_PROJECT; do
+  npx wrangler secret delete "$k" --env staging
+  npx wrangler secret delete "$k" --env production
+done
 ```
-
-The script warns about the live key and asks for confirmation. It finds the
-`Team` product by name, adds $30/month and $300/year prices to it, and creates
-`Lab` at $90/month and $900/year. Deactivate the old $29/$290 Team prices in the
-dashboard once the subscriber below has been moved. The script also
-rewrites the local `.env` with the live ids, so restore `.env` from git or
-re-run the script with the test key afterwards.
-
-Then archive the retired products in the dashboard (Starter Team, Unlimited,
-Single Project). Archiving keeps existing subscriptions alive.
-
-## 2. Secrets
-
-Add `STRIPE_PRICE_ID_LAB_MONTHLY` and `STRIPE_PRICE_ID_LAB_YEARLY` to
-`packages/web/.env.staging` and `packages/web/.env.production`, remove the
-`STARTER_TEAM`, `UNLIMITED_TEAM`, and `SINGLE_PROJECT` ids, then run
-`scripts/set-secrets.sh` for each environment. The worker throws at startup if
-any Team or Lab price id is missing, so do this before deploying the branch.
 
 ## 3. Migrate the one paying subscriber
 
