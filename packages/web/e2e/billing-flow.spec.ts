@@ -143,14 +143,10 @@ test.describe('Billing flows', () => {
     await expect(page.getByText('Active')).toBeVisible();
 
     // --- Upgrade to Lab ---
+    // The card is on file, so the price is swapped on the existing subscription
+    // server-side and the page lands back on billing without visiting Stripe.
     await clickPlanButton(page, 'Lab');
-
-    // Upgrade uses Stripe's confirmation page (card already on file)
-    await page.waitForURL(/checkout\.stripe\.com|billing\.stripe\.com/, { timeout: 30_000 });
-    await page.getByRole('button', { name: /Confirm/i }).click();
-    await page.waitForURL(url => url.origin === new URL(BASE_URL).origin, {
-      timeout: 60_000,
-    });
+    await page.waitForURL(/\/settings\/billing/, { timeout: 60_000 });
 
     await expect(page.getByText('Payment successful!')).toBeVisible({ timeout: 30_000 });
     await expect(page.getByRole('heading', { name: 'Lab', exact: true })).toBeVisible({

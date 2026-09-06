@@ -122,9 +122,9 @@ The Stripe Customer Portal allows users to manage their subscriptions, update pa
    - Cancellation reasons: Enable and add relevant options
    - Prorate cancellations: **Yes** (recommended)
 
-5. **Plan Switching:**
-   - Allow switching to: Select all CoRATES plans
-   - Proration behavior: **Always invoice immediately**
+5. **Plan Switching:** leave off. Plan changes for existing subscribers are
+   made in-app by swapping the price on the subscription, so the portal's
+   product list does not need to track price changes.
 
 6. **Save Configuration**
 
