@@ -1,6 +1,6 @@
 # API Routes Overview
 
-Backend API structure. All `/api/*` routes are TanStack Start file-based server routes under `packages/web/src/routes/api/`. The Stripe purchases webhook is a separate Hono-based worker (`packages/stripe-purchases`).
+Backend API structure. All `/api/*` routes are TanStack Start file-based server routes under `packages/web/src/routes/api/`.
 
 ```mermaid
 flowchart LR
@@ -17,10 +17,6 @@ flowchart LR
         billing["/billing/*"]
         admin["/admin/*"]
         inviteaccept["/invitations/accept"]
-    end
-
-    subgraph StripeWorker["Stripe Purchases Worker (Hono)"]
-        purchasewebhook["/api/billing/purchases/webhook"]
     end
 
     subgraph GuardsPolicies["Per-route guards & policies"]
@@ -134,8 +130,6 @@ Stripe integration for subscriptions and payments (main app Worker):
 - `GET /api/billing/subscription` - Get org subscription
 - `POST /api/billing/checkout` - Create Stripe checkout session
 - `POST /api/billing/portal` - Create Stripe customer portal session
-
-One-time purchase webhooks are handled by the isolated `packages/stripe-purchases` Worker at `POST /api/billing/purchases/webhook`. That Worker uses Hono and is deployed separately for isolation.
 
 ### Admin (`/api/admin/*`)
 

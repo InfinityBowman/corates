@@ -44,11 +44,7 @@ Lookup keys are unique per account and per mode, so test mode and live mode each
 
 ## 2. Create Webhooks
 
-You need **two** webhook endpoints in Stripe:
-
-### Webhook 1 - Auth/Subscription Events
-
-Used by Better Auth stripe plugin for subscription lifecycle.
+One webhook endpoint, used by the Better Auth stripe plugin for subscription lifecycle.
 
 - **URL:** `https://corates.org/api/auth/stripe/webhook`
 - **Events:**
@@ -58,21 +54,6 @@ Used by Better Auth stripe plugin for subscription lifecycle.
   - `invoice.paid`
   - `invoice.payment_failed`
 - **Secret:** Copy signing secret to `STRIPE_WEBHOOK_SECRET_AUTH`
-
-### Webhook 2 - Purchase Events
-
-Used for one-time purchases and additional billing events.
-
-- **URL:** `https://corates.org/api/billing/webhooks/stripe`
-- **Events:**
-  - `checkout.session.completed`
-  - `invoice.paid`
-  - `invoice.payment_failed`
-  - `customer.subscription.updated`
-  - `customer.subscription.deleted`
-  - `payment_intent.succeeded`
-  - `payment_intent.payment_failed`
-- **Secret:** Copy signing secret to `STRIPE_WEBHOOK_SECRET_PURCHASES`
 
 ## 3. Get API Keys
 
@@ -89,9 +70,8 @@ Run these commands from `packages/workers`:
 # Core Stripe secret
 wrangler secret put STRIPE_SECRET_KEY --env production
 
-# Webhook secrets (one for each endpoint)
+# Webhook secret
 wrangler secret put STRIPE_WEBHOOK_SECRET_AUTH --env production
-wrangler secret put STRIPE_WEBHOOK_SECRET_PURCHASES --env production
 ```
 
 ## 5. Configure Customer Portal
@@ -126,8 +106,7 @@ The portal URL is generated dynamically via the `/api/billing/portal` endpoint.
 
 ## Environment Variables Reference
 
-| Variable                          | Description                                        |
-| --------------------------------- | -------------------------------------------------- |
-| `STRIPE_SECRET_KEY`               | Stripe API secret key (`sk_live_*` or `sk_test_*`) |
-| `STRIPE_WEBHOOK_SECRET_AUTH`      | Signing secret for auth webhook endpoint           |
-| `STRIPE_WEBHOOK_SECRET_PURCHASES` | Signing secret for purchases webhook endpoint      |
+| Variable                     | Description                                        |
+| ---------------------------- | -------------------------------------------------- |
+| `STRIPE_SECRET_KEY`          | Stripe API secret key (`sk_live_*` or `sk_test_*`) |
+| `STRIPE_WEBHOOK_SECRET_AUTH` | Signing secret for auth webhook endpoint           |

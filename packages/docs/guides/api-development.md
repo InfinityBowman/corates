@@ -2,8 +2,6 @@
 
 API routes in the main CoRATES app are TanStack Start file-based server routes, served from the same Cloudflare Worker as the SPA. Shared backend logic (auth, billing resolvers, policies, rate limiting) lives in the `@corates/workers` library package.
 
-A separate Worker (`packages/stripe-purchases`) still uses Hono -- it is isolated for deploy-cadence reasons and documented in its own README.
-
 ## File layout
 
 Route files live under `packages/web/src/routes/api/` and mirror the URL path. Dynamic segments use a `$` prefix (TanStack Router convention).
@@ -262,12 +260,6 @@ const response = await handlePost({
 ```
 
 Server-side tests live under `__tests__/` adjacent to the route and follow the `*.server.test.ts` suffix (picked up by `pnpm --filter web test`).
-
-## The Hono worker (stripe-purchases)
-
-The Stripe purchases webhook lives in its own Worker under `packages/stripe-purchases/`. It uses Hono because the original code predates the TanStack Start migration and webhook signature verification is high-stakes -- it is kept isolated so frontend deploys do not disrupt payment retry windows. See `packages/stripe-purchases/src/routes/webhook.ts` for the two-phase trust model.
-
-Do not add new routes to the stripe-purchases worker unless they specifically need that isolation. New endpoints belong under `packages/web/src/routes/api/`.
 
 ## Don'ts
 

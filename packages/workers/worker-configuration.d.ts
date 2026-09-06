@@ -24,7 +24,6 @@ declare namespace Cloudflare {
     ADMIN_EMAIL: string;
     STRIPE_SECRET_KEY: string;
     STRIPE_WEBHOOK_SECRET_AUTH: string;
-    STRIPE_WEBHOOK_SECRET_PURCHASES: string;
     USER_SESSION: DurableObjectNamespace<import('./src/test-worker').UserSession>;
     WORKSPACE: DurableObjectNamespace<import('./src/test-worker').WorkspaceDO>;
   }
@@ -47,7 +46,6 @@ declare namespace Cloudflare {
     ADMIN_EMAIL: string;
     STRIPE_SECRET_KEY: string;
     STRIPE_WEBHOOK_SECRET_AUTH: string;
-    STRIPE_WEBHOOK_SECRET_PURCHASES: string;
     USER_SESSION: DurableObjectNamespace<import('./src/test-worker').UserSession>;
     WORKSPACE: DurableObjectNamespace<import('./src/test-worker').WorkspaceDO>;
     CF_VERSION_METADATA?: WorkerVersionMetadata;
@@ -77,7 +75,6 @@ declare namespace NodeJS {
       | 'ADMIN_EMAIL'
       | 'STRIPE_SECRET_KEY'
       | 'STRIPE_WEBHOOK_SECRET_AUTH'
-      | 'STRIPE_WEBHOOK_SECRET_PURCHASES'
       | 'DEV_MODE'
       | 'SENTRY_DSN'
     >

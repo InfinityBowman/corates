@@ -31,6 +31,10 @@ dotenv.config({ path: envPath });
 // Product/Price definitions from shared plans package
 const PRODUCTS = getAllStripeProductConfigs();
 
+// The signing secret is per Stripe CLI session, not per target, so the one
+// captured here also serves the e2e listener that dev:test runs against 3010.
+const WEBHOOK_FORWARD_URL = 'https://corates.localhost/api/auth/stripe/webhook';
+
 function parseArgs(argv) {
   const args = {
     key: null,
@@ -121,11 +125,7 @@ function readEnvFile() {
 }
 
 function writeEnvFile(env) {
-  const stripeKeys = [
-    'STRIPE_SECRET_KEY',
-    'STRIPE_WEBHOOK_SECRET_AUTH',
-    'STRIPE_WEBHOOK_SECRET_PURCHASES',
-  ];
+  const stripeKeys = ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET_AUTH'];
 
   // Track which Stripe keys we've updated
   const updatedKeys = new Set();
@@ -192,9 +192,12 @@ function writeEnvFile(env) {
  * Get webhook secret from stripe listen command
  * Spawns the process, captures the secret from output, then kills it
  */
-async function getWebhookSecret(forwardTo, timeout = 5000) {
+async function getWebhookSecret(forwardTo, timeout = 15000) {
   return new Promise((resolve, reject) => {
-    const stripeProcess = spawn('stripe', ['listen', '--forward-to', forwardTo], {
+    const args = ['listen', '--forward-to', forwardTo];
+    // portless serves the dev app over a locally issued certificate
+    if (forwardTo.startsWith('https://')) args.push('--skip-verify');
+    const stripeProcess = spawn('stripe', args, {
       stdio: ['ignore', 'pipe', 'pipe'],
     });
 
@@ -284,8 +287,8 @@ async function findPriceByLookupKey(stripe, lookupKey) {
 async function createProductAndPrices(stripe, productDef, dryRun, force) {
   const results = {};
 
-  // Find or create product
-  let product = await findExistingProduct(stripe, productDef.name);
+  // Find or create product. A dry run without a key has no client to look with.
+  let product = stripe ? await findExistingProduct(stripe, productDef.name) : null;
 
   if (product && force) {
     console.log(`🗑️  Deleting existing product: ${productDef.name} (${product.id})`);
@@ -448,44 +451,22 @@ async function main() {
   const currentEnv = readEnvFile();
   const needsAuthSecret =
     !currentEnv.STRIPE_WEBHOOK_SECRET_AUTH || currentEnv.STRIPE_WEBHOOK_SECRET_AUTH.startsWith('#');
-  const needsPurchasesSecret =
-    !currentEnv.STRIPE_WEBHOOK_SECRET_PURCHASES ||
-    currentEnv.STRIPE_WEBHOOK_SECRET_PURCHASES.startsWith('#');
 
-  if ((needsAuthSecret || needsPurchasesSecret) && !args.dryRun) {
+  if (needsAuthSecret && !args.dryRun) {
     console.log('\n🔐 Attempting to get webhook secrets from Stripe CLI...');
     console.log('   (Make sure Stripe CLI is installed and authenticated: stripe login)');
 
     const webhookSecrets = {};
 
-    if (needsAuthSecret) {
-      try {
-        console.log('   Getting webhook secret for auth endpoint...');
-        const secret = await getWebhookSecret('http://localhost:8787/api/auth/stripe/webhook');
-        webhookSecrets.STRIPE_WEBHOOK_SECRET_AUTH = secret;
-        console.log(`   ✓ Got auth webhook secret: ${secret.substring(0, 20)}...`);
-      } catch (error) {
-        console.warn(`   ⚠️  Could not get auth webhook secret: ${error.message}`);
-        console.warn('   You can get it manually by running:');
-        console.warn('   stripe listen --forward-to http://localhost:8787/api/auth/stripe/webhook');
-      }
-    }
-
-    if (needsPurchasesSecret) {
-      try {
-        console.log('   Getting webhook secret for purchases endpoint...');
-        const secret = await getWebhookSecret(
-          'http://localhost:8787/api/billing/purchases/webhook',
-        );
-        webhookSecrets.STRIPE_WEBHOOK_SECRET_PURCHASES = secret;
-        console.log(`   ✓ Got purchases webhook secret: ${secret.substring(0, 20)}...`);
-      } catch (error) {
-        console.warn(`   ⚠️  Could not get purchases webhook secret: ${error.message}`);
-        console.warn('   You can get it manually by running:');
-        console.warn(
-          '   stripe listen --forward-to http://localhost:8787/api/billing/purchases/webhook',
-        );
-      }
+    try {
+      console.log('   Getting webhook secret for auth endpoint...');
+      const secret = await getWebhookSecret(WEBHOOK_FORWARD_URL);
+      webhookSecrets.STRIPE_WEBHOOK_SECRET_AUTH = secret;
+      console.log(`   ✓ Got auth webhook secret: ${secret.substring(0, 20)}...`);
+    } catch (error) {
+      console.warn(`   ⚠️  Could not get auth webhook secret: ${error.message}`);
+      console.warn('   You can get it manually by running:');
+      console.warn(`   stripe listen --forward-to ${WEBHOOK_FORWARD_URL} --skip-verify`);
     }
 
     // Update .env with webhook secrets if we got them
@@ -502,20 +483,12 @@ async function main() {
     }
   }
 
-  if (needsAuthSecret || needsPurchasesSecret) {
+  if (needsAuthSecret) {
     console.log('\n📝 Next steps:');
-    if (needsAuthSecret) {
-      console.log('1. Get auth webhook secret:');
-      console.log('   stripe listen --forward-to http://localhost:8787/api/auth/stripe/webhook');
-    }
-    if (needsPurchasesSecret) {
-      console.log('2. Get purchases webhook secret:');
-      console.log(
-        '   stripe listen --forward-to http://localhost:8787/api/billing/purchases/webhook',
-      );
-    }
-    console.log('3. Copy the whsec_... values and add them to your .env file');
-    console.log('4. Restart your dev server');
+    console.log('1. Get auth webhook secret:');
+    console.log(`   stripe listen --forward-to ${WEBHOOK_FORWARD_URL} --skip-verify`);
+    console.log('2. Copy the whsec_... value and add it to your .env file');
+    console.log('3. Restart your dev server');
   } else {
     console.log('\n✅ Setup complete! All Stripe configuration is in place.');
   }

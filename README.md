@@ -40,7 +40,6 @@ CoRATES is a web application designed to streamline the entire quality and risk-
 
 - **Runtime**: Cloudflare Workers (serverless edge compute)
 - **API**: TanStack Start file-based server routes (in `packages/web/src/routes/api/`) served from the main app Worker
-- **Stripe Webhook Worker**: Separate Hono-based Worker (`packages/stripe-purchases`) that receives and verifies Stripe webhooks, isolated from the main app for deploy-cadence reasons
 - **Real-time**: Durable Objects (stateful computing for WebSocket connections)
 - **Database**: Cloudflare D1 (serverless SQLite)
 - **ORM**: Drizzle ORM with automatic migration generation (drizzle-kit)
@@ -71,7 +70,6 @@ CoRATES is a web application designed to streamline the entire quality and risk-
 
 - `packages/web` - React 19 / TanStack Start app, deployed as the main Cloudflare Worker (serves both the SPA and all `/api/*` routes)
 - `packages/workers` - Shared backend library (auth, policies, billing resolvers, Durable Objects) imported by `packages/web`
-- `packages/stripe-purchases` - Isolated Hono-based Cloudflare Worker for Stripe purchase webhooks
 - `packages/db` - Drizzle schema, client, and typed helpers
 - `packages/shared` - Shared TypeScript utilities, types, and domain error definitions
 - `packages/ai` - Python (uv) AI experiments: structured data extraction from research papers using LangExtract

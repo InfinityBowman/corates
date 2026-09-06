@@ -71,25 +71,10 @@ WEB_SECRETS=(
   ADMIN_EMAIL
   STRIPE_SECRET_KEY
   STRIPE_WEBHOOK_SECRET_AUTH
-  STRIPE_WEBHOOK_SECRET_PURCHASES
-)
-
-STRIPE_SECRETS=(
-  STRIPE_SECRET_KEY
-  STRIPE_WEBHOOK_SECRET_PURCHASES
 )
 
 echo "=== web worker (packages/web) --env $ENV ==="
 set_secrets_from_env "$ROOT/packages/web" "$ROOT/packages/web/.env.$ENV" "${WEB_SECRETS[@]}"
-
-echo
-echo "=== stripe-purchases worker (packages/stripe-purchases) --env $ENV ==="
-STRIPE_ENV="$ROOT/packages/stripe-purchases/.env.$ENV"
-if [[ ! -f "$STRIPE_ENV" ]]; then
-  echo "  No $STRIPE_ENV found, falling back to packages/web/.env.$ENV for shared Stripe keys"
-  STRIPE_ENV="$ROOT/packages/web/.env.$ENV"
-fi
-set_secrets_from_env "$ROOT/packages/stripe-purchases" "$STRIPE_ENV" "${STRIPE_SECRETS[@]}"
 
 echo
 echo "Done."

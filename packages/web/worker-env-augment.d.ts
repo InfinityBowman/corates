@@ -16,7 +16,6 @@ declare namespace Cloudflare {
     ADMIN_EMAIL: string;
     STRIPE_SECRET_KEY: string;
     STRIPE_WEBHOOK_SECRET_AUTH: string;
-    STRIPE_WEBHOOK_SECRET_PURCHASES: string;
     CF_VERSION_METADATA?: WorkerVersionMetadata;
   }
 }

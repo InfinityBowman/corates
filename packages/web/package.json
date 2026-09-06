@@ -33,6 +33,7 @@
     "dev:test": "concurrently -k -n web,stripe -c blue,yellow \"APP_URL=http://localhost:3010 AUTH_BASE_URL=http://localhost:3010 vite dev --mode e2e --config vite.config.e2e.ts\" \"stripe listen --forward-to http://localhost:3010/api/auth/stripe/webhook\"",
     "test:e2e": "playwright test",
     "db:generate:test": "node ./scripts/generate-test-sql.mjs",
+    "stripe:setup": "node ./scripts/setup-stripe-test.mjs",
     "user:make-admin:local": "node ./scripts/make-admin-local.mjs",
     "user:make-admin:prod": "node ./scripts/make-admin-prod.mjs"
   },

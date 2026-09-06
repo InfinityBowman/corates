@@ -327,7 +327,7 @@ export const stripeEventLedger = sqliteTable('stripe_event_ledger', {
   payloadHash: text('payloadHash').notNull().unique(), // SHA-256 hash for dedupe before verification
   signaturePresent: integer('signaturePresent', { mode: 'boolean' }).notNull(),
   receivedAt: integer('receivedAt', { mode: 'timestamp' }).notNull(),
-  route: text('route').notNull(), // e.g., '/api/auth/stripe/webhook' or '/api/billing/purchases/webhook'
+  route: text('route').notNull(), // e.g., '/api/auth/stripe/webhook'
   requestId: text('requestId').notNull(),
   status: text('status').notNull().default('received'), // received, processed, skipped_duplicate, failed, ignored_unverified
   error: text('error'), // Truncated error message/JSON
