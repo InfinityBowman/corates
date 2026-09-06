@@ -164,12 +164,12 @@ The rule of thumb for tolerated degradations is still **warn means console** (me
 lookups that fell back, cache writes that missed). A failure the user attempted and that
 did not complete gets a `clientLogger` event at the call site.
 
-Product usage events go through `track` in `@/lib/analytics`, which sends to Plausible and
-mirrors the same event to `clientLogger` as `client.<object>.<action>` (`Checklist:Created`
-becomes `client.checklist.created`). Plausible is the system of record for counts: the Loki
-copy is production-only, batched and sanitized, so it undercounts. Prop keys matching
-`/email|password|token|secret|authorization|cookie|userid/i` are dropped from the Loki copy
-while still reaching Plausible, so name props to avoid the divergence.
+Product usage events go through the same `clientLogger`, named `client.<object>.<action>`
+with a past-tense action (`client.checklist.created`, `client.export.project`). Loki is the
+only record: the events are production-only and batched, so they undercount, and prop keys
+matching `/email|password|token|secret|authorization|cookie|userid/i` are dropped by
+`sanitizeClientLogData`. Plausible still loads in `__root.tsx` for pageviews, but nothing
+sends it custom events.
 
 `bestEffort` in `@/lib/errorLogger` follows the same split: it warns by default and only reports
 when the call site passes `capture: true`. IndexedDB cache writes fail routinely under Safari

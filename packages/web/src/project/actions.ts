@@ -8,7 +8,7 @@
  */
 
 import { showToast } from '@/lib/toast';
-import { track } from '@/lib/analytics';
+import { clientLogger } from '@/lib/clientLogger';
 import { serializeAnswerRows } from '@corates/shared/sync';
 import type { ChecklistStatus } from '@corates/shared/checklists';
 import { useAuthStore, selectUser } from '@/stores/authStore';
@@ -57,7 +57,7 @@ export const project = {
         outcomeId: outcomeId ?? null,
         now: Date.now(),
       });
-      track('Checklist:Created', { type });
+      clientLogger.info('client.checklist.created', { type });
       return true;
     },
 
@@ -75,7 +75,7 @@ export const project = {
         toOutcomeId,
         now: Date.now(),
       });
-      track('Checklist:OutcomeChanged', { type });
+      clientLogger.info('client.checklist.outcome_changed', { type });
       showToast.success('Outcome Changed', 'Checklists moved to the selected outcome.');
       return true;
     },
@@ -88,7 +88,7 @@ export const project = {
         type: type as 'AMSTAR2' | 'ROB2' | 'ROBINS_I',
         now: Date.now(),
       });
-      track('Checklist:SentBackToTodo', { type });
+      clientLogger.info('client.checklist.sent_back_to_todo', { type });
       showToast.success('Sent Back', "The appraisal is back in the reviewers' To-Do lists.");
       return true;
     },

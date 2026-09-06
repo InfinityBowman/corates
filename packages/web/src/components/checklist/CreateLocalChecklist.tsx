@@ -23,7 +23,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FileUpload, FileUploadDropzone, FileUploadHiddenInput } from '@/components/ui/file-upload';
 import { LANDING_URL } from '@/config/api.js';
-import { track } from '@/lib/analytics';
+import { clientLogger } from '@/lib/clientLogger';
 import { getChecklistTypeOptions, DEFAULT_CHECKLIST_TYPE } from '@/checklist-registry/index';
 import { validatePdfFile } from '@/lib/pdfValidation.js';
 
@@ -112,10 +112,10 @@ export function CreateLocalChecklist({ type: typeParam }: { type?: string }) {
           now,
         });
 
-        track('LocalAppraisal', { type: checklistType });
+        clientLogger.info('client.local_appraisal.created', { type: checklistType });
 
         if (pdfFile) {
-          track('LocalAppraisal:PDF', { type: checklistType });
+          clientLogger.info('client.local_appraisal.pdf_attached', { type: checklistType });
           const arrayBuffer = await pdfFile.arrayBuffer();
           await db.localChecklistPdfs.put({
             checklistId: id,

@@ -812,7 +812,7 @@
     {
       "id": 16,
       "type": "stat",
-      "title": "Checklists completed",
+      "title": "Reconciliations finalized",
       "datasource": {
         "type": "loki",
         "uid": "${datasource}"
@@ -826,7 +826,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"client.checklist.completed\" | userId=~`$user` [$__auto]))"
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"client.reconciliation.finalized\" | userId=~`$user` [$__auto]))"
         }
       ],
       "fieldConfig": {
@@ -855,7 +855,7 @@
         "textMode": "auto",
         "justifyMode": "auto"
       },
-      "description": "The core product outcome: an appraisal carried all the way through."
+      "description": "The core product outcome: two reviewers reconciled and the consolidated appraisal was finalized."
     },
     {
       "id": 17,
@@ -969,7 +969,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"client.local_appraisal\" | userId=~`$user` [$__auto]))"
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"client.local_appraisal.created\" | userId=~`$user` [$__auto]))"
         }
       ],
       "fieldConfig": {
@@ -1003,7 +1003,7 @@
     {
       "id": 20,
       "type": "stat",
-      "title": "Appraisal PDFs exported",
+      "title": "Appraisal PDFs attached",
       "datasource": {
         "type": "loki",
         "uid": "${datasource}"
@@ -1017,7 +1017,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"client.local_appraisal.pdf\" | userId=~`$user` [$__auto]))"
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"client.local_appraisal.pdf_attached\" | userId=~`$user` [$__auto]))"
         }
       ],
       "fieldConfig": {
@@ -1064,7 +1064,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (message) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=~`client\\.checklist\\..*` | userId=~`$user` [$__auto]))",
+          "expr": "sum by (message) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=~`client\\.(checklist|reconciliation)\\..*` | userId=~`$user` [$__auto]))",
           "legendFormat": "{{message}}"
         }
       ],
@@ -1097,7 +1097,7 @@
           "sort": "desc"
         }
       },
-      "description": "Browser events only. Checklist work happens in Y.js and syncs peer to peer, so the server never sees it - these track() events are the only record of the actual research work."
+      "description": "Browser events only. Checklist work happens in Y.js and syncs peer to peer, so the server never sees it - these browser events are the only record of the actual research work."
     },
     {
       "id": 22,
@@ -1116,7 +1116,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "topk(20, sum by (type, message) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=~`client\\.(checklist|local_appraisal)\\..*` | type!=`` | userId=~`$user` [$__range])))",
+          "expr": "topk(20, sum by (type, message) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=~`client\\.(checklist|local_appraisal|reconciliation)\\..*` | type!=`` | userId=~`$user` [$__range])))",
           "queryType": "instant",
           "instant": true,
           "format": "table"
@@ -1178,7 +1178,7 @@
         ],
         "showHeader": true
       },
-      "description": "The `type` prop on each track() call - which appraisal instrument is being used."
+      "description": "The `type` prop on each browser event - which appraisal instrument is being used."
     },
     {
       "id": 23,
