@@ -73,12 +73,12 @@ function PricingPage() {
         {/* Header */}
         <div className='mx-auto max-w-2xl text-center'>
           <h1 className='text-foreground text-3xl font-bold md:text-4xl'>
-            Explore our plans for researchers and evidence synthesis teams.
+            Appraisal is free. Collaboration is what you pay for.
           </h1>
           <p className='text-muted-foreground mt-4 text-lg'>
             Individual appraisals with PDF annotation and export are always free.
             <br />
-            Choose a plan when you're ready to collaborate with your team.
+            Choose a plan when you&apos;re ready to collaborate with your team.
           </p>
         </div>
 
@@ -90,12 +90,13 @@ function PricingPage() {
 
         {/* Contact section */}
         <div className='mt-12 text-center'>
-          <p className='text-muted-foreground text-sm'>
-            Need a custom plan for your institution?{' '}
+          <p className='text-muted-foreground mx-auto max-w-2xl text-sm'>
+            Buying through a department or grant? Payments are card-only today - no purchase orders
+            or institutional invoicing yet.{' '}
             <Link to='/contact' className='text-primary hover:text-primary/80'>
               Contact us
             </Link>{' '}
-            for enterprise pricing.
+            and tell us what your purchasing office needs.
           </p>
         </div>
       </main>

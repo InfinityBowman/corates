@@ -76,6 +76,11 @@ export function PricingTable({
   const [validationError, setValidationError] = useState<PlanValidationResult | null>(null);
   const [pendingDowngrade, setPendingDowngrade] = useState<BillingCatalogPlan | null>(null);
 
+  // Tiers arrive as ids ("starter_team"); show the name a buyer recognizes.
+  // Free is the only tier with no catalog entry.
+  const tierDisplayName = (tier: string) =>
+    catalog.plans.find(p => p.tier === tier)?.name ?? 'Free';
+
   const isMarketing = mode === 'marketing';
 
   const { subscription: subData, refetch } = useSubscription();
@@ -286,8 +291,8 @@ export function PricingTable({
         {isPopular && !isCurrent && (
           <div className='absolute -top-4 left-1/2 -translate-x-1/2'>
             <Badge variant='default' className='px-4 py-1.5 font-bold text-white shadow-lg'>
-              <ZapIcon className='size-3.5' />
-              Most Popular
+              <StarIcon className='size-3.5' />
+              Recommended
             </Badge>
           </div>
         )}
@@ -506,9 +511,10 @@ export function PricingTable({
                     <AlertCircleIcon className='text-destructive size-5' />
                   </div>
                   <div>
-                    <DialogTitle>Cannot Change Plan</DialogTitle>
+                    <DialogTitle>That plan is too small right now</DialogTitle>
                     <DialogDescription className='mt-1'>
-                      Your current usage exceeds the limits of the selected plan.
+                      Nothing has been changed or charged. Come back under the limits below, then
+                      switch.
                     </DialogDescription>
                   </div>
                 </div>
@@ -519,7 +525,7 @@ export function PricingTable({
                     <Alert key={i} variant='destructive'>
                       <AlertTitle>{v.message}</AlertTitle>
                       <AlertDescription>
-                        Current: {v.used} / Limit: {v.limit}
+                        You have {v.used}. That plan allows {v.limit}.
                       </AlertDescription>
                     </Alert>
                   ))}
@@ -543,9 +549,10 @@ export function PricingTable({
                     <ArrowDownIcon className='text-warning size-5' />
                   </div>
                   <div>
-                    <DialogTitle>Confirm Downgrade</DialogTitle>
+                    <DialogTitle>Move to a smaller plan?</DialogTitle>
                     <DialogDescription className='mt-1'>
-                      Are you sure you want to downgrade your plan?
+                      We check that your current projects and collaborators fit the smaller plan
+                      before anything changes.
                     </DialogDescription>
                   </div>
                 </div>
@@ -555,11 +562,12 @@ export function PricingTable({
                   <AlertDescription>
                     <p>
                       You&apos;re switching from{' '}
-                      <span className='font-semibold'>{currentTier}</span> to{' '}
+                      <span className='font-semibold'>{tierDisplayName(currentTier)}</span> to{' '}
                       <span className='font-semibold'>{pendingDowngrade.name}</span>.
                     </p>
                     <p className='mt-2'>
-                      Your new plan will take effect at the end of your current billing period.
+                      You keep your current plan until the end of the billing period you have
+                      already paid for. The new allowances apply after that.
                     </p>
                   </AlertDescription>
                 </Alert>
