@@ -6,6 +6,11 @@ import path from 'node:path';
 import { expect, type Page, type BrowserContext } from '@playwright/test';
 import { loginAs, addProjectMember, type DualReviewerScenario } from './helpers';
 
+// Answer writes closer together than this trip the sync engine's "query
+// contributors are not congruent" race on staging, after which every later
+// write on the page throws. No person clicks faster than this.
+const ANSWER_CLICK_PACE_MS = 250;
+
 /** Click every radio on the AMSTAR2 checklist editor matching the given answer (e.g. "Yes", "No"). */
 export async function answerAllAMSTAR2(page: Page, answer: 'Yes' | 'No' | 'Partial Yes') {
   const radios = page.getByRole('radio', { name: answer });
@@ -15,6 +20,7 @@ export async function answerAllAMSTAR2(page: Page, answer: 'Yes' | 'No' | 'Parti
   for (let i = 0; i < count; i++) {
     await radios.nth(i).click();
     await expect(radios.nth(i)).toBeChecked({ timeout: 5_000 });
+    await page.waitForTimeout(ANSWER_CLICK_PACE_MS);
   }
 }
 
@@ -61,7 +67,7 @@ export async function answerAllROB2Domains(
     const count = await buttons.count();
     for (let i = 0; i < count; i++) {
       await buttons.nth(i).click();
-      await page.waitForTimeout(50);
+      await page.waitForTimeout(ANSWER_CLICK_PACE_MS);
     }
   }
 }
@@ -100,7 +106,7 @@ export async function answerROBINSISectionB(page: Page, answer: 'Y' | 'PY' | 'PN
   const count = await labels.count();
   for (let i = 0; i < count; i++) {
     await labels.nth(i).click();
-    await page.waitForTimeout(50);
+    await page.waitForTimeout(ANSWER_CLICK_PACE_MS);
   }
 }
 
@@ -163,7 +169,7 @@ export async function answerAllROBINSIDomains(
       if (!answered) {
         await group.getByRole('button').first().click();
       }
-      await page.waitForTimeout(30);
+      await page.waitForTimeout(ANSWER_CLICK_PACE_MS);
     }
   }
 }

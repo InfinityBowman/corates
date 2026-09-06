@@ -364,7 +364,8 @@ export function PricingTable({
                       <span className='font-semibold'>{pendingDowngrade.name}</span>.
                     </p>
                     <p className='mt-2'>
-                      Your new plan will take effect at the end of your current billing period.
+                      The change applies right away and unused time on your current plan is credited
+                      to your next invoice.
                     </p>
                   </AlertDescription>
                 </Alert>

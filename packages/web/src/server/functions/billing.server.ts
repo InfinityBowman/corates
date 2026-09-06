@@ -16,8 +16,10 @@ import { and, count, desc, eq, or } from 'drizzle-orm';
 import {
   getPlan,
   getGrantPlan,
+  getStripeProductConfig,
   CHECKOUT_ELIGIBLE_TIERS,
   type GrantType,
+  type PlanId,
 } from '@corates/shared/plans';
 import { throwDomainError, AUTH_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import { resolveOrgId, resolveOrgIdWithRole } from '@/server/billing-context';
@@ -273,6 +275,27 @@ export async function createCheckout(
     );
   }
 
+  if (currentBilling.source === 'subscription' && currentBilling.subscription) {
+    const row = await db
+      .select({
+        stripeCustomerId: subscription.stripeCustomerId,
+        stripeSubscriptionId: subscription.stripeSubscriptionId,
+      })
+      .from(subscription)
+      .where(eq(subscription.id, currentBilling.subscription.id))
+      .get();
+    if (row?.stripeCustomerId && row.stripeSubscriptionId) {
+      return changeSubscriptionPrice(db, {
+        orgId,
+        userId: session.user.id,
+        tier,
+        interval,
+        stripeCustomerId: row.stripeCustomerId,
+        stripeSubscriptionId: row.stripeSubscriptionId,
+      });
+    }
+  }
+
   info('billing.checkout_initiated', { orgId, userId: session.user.id, plan: tier, interval });
 
   const auth = createAuth(env);
@@ -296,6 +319,58 @@ export async function createCheckout(
     });
     throw err;
   }
+}
+
+// Better Auth's own upgrade path sends existing subscribers through Stripe's
+// customer portal, whose allowed-products list is dashboard-only configuration
+// that has to be kept in step with every price change. Swapping the price on
+// the subscription directly has no such dependency.
+async function changeSubscriptionPrice(
+  db: Database,
+  args: {
+    orgId: OrgId;
+    userId: string;
+    tier: string;
+    interval: 'monthly' | 'yearly';
+    stripeCustomerId: string;
+    stripeSubscriptionId: string;
+  },
+) {
+  const { orgId, userId, tier, interval, stripeCustomerId, stripeSubscriptionId } = args;
+  const envKey = getStripeProductConfig(tier as PlanId).envKeys[interval];
+  const priceId = envKey ? (env as unknown as Record<string, string | undefined>)[envKey] : null;
+  if (!priceId) {
+    captureError(new Error(`Missing Stripe price id for ${tier} ${interval}`), {
+      tags: { component: 'billing', action: 'change-price' },
+      extra: { orgId, tier, interval },
+    });
+    throwDomainError(VALIDATION_ERRORS.INVALID_INPUT, { field: 'tier', value: tier });
+  }
+
+  info('billing.price_change_initiated', { orgId, userId, plan: tier, interval });
+
+  const stripe = createStripeClient(env.STRIPE_SECRET_KEY);
+  try {
+    const current = await stripe.subscriptions.retrieve(stripeSubscriptionId);
+    const item = current.items.data[0];
+    if (!item) {
+      throwDomainError(VALIDATION_ERRORS.INVALID_INPUT, { reason: 'subscription_has_no_items' });
+    }
+    await stripe.subscriptions.update(stripeSubscriptionId, {
+      items: [{ id: item.id, price: priceId }],
+      proration_behavior: 'always_invoice',
+    });
+    await syncStripeSubscription(env, db, stripeCustomerId);
+  } catch (err) {
+    captureError(err, {
+      tags: { component: 'billing', action: 'change-price' },
+      extra: { orgId, userId, plan: tier, interval, stripeSubscriptionId },
+    });
+    throw err;
+  }
+
+  info('billing.price_changed', { orgId, userId, plan: tier, interval, stripeSubscriptionId });
+  return { url: `${env.APP_URL || 'https://corates.org'}/settings/billing?success=true` };
 }
 
 // --- Invoices ---

@@ -130,3 +130,66 @@ describe('createCheckout', () => {
     ).rejects.toThrow('Stripe API error');
   });
 });
+
+const stripeRetrieveMock = vi.fn();
+const stripeUpdateMock = vi.fn();
+const syncStripeSubscriptionMock = vi.fn();
+
+vi.mock('@corates/shared/stripe', async importOriginal => ({
+  ...(await importOriginal<typeof import('@corates/shared/stripe')>()),
+  createStripeClient: () => ({
+    subscriptions: {
+      retrieve: (...args: unknown[]) => stripeRetrieveMock(...args),
+      update: (...args: unknown[]) => stripeUpdateMock(...args),
+    },
+  }),
+}));
+
+vi.mock('@corates/workers/commands/billing', () => ({
+  syncStripeSubscription: (...args: unknown[]) => syncStripeSubscriptionMock(...args),
+}));
+
+describe('createCheckout for an existing Stripe subscriber', () => {
+  it('swaps the price on the subscription instead of opening checkout', async () => {
+    const { org, owner } = await buildOrg();
+    const { subscription } = await import('@corates/db/schema');
+    const db = createDb(env.DB);
+    await db.insert(subscription).values({
+      id: 'sub-row',
+      plan: 'team',
+      referenceId: org.id,
+      status: 'active',
+      stripeCustomerId: 'cus_123',
+      stripeSubscriptionId: 'sub_123',
+      periodEnd: new Date(Date.now() + 86_400_000),
+    });
+    // CI has no Stripe price ids in the worker env; the local .env does.
+    const testEnv = env as unknown as Record<string, string | undefined>;
+    const previousPriceId = testEnv.STRIPE_PRICE_ID_LAB_YEARLY;
+    testEnv.STRIPE_PRICE_ID_LAB_YEARLY = 'price_lab_yearly';
+    stripeRetrieveMock.mockResolvedValueOnce({ items: { data: [{ id: 'si_123' }] } });
+    stripeUpdateMock.mockResolvedValueOnce({});
+    syncStripeSubscriptionMock.mockResolvedValueOnce({ status: 'active' });
+
+    const session = mockSession({
+      userId: owner.id,
+      email: owner.email,
+      name: owner.name,
+      activeOrganizationId: org.id,
+    });
+    let result: unknown;
+    try {
+      result = await createCheckout(db, session, dummyRequest, 'lab', 'yearly');
+    } finally {
+      testEnv.STRIPE_PRICE_ID_LAB_YEARLY = previousPriceId;
+    }
+
+    expect((result as { url: string }).url).toContain('/settings/billing?success=true');
+    expect(stripeUpdateMock).toHaveBeenCalledWith('sub_123', {
+      items: [{ id: 'si_123', price: 'price_lab_yearly' }],
+      proration_behavior: 'always_invoice',
+    });
+    expect(syncStripeSubscriptionMock).toHaveBeenCalledWith(expect.anything(), db, 'cus_123');
+    expect(upgradeSubscriptionMock).not.toHaveBeenCalled();
+  });
+});

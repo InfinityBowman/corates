@@ -41,7 +41,7 @@ const FAQ_ITEMS: FAQItemData[] = [
   {
     question: 'Can I switch plans at any time?',
     answer:
-      "Yes. You can upgrade or downgrade your plan at any time. When you upgrade, you'll be charged a prorated amount for the remainder of your billing cycle. When you downgrade, your new plan will take effect at the start of your next billing cycle.",
+      'Yes. You can upgrade or downgrade your plan at any time. Changes apply right away: upgrades charge a prorated amount for the rest of your billing cycle, and downgrades credit the unused time to your next invoice.',
   },
   {
     question: 'Can I cancel my subscription?',
