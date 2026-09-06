@@ -3,12 +3,14 @@
  *
  * @throws ValidationError FIELD_REQUIRED if name is empty or whitespace-only
  * @throws DomainError QUOTA_EXCEEDED if org at project limit
+ * @throws DomainError FORBIDDEN free_project_cap if the actor's free project is already used in an org they own
  * @throws DomainError DB_TRANSACTION_FAILED on database error
  */
 
 import { createDb } from '@corates/db/client';
 import { projects, projectMembers } from '@corates/db/schema';
 import { insertWithQuotaCheck, type InsertRollbackMeta } from '../../lib/quotaTransaction';
+import { checkFreeProjectCap } from '../../lib/freeProjectCap';
 import { info } from '../../lib/logger';
 import {
   createValidationError,
@@ -59,6 +61,11 @@ export async function createProject(
 
   if (!trimmedName) {
     throw createValidationError('name', VALIDATION_ERRORS.FIELD_REQUIRED.code, null);
+  }
+
+  const freeCap = await checkFreeProjectCap(db, actor.id, orgId);
+  if (!freeCap.allowed) {
+    throw freeCap.error;
   }
 
   const setupStep: ProjectSetupStep = PROJECT_SETUP_STEPS[0];
