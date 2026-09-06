@@ -24,8 +24,37 @@ Workers (production) -> OTLP export -> loki.jacobmaynard.dev/otlp/v1/logs -> Lok
   - `corates-product-usage.json` - active users, project work, invitations, appraisals
   - `corates-request-performance.json` - RED metrics off `request.completed`
   - `corates-billing.json` - checkout funnels, subscriptions, Stripe webhook ingress
+  - `corates-web-analytics.json` - what the Plausible UI shows (visitors, visits, bounce,
+    pages, sources, countries, devices, goals), read from Plausible's ClickHouse. Filtered to
+    the `Host` variable because the Plausible script also runs on staging and local dev.
 - `.env` (gitignored) - R2 S3 credentials, Loki basic-auth htpasswd, Grafana admin password
 - `deploy.sh` - rsync config, then `docker --context homelab compose up -d`
+
+## Plausible
+
+Plausible CE runs on the same box from the home-lab repo (`services/plausible/`), and its
+ClickHouse sits on that stack's private `plausible_plausible-internal` network. Grafana joins
+that network (see `compose.yaml`) and reads it with the `grafana-clickhouse-datasource`
+plugin, installed before startup via `GF_PLUGINS_PREINSTALL_SYNC`, over the native protocol on
+port 9000. The datasource is provisioned as `Plausible` from
+`config/grafana/provisioning/datasources/clickhouse.yaml`.
+
+The ClickHouse user is `grafana`, defined in the home-lab repo at
+`services/plausible/clickhouse/grafana-reader.xml`: `readonly = 1`, `SELECT` and `dictGet` on
+`plausible_events.*` only, and permission to change `max_execution_time` because the plugin
+sets it per query. Its password is `CLICKHOUSE_GRAFANA_PASSWORD` in both stacks' `.env`;
+Grafana's provisioning file reads it from the container environment.
+
+Querying notes: corates.org is `site_id = 3`. `events_v2` is append-only, but `sessions_v2` is
+a `VersionedCollapsingMergeTree`, so every aggregate over it multiplies by `sign`
+(`sum(sign)` for visits, `sum(is_bounce * sign) / sum(sign)` for bounce rate). Plausible has
+no city-level geo database here, so `subdivision1_code` and `city_geoname_id` are always
+empty. To poke at the data directly:
+
+```bash
+docker --context homelab exec homelab-plausible-clickhouse clickhouse-client --query \
+  "SELECT name, count() FROM plausible_events.events_v2 WHERE site_id = 3 GROUP BY name"
+```
 
 ## Operating
 

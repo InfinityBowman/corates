@@ -35,11 +35,17 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
       GF_SERVER_ROOT_URL: https://grafana.jacobmaynard.dev
       GF_USERS_ALLOW_SIGN_UP: 'false'
+      # Sync so the plugin exists before datasource provisioning runs (GF_INSTALL_PLUGINS is deprecated and installs after startup)
+      GF_PLUGINS_PREINSTALL_SYNC: grafana-clickhouse-datasource
+      # Read by the datasource provisioning file, not by Grafana itself
+      CLICKHOUSE_GRAFANA_PASSWORD: ${CLICKHOUSE_GRAFANA_PASSWORD}
     volumes:
       - grafana-data:/var/lib/grafana
       - /home/jacob/corates/observability/grafana/provisioning:/etc/grafana/provisioning:ro
     networks:
       - homelab
+      # Plausible's ClickHouse lives only on this network (home-lab repo, services/plausible)
+      - plausible-internal
     labels:
       traefik.enable: 'true'
       traefik.http.routers.corates-grafana.rule: Host(`grafana.jacobmaynard.dev`)
@@ -55,3 +61,6 @@ volumes:
 networks:
   homelab:
     external: true
+  plausible-internal:
+    external: true
+    name: plausible_plausible-internal

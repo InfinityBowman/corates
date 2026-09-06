@@ -1,0 +1,17 @@
+apiVersion: 1
+
+datasources:
+  - name: Plausible
+    type: grafana-clickhouse-datasource
+    uid: plausible-clickhouse
+    access: proxy
+    jsonData:
+      host: plausible-clickhouse
+      port: 9000
+      protocol: native
+      username: grafana
+      defaultDatabase: plausible_events
+      dialTimeout: 10
+      queryTimeout: 60
+    secureJsonData:
+      password: $CLICKHOUSE_GRAFANA_PASSWORD
