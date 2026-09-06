@@ -1,6 +1,6 @@
 # Pricing restructure rollout (issue #659)
 
-Status: ready to merge; delete the retired secrets after the production deploy
+Status: complete (2026-09-06). Kept as the record of what was done and why.
 Branch: `feat/pricing-restructure`
 Last updated: 2026-09-06
 
@@ -81,9 +81,11 @@ DELETE FROM subscription WHERE plan = 'team' AND status = 'incomplete';
 One row each. The webhook had not rewritten the subscriber's row after the
 Stripe change, so the SQL did it.
 
-## 5. Deploy
+## 5. Deploy (done 2026-09-06)
 
-Merge to main. Staging deploys first, then e2e, then production.
+Shipped as #668, with #673 and #674 fixing the e2e suite (plan names, and a
+direct price change in place of the customer portal flow) and #676 moving to
+lookup keys. Production verified after each deploy.
 
 ## Follow-ups not on this branch
 
