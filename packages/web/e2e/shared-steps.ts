@@ -320,14 +320,14 @@ export async function waitForSynced(page: Page, timeout = 15_000) {
 
 /**
  * Marks the current checklist as complete and handles the confirmation dialog.
- * The dialog says "Mark Appraisal as Complete?" with a "Mark Complete" action button.
+ * The dialog says "Mark this appraisal complete?" with a "Mark complete" action button.
  */
 export async function markChecklistComplete(page: Page) {
-  // Click the header "Mark Complete" button
+  // Click the header "Mark complete" button
   await page.getByRole('button', { name: /Mark Complete/i }).click();
 
   // Wait for the confirmation dialog to appear
-  await expect(page.getByText('Mark Appraisal as Complete?')).toBeVisible({ timeout: 5_000 });
+  await expect(page.getByText('Mark this appraisal complete?')).toBeVisible({ timeout: 5_000 });
 
   // Click the "Mark Complete" button inside the dialog
   const dialog = page.getByRole('alertdialog');

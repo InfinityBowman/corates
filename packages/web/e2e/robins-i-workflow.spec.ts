@@ -34,9 +34,9 @@ import {
  */
 async function answerROBINSIDomain6WithSkips(page: import('@playwright/test').Page) {
   await answerSignallingQuestion(page, 'domain6', /pre-determined analysis plan/i, 'Y');
-  // exact: the direction label renders its own lowercase "(optional)"
+  // exact: match only the skipped-question label, not other parenthesised hints
   await expect(
-    page.locator('#domain-section-domain6').getByText('(Optional)', { exact: true }),
+    page.locator('#domain-section-domain6').getByText('(Not required)', { exact: true }),
   ).toHaveCount(3, { timeout: 5_000 });
 }
 

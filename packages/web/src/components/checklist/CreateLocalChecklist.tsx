@@ -78,7 +78,7 @@ export function CreateLocalChecklist({ type: typeParam }: { type?: string }) {
         ) {
           throw new Error(`Unsupported checklist type: ${checklistType}`);
         }
-        const checklistName = name.trim() || 'Untitled Checklist';
+        const checklistName = name.trim() || 'Untitled appraisal';
         // Local convention: study id === checklist id, so the /checklist/:id
         // route can serve as both.
         const id = crypto.randomUUID();
@@ -147,16 +147,17 @@ export function CreateLocalChecklist({ type: typeParam }: { type?: string }) {
     <div className='flex min-h-full items-center justify-center p-6'>
       <div className='w-full max-w-lg'>
         <div className='border-border bg-card rounded-xl border p-8 shadow-sm'>
-          <h1 className='text-foreground mb-2 text-2xl font-bold'>Start an Appraisal</h1>
+          <h1 className='text-foreground mb-2 text-2xl font-bold'>Start an appraisal</h1>
           <p className='text-muted-foreground mb-6'>
-            Start a new quality assessment. Your progress will be saved locally on this device.
+            Appraise one study from start to finish, no account needed. Your answers save to this
+            device as you work.
           </p>
 
           <form onSubmit={handleSubmit} className='flex flex-col gap-6'>
             {/* Checklist Type */}
             <div>
               <Label htmlFor='checklist-type' className='mb-2'>
-                Assessment Type
+                Appraisal tool
               </Label>
               <Select value={checklistType} onValueChange={setChecklistType}>
                 <SelectTrigger id='checklist-type' className='w-full'>
@@ -175,22 +176,25 @@ export function CreateLocalChecklist({ type: typeParam }: { type?: string }) {
             {/* Checklist Name */}
             <div>
               <Label htmlFor='checklist-name' className='mb-2'>
-                Study Name
+                Study name
               </Label>
               <Input
                 id='checklist-name'
                 type='text'
                 value={name}
                 onChange={e => setName(e.target.value)}
-                placeholder='e.g., Study by Smith et al. 2024'
+                placeholder='e.g. Smith et al. 2024'
               />
             </div>
 
             {/* PDF Upload */}
             <div>
               <span className='text-secondary-foreground mb-2 block text-sm font-medium'>
-                PDF Document <span className='text-muted-foreground/70'>(optional)</span>
+                Study PDF <span className='text-muted-foreground/70'>(optional)</span>
               </span>
+              <p className='text-muted-foreground mb-2 text-xs'>
+                Add the paper to read it beside the checklist while you answer.
+              </p>
 
               {pdfFile ?
                 <div className='border-info-border bg-info-bg flex items-center gap-3 rounded-lg border p-4'>
@@ -223,7 +227,9 @@ export function CreateLocalChecklist({ type: typeParam }: { type?: string }) {
                       <span className='text-primary font-medium'>Click to upload</span> or drag and
                       drop
                     </p>
-                    <p className='text-muted-foreground/70 mt-1 text-xs'>PDF files only</p>
+                    <p className='text-muted-foreground/70 mt-1 text-xs'>
+                      PDF only. It stays on this device.
+                    </p>
                   </FileUploadDropzone>
                   <FileUploadHiddenInput />
                 </FileUpload>
@@ -245,19 +251,19 @@ export function CreateLocalChecklist({ type: typeParam }: { type?: string }) {
                 Cancel
               </Button>
               <Button type='submit' size='lg' disabled={creating} className='flex-1'>
-                {creating ? 'Adding...' : 'Start'}
+                {creating ? 'Starting...' : 'Start appraisal'}
               </Button>
             </div>
           </form>
 
           <div className='bg-muted mt-6 rounded-lg p-4'>
             <p className='text-muted-foreground text-xs'>
-              Local studies are stored only on this device and don't require an account. To
-              collaborate with others or access your studies from multiple devices,{' '}
+              This appraisal is saved only in this browser. Clearing your browsing data deletes it,
+              and you cannot open it on another device or share it with a co-reviewer.{' '}
               <Link to='/signup' className='text-blue-600 hover:underline'>
-                create an account
-              </Link>
-              .
+                Create an account
+              </Link>{' '}
+              to keep your work and appraise studies as a team.
             </p>
           </div>
         </div>

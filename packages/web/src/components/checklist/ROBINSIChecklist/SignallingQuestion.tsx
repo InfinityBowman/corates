@@ -52,7 +52,7 @@ export function SignallingQuestion({
           {question.note && (
             <span className='text-muted-foreground/70 ml-2 text-xs'>({question.note})</span>
           )}
-          {isSkippable && <span className='ml-2 text-xs text-green-600'>(Optional)</span>}
+          {isSkippable && <span className='ml-2 text-xs text-green-600'>(Not required)</span>}
         </div>
 
         <div className='flex shrink-0 flex-wrap gap-1 sm:gap-2'>
@@ -80,7 +80,7 @@ export function SignallingQuestion({
           <NoteEditor
             value={commentValue ?? ''}
             onChange={text => writers.setText(`${questionKey}.comment`, text)}
-            placeholder='Comment (optional)'
+            placeholder='Note your reasoning (optional)'
             readOnly={disabled}
             inline={true}
           />

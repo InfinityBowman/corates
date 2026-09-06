@@ -122,6 +122,9 @@ function PdfUploadPanel({
 
   return (
     <div className='flex h-full flex-col items-center justify-center p-8'>
+      <p className='text-muted-foreground mb-3 max-w-sm text-center text-sm'>
+        Add the study PDF here to read it beside the checklist while you answer.
+      </p>
       <FileUpload
         accept={['application/pdf', '.pdf']}
         maxFiles={1}
@@ -133,7 +136,7 @@ function PdfUploadPanel({
           <p className='text-muted-foreground mt-3 text-center text-sm'>
             <span className='text-primary font-medium'>Click to upload</span> or drag and drop
           </p>
-          <p className='text-muted-foreground/70 mt-1 text-xs'>PDF files only</p>
+          <p className='text-muted-foreground/70 mt-1 text-xs'>PDF only</p>
         </FileUploadDropzone>
         <FileUploadHiddenInput />
       </FileUpload>

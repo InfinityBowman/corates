@@ -188,13 +188,13 @@ export function ChartSection({ studies }: ChartSectionProps) {
     if (amstarData.length) {
       result.push({
         key: 'amstar2',
-        instrumentLabel: 'AMSTAR-2',
+        instrumentLabel: 'AMSTAR 2',
         instrumentKind: 'amstar',
         trafficLightName: 'Item-level judgments by review',
         distributionName: 'Judgment distribution by item',
         trafficLightDescription:
-          'Visual representation of AMSTAR-2 quality assessment ratings across completed checklists.',
-        distributionDescription: 'Percentage of reviews at each judgment level, by checklist item.',
+          'Item-level AMSTAR 2 judgments for every finalized appraisal, one row per review.',
+        distributionDescription: 'Percentage of reviews at each judgment level, by AMSTAR 2 item.',
         config: AMSTAR2_CHART_CONFIG,
         data: sortChartItems(amstarData),
         defaultTrafficLightTitle: 'AMSTAR 2 Item-Level Judgments by Review',

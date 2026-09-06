@@ -74,7 +74,7 @@ export function ROBINSIChecklist({
     <div className='bg-blue-50'>
       <div className='container mx-auto flex max-w-5xl flex-col gap-4 px-4 py-6'>
         <div className='text-foreground mb-6 text-left text-lg font-semibold sm:text-center'>
-          {checklistName || 'ROBINS-I Checklist'}
+          {checklistName || 'ROBINS-I V2 appraisal'}
         </div>
 
         {/* Scoring Summary Strip */}

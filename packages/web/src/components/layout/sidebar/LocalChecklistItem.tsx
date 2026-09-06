@@ -36,7 +36,7 @@ export function LocalChecklistItem({ checklist, isSelected, onDelete }: LocalChe
         <FileCheck2Icon className='size-4 shrink-0' />
         <div className='min-w-0 flex-1'>
           <MarqueeLabel
-            text={checklist.name || 'Untitled Checklist'}
+            text={checklist.name || 'Untitled appraisal'}
             className='text-sm font-medium'
           />
           <div className='text-2xs text-muted-foreground/80 mt-0.5'>
@@ -49,7 +49,7 @@ export function LocalChecklistItem({ checklist, isSelected, onDelete }: LocalChe
         size='icon-sm'
         onClick={e => onDelete(e, checklist.id)}
         className='text-muted-foreground/70 hover:bg-destructive/5 hover:text-destructive mr-1 opacity-0 group-hover:opacity-100 focus:opacity-100'
-        aria-label='Delete checklist'
+        aria-label='Delete appraisal'
       >
         <TrashIcon className='size-4' />
       </Button>

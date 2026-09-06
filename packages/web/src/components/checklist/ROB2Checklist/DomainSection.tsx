@@ -127,7 +127,7 @@ export function DomainSection({
                   <JudgementBadge judgement={autoJudgement} />
                 </div>
               : !autoComplete && (
-                  <span className='text-muted-foreground/70 text-xs'>(answer more questions)</span>
+                  <span className='text-muted-foreground/70 text-xs'>Needs more answers</span>
                 )
               }
             </div>
