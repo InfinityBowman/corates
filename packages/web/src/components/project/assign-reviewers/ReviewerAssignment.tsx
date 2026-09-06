@@ -1,544 +1,278 @@
 /**
- * ReviewerAssignment - Bulk reviewer assignment with percentage distribution
+ * ReviewerAssignment - Studies in scope with two reviewer slots each, a team
+ * load strip, and Auto-fill. Nothing is written until Save.
  */
 
-import { useState, useMemo, useCallback } from 'react';
-import { showToast } from '@/lib/toast';
+import { useState } from 'react';
+import { CheckIcon, WandSparklesIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
-import { ShuffleIcon, CheckIcon, SlidersHorizontalIcon } from 'lucide-react';
+import { SheetFooter } from '@/components/ui/sheet';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { showToast } from '@/lib/toast';
 import type { StudyInfo, MemberEntry } from '@/stores/projectStore';
+import { getCitationLine, sortStudyPdfs } from '../study-utils';
+import { MemberAvatar, memberDisplayName } from '../MemberAvatar';
+import type { AssignSheetScope } from '../ProjectContext';
+import { ReviewerPicker } from './ReviewerPicker';
+import { AutoFillSettings, evenShares } from './AutoFillSettings';
+import { autoFillSlots, countLoad, type ReviewerSlots, type SlotRows } from './autoFill';
 
-const PRESETS = [0, 25, 33, 50, 100];
-
-function MemberPercentRow({
-  member,
-  percent,
-  onChange,
-}: {
-  member: MemberEntry;
-  percent: number;
-  onChange: (_val: number) => void;
-}) {
-  const [showCustom, setShowCustom] = useState(false);
-  const isPreset = PRESETS.includes(percent);
-
-  return (
-    <div className='border-border bg-card flex items-center gap-3 rounded-lg border p-2.5'>
-      <div className='text-foreground min-w-0 flex-1 truncate text-sm font-medium'>
-        {member.name || member.email || 'Unknown'}
-      </div>
-      <div className='flex items-center gap-1'>
-        {PRESETS.map(preset => (
-          <button
-            key={preset}
-            type='button'
-            onClick={() => {
-              onChange(preset);
-              setShowCustom(false);
-            }}
-            className={`rounded px-2 py-1 text-xs font-medium transition-colors ${
-              percent === preset && !showCustom ?
-                'bg-primary text-white'
-              : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-            }`}
-          >
-            {preset}%
-          </button>
-        ))}
-
-        {showCustom || !isPreset ?
-          <Input
-            type='number'
-            min={0}
-            max={100}
-            value={percent}
-            onChange={e => onChange(parseInt(e.target.value) || 0)}
-            onBlur={() => {
-              if (isPreset) setShowCustom(false);
-            }}
-            className='h-auto w-14 rounded px-1.5 py-1 text-center text-xs md:text-xs'
-            aria-label={`Share of studies for ${member.name || member.email || 'member'}`}
-            autoFocus={showCustom}
-          />
-        : <button
-            type='button'
-            onClick={() => setShowCustom(true)}
-            className='bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded px-2 py-1 text-xs font-medium transition-colors'
-            title='Enter a custom percentage'
-          >
-            ...
-          </button>
-        }
-      </div>
-    </div>
-  );
-}
+const SLOTS = ['reviewer1', 'reviewer2'] as const;
 
 interface ReviewerAssignmentProps {
+  scope: AssignSheetScope | null;
   studies: StudyInfo[];
   members: MemberEntry[];
-  onAssignReviewers: (studyId: string, updates: Record<string, unknown>) => void;
-  onDone?: () => void;
+  currentUserId: string | null;
+  onSave: (studyId: string, slots: ReviewerSlots) => void;
+  onClose: () => void;
+}
+
+function slotsOf(study: StudyInfo): ReviewerSlots {
+  return { reviewer1: study.reviewer1, reviewer2: study.reviewer2 };
+}
+
+function sameSlots(a: ReviewerSlots, b: ReviewerSlots): boolean {
+  return a.reviewer1 === b.reviewer1 && a.reviewer2 === b.reviewer2;
+}
+
+function firstName(member: MemberEntry): string {
+  return member.givenName || memberDisplayName(member).split(' ')[0];
 }
 
 export function ReviewerAssignment({
+  scope,
   studies,
   members,
-  onAssignReviewers,
-  onDone,
+  currentUserId,
+  onSave,
+  onClose,
 }: ReviewerAssignmentProps) {
-  const [showCustomize, setShowCustomize] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
-  const [previewAssignments, setPreviewAssignments] = useState<
-    Array<{
-      studyId: string;
-      studyName: string;
-      reviewer1: string;
-      reviewer2: string;
-      reviewer1Name: string;
-      reviewer2Name: string;
-      sameReviewer: boolean;
-    }>
-  >([]);
-  const [pool1Percents, setPool1Percents] = useState<Record<string, number>>({});
-  const [pool2Percents, setPool2Percents] = useState<Record<string, number>>({});
-
-  const unassignedStudies = useMemo(
-    () => studies.filter(s => !s.reviewer1 && !s.reviewer2),
-    [studies],
+  // Snapshot on open so rows do not move while editing.
+  const [studyIds] = useState(
+    () => scope?.studyIds ?? studies.filter(s => !s.reviewer1 && !s.reviewer2).map(s => s.id),
+  );
+  const [draft, setDraft] = useState<SlotRows>(() =>
+    Object.fromEntries(studies.filter(s => studyIds.includes(s.id)).map(s => [s.id, slotsOf(s)])),
   );
 
-  const getMemberName = useCallback(
-    (userId: string) => {
-      if (!userId) return 'Unknown';
-      const member = members.find(m => m.userId === userId);
-      return member?.name || member?.email || 'Unknown';
-    },
-    [members],
+  const [shares, setShares] = useState<Record<string, number>>({});
+  // Members who join mid-edit get the even share.
+  const effectiveShares = { ...evenShares(members.map(m => m.userId)), ...shares };
+  // `${studyId}:${slot}` keys Auto-fill chose, so Reshuffle spares hand picks.
+  const [autoFilled, setAutoFilled] = useState<Set<string>>(() => new Set());
+
+  const rows = studyIds.map(id => studies.find(s => s.id === id)).filter(s => s !== undefined);
+  const inScope = new Set(studyIds);
+  const baseLoad = countLoad(
+    Object.fromEntries(studies.filter(s => !inScope.has(s.id)).map(s => [s.id, slotsOf(s)])),
+    {},
   );
+  const load = countLoad(draft, baseLoad);
 
-  const evenPercent = useMemo(
-    () => (members.length > 0 ? Math.round(100 / members.length) : 0),
-    [members],
-  );
+  const changedRows = rows.filter(row => !sameSlots(draft[row.id] ?? slotsOf(row), slotsOf(row)));
+  const completeCount = rows.filter(row => {
+    const slots = draft[row.id];
+    return slots?.reviewer1 && slots.reviewer2;
+  }).length;
+  const hasEmptySlot = rows.some(row => !draft[row.id]?.reviewer1 || !draft[row.id]?.reviewer2);
+  const canAutoFill = hasEmptySlot || autoFilled.size > 0;
 
-  const pool1Members = useMemo(
-    () => members.map(m => ({ ...m, percent: pool1Percents[m.userId] ?? evenPercent })),
-    [members, pool1Percents, evenPercent],
-  );
-
-  const pool2Members = useMemo(
-    () => members.map(m => ({ ...m, percent: pool2Percents[m.userId] ?? evenPercent })),
-    [members, pool2Percents, evenPercent],
-  );
-
-  const pool1Total = useMemo(
-    () => pool1Members.reduce((sum, m) => sum + m.percent, 0),
-    [pool1Members],
-  );
-  const pool2Total = useMemo(
-    () => pool2Members.reduce((sum, m) => sum + m.percent, 0),
-    [pool2Members],
-  );
-
-  const isPoolValid = (total: number) => total >= 99 && total <= 101;
-  const isCustomValid = isPoolValid(pool1Total) && isPoolValid(pool2Total);
-
-  const updatePool1 = useCallback((userId: string, value: number) => {
-    const val = Math.max(0, Math.min(100, value));
-    setPool1Percents(prev => ({ ...prev, [userId]: val }));
-    setShowPreview(false);
-  }, []);
-
-  const updatePool2 = useCallback((userId: string, value: number) => {
-    const val = Math.max(0, Math.min(100, value));
-    setPool2Percents(prev => ({ ...prev, [userId]: val }));
-    setShowPreview(false);
-  }, []);
-
-  const resetToEven = useCallback(() => {
-    const memberIds = members.map(m => m.userId);
-    const count = memberIds.length;
-    if (count === 0) {
-      setPool1Percents({});
-      setPool2Percents({});
-      setShowPreview(false);
-      return;
-    }
-    const base = Math.floor(100 / count);
-    const remainder = 100 - base * count;
-    const percents: Record<string, number> = {};
-    memberIds.forEach((id: string, i: number) => {
-      percents[id] = i < remainder ? base + 1 : base;
+  const setSlot = (studyId: string, slot: keyof ReviewerSlots, userId: string | null) => {
+    setDraft(prev => ({ ...prev, [studyId]: { ...prev[studyId], [slot]: userId } }));
+    setAutoFilled(prev => {
+      const next = new Set(prev);
+      next.delete(`${studyId}:${slot}`);
+      return next;
     });
-    setPool1Percents({ ...percents });
-    setPool2Percents({ ...percents });
-    setShowPreview(false);
-  }, [members]);
-
-  const shuffleArray = <T,>(array: T[]): T[] => {
-    const shuffled = [...array];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    return shuffled;
   };
 
-  const generateAssignments = useCallback(() => {
-    if (unassignedStudies.length === 0) {
-      showToast.info('Nothing to assign', 'Every study already has two reviewers.');
-      return null;
-    }
-    if (showCustomize && !isCustomValid) {
-      showToast.warning(
-        'Percentages do not add up',
-        'Each reviewer pool has to total between 99% and 101%.',
-      );
-      return null;
-    }
-
-    const totalStudies = unassignedStudies.length;
-    const pool1Assignments: string[] = [];
-    const pool2Assignments: string[] = [];
-
-    let remaining1 = totalStudies;
-    pool1Members.forEach((m, i) => {
-      const count =
-        i === pool1Members.length - 1 ? remaining1 : Math.round((m.percent / 100) * totalStudies);
-      remaining1 -= count;
-      for (let j = 0; j < Math.max(0, count); j++) pool1Assignments.push(m.userId);
-    });
-
-    let remaining2 = totalStudies;
-    pool2Members.forEach((m, i) => {
-      const count =
-        i === pool2Members.length - 1 ? remaining2 : Math.round((m.percent / 100) * totalStudies);
-      remaining2 -= count;
-      for (let j = 0; j < Math.max(0, count); j++) pool2Assignments.push(m.userId);
-    });
-
-    const shuffled1 = shuffleArray(pool1Assignments);
-    const shuffled2 = shuffleArray(pool2Assignments);
-    const shuffledStudies = shuffleArray(unassignedStudies);
-
-    const assignments = shuffledStudies.map((study, index) => {
-      const r1 = shuffled1[index];
-      const r2 = shuffled2[index];
-      return {
-        studyId: study.id,
-        studyName: study.name,
-        reviewer1: r1,
-        reviewer2: r2,
-        reviewer1Name: getMemberName(r1),
-        reviewer2Name: getMemberName(r2),
-        sameReviewer: r1 === r2,
+  const handleAutoFill = () => {
+    const cleared: SlotRows = {};
+    for (const [studyId, slots] of Object.entries(draft)) {
+      cleared[studyId] = {
+        reviewer1: autoFilled.has(`${studyId}:reviewer1`) ? null : slots.reviewer1,
+        reviewer2: autoFilled.has(`${studyId}:reviewer2`) ? null : slots.reviewer2,
       };
+    }
+    const filled = autoFillSlots(cleared, {
+      memberIds: members.map(m => m.userId),
+      baseLoad,
+      weights: effectiveShares,
     });
-
-    // Resolve conflicts by swapping between studies
-    for (let i = 0; i < assignments.length; i++) {
-      if (assignments[i].sameReviewer) {
-        let resolved = false;
-        for (let j = 0; j < assignments.length; j++) {
-          if (i !== j && !assignments[j].sameReviewer) {
-            const canSwap =
-              assignments[j].reviewer2 !== assignments[i].reviewer1 &&
-              assignments[i].reviewer2 !== assignments[j].reviewer1;
-            if (canSwap) {
-              const temp = assignments[i].reviewer2;
-              assignments[i].reviewer2 = assignments[j].reviewer2;
-              assignments[i].reviewer2Name = assignments[j].reviewer2Name;
-              assignments[j].reviewer2 = temp;
-              assignments[j].reviewer2Name = getMemberName(temp);
-              assignments[i].sameReviewer = false;
-              assignments[j].sameReviewer = assignments[j].reviewer1 === assignments[j].reviewer2;
-              resolved = true;
-              break;
-            }
-          }
-        }
-        // If no swap partner found, directly pick a different member
-        if (!resolved) {
-          const alt = members.find(m => m.userId !== assignments[i].reviewer1);
-          if (alt) {
-            assignments[i].reviewer2 = alt.userId;
-            assignments[i].reviewer2Name = getMemberName(alt.userId);
-            assignments[i].sameReviewer = false;
-          }
-        }
+    const chosen = new Set<string>();
+    for (const [studyId, slots] of Object.entries(filled)) {
+      for (const slot of SLOTS) {
+        if (!cleared[studyId][slot] && slots[slot]) chosen.add(`${studyId}:${slot}`);
       }
     }
+    setDraft(filled);
+    setAutoFilled(chosen);
+  };
 
-    return assignments;
-  }, [
-    unassignedStudies,
-    showCustomize,
-    isCustomValid,
-    pool1Members,
-    pool2Members,
-    getMemberName,
-    members,
-  ]);
-
-  const handleGenerate = useCallback(() => {
-    const assignments = generateAssignments();
-    if (assignments) {
-      setPreviewAssignments(assignments);
-      setShowPreview(true);
-    }
-  }, [generateAssignments]);
-
-  const handleApply = useCallback(() => {
-    if (previewAssignments.length === 0) return;
-    const conflicts = previewAssignments.filter(a => a.sameReviewer);
-    if (conflicts.length > 0) {
-      showToast.warning(
-        'Same person on both sides',
-        `${conflicts.length} ${conflicts.length === 1 ? 'study has' : 'studies have'} the same person as both reviewers. Reshuffle to fix it.`,
-      );
-      return;
-    }
-    let successCount = 0;
-    for (const assignment of previewAssignments) {
+  const handleSave = async () => {
+    let saved = 0;
+    for (const row of changedRows) {
       try {
-        onAssignReviewers(assignment.studyId, {
-          reviewer1: assignment.reviewer1,
-          reviewer2: assignment.reviewer2,
-        });
-        successCount++;
+        onSave(row.id, draft[row.id]);
+        saved++;
       } catch (err) {
-        import('@/lib/error-utils').then(({ handleError }) =>
-          handleError(err, { toastTitle: 'Could not assign reviewers' }),
-        );
+        const { handleError } = await import('@/lib/error-utils');
+        await handleError(err, { toastTitle: 'Could not save the reviewers' });
       }
     }
-    if (successCount > 0) {
+    if (saved > 0) {
       showToast.success(
-        'Reviewers assigned',
-        `${successCount} ${successCount === 1 ? 'study is' : 'studies are'} now assigned. Reviewers see their studies on the To do tab.`,
+        'Reviewers saved',
+        `${saved} ${saved === 1 ? 'study' : 'studies'} updated. Reviewers see their studies on the To do tab.`,
       );
     }
-    setShowPreview(false);
-    setPreviewAssignments([]);
-    onDone?.();
-  }, [previewAssignments, onAssignReviewers, onDone]);
+    onClose();
+  };
 
-  const hasConflicts = previewAssignments.some(a => a.sameReviewer);
-  const conflictCount = previewAssignments.filter(a => a.sameReviewer).length;
+  if (members.length < 2 || rows.length === 0) {
+    return (
+      <>
+        <div className='flex-1 p-4'>
+          {members.length < 2 ?
+            <p className='text-muted-foreground text-sm'>
+              Double review needs two people. Invite at least one more member from the Overview tab,
+              then come back to assign reviewers.
+            </p>
+          : scope ?
+            <p className='text-muted-foreground text-sm'>
+              These studies are no longer in the project.
+            </p>
+          : <div className='text-success flex items-center gap-2 text-sm'>
+              <CheckIcon className='size-4' />
+              Every study already has two reviewers.
+            </div>
+          }
+        </div>
+        <SheetFooter className='flex-row justify-end'>
+          <Button variant='outline' onClick={onClose}>
+            Close
+          </Button>
+        </SheetFooter>
+      </>
+    );
+  }
+
+  const scopeLabel =
+    scope?.label ?? `${rows.length} ${rows.length === 1 ? 'study' : 'studies'} without reviewers`;
 
   return (
-    <div>
-      {members.length < 2 ?
-        <p className='text-muted-foreground text-sm'>
-          Double review needs two people. Invite at least one more member from the Overview tab,
-          then come back to assign reviewers.
-        </p>
-      : unassignedStudies.length === 0 && !showPreview ?
-        <div className='text-success flex items-center gap-2'>
-          <CheckIcon className='size-5' />
-          <p className='text-sm'>Every study already has two reviewers.</p>
-        </div>
-      : <div className='flex flex-col gap-4'>
-          {/* Summary */}
-          <div className='bg-muted flex items-center justify-between rounded-lg px-4 py-3'>
-            <p className='text-muted-foreground text-sm'>
-              <span className='text-foreground font-semibold'>{unassignedStudies.length}</span>{' '}
-              unassigned
-            </p>
-            <p className='text-muted-foreground text-sm'>
-              <span className='text-foreground font-semibold'>{members.length}</span> possible
-              reviewers
-            </p>
-            <p className='text-muted-foreground text-sm'>
-              <span className='text-foreground font-semibold'>{evenPercent}%</span> each (even)
-            </p>
+    <>
+      <div className='flex min-h-0 flex-1 flex-col overflow-y-auto'>
+        <div className='border-border flex items-center gap-3 border-b px-4 py-2.5'>
+          <div className='flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1'>
+            {members.map(member => {
+              const count = load[member.userId] ?? 0;
+              return (
+                <Tooltip key={member.userId}>
+                  <TooltipTrigger asChild>
+                    <span className='flex items-center gap-1.5 text-xs'>
+                      <MemberAvatar member={member} className='text-3xs size-5' />
+                      <span className='text-foreground'>
+                        {member.userId === currentUserId ? 'You' : firstName(member)}
+                      </span>
+                      <span className='text-muted-foreground tabular-nums'>{count}</span>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {memberDisplayName(member)} reviews {count} {count === 1 ? 'study' : 'studies'}{' '}
+                    in this project
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
           </div>
-
-          {/* Customize */}
-          <Collapsible open={showCustomize} onOpenChange={setShowCustomize}>
-            <CollapsibleTrigger className='border-border bg-card hover:bg-muted data-[state=open]:border-primary data-[state=open]:bg-primary/5 flex w-full items-center justify-between rounded-lg border px-4 py-3 text-sm font-medium transition-all'>
-              <div className='flex items-center gap-2'>
-                <SlidersHorizontalIcon className='size-4' />
-                <span>Customize distribution</span>
-              </div>
-              <span className='text-muted-foreground text-xs'>
-                {showCustomize ? 'Using custom' : 'Adjust percentages'}
-              </span>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <div className='mt-4 flex flex-col gap-4'>
-                {/* Pool 1 */}
-                <div className='border-border bg-muted rounded-xl border p-4'>
-                  <div className='mb-3 flex items-center justify-between'>
-                    <h4 className='text-secondary-foreground text-sm font-semibold'>
-                      Reviewer 1 pool
-                    </h4>
-                    <span
-                      className={`text-xs font-medium ${isPoolValid(pool1Total) ? 'text-success' : 'text-amber-600'}`}
-                    >
-                      Total: {pool1Total}%
-                    </span>
-                  </div>
-                  <div className='flex flex-col gap-2'>
-                    {pool1Members.map(member => (
-                      <MemberPercentRow
-                        key={member.userId}
-                        member={member}
-                        percent={member.percent}
-                        onChange={val => updatePool1(member.userId, val)}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                {/* Pool 2 */}
-                <div className='border-border bg-muted rounded-xl border p-4'>
-                  <div className='mb-3 flex items-center justify-between'>
-                    <h4 className='text-secondary-foreground text-sm font-semibold'>
-                      Reviewer 2 pool
-                    </h4>
-                    <span
-                      className={`text-xs font-medium ${isPoolValid(pool2Total) ? 'text-success' : 'text-amber-600'}`}
-                    >
-                      Total: {pool2Total}%
-                    </span>
-                  </div>
-                  <div className='flex flex-col gap-2'>
-                    {pool2Members.map(member => (
-                      <MemberPercentRow
-                        key={member.userId}
-                        member={member}
-                        percent={member.percent}
-                        onChange={val => updatePool2(member.userId, val)}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                <div className='flex items-center justify-between'>
-                  {!isCustomValid && (
-                    <p className='text-xs text-amber-600'>
-                      Each pool has to total between 99% and 101% before you can generate
-                    </p>
-                  )}
-                  <button
-                    type='button'
-                    onClick={resetToEven}
-                    className='text-primary hover:text-primary/80 ml-auto text-xs font-medium'
-                  >
-                    Reset to even split
-                  </button>
-                </div>
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
-
-          {/* Generate button */}
-          <Button
-            size='lg'
-            onClick={handleGenerate}
-            disabled={showCustomize && !isCustomValid}
-            className='self-start'
-          >
-            <ShuffleIcon className='size-4' />
-            {showPreview ?
-              'Reshuffle'
-            : showCustomize ?
-              'Generate with custom split'
-            : 'Assign randomly, even split'}
-          </Button>
-
-          {/* Preview */}
-          {showPreview && (
-            <div
-              className={`overflow-hidden rounded-xl border ${hasConflicts ? 'border-destructive/20' : 'border-primary'}`}
+          <div className='flex shrink-0 -space-x-px'>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={handleAutoFill}
+              disabled={!canAutoFill}
+              className='rounded-r-none'
             >
-              <div
-                className={`flex items-center justify-between border-b px-4 py-3 ${
-                  hasConflicts ?
-                    'border-destructive/20 bg-destructive/10'
-                  : 'border-primary bg-primary/5'
-                }`}
-              >
-                <div>
-                  <h4
-                    className={`text-sm font-semibold ${hasConflicts ? 'text-destructive' : 'text-primary'}`}
-                  >
-                    Assignment preview
-                  </h4>
-                  {hasConflicts && (
-                    <p className='text-destructive text-xs'>
-                      {conflictCount} {conflictCount === 1 ? 'study has' : 'studies have'} the same
-                      person twice - reshuffle to fix
-                    </p>
-                  )}
-                </div>
-                <span className='text-muted-foreground text-xs'>
-                  {previewAssignments.length} studies
-                </span>
-              </div>
-
-              <div className='max-h-64 overflow-y-auto'>
-                <table className='w-full text-left text-sm'>
-                  <thead className='bg-muted sticky top-0'>
-                    <tr>
-                      <th className='text-muted-foreground py-2 pr-4 pl-4 text-xs font-medium'>
-                        Study
-                      </th>
-                      <th className='text-muted-foreground py-2 pr-4 text-xs font-medium'>
-                        Reviewer 1
-                      </th>
-                      <th className='text-muted-foreground py-2 pr-4 text-xs font-medium'>
-                        Reviewer 2
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className='divide-border divide-y'>
-                    {previewAssignments.map(assignment => (
-                      <tr
-                        key={assignment.studyId}
-                        className={`hover:bg-muted ${assignment.sameReviewer ? 'bg-destructive/10' : ''}`}
-                      >
-                        <td className='text-foreground max-w-xs truncate py-2 pr-4 pl-4'>
-                          {assignment.studyName}
-                        </td>
-                        <td className='text-secondary-foreground py-2 pr-4'>
-                          {assignment.reviewer1Name}
-                        </td>
-                        <td
-                          className={`py-2 pr-4 ${assignment.sameReviewer ? 'text-destructive font-medium' : 'text-secondary-foreground'}`}
-                        >
-                          {assignment.reviewer2Name}
-                          {assignment.sameReviewer && ' (conflict)'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className='border-border bg-muted flex gap-2 border-t px-4 py-3'>
-                <Button variant='success' onClick={handleApply} disabled={hasConflicts}>
-                  <CheckIcon className='size-4' />
-                  Apply assignments
-                </Button>
-                <Button
-                  variant='outline'
-                  onClick={() => {
-                    setShowPreview(false);
-                    setPreviewAssignments([]);
-                  }}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          )}
+              <WandSparklesIcon />
+              {autoFilled.size > 0 && !hasEmptySlot ? 'Reshuffle' : 'Auto-fill'}
+            </Button>
+            <AutoFillSettings
+              members={members}
+              currentUserId={currentUserId}
+              shares={effectiveShares}
+              onChange={setShares}
+              disabled={!canAutoFill}
+            />
+          </div>
         </div>
-      }
-    </div>
+
+        <div className='text-2xs text-muted-foreground hidden grid-cols-[1fr_9rem_9rem] gap-x-2 px-4 pt-3 pb-1.5 font-semibold tracking-wide uppercase sm:grid'>
+          <span className='truncate'>{scopeLabel}</span>
+          <span>Reviewer 1</span>
+          <span>Reviewer 2</span>
+        </div>
+        <p className='text-2xs text-muted-foreground px-4 pt-3 pb-1.5 font-semibold tracking-wide uppercase sm:hidden'>
+          {scopeLabel}
+        </p>
+
+        <ul className='divide-border divide-y'>
+          {rows.map(row => {
+            const slots = draft[row.id] ?? slotsOf(row);
+            const studyName = row.name || 'Untitled study';
+            const citation = getCitationLine(sortStudyPdfs(row.pdfs ?? []), row);
+            return (
+              <li
+                key={row.id}
+                className='hover:bg-muted/40 grid grid-cols-1 items-center gap-x-2 gap-y-2 px-4 py-2 sm:grid-cols-[1fr_9rem_9rem]'
+              >
+                <div className='min-w-0'>
+                  <p className='text-foreground truncate text-sm font-medium'>{studyName}</p>
+                  {citation && <p className='text-muted-foreground truncate text-xs'>{citation}</p>}
+                </div>
+                <div className='grid grid-cols-2 gap-2 sm:contents'>
+                  <ReviewerPicker
+                    slotLabel='Reviewer 1'
+                    studyName={studyName}
+                    value={slots.reviewer1}
+                    onChange={userId => setSlot(row.id, 'reviewer1', userId)}
+                    members={members}
+                    takenBy={slots.reviewer2}
+                    takenLabel='Reviewer 2'
+                    currentUserId={currentUserId}
+                    load={load}
+                  />
+                  <ReviewerPicker
+                    slotLabel='Reviewer 2'
+                    studyName={studyName}
+                    value={slots.reviewer2}
+                    onChange={userId => setSlot(row.id, 'reviewer2', userId)}
+                    members={members}
+                    takenBy={slots.reviewer1}
+                    takenLabel='Reviewer 1'
+                    currentUserId={currentUserId}
+                    load={load}
+                  />
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+
+      <SheetFooter className='flex-row items-center gap-2'>
+        <p className='text-muted-foreground min-w-0 flex-1 text-xs'>
+          {completeCount} of {rows.length} {rows.length === 1 ? 'study has' : 'studies have'} two
+          reviewers
+        </p>
+        <Button variant='outline' onClick={onClose}>
+          Cancel
+        </Button>
+        <Button onClick={handleSave} disabled={changedRows.length === 0}>
+          Save reviewers
+        </Button>
+      </SheetFooter>
+    </>
   );
 }

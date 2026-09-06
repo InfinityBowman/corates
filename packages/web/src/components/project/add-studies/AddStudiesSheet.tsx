@@ -32,7 +32,7 @@ import {
 interface AddStudiesSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAdded?: (count: number) => void;
+  onAdded?: (studyIds: string[]) => void;
 }
 
 export function AddStudiesSheet({ open, onOpenChange, onAdded }: AddStudiesSheetProps) {
@@ -147,9 +147,11 @@ export function AddStudiesSheet({ open, onOpenChange, onAdded }: AddStudiesSheet
 
   const handleAddStudies = useCallback(
     async (studiesToAdd: MergedStudy[]) => {
-      await project.study.addBatch(studiesToAdd as unknown as Record<string, unknown>[]);
+      const { studyIds } = await project.study.addBatch(
+        studiesToAdd as unknown as Record<string, unknown>[],
+      );
       handleOpenChange(false);
-      onAdded?.(studiesToAdd.length);
+      onAdded?.(studyIds);
     },
     [handleOpenChange, onAdded],
   );

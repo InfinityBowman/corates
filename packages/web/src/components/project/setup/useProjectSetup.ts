@@ -36,7 +36,7 @@ interface PendingInvitation {
 }
 
 export function useProjectSetup() {
-  const { projectId, orgId, setAddStudiesSheetOpen, setAssignSheetOpen, setOutcomesSheetOpen } =
+  const { projectId, orgId, setAddStudiesSheetOpen, openAssignSheet, setOutcomesSheetOpen } =
     useProjectContext();
   const queryClient = useQueryClient();
   const meta = useProjectMeta(projectId);
@@ -104,7 +104,7 @@ export function useProjectSetup() {
         !hasStudies ? 'Needs studies'
         : !hasTeam ? 'Needs a second member'
         : null,
-      onOpen: () => setAssignSheetOpen(true),
+      onOpen: () => openAssignSheet(),
     },
   ];
   const activeKey = steps.find(step => !step.done && !step.lockReason)?.key ?? null;

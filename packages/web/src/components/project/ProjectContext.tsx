@@ -18,6 +18,12 @@ export interface ProjectMember {
   image?: string | null;
 }
 
+export interface AssignSheetScope {
+  studyIds: string[];
+  /** Heading over the study list, e.g. "3 new studies". */
+  label: string;
+}
+
 interface ProjectContextValue {
   projectId: string;
   orgId: string | null;
@@ -31,6 +37,9 @@ interface ProjectContextValue {
   setAddStudiesSheetOpen: (open: boolean) => void;
   assignSheetOpen: boolean;
   setAssignSheetOpen: (open: boolean) => void;
+  /** null means every unassigned study. */
+  assignSheetScope: AssignSheetScope | null;
+  openAssignSheet: (scope?: AssignSheetScope) => void;
   outcomesSheetOpen: boolean;
   setOutcomesSheetOpen: (open: boolean) => void;
 }
@@ -56,6 +65,11 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
   const isOwner = userRole === 'owner';
   const [addStudiesSheetOpen, setAddStudiesSheetOpen] = useState(false);
   const [assignSheetOpen, setAssignSheetOpen] = useState(false);
+  const [assignSheetScope, setAssignSheetScope] = useState<AssignSheetScope | null>(null);
+  const openAssignSheet = useCallback((scope?: AssignSheetScope) => {
+    setAssignSheetScope(scope ?? null);
+    setAssignSheetOpen(true);
+  }, []);
   const [outcomesSheetOpen, setOutcomesSheetOpen] = useState(false);
 
   // Stable path helpers that only depend on projectId
@@ -101,6 +115,8 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
       setAddStudiesSheetOpen,
       assignSheetOpen,
       setAssignSheetOpen,
+      assignSheetScope,
+      openAssignSheet,
       outcomesSheetOpen,
       setOutcomesSheetOpen,
     }),
@@ -115,6 +131,8 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
       getReconcilePath,
       addStudiesSheetOpen,
       assignSheetOpen,
+      assignSheetScope,
+      openAssignSheet,
       outcomesSheetOpen,
     ],
   );

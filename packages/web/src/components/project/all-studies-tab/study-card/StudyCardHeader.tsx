@@ -31,24 +31,10 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { Avatar, AvatarImage, AvatarFallback, getInitials } from '@/components/ui/avatar';
 import { useProjectContext, type ProjectMember } from '@/components/project/ProjectContext';
+import { MemberAvatar, memberDisplayName } from '@/components/project/MemberAvatar';
 import type { StudyInfo } from '@/stores/projectStore';
 import { project } from '@/project';
-import { API_BASE } from '@/config/api';
-
-const AVATAR_COLORS = [
-  { bg: 'bg-blue-100', text: 'text-blue-700' },
-  { bg: 'bg-emerald-100', text: 'text-emerald-700' },
-  { bg: 'bg-amber-100', text: 'text-amber-700' },
-  { bg: 'bg-pink-100', text: 'text-pink-700' },
-  { bg: 'bg-indigo-100', text: 'text-indigo-700' },
-];
-
-function getAvatarColorClasses(name: string) {
-  const index = name ? name.charCodeAt(0) % AVATAR_COLORS.length : 0;
-  return AVATAR_COLORS[index];
-}
 
 interface StudyCardHeaderProps {
   study: StudyInfo;
@@ -156,29 +142,14 @@ export function StudyCardHeader({
 
         {hasReviewers ?
           <div className='flex shrink-0 -space-x-1.5' data-selectable>
-            {assignedReviewers.map(member => {
-              const displayName = member?.name || member?.email || 'Unknown';
-              const colorClasses = getAvatarColorClasses(displayName);
-              const avatarSrc =
-                member?.image ?
-                  member.image.startsWith('/') ?
-                    `${API_BASE}${member.image}`
-                  : member.image
-                : undefined;
-              return (
-                <Tooltip key={member.userId}>
-                  <TooltipTrigger>
-                    <Avatar className='size-7 border-2 border-white text-xs'>
-                      <AvatarImage src={avatarSrc} alt={displayName} />
-                      <AvatarFallback className={`${colorClasses.bg} ${colorClasses.text}`}>
-                        {getInitials(displayName)}
-                      </AvatarFallback>
-                    </Avatar>
-                  </TooltipTrigger>
-                  <TooltipContent>{displayName}</TooltipContent>
-                </Tooltip>
-              );
-            })}
+            {assignedReviewers.map(member => (
+              <Tooltip key={member.userId}>
+                <TooltipTrigger>
+                  <MemberAvatar member={member} className='border-2 border-white' />
+                </TooltipTrigger>
+                <TooltipContent>{memberDisplayName(member)}</TooltipContent>
+              </Tooltip>
+            ))}
           </div>
         : <span className='text-muted-foreground/70 shrink-0 text-xs italic'>
             No reviewers assigned

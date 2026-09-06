@@ -342,7 +342,7 @@ export const studyActions = {
 
   async addBatch(
     studiesToAdd: Record<string, unknown>[],
-  ): Promise<{ successCount: number; manualPdfCount: number }> {
+  ): Promise<{ successCount: number; manualPdfCount: number; studyIds: string[] }> {
     const projectId = connectionPool.getActiveProjectId();
     const orgId = connectionPool.getActiveOrgId();
     const user = selectUser(useAuthStore.getState());
@@ -355,6 +355,7 @@ export const studyActions = {
 
     let successCount = 0;
     let manualPdfCount = 0;
+    const studyIds: string[] = [];
 
     try {
       for (const study of studiesToAdd) {
@@ -425,6 +426,7 @@ export const studyActions = {
           }
 
           successCount++;
+          studyIds.push(studyId);
         } catch (err) {
           console.error('Error adding study:', err);
           captureException(err, { component: 'studyActions', action: 'addBatch.study' });
@@ -432,7 +434,7 @@ export const studyActions = {
       }
 
       showBatchResultToast(successCount, manualPdfCount);
-      return { successCount, manualPdfCount };
+      return { successCount, manualPdfCount, studyIds };
     } catch (err) {
       console.error('Error adding studies:', err);
       captureException(err, { component: 'studyActions', action: 'addBatch' });

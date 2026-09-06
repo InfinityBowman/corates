@@ -1,9 +1,9 @@
 /**
- * AssignReviewersSheet - Hosts the bulk ReviewerAssignment flow in a side sheet,
- * opened from the project header.
+ * AssignReviewersSheet - Hosts ReviewerAssignment in a side sheet, scoped by
+ * whoever opened it: the header (all unassigned), the post-add toast (just
+ * added), or a study card (that study).
  */
 
-import { useCallback } from 'react';
 import {
   Sheet,
   SheetContent,
@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/sheet';
 import { ReviewerAssignment } from './ReviewerAssignment';
 import { useAllStudies, useProjectMembers } from '@/project/workspace-data';
+import { useAuthStore, selectUser } from '@/stores/authStore';
 import { project } from '@/project';
 import { useProjectContext } from '../ProjectContext';
 
@@ -22,34 +23,29 @@ interface AssignReviewersSheetProps {
 }
 
 export function AssignReviewersSheet({ open, onOpenChange }: AssignReviewersSheetProps) {
-  const { projectId } = useProjectContext();
-
+  const { projectId, assignSheetScope } = useProjectContext();
+  const user = useAuthStore(selectUser);
   const studies = useAllStudies(projectId);
   const members = useProjectMembers(projectId);
 
-  const handleAssignReviewers = useCallback((studyId: string, updates: Record<string, unknown>) => {
-    project.study.update(studyId, updates);
-  }, []);
-
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side='right' className='w-full gap-0 overflow-y-auto sm:max-w-xl'>
+      <SheetContent side='right' className='w-full gap-0 sm:max-w-xl'>
         <SheetHeader>
           <SheetTitle>Assign reviewers</SheetTitle>
           <SheetDescription>
-            Every study is appraised independently by two reviewers, who then reconcile their
-            answers. Spread the unassigned studies across your team here, or set the two reviewers
-            for a single study from its card on All studies.
+            Two people appraise each study on their own, then reconcile their answers together. Pick
+            both reviewers for each study, or let Auto-fill spread the work evenly across the team.
           </SheetDescription>
         </SheetHeader>
-        <div className='p-4'>
-          <ReviewerAssignment
-            studies={studies}
-            members={members}
-            onAssignReviewers={handleAssignReviewers}
-            onDone={() => onOpenChange(false)}
-          />
-        </div>
+        <ReviewerAssignment
+          scope={assignSheetScope}
+          studies={studies}
+          members={members}
+          currentUserId={user?.id ?? null}
+          onSave={(studyId, slots) => project.study.update(studyId, { ...slots })}
+          onClose={() => onOpenChange(false)}
+        />
       </SheetContent>
     </Sheet>
   );

@@ -10,13 +10,11 @@ import {
   isReconciledChecklist,
   getTodoChecklists,
   getCompletedChecklists,
-  getFinalizedChecklist,
   getReconciliationChecklists,
   shouldShowInTab,
   getStudiesForTab,
   getChecklistCount,
   getNextStatusForCompletion,
-  findReconciledChecklist,
   isDualReviewerStudy,
   getReconciliationChecklistsByOutcome,
   getReadyReconciliationPairs,
@@ -51,7 +49,6 @@ describe('checklist-domain', () => {
       expect(getTodoChecklists(null, 'user-1')).toEqual([]);
       expect(getTodoChecklists(createStudy(), null)).toEqual([]);
       expect(getCompletedChecklists(null)).toEqual([]);
-      expect(getFinalizedChecklist(null)).toBeNull();
       expect(getReconciliationChecklists(null)).toEqual([]);
       expect(getStudiesForTab(null, 'todo', 'user-1')).toEqual([]);
       expect(getStudiesForTab([], 'todo', 'user-1')).toEqual([]);
@@ -135,48 +132,6 @@ describe('checklist-domain', () => {
       const result = getCompletedChecklists(study);
       expect(result).toHaveLength(2);
       expect(result.map(c => c.id)).toEqual(['cl-1', 'cl-3']);
-    });
-  });
-
-  describe('getFinalizedChecklist', () => {
-    it('returns finalized reconciled checklist first', () => {
-      const study = createStudy({
-        checklists: [
-          createChecklist({
-            id: 'cl-1',
-            assignedTo: 'user-1',
-            status: CHECKLIST_STATUS.FINALIZED,
-          }),
-          createChecklist({
-            id: 'cl-2',
-            assignedTo: null, // Reconciled
-            status: CHECKLIST_STATUS.FINALIZED,
-          }),
-        ],
-      });
-      const result = getFinalizedChecklist(study);
-      expect(result!.id).toBe('cl-2');
-    });
-
-    it('returns any finalized checklist if no reconciled', () => {
-      const study = createStudy({
-        checklists: [
-          createChecklist({
-            id: 'cl-1',
-            assignedTo: 'user-1',
-            status: CHECKLIST_STATUS.FINALIZED,
-          }),
-        ],
-      });
-      const result = getFinalizedChecklist(study);
-      expect(result!.id).toBe('cl-1');
-    });
-
-    it('returns null when no finalized checklist exists', () => {
-      const study = createStudy({
-        checklists: [createChecklist({ status: CHECKLIST_STATUS.PENDING })],
-      });
-      expect(getFinalizedChecklist(study)).toBeNull();
     });
   });
 
@@ -417,37 +372,6 @@ describe('checklist-domain', () => {
         reviewer2: 'user-2',
       });
       expect(getNextStatusForCompletion(study)).toBe(CHECKLIST_STATUS.REVIEWER_COMPLETED);
-    });
-  });
-
-  describe('findReconciledChecklist', () => {
-    it('returns reconciled checklist if exists', () => {
-      const study = createStudy({
-        checklists: [
-          createChecklist({ id: 'cl-1', assignedTo: 'user-1' }),
-          createChecklist({ id: 'cl-2', assignedTo: null }), // Reconciled
-        ],
-      });
-      const result = findReconciledChecklist(study);
-      expect(result!.id).toBe('cl-2');
-    });
-
-    it('excludes specified checklist id', () => {
-      const study = createStudy({
-        checklists: [
-          createChecklist({ id: 'cl-1', assignedTo: null }),
-          createChecklist({ id: 'cl-2', assignedTo: null }),
-        ],
-      });
-      const result = findReconciledChecklist(study, 'cl-1');
-      expect(result!.id).toBe('cl-2');
-    });
-
-    it('returns null when no reconciled checklist exists', () => {
-      const study = createStudy({
-        checklists: [createChecklist({ id: 'cl-1', assignedTo: 'user-1' })],
-      });
-      expect(findReconciledChecklist(study)).toBeNull();
     });
   });
 

@@ -57,23 +57,6 @@ export function getCompletedChecklists(study: Study | null | undefined): StudyCh
 }
 
 /**
- * Gets the finalized checklist for a study (the authoritative version for tables/charts)
- * @param study - The study object
- * @returns The finalized checklist or null if not found
- */
-export function getFinalizedChecklist(study: Study | null | undefined): StudyChecklist | null {
-  if (!study || !study.checklists) return null;
-  const checklists = study.checklists || [];
-  // Prefer reconciled checklist if it's finalized
-  const reconciled = checklists.find(
-    c => isReconciledChecklist(c) && c.status === CHECKLIST_STATUS.FINALIZED,
-  );
-  if (reconciled) return reconciled;
-  // Otherwise, find any finalized checklist
-  return checklists.find(c => c.status === CHECKLIST_STATUS.FINALIZED) || null;
-}
-
-/**
  * Gets checklists in the reconciliation workflow (individual reviewer checklists that are completed)
  * @param study - The study object
  * @returns Array of checklists in reconciliation workflow
@@ -249,25 +232,6 @@ export function getNextStatusForCompletion(study: Study | null | undefined): str
 
   // Dual reviewer: goes to reviewer-completed (awaiting reconciliation)
   return CHECKLIST_STATUS.REVIEWER_COMPLETED;
-}
-
-/**
- * Finds the reconciled checklist for a study, if one exists
- * @param study - The study object
- * @param excludeId - Optional checklist ID to exclude from search
- * @returns The reconciled checklist or null if not found
- */
-export function findReconciledChecklist(
-  study: Study | null | undefined,
-  excludeId: string | null = null,
-): StudyChecklist | null {
-  if (!study || !study.checklists) return null;
-
-  const reconciled = study.checklists.find(
-    c => isReconciledChecklist(c) && (!excludeId || c.id !== excludeId),
-  );
-
-  return reconciled || null;
 }
 
 /**
