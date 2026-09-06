@@ -108,6 +108,9 @@ settings:
 overrides:
   better-sqlite3: ^13.0.2
 
+patchedDependencies:
+  '@tanstack/db@0.8.7': 14c1a46d730915892e25fc1e2378485e6c87b1fecc1cd9dc8b6d0fada4a0b2dc
+
 importers:
 
   .:
@@ -193,7 +196,7 @@ importers:
         version: 5.39.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@cf-sync/client':
         specifier: ^0.2.0
-        version: 0.2.0(@tanstack/db@0.8.7(typescript@7.0.2))(@tanstack/react-db@0.3.7(react@19.2.8)(typescript@7.0.2))(react@19.2.8)(zod@4.5.4)
+        version: 0.2.0(@tanstack/db@0.8.7(patch_hash=14c1a46d730915892e25fc1e2378485e6c87b1fecc1cd9dc8b6d0fada4a0b2dc)(typescript@7.0.2))(@tanstack/react-db@0.3.7(react@19.2.8)(typescript@7.0.2))(react@19.2.8)(zod@4.5.4)
       '@cf-sync/yjs':
         specifier: ^0.2.0
         version: 0.2.0(@cf-sync/server@0.2.0(zod@4.5.4))(react@19.2.8)(yjs@13.6.32)(zod@4.5.4)
@@ -307,7 +310,7 @@ importers:
         version: 5.4.0(rollup@4.62.4)
       '@tanstack/db':
         specifier: ^0.8.7
-        version: 0.8.7(typescript@7.0.2)
+        version: 0.8.7(patch_hash=14c1a46d730915892e25fc1e2378485e6c87b1fecc1cd9dc8b6d0fada4a0b2dc)(typescript@7.0.2)
       '@tanstack/react-db':
         specifier: ^0.3.7
         version: 0.3.7(react@19.2.8)(typescript@7.0.2)
@@ -8978,10 +8981,10 @@ snapshots:
     dependencies:
       css-tree: 3.2.1
 
-  '@cf-sync/client@0.2.0(@tanstack/db@0.8.7(typescript@7.0.2))(@tanstack/react-db@0.3.7(react@19.2.8)(typescript@7.0.2))(react@19.2.8)(zod@4.5.4)':
+  '@cf-sync/client@0.2.0(@tanstack/db@0.8.7(patch_hash=14c1a46d730915892e25fc1e2378485e6c87b1fecc1cd9dc8b6d0fada4a0b2dc)(typescript@7.0.2))(@tanstack/react-db@0.3.7(react@19.2.8)(typescript@7.0.2))(react@19.2.8)(zod@4.5.4)':
     dependencies:
       '@cf-sync/protocol': 0.1.1(zod@4.5.4)
-      '@tanstack/db': 0.8.7(typescript@7.0.2)
+      '@tanstack/db': 0.8.7(patch_hash=14c1a46d730915892e25fc1e2378485e6c87b1fecc1cd9dc8b6d0fada4a0b2dc)(typescript@7.0.2)
     optionalDependencies:
       '@tanstack/react-db': 0.3.7(react@19.2.8)(typescript@7.0.2)
       react: 19.2.8
@@ -11520,7 +11523,7 @@ snapshots:
       sorted-btree: 1.8.1
       typescript: 7.0.2
 
-  '@tanstack/db@0.8.7(typescript@7.0.2)':
+  '@tanstack/db@0.8.7(patch_hash=14c1a46d730915892e25fc1e2378485e6c87b1fecc1cd9dc8b6d0fada4a0b2dc)(typescript@7.0.2)':
     dependencies:
       '@standard-schema/spec': 1.1.0
       '@tanstack/db-ivm': 0.1.19(typescript@7.0.2)
@@ -11535,7 +11538,7 @@ snapshots:
 
   '@tanstack/react-db@0.3.7(react@19.2.8)(typescript@7.0.2)':
     dependencies:
-      '@tanstack/db': 0.8.7(typescript@7.0.2)
+      '@tanstack/db': 0.8.7(patch_hash=14c1a46d730915892e25fc1e2378485e6c87b1fecc1cd9dc8b6d0fada4a0b2dc)(typescript@7.0.2)
       react: 19.2.8
       use-sync-external-store: 1.6.0(react@19.2.8)
     transitivePeerDependencies:

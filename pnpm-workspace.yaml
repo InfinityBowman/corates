@@ -30,3 +30,6 @@ allowBuilds:
   unrs-resolver: true
   workerd: true
   core-js: false
+
+patchedDependencies:
+  '@tanstack/db@0.8.7': patches/@tanstack__db@0.8.7.patch
