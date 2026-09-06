@@ -1,7 +1,7 @@
 {
   "title": "CoRATES Product Usage",
   "uid": "corates-product-usage",
-  "description": "What people actually do in CoRATES. Server-side domain events are authoritative; the client.* rows come from track() in src/lib/analytics.ts, which is batched, rate limited, sanitized and blockable, so Plausible remains the system of record for counts and these undercount. Production only; OTLP export latency is roughly 2-4 minutes.",
+  "description": "What people actually do in CoRATES. Server-side domain events are authoritative; the client.* rows come from clientLogger in packages/web, which is batched, rate limited, sanitized and blockable, so they undercount. Production only; OTLP export latency is roughly 2-4 minutes.",
   "tags": ["corates", "loki", "production", "product", "usage"],
   "editable": true,
   "graphTooltip": 1,
@@ -1181,6 +1181,141 @@
       "description": "The `type` prop on each browser event - which appraisal instrument is being used."
     },
     {
+      "id": 41,
+      "type": "timeseries",
+      "title": "Exports",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 14,
+        "x": 0,
+        "y": 45
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (message, format) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=~`client\\.(project|local_appraisal)\\.exported` | userId=~`$user` [$__auto]))",
+          "legendFormat": "{{message}} {{format}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 85,
+            "lineWidth": 0,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "description": "CSV and PDF downloads, the strongest signal that an appraisal delivered value. client.project.exported is from a project's export menu; client.local_appraisal.exported is the browser-only appraisals section on the dashboard. Built and downloaded in the browser, so nothing server-side sees these."
+    },
+    {
+      "id": 42,
+      "type": "table",
+      "title": "Exports by source and scope",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 10,
+        "x": 14,
+        "y": 45
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (message, format, scope) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=~`client\\.(project|local_appraisal)\\.exported` | userId=~`$user` [$__range]))",
+          "queryType": "instant",
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "renameByName": {
+              "message": "Source",
+              "format": "Format",
+              "scope": "Scope",
+              "Value": "Count"
+            },
+            "indexByName": {
+              "message": 0,
+              "format": 1,
+              "scope": 2,
+              "Value": 3
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "filterable": false
+          },
+          "noValue": "nothing in range"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Count"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 90
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "sortBy": [
+          {
+            "displayName": "Count",
+            "desc": true
+          }
+        ],
+        "showHeader": true
+      },
+      "description": "scope is all (whole project or every local appraisal) or single (one study)."
+    },
+    {
       "id": 23,
       "type": "row",
       "title": "Collaboration",
@@ -1190,7 +1325,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 45
+        "y": 53
       }
     },
     {
@@ -1205,7 +1340,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 46
+        "y": 54
       },
       "targets": [
         {
@@ -1267,7 +1402,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 46
+        "y": 54
       },
       "targets": [
         {
@@ -1345,7 +1480,7 @@
         "h": 4,
         "w": 6,
         "x": 0,
-        "y": 54
+        "y": 62
       },
       "targets": [
         {
@@ -1392,7 +1527,7 @@
         "h": 4,
         "w": 6,
         "x": 6,
-        "y": 54
+        "y": 62
       },
       "targets": [
         {
@@ -1440,7 +1575,7 @@
         "h": 4,
         "w": 6,
         "x": 12,
-        "y": 54
+        "y": 62
       },
       "targets": [
         {
@@ -1507,7 +1642,7 @@
         "h": 4,
         "w": 6,
         "x": 18,
-        "y": 54
+        "y": 62
       },
       "targets": [
         {
@@ -1554,7 +1689,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 58
+        "y": 66
       },
       "targets": [
         {
@@ -1634,7 +1769,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 58
+        "y": 66
       },
       "targets": [
         {
@@ -1713,7 +1848,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 65
+        "y": 73
       }
     },
     {
@@ -1728,7 +1863,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 66
+        "y": 74
       },
       "targets": [
         {
@@ -1789,7 +1924,7 @@
         "h": 4,
         "w": 6,
         "x": 12,
-        "y": 66
+        "y": 74
       },
       "targets": [
         {
@@ -1839,7 +1974,7 @@
         "h": 4,
         "w": 6,
         "x": 18,
-        "y": 66
+        "y": 74
       },
       "targets": [
         {
@@ -1890,7 +2025,7 @@
         "h": 4,
         "w": 12,
         "x": 12,
-        "y": 70
+        "y": 78
       },
       "targets": [
         {
@@ -1968,7 +2103,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 74
+        "y": 82
       }
     },
     {
@@ -1983,7 +2118,7 @@
         "h": 7,
         "w": 8,
         "x": 0,
-        "y": 75
+        "y": 83
       },
       "targets": [
         {
@@ -2061,7 +2196,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 82
+        "y": 90
       },
       "targets": [
         {
@@ -2094,7 +2229,7 @@
         "h": 7,
         "w": 16,
         "x": 8,
-        "y": 75
+        "y": 83
       },
       "targets": [
         {

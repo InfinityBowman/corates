@@ -24,9 +24,9 @@
       {
         "name": "event",
         "label": "Event",
-        "description": "client.* events from packages/web (track() in src/lib/analytics.ts plus direct clientLogger calls). Static list because Loki's label_values() cannot take a | json pipeline; All still matches new events.",
+        "description": "client.* events from clientLogger calls in packages/web. Static list because Loki's label_values() cannot take a | json pipeline; All still matches new events.",
         "type": "custom",
-        "query": "client.auth.sign_in_failed,client.checklist.completed,client.checklist.created,client.checklist.outcome_changed,client.checklist.sent_back_to_todo,client.collaborator.invited,client.drive.connect_failed,client.drive.picker_failed,client.feedback.submitted,client.local_appraisal,client.local_appraisal.pdf,client.pdf.load_failed,client.pdf.upload_failed,client.presence,client.project.created,client.sync.fatal,client.sync.mutation_rejected",
+        "query": "client.auth.oauth_error_redirect,client.auth.sign_in_failed,client.checklist.created,client.checklist.outcome_changed,client.checklist.sent_back_to_todo,client.collaborator.invited,client.drive.connect_failed,client.drive.picker_failed,client.feedback.submitted,client.local_appraisal.created,client.local_appraisal.exported,client.local_appraisal.pdf_attached,client.pdf.load_failed,client.pdf.upload_failed,client.presence,client.project.created,client.project.exported,client.reconciliation.finalized,client.route.not_found,client.sync.fatal,client.sync.mutation_rejected",
         "multi": true,
         "includeAll": true,
         "allValue": "client\\..*",

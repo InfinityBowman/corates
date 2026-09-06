@@ -131,7 +131,7 @@ export function LocalAppraisalsSection({
     const csv = buildProjectCsv({ studies: enrichStudies(studies) });
     const date = new Date().toISOString().slice(0, 10);
     downloadCsv(csv, `corates-local-appraisals-${date}.csv`);
-    clientLogger.info('client.export.local', { format: 'csv', scope: 'all' });
+    clientLogger.info('client.local_appraisal.exported', { format: 'csv', scope: 'all' });
   };
 
   const handleExportAllPdf = () => {
@@ -139,7 +139,7 @@ export function LocalAppraisalsSection({
     const doc = buildProjectPdf({ studies: enriched });
     const date = new Date().toISOString().slice(0, 10);
     downloadPdf(doc, `corates-local-appraisals-${date}.pdf`);
-    clientLogger.info('client.export.local', { format: 'pdf', scope: 'all' });
+    clientLogger.info('client.local_appraisal.exported', { format: 'pdf', scope: 'all' });
   };
 
   const handleExportOneCsv = (studyId: string) => {
@@ -148,7 +148,7 @@ export function LocalAppraisalsSection({
     const csv = buildProjectCsv({ studies: enrichStudies([study]) });
     const safeName = (study.name || 'appraisal').replace(/[^a-zA-Z0-9-_ ]/g, '').trim();
     downloadCsv(csv, `${safeName}.csv`);
-    clientLogger.info('client.export.local', { format: 'csv', scope: 'single' });
+    clientLogger.info('client.local_appraisal.exported', { format: 'csv', scope: 'single' });
   };
 
   const handleExportOnePdf = (studyId: string) => {
@@ -159,7 +159,7 @@ export function LocalAppraisalsSection({
     const doc = buildProjectPdf({ studies: enriched, projectName: name });
     const safeName = name.replace(/[^a-zA-Z0-9-_ ]/g, '').trim();
     downloadPdf(doc, `${safeName}.pdf`);
-    clientLogger.info('client.export.local', { format: 'pdf', scope: 'single' });
+    clientLogger.info('client.local_appraisal.exported', { format: 'pdf', scope: 'single' });
   };
 
   const hasChecklists = appraisals.length > 0;

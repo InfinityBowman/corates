@@ -1356,7 +1356,7 @@
       "id": 28,
       "type": "table",
       "title": "Goal conversions",
-      "description": "Every custom event: the Object:Action events sent by track() in src/lib/analytics.ts, plus Form: Submission and Outbound Link: Click, which the Plausible script captures on its own. Conversion rate is unique converting visitors over unique visitors in the range, as Plausible defines it.",
+      "description": "Historical only. Product events moved to Loki on 2026-09-06 (see the Product Usage dashboard); nothing sends Plausible custom events any more, so only Form: Submission and Outbound Link: Click, which the Plausible script captures on its own, still arrive. Conversion rate is unique converting visitors over unique visitors in the range, as Plausible defines it.",
       "datasource": {
         "type": "grafana-clickhouse-datasource",
         "uid": "${datasource}"
@@ -1417,7 +1417,7 @@
       "id": 29,
       "type": "timeseries",
       "title": "Custom events over time",
-      "description": "",
+      "description": "Historical only for product events, which moved to Loki on 2026-09-06. Only the events the Plausible script captures on its own (Form: Submission, Outbound Link: Click) continue past that date.",
       "datasource": {
         "type": "grafana-clickhouse-datasource",
         "uid": "${datasource}"
@@ -1476,7 +1476,7 @@
       "id": 30,
       "type": "table",
       "title": "Local appraisals by tool",
-      "description": "LocalAppraisal is the standalone /checklist tool; the :PDF variant is a PDF export from it. Signed-out use, so nothing on the server side sees these.",
+      "description": "Historical only, ends 2026-09-06. These moved to Loki as client.local_appraisal.created and client.local_appraisal.pdf_attached on the Product Usage dashboard. The :PDF variant was a source PDF being attached, not an export.",
       "datasource": {
         "type": "grafana-clickhouse-datasource",
         "uid": "${datasource}"

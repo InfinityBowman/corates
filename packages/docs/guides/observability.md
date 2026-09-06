@@ -165,7 +165,7 @@ lookups that fell back, cache writes that missed). A failure the user attempted 
 did not complete gets a `clientLogger` event at the call site.
 
 Product usage events go through the same `clientLogger`, named `client.<object>.<action>`
-with a past-tense action (`client.checklist.created`, `client.export.project`). Loki is the
+with a past-tense action (`client.checklist.created`, `client.project.exported`). Loki is the
 only record: the events are production-only and batched, so they undercount, and prop keys
 matching `/email|password|token|secret|authorization|cookie|userid/i` are dropped by
 `sanitizeClientLogData`. Plausible still loads in `__root.tsx` for pageviews, but nothing
