@@ -7,9 +7,7 @@ import { AddStudiesForm, type AddStudiesFormState } from '../add-studies/AddStud
 import type { MergedStudy } from '@/hooks/useAddStudies/deduplication';
 import { GoogleDrivePickerModal } from '../google-drive/GoogleDrivePickerModal';
 import { StudyCard } from './study-card/StudyCard';
-import { AssignReviewersModal } from './AssignReviewersModal';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
-import type { StudyInfo } from '@/stores/projectStore';
 import { useAllStudies, useProjectMeta } from '@/project/workspace-data';
 import { useAddStudies } from '@/hooks/useAddStudies';
 import { useProjectExport } from '@/hooks/useProjectExport';
@@ -20,13 +18,11 @@ import { ProjectSetupPanel } from '../setup/ProjectSetupPanel';
 import { ProjectSetupCard } from '../setup/ProjectSetupCard';
 
 export function AllStudiesTab() {
-  const { projectId, getMember, isOwner } = useProjectContext();
+  const { projectId, getMember, isOwner, openAssignSheet } = useProjectContext();
 
   const [showGoogleDriveModal, setShowGoogleDriveModal] = useState(false);
   const [googleDriveTargetStudyId, setGoogleDriveTargetStudyId] = useState<string | null>(null);
   const [expandedStudies, setExpandedStudies] = useState<Set<string>>(new Set());
-  const [showReviewersModal, setShowReviewersModal] = useState(false);
-  const [editingStudy, setEditingStudy] = useState<StudyInfo | null>(null);
 
   const addStudies = useAddStudies({});
   const studies = useAllStudies(projectId);
@@ -115,10 +111,7 @@ export function AllStudiesTab() {
               onExportCsv={() => exportStudyCsv(study.id)}
               onExportPdf={() => exportStudyPdf(study.id)}
               getMember={getMember}
-              onAssignReviewers={s => {
-                setEditingStudy(s);
-                setShowReviewersModal(true);
-              }}
+              onAssignReviewers={s => openAssignSheet({ studyIds: [s.id], label: 'This study' })}
               onOpenGoogleDrive={handleOpenGoogleDrive}
             />
           ))}
@@ -134,24 +127,6 @@ export function AllStudiesTab() {
         projectId={projectId}
         studyId={googleDriveTargetStudyId}
         onImportSuccess={handleGoogleDriveImportSuccess}
-      />
-
-      <AssignReviewersModal
-        open={showReviewersModal}
-        onOpenChange={open => {
-          if (!open) {
-            setShowReviewersModal(false);
-            setEditingStudy(null);
-          }
-        }}
-        study={editingStudy}
-        projectId={projectId}
-        onSave={(
-          studyId: string,
-          updates: { reviewer1: string | null; reviewer2: string | null },
-        ) => {
-          project.study.update(studyId, updates);
-        }}
       />
     </div>
   );

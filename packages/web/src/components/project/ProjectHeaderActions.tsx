@@ -55,6 +55,7 @@ export function ProjectHeaderActions() {
     setAddStudiesSheetOpen,
     assignSheetOpen,
     setAssignSheetOpen,
+    openAssignSheet,
     outcomesSheetOpen,
     setOutcomesSheetOpen,
   } = useProjectContext();
@@ -69,20 +70,22 @@ export function ProjectHeaderActions() {
     [studies],
   );
 
-  // addBatch already shows its own result toast; this one is just the handoff
-  // into bulk assignment for the studies that arrived unassigned.
+  // addBatch shows its own result toast; this one hands off just the new studies.
   const handleAdded = useCallback(
-    (count: number) => {
-      if (!isOwner || members.length < 2 || count === 0) return;
-      toast('Assign two reviewers to the new studies?', {
+    (studyIds: string[]) => {
+      if (!isOwner || members.length < 2 || studyIds.length === 0) return;
+      const count = studyIds.length;
+      const label = `${count} new ${count === 1 ? 'study' : 'studies'}`;
+      toast('Assign reviewers?', {
+        description: `The ${label} ${count === 1 ? 'has' : 'have'} no reviewers yet.`,
         duration: 10000,
         action: {
           label: 'Assign reviewers',
-          onClick: () => setAssignSheetOpen(true),
+          onClick: () => openAssignSheet({ studyIds, label }),
         },
       });
     },
-    [isOwner, members.length, setAssignSheetOpen],
+    [isOwner, members.length, openAssignSheet],
   );
 
   const assignBlockedReason =
@@ -122,7 +125,7 @@ export function ProjectHeaderActions() {
 
       {assignBlockedReason ?
         <DisabledActionButton reason={assignBlockedReason}>{assignButton}</DisabledActionButton>
-      : <Button variant='outline' onClick={() => setAssignSheetOpen(true)}>
+      : <Button variant='outline' onClick={() => openAssignSheet()}>
           {assignButton}
         </Button>
       }

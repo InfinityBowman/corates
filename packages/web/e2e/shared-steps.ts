@@ -261,13 +261,12 @@ export async function assignReviewers(page: Page) {
 
   const dialog = page.getByRole('dialog');
 
-  // Target Select triggers by index to avoid the race where
-  // getByText('Unassigned').first() re-targets reviewer1's trigger
-  // before React re-renders it with the selected value.
+  // The sheet is scoped to this one study, so its two reviewer pickers are
+  // the only comboboxes; target them by index rather than by placeholder text.
   const triggers = dialog.getByRole('combobox');
   await triggers.nth(0).click();
   await page.getByRole('option', { name: /Alice/i }).click();
-  // Wait for Radix Select dropdown to fully close before opening the next one;
+  // Wait for the picker popover to fully close before opening the next one;
   // without this the first selection can be lost.
   await expect(page.getByRole('listbox')).toBeHidden({ timeout: 5_000 });
   await triggers.nth(1).click();
