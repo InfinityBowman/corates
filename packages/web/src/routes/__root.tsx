@@ -1,8 +1,9 @@
 import { useSyncExternalStore, useEffect, lazy, Suspense } from 'react';
-import { HeadContent, Link, Outlet, Scripts, createRootRoute } from '@tanstack/react-router';
+import { HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-router';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
 import { AuthProvider } from '@/components/auth/AuthProvider';
+import { NotFoundPage } from '@/components/NotFound';
 import { Button } from '@/components/ui/button';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -189,24 +190,9 @@ export const Route = createRootRoute({
 
   component: RootLayout,
   shellComponent: RootDocument,
-  notFoundComponent: NotFound,
+  notFoundComponent: NotFoundPage,
   errorComponent: RootError,
 });
-
-function NotFound() {
-  return (
-    <div className='flex min-h-screen flex-col items-center justify-center gap-4 text-center'>
-      <h1 className='text-6xl font-bold tracking-tight text-blue-600'>404</h1>
-      <p className='text-gray-600'>This page could not be found.</p>
-      <Link
-        to='/'
-        className='mt-4 rounded-lg bg-blue-600 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700'
-      >
-        Back to home
-      </Link>
-    </div>
-  );
-}
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
