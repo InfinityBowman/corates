@@ -1,6 +1,6 @@
 # Pricing restructure rollout (issue #659)
 
-Status: in progress (Stripe products and secrets done, subscriber and D1 pending)
+Status: ready to merge; delete the retired secrets after the production deploy
 Branch: `feat/pricing-restructure`
 Last updated: 2026-09-06
 
@@ -63,32 +63,14 @@ for k in STRIPE_PRICE_ID_STARTER_TEAM_MONTHLY STRIPE_PRICE_ID_STARTER_TEAM_YEARL
 done
 ```
 
-## 3. Migrate the one paying subscriber
+## 3. Migrate the one paying subscriber (done 2026-09-06)
 
-Subscription `sub_1Ti84CCoCKvs2wg8VYLidG7W` is on Starter Team at $8/month with
-the current period ending 2026-09-14. Better Auth resolves the plan from the
-price id on every webhook, so once Starter Team's price is no longer in the
-plan list, the row would stop syncing. Move the Stripe subscription to the Team
-monthly price and grandfather the $8 with a permanent coupon:
+Subscription `sub_1Ti84CCoCKvs2wg8VYLidG7W` was on Starter Team at $8/month.
+It now carries the Team monthly price with the permanent coupon `T5SdjMlE`
+($22 off), so the next invoice on 2026-09-14 previews at $8. No proration was
+charged. The old live products are archived.
 
-```bash
-# 1. Coupon that takes the Team monthly price back down to $8
-curl -u "$KEY:" https://api.stripe.com/v1/coupons \
-  -d amount_off=2200 -d currency=usd -d duration=forever \
-  -d name="Grandfathered Starter Team"
-
-# 2. Swap the price, no proration, keep the billing anchor
-curl -u "$KEY:" https://api.stripe.com/v1/subscriptions/sub_1Ti84CCoCKvs2wg8VYLidG7W \
-  -d "items[0][id]=<subscription item id>" \
-  -d "items[0][price]=<STRIPE_PRICE_ID_TEAM_MONTHLY>" \
-  -d proration_behavior=none \
-  -d "discounts[0][coupon]=<coupon id>"
-```
-
-The webhook then rewrites the DB row with `plan = 'team'`. If it does not, the
-D1 statement in the next step covers it.
-
-## 4. Prod D1
+## 4. Prod D1 (done 2026-09-06)
 
 ```sql
 UPDATE subscription SET plan = 'team' WHERE plan = 'starter_team';
@@ -96,12 +78,8 @@ UPDATE subscription SET plan = 'enterprise' WHERE plan = 'unlimited_team';
 DELETE FROM subscription WHERE plan = 'team' AND status = 'incomplete';
 ```
 
-The second statement keeps the admin-provisioned org on unlimited quotas. The
-incomplete row never paid and would otherwise sit in the table under the new
-Team id.
-
-Run via `npx wrangler d1 execute corates-db-prod --remote --env production`
-from `packages/web`.
+One row each. The webhook had not rewritten the subscriber's row after the
+Stripe change, so the SQL did it.
 
 ## 5. Deploy
 
