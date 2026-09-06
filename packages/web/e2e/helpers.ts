@@ -31,6 +31,7 @@ export async function testApi(path: string, init?: RequestInit): Promise<Respons
         signal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS),
       });
       if (!RETRYABLE_STATUSES.has(res.status)) return res;
+      await res.body?.cancel();
       lastError = new Error(`${res.status} ${res.statusText}`);
     } catch (err) {
       lastError = err;

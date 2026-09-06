@@ -4,6 +4,7 @@ import { and, eq } from 'drizzle-orm';
 import { createDb } from '@corates/db/client';
 import { projectMembers, user } from '@corates/db/schema';
 import { addMember } from '@corates/workers/commands/members';
+import { DomainErrorException, PROJECT_ERRORS } from '@corates/shared';
 import type { OrgId, ProjectId, UserId } from '@corates/shared/ids';
 import { devModeGate } from '@/server/devModeGate';
 import { captureError } from '@corates/workers/logger';
@@ -43,18 +44,28 @@ export const handler = async ({ request }: { request: Request }) => {
       return Response.json({ success: true, alreadyMember: true });
     }
 
-    const result = await addMember(
-      env,
-      { id: body.userId as UserId },
-      {
-        orgId: body.orgId as OrgId,
-        projectId: body.projectId as ProjectId,
-        userToAdd: userToAdd as typeof userToAdd & { id: UserId },
-        role: (body.role || 'member') as 'owner' | 'member',
-      },
-    );
-
-    return Response.json({ success: true, ...result });
+    try {
+      const result = await addMember(
+        env,
+        { id: body.userId as UserId },
+        {
+          orgId: body.orgId as OrgId,
+          projectId: body.projectId as ProjectId,
+          userToAdd: userToAdd as typeof userToAdd & { id: UserId },
+          role: (body.role || 'member') as 'owner' | 'member',
+        },
+      );
+      return Response.json({ success: true, ...result });
+    } catch (err) {
+      // A retried request whose first attempt landed after the pre-check.
+      if (
+        err instanceof DomainErrorException &&
+        err.code === PROJECT_ERRORS.MEMBER_ALREADY_EXISTS.code
+      ) {
+        return Response.json({ success: true, alreadyMember: true });
+      }
+      throw err;
+    }
   } catch (err) {
     captureError(err, { tags: { component: 'test-routes', action: 'add-project-member' } });
     return Response.json({ error: (err as Error).message }, { status: 500 });

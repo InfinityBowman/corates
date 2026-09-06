@@ -29,8 +29,12 @@ function walk(suite, ancestors, pass) {
     const firstError = test.results.find(r => r.error)?.error?.message ?? '';
     const previous = tests.get(key);
     let outcome = test.status;
-    if (previous && previous.outcome !== 'expected' && outcome === 'expected') outcome = 'healed';
-    tests.set(key, { title: `${spec.file} > ${title}`, outcome, error: firstError, pass });
+    let error = firstError;
+    if (previous && previous.outcome !== 'expected' && outcome === 'expected') {
+      outcome = 'healed';
+      error = previous.error;
+    }
+    tests.set(key, { title: `${spec.file} > ${title}`, outcome, error, pass });
   }
   for (const child of suite.suites ?? []) {
     walk(child, [...ancestors, child.title], pass);
