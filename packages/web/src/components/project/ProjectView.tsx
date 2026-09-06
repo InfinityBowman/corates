@@ -15,7 +15,7 @@ import { project } from '@/project';
 import { uploadPdf, deletePdf } from '@/api/pdf-api';
 import { cachePdf } from '@/primitives/pdfCache.js';
 import { bestEffort } from '@/lib/errorLogger.js';
-import { importFromGoogleDrive } from '@/api/google-drive';
+import { importFromDrive } from '@/server/functions/google-drive.functions';
 import { Tabs, TabsContent, TabsIndicator, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -221,7 +221,7 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
       };
       const studyId = project.study.create(title, file.metadata?.abstract || '', metadata);
       if (studyId && file.id) {
-        importFromGoogleDrive(file.id, projectId, studyId)
+        importFromDrive({ data: { fileId: file.id, projectId, studyId } })
           .then((result: any) => {
             try {
               project.pdf.addToStudy(studyId, {

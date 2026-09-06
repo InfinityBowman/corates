@@ -14,7 +14,8 @@ import { createFileRoute, useNavigate, Link } from '@tanstack/react-router';
 import { MailIcon, CheckIcon, AlertTriangleIcon, ClockIcon } from 'lucide-react';
 import { useAuthStore, selectUser, selectIsAuthLoading } from '@/stores/authStore';
 import { getInvitation, acceptInvitation } from '@/server/functions/invitations.functions';
-import { getDomainError, getUserFriendlyMessage, parseError } from '@/lib/error-utils';
+import { normalizeError } from '@corates/shared';
+import { getDomainError, getUserFriendlyMessage } from '@/lib/error-utils';
 import { showToast } from '@/lib/toast';
 import { queryClient } from '@/lib/queryClient';
 import { queryKeys } from '@/lib/queryKeys';
@@ -92,7 +93,7 @@ function InvitePage() {
         navigate({ to: '/dashboard', replace: true });
         return;
       } else {
-        setAcceptError(getUserFriendlyMessage(parseError(err)));
+        setAcceptError(getUserFriendlyMessage(normalizeError(err)));
       }
       setAccepting(false);
     }

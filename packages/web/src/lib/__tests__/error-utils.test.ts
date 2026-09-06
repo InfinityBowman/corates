@@ -9,7 +9,6 @@ import {
   handleDomainError,
   handleTransportError,
   handleError,
-  parseError,
   isErrorCode,
 } from '../error-utils';
 import {
@@ -202,21 +201,6 @@ describe('handleError', () => {
     const result = await handleError(error, { showToast: false });
 
     expect(result.code).toBe('TRANSPORT_NETWORK_ERROR');
-  });
-});
-
-describe('parseError', () => {
-  it('should normalize Error objects', () => {
-    const error = new Error('Failed to fetch');
-    const result = parseError(error);
-
-    expect(result.code).toBe('TRANSPORT_NETWORK_ERROR');
-  });
-
-  it('should normalize strings', () => {
-    const result = parseError('Some error');
-
-    expect(result.code).toBe('UNKNOWN_UNHANDLED_ERROR');
   });
 });
 

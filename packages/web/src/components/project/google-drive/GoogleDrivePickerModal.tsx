@@ -12,7 +12,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { importFromGoogleDrive } from '@/api/google-drive';
+import { importFromDrive } from '@/server/functions/google-drive.functions';
 import { GoogleDrivePickerLauncher } from './GoogleDrivePickerLauncher';
 
 interface GoogleDrivePickerModalProps {
@@ -41,7 +41,9 @@ export function GoogleDrivePickerModal({
 
     try {
       setImporting(true);
-      const result = await importFromGoogleDrive(file.id, projectId, targetStudyId);
+      const result = await importFromDrive({
+        data: { fileId: file.id, projectId, studyId: targetStudyId },
+      });
       showToast.success('PDF imported', `"${file.name}" is attached to this study.`);
       onImportSuccess?.(result.file, targetStudyId);
     } catch (err: unknown) {

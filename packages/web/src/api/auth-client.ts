@@ -5,9 +5,14 @@ import {
   adminClient,
   organizationClient,
 } from 'better-auth/client/plugins';
-import { AUTH_ERRORS, USER_ERRORS, createDomainError, type ErrorDefinition } from '@corates/shared';
+import {
+  AUTH_ERRORS,
+  USER_ERRORS,
+  createDomainError,
+  normalizeError,
+  type ErrorDefinition,
+} from '@corates/shared';
 import { API_BASE } from '@/config/api';
-import { parseError } from '@/lib/error-utils';
 
 /**
  * Better Auth reports failures via error codes (e.g. INVALID_EMAIL_OR_PASSWORD).
@@ -38,7 +43,7 @@ export const authClient = createAuthClient({
   fetchOptions: {
     credentials: 'include' as globalThis.RequestCredentials,
     onError(error: unknown) {
-      const parsedError = parseError(error);
+      const parsedError = normalizeError(error);
       console.error('Auth error:', parsedError.code, parsedError.message);
     },
   },

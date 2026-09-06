@@ -26,8 +26,8 @@ vi.mock('@/stores/projectStore', () => ({
   useProjectStore: { getState: () => ({ projects: {} }) },
 }));
 
-vi.mock('@/api/google-drive', () => ({
-  importFromGoogleDrive: vi.fn().mockResolvedValue({
+vi.mock('@/server/functions/google-drive.functions', () => ({
+  importFromDrive: vi.fn().mockResolvedValue({
     success: true,
     id: 'media-1',
     file: {
@@ -76,7 +76,7 @@ vi.mock('@/lib/toast', () => ({
 import { studyActions } from '../actions/studies';
 import { extractPdfTitle, extractPdfDoi } from '@/lib/pdfUtils.js';
 import { fetchFromDOI } from '@/lib/referenceLookup.js';
-import { importFromGoogleDrive } from '@/api/google-drive';
+import { importFromDrive } from '@/server/functions/google-drive.functions';
 import { uploadPdf } from '@/api/pdf-api';
 
 describe('studyActions.addBatch', () => {
@@ -116,7 +116,7 @@ describe('studyActions.addBatch', () => {
     expect(mockStudyCreate).toHaveBeenCalledWith(
       expect.objectContaining({ name: 'Untitled Study' }),
     );
-    expect(importFromGoogleDrive).not.toHaveBeenCalled();
+    expect(importFromDrive).not.toHaveBeenCalled();
     expect(uploadPdf).not.toHaveBeenCalled();
   });
 
@@ -143,7 +143,9 @@ describe('studyActions.addBatch', () => {
     ]);
 
     const studyId = mockStudyCreate.mock.calls[0][0].id;
-    expect(importFromGoogleDrive).toHaveBeenCalledWith('drive-1', 'proj-1', studyId);
+    expect(importFromDrive).toHaveBeenCalledWith({
+      data: { fileId: 'drive-1', projectId: 'proj-1', studyId },
+    });
     expect(mockPdfAttach).toHaveBeenCalledWith(
       expect.objectContaining({
         studyId,
@@ -191,7 +193,7 @@ describe('studyActions.addBatch', () => {
       expect.any(ArrayBuffer),
       'Local.pdf',
     );
-    expect(importFromGoogleDrive).not.toHaveBeenCalled();
+    expect(importFromDrive).not.toHaveBeenCalled();
   });
 
   it('counts successes and manual PDFs correctly across a mixed batch', async () => {
