@@ -167,21 +167,12 @@ jobs:
     runs-on: self-hosted
     permissions:
       contents: read
-    outputs:
-      # Resolved Playwright version, consumed by the e2e job's container tag so
-      # the image can never drift out of sync with @playwright/test.
-      playwright-version: ${{ steps.pw-version.outputs.version }}
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup workspace
         uses: ./.github/actions/setup-workspace
-
-      - name: Resolve Playwright version
-        id: pw-version
-        run: echo "version=$(pnpm --filter web exec playwright --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
 
       - name: Build web for staging
         env:
@@ -235,18 +226,18 @@ jobs:
           echo "Staging did not become ready in time"
           exit 1
 
-  # E2E against staging in the official Playwright container: browsers and their
-  # system deps are prebaked, so there is no install step. The image tag is
-  # derived from the version build-web resolved, so it always matches
-  # @playwright/test and cannot drift.
+  # E2E against staging, on the host rather than the Playwright container. A
+  # container job leaves root-owned files in the runner's workspace that the
+  # runner user cannot clean up, and it cannot use the warm pnpm store.
+  # Chromium's system libraries were installed once on the runner host with
+  # `playwright install-deps chromium`; the browser itself is installed per
+  # job below, so it always matches @playwright/test.
   e2e:
     needs: [build-web, resolve-skip-e2e]
     if: |
       needs.build-web.result == 'success' &&
       needs.resolve-skip-e2e.outputs.skip_e2e != 'true'
     runs-on: self-hosted
-    container:
-      image: mcr.microsoft.com/playwright:v${{ needs.build-web.outputs.playwright-version }}-noble
     permissions:
       contents: read
 
@@ -254,23 +245,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # The Playwright image ships no C toolchain, so native modules
-      # (better-sqlite3) hard-fail when their prebuilt-binary download flakes
-      # and prebuild-install falls back to compiling from source.
-      - name: Install native build tools
-        run: apt-get update && apt-get install -y --no-install-recommends make g++
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup workspace
+        uses: ./.github/actions/setup-workspace
         with:
-          node-version: '24'
-          cache: 'pnpm'
+          build-workspace: 'false'
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      # Per-runner browser cache, for the same reasons as the pnpm store. A
+      # no-op once the build matching @playwright/test is present.
+      - name: Install Chromium
+        run: |
+          browsers="$(dirname "$RUNNER_WORKSPACE")/ms-playwright"
+          echo "PLAYWRIGHT_BROWSERS_PATH=$browsers" >> "$GITHUB_ENV"
+          PLAYWRIGHT_BROWSERS_PATH="$browsers" pnpm --filter web exec playwright install chromium
 
       - name: Run e2e tests
         env:
