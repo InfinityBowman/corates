@@ -5,8 +5,15 @@
 
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from '@tanstack/react-router';
-import { HomeIcon, PlusIcon, WifiOffIcon, TriangleAlertIcon } from 'lucide-react';
+import {
+  HomeIcon,
+  MessageCircleIcon,
+  PlusIcon,
+  WifiOffIcon,
+  TriangleAlertIcon,
+} from 'lucide-react';
 import { useAuthStore, selectIsLoggedIn } from '@/stores/authStore';
+import { useFeedbackStore } from '@/stores/feedbackStore';
 import { useAllStudies } from '@/project/workspace-data';
 import { applyLocalMutation } from '@/project/localWrites';
 import { LOCAL_PROJECT_ID } from '@/project/localProject';
@@ -76,6 +83,7 @@ export function AppSidebar({ onClose, closeLabel, closeIcon }: AppSidebarProps) 
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const isLoggedIn = useAuthStore(selectIsLoggedIn);
+  const openFeedback = useFeedbackStore(s => s.open);
   const isOnline = useOnlineStatus();
   const { projects, isLoading: isProjectsLoading } = useMyProjectsList({ enabled: isLoggedIn });
 
@@ -184,6 +192,15 @@ export function AppSidebar({ onClose, closeLabel, closeIcon }: AppSidebarProps) 
           </div>
         </div>
       </div>
+
+      {isLoggedIn && (
+        <div className='border-border shrink-0 border-t p-2'>
+          <button type='button' onClick={openFeedback} className={navRowClass(false)}>
+            <MessageCircleIcon className='size-4 shrink-0' />
+            <span className='truncate'>Give feedback</span>
+          </button>
+        </div>
+      )}
 
       {(!isOnline || !isLoggedIn) && (
         <div className='border-border flex shrink-0 items-center gap-2 border-t px-3 py-2.5'>

@@ -1,8 +1,9 @@
 /**
  * feedbackStore - Global open/close state for the in-app feedback dialog
  *
- * The dialog is mounted once in the root layout; entry points (navbar
- * dropdown, early access banner) open it through this store.
+ * The dialog is mounted once in the root layout; entry points (sidebar
+ * footer, Home prompt, account menu, early access banner) open it through
+ * this store.
  */
 
 import { create } from 'zustand';
