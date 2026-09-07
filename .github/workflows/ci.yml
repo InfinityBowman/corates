@@ -152,14 +152,23 @@ jobs:
             const message = context.payload.head_commit?.message ?? '';
             const skipFromCommit = message.toLowerCase().includes('[skip e2e]');
 
-            const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              commit_sha: context.sha,
-            });
-            const mergedPr = prs.find(pr => pr.merged_at) ?? prs[0];
-            const labels = mergedPr?.labels?.map(label => label.name) ?? [];
-            const skipFromLabel = labels.includes('skip-e2e');
+            // This job gates the production deploy, so an API blip on the
+            // label lookup must not fail it. A failure falls back to running
+            // e2e, which is the safe direction.
+            let mergedPr;
+            let skipFromLabel = false;
+            try {
+              const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                commit_sha: context.sha,
+              });
+              mergedPr = prs.find(pr => pr.merged_at) ?? prs[0];
+              const labels = mergedPr?.labels?.map(label => label.name) ?? [];
+              skipFromLabel = labels.includes('skip-e2e');
+            } catch (error) {
+              core.warning(`Could not read PR labels (${error.message}); running e2e`);
+            }
 
             const skip = skipFromCommit || skipFromLabel;
             core.setOutput('skip_e2e', skip ? 'true' : 'false');
