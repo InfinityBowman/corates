@@ -1,5 +1,5 @@
-import { and, count, eq, inArray } from 'drizzle-orm';
-import { member, projects } from '@corates/db/schema';
+import { eq } from 'drizzle-orm';
+import { projects } from '@corates/db/schema';
 import { resolveOrgAccess, type OrgBilling } from './billingResolver';
 import { isUnlimitedQuota } from '@corates/shared/plans';
 import { createDomainError, AUTH_ERRORS } from '@corates/shared';
@@ -7,31 +7,30 @@ import type { OrgId, UserId } from '@corates/shared/ids';
 import type { Database } from '@corates/db/client';
 
 /**
- * Free projects are attributed to org owners so a user cannot multiply the
- * Free quota by creating more orgs. Only orgs that resolve to Free count; a
- * paid or granted org never consumes its owner's free slot.
+ * Free projects are attributed to their creator so a user cannot multiply the
+ * Free quota by creating more workspaces. Creating a project requires owning the
+ * workspace, so the creator is always the project owner. Only projects in orgs
+ * that resolve to Free count; a paid or granted org never consumes a free slot.
  */
 export async function countFreeProjectsOwnedByUser(db: Database, userId: UserId): Promise<number> {
   const owned = await db
-    .select({ orgId: member.organizationId })
-    .from(member)
-    .where(and(eq(member.userId, userId), eq(member.role, 'owner')))
+    .select({ orgId: projects.orgId })
+    .from(projects)
+    .where(eq(projects.createdBy, userId))
     .all();
 
-  const freeOrgIds: string[] = [];
+  const freeByOrg = new Map<OrgId, boolean>();
+  let total = 0;
   for (const { orgId } of owned) {
-    const billing = await resolveOrgAccess(db, orgId as OrgId);
-    if (billing.source === 'free') freeOrgIds.push(orgId);
+    let isFree = freeByOrg.get(orgId);
+    if (isFree === undefined) {
+      isFree = (await resolveOrgAccess(db, orgId)).source === 'free';
+      freeByOrg.set(orgId, isFree);
+    }
+    if (isFree) total += 1;
   }
 
-  if (freeOrgIds.length === 0) return 0;
-
-  const [result] = await db
-    .select({ count: count() })
-    .from(projects)
-    .where(inArray(projects.orgId, freeOrgIds));
-
-  return result?.count || 0;
+  return total;
 }
 
 type FreeProjectCapResult =
@@ -57,7 +56,7 @@ export async function checkFreeProjectCap(
     error: createDomainError(
       AUTH_ERRORS.FORBIDDEN,
       { reason: 'free_project_cap', quotaKey: 'projects.max', used, limit, requested: 1 },
-      `Free project cap reached: ${used} of ${limit} across workspaces you own`,
+      `Free project cap reached: ${used} of ${limit} projects you own`,
     ),
   };
 }

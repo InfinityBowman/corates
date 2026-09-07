@@ -97,7 +97,7 @@ lookup keys. Production verified after each deploy.
   projects".
 - **Free projects per user.** Each org gets a free project, and users can
   create extra orgs. Decided in #671: the free project is capped per user
-  across the Free orgs they own, enforced at project creation.
+  across the Free projects they created, enforced at project creation.
 - **`stripe-purchases` worker.** Retired in #672 along with its CI deploy
   steps and `STRIPE_WEBHOOK_SECRET_PURCHASES`. Subscription status already
   synced through Better Auth; the worker's dunning email and Stripe customer

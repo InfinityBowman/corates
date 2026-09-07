@@ -30,12 +30,12 @@ async function seedOrg(orgId: OrgId, ownerId: string, role: 'owner' | 'member' =
   });
 }
 
-async function seedProjectIn(orgId: OrgId, id = `project-${orgId}`) {
+async function seedProjectIn(orgId: OrgId, id = `project-${orgId}`, createdBy: string = userId) {
   await seedProject({
     id,
     name: id,
     orgId,
-    createdBy: userId,
+    createdBy,
     createdAt: nowSec,
     updatedAt: nowSec,
   });
@@ -68,7 +68,7 @@ beforeEach(async () => {
 });
 
 describe('countFreeProjectsOwnedByUser', () => {
-  it('counts projects across every free org the user owns', async () => {
+  it('counts the projects the user created across every free org', async () => {
     await seedProjectIn(orgA);
     await seedProjectIn(orgB);
 
@@ -83,7 +83,7 @@ describe('countFreeProjectsOwnedByUser', () => {
     expect(await countFreeProjectsOwnedByUser(createDb(env.DB), userId)).toBe(1);
   });
 
-  it('ignores orgs where the user is not an owner', async () => {
+  it('ignores projects shared with the user from another workspace', async () => {
     const otherUser = 'user-2';
     await seedUser({
       id: otherUser,
@@ -101,7 +101,28 @@ describe('countFreeProjectsOwnedByUser', () => {
       role: 'member',
       createdAt: nowSec,
     });
-    await seedProjectIn(orgC);
+    await seedProjectIn(orgC, 'project-org-c', otherUser);
+
+    expect(await countFreeProjectsOwnedByUser(createDb(env.DB), userId)).toBe(0);
+  });
+
+  it('ignores projects another user created in an org the user owns', async () => {
+    const otherUser = 'user-2';
+    await seedUser({
+      id: otherUser,
+      name: 'User 2',
+      email: 'user2@example.com',
+      createdAt: nowSec,
+      updatedAt: nowSec,
+    });
+    await seedOrgMember({
+      id: 'member-a-user-2',
+      userId: otherUser,
+      organizationId: orgA,
+      role: 'owner',
+      createdAt: nowSec,
+    });
+    await seedProjectIn(orgA, 'project-org-a', otherUser);
 
     expect(await countFreeProjectsOwnedByUser(createDb(env.DB), userId)).toBe(0);
   });
