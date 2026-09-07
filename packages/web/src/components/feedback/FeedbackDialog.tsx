@@ -90,7 +90,8 @@ export function FeedbackDialog() {
             <DialogHeader>
               <DialogTitle>Give feedback</DialogTitle>
               <DialogDescription>
-                Tell us what's broken, missing, or working well.
+                Tell us what's broken, missing, or working well. We're a small team shipping daily,
+                and most of what we build starts as a message like this.
               </DialogDescription>
             </DialogHeader>
 

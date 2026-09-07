@@ -14,6 +14,7 @@ import { DashboardHeader } from './DashboardHeader';
 import { WelcomeCard } from './WelcomeCard';
 import { ProjectsSection } from './ProjectsSection';
 import { LocalAppraisalsSection } from './LocalAppraisalsSection';
+import { FeedbackPrompt } from './FeedbackPrompt';
 import { useInitialAnimation, AnimationContext } from './useInitialAnimation';
 
 const WELCOME_DISMISSED_KEY = 'corates-welcome-dismissed';
@@ -68,6 +69,8 @@ export function Dashboard() {
           />
         )}
         <LocalAppraisalsSection showSignInPrompt={!isLoggedIn} />
+
+        {isLoggedIn && <FeedbackPrompt style={animation.fadeUp(400)} />}
       </div>
     </AnimationContext.Provider>
   );
