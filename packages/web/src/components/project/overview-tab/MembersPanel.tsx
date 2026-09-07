@@ -115,6 +115,7 @@ export function MembersPanel({ members, progressFor }: MembersPanelProps) {
             size='xs'
             className='text-primary hover:text-primary'
             onClick={() => setShowAddMemberModal(true)}
+            data-testid='invite-member-button'
           >
             <PlusIcon className='size-3.5' />
             Invite

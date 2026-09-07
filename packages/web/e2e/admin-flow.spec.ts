@@ -32,6 +32,16 @@ function adminUserLink(page: Page, userId: string) {
   return page.locator(`[data-testid="admin-user-link"][data-user-id="${userId}"]`);
 }
 
+/**
+ * The search is debounced, so right after typing the table still shows the
+ * previous, longer list. Clicking a link then races the re-render and can
+ * land on another user's row. Every search here is by a unique seeded
+ * email, so the list has settled once exactly one link remains.
+ */
+async function waitForSearchToSettle(page: Page) {
+  await expect(page.getByTestId('admin-user-link')).toHaveCount(1, { timeout: 10_000 });
+}
+
 async function loginAndGoto(
   page: Page,
   context: BrowserContext,
@@ -89,8 +99,9 @@ test('Admin dashboard, user detail (loader pilot), and access control', async ({
   // ── Search for the regular user and navigate via click (client-side loader) ──
   const searchInput = page.getByPlaceholder('Search by name or email...');
   await searchInput.fill(scenario.regularUser.email);
-  // By user id, not name: the search is debounced, and a retry of this spec
-  // leaves an earlier "Regular User" in the list that the bare name matches.
+  await waitForSearchToSettle(page);
+  // By user id, not name: a retry of this spec leaves an earlier "Regular
+  // User" in the list that the bare name matches.
   const regularRowLink = adminUserLink(page, scenario.regularUser.id);
   await expect(regularRowLink).toBeVisible({ timeout: 10_000 });
 
@@ -105,9 +116,7 @@ test('Admin dashboard, user detail (loader pilot), and access control', async ({
   await expect(page.getByText('Admin Dashboard')).toBeVisible({ timeout: 10_000 });
 
   await searchInput.fill(scenario.admin.email);
-  // The users list is global and churns while parallel workers seed their own
-  // users; target the row by user id so a mid-render reorder cannot swap the
-  // click onto another user's link.
+  await waitForSearchToSettle(page);
   const adminRowLink = adminUserLink(page, scenario.admin.id);
   await expect(adminRowLink).toBeVisible({ timeout: 10_000 });
 
