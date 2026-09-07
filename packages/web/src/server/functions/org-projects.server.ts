@@ -38,7 +38,7 @@ export async function createOrgProject(
   session: Session,
   db: Database,
   orgId: OrgId,
-  data: { name: string; description?: string },
+  data: { name: string },
 ) {
   // Projects are billed to the org owner, so only owners create them
   const membership = await requireOrgMembership(session, db, orgId, 'owner');
@@ -69,11 +69,7 @@ export async function createOrgProject(
     const { project } = await createProject(
       env,
       { id: membership.context.userId },
-      {
-        orgId,
-        name: data.name,
-        description: data.description,
-      },
+      { orgId, name: data.name },
     );
 
     return project;
@@ -95,7 +91,7 @@ export async function updateProjectById(
   db: Database,
   orgId: OrgId,
   projectId: ProjectId,
-  data: { name?: string; description?: string },
+  data: { name?: string },
 ) {
   const orgMembership = await requireOrgMembership(session, db, orgId);
   if (!orgMembership.ok) throw orgMembership.error;
@@ -110,7 +106,7 @@ export async function updateProjectById(
     const result = await updateProjectCmd(
       env,
       { id: access.context.userId },
-      { projectId, name: data.name, description: data.description },
+      { projectId, name: data.name },
     );
     return { success: true as const, projectId: result.projectId };
   } catch (err) {
