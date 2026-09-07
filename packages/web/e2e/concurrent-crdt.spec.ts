@@ -66,35 +66,26 @@ async function clickUncheckedCheckboxes(page: Page, count: number): Promise<numb
 
 /**
  * Count ROB2 toggle buttons that are currently selected for a given answer.
- * Selected buttons have the `border-blue-400` class.
+ * Signalling answers are toggle buttons, so selection is `aria-pressed`.
  */
-async function countSelectedROB2Buttons(page: Page, answer: string): Promise<number> {
-  const buttons = page.getByRole('button', { name: answer, exact: true });
-  const total = await buttons.count();
-  let selected = 0;
-  for (let i = 0; i < total; i++) {
-    const classes = (await buttons.nth(i).getAttribute('class')) ?? '';
-    if (classes.includes('border-blue')) {
-      selected++;
-    }
-  }
-  return selected;
+function countSelectedROB2Buttons(page: Page, answer: string): Promise<number> {
+  return page.getByRole('button', { name: answer, exact: true, pressed: true }).count();
 }
 
 /**
  * Click the first N unselected ROB2 toggle buttons matching an answer.
+ * Walks a fixed index so a click does not shift which button comes next.
  */
 async function clickROB2Buttons(page: Page, answer: string, count: number): Promise<number> {
   const buttons = page.getByRole('button', { name: answer, exact: true });
   const total = await buttons.count();
   let clicked = 0;
   for (let i = 0; i < total && clicked < count; i++) {
-    const classes = (await buttons.nth(i).getAttribute('class')) ?? '';
-    if (!classes.includes('border-blue')) {
-      await buttons.nth(i).click();
-      await page.waitForTimeout(100);
-      clicked++;
-    }
+    const button = buttons.nth(i);
+    if ((await button.getAttribute('aria-pressed')) === 'true') continue;
+    await button.click();
+    await expect(button).toHaveAttribute('aria-pressed', 'true', { timeout: 5_000 });
+    clicked++;
   }
   return clicked;
 }

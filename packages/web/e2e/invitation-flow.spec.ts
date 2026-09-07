@@ -38,13 +38,13 @@ const TEST_PREFIX = `invite-e2e-${Date.now()}`;
  */
 async function sendInvitationViaUI(page: Page, email: string) {
   await page.getByRole('tab', { name: /Overview/i }).click();
-  // The editable project title is also a button, so match the label exactly
-  await page.getByRole('button', { name: 'Invite', exact: true }).click();
+  // The setup card offers its own Invite button, so target the Members panel's.
+  await page.getByTestId('invite-member-button').click();
 
-  const dialog = page.getByRole('dialog');
+  const dialog = page.getByTestId('invite-member-dialog');
   await expect(dialog).toBeVisible({ timeout: 5_000 });
 
-  await dialog.getByPlaceholder('Type at least 2 characters...').fill(email);
+  await dialog.getByLabel('Search by name or email').fill(email);
 
   // No matching user -> the modal offers to send an email invitation
   await expect(dialog.getByText('No user found. You can send an invitation to')).toBeVisible({

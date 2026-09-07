@@ -84,10 +84,8 @@ async function fillROB2ChecklistForOutcome(
 async function changeOutcomeViaDialog(page: Page, targetOutcomeName: string) {
   await page.getByRole('button', { name: 'Change outcome', exact: true }).first().click();
 
-  const dialog = page.getByRole('dialog');
-  await expect(dialog.getByRole('heading', { name: 'Change outcome' })).toBeVisible({
-    timeout: 5_000,
-  });
+  const dialog = page.getByTestId('change-outcome-dialog');
+  await expect(dialog).toBeVisible({ timeout: 5_000 });
 
   await dialog.getByRole('combobox').click();
   await page.getByRole('option', { name: targetOutcomeName }).click();

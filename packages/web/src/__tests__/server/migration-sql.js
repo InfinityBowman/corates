@@ -241,7 +241,7 @@ CREATE TABLE \`verification\` (
 	\`updatedAt\` integer DEFAULT (unixepoch())
 );
 
-
+--> statement-breakpoint
 CREATE INDEX \`account_userId_idx\` ON \`account\` (\`userId\`);--> statement-breakpoint
 CREATE INDEX \`mediaFiles_projectId_idx\` ON \`mediaFiles\` (\`projectId\`);--> statement-breakpoint
 CREATE INDEX \`member_userId_idx\` ON \`member\` (\`userId\`);--> statement-breakpoint
@@ -253,15 +253,15 @@ CREATE INDEX \`project_members_userId_idx\` ON \`project_members\` (\`userId\`);
 CREATE INDEX \`projects_orgId_idx\` ON \`projects\` (\`orgId\`);--> statement-breakpoint
 CREATE INDEX \`session_userId_idx\` ON \`session\` (\`userId\`);--> statement-breakpoint
 CREATE INDEX \`subscription_referenceId_idx\` ON \`subscription\` (\`referenceId\`);
-
+--> statement-breakpoint
 CREATE TABLE \`processed_emails\` (
 	\`queueMessageId\` text PRIMARY KEY NOT NULL,
 	\`processedAt\` integer DEFAULT (unixepoch())
 );
 
-
+--> statement-breakpoint
 CREATE UNIQUE INDEX \`subscription_referenceId_incomplete_uidx\` ON \`subscription\` (\`referenceId\`) WHERE "subscription"."status" = 'incomplete';
-
+--> statement-breakpoint
 CREATE TABLE \`feedback\` (
 	\`id\` text PRIMARY KEY NOT NULL,
 	\`userId\` text NOT NULL,
@@ -274,9 +274,9 @@ CREATE TABLE \`feedback\` (
 );
 --> statement-breakpoint
 CREATE INDEX \`feedback_userId_createdAt_idx\` ON \`feedback\` (\`userId\`,\`createdAt\`);
-
+--> statement-breakpoint
 CREATE UNIQUE INDEX \`project_members_projectId_userId_uidx\` ON \`project_members\` (\`projectId\`,\`userId\`);
-
+--> statement-breakpoint
 CREATE TABLE \`contact_submissions\` (
 	\`id\` text PRIMARY KEY NOT NULL,
 	\`name\` text NOT NULL,
@@ -289,7 +289,7 @@ CREATE TABLE \`contact_submissions\` (
 --> statement-breakpoint
 CREATE UNIQUE INDEX \`contact_submissions_dedupKey_unique\` ON \`contact_submissions\` (\`dedupKey\`);--> statement-breakpoint
 CREATE INDEX \`contact_submissions_email_createdAt_idx\` ON \`contact_submissions\` (\`email\`,\`createdAt\`);
-
+--> statement-breakpoint
 ALTER TABLE \`account\` ADD \`issuer\` text;--> statement-breakpoint
 UPDATE \`account\` SET \`issuer\` = CASE \`providerId\`
 	WHEN 'credential' THEN 'local:credential'
@@ -322,7 +322,7 @@ ALTER TABLE \`__new_account\` RENAME TO \`account\`;--> statement-breakpoint
 CREATE INDEX \`account_userId_idx\` ON \`account\` (\`userId\`);--> statement-breakpoint
 CREATE UNIQUE INDEX \`account_issuer_accountId_uidx\` ON \`account\` (\`issuer\`,\`accountId\`);
 
-
+--> statement-breakpoint
 CREATE TABLE \`notifications\` (
 	\`id\` text PRIMARY KEY NOT NULL,
 	\`userId\` text NOT NULL,
@@ -336,7 +336,7 @@ CREATE TABLE \`notifications\` (
 CREATE INDEX \`notifications_userId_createdAt_idx\` ON \`notifications\` (\`userId\`,\`createdAt\`);--> statement-breakpoint
 CREATE INDEX \`notifications_userId_readAt_idx\` ON \`notifications\` (\`userId\`,\`readAt\`);
 
-
+--> statement-breakpoint
 ALTER TABLE \`projects\` ADD \`setupStep\` text;
-
+--> statement-breakpoint
 ALTER TABLE \`projects\` DROP COLUMN \`description\`;`;

@@ -281,6 +281,17 @@ Do not use e2e for what a unit or server test can cover. They are the slowest an
 - Every spec must be safe to run twice. Remote runs retry a failed test in a fresh worker, which re-runs `beforeAll` and seeds again while the earlier data is still there. Seed with `uniquePrefix`, guard `afterAll` cleanup with `if (scenario)`, and scope locators on shared seeded names (Alice Reviewer, Regular User) to a row or href rather than the bare text.
 - CI runs `scripts/e2e-ci.sh`: a full pass, then one re-run of up to three failed specs after the suite has finished, then a job summary from the JSON reporter output. The first pass's traces land in `test-results-first-pass/` in the artifact when that re-run happened.
 
+### Selectors
+
+E2E runs only after merge, so a copy or layout change that breaks a locator lands on main and blocks the production deploy. The rule that keeps that rare:
+
+- **A `data-testid` for what the test clicks or scopes into.** Dialogs and sheets (`add-studies-sheet`, `mark-complete-dialog`), overflow menus (`study-card-menu`), pickers (`reviewer-picker-1`), list rows a spec must pin to one seeded record (`member-row` and `admin-user-link`, each carrying `data-user-id`), and containers a spec walks (`signalling-question`, `plan-card-<tier>`).
+- **A role or text locator for what the test reads.** Headings, toasts, status labels, and button copy a user would see stay as `getByRole` / `getByText`, scoped to a testid container where the same text can appear twice.
+- **State comes from ARIA, not classes.** Signalling answer buttons carry `aria-pressed`; use `getByRole('button', { pressed: true })`. `[data-sync-pending]` is the outbox marker. Never read a Tailwind class to detect state.
+- **Never a CSS class, XPath, or icon selector.** `.rounded-2xl`, `svg.lucide-*`, and `div.border-b` all break on the next restyle.
+
+Conventions: the attribute is `data-testid`, kebab-case, noun-first (`plan-card-cta`, not `cta-plan-card`), placed on the element the test interacts with rather than a wrapper. Playwright's default `testIdAttribute` already matches, so no config is needed. Add a testid only for an element a spec uses, and never remove one in a refactor without grepping `packages/web/e2e/` for it first. The attribute is the contract.
+
 ## Common patterns
 
 ### Async

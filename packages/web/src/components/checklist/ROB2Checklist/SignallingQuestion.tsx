@@ -41,6 +41,7 @@ export function SignallingQuestion({
 
   return (
     <div
+      data-testid='signalling-question'
       className={`border-border/50 border-b py-3 last:border-b-0 ${isSkippable ? 'opacity-50' : ''}`}
     >
       <div className='flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-4'>
@@ -57,6 +58,7 @@ export function SignallingQuestion({
             <button
               key={option}
               type='button'
+              aria-pressed={answer === option}
               onClick={() => !disabled && handleAnswerChange(option)}
               disabled={disabled}
               className={`relative inline-flex cursor-pointer items-center justify-center rounded border px-2 py-1 text-xs font-medium transition-colors ${disabled ? 'cursor-not-allowed opacity-50' : ''} ${

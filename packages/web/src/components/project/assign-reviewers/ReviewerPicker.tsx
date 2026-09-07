@@ -15,6 +15,7 @@ const SEARCH_THRESHOLD = 6;
 
 interface ReviewerPickerProps {
   slotLabel: string;
+  testId?: string;
   studyName: string;
   value: string | null;
   onChange: (userId: string | null) => void;
@@ -30,6 +31,7 @@ const optionClass =
 
 export function ReviewerPicker({
   slotLabel,
+  testId,
   studyName,
   value,
   onChange,
@@ -96,6 +98,7 @@ export function ReviewerPicker({
           aria-haspopup='listbox'
           aria-expanded={open}
           aria-label={`${slotLabel} for ${studyName}`}
+          data-testid={testId}
           className={cn(
             'focus-visible:border-ring focus-visible:ring-ring/50 flex h-7 w-full min-w-0 items-center gap-1.5 rounded-md border px-1.5 text-xs transition-colors outline-none focus-visible:ring-3',
             selected ?

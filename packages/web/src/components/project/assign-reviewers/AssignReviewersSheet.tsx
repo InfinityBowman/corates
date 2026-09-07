@@ -30,7 +30,11 @@ export function AssignReviewersSheet({ open, onOpenChange }: AssignReviewersShee
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side='right' className='w-full gap-0 sm:max-w-xl'>
+      <SheetContent
+        side='right'
+        className='w-full gap-0 sm:max-w-xl'
+        data-testid='assign-reviewers-sheet'
+      >
         <SheetHeader>
           <SheetTitle>Assign reviewers</SheetTitle>
           <SheetDescription>

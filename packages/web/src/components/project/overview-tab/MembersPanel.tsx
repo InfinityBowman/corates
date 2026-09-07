@@ -115,6 +115,7 @@ export function MembersPanel({ members, progressFor }: MembersPanelProps) {
             size='xs'
             className='text-primary hover:text-primary'
             onClick={() => setShowAddMemberModal(true)}
+            data-testid='invite-member-button'
           >
             <PlusIcon className='size-3.5' />
             Invite
@@ -132,7 +133,12 @@ export function MembersPanel({ members, progressFor }: MembersPanelProps) {
           const progress = progressFor(member.userId);
 
           return (
-            <div key={member.userId} className='flex items-center gap-2 py-1 text-sm'>
+            <div
+              key={member.userId}
+              data-testid='member-row'
+              data-user-id={member.userId}
+              className='flex items-center gap-2 py-1 text-sm'
+            >
               <Avatar size='sm' className='size-6'>
                 <AvatarImage
                   src={

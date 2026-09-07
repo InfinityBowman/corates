@@ -45,7 +45,7 @@ export function PresenceAvatars({
 
   return (
     <div className='flex items-center gap-2'>
-      <div className='flex -space-x-2'>
+      <div className='flex -space-x-2' data-testid='presence-avatars'>
         {visibleUsers.map(user => (
           <Tooltip key={user.clientId} delayDuration={200}>
             <TooltipTrigger asChild>

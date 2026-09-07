@@ -176,7 +176,11 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='gap-0 overflow-hidden p-0 sm:max-w-155' showCloseButton={false}>
+      <DialogContent
+        className='gap-0 overflow-hidden p-0 sm:max-w-155'
+        showCloseButton={false}
+        data-testid='create-project-dialog'
+      >
         <DialogTitle className='sr-only'>Create a new project</DialogTitle>
 
         <form onSubmit={handleSubmit} onKeyDown={handleKeyDown}>
@@ -277,7 +281,12 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
             >
               Cancel
             </Button>
-            <Button type='submit' size='sm' disabled={!canSubmit}>
+            <Button
+              type='submit'
+              size='sm'
+              disabled={!canSubmit}
+              data-testid='create-project-submit'
+            >
               {isSubmitting ? 'Creating...' : 'Create project'}
               {!isSubmitting && (
                 <span className='ml-0.5 inline-flex items-center gap-0.5 opacity-70' aria-hidden>

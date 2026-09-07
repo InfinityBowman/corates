@@ -99,14 +99,11 @@ async function waitForCheckoutFramesToSettle(page: Page) {
   }
 }
 
-async function clickPlanButton(page: Page, planName: string) {
+async function clickPlanButton(page: Page, tier: 'team' | 'lab') {
   await page.goto('/settings/plans');
   await page.waitForLoadState('networkidle');
 
-  const card = page.locator(
-    `xpath=//h3[text()="${planName}"]/ancestor::div[contains(@class,"rounded-2xl")][1]`,
-  );
-  const btn = card.getByRole('button', { name: /Get Started|Upgrade Now/i });
+  const btn = page.getByTestId(`plan-card-${tier}`).getByTestId('plan-card-cta');
   await btn.waitFor({ timeout: 15_000 });
   // The settings layout has a nested scroll container that prevents
   // Playwright's built-in scroll from reaching the button. Use JS click.
@@ -118,7 +115,7 @@ test.describe('Billing flows', () => {
     await signUpViaUI(page);
 
     // --- Cancel checkout ---
-    await clickPlanButton(page, 'Team');
+    await clickPlanButton(page, 'team');
     await page.waitForURL(/checkout\.stripe\.com/, { timeout: 30_000 });
 
     await waitForCheckoutFramesToSettle(page);
@@ -132,7 +129,7 @@ test.describe('Billing flows', () => {
     await expect(page.getByText('No changes were made to your subscription.')).toBeVisible();
 
     // --- Complete checkout ---
-    await clickPlanButton(page, 'Team');
+    await clickPlanButton(page, 'team');
     await fillStripeCheckout(page);
 
     await expect(page.getByText('Payment successful!')).toBeVisible({ timeout: 30_000 });
@@ -145,7 +142,7 @@ test.describe('Billing flows', () => {
     // --- Upgrade to Lab ---
     // The card is on file, so the price is swapped on the existing subscription
     // server-side and the page lands back on billing without visiting Stripe.
-    await clickPlanButton(page, 'Lab');
+    await clickPlanButton(page, 'lab');
     await page.waitForURL(/\/settings\/billing/, { timeout: 60_000 });
 
     await expect(page.getByText('Payment successful!')).toBeVisible({ timeout: 30_000 });

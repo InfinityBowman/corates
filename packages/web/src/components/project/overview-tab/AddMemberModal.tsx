@@ -162,7 +162,7 @@ export function AddMemberModal({
         if (!open) handleClose();
       }}
     >
-      <DialogContent className='sm:max-w-md'>
+      <DialogContent className='sm:max-w-md' data-testid='invite-member-dialog'>
         <DialogHeader>
           <DialogTitle>Invite a member</DialogTitle>
         </DialogHeader>

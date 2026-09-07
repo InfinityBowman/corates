@@ -229,6 +229,7 @@ export function ReviewerAssignment({
                 <div className='grid grid-cols-2 gap-2 sm:contents'>
                   <ReviewerPicker
                     slotLabel='Reviewer 1'
+                    testId='reviewer-picker-1'
                     studyName={studyName}
                     value={slots.reviewer1}
                     onChange={userId => setSlot(row.id, 'reviewer1', userId)}
@@ -240,6 +241,7 @@ export function ReviewerAssignment({
                   />
                   <ReviewerPicker
                     slotLabel='Reviewer 2'
+                    testId='reviewer-picker-2'
                     studyName={studyName}
                     value={slots.reviewer2}
                     onChange={userId => setSlot(row.id, 'reviewer2', userId)}

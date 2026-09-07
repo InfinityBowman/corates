@@ -118,7 +118,7 @@ test(`Realtime reconciliation with ${STUDY_COUNT} ROB2 studies`, async ({ browse
     // MEASURE: Presence sync latency
     // ================================================================
     const presenceStart = Date.now();
-    const bobAvatar = pageA.locator('.-space-x-2').getByText('BR');
+    const bobAvatar = pageA.getByTestId('presence-avatars').getByText('BR');
     // Awareness sync via Durable Objects can be slow on first connect,
     // especially against remote staging where WebSocket cold-start adds latency.
     await expect(bobAvatar).toBeVisible({ timeout: 30_000 });

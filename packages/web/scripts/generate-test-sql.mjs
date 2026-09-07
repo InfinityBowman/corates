@@ -35,8 +35,9 @@ try {
     return readFileSync(filePath, 'utf-8');
   });
 
-  // Join all migrations with newlines to preserve structure
-  const combinedSql = migrationSqls.join('\n\n');
+  // Files do not always end with a breakpoint, so join on one or the last
+  // statement of a file runs merged with the first of the next.
+  const combinedSql = migrationSqls.join('\n--> statement-breakpoint\n');
 
   // Ensure output directory exists (recursive: true creates parent dirs if needed)
   mkdirSync(OUTPUT_DIR, { recursive: true });

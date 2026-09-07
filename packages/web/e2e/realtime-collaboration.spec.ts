@@ -209,11 +209,11 @@ test('Presence avatars, cursor sync, and text editing sync during reconciliation
     // a remote user. Avatars show initials as fallback text.
     // ================================================================
     // User A should see Bob's avatar ("BR" for "Bob Reviewer")
-    const bobAvatar = pageA.locator('.-space-x-2').getByText('BR');
+    const bobAvatar = pageA.getByTestId('presence-avatars').getByText('BR');
     await expect(bobAvatar).toBeVisible({ timeout: 15_000 });
 
     // User B should see Alice's avatar ("AR" for "Alice Reviewer")
-    const aliceAvatar = pageB.locator('.-space-x-2').getByText('AR');
+    const aliceAvatar = pageB.getByTestId('presence-avatars').getByText('AR');
     await expect(aliceAvatar).toBeVisible({ timeout: 15_000 });
 
     // ================================================================
@@ -223,8 +223,8 @@ test('Presence avatars, cursor sync, and text editing sync during reconciliation
     // ================================================================
     await pageA.mouse.move(400, 400);
 
-    // RemoteCursors overlay is pointer-events-none and shows the name
-    const remoteCursor = pageB.locator('.pointer-events-none').getByText('Alice Reviewer');
+    // The RemoteCursors overlay labels each cursor with the user's name
+    const remoteCursor = pageB.getByTestId('remote-cursors').getByText('Alice Reviewer');
     await expect(remoteCursor).toBeVisible({ timeout: 10_000 });
 
     // ================================================================
