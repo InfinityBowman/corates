@@ -190,7 +190,9 @@ const FIXTURES_DIR = path.join(import.meta.dirname, 'fixtures');
  * Handles both first-project and subsequent-project scenarios.
  */
 export async function createProject(page: Page, name: string): Promise<string> {
-  const newProjectBtn = page.getByRole('button', { name: /New Project/i });
+  // The sidebar and the empty state offer the same action, so scope to the
+  // Home header, which is the one button present in both states.
+  const newProjectBtn = page.locator('header').getByRole('button', { name: 'New project' });
   await newProjectBtn.click();
 
   await page.getByPlaceholder('Project name').fill(name);
