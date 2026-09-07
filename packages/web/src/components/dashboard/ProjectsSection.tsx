@@ -58,21 +58,30 @@ export function ProjectsSection({
     queryKey: queryKeys.invitations.pendingForMe,
     queryFn: () => listMyPendingInvitations(),
   });
-  const { hasEntitlement, hasQuota, quotas, isLoading: subscriptionLoading } = useSubscription();
+  const {
+    hasEntitlement,
+    hasQuota,
+    quotas,
+    subscription,
+    isLoading: subscriptionLoading,
+  } = useSubscription();
 
   const projectCount = projects?.length || 0;
+  // Server-computed count the project cap is enforced against: on Free that is the
+  // projects the user created, not projects shared with them from other workspaces.
+  const quotaProjectCount = subscription.projectCount;
 
   // Local-first: assume user can create unless we know they can't
   const canCreateProject =
     subscriptionLoading ? true : (
       hasEntitlement('project.create') &&
-      hasQuota('projects.max', { used: projectCount, requested: 1 })
+      hasQuota('projects.max', { used: quotaProjectCount, requested: 1 })
     );
 
   const restrictionType: 'entitlement' | 'quota' | null =
     subscriptionLoading ? null
     : !hasEntitlement('project.create') ? 'entitlement'
-    : !hasQuota('projects.max', { used: projectCount, requested: 1 }) ? 'quota'
+    : !hasQuota('projects.max', { used: quotaProjectCount, requested: 1 }) ? 'quota'
     : null;
 
   const handleCreateClick = useCallback(() => {
@@ -117,6 +126,7 @@ export function ProjectsSection({
       await deleteProject({ data: { orgId: project.orgId, projectId: pendingDeleteId } });
 
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscription.current });
       showToast.success('Project deleted', 'The project and everything in it has been removed.');
       setDeleteDialogOpen(false);
     } catch (err) {
@@ -137,7 +147,7 @@ export function ProjectsSection({
         <div className='mb-4'>
           <ContactPrompt
             restrictionType={restrictionType}
-            projectCount={projectCount}
+            projectCount={quotaProjectCount}
             quotaLimit={quotas?.['projects.max']}
           />
         </div>
@@ -164,7 +174,7 @@ export function ProjectsSection({
               <PopoverContent align='end'>
                 <RestrictionNudge
                   restrictionType={restrictionType}
-                  projectCount={projectCount}
+                  projectCount={quotaProjectCount}
                   quotaLimit={quotas?.['projects.max']}
                 />
               </PopoverContent>

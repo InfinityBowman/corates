@@ -2,7 +2,12 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { env } from 'cloudflare:workers';
 import { createDb } from '@corates/db/client';
 import { resetTestDatabase } from '@/__tests__/server/helpers';
-import { buildOrg, resetCounter } from '@/__tests__/server/factories';
+import {
+  buildOrg,
+  buildProject,
+  buildProjectMember,
+  resetCounter,
+} from '@/__tests__/server/factories';
 import { fetchSubscription } from '@/server/functions/billing.server';
 import type { Session } from '@/server/middleware/auth';
 
@@ -46,6 +51,27 @@ describe('fetchSubscription', () => {
     expect(result.stripeSubscriptionId).toBeNull();
     expect(result.source).toBe('free');
     expect(result.accessMode).toBe('free');
+    expect(result.projectCount).toBe(0);
+  });
+
+  it('does not count a project shared from another workspace against a Free user', async () => {
+    const { org, owner } = await buildOrg();
+    const { org: otherOrg, project } = await buildProject();
+    await buildProjectMember({
+      projectId: project.id,
+      orgId: otherOrg.id,
+      user: owner,
+      role: 'member',
+    });
+
+    const session = mockSession({
+      userId: owner.id,
+      email: owner.email,
+      name: owner.name,
+      activeOrganizationId: org.id,
+    });
+    const result = await fetchSubscription(createDb(env.DB), session);
+    expect(result.source).toBe('free');
     expect(result.projectCount).toBe(0);
   });
 

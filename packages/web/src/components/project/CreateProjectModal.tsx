@@ -125,6 +125,9 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
 
       clientLogger.info('client.project.created');
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
+      // The Free cap counts server-side now, so the count has to refetch or the
+      // button stays enabled until the subscription query goes stale.
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscription.current });
       onOpenChange(false);
 
       navigate({

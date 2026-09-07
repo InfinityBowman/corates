@@ -1,7 +1,7 @@
 import { captureError, info, warn } from '@corates/workers/logger';
 import { env } from 'cloudflare:workers';
 import type { Database } from '@corates/db/client';
-import type { OrgId } from '@corates/shared/ids';
+import type { OrgId, UserId } from '@corates/shared/ids';
 import {
   resolveOrgAccess,
   getOrgResourceUsage,
@@ -9,6 +9,7 @@ import {
 } from '@corates/workers/billing-resolver';
 import { createStripeClient } from '@corates/shared/stripe';
 import { createAuth } from '@corates/workers/auth-config';
+import { countFreeProjectsOwnedByUser } from '@corates/workers/free-project-cap';
 import { syncStripeSubscription } from '@corates/workers/commands/billing';
 import { projects, subscription } from '@corates/db/schema';
 import { and, count, desc, eq, or } from 'drizzle-orm';
@@ -49,10 +50,13 @@ export async function fetchSubscription(db: Database, session: Session) {
 
   const orgBilling = await resolveOrgAccess(db, orgId);
 
-  const [projectCountResult] = await db
-    .select({ count: count() })
-    .from(projects)
-    .where(eq(projects.orgId, orgId));
+  // Free is capped on the projects the user created, so that is the number the
+  // cap is enforced against; paid and granted orgs are capped per workspace.
+  const projectCount =
+    orgBilling.source === 'free' ?
+      await countFreeProjectsOwnedByUser(db, session.user.id as UserId)
+    : ((await db.select({ count: count() }).from(projects).where(eq(projects.orgId, orgId)))[0]
+        ?.count ?? 0);
 
   const effectivePlan =
     orgBilling.source === 'grant' ?
@@ -79,7 +83,7 @@ export async function fetchSubscription(db: Database, session: Session) {
     cancelAtPeriodEnd: orgBilling.subscription?.cancelAtPeriodEnd || false,
     accessMode: orgBilling.accessMode,
     source: orgBilling.source,
-    projectCount: projectCountResult?.count || 0,
+    projectCount,
   };
 }
 

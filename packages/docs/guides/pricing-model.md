@@ -44,10 +44,12 @@ term.
 Collaborators never pay. A collaborator is any non-owner member of the owning
 organization.
 
-The Free project is per user, not per organization. Projects in every Free org
-a user owns count toward one limit, so creating extra orgs does not add free
-projects. Orgs on a paid plan or a grant never consume their owner's free slot.
-Only org owners create projects; collaborators work inside them.
+The Free project is per user, not per organization. The projects a user created
+count toward one limit, so creating extra orgs does not add free projects.
+Projects shared with a user from someone else's workspace never count against
+their own limit. Projects in an org on a paid plan or a grant never consume a
+free slot. Only org owners create projects, so a project's creator is always its
+owner; collaborators work inside them.
 See `checkFreeProjectCap` in `packages/workers/src/lib/freeProjectCap.ts`.
 
 ## What every tier keeps
