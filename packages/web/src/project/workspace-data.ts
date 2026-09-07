@@ -503,7 +503,6 @@ export function useProjectOutcomes(projectId: string): OutcomeEntry[] {
 
 export interface ProjectMetaInfo {
   name: string | null;
-  description: string | null;
   orgId: string | null;
   /** The current user's role on the project; null until the projects query resolves. */
   role: string | null;
@@ -512,7 +511,6 @@ export interface ProjectMetaInfo {
 
 const EMPTY_META: ProjectMetaInfo = {
   name: null,
-  description: null,
   orgId: null,
   role: null,
   setupStep: null,
@@ -530,7 +528,6 @@ export function useProjectMeta(projectId: string): ProjectMetaInfo {
     if (!project) return EMPTY_META;
     return {
       name: project.name ?? null,
-      description: project.description ?? null,
       orgId: project.orgId ?? null,
       role: project.role ?? null,
       setupStep: project.setupStep ?? null,

@@ -59,7 +59,6 @@ export const seedOrgMemberSchema = z.object({
 export const seedProjectSchema = z.object({
   id: z.string().min(1, 'Project ID is required'),
   name: z.string().min(1, 'Project name is required'),
-  description: z.string().nullable().optional().default(null),
   orgId: z.string().nullable().optional().default(null),
   createdBy: z.string().min(1, 'Created by user ID is required'),
   createdAt: dateOrTimestampToNumber,

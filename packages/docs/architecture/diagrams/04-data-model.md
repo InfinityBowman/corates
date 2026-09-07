@@ -111,7 +111,7 @@ Top-level workspace container. Organizations group projects and team members. Ma
 
 ### Project
 
-Research project container belonging to an organization. Basic metadata (id, name, description, orgId, createdBy) stored in D1 for authorization. Content stored as sync-engine rows in the project's workspace Durable Object (WorkspaceDO).
+Research project container belonging to an organization. Basic metadata (id, name, orgId, createdBy) stored in D1 for authorization. Content stored as sync-engine rows in the project's workspace Durable Object (WorkspaceDO).
 
 **Role hierarchy:** `owner > member`
 
