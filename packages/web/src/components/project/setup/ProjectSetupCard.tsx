@@ -1,6 +1,6 @@
 /**
- * ProjectSetupCard - Compact setup checklist shown above the study list once
- * studies exist, until the owner finishes or dismisses setup.
+ * ProjectSetupCard - Compact setup checklist shown at the top of the Overview
+ * once studies exist, until the owner finishes or dismisses setup.
  */
 
 import { useState } from 'react';
@@ -19,7 +19,7 @@ export function ProjectSetupCard() {
   const { steps, activeKey, doneCount, dismiss, isDismissing } = setup;
 
   return (
-    <div className='border-border bg-card mb-6 overflow-hidden rounded-xl border'>
+    <div className='border-border bg-card overflow-hidden rounded-xl border'>
       <div className='bg-muted/50 flex h-10 items-center gap-2.5 border-b px-3.5'>
         <span className='text-sm font-semibold'>Setup</span>
         <span className='text-muted-foreground text-xs'>

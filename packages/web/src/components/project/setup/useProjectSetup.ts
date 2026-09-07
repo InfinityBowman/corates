@@ -62,7 +62,7 @@ export function useProjectSetup() {
   const hasStudies = studies.length > 0;
   const hasTeam = members.length > 1;
   const hasInvited = invitations.length > 0;
-  const assignDone = hasStudies && studies.every(s => s.reviewer1 && s.reviewer2);
+  const assignDone = hasStudies && studies.every(s => s.reviewer1 || s.reviewer2);
 
   const steps: SetupStep[] = [
     {
@@ -88,7 +88,7 @@ export function useProjectSetup() {
     {
       key: 'team',
       title: 'Invite your co-reviewers',
-      description: 'Two reviewers appraise each study independently. You count as one.',
+      description: 'Each study gets one or two reviewers. You count as one.',
       cta: 'Invite',
       done: hasTeam || hasInvited,
       lockReason: null,
@@ -100,10 +100,7 @@ export function useProjectSetup() {
       description: 'Split the studies across the team. Everyone is notified once.',
       cta: 'Assign',
       done: assignDone,
-      lockReason:
-        !hasStudies ? 'Needs studies'
-        : !hasTeam ? 'Needs a second member'
-        : null,
+      lockReason: hasStudies ? null : 'Needs studies',
       onOpen: () => openAssignSheet(),
     },
   ];

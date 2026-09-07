@@ -223,8 +223,8 @@ export function studyCardTitle(page: Page, studyName = 'Petrie2019') {
 export async function addStudyViaPdf(page: Page, fixture = 'Petrie2019.pdf') {
   await page.getByRole('tab', { name: /All Studies/i }).click();
 
-  // The owner's empty project shows the setup hero, not an inline form, so
-  // upload through the Add studies sheet (offered by both header and hero).
+  // Upload through the header's Add studies sheet rather than the inline
+  // form an empty project shows, so the flow is the same at any study count.
   await page.getByRole('button', { name: 'Add studies' }).first().click();
   const sheet = page.getByRole('dialog');
   await expect(sheet.getByRole('heading', { name: 'Add studies' })).toBeVisible({

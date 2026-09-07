@@ -1,11 +1,14 @@
 /**
  * OverviewTab - progress, reliability and results in the main column, with
- * members and outcomes in a rail on the right.
+ * members and outcomes in a rail on the right. The owner's first-run setup
+ * lives here too: a hero while the project is empty, a compact card once
+ * studies exist.
  */
 
 import { useState, useMemo } from 'react';
 import { ChevronDownIcon } from 'lucide-react';
-import { useAllStudies, useProjectMembers } from '@/project/workspace-data';
+import { useAllStudies, useProjectMembers, useProjectMeta } from '@/project/workspace-data';
+import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import { project } from '@/project';
 import { useProjectContext, type ProjectMember } from '../ProjectContext';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
@@ -21,6 +24,8 @@ import { ReliabilitySection } from './ReliabilitySection';
 import { MembersPanel } from './MembersPanel';
 import { OutcomesPanel } from './OutcomesPanel';
 import { countStages } from './studyStage';
+import { ProjectSetupPanel } from '../setup/ProjectSetupPanel';
+import { ProjectSetupCard } from '../setup/ProjectSetupCard';
 
 function CollapsibleCard({
   title,
@@ -51,9 +56,16 @@ function CollapsibleCard({
 }
 
 export function OverviewTab() {
-  const { projectId } = useProjectContext();
+  const { projectId, isOwner } = useProjectContext();
   const studies = useAllStudies(projectId);
   const members = useProjectMembers(projectId) as ProjectMember[];
+  const meta = useProjectMeta(projectId);
+  const connectionState = useProjectStore(s => selectConnectionPhase(s, projectId));
+  // Wait for the first sync before treating the project as empty, so a cold
+  // refresh does not flash the setup hero over a project that has studies.
+  const hasData = connectionState.phase === 'synced' || studies.length > 0;
+  const showSetup = isOwner && meta.setupStep !== null;
+  const empty = studies.length === 0;
 
   const [chartsExpanded, setChartsExpanded] = useState(true);
   const [tablesExpanded, setTablesExpanded] = useState(false);
@@ -99,36 +111,45 @@ export function OverviewTab() {
   return (
     <div className='grid h-full lg:grid-cols-[minmax(0,1fr)_320px]'>
       <div className='flex min-w-0 flex-col gap-10 px-6 py-6'>
-        <ProgressSection counts={stageCounts} total={studies.length} />
+        {hasData && empty && showSetup ?
+          <ProjectSetupPanel />
+        : <>
+            {!empty && showSetup && <ProjectSetupCard />}
 
-        {interRaterMetrics.studyCount > 0 && <ReliabilitySection metrics={interRaterMetrics} />}
+            <ProgressSection counts={stageCounts} total={studies.length} />
 
-        <section aria-labelledby='overview-results-heading'>
-          <h2 id='overview-results-heading' className='mb-3 text-sm font-semibold'>
-            Results
-          </h2>
-          {stageCounts.final > 0 ?
-            <div className='flex flex-col gap-3'>
-              <CollapsibleCard
-                title='Figures'
-                open={chartsExpanded}
-                onOpenChange={setChartsExpanded}
-              >
-                <ChartSection studies={studies} />
-              </CollapsibleCard>
-              <CollapsibleCard
-                title='Tables'
-                open={tablesExpanded}
-                onOpenChange={setTablesExpanded}
-              >
-                <ResultsTables studies={studies} />
-              </CollapsibleCard>
-            </div>
-          : <p className='text-muted-foreground text-sm'>
-              Figures and tables appear once the first study is finalized.
-            </p>
-          }
-        </section>
+            {interRaterMetrics.studyCount > 0 && <ReliabilitySection metrics={interRaterMetrics} />}
+
+            {!empty && (
+              <section aria-labelledby='overview-results-heading'>
+                <h2 id='overview-results-heading' className='mb-3 text-sm font-semibold'>
+                  Results
+                </h2>
+                {stageCounts.final > 0 ?
+                  <div className='flex flex-col gap-3'>
+                    <CollapsibleCard
+                      title='Figures'
+                      open={chartsExpanded}
+                      onOpenChange={setChartsExpanded}
+                    >
+                      <ChartSection studies={studies} />
+                    </CollapsibleCard>
+                    <CollapsibleCard
+                      title='Tables'
+                      open={tablesExpanded}
+                      onOpenChange={setTablesExpanded}
+                    >
+                      <ResultsTables studies={studies} />
+                    </CollapsibleCard>
+                  </div>
+                : <p className='text-muted-foreground text-sm'>
+                    Figures and tables appear once the first study is finalized.
+                  </p>
+                }
+              </section>
+            )}
+          </>
+        }
       </div>
 
       <aside className='border-border flex flex-col gap-8 border-t px-5 py-6 lg:border-t-0 lg:border-l'>

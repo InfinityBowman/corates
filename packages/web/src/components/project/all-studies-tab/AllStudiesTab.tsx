@@ -11,14 +11,12 @@ import type { MergedStudy } from '@/hooks/useAddStudies/deduplication';
 import { GoogleDrivePickerModal } from '../google-drive/GoogleDrivePickerModal';
 import { StudyCard } from './study-card/StudyCard';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
-import { useAllStudies, useProjectMeta } from '@/project/workspace-data';
+import { useAllStudies } from '@/project/workspace-data';
 import { useAddStudies } from '@/hooks/useAddStudies';
 import { useProjectExport } from '@/hooks/useProjectExport';
 import { project } from '@/project';
 import { useProjectContext } from '../ProjectContext';
 import { saveFormState } from '@/lib/formStatePersistence.js';
-import { ProjectSetupPanel } from '../setup/ProjectSetupPanel';
-import { ProjectSetupCard } from '../setup/ProjectSetupCard';
 
 export function AllStudiesTab() {
   const { projectId, getMember, isOwner, openAssignSheet } = useProjectContext();
@@ -33,8 +31,6 @@ export function AllStudiesTab() {
   const connectionState = useProjectStore(s => selectConnectionPhase(s, projectId));
   const hasData = connectionState.phase === 'synced' || studies.length > 0;
   const unassignedCount = studies.filter(s => !s.reviewer1 && !s.reviewer2).length;
-  const meta = useProjectMeta(projectId);
-  const showSetup = isOwner && meta.setupStep !== null;
 
   const handleSaveState = useCallback(
     async (state: AddStudiesFormState) => {
@@ -72,18 +68,16 @@ export function AllStudiesTab() {
 
   return (
     <div>
-      {hasData && studies.length === 0 && showSetup && <ProjectSetupPanel />}
-
       {/* Empty project: the add form is the centerpiece. Once studies exist it
           moves to the Add studies sheet in the project header. */}
-      {hasData && studies.length === 0 && !showSetup && (
+      {hasData && studies.length === 0 && (
         <>
           <div className='mb-4'>
             <h2 className='text-foreground text-lg font-semibold'>Add your first study</h2>
             <p className='text-muted-foreground mt-1 text-sm'>
               Bring in the papers you plan to appraise. Upload PDFs, import a file from your
               reference manager, look up DOIs or PubMed IDs, or pull PDFs from Google Drive. Once
-              studies are here, you can assign two reviewers to each one.
+              studies are here, you can assign one or two reviewers to each one.
             </p>
           </div>
           <AddStudiesForm
@@ -101,8 +95,6 @@ export function AllStudiesTab() {
           <p className='text-muted-foreground/70'>Loading studies...</p>
         </div>
       )}
-
-      {studies.length > 0 && showSetup && <ProjectSetupCard />}
 
       {studies.length > 0 && (
         <div className='mb-3 flex items-center justify-between'>

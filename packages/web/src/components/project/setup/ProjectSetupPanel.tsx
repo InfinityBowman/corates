@@ -1,7 +1,7 @@
 /**
  * ProjectSetupPanel - First-run setup hero for an empty project.
  *
- * Shown on the Studies tab to the owner until studies exist or setup is
+ * Shown on the Overview to the owner until studies exist or setup is
  * dismissed. Every step is always visible and opens the same sheet the
  * project header does; nothing is required before moving on.
  */
