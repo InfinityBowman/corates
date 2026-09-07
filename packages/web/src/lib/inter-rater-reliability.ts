@@ -26,6 +26,7 @@ export interface InterRaterMetrics {
   cohensKappa: number | null;
   studyCount: number;
   totalComparisons: number;
+  agreementCount: number;
 }
 
 /**
@@ -42,6 +43,7 @@ export function calculateInterRaterReliability(
       cohensKappa: null,
       studyCount: 0,
       totalComparisons: 0,
+      agreementCount: 0,
     };
   }
 
@@ -54,6 +56,7 @@ export function calculateInterRaterReliability(
       cohensKappa: null,
       studyCount: 0,
       totalComparisons: 0,
+      agreementCount: 0,
     };
   }
 
@@ -118,6 +121,7 @@ export function calculateInterRaterReliability(
       cohensKappa: null,
       studyCount: 0,
       totalComparisons: 0,
+      agreementCount: 0,
     };
   }
 
@@ -133,6 +137,7 @@ export function calculateInterRaterReliability(
     cohensKappa,
     studyCount: eligibleStudyCount,
     totalComparisons: allComparisons.length,
+    agreementCount: agreements,
   };
 }
 

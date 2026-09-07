@@ -37,6 +37,8 @@ interface ProjectViewProps {
   projectId: string;
 }
 
+const TAB_PANEL = 'w-full max-w-7xl px-6 py-6';
+
 export function ProjectView({ projectId }: ProjectViewProps) {
   return (
     <ProjectGate projectId={projectId} fallback={<ProjectLoadingFallback />}>
@@ -50,7 +52,7 @@ function ProjectLoadingFallback() {
     <div className='bg-background min-h-full'>
       {/* Header skeleton mirrors the real sticky project header */}
       <header className='border-border bg-card sticky top-0 z-20 border-b'>
-        <div className='mx-auto flex h-11 max-w-7xl items-center gap-3 px-6'>
+        <div className='flex h-11 items-center gap-3 px-6'>
           <Skeleton className='h-5 w-48' />
           <div className='bg-border h-5 w-px' />
           {Array.from({ length: 5 }).map((_, i) => (
@@ -291,47 +293,43 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
 
       {/* Main project view */}
       {!isChildRoute && (
-        <div className='bg-background min-h-full'>
-          <Tabs value={tabFromUrl} onValueChange={handleTabChange}>
+        <div className='bg-background flex min-h-full flex-col'>
+          <Tabs value={tabFromUrl} onValueChange={handleTabChange} className='flex flex-1 flex-col'>
             {/* Sticky header */}
-            <header className='border-border bg-card sticky top-0 z-20 border-b'>
-              <div className='mx-auto max-w-7xl px-6'>
-                <ProjectHeader
-                  name={meta.name ?? undefined}
-                  onRename={newName => project.project.rename(newName)}
-                  tabs={TAB_DEFS}
-                />
-              </div>
+            <header className='border-border bg-card sticky top-0 z-20 border-b px-6'>
+              <ProjectHeader
+                name={meta.name ?? undefined}
+                onRename={newName => project.project.rename(newName)}
+                tabs={TAB_DEFS}
+              />
             </header>
 
-            {/* Main content */}
-            <div className='mx-auto max-w-7xl px-6 py-6'>
-              <TabsContent value='overview'>
-                <SectionErrorBoundary name='Overview'>
-                  <OverviewTab />
-                </SectionErrorBoundary>
-              </TabsContent>
-              <TabsContent value='all-studies'>
-                <SectionErrorBoundary name='All studies'>
-                  <AllStudiesTab />
-                </SectionErrorBoundary>
-              </TabsContent>
-              <TabsContent value='todo'>
-                <SectionErrorBoundary name='To-Do'>
-                  <ToDoTab />
-                </SectionErrorBoundary>
-              </TabsContent>
-              <TabsContent value='reconcile'>
-                <SectionErrorBoundary name='Reconcile'>
-                  <ReconcileTab />
-                </SectionErrorBoundary>
-              </TabsContent>
-              <TabsContent value='completed'>
-                <SectionErrorBoundary name='Completed'>
-                  <CompletedTab />
-                </SectionErrorBoundary>
-              </TabsContent>
-            </div>
+            {/* Overview lays out its own columns so its divider spans the full height */}
+            <TabsContent value='overview' className='flex-1'>
+              <SectionErrorBoundary name='Overview'>
+                <OverviewTab />
+              </SectionErrorBoundary>
+            </TabsContent>
+            <TabsContent value='all-studies' className={TAB_PANEL}>
+              <SectionErrorBoundary name='All studies'>
+                <AllStudiesTab />
+              </SectionErrorBoundary>
+            </TabsContent>
+            <TabsContent value='todo' className={TAB_PANEL}>
+              <SectionErrorBoundary name='To-Do'>
+                <ToDoTab />
+              </SectionErrorBoundary>
+            </TabsContent>
+            <TabsContent value='reconcile' className={TAB_PANEL}>
+              <SectionErrorBoundary name='Reconcile'>
+                <ReconcileTab />
+              </SectionErrorBoundary>
+            </TabsContent>
+            <TabsContent value='completed' className={TAB_PANEL}>
+              <SectionErrorBoundary name='Completed'>
+                <CompletedTab />
+              </SectionErrorBoundary>
+            </TabsContent>
           </Tabs>
         </div>
       )}

@@ -8,7 +8,6 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { MailIcon, XIcon } from 'lucide-react';
 import { showToast } from '@/lib/toast';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { getInvitations, cancelInvitation } from '@/server/functions/org-projects.functions';
 import { queryClient } from '@/lib/queryClient';
@@ -72,55 +71,42 @@ export function PendingInvitations({
   };
 
   return (
-    <div className='mt-4'>
-      <h4 className='text-muted-foreground mb-2 text-sm font-medium'>
-        Pending invitations ({invitations.length})
-      </h4>
-      <div className='flex flex-col gap-2'>
-        {invitations.map(invitation => {
-          const expiry = expiryText(invitation.expiresAt);
-          return (
-            <div
-              key={invitation.id}
-              className='border-border flex items-center justify-between rounded-lg border border-dashed p-3'
-            >
-              <div className='flex items-center gap-3'>
-                <div className='bg-muted flex size-9 items-center justify-center rounded-full'>
-                  <MailIcon className='text-muted-foreground size-4' />
-                </div>
-                <div>
-                  <p className='text-foreground font-medium'>{invitation.email}</p>
-                  <p
-                    className={
-                      expiry.expired ? 'text-destructive text-xs' : 'text-muted-foreground text-xs'
-                    }
-                  >
-                    {expiry.text}
-                  </p>
-                </div>
+    <div className='mt-1 flex flex-col gap-1'>
+      {invitations.map(invitation => {
+        const expiry = expiryText(invitation.expiresAt);
+        return (
+          <div key={invitation.id} className='flex items-center gap-2 py-1 text-sm'>
+            <div className='border-border flex size-6 shrink-0 items-center justify-center rounded-full border border-dashed'>
+              <MailIcon className='text-muted-foreground size-3' />
+            </div>
+            <div className='min-w-0 flex-1'>
+              <div className='text-muted-foreground truncate' title={invitation.email}>
+                {invitation.email}
               </div>
-              <div className='flex items-center gap-2'>
-                <Badge variant='outline' className='capitalize'>
-                  {invitation.role}
-                </Badge>
-                {isOwner && (
-                  <Button
-                    variant='ghost'
-                    size='icon-sm'
-                    onClick={() => handleCancel(invitation)}
-                    disabled={cancellingId === invitation.id}
-                    className='text-muted-foreground hover:text-red-600'
-                    title='Cancel invitation'
-                    aria-label='Cancel invitation'
-                  >
-                    <XIcon className='size-4' />
-                  </Button>
-                )}
+              <div
+                className={`text-xs ${expiry.expired ? 'text-destructive' : 'text-muted-foreground'}`}
+              >
+                {expiry.text}
               </div>
             </div>
-          );
-        })}
-      </div>
+            <span className='text-muted-foreground shrink-0 text-xs capitalize'>
+              {invitation.role}
+            </span>
+            {isOwner ?
+              <Button
+                variant='ghost'
+                size='icon-xs'
+                onClick={() => handleCancel(invitation)}
+                disabled={cancellingId === invitation.id}
+                className='text-muted-foreground hover:text-destructive'
+                aria-label='Cancel invitation'
+              >
+                <XIcon className='size-3.5' />
+              </Button>
+            : <span className='size-6 shrink-0' />}
+          </div>
+        );
+      })}
     </div>
   );
 }
