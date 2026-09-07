@@ -16,7 +16,8 @@ Workers (production) -> OTLP export -> loki.jacobmaynard.dev/otlp/v1/logs -> Lok
 - `config/` - Loki config and Grafana datasource provisioning; rsynced to
   `/home/jacob/corates/observability/` on the box by deploy.sh (bind mounts resolve
   remotely when using a docker context)
-- `dashboards/` - Grafana dashboard JSON, imported by hand via Dashboards > New > Import.
+- `dashboards/` - Grafana dashboard JSON, imported via Dashboards > New > Import or the API:
+  `jq '{dashboard: (. + {id: null}), overwrite: true}' dashboards/<file>.json | curl -u admin:$GRAFANA_ADMIN_PASSWORD -H 'Content-Type: application/json' -d @- https://grafana.jacobmaynard.dev/api/dashboards/db`.
   All are scoped to `deployment_environment_name="production"`; staging is deliberately
   excluded, so importing them will not show staging traffic.
   - `corates-logs.json` - volume, levels, handler types, top paths

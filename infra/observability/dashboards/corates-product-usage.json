@@ -826,7 +826,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=~`client\\.(reconciliation\\.finalized|checklist\\.completed)` | userId=~`$user` [$__auto]))"
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"client.reconciliation.finalized\" | userId=~`$user` [$__auto]))"
         }
       ],
       "fieldConfig": {
@@ -855,7 +855,7 @@
         "textMode": "auto",
         "justifyMode": "auto"
       },
-      "description": "The core product outcome: two reviewers reconciled and the consolidated appraisal was finalized. The regex also matches the pre-2026-09-06 name client.checklist.completed for the week the Loki mirror ran before the rename."
+      "description": "Consolidated checklists finalized after reconciliation. Individual reviewer completions are the separate client.checklist.completed event."
     },
     {
       "id": 17,
@@ -1048,6 +1048,250 @@
       }
     },
     {
+      "id": 43,
+      "type": "stat",
+      "title": "Checklists completed",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 37
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"client.checklist.completed\" | userId=~`$user` [$__auto]))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "0",
+          "custom": {
+            "fillOpacity": 25,
+            "lineWidth": 1
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#5794F2"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["sum"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "description": "A reviewer confirmed Mark Complete on their own project checklist."
+    },
+    {
+      "id": 44,
+      "type": "stat",
+      "title": "Local appraisals completed",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 37
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"client.local_appraisal.completed\" | userId=~`$user` [$__auto]))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "0",
+          "custom": {
+            "fillOpacity": 25,
+            "lineWidth": 1
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#5794F2"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["sum"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "description": "A local practice checklist reached a computable score for the first time."
+    },
+    {
+      "id": 45,
+      "type": "stat",
+      "title": "Projects with appraisal work",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 37
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "count(sum by (projectId) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"sync.mutation\" | userId=~`$user` [$__range])))",
+          "queryType": "instant",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "0",
+          "custom": {
+            "fillOpacity": 25,
+            "lineWidth": 1
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#73BF69"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "description": "Distinct projects with at least one committed mutation. Opened a project counts connections; this counts work."
+    },
+    {
+      "id": 46,
+      "type": "stat",
+      "title": "People doing appraisal work",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 37
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "count(sum by (userId) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"sync.mutation\" | userId=~`$user` [$__range])))",
+          "queryType": "instant",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "0",
+          "custom": {
+            "fillOpacity": 25,
+            "lineWidth": 1
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#73BF69"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "description": "Distinct users who committed at least one workspace mutation."
+    },
+    {
+      "id": 47,
+      "type": "stat",
+      "title": "Mutations committed",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 37
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(sum_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"sync.mutation\" | userId=~`$user` | unwrap count [$__auto]))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "0",
+          "custom": {
+            "fillOpacity": 25,
+            "lineWidth": 1
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#B877D9"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["sum"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "description": "Committed workspace mutations, summing count so coalesced edits are counted in full."
+    },
+    {
       "id": 21,
       "type": "timeseries",
       "title": "Checklist activity",
@@ -1059,7 +1303,7 @@
         "h": 8,
         "w": 14,
         "x": 0,
-        "y": 37
+        "y": 41
       },
       "targets": [
         {
@@ -1097,7 +1341,7 @@
           "sort": "desc"
         }
       },
-      "description": "Browser events only. Checklist work happens in Y.js and syncs peer to peer, so the server never sees it - these browser events are the only record of the actual research work."
+      "description": "Browser events only; the server-side record of the same work is sync.mutation under Workspace activity below."
     },
     {
       "id": 22,
@@ -1111,7 +1355,7 @@
         "h": 8,
         "w": 10,
         "x": 14,
-        "y": 37
+        "y": 41
       },
       "targets": [
         {
@@ -1192,7 +1436,7 @@
         "h": 8,
         "w": 14,
         "x": 0,
-        "y": 45
+        "y": 49
       },
       "targets": [
         {
@@ -1244,7 +1488,7 @@
         "h": 8,
         "w": 10,
         "x": 14,
-        "y": 45
+        "y": 49
       },
       "targets": [
         {
@@ -1325,7 +1569,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 53
+        "y": 57
       }
     },
     {
@@ -1340,7 +1584,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 54
+        "y": 58
       },
       "targets": [
         {
@@ -1402,7 +1646,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 54
+        "y": 58
       },
       "targets": [
         {
@@ -1480,7 +1724,7 @@
         "h": 4,
         "w": 6,
         "x": 0,
-        "y": 62
+        "y": 66
       },
       "targets": [
         {
@@ -1527,7 +1771,7 @@
         "h": 4,
         "w": 6,
         "x": 6,
-        "y": 62
+        "y": 66
       },
       "targets": [
         {
@@ -1575,7 +1819,7 @@
         "h": 4,
         "w": 6,
         "x": 12,
-        "y": 62
+        "y": 66
       },
       "targets": [
         {
@@ -1642,7 +1886,7 @@
         "h": 4,
         "w": 6,
         "x": 18,
-        "y": 62
+        "y": 66
       },
       "targets": [
         {
@@ -1689,7 +1933,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 66
+        "y": 70
       },
       "targets": [
         {
@@ -1769,7 +2013,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 66
+        "y": 70
       },
       "targets": [
         {
@@ -1848,7 +2092,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 73
+        "y": 77
       }
     },
     {
@@ -1863,7 +2107,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 74
+        "y": 78
       },
       "targets": [
         {
@@ -1924,7 +2168,7 @@
         "h": 4,
         "w": 6,
         "x": 12,
-        "y": 74
+        "y": 78
       },
       "targets": [
         {
@@ -1974,7 +2218,7 @@
         "h": 4,
         "w": 6,
         "x": 18,
-        "y": 74
+        "y": 78
       },
       "targets": [
         {
@@ -2025,7 +2269,7 @@
         "h": 4,
         "w": 12,
         "x": 12,
-        "y": 78
+        "y": 82
       },
       "targets": [
         {
@@ -2103,7 +2347,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 82
+        "y": 86
       }
     },
     {
@@ -2118,7 +2362,7 @@
         "h": 7,
         "w": 8,
         "x": 0,
-        "y": 83
+        "y": 87
       },
       "targets": [
         {
@@ -2196,7 +2440,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 90
+        "y": 94
       },
       "targets": [
         {
@@ -2229,7 +2473,7 @@
         "h": 7,
         "w": 16,
         "x": 8,
-        "y": 83
+        "y": 87
       },
       "targets": [
         {
@@ -2249,6 +2493,204 @@
         "sortOrder": "Descending"
       },
       "description": "Bodies are not logged - these are the submission events. Read the actual text in the DB by feedbackId."
+    },
+    {
+      "id": 48,
+      "type": "row",
+      "title": "Workspace activity",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 101
+      }
+    },
+    {
+      "id": 49,
+      "type": "timeseries",
+      "title": "Mutations by name",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 14,
+        "x": 0,
+        "y": 102
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (name) (sum_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"sync.mutation\" | userId=~`$user` | unwrap count [$__auto]))",
+          "legendFormat": "{{name}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 85,
+            "lineWidth": 0,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "description": "sync.mutation lines from the workspace DO. Field-edit mutators coalesce into one line per user, checklist and 60s window; count carries the real number and this panel sums it."
+    },
+    {
+      "id": 50,
+      "type": "timeseries",
+      "title": "Completions by instrument",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 10,
+        "x": 14,
+        "y": 102
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (message, type) (count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=~`client\\\\.(checklist|local_appraisal)\\\\.completed` | userId=~`$user` [$__auto]))",
+          "legendFormat": "{{message}} {{type}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 85,
+            "lineWidth": 0,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "description": "client.checklist.completed and client.local_appraisal.completed by the type prop. Divide by the matching created event for a completion rate."
+    },
+    {
+      "id": 51,
+      "type": "table",
+      "title": "Appraisal work by project and user",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 110
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(40, sum by (projectId, userId) (sum_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"sync.mutation\" | userId=~`$user` | unwrap count [$__range])))",
+          "queryType": "instant",
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "renameByName": {
+              "projectId": "Project",
+              "userId": "User",
+              "Value": "Mutations"
+            },
+            "indexByName": {
+              "projectId": 0,
+              "userId": 1,
+              "Value": 2
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "filterable": false
+          },
+          "noValue": "nothing in range"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Mutations"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 90
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "sortBy": [
+          {
+            "displayName": "Mutations",
+            "desc": true
+          }
+        ],
+        "showHeader": true
+      },
+      "description": "Who did work in which project, from sync.mutation."
     }
   ]
 }

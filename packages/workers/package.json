@@ -50,7 +50,7 @@
   },
   "dependencies": {
     "@better-auth/stripe": "^1.7.2",
-    "@cf-sync/server": "^0.2.0",
+    "@cf-sync/server": "^0.2.1",
     "@cf-sync/yjs": "^0.2.0",
     "@corates/db": "workspace:*",
     "@corates/shared": "workspace:*",

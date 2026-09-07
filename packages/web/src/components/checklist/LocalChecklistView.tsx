@@ -19,6 +19,7 @@ import { LOCAL_PROJECT_ID } from '@/project/localProject';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import { useChecklistViewModel } from '@/primitives/useProject/useChecklistViewModel';
 import { useChecklistScore, WorkspaceProjectContext } from '@/project/workspace-data';
+import { useLocalAppraisalCompletion } from '@/hooks/useLocalAppraisalCompletion';
 import { db } from '@/primitives/db';
 import { ScoreTag } from '@/components/checklist/ScoreTag';
 import { ChecklistResourcesButton } from '@/components/checklist/ChecklistResourcesButton';
@@ -60,6 +61,7 @@ function LocalChecklistEditor({ checklistId }: { checklistId: string }) {
     checklistId,
   );
   const currentScore = useChecklistScore(LOCAL_PROJECT_ID, checklistId, checklistType);
+  useLocalAppraisalCompletion(checklistId, checklistType, currentScore);
 
   const [pdfState, setPdfState] = useState<{
     loading: boolean;
