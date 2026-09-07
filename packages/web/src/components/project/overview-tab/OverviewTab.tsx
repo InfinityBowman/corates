@@ -50,6 +50,7 @@ import { ChartSection } from './ChartSection';
 import { ResultsTables } from './ResultsTables';
 import { AddMemberModal } from './AddMemberModal';
 import { PendingInvitations } from './PendingInvitations';
+import { OutcomesCard } from './OutcomesCard';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useMembers } from '@/hooks/useMembers';
 
@@ -380,6 +381,8 @@ export function OverviewTab() {
         )}
         <PendingInvitations projectId={projectId} orgId={orgId} isOwner={isOwner} />
       </div>
+
+      <OutcomesCard />
 
       {/* Results */}
       <div className='flex flex-col gap-4'>

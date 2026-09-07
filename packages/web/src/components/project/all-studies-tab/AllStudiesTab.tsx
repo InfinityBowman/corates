@@ -3,6 +3,9 @@
  */
 
 import { useState, useCallback } from 'react';
+import { UsersIcon } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { AddStudiesForm, type AddStudiesFormState } from '../add-studies/AddStudiesForm';
 import type { MergedStudy } from '@/hooks/useAddStudies/deduplication';
 import { GoogleDrivePickerModal } from '../google-drive/GoogleDrivePickerModal';
@@ -29,6 +32,7 @@ export function AllStudiesTab() {
   const { exportStudyCsv, exportStudyPdf } = useProjectExport(projectId);
   const connectionState = useProjectStore(s => selectConnectionPhase(s, projectId));
   const hasData = connectionState.phase === 'synced' || studies.length > 0;
+  const unassignedCount = studies.filter(s => !s.reviewer1 && !s.reviewer2).length;
   const meta = useProjectMeta(projectId);
   const showSetup = isOwner && meta.setupStep !== null;
 
@@ -99,6 +103,23 @@ export function AllStudiesTab() {
       )}
 
       {studies.length > 0 && showSetup && <ProjectSetupCard />}
+
+      {studies.length > 0 && (
+        <div className='mb-3 flex items-center justify-between'>
+          <span className='text-muted-foreground text-sm'>
+            {studies.length} {studies.length === 1 ? 'study' : 'studies'}
+          </span>
+          {isOwner && unassignedCount > 0 && (
+            <Button variant='outline' size='sm' onClick={() => openAssignSheet()}>
+              <UsersIcon className='size-4' />
+              Assign reviewers
+              <Badge variant='info' className='min-w-5 px-1.5 tabular-nums'>
+                {unassignedCount}
+              </Badge>
+            </Button>
+          )}
+        </div>
+      )}
 
       {studies.length > 0 && (
         <div className='flex flex-col gap-2'>

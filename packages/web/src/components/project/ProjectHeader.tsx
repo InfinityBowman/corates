@@ -52,7 +52,7 @@ export function ProjectHeader({ name, onRename, tabs }: ProjectHeaderProps) {
 
   return (
     <div className='flex h-11 items-center gap-3'>
-      <div className='flex min-w-0 shrink items-center gap-2'>
+      <div className='flex max-w-80 min-w-28 shrink-[10] items-center gap-2 [&_button]:min-w-0 [&_span]:min-w-0'>
         <InlineEdit
           value={localName}
           onCommit={handleNameCommit}
@@ -76,7 +76,7 @@ export function ProjectHeader({ name, onRename, tabs }: ProjectHeaderProps) {
           <TabsTrigger
             key={tab.value}
             value={tab.value}
-            className='text-muted-foreground hover:bg-muted hover:text-foreground data-[state=active]:bg-muted data-[state=active]:text-foreground h-7 gap-1.5 rounded-md px-2.5 py-0'
+            className='text-muted-foreground hover:bg-muted hover:text-foreground data-[state=active]:bg-muted data-[state=active]:text-foreground h-7 shrink-0 gap-1.5 rounded-md px-2.5 py-0'
           >
             {tab.label}
             {tab.count != null && (
