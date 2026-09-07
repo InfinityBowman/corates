@@ -24,9 +24,11 @@ export const handler = async () => {
 
   try {
     // Discover tables from the catalog rather than a hand-kept list, which
-    // went stale every time a migration added a table. `_cf_*` is D1's own.
+    // went stale every time a migration added a table. `_cf_*` is D1's own,
+    // and `d1_migrations` is wrangler's record of applied migrations: dropping
+    // it makes the next `d1 migrations apply` re-run every file and fail.
     const { results: tables } = await env.DB.prepare(
-      "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite\\_%' ESCAPE '\\' AND name NOT LIKE '\\_cf\\_%' ESCAPE '\\'",
+      "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite\\_%' ESCAPE '\\' AND name NOT LIKE '\\_cf\\_%' ESCAPE '\\' AND name <> 'd1_migrations'",
     ).all<{ name: string }>();
 
     await env.DB.prepare('PRAGMA foreign_keys = OFF').run();
