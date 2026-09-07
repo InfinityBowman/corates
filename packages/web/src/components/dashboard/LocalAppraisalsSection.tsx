@@ -1,12 +1,13 @@
 /**
- * LocalAppraisalsSection - Device-local appraisals with delete/rename
+ * LocalAppraisalsSection - device-local appraisals as rows, with rename,
+ * delete and export
  */
 
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import {
   PlusIcon,
-  FileTextIcon,
+  FileCheck2Icon,
   LogInIcon,
   TriangleAlertIcon,
   DownloadIcon,
@@ -41,71 +42,52 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useAnimation } from './useInitialAnimation';
-import { LocalAppraisalCard } from './LocalAppraisalCard';
+import { DashboardSection, EmptyState } from './DashboardSection';
+import { LocalAppraisalRow } from './LocalAppraisalRow';
 
 interface LocalAppraisalsSectionProps {
-  showHeader?: boolean;
   showSignInPrompt?: boolean;
 }
 
-interface AppraisalCardData {
-  id: string;
-  name: string;
-  type?: string;
-  updatedAt?: number;
-  createdAt?: number;
-}
-
-export function LocalAppraisalsSection({
-  showHeader = true,
-  showSignInPrompt,
-}: LocalAppraisalsSectionProps) {
+export function LocalAppraisalsSection({ showSignInPrompt }: LocalAppraisalsSectionProps) {
   const navigate = useNavigate();
   const animation = useAnimation();
   const studies = useAllStudies(LOCAL_PROJECT_ID);
 
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
-  const appraisals: AppraisalCardData[] = [];
-  for (const study of studies) {
-    const checklist = (study.checklists || [])[0];
-    if (!checklist) continue;
-    appraisals.push({
-      id: study.id,
-      name: study.name || 'Untitled Checklist',
-      type: checklist.type,
-      updatedAt: (checklist.updatedAt ?? study.updatedAt) as number | undefined,
-      createdAt: (checklist.createdAt ?? study.createdAt) as number | undefined,
-    });
-  }
-  appraisals.sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
+  const appraisals = studies
+    .flatMap(study => {
+      const checklist = study.checklists?.[0];
+      if (!checklist) return [];
+      return [
+        {
+          id: study.id,
+          name: study.name || 'Untitled Checklist',
+          type: checklist.type,
+          updatedAt: (checklist.updatedAt ?? study.updatedAt) as number | undefined,
+          createdAt: (checklist.createdAt ?? study.createdAt) as number | undefined,
+        },
+      ];
+    })
+    .sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
 
   const handleOpen = (checklistId: string) => {
     navigate({ to: `/checklist/${checklistId}` as string });
   };
 
-  const handleDelete = (checklistId: string) => {
-    setPendingDeleteId(checklistId);
-    setDeleteDialogOpen(true);
-  };
-
   const confirmDelete = async () => {
-    if (!pendingDeleteId) {
-      setDeleteDialogOpen(false);
-      return;
-    }
+    if (!pendingDeleteId) return;
     try {
       // Cascades the checklist + answers rows.
       applyLocalMutation(LOCAL_PROJECT_ID, 'study.delete', { id: pendingDeleteId });
       await db.localChecklistPdfs.delete(pendingDeleteId);
     } finally {
-      setDeleteDialogOpen(false);
       setPendingDeleteId(null);
     }
   };
 
-  const handleRename = async (studyId: string, newName: string) => {
+  const handleRename = (studyId: string, newName: string) => {
     const now = Date.now();
     applyLocalMutation(LOCAL_PROJECT_ID, 'study.update', {
       id: studyId,
@@ -165,19 +147,40 @@ export function LocalAppraisalsSection({
   const hasChecklists = appraisals.length > 0;
 
   return (
-    <section style={animation.fadeUp(300)}>
-      {showHeader && (
-        <div className='mb-4 flex items-center justify-between'>
-          <h2 className='text-muted-foreground text-sm font-semibold tracking-wide uppercase'>
-            Local Appraisals
-          </h2>
-          {hasChecklists && (
-            <div className='flex items-center gap-2'>
+    <>
+      {showSignInPrompt && (
+        <div
+          className='border-primary/20 bg-primary/5 flex items-center justify-between gap-4 rounded-lg border px-4 py-3'
+          style={animation.fadeUp(100)}
+        >
+          <div className='flex items-center gap-3'>
+            <LogInIcon className='text-primary size-4 shrink-0' />
+            <p className='text-sm'>
+              <span className='text-primary font-medium'>Want to collaborate?</span>{' '}
+              <span className='text-primary/70'>
+                Sign in to create projects and sync across devices.
+              </span>
+            </p>
+          </div>
+          <Button size='sm' onClick={() => navigate({ to: '/signin' })}>
+            Sign in
+          </Button>
+        </div>
+      )}
+
+      <DashboardSection
+        title='Local appraisals'
+        count={appraisals.length}
+        style={animation.fadeUp(300)}
+        aside={
+          <>
+            <span className='text-muted-foreground text-xs'>On this device</span>
+            {hasChecklists && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant='outline'>
+                  <Button variant='ghost' size='xs' className='text-muted-foreground'>
                     <DownloadIcon data-icon='inline-start' />
-                    Export All
+                    Export all
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align='end'>
@@ -191,70 +194,42 @@ export function LocalAppraisalsSection({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+            )}
+          </>
+        }
+      >
+        {hasChecklists ?
+          appraisals.map(appraisal => (
+            <LocalAppraisalRow
+              key={appraisal.id}
+              checklist={appraisal}
+              onOpen={handleOpen}
+              onDelete={setPendingDeleteId}
+              onRename={newName => handleRename(appraisal.id, newName)}
+              onExportCsv={handleExportOneCsv}
+              onExportPdf={handleExportOnePdf}
+            />
+          ))
+        : <EmptyState
+            icon={FileCheck2Icon}
+            title='No local appraisals'
+            description='Appraise a study with AMSTAR 2, RoB 2 or ROBINS-I. Stays on this device, with optional PDF annotation.'
+            action={
               <Button onClick={handleCreate}>
                 <PlusIcon data-icon='inline-start' />
-                New Appraisal
+                New appraisal
               </Button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Sign-in prompt */}
-      {showSignInPrompt && (
-        <div className='border-primary/20 bg-primary/5 mb-4 flex items-center justify-between rounded-xl border p-4'>
-          <div className='flex items-center gap-3'>
-            <div className='bg-primary/10 flex size-10 items-center justify-center rounded-lg'>
-              <LogInIcon className='text-primary size-5' />
-            </div>
-            <div>
-              <p className='text-primary text-sm font-medium'>Want to collaborate?</p>
-              <p className='text-primary/70 text-xs'>
-                Sign in to create projects and sync across devices
-              </p>
-            </div>
-          </div>
-          <Button onClick={() => navigate({ to: '/signin' })}>Sign In</Button>
-        </div>
-      )}
-
-      {/* Appraisals list */}
-      <div className='flex flex-col gap-3'>
-        {!hasChecklists && (
-          <div className='border-border bg-muted/50 flex flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-10'>
-            <div className='bg-secondary mb-3 flex size-12 items-center justify-center rounded-xl'>
-              <FileTextIcon className='text-muted-foreground size-6 opacity-70' />
-            </div>
-            <h3 className='text-secondary-foreground mb-1 text-sm font-medium'>
-              No local appraisals
-            </h3>
-            <p className='text-muted-foreground mb-4 max-w-sm text-center text-xs'>
-              Use AMSTAR 2, ROBINS-I, or RoB 2 to appraise studies on this device with optional PDF
-              annotation
-            </p>
-            <Button onClick={handleCreate}>
-              <PlusIcon data-icon='inline-start' />
-              Create Appraisal
-            </Button>
-          </div>
-        )}
-
-        {appraisals.map((appraisal, index) => (
-          <LocalAppraisalCard
-            key={appraisal.id}
-            checklist={appraisal}
-            onOpen={handleOpen}
-            onDelete={handleDelete}
-            onRename={newName => handleRename(appraisal.id, newName)}
-            onExportCsv={handleExportOneCsv}
-            onExportPdf={handleExportOnePdf}
-            style={animation.statRise(index * 50)}
+            }
           />
-        ))}
-      </div>
+        }
+      </DashboardSection>
 
-      {/* Delete dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      <AlertDialog
+        open={pendingDeleteId !== null}
+        onOpenChange={open => {
+          if (!open) setPendingDeleteId(null);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogIcon variant='danger'>
@@ -275,6 +250,6 @@ export function LocalAppraisalsSection({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </section>
+    </>
   );
 }

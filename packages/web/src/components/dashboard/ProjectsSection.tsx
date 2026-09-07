@@ -1,18 +1,15 @@
 /**
- * ProjectsSection - Projects grid with create and delete flows
+ * ProjectsSection - pending invitations, then the user's projects as rows,
+ * with the create and delete flows.
  */
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { PlusIcon, FolderIcon, TriangleAlertIcon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { FolderIcon, TriangleAlertIcon } from 'lucide-react';
 import { useMyProjectsList } from '@/hooks/useMyProjectsList';
-import { useSubscription } from '@/hooks/useSubscription';
-import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { showToast } from '@/lib/toast';
 import { CreateProjectModal } from '@/components/project/CreateProjectModal';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { queryKeys } from '@/lib/queryKeys';
 import {
   AlertDialog,
@@ -25,31 +22,24 @@ import {
   AlertDialogIcon,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { useAnimation } from './useInitialAnimation';
-import { ProjectCard } from './ProjectCard';
-import { InvitationCard } from './InvitationCard';
 import { listMyPendingInvitations } from '@/server/functions/invitations.functions';
-import { ContactPrompt, getRestrictionCopy } from './ContactPrompt';
+import { useAnimation } from './useInitialAnimation';
+import { DashboardSection, EmptyState } from './DashboardSection';
+import { ProjectRow } from './ProjectRow';
+import { InvitationRow } from './InvitationRow';
+import { ContactPrompt } from './ContactPrompt';
+import { NewProjectButton, useProjectCreateRestriction } from './NewProjectButton';
 
 interface ProjectsSectionProps {
-  showHeader?: boolean;
   createModalOpen: boolean;
   setCreateModalOpen: (open: boolean) => void;
-  onCreateClick?: () => void;
 }
 
-export function ProjectsSection({
-  showHeader = true,
-  createModalOpen,
-  setCreateModalOpen,
-  onCreateClick,
-}: ProjectsSectionProps) {
+export function ProjectsSection({ createModalOpen, setCreateModalOpen }: ProjectsSectionProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const isOnline = useOnlineStatus();
   const animation = useAnimation();
 
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
@@ -58,65 +48,18 @@ export function ProjectsSection({
     queryKey: queryKeys.invitations.pendingForMe,
     queryFn: () => listMyPendingInvitations(),
   });
-  const {
-    hasEntitlement,
-    hasQuota,
-    quotas,
-    subscription,
-    isLoading: subscriptionLoading,
-  } = useSubscription();
+  const { restrictionType, projectCount, quotaLimit } = useProjectCreateRestriction();
 
-  const projectCount = projects?.length || 0;
-  // Server-computed count the project cap is enforced against: on Free that is the
-  // projects the user created, not projects shared with them from other workspaces.
-  const quotaProjectCount = subscription.projectCount;
+  async function confirmDeleteProject() {
+    if (!pendingDeleteId) return;
 
-  // Local-first: assume user can create unless we know they can't
-  const canCreateProject =
-    subscriptionLoading ? true : (
-      hasEntitlement('project.create') &&
-      hasQuota('projects.max', { used: quotaProjectCount, requested: 1 })
-    );
-
-  const restrictionType: 'entitlement' | 'quota' | null =
-    subscriptionLoading ? null
-    : !hasEntitlement('project.create') ? 'entitlement'
-    : !hasQuota('projects.max', { used: quotaProjectCount, requested: 1 }) ? 'quota'
-    : null;
-
-  const handleCreateClick = useCallback(() => {
-    if (onCreateClick) {
-      onCreateClick();
-    } else {
-      setCreateModalOpen(true);
-    }
-  }, [onCreateClick, setCreateModalOpen]);
-
-  const openProject = useCallback(
-    (projectId: string) => {
-      navigate({ to: `/projects/${projectId}` as string });
-    },
-    [navigate],
-  );
-
-  const handleDeleteProject = useCallback((targetProjectId: string) => {
-    setPendingDeleteId(targetProjectId);
-    setDeleteDialogOpen(true);
-  }, []);
-
-  const confirmDeleteProject = useCallback(async () => {
-    if (!pendingDeleteId) {
-      setDeleteDialogOpen(false);
-      return;
-    }
-
-    const project = projects?.find(p => p.id === pendingDeleteId);
+    const project = projects.find(p => p.id === pendingDeleteId);
     if (!project?.orgId) {
       showToast.error(
         'Delete failed',
         'We could not find the organization this project belongs to. Reload the page and try again.',
       );
-      setDeleteDialogOpen(false);
+      setPendingDeleteId(null);
       return;
     }
 
@@ -128,99 +71,63 @@ export function ProjectsSection({
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.subscription.current });
       showToast.success('Project deleted', 'The project and everything in it has been removed.');
-      setDeleteDialogOpen(false);
+      setPendingDeleteId(null);
     } catch (err) {
       const { handleError } = await import('@/lib/error-utils');
       await handleError(err, { toastTitle: 'Delete failed' });
     } finally {
       setDeleteLoading(false);
-      setPendingDeleteId(null);
     }
-  }, [pendingDeleteId, projects, queryClient]);
-
-  const hasProjects = projectCount > 0 || (invitations?.length ?? 0) > 0;
+  }
 
   return (
-    <section style={animation.fadeUp(200)}>
+    <>
       {/* Trial pitch stays prominent; the quota limit is surfaced just-in-time on the button */}
       {restrictionType === 'entitlement' && (
-        <div className='mb-4'>
-          <ContactPrompt
-            restrictionType={restrictionType}
-            projectCount={quotaProjectCount}
-            quotaLimit={quotas?.['projects.max']}
-          />
-        </div>
+        <ContactPrompt
+          restrictionType={restrictionType}
+          projectCount={projectCount}
+          quotaLimit={quotaLimit}
+        />
       )}
 
-      {/* Header */}
-      {showHeader && (
-        <div className='mb-4 flex items-center justify-between'>
-          <h2 className='text-muted-foreground text-sm font-semibold tracking-wide uppercase'>
-            Your projects
-          </h2>
-          {canCreateProject ?
-            <Button onClick={handleCreateClick} disabled={!isOnline}>
-              <PlusIcon data-icon='inline-start' />
-              New project
-            </Button>
-          : <Popover>
-              <PopoverTrigger asChild>
-                <Button disabled={!isOnline}>
-                  <PlusIcon data-icon='inline-start' />
-                  New project
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent align='end'>
-                <RestrictionNudge
-                  restrictionType={restrictionType}
-                  projectCount={quotaProjectCount}
-                  quotaLimit={quotas?.['projects.max']}
-                />
-              </PopoverContent>
-            </Popover>
-          }
-        </div>
+      {invitations && invitations.length > 0 && (
+        <DashboardSection
+          title='Invitations'
+          count={invitations.length}
+          style={animation.fadeUp(100)}
+        >
+          {invitations.map(invitation => (
+            <InvitationRow key={invitation.id} invitation={invitation} />
+          ))}
+        </DashboardSection>
       )}
 
-      {/* Projects grid */}
-      <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-3'>
-        {!hasProjects && (
-          <div className='border-border bg-muted/50 col-span-full flex flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-16'>
-            <div className='bg-secondary mb-4 flex size-16 items-center justify-center rounded-2xl'>
-              <FolderIcon className='text-muted-foreground size-8 opacity-70' />
-            </div>
-            <h3 className='text-secondary-foreground mb-2 text-lg font-semibold'>
-              No projects yet
-            </h3>
-            <p className='text-muted-foreground mb-6 max-w-sm text-center text-sm'>
-              A project is where you and your team appraise the same studies and reconcile where you
-              disagree. Use New project above to create your first one.
-            </p>
-          </div>
-        )}
-
-        {invitations?.map((invitation, index) => (
-          <InvitationCard
-            key={invitation.id}
-            invitation={invitation}
-            style={animation.statRise(index * 50)}
+      <DashboardSection title='Projects' count={projects.length} style={animation.fadeUp(200)}>
+        {projects.length > 0 ?
+          projects.map(project => (
+            <ProjectRow
+              key={project.id}
+              project={project}
+              onOpen={id => navigate({ to: `/projects/${id}` as string })}
+              onDelete={setPendingDeleteId}
+            />
+          ))
+        : <EmptyState
+            icon={FolderIcon}
+            title='No projects yet'
+            description='A project is where you and your team appraise the same studies independently, then reconcile where you disagree.'
+            action={<NewProjectButton onClick={() => setCreateModalOpen(true)} />}
           />
-        ))}
+        }
+      </DashboardSection>
 
-        {projects?.map((project, index) => (
-          <ProjectCard
-            key={project.id}
-            project={project}
-            onOpen={openProject}
-            onDelete={handleDeleteProject}
-            style={animation.statRise(index * 50)}
-          />
-        ))}
-      </div>
-
-      {/* Delete confirmation dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      <AlertDialog
+        open={pendingDeleteId !== null}
+        onOpenChange={open => {
+          if (!open && !deleteLoading) setPendingDeleteId(null);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogIcon variant='danger'>
@@ -248,30 +155,6 @@ export function ProjectsSection({
       </AlertDialog>
 
       <CreateProjectModal open={createModalOpen} onOpenChange={setCreateModalOpen} />
-    </section>
-  );
-}
-
-function RestrictionNudge({
-  restrictionType,
-  projectCount,
-  quotaLimit,
-}: {
-  restrictionType: 'entitlement' | 'quota' | null;
-  projectCount: number;
-  quotaLimit?: number | null;
-}) {
-  const { title, message } = getRestrictionCopy({ restrictionType, projectCount, quotaLimit });
-
-  return (
-    <div className='flex flex-col gap-3'>
-      <div>
-        <p className='text-popover-foreground font-medium'>{title}</p>
-        <p className='text-muted-foreground mt-1 text-sm'>{message}</p>
-      </div>
-      <Button asChild className='w-full'>
-        <a href='/pricing'>View plans</a>
-      </Button>
-    </div>
+    </>
   );
 }

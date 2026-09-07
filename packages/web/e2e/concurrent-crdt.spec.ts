@@ -156,8 +156,12 @@ async function runConcurrentEditCycle(
   try {
     await pageA.goto(`${BASE_URL}/dashboard`);
     await pageB.goto(`${BASE_URL}/dashboard`);
-    await expect(pageA.getByText('Welcome back,')).toBeVisible({ timeout: 15_000 });
-    await expect(pageB.getByText('Welcome back,')).toBeVisible({ timeout: 15_000 });
+    await expect(pageA.getByRole('heading', { name: 'Projects', exact: true })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(pageB.getByRole('heading', { name: 'Projects', exact: true })).toBeVisible({
+      timeout: 15_000,
+    });
 
     await pageA.goto(`${BASE_URL}${checklistUrlA}`);
     await pageB.goto(`${BASE_URL}${checklistUrlB}`);
@@ -246,7 +250,9 @@ test.describe('Concurrent CRDT: AMSTAR2', () => {
 
     await loginAs(setupCtx, scenario.cookiesA);
     await setupPage.goto(`${BASE_URL}/dashboard`);
-    await expect(setupPage.getByText('Welcome back,')).toBeVisible({ timeout: 15_000 });
+    await expect(setupPage.getByRole('heading', { name: 'Projects', exact: true })).toBeVisible({
+      timeout: 15_000,
+    });
 
     const projectId = await createProject(setupPage, 'AMSTAR2 CRDT Test');
     await addProjectMember(scenario.orgId, projectId, scenario.userB.id, scenario.cookiesA);
@@ -336,7 +342,9 @@ test.describe('Concurrent CRDT: ROB2', () => {
 
     await loginAs(setupCtx, scenario.cookiesA);
     await setupPage.goto(`${BASE_URL}/dashboard`);
-    await expect(setupPage.getByText('Welcome back,')).toBeVisible({ timeout: 15_000 });
+    await expect(setupPage.getByRole('heading', { name: 'Projects', exact: true })).toBeVisible({
+      timeout: 15_000,
+    });
 
     const projectId = await createProject(setupPage, 'ROB2 CRDT Test');
     await addProjectMember(scenario.orgId, projectId, scenario.userB.id, scenario.cookiesA);

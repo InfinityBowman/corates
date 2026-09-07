@@ -1,172 +1,48 @@
 /**
- * ProjectHeaderActions - Add studies / Assign reviewers cluster in the sticky
- * project header, with the sheets they open.
+ * ProjectHeaderActions - right side of the project header: the Export menu
+ * and Add studies as the one primary button.
  */
 
-import { useMemo, useCallback, type ReactNode } from 'react';
-import {
-  PlusIcon,
-  UsersIcon,
-  TargetIcon,
-  DownloadIcon,
-  FileSpreadsheetIcon,
-  FileIcon,
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { Button, buttonVariants } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { PlusIcon, FileSpreadsheetIcon, FileIcon, DownloadIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
-import { AddStudiesSheet } from './add-studies/AddStudiesSheet';
-import { AssignReviewersSheet } from './assign-reviewers/AssignReviewersSheet';
-import { OutcomesSheet } from './outcomes/OutcomesSheet';
-import { useAllStudies, useProjectMembers, useProjectOutcomes } from '@/project/workspace-data';
 import { useProjectExport } from '@/hooks/useProjectExport';
 import { useProjectContext } from './ProjectContext';
 
-// Native disabled buttons drop pointer events, so the tooltip would never fire.
-function DisabledActionButton({ reason, children }: { reason: string; children: ReactNode }) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span
-          className={cn(buttonVariants({ variant: 'outline' }), 'cursor-not-allowed opacity-50')}
-          aria-disabled='true'
-        >
-          {children}
-        </span>
-      </TooltipTrigger>
-      <TooltipContent>{reason}</TooltipContent>
-    </Tooltip>
-  );
-}
-
 export function ProjectHeaderActions() {
-  const {
-    projectId,
-    isOwner,
-    addStudiesSheetOpen,
-    setAddStudiesSheetOpen,
-    assignSheetOpen,
-    setAssignSheetOpen,
-    openAssignSheet,
-    outcomesSheetOpen,
-    setOutcomesSheetOpen,
-  } = useProjectContext();
-
-  const studies = useAllStudies(projectId);
-  const members = useProjectMembers(projectId);
-  const outcomes = useProjectOutcomes(projectId);
+  const { projectId, setAddStudiesSheetOpen } = useProjectContext();
   const { hasExportableData, exportAllCsv, exportAllPdf } = useProjectExport(projectId);
 
-  const unassignedCount = useMemo(
-    () => studies.filter(s => !s.reviewer1 && !s.reviewer2).length,
-    [studies],
-  );
-
-  // addBatch shows its own result toast; this one hands off just the new studies.
-  const handleAdded = useCallback(
-    (studyIds: string[]) => {
-      if (!isOwner || members.length < 2 || studyIds.length === 0) return;
-      const count = studyIds.length;
-      const label = `${count} new ${count === 1 ? 'study' : 'studies'}`;
-      toast('Assign reviewers?', {
-        description: `The ${label} ${count === 1 ? 'has' : 'have'} no reviewers yet.`,
-        duration: 10000,
-        action: {
-          label: 'Assign reviewers',
-          onClick: () => openAssignSheet({ studyIds, label }),
-        },
-      });
-    },
-    [isOwner, members.length, openAssignSheet],
-  );
-
-  const assignBlockedReason =
-    !isOwner ? 'Only the project owner can assign reviewers.'
-    : studies.length === 0 ? 'Add studies first.'
-    : null;
-  const exportBlockedReason =
-    hasExportableData ? null : 'Start a checklist on at least one study first.';
-
-  const assignButton = (
-    <>
-      <UsersIcon className='size-4' />
-      Assign reviewers
-      {unassignedCount > 0 && (
-        <Badge variant='info' className='min-w-5 px-1.5 tabular-nums'>
-          {unassignedCount}
-        </Badge>
-      )}
-    </>
-  );
-
   return (
-    <div className='flex shrink-0 items-center gap-2'>
-      <Button
-        variant='ghost'
-        onClick={() => setOutcomesSheetOpen(true)}
-        className='text-muted-foreground'
-      >
-        <TargetIcon className='size-4' />
-        Outcomes
-        {outcomes.length > 0 && (
-          <Badge variant='secondary' className='min-w-5 px-1.5 tabular-nums'>
-            {outcomes.length}
-          </Badge>
-        )}
-      </Button>
+    <div className='flex shrink-0 items-center gap-1.5'>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant='outline' size='sm'>
+            <DownloadIcon className='size-4' />
+            Export
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align='end' className='w-48'>
+          <DropdownMenuItem onClick={exportAllCsv} disabled={!hasExportableData}>
+            <FileSpreadsheetIcon />
+            Export as CSV
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={exportAllPdf} disabled={!hasExportableData}>
+            <FileIcon />
+            Export as PDF
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
-      {assignBlockedReason ?
-        <DisabledActionButton reason={assignBlockedReason}>{assignButton}</DisabledActionButton>
-      : <Button variant='outline' onClick={() => openAssignSheet()}>
-          {assignButton}
-        </Button>
-      }
-
-      {exportBlockedReason ?
-        <DisabledActionButton reason={exportBlockedReason}>
-          <DownloadIcon className='size-4' />
-          Export
-        </DisabledActionButton>
-      : <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant='outline'>
-              <DownloadIcon className='size-4' />
-              Export
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align='end'>
-            <DropdownMenuItem onClick={exportAllCsv}>
-              <FileSpreadsheetIcon />
-              Export as CSV
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={exportAllPdf}>
-              <FileIcon />
-              Export as PDF
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      }
-
-      <Button onClick={() => setAddStudiesSheetOpen(true)}>
+      <Button size='sm' onClick={() => setAddStudiesSheetOpen(true)}>
         <PlusIcon className='size-4' />
         Add studies
       </Button>
-
-      <AddStudiesSheet
-        open={addStudiesSheetOpen}
-        onOpenChange={setAddStudiesSheetOpen}
-        onAdded={handleAdded}
-      />
-      {isOwner && <AssignReviewersSheet open={assignSheetOpen} onOpenChange={setAssignSheetOpen} />}
-      <OutcomesSheet open={outcomesSheetOpen} onOpenChange={setOutcomesSheetOpen} />
     </div>
   );
 }

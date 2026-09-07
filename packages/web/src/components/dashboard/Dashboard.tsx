@@ -1,5 +1,5 @@
 /**
- * Dashboard - Main dashboard container
+ * Dashboard - the Home page
  *
  * Local-first: always renders content immediately, progressively
  * enhances based on auth/subscription state.
@@ -47,28 +47,27 @@ export function Dashboard() {
 
   return (
     <AnimationContext.Provider value={animation}>
-      <div className='px-4 py-8 sm:px-6 lg:px-8'>
+      <DashboardHeader onNewProject={() => setCreateModalOpen(true)} />
+
+      <div className='mx-auto flex w-full max-w-7xl flex-col gap-4 px-6 py-6'>
         {isLoggedIn && subscriptionFetchFailed && (
-          <Alert variant='warning' className='mb-6'>
+          <Alert variant='warning'>
             We could not load your plan details. Some features may be unavailable until you reload
             the page.
           </Alert>
         )}
 
-        {showWelcomeCard ?
-          <WelcomeCard user={user!} onDismiss={dismissWelcome} />
-        : <DashboardHeader user={user} />}
+        {showWelcomeCard && (
+          <WelcomeCard user={user!} onDismiss={dismissWelcome} style={animation.fadeUp(0)} />
+        )}
 
-        <div id='projects-section' className='flex flex-col gap-8'>
-          {isLoggedIn && (
-            <ProjectsSection
-              createModalOpen={createModalOpen}
-              setCreateModalOpen={setCreateModalOpen}
-            />
-          )}
-
-          <LocalAppraisalsSection showHeader showSignInPrompt={!isLoggedIn} />
-        </div>
+        {isLoggedIn && (
+          <ProjectsSection
+            createModalOpen={createModalOpen}
+            setCreateModalOpen={setCreateModalOpen}
+          />
+        )}
+        <LocalAppraisalsSection showSignInPrompt={!isLoggedIn} />
       </div>
     </AnimationContext.Provider>
   );

@@ -60,7 +60,7 @@ export interface ChecklistChartConfig {
 // ROBINS-I V2 "Low (except for concerns about uncontrolled confounding)"
 // judgement, which has no robvis equivalent; we use a lime between low and
 // moderate in both color palettes.
-const COLORS = {
+export const COLORS = {
   positive: { default: '#10b981', cochrane: '#02C100', greyscale: '#1b1b1b' },
   positiveQualified: { default: '#84cc16', cochrane: '#7CB518', greyscale: '#303030' },
   intermediate: { default: '#facc15', cochrane: '#E2DF07', greyscale: '#484848' },

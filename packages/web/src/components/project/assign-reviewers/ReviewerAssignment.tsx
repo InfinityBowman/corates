@@ -130,16 +130,11 @@ export function ReviewerAssignment({
     onClose();
   };
 
-  if (members.length < 2 || rows.length === 0) {
+  if (rows.length === 0) {
     return (
       <>
         <div className='flex-1 p-4'>
-          {members.length < 2 ?
-            <p className='text-muted-foreground text-sm'>
-              Double review needs two people. Invite at least one more member from the Overview tab,
-              then come back to assign reviewers.
-            </p>
-          : scope ?
+          {scope ?
             <p className='text-muted-foreground text-sm'>
               These studies are no longer in the project.
             </p>
@@ -263,8 +258,10 @@ export function ReviewerAssignment({
 
       <SheetFooter className='flex-row items-center gap-2'>
         <p className='text-muted-foreground min-w-0 flex-1 text-xs'>
-          {completeCount} of {rows.length} {rows.length === 1 ? 'study has' : 'studies have'} two
-          reviewers
+          {members.length < 2 ?
+            'A study with one reviewer finalizes without reconciliation.'
+          : `${completeCount} of ${rows.length} ${rows.length === 1 ? 'study has' : 'studies have'} two reviewers`
+          }
         </p>
         <Button variant='outline' onClick={onClose}>
           Cancel

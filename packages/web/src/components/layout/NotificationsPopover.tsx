@@ -1,5 +1,6 @@
 /**
- * NotificationBell - navbar entry point to the notification center.
+ * NotificationsPopover - the notification center, anchored to whatever
+ * trigger is passed as children (the sidebar Inbox row).
  * Unread count is fetched eagerly; the list only when the popover opens.
  * Live updates arrive through useMembershipSync, which edits both caches.
  */
@@ -7,7 +8,7 @@
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
-import { BellIcon, CheckCheckIcon, InboxIcon } from 'lucide-react';
+import { CheckCheckIcon, InboxIcon } from 'lucide-react';
 import type { NotificationRecord } from '@corates/shared/notifications';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -40,7 +41,13 @@ function decrementUnread() {
   );
 }
 
-export function NotificationBell() {
+interface NotificationsPopoverProps {
+  children: React.ReactNode;
+  side?: React.ComponentProps<typeof PopoverContent>['side'];
+  align?: React.ComponentProps<typeof PopoverContent>['align'];
+}
+
+export function NotificationsPopover({ children, side, align = 'end' }: NotificationsPopoverProps) {
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState<Filter>('all');
   const navigate = useNavigate();
@@ -107,24 +114,8 @@ export function NotificationBell() {
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button
-          type='button'
-          className='relative flex h-9 items-center rounded px-2 transition hover:bg-blue-600'
-          aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
-        >
-          <BellIcon className='size-4' aria-hidden='true' />
-          {unreadCount > 0 && (
-            <span
-              data-testid='notification-badge'
-              className='absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] leading-none font-semibold text-white'
-            >
-              {unreadCount > 99 ? '99+' : unreadCount}
-            </span>
-          )}
-        </button>
-      </PopoverTrigger>
-      <PopoverContent align='end' className='w-96 gap-0 p-0'>
+      <PopoverTrigger asChild>{children}</PopoverTrigger>
+      <PopoverContent side={side} align={align} className='w-96 gap-0 p-0'>
         <div className='flex items-center justify-between border-b py-1.5 pr-1.5 pl-3.5'>
           <span className='flex items-center gap-2 text-[13px] font-semibold'>
             Notifications

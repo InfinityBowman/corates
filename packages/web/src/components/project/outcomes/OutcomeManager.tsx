@@ -22,10 +22,28 @@ import { useProjectContext } from '../ProjectContext';
 import { useProjectOutcomes } from '@/project/workspace-data';
 import { showToast } from '@/lib/toast';
 
-export function OutcomeManager() {
+interface OutcomeManagerProps {
+  /** Checklists per outcome id, shown beside each name when provided. */
+  checklistCounts?: Record<string, number>;
+  /** Controlled add-form state, for a parent that renders its own Add trigger. */
+  adding?: boolean;
+  onAddingChange?: (adding: boolean) => void;
+}
+
+export function OutcomeManager({
+  checklistCounts,
+  adding,
+  onAddingChange,
+}: OutcomeManagerProps = {}) {
   const { projectId } = useProjectContext();
 
-  const [isAdding, setIsAdding] = useState(false);
+  const [internalAdding, setInternalAdding] = useState(false);
+  const isControlled = adding !== undefined;
+  const isAdding = isControlled ? adding : internalAdding;
+  const setIsAdding = (next: boolean) => {
+    if (isControlled) onAddingChange?.(next);
+    else setInternalAdding(next);
+  };
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newName, setNewName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -33,7 +51,7 @@ export function OutcomeManager() {
 
   const outcomes = useProjectOutcomes(projectId);
 
-  const handleAdd = useCallback(async () => {
+  async function handleAdd() {
     const name = newName.trim();
     if (!name) return;
     setIsSaving(true);
@@ -52,7 +70,7 @@ export function OutcomeManager() {
     } finally {
       setIsSaving(false);
     }
-  }, [newName]);
+  }
 
   const handleUpdate = useCallback(
     async (outcomeId: string) => {
@@ -112,7 +130,7 @@ export function OutcomeManager() {
 
   return (
     <div className='flex flex-col gap-2'>
-      {!isAdding && (
+      {!isAdding && !isControlled && (
         <Button
           variant='outline'
           size='sm'
@@ -236,6 +254,11 @@ export function OutcomeManager() {
           </div>
         : <div key={outcome.id} className='flex items-center gap-2'>
             <span className='text-foreground min-w-0 flex-1 truncate text-sm'>{outcome.name}</span>
+            {checklistCounts && (
+              <span className='text-muted-foreground shrink-0 text-xs tabular-nums'>
+                {checklistCounts[outcome.id] ?? 0} checklists
+              </span>
+            )}
             <Button
               variant='ghost'
               size='icon-sm'

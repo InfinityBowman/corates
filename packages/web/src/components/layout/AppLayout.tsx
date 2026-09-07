@@ -1,23 +1,28 @@
 /**
- * AppLayout - Main application layout with navbar + sidebar + content area
+ * AppLayout - sidebar + content area for all app routes.
  *
- * Manages sidebar state (desktop mode, mobile overlay, width) with localStorage persistence.
- * Hides sidebar on /admin and /settings routes (they have their own sidebars)
+ * The sidebar is the only chrome: account menu, Inbox, projects and local
+ * appraisals all live there. Desktop can hide it (visibility and width are
+ * persisted); mobile gets a slim bar that toggles the slide-in overlay.
  */
 
 import { useState, useCallback, useEffect, lazy, Suspense } from 'react';
-import { Outlet, useLocation } from '@tanstack/react-router';
+import { Outlet } from '@tanstack/react-router';
+import { PanelLeftOpenIcon } from 'lucide-react';
 import { useAdminStore } from '@/stores/adminStore';
+import { useAuthStore, selectUser, selectIsAuthLoading } from '@/stores/authStore';
 import { useMembershipSync } from '@/hooks/useMembershipSync';
 import { connectionPool } from '@/project/ConnectionPool';
 import { LOCAL_PROJECT_ID } from '@/project/localProject';
-import { AppNavbar } from './AppNavbar';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { PaymentIssueBanner } from '@/components/billing/PaymentIssueBanner';
 import { Sidebar } from './Sidebar';
+import { MobileBar } from './MobileBar';
 
-const SIDEBAR_MODE_KEY = 'corates-sidebar-mode';
+const SIDEBAR_VISIBLE_KEY = 'corates-sidebar-visible';
 const SIDEBAR_WIDTH_KEY = 'corates-sidebar-width';
-const DEFAULT_SIDEBAR_WIDTH = 256;
+const DEFAULT_SIDEBAR_WIDTH = 240;
 const MIN_SIDEBAR_WIDTH = 200;
 const MAX_SIDEBAR_WIDTH = 480;
 // Lazy load admin components
@@ -41,30 +46,33 @@ export function AppLayout() {
     }
   }, []);
 
-  const location = useLocation();
+  const user = useAuthStore(selectUser);
+  const isAuthLoading = useAuthStore(selectIsAuthLoading);
   const isImpersonating = useAdminStore(s => s.isImpersonating);
+  const checkAdminStatus = useAdminStore(s => s.checkAdminStatus);
   const checkImpersonationStatus = useAdminStore(s => s.checkImpersonationStatus);
 
   // The store resets on the full-page reload that impersonateUser/stopImpersonation
   // trigger, so re-derive impersonation state from the session on mount.
   useEffect(() => {
+    checkAdminStatus();
     checkImpersonationStatus();
-  }, [checkImpersonationStatus]);
+  }, [checkAdminStatus, checkImpersonationStatus]);
 
-  // Routes that should NOT show the main sidebar
-  const shouldHideSidebar =
-    location.pathname.startsWith('/admin') || location.pathname.startsWith('/settings');
+  // Cache the display name so the account menu can show it before the session resolves
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('userName', user.name || '');
+    } else if (!isAuthLoading) {
+      localStorage.removeItem('userName');
+    }
+  }, [user, isAuthLoading]);
 
-  // Desktop sidebar mode with localStorage persistence
-  const [desktopSidebarMode, setDesktopSidebarMode] = useState<'expanded' | 'collapsed'>(() => {
-    const stored = localStorage.getItem(SIDEBAR_MODE_KEY);
-    return stored === 'expanded' ? 'expanded' : 'collapsed';
-  });
-
-  // Mobile sidebar state
+  const [desktopSidebarVisible, setDesktopSidebarVisible] = useState(
+    () => localStorage.getItem(SIDEBAR_VISIBLE_KEY) !== 'false',
+  );
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
-  // Sidebar width with localStorage persistence
   const [sidebarWidth, setSidebarWidth] = useState(() => {
     const stored = localStorage.getItem(SIDEBAR_WIDTH_KEY);
     if (stored) {
@@ -82,12 +90,9 @@ export function AppLayout() {
     localStorage.setItem(SIDEBAR_WIDTH_KEY, String(clamped));
   }, []);
 
-  const toggleDesktopSidebar = useCallback(() => {
-    setDesktopSidebarMode(prev => {
-      const next = prev === 'expanded' ? 'collapsed' : 'expanded';
-      localStorage.setItem(SIDEBAR_MODE_KEY, next);
-      return next;
-    });
+  const setDesktopVisible = useCallback((visible: boolean) => {
+    setDesktopSidebarVisible(visible);
+    localStorage.setItem(SIDEBAR_VISIBLE_KEY, String(visible));
   }, []);
 
   const toggleMobileSidebar = useCallback(() => setMobileSidebarOpen(prev => !prev), []);
@@ -103,21 +108,36 @@ export function AppLayout() {
         </Suspense>
       )}
 
-      <AppNavbar
-        mobileSidebarOpen={shouldHideSidebar ? undefined : mobileSidebarOpen}
-        toggleMobileSidebar={shouldHideSidebar ? undefined : toggleMobileSidebar}
-      />
+      <MobileBar open={mobileSidebarOpen} onToggle={toggleMobileSidebar} />
 
       <div className='flex flex-1 overflow-hidden'>
-        {!shouldHideSidebar && (
-          <Sidebar
-            desktopMode={desktopSidebarMode}
-            mobileOpen={mobileSidebarOpen}
-            onToggleDesktop={toggleDesktopSidebar}
-            onCloseMobile={closeMobileSidebar}
-            width={sidebarWidth}
-            onWidthChange={handleWidthChange}
-          />
+        <Sidebar
+          desktopVisible={desktopSidebarVisible}
+          mobileOpen={mobileSidebarOpen}
+          onHideDesktop={() => setDesktopVisible(false)}
+          onCloseMobile={closeMobileSidebar}
+          width={sidebarWidth}
+          onWidthChange={handleWidthChange}
+        />
+
+        {/* Own column rather than an overlay: pages with sticky headers would cover it */}
+        {!desktopSidebarVisible && (
+          <div className='border-border bg-sidebar hidden w-10 shrink-0 flex-col items-center border-r pt-2 md:flex'>
+            <Tooltip delayDuration={500}>
+              <TooltipTrigger asChild>
+                <Button
+                  variant='ghost'
+                  size='icon-sm'
+                  onClick={() => setDesktopVisible(true)}
+                  className='text-muted-foreground'
+                  aria-label='Show sidebar'
+                >
+                  <PanelLeftOpenIcon className='size-4' />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side='right'>Show sidebar</TooltipContent>
+            </Tooltip>
+          </div>
         )}
 
         <main className='text-foreground flex flex-1 flex-col overflow-auto'>

@@ -3,19 +3,20 @@
  */
 
 import { useState, useCallback } from 'react';
+import { UsersIcon } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { AddStudiesForm, type AddStudiesFormState } from '../add-studies/AddStudiesForm';
 import type { MergedStudy } from '@/hooks/useAddStudies/deduplication';
 import { GoogleDrivePickerModal } from '../google-drive/GoogleDrivePickerModal';
 import { StudyCard } from './study-card/StudyCard';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
-import { useAllStudies, useProjectMeta } from '@/project/workspace-data';
+import { useAllStudies } from '@/project/workspace-data';
 import { useAddStudies } from '@/hooks/useAddStudies';
 import { useProjectExport } from '@/hooks/useProjectExport';
 import { project } from '@/project';
 import { useProjectContext } from '../ProjectContext';
 import { saveFormState } from '@/lib/formStatePersistence.js';
-import { ProjectSetupPanel } from '../setup/ProjectSetupPanel';
-import { ProjectSetupCard } from '../setup/ProjectSetupCard';
 
 export function AllStudiesTab() {
   const { projectId, getMember, isOwner, openAssignSheet } = useProjectContext();
@@ -29,8 +30,7 @@ export function AllStudiesTab() {
   const { exportStudyCsv, exportStudyPdf } = useProjectExport(projectId);
   const connectionState = useProjectStore(s => selectConnectionPhase(s, projectId));
   const hasData = connectionState.phase === 'synced' || studies.length > 0;
-  const meta = useProjectMeta(projectId);
-  const showSetup = isOwner && meta.setupStep !== null;
+  const unassignedCount = studies.filter(s => !s.reviewer1 && !s.reviewer2).length;
 
   const handleSaveState = useCallback(
     async (state: AddStudiesFormState) => {
@@ -68,18 +68,16 @@ export function AllStudiesTab() {
 
   return (
     <div>
-      {hasData && studies.length === 0 && showSetup && <ProjectSetupPanel />}
-
       {/* Empty project: the add form is the centerpiece. Once studies exist it
           moves to the Add studies sheet in the project header. */}
-      {hasData && studies.length === 0 && !showSetup && (
+      {hasData && studies.length === 0 && (
         <>
           <div className='mb-4'>
             <h2 className='text-foreground text-lg font-semibold'>Add your first study</h2>
             <p className='text-muted-foreground mt-1 text-sm'>
               Bring in the papers you plan to appraise. Upload PDFs, import a file from your
               reference manager, look up DOIs or PubMed IDs, or pull PDFs from Google Drive. Once
-              studies are here, you can assign two reviewers to each one.
+              studies are here, you can assign one or two reviewers to each one.
             </p>
           </div>
           <AddStudiesForm
@@ -98,7 +96,22 @@ export function AllStudiesTab() {
         </div>
       )}
 
-      {studies.length > 0 && showSetup && <ProjectSetupCard />}
+      {studies.length > 0 && (
+        <div className='mb-3 flex items-center justify-between'>
+          <span className='text-muted-foreground text-sm'>
+            {studies.length} {studies.length === 1 ? 'study' : 'studies'}
+          </span>
+          {isOwner && unassignedCount > 0 && (
+            <Button variant='outline' size='sm' onClick={() => openAssignSheet()}>
+              <UsersIcon className='size-4' />
+              Assign reviewers
+              <Badge variant='info' className='min-w-5 px-1.5 tabular-nums'>
+                {unassignedCount}
+              </Badge>
+            </Button>
+          )}
+        </div>
+      )}
 
       {studies.length > 0 && (
         <div className='flex flex-col gap-2'>
