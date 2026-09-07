@@ -45,7 +45,11 @@ export function RemoteCursors({ users, containerScrollY }: RemoteCursorsProps) {
   };
 
   return (
-    <div className='pointer-events-none absolute inset-0' style={{ zIndex: 9999 }}>
+    <div
+      className='pointer-events-none absolute inset-0'
+      style={{ zIndex: 9999 }}
+      data-testid='remote-cursors'
+    >
       {activeCursors.map(user => {
         if (!user.cursor) return null;
         const x = user.cursor.x;

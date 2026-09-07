@@ -65,7 +65,11 @@ export function AccountMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button type='button' className={`${TRIGGER_CLASS} aria-expanded:bg-muted`}>
+        <button
+          type='button'
+          className={`${TRIGGER_CLASS} aria-expanded:bg-muted`}
+          data-testid='account-menu'
+        >
           <Logo />
           <span className='truncate'>{displayName}</span>
           <ChevronDownIcon className='text-muted-foreground size-3.5 shrink-0' aria-hidden='true' />

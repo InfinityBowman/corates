@@ -342,7 +342,7 @@ test('Project actions work after cold reload (no warm query cache)', async ({ co
 
   // Attempt a mutation: confirming the dialog calls project.study.delete(),
   // which requires connectionPool.getActiveOps() to be non-null.
-  await page.locator('button:has(svg.lucide-ellipsis-vertical)').first().click();
+  await page.getByTestId('study-card').first().getByTestId('study-card-menu').click();
   await page.getByRole('menuitem', { name: /Delete Study/i }).click();
   await page.getByRole('button', { name: 'Delete study', exact: true }).click();
   await page.waitForTimeout(1000);

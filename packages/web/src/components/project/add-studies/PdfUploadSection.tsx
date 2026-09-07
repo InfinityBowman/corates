@@ -39,7 +39,7 @@ export function PdfUploadSection({ studies }: PdfUploadSectionProps) {
           </p>
           <p className='text-muted-foreground/70 mt-1 text-xs'>PDF files only</p>
         </FileUploadDropzone>
-        <FileUploadHiddenInput />
+        <FileUploadHiddenInput data-testid='add-studies-file-input' />
       </FileUpload>
 
       {pendingPdfs.length > 0 && (

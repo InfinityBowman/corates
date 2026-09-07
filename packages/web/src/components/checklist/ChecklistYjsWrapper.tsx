@@ -329,7 +329,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
     <>
       {/* Complete confirmation dialog */}
       <AlertDialog open={completeDialogOpen} onOpenChange={setCompleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent data-testid='mark-complete-dialog'>
           <AlertDialogHeader>
             <AlertDialogTitle>Mark Appraisal as Complete?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -343,7 +343,9 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
             <Button variant='outline' onClick={() => setCompleteDialogOpen(false)}>
               Cancel
             </Button>
-            <AlertDialogAction onClick={confirmMarkComplete}>Mark Complete</AlertDialogAction>
+            <AlertDialogAction onClick={confirmMarkComplete} data-testid='mark-complete-confirm'>
+              Mark Complete
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

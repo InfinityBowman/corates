@@ -154,7 +154,11 @@ export function AddStudiesForm({
               Cancel
             </Button>
           )}
-          <Button onClick={handleSubmit} disabled={isSubmitting || studies.totalStudyCount === 0}>
+          <Button
+            onClick={handleSubmit}
+            disabled={isSubmitting || studies.totalStudyCount === 0}
+            data-testid='add-studies-upload'
+          >
             {isSubmitting ?
               <>
                 <Spinner size='sm' variant='current' />

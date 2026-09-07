@@ -157,7 +157,10 @@ export function StudyCardHeader({
         }
 
         <DropdownMenu>
-          <DropdownMenuTrigger className='text-muted-foreground/70 hover:bg-secondary hover:text-secondary-foreground rounded-md p-1.5 transition-colors'>
+          <DropdownMenuTrigger
+            data-testid='study-card-menu'
+            className='text-muted-foreground/70 hover:bg-secondary hover:text-secondary-foreground rounded-md p-1.5 transition-colors'
+          >
             <MoreVerticalIcon className='size-4' />
           </DropdownMenuTrigger>
           <DropdownMenuContent align='end'>

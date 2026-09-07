@@ -68,15 +68,15 @@ async function addAndCompleteChecklist(page: Page, projectId: string, answer: 'Y
 async function sendBackFirstGroup(page: Page, expectsConsensusWarning: boolean) {
   await page.getByRole('button', { name: 'Send Back', exact: true }).first().click();
 
-  const dialog = page.getByRole('alertdialog');
-  await expect(dialog.getByText('Send Back to To-Do')).toBeVisible({ timeout: 5_000 });
+  const dialog = page.getByTestId('send-back-dialog');
+  await expect(dialog).toBeVisible({ timeout: 5_000 });
   if (expectsConsensusWarning) {
     await expect(dialog.getByText(/consensus checklist/i)).toBeVisible();
   } else {
     await expect(dialog.getByText(/consensus checklist/i)).toBeHidden();
   }
 
-  await dialog.getByRole('button', { name: 'Send Back', exact: true }).click();
+  await dialog.getByTestId('send-back-confirm').click();
   await expect(dialog).toBeHidden({ timeout: 10_000 });
 }
 

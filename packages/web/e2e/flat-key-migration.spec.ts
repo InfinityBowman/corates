@@ -109,6 +109,7 @@ test.describe('Flat-key migration', () => {
 
     // Count selected answers before rewrite
     const selectedBefore = await countSelectedToggleButtons(page, 'Y');
+    expect(selectedBefore).toBeGreaterThan(0);
 
     // Rewrite the rows into a legacy nested Y.Doc, then reload -- the
     // one-time converter (incl. flat-key migration) runs
@@ -134,17 +135,9 @@ test.describe('Flat-key migration', () => {
   });
 });
 
-async function countSelectedToggleButtons(
+function countSelectedToggleButtons(
   page: import('@playwright/test').Page,
   name: string,
 ): Promise<number> {
-  const buttons = page.getByRole('button', { name, exact: true });
-  const count = await buttons.count();
-  let selected = 0;
-  for (let i = 0; i < count; i++) {
-    const ariaPressed = await buttons.nth(i).getAttribute('aria-pressed');
-    const dataState = await buttons.nth(i).getAttribute('data-state');
-    if (ariaPressed === 'true' || dataState === 'on') selected++;
-  }
-  return selected;
+  return page.getByRole('button', { name, exact: true, pressed: true }).count();
 }

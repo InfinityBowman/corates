@@ -271,8 +271,8 @@ test.describe('Auth flows', () => {
         timeout: 15_000,
       });
 
-      // Open user dropdown (button in nav with user name) and click sign out
-      await page.locator('nav button', { hasText: scenario.userA.name.split(' ')[0] }).click();
+      // Open the sidebar account menu and click sign out
+      await page.getByTestId('account-menu').click();
       await page.getByRole('menuitem', { name: /Sign Out/i }).click();
       // Sign-out keeps the user on /dashboard in signed-out state; the nav
       // swaps the user dropdown for a Sign In link once the session clears

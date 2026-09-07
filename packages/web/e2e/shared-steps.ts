@@ -68,7 +68,7 @@ export async function answerAllROB2Domains(
 /**
  * Answer a single signalling question, scoped to its domain section and the
  * question row matched by text. Works for both ROB2 and ROBINS-I editors
- * (both render rows as bordered divs with toggle buttons inside
+ * (both render a `signalling-question` row with toggle buttons inside
  * `#domain-section-*` containers).
  */
 export async function answerSignallingQuestion(
@@ -79,7 +79,7 @@ export async function answerSignallingQuestion(
 ) {
   const section = page.locator(`#domain-section-${domainKey}`);
   await section.scrollIntoViewIfNeeded();
-  const row = section.locator('div.border-b').filter({ hasText: questionText });
+  const row = section.getByTestId('signalling-question').filter({ hasText: questionText });
   await expect(row).toHaveCount(1, { timeout: 5_000 });
   await row.getByRole('button', { name: answer, exact: true }).click();
 }
@@ -118,9 +118,9 @@ const ROBINSI_NO_CODES = ['N', 'SN', 'WN', 'PN'];
  * between domains. Assumes the default ITT (not per-protocol) domain set: D1 = domain1a,
  * D2-D6. Section B must be answered first so domains are visible.
  *
- * Each signalling question renders its option buttons in a `shrink-0 flex-wrap` group,
- * which is unique to signalling questions (judgement/direction buttons use other layouts),
- * so iterating those groups yields exactly one answer per question.
+ * Each `signalling-question` row holds only that question's option buttons
+ * (judgement/direction buttons live outside the rows), so iterating rows yields
+ * exactly one answer per question.
  */
 export async function answerAllROBINSIDomains(
   page: Page,
@@ -141,16 +141,16 @@ export async function answerAllROBINSIDomains(
     await page.getByRole('button', { name: pill, exact: true }).first().click();
 
     const section = page.locator(`#domain-section-${key}`);
-    const optionGroups = section.locator('div.shrink-0.flex-wrap');
-    await expect(optionGroups.first()).toBeVisible({ timeout: 5_000 });
+    const rows = section.getByTestId('signalling-question');
+    await expect(rows.first()).toBeVisible({ timeout: 5_000 });
 
-    const groupCount = await optionGroups.count();
-    for (let i = 0; i < groupCount; i++) {
-      const group = optionGroups.nth(i);
+    const rowCount = await rows.count();
+    for (let i = 0; i < rowCount; i++) {
+      const row = rows.nth(i);
 
       let answered = false;
       for (const code of preferred) {
-        const btn = group.getByRole('button', { name: code, exact: true });
+        const btn = row.getByRole('button', { name: code, exact: true });
         if ((await btn.count()) > 0) {
           await btn.first().click();
           answered = true;
@@ -159,7 +159,7 @@ export async function answerAllROBINSIDomains(
       }
       // No preferred code in this scale: fall back to the first definite option.
       if (!answered) {
-        await group.getByRole('button').first().click();
+        await row.getByRole('button').first().click();
       }
     }
   }
@@ -195,8 +195,9 @@ export async function createProject(page: Page, name: string): Promise<string> {
   const newProjectBtn = page.locator('header').getByRole('button', { name: 'New project' });
   await newProjectBtn.click();
 
-  await page.getByPlaceholder('Project name').fill(name);
-  const createBtn = page.getByRole('button', { name: 'Create project' });
+  const dialog = page.getByTestId('create-project-dialog');
+  await dialog.getByLabel('Project name').fill(name);
+  const createBtn = dialog.getByTestId('create-project-submit');
   await expect(createBtn).toBeEnabled({ timeout: 10_000 });
   await createBtn.click();
 
@@ -228,19 +229,15 @@ export async function addStudyViaPdf(page: Page, fixture = 'Petrie2019.pdf') {
   // Upload through the header's Add studies sheet rather than the inline
   // form an empty project shows, so the flow is the same at any study count.
   await page.getByRole('button', { name: 'Add studies' }).first().click();
-  const sheet = page.getByRole('dialog');
-  await expect(sheet.getByRole('heading', { name: 'Add studies' })).toBeVisible({
-    timeout: 10_000,
-  });
+  const sheet = page.getByTestId('add-studies-sheet');
+  await expect(sheet).toBeVisible({ timeout: 10_000 });
 
-  const fileInput = sheet.locator('input[type="file"][accept*="pdf"]');
-  await fileInput.setInputFiles(path.join(FIXTURES_DIR, fixture));
+  await sheet.getByTestId('add-studies-file-input').setInputFiles(path.join(FIXTURES_DIR, fixture));
 
-  // Wait for metadata extraction to finish and the study to appear in staged list
-  await expect(sheet.getByRole('button', { name: /Upload 1 Stud/i })).toBeVisible({
-    timeout: 30_000,
-  });
-  await sheet.getByRole('button', { name: /Upload 1 Stud/i }).click();
+  // The upload button only renders once metadata extraction has staged the study.
+  const uploadBtn = sheet.getByTestId('add-studies-upload');
+  await expect(uploadBtn).toHaveText(/Upload 1 stud/i, { timeout: 30_000 });
+  await uploadBtn.click();
   await expect(sheet).toBeHidden({ timeout: 10_000 });
 
   await expect(studyCardTitle(page, fixture.replace(/\.pdf$/i, ''))).toBeVisible({
@@ -252,25 +249,19 @@ export async function addStudyViaPdf(page: Page, fixture = 'Petrie2019.pdf') {
  * Assigns reviewers to the first study in the All Studies tab.
  */
 export async function assignReviewers(page: Page) {
-  await page.locator('button:has(svg.lucide-ellipsis-vertical)').first().click();
+  await page.getByTestId('study-card').first().getByTestId('study-card-menu').click();
   await page.getByRole('menuitem', { name: /Assign Reviewers/i }).click();
-  await expect(page.getByRole('heading', { name: 'Assign reviewers' })).toBeVisible({
-    timeout: 5_000,
-  });
 
-  // By name: each reviewer picker popover is also role="dialog" while it
-  // animates out, so the bare role can match two elements.
-  const dialog = page.getByRole('dialog', { name: 'Assign reviewers' });
+  const dialog = page.getByTestId('assign-reviewers-sheet');
+  await expect(dialog).toBeVisible({ timeout: 5_000 });
 
-  // The sheet is scoped to this one study, so its two reviewer pickers are
-  // the only comboboxes; target them by index rather than by placeholder text.
-  const triggers = dialog.getByRole('combobox');
-  await triggers.nth(0).click();
+  // The sheet is scoped to this one study, so each picker testid matches once.
+  await dialog.getByTestId('reviewer-picker-1').click();
   await page.getByRole('option', { name: /Alice/i }).click();
   // Wait for the picker popover to fully close before opening the next one;
   // without this the first selection can be lost.
   await expect(page.getByRole('listbox')).toBeHidden({ timeout: 5_000 });
-  await triggers.nth(1).click();
+  await dialog.getByTestId('reviewer-picker-2').click();
   // Members added out-of-band propagate via the membership poke (session
   // refresh -> members refetch); the open dropdown re-renders when the list
   // lands, so wait for the option rather than requiring a page reload.
@@ -318,12 +309,9 @@ export async function markChecklistComplete(page: Page) {
   // Click the header "Mark Complete" button
   await page.getByRole('button', { name: /Mark Complete/i }).click();
 
-  // Wait for the confirmation dialog to appear
-  await expect(page.getByText('Mark Appraisal as Complete?')).toBeVisible({ timeout: 5_000 });
-
-  // Click the "Mark Complete" button inside the dialog
-  const dialog = page.getByRole('alertdialog');
-  await dialog.getByRole('button', { name: /Mark Complete/i }).click();
+  const dialog = page.getByTestId('mark-complete-dialog');
+  await expect(dialog).toBeVisible({ timeout: 5_000 });
+  await dialog.getByTestId('mark-complete-confirm').click();
 
   await expect(dialog).toBeHidden({ timeout: 10_000 });
 }
@@ -353,7 +341,9 @@ export async function setupProjectWithStudy(
   // Verify the member appears in the team list before continuing
   await page.reload();
   await page.getByRole('tab', { name: /Overview/i }).click();
-  await expect(page.getByText(scenario.userB.name)).toBeVisible({ timeout: 10_000 });
+  await expect(
+    page.locator(`[data-testid="member-row"][data-user-id="${scenario.userB.id}"]`),
+  ).toBeVisible({ timeout: 10_000 });
 
   await addStudyViaPdf(page);
   await assignReviewers(page);

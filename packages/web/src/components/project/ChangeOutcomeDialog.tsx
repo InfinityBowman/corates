@@ -110,7 +110,7 @@ export function ChangeOutcomeDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent>
+      <DialogContent data-testid='change-outcome-dialog'>
         <DialogHeader>
           <DialogTitle>Change outcome</DialogTitle>
           <DialogDescription>

@@ -201,7 +201,7 @@ export function PricingTable({
 
     if (plan.cta === 'contact') {
       return (
-        <Button asChild size='lg' className={className}>
+        <Button asChild size='lg' className={className} data-testid='plan-card-cta'>
           <Link to='/contact'>{getButtonText(plan)}</Link>
         </Button>
       );
@@ -209,7 +209,7 @@ export function PricingTable({
 
     if (isMarketing) {
       return (
-        <Button asChild size='lg' className={className}>
+        <Button asChild size='lg' className={className} data-testid='plan-card-cta'>
           <Link to={buildSignUpUrl(plan)}>{getButtonText(plan)}</Link>
         </Button>
       );
@@ -222,6 +222,7 @@ export function PricingTable({
         className={className}
         onClick={() => handleAction(plan)}
         disabled={isButtonDisabled(plan)}
+        data-testid='plan-card-cta'
       >
         {loadingTier === plan.tier ?
           <span className='flex items-center justify-center gap-2'>
@@ -240,6 +241,7 @@ export function PricingTable({
     return (
       <div
         key={plan.tier}
+        data-testid={`plan-card-${plan.tier}`}
         className={`relative flex flex-col rounded-2xl border-2 p-6 transition-all duration-300 ${
           isCurrent ? 'border-primary bg-card shadow-lg'
           : isPopular ? 'border-primary/70 bg-card shadow-xl hover:shadow-2xl'

@@ -180,6 +180,7 @@ export function AddStudiesSheet({ open, onOpenChange, onAdded }: AddStudiesSheet
           side='right'
           className='w-full gap-0 overflow-y-auto sm:max-w-3xl'
           onInteractOutside={handleInteractOutside}
+          data-testid='add-studies-sheet'
         >
           <SheetHeader>
             <SheetTitle>Add studies</SheetTitle>

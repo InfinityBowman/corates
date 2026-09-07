@@ -42,7 +42,7 @@ export function SendBackToTodoButton({
       </Button>
 
       <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
-        <AlertDialogContent>
+        <AlertDialogContent data-testid='send-back-dialog'>
           <AlertDialogHeader>
             <AlertDialogIcon variant='warning' />
             <div>
@@ -57,7 +57,9 @@ export function SendBackToTodoButton({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={onSendBack}>Send Back</AlertDialogAction>
+            <AlertDialogAction onClick={onSendBack} data-testid='send-back-confirm'>
+              Send Back
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

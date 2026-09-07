@@ -28,6 +28,10 @@ test.afterAll(async () => {
   if (scenario) await cleanupAdminScenario(scenario);
 });
 
+function adminUserLink(page: Page, userId: string) {
+  return page.locator(`[data-testid="admin-user-link"][data-user-id="${userId}"]`);
+}
+
 async function loginAndGoto(
   page: Page,
   context: BrowserContext,
@@ -85,9 +89,9 @@ test('Admin dashboard, user detail (loader pilot), and access control', async ({
   // ── Search for the regular user and navigate via click (client-side loader) ──
   const searchInput = page.getByPlaceholder('Search by name or email...');
   await searchInput.fill(scenario.regularUser.email);
-  // By href, not name: the search is debounced, and a retry of this spec
+  // By user id, not name: the search is debounced, and a retry of this spec
   // leaves an earlier "Regular User" in the list that the bare name matches.
-  const regularRowLink = page.locator(`a[href*="/admin/users/${scenario.regularUser.id}"]`).first();
+  const regularRowLink = adminUserLink(page, scenario.regularUser.id);
   await expect(regularRowLink).toBeVisible({ timeout: 10_000 });
 
   await regularRowLink.click();
@@ -102,9 +106,9 @@ test('Admin dashboard, user detail (loader pilot), and access control', async ({
 
   await searchInput.fill(scenario.admin.email);
   // The users list is global and churns while parallel workers seed their own
-  // users; target the row by href so a mid-render reorder cannot swap the
+  // users; target the row by user id so a mid-render reorder cannot swap the
   // click onto another user's link.
-  const adminRowLink = page.locator(`a[href*="/admin/users/${scenario.admin.id}"]`).first();
+  const adminRowLink = adminUserLink(page, scenario.admin.id);
   await expect(adminRowLink).toBeVisible({ timeout: 10_000 });
 
   await adminRowLink.click();
