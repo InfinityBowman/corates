@@ -23,6 +23,11 @@ import { verifyAuth } from '../auth/config';
 import { captureError, warn, info } from '../lib/logger';
 import type { Env } from '../types';
 import { buildSyncVerdict } from './authorize';
+import { createMutationLogger } from './mutation-log';
+
+// Module-level so the coalescing windows survive across the instances one
+// isolate serves; the key carries the workspace id, so nothing crosses over.
+const logMutation = createMutationLogger(line => info('sync.mutation', line));
 
 export class WorkspaceDO extends createWorkspaceDO({
   app: syncApp,
@@ -56,6 +61,7 @@ export class WorkspaceDO extends createWorkspaceDO({
       ...(detail.length > 0 && { detail }),
     });
   },
+  onMutationCommitted: logMutation,
 }) {}
 
 export const SYNC_PATH_PREFIX = '/api/sync';

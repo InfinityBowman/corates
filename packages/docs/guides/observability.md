@@ -122,11 +122,26 @@ Two things still log unscoped:
   on `projectId`, not `requestId` - the engine stamps every diagnostic with the workspace it
   came from (`@cf-sync/server` 0.2.0), and a workspace id _is_ a projectId here. A requestId
   would be meaningless on them: init failures fire at DO construction and internal errors on
-  a live socket, both outside any request.
+  a live socket, both outside any request. The same file passes `onMutationCommitted`
+  (`@cf-sync/server` 0.2.1), which is where `sync.mutation` comes from - see below.
 - **Module-init and test code**, which has no request to attach to.
 
 Hibernated WebSocket callbacks (`webSocketMessage`, `webSocketError`) also fall outside: they
 fire long after the originating request, so there is no scope left to inherit.
+
+### Workspace mutations
+
+Every committed mutation in a project emits one `sync.mutation` line from
+`sync/mutation-log.ts` with `projectId`, `name` (the mutator), `userId`, `tables`,
+`rowCount`, `version` and `count`. Never args or row values: answers are research data.
+Rejected mutations, migrations and admin imports emit nothing, since the engine only fires
+the hook after a commit that wrote rows.
+
+`checklist.updateAnswer`, `checklist.setText`, `annotation.*` and
+`reconciliation.saveProgress` fire per field edit, so they coalesce into one line per user,
+mutation and checklist per 60 second window, emitted when the window closes with `count`
+holding how many it stands for. Sum `count` rather than counting lines. The 60 seconds were
+chosen before any production measurement; adjust if the `Mutations committed` panel says so.
 
 ## Levels
 
@@ -172,6 +187,13 @@ matching `/email|password|token|secret|authorization|cookie|userid/i` are droppe
 sends it custom events. Its custom-event history from May to August 2026 was copied into
 Loki with `source: plausible` and no `userId` (see `infra/observability/README.md`).
 
+Completion has its own events so the funnel is measurable. `client.checklist.completed`
+fires when a reviewer confirms Mark Complete, with `type` and the resulting `status`;
+`client.reconciliation.finalized` remains the consolidated checklist after reconciliation.
+`client.local_appraisal.completed` fires once per local checklist when its score first
+becomes computable (the same `scoreChecklistRows` completeness export uses), tracked in
+localStorage so re-edits never re-emit.
+
 `bestEffort` in `@/lib/errorLogger` follows the same split: it warns by default and only reports
 when the call site passes `capture: true`. IndexedDB cache writes fail routinely under Safari
 private browsing and quota pressure, so they stay on the console; the rollback deletes do pass
@@ -191,6 +213,15 @@ Grafana lives at `grafana.jacobmaynard.dev` with one dashboard, `CoRATES Logs`.
 {service_name="corates-workers-prod"} | json | service="corates-web-client"   # browser events
 {service_name="corates-workers-prod"} | json | message="client.sync.fatal"
 {service_name="corates-workers-prod"} | json | message="client.checklist.created"   # usage events
+{service_name="corates-workers-prod"} | json | message="sync.mutation" | projectId="..."   # work inside one project
+```
+
+```logql
+# Who did appraisal work in which project today
+sum by (projectId, userId) (sum_over_time({service_name="corates-workers-prod"} | json | message="sync.mutation" | unwrap count [24h]))
+
+# Completion rate by instrument: completed over created
+sum by (type) (count_over_time({service_name="corates-workers-prod"} | json | message="client.checklist.completed" [30d]))
 ```
 
 Retention is 90 days (`limits_config.retention_period`). Deploying and operating the stack

@@ -253,6 +253,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
       updates: { status: nextStatus as ChecklistStatus },
       now: Date.now(),
     });
+    clientLogger.info('client.checklist.completed', { type: checklistType, status: nextStatus });
     if (nextStatus === CHECKLIST_STATUS.FINALIZED) {
       showToast.success('Appraisal Completed', 'This appraisal has been marked as completed.');
     } else {
