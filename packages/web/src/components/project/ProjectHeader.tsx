@@ -1,11 +1,10 @@
 /**
- * ProjectHeader - one sticky row: project name, role, tabs, then the actions.
+ * ProjectHeader - one sticky row: project name, tabs, then the actions.
  * Must render inside the project's <Tabs> so the tab list can bind to it.
  */
 
 import { useState, useEffect } from 'react';
 import { useProjectContext } from './ProjectContext';
-import { Badge } from '@/components/ui/badge';
 import { InlineEdit } from '@/components/ui/inline-edit';
 import { TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProjectHeaderActions } from './ProjectHeaderActions';
@@ -62,11 +61,6 @@ export function ProjectHeader({ name, onRename, tabs }: ProjectHeaderProps) {
           ariaLabel='Edit project name'
           className='text-foreground truncate text-sm font-semibold'
         />
-        {userRole && (
-          <Badge variant='outline' className='shrink-0 capitalize'>
-            {userRole}
-          </Badge>
-        )}
       </div>
 
       <div className='bg-border h-5 w-px shrink-0' aria-hidden='true' />

@@ -5,7 +5,7 @@
  * sidebar while on /settings routes.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useEffectEvent } from 'react';
 import { useLocation } from '@tanstack/react-router';
 import { createPortal } from 'react-dom';
 import { PanelLeftCloseIcon, XIcon } from 'lucide-react';
@@ -43,10 +43,15 @@ export function Sidebar({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [mobileOpen, onCloseMobile]);
 
-  // Close mobile on route change
-  useEffect(() => {
+  // Close mobile on route change. Reads mobileOpen through an event so the
+  // effect depends on the pathname alone; with mobileOpen as a dep, opening
+  // the sidebar re-ran the effect and closed it immediately.
+  const closeMobileOnNavigate = useEffectEvent(() => {
     if (mobileOpen) onCloseMobile();
-  }, [pathname, mobileOpen, onCloseMobile]);
+  });
+  useEffect(() => {
+    closeMobileOnNavigate();
+  }, [pathname]);
 
   const handleResizeStart = useCallback(
     (e: React.MouseEvent) => {
