@@ -176,11 +176,14 @@ mirror should shrink to the failure events that Plausible never sees.
 > **Resolved 2026-09-06, the other way.** `track()` and `@/lib/analytics` are gone; every
 > product event now goes straight to `clientLogger`, so Loki is the single record and
 > Plausible keeps only pageviews and its own autocapture. The undercount is accepted as the
-> price of one convention. Custom-event history in ClickHouse stops at this change, and the
+> price of one convention. Custom-event history in ClickHouse stops at this change. The
 > events renamed with it (`Checklist:Completed` to `client.reconciliation.finalized`,
 > `LocalAppraisal` to `client.local_appraisal.created`, `LocalAppraisal:PDF` to
-> `client.local_appraisal.pdf_attached`, `404` to `client.route.not_found`) do not join up
-> with the old series in either store.
+> `client.local_appraisal.pdf_attached`, `404` to `client.route.not_found`) were bridged
+> the same day: the Plausible history from May 2026 was copied into Loki under the new
+> names (`infra/observability/scripts/backfill-plausible-events.mjs`, see the stack README),
+> and the three product-usage stat panels match both names for the week the Loki mirror
+> ran before the rename.
 
 ### Fallback
 

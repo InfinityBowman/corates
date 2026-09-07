@@ -826,7 +826,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"client.reconciliation.finalized\" | userId=~`$user` [$__auto]))"
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=~`client\\.(reconciliation\\.finalized|checklist\\.completed)` | userId=~`$user` [$__auto]))"
         }
       ],
       "fieldConfig": {
@@ -855,7 +855,7 @@
         "textMode": "auto",
         "justifyMode": "auto"
       },
-      "description": "The core product outcome: two reviewers reconciled and the consolidated appraisal was finalized."
+      "description": "The core product outcome: two reviewers reconciled and the consolidated appraisal was finalized. The regex also matches the pre-2026-09-06 name client.checklist.completed for the week the Loki mirror ran before the rename."
     },
     {
       "id": 17,
@@ -969,7 +969,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"client.local_appraisal.created\" | userId=~`$user` [$__auto]))"
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=~`client\\.local_appraisal(\\.created)?` | userId=~`$user` [$__auto]))"
         }
       ],
       "fieldConfig": {
@@ -1017,7 +1017,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=\"client.local_appraisal.pdf_attached\" | userId=~`$user` [$__auto]))"
+          "expr": "sum(count_over_time({service_name=\"corates-workers-prod\", deployment_environment_name=\"production\"} | json | message=~`client\\.local_appraisal\\.(pdf_attached|pdf)` | userId=~`$user` [$__auto]))"
         }
       ],
       "fieldConfig": {

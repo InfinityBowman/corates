@@ -24,7 +24,9 @@ common:
 
 schema_config:
   configs:
-    - from: '2026-08-08'
+    # Starts before the May 2026 Plausible history that scripts/backfill-plausible-events.mjs
+    # copied in; Loki refuses to store chunks from before the first schema period.
+    - from: '2026-05-01'
       store: tsdb
       object_store: s3
       schema: v13
