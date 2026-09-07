@@ -1,8 +1,9 @@
 /**
  * CreateProjectModal - Composer-style dialog for creating a new project.
  *
- * Collects project name and organization (if user has multiple), then lands
- * the owner on the Studies tab where first-run setup lives.
+ * Collects a project name, then lands the owner on the Studies tab where
+ * first-run setup lives. The project always belongs to the user's own
+ * workspace, since only workspace owners can create projects.
  */
 
 import { useState, useEffect } from 'react';
@@ -12,13 +13,6 @@ import { CheckIcon, ChevronRightIcon, CommandIcon, CornerDownLeftIcon } from 'lu
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { getInitials } from '@/components/ui/avatar';
 import { showToast } from '@/lib/toast';
 import { useOrgs } from '@/hooks/useOrgs';
@@ -69,30 +63,20 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
   const queryClient = useQueryClient();
 
   const [projectName, setProjectName] = useState('');
-  const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
   const [selectedTools, setSelectedTools] = useState<Set<ChecklistType>>(() => new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { orgs, isLoading: orgsLoading } = useOrgs();
-
-  useEffect(() => {
-    if (orgs.length > 1 && !selectedOrgId) {
-      setSelectedOrgId(orgs[0].id);
-    }
-  }, [orgs, selectedOrgId]);
-
-  const resolvedOrgId = orgs.length === 1 ? orgs[0].id : selectedOrgId;
-  const resolvedOrg = orgs.find(org => org.id === resolvedOrgId);
+  const { orgs } = useOrgs();
+  const resolvedOrg = orgs[0];
 
   useEffect(() => {
     if (!open) {
       setProjectName('');
-      setSelectedOrgId(null);
       setSelectedTools(new Set());
     }
   }, [open]);
 
-  const canSubmit = projectName.trim().length > 0 && !isSubmitting && !!resolvedOrgId;
+  const canSubmit = projectName.trim().length > 0 && !isSubmitting && !!resolvedOrg;
 
   const toggleTool = (type: ChecklistType) => {
     setSelectedTools(prev => {
@@ -106,13 +90,9 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
 
-    if (!projectName.trim()) return;
+    if (!projectName.trim() || !resolvedOrg) return;
 
-    const orgId = resolvedOrgId;
-    if (!orgId) {
-      showToast.error('Choose a team', 'Select which team this project belongs to.');
-      return;
-    }
+    const orgId = resolvedOrg.id;
 
     setIsSubmitting(true);
     try {
@@ -185,26 +165,12 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
 
         <form onSubmit={handleSubmit} onKeyDown={handleKeyDown}>
           <div className='text-muted-foreground flex items-center gap-2 px-4 pt-3 text-xs'>
-            {!orgsLoading && orgs.length > 1 ?
-              <Select value={selectedOrgId || ''} onValueChange={setSelectedOrgId}>
-                <SelectTrigger size='sm' aria-label='Team' className='h-6 text-xs'>
-                  <SelectValue placeholder='Select a team' />
-                </SelectTrigger>
-                <SelectContent>
-                  {orgs.map((org: { id: string; name: string }) => (
-                    <SelectItem key={org.id} value={org.id}>
-                      {org.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            : <span className='bg-muted text-muted-foreground inline-flex h-6 items-center gap-1.5 rounded-md px-1.5 font-medium'>
-                <span className='bg-primary/15 text-primary flex size-3.5 items-center justify-center rounded-sm text-[9px] font-semibold'>
-                  {getInitials(resolvedOrg?.name).charAt(0)}
-                </span>
-                {resolvedOrg?.name}
+            <span className='bg-muted text-muted-foreground inline-flex h-6 items-center gap-1.5 rounded-md px-1.5 font-medium'>
+              <span className='bg-primary/15 text-primary flex size-3.5 items-center justify-center rounded-sm text-[9px] font-semibold'>
+                {getInitials(resolvedOrg?.name).charAt(0)}
               </span>
-            }
+              {resolvedOrg?.name}
+            </span>
             <ChevronRightIcon className='size-3' />
             <span>New project</span>
           </div>
