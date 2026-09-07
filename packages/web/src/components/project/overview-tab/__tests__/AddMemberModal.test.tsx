@@ -33,33 +33,44 @@ function searchBox() {
   return screen.getByRole('combobox', { name: 'Search by name or email' });
 }
 
-describe('AddMemberModal search', () => {
+function chipClearButton() {
+  return screen.queryByRole('button', { name: 'Clear the selected person' });
+}
+
+function sendButton() {
+  return screen.getByRole('button', { name: 'Send invitation' });
+}
+
+describe('AddMemberModal', () => {
   beforeEach(() => {
     searchUsers.mockReset();
+    addMemberToProject.mockReset();
     searchUsers.mockImplementation(async ({ data }: { data: { q: string } }) =>
-      [alice, bob].filter(u => u.name.toLowerCase().includes(data.q.toLowerCase())),
+      [alice, bob].filter(
+        u => u.name.toLowerCase().includes(data.q.toLowerCase()) || u.email === data.q,
+      ),
     );
   });
 
-  it('shows fresh results after a selection when the query is edited', async () => {
+  it('turns a picked person into a chip and lets a new search replace it', async () => {
     renderModal();
 
     fireEvent.change(searchBox(), { target: { value: 'ali' } });
-    const option = await screen.findByRole('option', { name: /Alice Example/ });
-    fireEvent.click(option);
+    fireEvent.click(await screen.findByRole('option', { name: /Alice Example/ }));
 
     expect(screen.queryByRole('listbox')).toBeNull();
-    expect(screen.getByRole('button', { name: 'Clear the selected person' })).toBeTruthy();
-    expect(searchBox()).toHaveValue('Alice Example');
+    expect(chipClearButton()).toBeTruthy();
+    expect(screen.getByText('Alice Example')).toBeTruthy();
+    expect(searchBox()).toHaveValue('');
 
     fireEvent.change(searchBox(), { target: { value: 'bob' } });
+    fireEvent.click(await screen.findByRole('option', { name: /Bob Example/ }));
 
-    expect(screen.queryByRole('button', { name: 'Clear the selected person' })).toBeNull();
-    await screen.findByRole('option', { name: /Bob Example/ });
-    expect(screen.queryByRole('option', { name: /Alice Example/ })).toBeNull();
+    expect(screen.getByText('Bob Example')).toBeTruthy();
+    expect(screen.queryByText('Alice Example')).toBeNull();
   });
 
-  it("does not search for the selected person's own name", async () => {
+  it('does not search again after a pick clears the input', async () => {
     renderModal();
 
     fireEvent.change(searchBox(), { target: { value: 'ali' } });
@@ -67,32 +78,51 @@ describe('AddMemberModal search', () => {
 
     await new Promise(r => setTimeout(r, 400));
     expect(searchUsers).toHaveBeenCalledTimes(1);
-    expect(screen.queryByRole('listbox')).toBeNull();
   });
 
-  it('clears the selection from the visible clear button', async () => {
+  it('removes the chip from its clear button and from Backspace', async () => {
     renderModal();
 
     fireEvent.change(searchBox(), { target: { value: 'ali' } });
     fireEvent.click(await screen.findByRole('option', { name: /Alice Example/ }));
-    fireEvent.click(screen.getByRole('button', { name: 'Clear the selected person' }));
+    fireEvent.click(chipClearButton()!);
+    expect(chipClearButton()).toBeNull();
+    expect(sendButton()).toBeDisabled();
 
-    expect(searchBox()).toHaveValue('');
-    expect(screen.getByRole('button', { name: 'Send invitation' })).toBeDisabled();
+    fireEvent.change(searchBox(), { target: { value: 'ali' } });
+    fireEvent.click(await screen.findByRole('option', { name: /Alice Example/ }));
+    fireEvent.keyDown(searchBox(), { key: 'Backspace' });
+    expect(chipClearButton()).toBeNull();
   });
 
-  it('offers an email invitation when nothing matches a full address', async () => {
+  it('offers an email row for an address with no account and sends to it', async () => {
+    addMemberToProject.mockResolvedValue({ invitation: true, email: 'new@example.org' });
     renderModal();
 
     fireEvent.change(searchBox(), { target: { value: 'new@example.org' } });
 
-    await waitFor(() =>
-      expect(screen.getByText(/No user found\. You can send an invitation to/)).toBeTruthy(),
-    );
-    expect(screen.getByRole('button', { name: 'Send invitation' })).toBeEnabled();
+    const row = await screen.findByTestId('invite-email-option');
+    expect(row).toHaveTextContent('new@example.org');
+    expect(sendButton()).toBeEnabled();
+
+    fireEvent.click(sendButton());
+    await waitFor(() => expect(addMemberToProject).toHaveBeenCalledTimes(1));
+    expect(addMemberToProject.mock.calls[0][0].data).toMatchObject({
+      email: 'new@example.org',
+      role: 'member',
+    });
   });
 
-  it('selects the highlighted result with Enter', async () => {
+  it('does not offer an email row when the address already has an account', async () => {
+    renderModal();
+
+    fireEvent.change(searchBox(), { target: { value: 'alice@example.org' } });
+
+    await screen.findByRole('option', { name: /Alice Example/ });
+    expect(screen.queryByTestId('invite-email-option')).toBeNull();
+  });
+
+  it('selects the highlighted row with Enter', async () => {
     renderModal();
 
     fireEvent.change(searchBox(), { target: { value: 'example' } });
@@ -101,7 +131,7 @@ describe('AddMemberModal search', () => {
     fireEvent.keyDown(searchBox(), { key: 'ArrowDown' });
     fireEvent.keyDown(searchBox(), { key: 'Enter' });
 
-    expect(searchBox()).toHaveValue('Bob Example');
+    expect(screen.getByText('Bob Example')).toBeTruthy();
     expect(screen.queryByRole('listbox')).toBeNull();
   });
 });
