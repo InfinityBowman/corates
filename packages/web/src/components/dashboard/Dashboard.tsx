@@ -17,8 +17,6 @@ import { LocalAppraisalsSection } from './LocalAppraisalsSection';
 import { FeedbackPrompt } from './FeedbackPrompt';
 import { useInitialAnimation, AnimationContext } from './useInitialAnimation';
 
-const WELCOME_DISMISSED_KEY = 'corates-welcome-dismissed';
-
 export function Dashboard() {
   const animation = useInitialAnimation();
 
@@ -27,24 +25,6 @@ export function Dashboard() {
   const { subscriptionFetchFailed } = useSubscription();
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [welcomeDismissed, setWelcomeDismissed] = useState(() => {
-    try {
-      return localStorage.getItem(WELCOME_DISMISSED_KEY) === 'true';
-    } catch {
-      return false;
-    }
-  });
-
-  const dismissWelcome = () => {
-    try {
-      localStorage.setItem(WELCOME_DISMISSED_KEY, 'true');
-    } catch {
-      // localStorage unavailable
-    }
-    setWelcomeDismissed(true);
-  };
-
-  const showWelcomeCard = isLoggedIn && !welcomeDismissed;
 
   return (
     <AnimationContext.Provider value={animation}>
@@ -58,9 +38,7 @@ export function Dashboard() {
           </Alert>
         )}
 
-        {showWelcomeCard && (
-          <WelcomeCard user={user!} onDismiss={dismissWelcome} style={animation.fadeUp(0)} />
-        )}
+        {isLoggedIn && <WelcomeCard user={user!} style={animation.fadeUp(0)} />}
 
         {isLoggedIn && (
           <ProjectsSection
