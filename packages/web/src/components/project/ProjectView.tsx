@@ -16,20 +16,13 @@ import { uploadPdf, deletePdf } from '@/api/pdf-api';
 import { cachePdf } from '@/primitives/pdfCache.js';
 import { bestEffort } from '@/lib/errorLogger.js';
 import { importFromDrive } from '@/server/functions/google-drive.functions';
-import { Tabs, TabsContent, TabsIndicator, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
-import {
-  HomeIcon,
-  BookOpenIcon,
-  ListTodoIcon,
-  ArrowRightLeftIcon,
-  CheckCircleIcon,
-} from 'lucide-react';
 import { getChecklistCount } from '@corates/shared/checklists';
 
-import { ProjectHeader } from './ProjectHeader';
+import { ProjectHeader, type ProjectTabDef } from './ProjectHeader';
+import { ProjectSheets } from './ProjectSheets';
 import { PdfPreviewPanel } from './PdfPreviewPanel';
 import { SectionErrorBoundary } from './SectionErrorBoundary';
 
@@ -57,21 +50,13 @@ function ProjectLoadingFallback() {
     <div className='bg-background min-h-full'>
       {/* Header skeleton mirrors the real sticky project header */}
       <header className='border-border bg-card sticky top-0 z-20 border-b'>
-        <div className='mx-auto max-w-7xl px-6 py-4'>
-          <div className='flex items-center gap-3'>
-            <Skeleton className='size-8 shrink-0 rounded-md' />
-            <div className='flex-1 space-y-2'>
-              <Skeleton className='h-6 w-56 max-w-full' />
-              <Skeleton className='h-4 w-80 max-w-full' />
-            </div>
-          </div>
-        </div>
-        <div className='mx-auto max-w-7xl px-6'>
-          <div className='flex gap-1 pb-px'>
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className='h-9 w-28 rounded-t-lg' />
-            ))}
-          </div>
+        <div className='mx-auto flex h-11 max-w-7xl items-center gap-3 px-6'>
+          <Skeleton className='h-5 w-48' />
+          <div className='bg-border h-5 w-px' />
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className='h-6 w-20 rounded-md' />
+          ))}
+          <Skeleton className='ml-auto h-7 w-28 rounded-md' />
         </div>
       </header>
 
@@ -282,28 +267,13 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
     [location.pathname, location.search, navigate],
   );
 
-  const TAB_DEFS = useMemo(
+  const TAB_DEFS = useMemo<ProjectTabDef[]>(
     () => [
-      { value: 'overview', label: 'Overview', icon: HomeIcon },
-      {
-        value: 'all-studies',
-        label: 'All studies',
-        icon: BookOpenIcon,
-        getCount: getAllStudiesCount,
-      },
-      { value: 'todo', label: 'To-Do', icon: ListTodoIcon, getCount: getToDoCount },
-      {
-        value: 'reconcile',
-        label: 'Reconcile',
-        icon: ArrowRightLeftIcon,
-        getCount: getReconcileCount,
-      },
-      {
-        value: 'completed',
-        label: 'Completed',
-        icon: CheckCircleIcon,
-        getCount: getCompletedCount,
-      },
+      { value: 'overview', label: 'Overview' },
+      { value: 'all-studies', label: 'All studies', count: getAllStudiesCount() },
+      { value: 'todo', label: 'To-Do', count: getToDoCount() },
+      { value: 'reconcile', label: 'Reconcile', count: getReconcileCount() },
+      { value: 'completed', label: 'Completed', count: getCompletedCount() },
     ],
     [getAllStudiesCount, getToDoCount, getReconcileCount, getCompletedCount],
   );
@@ -329,35 +299,8 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
                 <ProjectHeader
                   name={meta.name ?? undefined}
                   onRename={newName => project.project.rename(newName)}
-                  onBack={() => navigate({ to: '/dashboard' })}
+                  tabs={TAB_DEFS}
                 />
-              </div>
-
-              <div className='mx-auto max-w-7xl px-6'>
-                <TabsList className='relative flex gap-1 overflow-x-auto bg-transparent pb-px'>
-                  {TAB_DEFS.map(tab => {
-                    const Icon = tab.icon;
-                    return (
-                      <TabsTrigger
-                        key={tab.value}
-                        value={tab.value}
-                        className='text-muted-foreground hover:bg-muted hover:text-secondary-foreground group relative gap-2 rounded-t-lg px-4 py-2.5 transition-all data-[state=active]:bg-blue-50/50 data-[state=active]:text-blue-600'
-                      >
-                        <Icon className='size-4 opacity-60 transition-opacity group-data-[state=active]:opacity-100' />
-                        <span className='font-medium'>{tab.label}</span>
-                        {tab.getCount && (
-                          <Badge
-                            variant='secondary'
-                            className='min-w-6 px-1.5 tabular-nums group-data-[state=active]:bg-blue-100 group-data-[state=active]:text-blue-700'
-                          >
-                            {tab.getCount()}
-                          </Badge>
-                        )}
-                      </TabsTrigger>
-                    );
-                  })}
-                  <TabsIndicator className='bg-primary h-0.5 rounded-full' />
-                </TabsList>
               </div>
             </header>
 
@@ -393,6 +336,7 @@ function ProjectViewInner({ projectId }: ProjectViewProps) {
         </div>
       )}
 
+      {!isChildRoute && <ProjectSheets />}
       {!isChildRoute && <PdfPreviewPanel />}
     </>
   );
