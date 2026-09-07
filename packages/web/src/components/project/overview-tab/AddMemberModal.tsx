@@ -1,24 +1,17 @@
 /**
- * AddMemberModal - Search and add members to a project
+ * AddMemberModal - Search for a person or enter an email to invite them to
+ * a project. One field holds the chosen person as a chip, the search input,
+ * and the role picker; matches drop in as a list directly beneath it.
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useId } from 'react';
 import { Link } from '@tanstack/react-router';
-import { TriangleAlertIcon } from 'lucide-react';
+import { MailIcon, TriangleAlertIcon, XIcon } from 'lucide-react';
 import { showToast } from '@/lib/toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { getInitials } from '@/components/ui/avatar';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
+import { Avatar, AvatarImage, AvatarFallback, getInitials } from '@/components/ui/avatar';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import {
   Select,
@@ -35,6 +28,7 @@ import type { UserSearchResult } from '@/server/functions/users.server';
 import { clientLogger } from '@/lib/clientLogger';
 import { queryClient } from '@/lib/queryClient';
 import { queryKeys } from '@/lib/queryKeys';
+import { cn } from '@/lib/utils';
 
 interface AddMemberModalProps {
   isOpen: boolean;
@@ -44,6 +38,35 @@ interface AddMemberModalProps {
   quotaInfo?: { used: number; max: number };
 }
 
+type Role = 'member' | 'owner';
+
+const ROLES: { value: Role; label: string; description: string }[] = [
+  {
+    value: 'member',
+    label: 'Reviewer',
+    description: 'Appraises studies and edits project content',
+  },
+  { value: 'owner', label: 'Lead', description: 'Also assigns reviewers and manages members' },
+];
+
+type Target = { kind: 'user'; user: UserSearchResult } | { kind: 'email'; email: string };
+
+const isValidEmail = (str: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str);
+
+function rowId(listboxId: string, target: Target) {
+  return `${listboxId}-${target.kind === 'user' ? target.user.id : 'email'}`;
+}
+
+function UserAvatar({ user, className }: { user: UserSearchResult; className: string }) {
+  const label = user.name || user.email || undefined;
+  return (
+    <Avatar className={className}>
+      <AvatarImage src={user.image ?? undefined} alt={label} />
+      <AvatarFallback className='text-[9px]'>{getInitials(label)}</AvatarFallback>
+    </Avatar>
+  );
+}
+
 export function AddMemberModal({
   isOpen,
   onClose,
@@ -51,76 +74,117 @@ export function AddMemberModal({
   orgId,
   quotaInfo,
 }: AddMemberModalProps) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<UserSearchResult[]>([]);
   const [searching, setSearching] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<UserSearchResult | null>(null);
-  const [selectedRole, setSelectedRole] = useState<'member' | 'owner'>('member');
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [target, setTarget] = useState<Target | null>(null);
+  const [role, setRole] = useState<Role>('member');
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const listboxId = useId();
 
   const isAtQuotaLimit =
     quotaInfo && !isUnlimitedQuota(quotaInfo.max) && quotaInfo.used >= quotaInfo.max;
 
-  const debouncedQuery = useDebouncedValue(searchQuery, 300);
+  const trimmedQuery = query.trim();
+  const debouncedQuery = useDebouncedValue(trimmedQuery, 300);
+  const settled = debouncedQuery === trimmedQuery;
 
-  // Focus input when modal opens
   useEffect(() => {
-    if (isOpen && inputRef.current) {
-      inputRef.current.focus();
-    }
+    if (isOpen) inputRef.current?.focus();
   }, [isOpen]);
 
-  // Search users on debounced query change
   useEffect(() => {
-    if (debouncedQuery.length < 2) {
-      setSearchResults([]);
-      return;
-    }
+    if (!settled || debouncedQuery.length < 2) return;
     let cancelled = false;
+    setSearching(true);
     (async () => {
-      if (cancelled) return;
-      setSearching(true);
       try {
-        const results = await searchUsers({
+        const found = await searchUsers({
           data: { q: debouncedQuery, projectId: projectId || undefined },
         });
-        if (!cancelled) setSearchResults(results);
+        if (cancelled) return;
+        setResults(found);
+        setActiveIndex(0);
+        setSearching(false);
       } catch (err: unknown) {
-        if (!cancelled) {
-          const { handleError } = await import('@/lib/error-utils');
-          await handleError(err, { setError, showToast: false });
-        }
-      } finally {
-        if (!cancelled) setSearching(false);
+        if (cancelled) return;
+        const { handleError } = await import('@/lib/error-utils');
+        await handleError(err, { setError, showToast: false });
+        setSearching(false);
       }
     })();
     return () => {
       cancelled = true;
+      setSearching(false);
     };
-  }, [debouncedQuery, projectId]);
+  }, [settled, debouncedQuery, projectId]);
 
-  const isValidEmail = (str: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str.trim());
-  const canAddByEmail = !selectedUser && isValidEmail(searchQuery) && searchQuery.length >= 3;
+  // A typed email with no matching account is offered as its own row once the
+  // search has settled, so it does not flash before the account row arrives.
+  const emailQuery = isValidEmail(trimmedQuery) ? trimmedQuery : null;
+  const emailHasAccount =
+    !!emailQuery && results.some(u => u.email?.toLowerCase() === emailQuery.toLowerCase());
+  const offerEmail = !!emailQuery && !emailHasAccount && settled && !searching;
+  const rows: Target[] = [
+    ...(trimmedQuery.length >= 2 ? results.map(user => ({ kind: 'user', user }) as Target) : []),
+    ...(offerEmail ? [{ kind: 'email', email: emailQuery } as Target] : []),
+  ];
+  const showNoMatch =
+    rows.length === 0 && settled && !searching && trimmedQuery.length >= 2 && !emailQuery;
+  const showList = rows.length > 0 || showNoMatch;
 
-  const handleSelectUser = useCallback((user: UserSearchResult) => {
-    setSelectedUser(user);
-    setSearchQuery(user.name || user.email || '');
-    setSearchResults([]);
-  }, []);
+  // Typing a full email and pressing Send should work without picking the row.
+  const pending: Target | null =
+    target ?? (emailQuery && !emailHasAccount ? { kind: 'email', email: emailQuery } : null);
+  const canSubmit = !!pending && !adding && !isAtQuotaLimit;
 
-  const handleClose = useCallback(() => {
-    setSearchQuery('');
-    setSearchResults([]);
-    setSelectedUser(null);
-    setSelectedRole('member');
+  const choose = (row: Target) => {
+    setTarget(row);
+    setQuery('');
+    setResults([]);
+    setError(null);
+    inputRef.current?.focus();
+  };
+
+  const clearTarget = () => {
+    setTarget(null);
+    inputRef.current?.focus();
+  };
+
+  const handleClose = () => {
+    setQuery('');
+    setResults([]);
+    setTarget(null);
+    setRole('member');
     setError(null);
     onClose();
-  }, [onClose]);
+  };
 
-  const handleAddMember = useCallback(async () => {
-    if (!selectedUser && !canAddByEmail) return;
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && query === '' && target) {
+      e.preventDefault();
+      setTarget(null);
+      return;
+    }
+    if (rows.length === 0) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setActiveIndex(i => (i + 1) % rows.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActiveIndex(i => (i - 1 + rows.length) % rows.length);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      choose(rows[Math.min(activeIndex, rows.length - 1)]);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!canSubmit || !pending) return;
     if (!orgId) {
       setError('This project is not linked to a team yet. Reload the page and try again.');
       return;
@@ -133,17 +197,20 @@ export function AddMemberModal({
         data: {
           orgId,
           projectId,
-          ...(selectedUser ?
-            { userId: selectedUser.id, role: selectedRole }
-          : { email: searchQuery.trim(), role: selectedRole }),
+          ...(pending.kind === 'user' ?
+            { userId: pending.user.id, role }
+          : { email: pending.email, role }),
         },
       })) as { invitation?: boolean; email?: string };
       clientLogger.info('client.collaborator.invited', { method: 'email' });
+      const sentTo =
+        result.email ||
+        (pending.kind === 'user' ? pending.user.name || pending.user.email : pending.email);
       showToast.success(
         'Invitation sent',
-        `${result.email || searchQuery} can join the project from the link in the email.`,
+        `${sentTo} can join the project from the link in the email.`,
       );
-      // The invitations list is a D1 fact read through React Query — nothing
+      // The invitations list is a D1 fact read through React Query. Nothing
       // pushes it to this client, so refetch after the write.
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.invitations(projectId) });
       handleClose();
@@ -153,7 +220,9 @@ export function AddMemberModal({
     } finally {
       setAdding(false);
     }
-  }, [selectedUser, canAddByEmail, orgId, projectId, selectedRole, searchQuery, handleClose]);
+  };
+
+  const activeRow = rows[Math.min(activeIndex, rows.length - 1)];
 
   return (
     <Dialog
@@ -162,169 +231,176 @@ export function AddMemberModal({
         if (!open) handleClose();
       }}
     >
-      <DialogContent className='sm:max-w-md' data-testid='invite-member-dialog'>
-        <DialogHeader>
-          <DialogTitle>Invite a member</DialogTitle>
-        </DialogHeader>
+      <DialogContent
+        className='gap-0 overflow-hidden p-0 sm:max-w-md'
+        showCloseButton={false}
+        data-testid='invite-member-dialog'
+      >
+        <form onSubmit={handleSubmit}>
+          <div className='px-4 pt-3.5'>
+            <DialogTitle className='text-sm font-medium'>Invite a member</DialogTitle>
+          </div>
 
-        <div className='flex flex-col gap-4'>
           {isAtQuotaLimit && (
-            <Alert variant='warning'>
-              <TriangleAlertIcon />
-              <div>
-                <AlertTitle>Collaborator limit reached</AlertTitle>
-                <AlertDescription>
-                  Your team has {quotaInfo?.used} of {quotaInfo?.max} collaborators.{' '}
-                  <Link to='/settings/plans' className='font-medium underline'>
-                    Upgrade your plan
-                  </Link>{' '}
-                  to add more team members.
-                </AlertDescription>
-              </div>
-            </Alert>
+            <div className='px-4 pt-3'>
+              <Alert variant='warning'>
+                <TriangleAlertIcon />
+                <div>
+                  <AlertTitle>Collaborator limit reached</AlertTitle>
+                  <AlertDescription>
+                    Your team has {quotaInfo?.used} of {quotaInfo?.max} collaborators.{' '}
+                    <Link to='/settings/plans' className='font-medium underline'>
+                      Upgrade your plan
+                    </Link>{' '}
+                    to add more team members.
+                  </AlertDescription>
+                </div>
+              </Alert>
+            </div>
           )}
 
-          <div className='relative'>
-            <Label htmlFor='member-search' className='mb-1'>
-              Search by name or email
-            </Label>
-            <Input
-              id='member-search'
-              ref={inputRef}
-              type='text'
-              autoComplete='off'
-              value={searchQuery}
-              onChange={e => {
-                setSearchQuery(e.target.value);
-                setError(null);
-              }}
-              placeholder='Type at least 2 characters...'
-              disabled={!!isAtQuotaLimit}
-            />
-
-            {searchResults.length > 0 && !selectedUser && (
-              <div className='border-border bg-card absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border shadow-lg'>
-                {searchResults.map((user: UserSearchResult) => (
-                  <button
-                    key={user.id}
-                    type='button'
-                    onClick={() => handleSelectUser(user)}
-                    className='hover:bg-muted flex w-full items-center gap-3 px-4 py-3 text-left transition-colors'
+          <div className='px-4 pt-3 pb-4'>
+            <div className='border-input focus-within:border-ring focus-within:ring-ring/50 dark:bg-input/30 rounded-lg border transition-colors focus-within:ring-3'>
+              <div className='flex min-h-9 flex-wrap items-center gap-1.5 py-1 pr-1 pl-2.5'>
+                {target && (
+                  <span className='bg-muted text-foreground inline-flex h-6 max-w-full items-center gap-1.5 rounded-md pr-0.5 pl-1 text-xs font-medium'>
+                    {target.kind === 'user' ?
+                      <UserAvatar user={target.user} className='size-4' />
+                    : <MailIcon className='text-muted-foreground size-3' />}
+                    <span className='truncate'>
+                      {target.kind === 'user' ?
+                        target.user.name || target.user.email
+                      : target.email}
+                    </span>
+                    <button
+                      type='button'
+                      onClick={clearTarget}
+                      aria-label='Clear the selected person'
+                      className='text-muted-foreground hover:bg-foreground/10 hover:text-foreground flex size-4 items-center justify-center rounded'
+                    >
+                      <XIcon className='size-3' />
+                    </button>
+                  </span>
+                )}
+                <input
+                  ref={inputRef}
+                  type='text'
+                  role='combobox'
+                  autoComplete='off'
+                  aria-label='Search by name or email'
+                  aria-expanded={rows.length > 0}
+                  aria-controls={listboxId}
+                  aria-autocomplete='list'
+                  aria-activedescendant={activeRow ? rowId(listboxId, activeRow) : undefined}
+                  value={query}
+                  onChange={e => {
+                    setQuery(e.target.value);
+                    setError(null);
+                    if (e.target.value.trim().length < 2) setResults([]);
+                  }}
+                  onKeyDown={handleKeyDown}
+                  placeholder={target ? '' : 'Name or email'}
+                  disabled={!!isAtQuotaLimit}
+                  className='placeholder:text-muted-foreground h-6 min-w-24 flex-1 bg-transparent text-sm outline-none disabled:cursor-not-allowed'
+                />
+                {searching && <Spinner size='sm' className='size-3.5' />}
+                <Select value={role} onValueChange={v => setRole(v as Role)}>
+                  <SelectTrigger
+                    size='sm'
+                    aria-label='Role'
+                    className='text-muted-foreground hover:text-foreground hover:bg-muted dark:hover:bg-muted h-6 border-0 bg-transparent px-1.5 text-xs shadow-none focus-visible:ring-0 dark:bg-transparent'
                   >
-                    <Avatar className='size-8 shrink-0'>
-                      <AvatarImage
-                        src={user.image ?? undefined}
-                        alt={user.name || user.email || undefined}
-                      />
-                      <AvatarFallback className='bg-primary text-sm text-white'>
-                        {getInitials(user.name || user.email || undefined)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className='min-w-0'>
-                      <p className='text-foreground truncate font-medium'>
-                        {user.name || 'Unknown'}
-                      </p>
-                      <p className='text-muted-foreground truncate text-sm'>{user.email}</p>
-                    </div>
-                  </button>
-                ))}
+                    <SelectValue>{ROLES.find(r => r.value === role)?.label}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent align='end'>
+                    {ROLES.map(r => (
+                      <SelectItem key={r.value} value={r.value}>
+                        <span>{r.label}</span>
+                        <span className='text-muted-foreground text-xs'>{r.description}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            )}
 
-            {searching && (
-              <div className='absolute top-8 right-3'>
-                <Spinner size='sm' className='size-5' />
-              </div>
+              {showList && (
+                <div
+                  id={listboxId}
+                  role='listbox'
+                  aria-label='People'
+                  className='max-h-56 overflow-y-auto border-t p-1'
+                >
+                  {rows.map((row, index) => (
+                    <div
+                      key={rowId(listboxId, row)}
+                      id={rowId(listboxId, row)}
+                      role='option'
+                      aria-selected={index === activeIndex}
+                      data-testid={row.kind === 'email' ? 'invite-email-option' : undefined}
+                      onMouseEnter={() => setActiveIndex(index)}
+                      onMouseDown={e => e.preventDefault()}
+                      onClick={() => choose(row)}
+                      className={cn(
+                        'flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-sm',
+                        index === activeIndex && 'bg-muted',
+                      )}
+                    >
+                      {row.kind === 'user' ?
+                        <>
+                          <UserAvatar user={row.user} className='size-6' />
+                          <span className='text-foreground truncate font-medium'>
+                            {row.user.name || 'Unknown'}
+                          </span>
+                          <span className='text-muted-foreground min-w-0 truncate text-xs'>
+                            {row.user.email}
+                          </span>
+                        </>
+                      : <>
+                          <span className='bg-muted text-muted-foreground flex size-6 shrink-0 items-center justify-center rounded-full'>
+                            <MailIcon className='size-3' />
+                          </span>
+                          <span className='text-foreground truncate font-medium'>
+                            Invite by email
+                          </span>
+                          <span className='text-muted-foreground min-w-0 truncate text-xs'>
+                            {row.email}
+                          </span>
+                        </>
+                      }
+                    </div>
+                  ))}
+                  {showNoMatch && (
+                    <p className='text-muted-foreground px-2 py-1.5 text-xs'>
+                      No one matches &quot;{trimmedQuery}&quot;. Enter a full email address to
+                      invite someone new.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {error && (
+              <Alert variant='destructive' className='mt-3'>
+                {error}
+              </Alert>
             )}
           </div>
 
-          {searchQuery.length >= 2 &&
-            !searching &&
-            searchResults.length === 0 &&
-            !selectedUser &&
-            !canAddByEmail && (
-              <p className='text-muted-foreground text-sm'>
-                No users found matching &quot;{searchQuery}&quot;
-              </p>
-            )}
-
-          {canAddByEmail && (
-            <Alert variant='info'>
-              <p className='text-sm'>
-                No user found. You can send an invitation to{' '}
-                <span className='font-medium'>{searchQuery.trim()}</span>.
-              </p>
-            </Alert>
-          )}
-
-          {selectedUser && (
-            <div className='border-info-border bg-info-bg flex items-center justify-between rounded-lg border p-3'>
-              <div className='flex items-center gap-3'>
-                <Avatar className='size-10'>
-                  <AvatarImage
-                    src={selectedUser.image ?? undefined}
-                    alt={selectedUser.name || selectedUser.email || undefined}
-                  />
-                  <AvatarFallback className='bg-primary text-white'>
-                    {getInitials(selectedUser.name || selectedUser.email || undefined)}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className='text-foreground font-medium'>{selectedUser.name || 'Unknown'}</p>
-                  <p className='text-muted-foreground text-sm'>{selectedUser.email}</p>
-                </div>
-              </div>
-              <Button
-                variant='ghost'
-                size='icon-sm'
-                onClick={() => {
-                  setSelectedUser(null);
-                  setSearchQuery('');
-                }}
-              >
-                <span className='sr-only'>Clear the selected person</span>
-              </Button>
-            </div>
-          )}
-
-          {(selectedUser || canAddByEmail) && (
-            <div>
-              <label className='text-secondary-foreground mb-1 block text-sm font-medium'>
-                Role
-              </label>
-              <Select
-                value={selectedRole}
-                onValueChange={v => setSelectedRole(v as 'member' | 'owner')}
-              >
-                <SelectTrigger className='w-full'>
-                  <SelectValue placeholder='Select a role' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='member'>
-                    Member - can appraise studies and edit project content
-                  </SelectItem>
-                  <SelectItem value='owner'>
-                    Owner - can also assign reviewers and manage members
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          {error && <Alert variant='destructive'>{error}</Alert>}
-        </div>
-
-        <DialogFooter>
-          <Button variant='outline' onClick={handleClose}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleAddMember}
-            disabled={(!selectedUser && !canAddByEmail) || adding || !!isAtQuotaLimit}
-          >
-            {adding ? 'Sending invitation...' : 'Send invitation'}
-          </Button>
-        </DialogFooter>
+          <div className='bg-muted/50 flex items-center justify-end gap-1.5 border-t px-4 py-2.5'>
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              onClick={handleClose}
+              disabled={adding}
+            >
+              Cancel
+            </Button>
+            <Button type='submit' size='sm' disabled={!canSubmit}>
+              {adding ? 'Sending...' : 'Send invitation'}
+            </Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );
