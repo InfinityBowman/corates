@@ -126,6 +126,7 @@ export function ProjectsSection({
       await deleteProject({ data: { orgId: project.orgId, projectId: pendingDeleteId } });
 
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscription.current });
       showToast.success('Project deleted', 'The project and everything in it has been removed.');
       setDeleteDialogOpen(false);
     } catch (err) {
