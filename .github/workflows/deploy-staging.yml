@@ -24,13 +24,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  pick-runner:
-    uses: ./.github/workflows/pick-runner.yml
-    secrets: inherit
-
   deploy-staging:
-    needs: pick-runner
-    runs-on: [self-hosted, '${{ needs.pick-runner.outputs.label }}']
+    runs-on: ubuntu-latest
     permissions:
       contents: read
 
