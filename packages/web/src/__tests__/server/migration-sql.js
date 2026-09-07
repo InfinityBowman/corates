@@ -337,4 +337,6 @@ CREATE INDEX \`notifications_userId_createdAt_idx\` ON \`notifications\` (\`user
 CREATE INDEX \`notifications_userId_readAt_idx\` ON \`notifications\` (\`userId\`,\`readAt\`);
 
 
-ALTER TABLE \`projects\` ADD \`setupStep\` text;`;
+ALTER TABLE \`projects\` ADD \`setupStep\` text;
+
+ALTER TABLE \`projects\` DROP COLUMN \`description\`;`;
