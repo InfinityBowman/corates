@@ -87,7 +87,9 @@ test.describe('Auth flows', () => {
         const ownerPage = await ownerCtx.newPage();
         await loginAs(ownerCtx, ownerScenario.cookiesA);
         await ownerPage.goto('/dashboard');
-        await expect(ownerPage.getByText('Welcome back,')).toBeVisible({ timeout: 15_000 });
+        await expect(ownerPage.getByRole('heading', { name: 'Projects', exact: true })).toBeVisible(
+          { timeout: 15_000 },
+        );
         const projectId = await createProject(ownerPage, 'WebSocket Auth Test');
         await ownerCtx.close();
 
@@ -265,7 +267,9 @@ test.describe('Auth flows', () => {
       // Sign in via injected cookies
       await loginAs(context, scenario.cookiesA);
       await page.goto('/dashboard');
-      await expect(page.getByText('Welcome back,')).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByRole('heading', { name: 'Projects', exact: true })).toBeVisible({
+        timeout: 15_000,
+      });
 
       // Open user dropdown (button in nav with user name) and click sign out
       await page.locator('nav button', { hasText: scenario.userA.name.split(' ')[0] }).click();

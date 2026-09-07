@@ -55,7 +55,9 @@ test(`Realtime reconciliation with ${STUDY_COUNT} ROB2 studies`, async ({ browse
 
   await loginAs(setupCtx, scenario.cookiesA);
   await page.goto(`${BASE_URL}/dashboard`);
-  await expect(page.getByText('Welcome back,')).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('heading', { name: 'Projects', exact: true })).toBeVisible({
+    timeout: 15_000,
+  });
 
   const projectId = await createProject(page, `Scale Test (${STUDY_COUNT} studies)`);
   await addProjectMember(scenario.orgId, projectId, scenario.userB.id, scenario.cookiesA);
@@ -102,7 +104,9 @@ test(`Realtime reconciliation with ${STUDY_COUNT} ROB2 studies`, async ({ browse
 
   try {
     await pageB.goto(`${BASE_URL}/dashboard`);
-    await expect(pageB.getByText('Welcome back,')).toBeVisible({ timeout: 15_000 });
+    await expect(pageB.getByRole('heading', { name: 'Projects', exact: true })).toBeVisible({
+      timeout: 15_000,
+    });
 
     await pageA.goto(`${BASE_URL}${reconcilePath}`);
     await pageB.goto(`${BASE_URL}${reconcilePath}`);

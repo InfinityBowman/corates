@@ -1,37 +1,25 @@
 /**
- * DashboardHeader - Welcome section with user info
+ * DashboardHeader - the Home page bar: title plus the two create actions
  */
 
-import { getRoleLabel } from '@/components/auth/RoleSelector';
-import type { AuthUser } from '@/stores/authStore';
-import { useAnimation } from './useInitialAnimation';
+import { useAuthStore, selectIsLoggedIn } from '@/stores/authStore';
+import { NewAppraisalMenu } from './NewAppraisalMenu';
+import { NewProjectButton } from './NewProjectButton';
 
 interface DashboardHeaderProps {
-  user: AuthUser | null;
+  onNewProject: () => void;
 }
 
-export function DashboardHeader({ user }: DashboardHeaderProps) {
-  const animation = useAnimation();
-
-  const firstName = user?.givenName || user?.name || '';
+export function DashboardHeader({ onNewProject }: DashboardHeaderProps) {
+  const isLoggedIn = useAuthStore(selectIsLoggedIn);
 
   return (
-    <header className='mb-10' style={animation.fadeUp(0)}>
-      <div className='flex items-start justify-between'>
-        <div>
-          {firstName ?
-            <>
-              <p className='text-primary mb-1 text-sm font-medium'>Welcome back,</p>
-              <h1 className='text-foreground text-3xl font-semibold tracking-tight sm:text-4xl'>
-                {firstName}
-              </h1>
-            </>
-          : <p className='text-primary mb-1 text-sm font-medium'>Welcome to CoRATES</p>}
-          {(user?.persona || user?.email) && (
-            <p className='text-muted-foreground mt-2'>
-              {user.persona ? getRoleLabel(user.persona) : user.email}
-            </p>
-          )}
+    <header className='border-border bg-card sticky top-0 z-20 border-b'>
+      <div className='mx-auto flex h-11 max-w-7xl items-center justify-between px-6'>
+        <h1 className='text-sm font-semibold'>Home</h1>
+        <div className='flex items-center gap-2'>
+          <NewAppraisalMenu />
+          {isLoggedIn && <NewProjectButton onClick={onNewProject} />}
         </div>
       </div>
     </header>

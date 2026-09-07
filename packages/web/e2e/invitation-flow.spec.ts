@@ -68,7 +68,9 @@ test.describe('Invitation flows', () => {
       const ownerPage = await ownerCtx.newPage();
       await loginAs(ownerCtx, ownerScenario.cookiesA);
       await ownerPage.goto('/dashboard');
-      await expect(ownerPage.getByText('Welcome back,')).toBeVisible({ timeout: 15_000 });
+      await expect(ownerPage.getByRole('heading', { name: 'Projects', exact: true })).toBeVisible({
+        timeout: 15_000,
+      });
       const projectId = await createProject(ownerPage, 'Invitation Flow Test');
 
       await sendInvitationViaUI(ownerPage, inviteeEmail);
@@ -141,7 +143,9 @@ test.describe('Invitation flows', () => {
       const ownerPage = await ownerCtx.newPage();
       await loginAs(ownerCtx, ownerScenario.cookiesA);
       await ownerPage.goto('/dashboard');
-      await expect(ownerPage.getByText('Welcome back,')).toBeVisible({ timeout: 15_000 });
+      await expect(ownerPage.getByRole('heading', { name: 'Projects', exact: true })).toBeVisible({
+        timeout: 15_000,
+      });
       const projectId = await createProject(ownerPage, 'Invitation Existing User Test');
 
       await sendInvitationViaUI(ownerPage, inviteeEmail);
@@ -222,7 +226,9 @@ test.describe('Invitation flows', () => {
       const ownerPage = await ownerCtx.newPage();
       await loginAs(ownerCtx, ownerScenario.cookiesA);
       await ownerPage.goto('/dashboard');
-      await expect(ownerPage.getByText('Welcome back,')).toBeVisible({ timeout: 15_000 });
+      await expect(ownerPage.getByRole('heading', { name: 'Projects', exact: true })).toBeVisible({
+        timeout: 15_000,
+      });
       const projectId = await createProject(ownerPage, 'Invite Anchoring Test');
 
       await sendInvitationViaUI(ownerPage, invitedEmail);

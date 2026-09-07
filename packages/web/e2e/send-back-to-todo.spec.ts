@@ -138,7 +138,9 @@ test('Send appraisals back to To-Do from the Reconcile tab', async ({ browser, c
     // Land on the dashboard first so the fresh context resolves its active org
     // before hitting a project-scoped route.
     await pageA.goto(`${BASE_URL}/dashboard`);
-    await expect(pageA.getByText('Welcome back,')).toBeVisible({ timeout: 15_000 });
+    await expect(pageA.getByRole('heading', { name: 'Projects', exact: true })).toBeVisible({
+      timeout: 15_000,
+    });
 
     await pageA.goto(`${BASE_URL}/projects/${projectId}`);
     await pageA.getByRole('tab', { name: /Reconcile/i }).click();

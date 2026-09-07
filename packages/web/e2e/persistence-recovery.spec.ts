@@ -263,7 +263,9 @@ test('Project data survives navigate-away and navigate-back (cached phase)', asy
 
   // Navigate away to dashboard (releases the connection, destroys Y.Doc in memory)
   await page.goto('/dashboard');
-  await expect(page.getByText('Welcome back,')).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('heading', { name: 'Projects', exact: true })).toBeVisible({
+    timeout: 15_000,
+  });
 
   // Navigate back -- Dexie cache should render the study via the cached phase
   // before the WebSocket finishes syncing
@@ -274,7 +276,9 @@ test('Project data survives navigate-away and navigate-back (cached phase)', asy
   // Navigate away and back a second time to confirm the cache + sync pipeline
   // leaves Dexie in a consistent state across multiple visits
   await page.goto('/dashboard');
-  await expect(page.getByText('Welcome back,')).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('heading', { name: 'Projects', exact: true })).toBeVisible({
+    timeout: 15_000,
+  });
 
   await page.goto(`/projects/${projectId}`);
   await page.getByRole('tab', { name: /All Studies/i }).click();
@@ -294,7 +298,9 @@ test('Concurrent server-side change merges correctly on revisit', async ({ conte
 
   // Navigate away so the connection is released
   await page.goto('/dashboard');
-  await expect(page.getByText('Welcome back,')).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('heading', { name: 'Projects', exact: true })).toBeVisible({
+    timeout: 15_000,
+  });
 
   // While User A is away, add a second study via the server-side API.
   // This simulates another user (or a migration) modifying the project
@@ -358,7 +364,9 @@ test('Rapid navigation does not corrupt state or crash', async ({ context, page 
   // and that Dexie cache stays consistent through multiple lifecycles.
   for (let i = 0; i < 3; i++) {
     await page.goto('/dashboard');
-    await expect(page.getByText('Welcome back,')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('heading', { name: 'Projects', exact: true })).toBeVisible({
+      timeout: 15_000,
+    });
 
     await page.goto(`/projects/${projectId}`);
     await page.getByRole('tab', { name: /All Studies/i }).click();

@@ -281,24 +281,15 @@ export async function assignReviewers(page: Page) {
 }
 
 /**
- * Adds an outcome through the Outcomes sheet in the project header.
+ * Adds an outcome through the Outcomes card on the Overview tab.
  */
 export async function addOutcome(page: Page, name: string) {
-  await page.getByRole('tab', { name: /All Studies/i }).click();
-  // By role: the setup card's "Define outcomes" heading also matches the text.
-  await page.getByRole('button', { name: /^Outcomes/ }).click();
-
-  const sheet = page.getByRole('dialog');
-  await expect(sheet.getByRole('button', { name: /Add/i }).last()).toBeVisible({ timeout: 5_000 });
-  await sheet.getByRole('button', { name: /Add/i }).last().click();
-  await sheet.getByPlaceholder(/outcome/i).fill(name);
+  await page.getByRole('tab', { name: /Overview/i }).click();
+  const card = page.getByRole('region', { name: /^Outcomes/ });
+  await card.getByRole('button', { name: 'Add outcome' }).first().click();
+  await card.getByPlaceholder(/outcome/i).fill(name);
   await page.keyboard.press('Enter');
-  await expect(sheet.getByText(name, { exact: true })).toBeVisible({ timeout: 5_000 });
-
-  // The sheet is modal and nothing else closes it, so its overlay would swallow
-  // every later click on the tabs behind it.
-  await sheet.getByRole('button', { name: 'Close' }).click();
-  await expect(sheet).toBeHidden({ timeout: 5_000 });
+  await expect(card.getByText(name, { exact: true })).toBeVisible({ timeout: 5_000 });
 }
 
 /**
@@ -347,7 +338,9 @@ export async function setupProjectWithStudy(
 ): Promise<string> {
   await loginAs(context, scenario.cookiesA);
   await page.goto('/dashboard');
-  await expect(page.getByText('Welcome back,')).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('heading', { name: 'Projects', exact: true })).toBeVisible({
+    timeout: 15_000,
+  });
 
   const projectId = await createProject(page, projectName);
 

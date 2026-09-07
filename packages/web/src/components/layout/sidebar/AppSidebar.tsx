@@ -114,7 +114,7 @@ export function AppSidebar({ onClose, closeLabel, closeIcon }: AppSidebarProps) 
   }
 
   return (
-    <div className='flex h-full flex-col'>
+    <nav aria-label='Main' className='flex h-full flex-col'>
       <div className='flex shrink-0 items-center gap-1 px-2 pt-2 pb-1'>
         <AccountMenu />
         <Tooltip delayDuration={500}>
@@ -134,13 +134,13 @@ export function AppSidebar({ onClose, closeLabel, closeIcon }: AppSidebarProps) 
       </div>
 
       <div className='flex-1 overflow-x-hidden overflow-y-auto px-2 pb-4'>
-        <nav className='mb-4 flex flex-col gap-0.5'>
+        <div className='mb-4 flex flex-col gap-0.5'>
           <Link to='/dashboard' className={navRowClass(isHome)}>
             <HomeIcon className='size-4 shrink-0' />
             <span className='truncate'>Home</span>
           </Link>
           {isLoggedIn && <InboxRow />}
-        </nav>
+        </div>
 
         {isLoggedIn && (
           <div className='mb-4'>
@@ -234,6 +234,6 @@ export function AppSidebar({ onClose, closeLabel, closeIcon }: AppSidebarProps) 
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </nav>
   );
 }

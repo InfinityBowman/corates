@@ -36,7 +36,9 @@ async function loginAndGoto(
 ) {
   await loginAs(context, cookies);
   await page.goto('/dashboard');
-  await expect(page.getByText('Welcome back,')).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('heading', { name: 'Projects', exact: true })).toBeVisible({
+    timeout: 15_000,
+  });
   await page.goto(path);
 }
 
