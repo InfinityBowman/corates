@@ -1,7 +1,9 @@
 import * as Sentry from '@sentry/cloudflare';
 import { createStartHandler, defaultStreamHandler } from '@tanstack/react-start/server';
 import { handleEmailQueue } from '@corates/workers/queue';
-import { runWithLogger } from '@corates/workers/logger';
+import { reconcileStripeSubscriptions } from '@corates/workers/commands/billing';
+import { runWithLogger, warn } from '@corates/workers/logger';
+import { createDb } from '@corates/db/client';
 import { handleSyncFetch } from '@corates/workers/sync';
 import { withRequestCompletionLog } from '@/server/requestCompletion';
 import { withAcceptNegotiation } from '@/server/ssrAccept';
@@ -88,6 +90,29 @@ const workerHandler = {
             await startFetch(request, { context: { cloudflareCtx: ctx } } as never),
           );
         }),
+    );
+  },
+
+  // Cron schedules live in wrangler.jsonc under `triggers`. There is one job,
+  // so the cron expression is not dispatched on yet.
+  async scheduled(controller: { cron: string }, env: unknown): Promise<void> {
+    return runWithLogger(
+      {
+        requestId: crypto.randomUUID(),
+        env: (env as SentryEnv).ENVIRONMENT,
+        context: { cron: controller.cron },
+      },
+      async () => {
+        const cronEnv = env as SentryEnv & {
+          DB: Parameters<typeof createDb>[0];
+          STRIPE_SECRET_KEY?: string;
+        };
+        if (!cronEnv.STRIPE_SECRET_KEY) {
+          warn('billing.reconcile_skipped', { reason: 'stripe_not_configured' });
+          return;
+        }
+        await reconcileStripeSubscriptions(cronEnv as never, createDb(cronEnv.DB));
+      },
     );
   },
 

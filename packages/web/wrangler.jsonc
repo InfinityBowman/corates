@@ -80,6 +80,12 @@
     }
   },
 
+  // Inherited by every environment. Daily Stripe reconcile sweep; see
+  // docs/guides/stripe-setup.md.
+  "triggers": {
+    "crons": ["0 6 * * *"]
+  },
+
   // VITE_* vars are inlined into the client bundle by Vite at build time
   // (read from `import.meta.env`), not from this file. They live in
   // .env.production locally and as Workers Builds env vars in CI.

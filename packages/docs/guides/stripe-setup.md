@@ -104,6 +104,19 @@ The Stripe Customer Portal allows users to manage their subscriptions, update pa
 
 The portal URL is generated dynamically via the `/api/billing/portal` endpoint.
 
+## 6. Reconcile sweep
+
+A cron trigger in `wrangler.jsonc` runs `reconcileStripeSubscriptions` once a day in every
+environment. It walks every subscription in Stripe and rewrites its local row, then cancels
+rows whose Stripe subscription no longer exists. Nothing else has to be configured in Stripe.
+
+Every row the sweep changes is logged as `billing.reconcile_drift` with the previous and new
+status and plan, and the run ends with `billing.reconcile_completed` carrying the counts. Drift
+on a quiet day means a webhook was missed; check `stripe_event_ledger` for that org.
+
+To run it locally, start the dev server with `wrangler dev --test-scheduled` and request
+`/__scheduled?cron=0+6+*+*+*`.
+
 ## Environment Variables Reference
 
 | Variable                     | Description                                        |
