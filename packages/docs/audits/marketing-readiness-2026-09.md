@@ -43,19 +43,19 @@ generic template) decides how many review types can use the tool at all.
 
 ## Where the product stands today
 
-| Area | State |
-| --- | --- |
-| Instruments | AMSTAR 2 (2017), RoB 2 (2.0), ROBINS-I (V2 draft). Official algorithms implemented. Per-outcome for RoB 2 and ROBINS-I. No other instruments, no custom template. |
-| Workflow | Create project, add studies (PDF, RIS/ENW/BibTeX, DOI/PMID lookup, Google Drive), assign two reviewers with auto-fill, independent checklists, reconcile to a third checklist, reopen. |
-| Collaboration | Custom sync engine with offline outbox, presence avatars, per-question presence, remote cursors, email invitations, org and project roles (member, owner). |
-| PDF | EmbedPDF viewer, highlights and eight annotation types, annotations cloned into the reconciled checklist. Annotations are not linked to questions. |
-| Outputs | Project and per-study CSV and PDF, traffic-light and weighted bar plots (SVG, PNG, Cochrane palette), results tables, APA and AMA citation of the tool. |
-| Agreement | Percent agreement and Cohen's kappa, AMSTAR 2 only (`packages/web/src/lib/inter-rater-reliability.ts:70`). |
-| Local tool | `/checklist` runs without an account, persists to IndexedDB, exports CSV and PDF, no figures, no promotion into a project. |
-| Account | Google, ORCID, password, email OTP. TOTP 2FA. Session list. Account deletion. No data export. |
-| Billing | Free 1 project and 3 collaborators, Team 300 USD/yr for 3 projects, Lab 900 USD/yr for 10, Enterprise by contact. Only `project.create`, `projects.max`, and `collaborators.org.max` are enforced. |
-| Public pages | Landing, about, pricing with FAQ, privacy, terms, security, contact, three strong resource pages. No user docs, blog, changelog, or status page. |
-| Users | About 40 in production, one external paying customer, four projects ever created. |
+| Area          | State                                                                                                                                                                                              |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Instruments   | AMSTAR 2 (2017), RoB 2 (2.0), ROBINS-I (V2 draft). Official algorithms implemented. Per-outcome for RoB 2 and ROBINS-I. No other instruments, no custom template.                                  |
+| Workflow      | Create project, add studies (PDF, RIS/ENW/BibTeX, DOI/PMID lookup, Google Drive), assign two reviewers with auto-fill, independent checklists, reconcile to a third checklist, reopen.             |
+| Collaboration | Custom sync engine with offline outbox, presence avatars, per-question presence, remote cursors, email invitations, org and project roles (member, owner).                                         |
+| PDF           | EmbedPDF viewer, highlights and eight annotation types, annotations cloned into the reconciled checklist. Annotations are not linked to questions.                                                 |
+| Outputs       | Project and per-study CSV and PDF, traffic-light and weighted bar plots (SVG, PNG, Cochrane palette), results tables, APA and AMA citation of the tool.                                            |
+| Agreement     | Percent agreement and Cohen's kappa, AMSTAR 2 only (`packages/web/src/lib/inter-rater-reliability.ts:70`).                                                                                         |
+| Local tool    | `/checklist` runs without an account, persists to IndexedDB, exports CSV and PDF, no figures, no promotion into a project.                                                                         |
+| Account       | Google, ORCID, password, email OTP. TOTP 2FA. Session list. Account deletion. No data export.                                                                                                      |
+| Billing       | Free 1 project and 3 collaborators, Team 300 USD/yr for 3 projects, Lab 900 USD/yr for 10, Enterprise by contact. Only `project.create`, `projects.max`, and `collaborators.org.max` are enforced. |
+| Public pages  | Landing, about, pricing with FAQ, privacy, terms, security, contact, three strong resource pages. No user docs, blog, changelog, or status page.                                                   |
+| Users         | About 40 in production, one external paying customer, four projects ever created.                                                                                                                  |
 
 ## Part 1: Blockers before any outreach
 
@@ -152,13 +152,13 @@ link. Templates for all of these are cheap; the absence is what costs a sale.
 
 From `packages/web/src/components/FeatureShowcase.tsx` and elsewhere:
 
-| Claim | Reality | Fix |
-| --- | --- | --- |
-| "Automatic inter-rater reliability calculation" | AMSTAR 2 only; RoB 2 and ROBINS-I projects show N/A under a tile labelled "Domain judgements compared" | Extend kappa to domain judgements for the other two instruments |
-| "Continue working even without internet access (coming soon)" (line 542) | Offline persistence and outbox exist; `.github/SECURITY.md` says it works | Pick one; probably drop "coming soon" |
-| "Role-based access control and audit logging (coming soon)" (line 597) | Two-tier roles exist; no user-facing audit log | Reword to what exists, or expose the mutation log |
-| Reviewers can override suggested judgements with documentation (`lib/tool-content.ts`) | `DomainSection.tsx:144` and `:163` hard-code `isAutoMode={true}` (#652) | Ship overrides with required rationale, or delete the sentence |
-| "Priority support", "PDF markup and consensus workflows", "Exports and figures" as plan features (`packages/shared/src/plans/catalog.ts`) | None are gated; all plans get them | Fine to leave, but do not imply Free lacks them |
+| Claim                                                                                                                                     | Reality                                                                                                | Fix                                                             |
+| ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------- |
+| "Automatic inter-rater reliability calculation"                                                                                           | AMSTAR 2 only; RoB 2 and ROBINS-I projects show N/A under a tile labelled "Domain judgements compared" | Extend kappa to domain judgements for the other two instruments |
+| "Continue working even without internet access (coming soon)" (line 542)                                                                  | Offline persistence and outbox exist; `.github/SECURITY.md` says it works                              | Pick one; probably drop "coming soon"                           |
+| "Role-based access control and audit logging (coming soon)" (line 597)                                                                    | Two-tier roles exist; no user-facing audit log                                                         | Reword to what exists, or expose the mutation log               |
+| Reviewers can override suggested judgements with documentation (`lib/tool-content.ts`)                                                    | `DomainSection.tsx:144` and `:163` hard-code `isAutoMode={true}` (#652)                                | Ship overrides with required rationale, or delete the sentence  |
+| "Priority support", "PDF markup and consensus workflows", "Exports and figures" as plan features (`packages/shared/src/plans/catalog.ts`) | None are gated; all plans get them                                                                     | Fine to leave, but do not imply Free lacks them                 |
 
 ## Part 2: Gaps researchers hit in the first week
 
@@ -214,20 +214,20 @@ protocols versus 33 percent for ROBINS-I). Together NOS and QUADAS-2 cover
 most observational and diagnostic accuracy reviews, which today cannot use
 CoRATES at all.
 
-| Instrument | Demand | License | Effort | Recommendation |
-| --- | --- | --- | --- | --- |
-| RoB 2 (parallel) | Highest, mandatory in Cochrane | CC BY-NC-ND, permission needed | Done | Clear the license |
-| ROBINS-I | High | CC BY-NC-ND, V2 still draft (revised Nov 2025) | Done | Record the version used per appraisal; keep V1 available |
-| Newcastle-Ottawa | High | Free from OHRI, no stated license | Low, study level, star scoring | Add first |
-| QUADAS-2 | High for DTA reviews | Bristol, no published license, WHO copies CC BY-NC-SA | Medium, per-domain with applicability | Add second, ask Bristol in the same letter |
-| Generic custom template | High, every competitor has it | None | Medium | Add; also unlocks reporting checklists |
-| JBI checklists | High in nursing and allied health | Research use only, contact JBI | Low each, 13 designs | Ask JBI; Rayyan and Nested Knowledge got permission |
-| AMSTAR 2 | Medium, overviews | CC BY 4.0 | Done | Pair with ROBIS |
-| CASP | Medium, qualitative synthesis | CC BY-NC-SA | Low | After permission |
-| ROBINS-E | Medium, exposure reviews | CC BY-NC-ND | Medium, shares ROBINS-I structure | Include in Bristol letter |
-| ROBIS, PROBAST(+AI) | Lower | CC BY | Medium | Cheap wins, no permission needed |
-| RoB 2 cluster and crossover | Lower | Same as RoB 2 | Medium | After base license |
-| MMAT, QUIPS, SYRCLE, COSMIN | Niche | Non-commercial or unstated | Low each | Later |
+| Instrument                  | Demand                            | License                                               | Effort                                | Recommendation                                           |
+| --------------------------- | --------------------------------- | ----------------------------------------------------- | ------------------------------------- | -------------------------------------------------------- |
+| RoB 2 (parallel)            | Highest, mandatory in Cochrane    | CC BY-NC-ND, permission needed                        | Done                                  | Clear the license                                        |
+| ROBINS-I                    | High                              | CC BY-NC-ND, V2 still draft (revised Nov 2025)        | Done                                  | Record the version used per appraisal; keep V1 available |
+| Newcastle-Ottawa            | High                              | Free from OHRI, no stated license                     | Low, study level, star scoring        | Add first                                                |
+| QUADAS-2                    | High for DTA reviews              | Bristol, no published license, WHO copies CC BY-NC-SA | Medium, per-domain with applicability | Add second, ask Bristol in the same letter               |
+| Generic custom template     | High, every competitor has it     | None                                                  | Medium                                | Add; also unlocks reporting checklists                   |
+| JBI checklists              | High in nursing and allied health | Research use only, contact JBI                        | Low each, 13 designs                  | Ask JBI; Rayyan and Nested Knowledge got permission      |
+| AMSTAR 2                    | Medium, overviews                 | CC BY 4.0                                             | Done                                  | Pair with ROBIS                                          |
+| CASP                        | Medium, qualitative synthesis     | CC BY-NC-SA                                           | Low                                   | After permission                                         |
+| ROBINS-E                    | Medium, exposure reviews          | CC BY-NC-ND                                           | Medium, shares ROBINS-I structure     | Include in Bristol letter                                |
+| ROBIS, PROBAST(+AI)         | Lower                             | CC BY                                                 | Medium                                | Cheap wins, no permission needed                         |
+| RoB 2 cluster and crossover | Lower                             | Same as RoB 2                                         | Medium                                | After base license                                       |
+| MMAT, QUIPS, SYRCLE, COSMIN | Niche                             | Non-commercial or unstated                            | Low each                              | Later                                                    |
 
 A study-design field on each study, so the project can assign different
 instruments per design, is the structural change that makes breadth useful.
@@ -318,17 +318,17 @@ Academy plus monthly webinars is the bar.
 
 ## Part 7: Competitive positioning
 
-| Tool | Appraisal support | Pricing | Where CoRATES wins |
-| --- | --- | --- | --- |
-| Covidence | RoB 1 default; no RoB 2 template; one custom template per review; consensus export CSV only | 339 USD/yr per review; institutional 2,500 to 6,500 USD | Cochrane itself says Covidence is not RoB 2 compatible. This is the headline. |
-| Rayyan | RoB 2 only so far, others "planned"; RoB gated to Business tier | 2,500 USD/yr minimum for RoB | Price, no per-seat, ROBINS-I and AMSTAR 2 today |
-| RevMan Web | RoB 2 native but assessment done in Excel; no ROBINS-I | Free for Cochrane authors | Dual-reviewer workflow and reconciliation; the RevMan CSV export makes CoRATES the front end |
-| Nested Knowledge | Broad instruments, AI suggestions, PDF-anchored quotes | 295 USD per user per month | Price by an order of magnitude |
-| EPPI-Reviewer | Generic coding tools, reconciliation | 10 GBP per user per month plus per review | Instrument-aware algorithms, per-outcome structure |
-| JBI SUMARI | JBI checklists, dated UI | 130 USD/yr | UX, realtime, figures |
-| DistillerSR, Laser AI | Enterprise, audit trails, AI | 19.95 USD/mo student to 3,000 USD/project | Price, simplicity |
-| robvis | Figures only | Free | Figures are produced from the appraisal itself; match its CSV format so reviewers can round-trip |
-| SRDR+ | Free multi-tool RoB | Shut down 28 Nov 2025 | Orphaned AHRQ Evidence-based Practice Center users are a live segment |
+| Tool                  | Appraisal support                                                                           | Pricing                                                 | Where CoRATES wins                                                                               |
+| --------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Covidence             | RoB 1 default; no RoB 2 template; one custom template per review; consensus export CSV only | 339 USD/yr per review; institutional 2,500 to 6,500 USD | Cochrane itself says Covidence is not RoB 2 compatible. This is the headline.                    |
+| Rayyan                | RoB 2 only so far, others "planned"; RoB gated to Business tier                             | 2,500 USD/yr minimum for RoB                            | Price, no per-seat, ROBINS-I and AMSTAR 2 today                                                  |
+| RevMan Web            | RoB 2 native but assessment done in Excel; no ROBINS-I                                      | Free for Cochrane authors                               | Dual-reviewer workflow and reconciliation; the RevMan CSV export makes CoRATES the front end     |
+| Nested Knowledge      | Broad instruments, AI suggestions, PDF-anchored quotes                                      | 295 USD per user per month                              | Price by an order of magnitude                                                                   |
+| EPPI-Reviewer         | Generic coding tools, reconciliation                                                        | 10 GBP per user per month plus per review               | Instrument-aware algorithms, per-outcome structure                                               |
+| JBI SUMARI            | JBI checklists, dated UI                                                                    | 130 USD/yr                                              | UX, realtime, figures                                                                            |
+| DistillerSR, Laser AI | Enterprise, audit trails, AI                                                                | 19.95 USD/mo student to 3,000 USD/project               | Price, simplicity                                                                                |
+| robvis                | Figures only                                                                                | Free                                                    | Figures are produced from the appraisal itself; match its CSV format so reviewers can round-trip |
+| SRDR+                 | Free multi-tool RoB                                                                         | Shut down 28 Nov 2025                                   | Orphaned AHRQ Evidence-based Practice Center users are a live segment                            |
 
 Positioning that the research supports: "the appraisal step, done properly,
 at a price a lab can put on a card". Lead with RoB 2 per outcome where
