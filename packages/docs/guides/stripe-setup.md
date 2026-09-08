@@ -47,12 +47,12 @@ Lookup keys are unique per account and per mode, so test mode and live mode each
 One webhook endpoint, used by the Better Auth stripe plugin for subscription lifecycle.
 
 - **URL:** `https://corates.org/api/auth/stripe/webhook`
-- **Events:**
+- **Events:** exactly the four the Better Auth stripe plugin handles. Anything else is
+  acknowledged and ignored, and only pads `stripe_event_ledger`.
+  - `checkout.session.completed`
   - `customer.subscription.created`
   - `customer.subscription.updated`
   - `customer.subscription.deleted`
-  - `invoice.paid`
-  - `invoice.payment_failed`
 - **Secret:** Copy signing secret to `STRIPE_WEBHOOK_SECRET_AUTH`
 
 ## 3. Get API Keys

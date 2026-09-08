@@ -112,6 +112,22 @@ describe('fetchInvoices', () => {
     expect(callArg.limit).toBe(10);
   });
 
+  it('returns invoices for a past-due subscription', async () => {
+    const { org, owner } = await buildOrg();
+    await seedSubscription(org.id, 'cus_past_due', 'past_due');
+    invoicesListMock.mockResolvedValueOnce({ data: [] });
+
+    const session = mockSession({
+      userId: owner.id,
+      email: owner.email,
+      name: owner.name,
+      activeOrganizationId: org.id,
+    });
+    await fetchInvoices(createDb(env.DB), session);
+
+    expect(invoicesListMock).toHaveBeenCalledWith({ customer: 'cus_past_due', limit: 10 });
+  });
+
   it('propagates error when stripe.invoices.list throws', async () => {
     const { org, owner } = await buildOrg();
     await seedSubscription(org.id, 'cus_real');
