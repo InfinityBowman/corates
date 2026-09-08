@@ -19,6 +19,7 @@ import { dirname } from 'path';
 import dotenv from 'dotenv';
 import { spawn } from 'node:child_process';
 import { getAllStripeProductConfigs } from '@corates/shared/plans';
+import { STRIPE_API_VERSION } from '@corates/shared/stripe';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -81,7 +82,7 @@ async function validateStripeKey(key) {
     throw new Error('Stripe secret key must start with sk_test_ or sk_live_');
   }
   if (key.startsWith('sk_live_')) {
-    console.warn('⚠️  WARNING: Using LIVE key! This script is intended for test mode only.');
+    console.warn('WARNING: Using LIVE key! This script is intended for test mode only.');
     const { default: readline } = await import('node:readline');
     const rl = readline.createInterface({
       input: process.stdin,
@@ -291,7 +292,7 @@ async function createProductAndPrices(stripe, productDef, dryRun, force) {
   let product = stripe ? await findExistingProduct(stripe, productDef.name) : null;
 
   if (product && force) {
-    console.log(`🗑️  Deleting existing product: ${productDef.name} (${product.id})`);
+    console.log(`Deleting existing product: ${productDef.name} (${product.id})`);
     if (!dryRun) {
       await stripe.products.del(product.id);
       product = null;
@@ -299,7 +300,7 @@ async function createProductAndPrices(stripe, productDef, dryRun, force) {
   }
 
   if (!product) {
-    console.log(`📦 Creating product: ${productDef.name}`);
+    console.log(`Creating product: ${productDef.name}`);
     if (!dryRun) {
       product = await stripe.products.create({
         name: productDef.name,
@@ -308,13 +309,13 @@ async function createProductAndPrices(stripe, productDef, dryRun, force) {
           created_by: 'corates-setup-script',
         },
       });
-      console.log(`   ✓ Created: ${product.id}`);
+      console.log(`   Created: ${product.id}`);
     } else {
       console.log(`   [DRY RUN] Would create product`);
       product = { id: 'prod_dryrun' };
     }
   } else {
-    console.log(`✓ Product exists: ${productDef.name} (${product.id})`);
+    console.log(`Product exists: ${productDef.name} (${product.id})`);
   }
 
   // Create prices. A price whose lookup key already points at the right amount
@@ -328,7 +329,7 @@ async function createProductAndPrices(stripe, productDef, dryRun, force) {
 
     if (price && (force || price.unit_amount !== priceDef.amount || price.product !== product.id)) {
       console.log(
-        `↪️  ${priceDef.lookupKey} points at ${price.id} ($${(price.unit_amount / 100).toFixed(2)}); moving the key to a new price`,
+        `${priceDef.lookupKey} points at ${price.id} ($${(price.unit_amount / 100).toFixed(2)}); moving the key to a new price`,
       );
       price = null;
     }
@@ -336,7 +337,7 @@ async function createProductAndPrices(stripe, productDef, dryRun, force) {
     if (!price) {
       const amountDisplay = (priceDef.amount / 100).toFixed(2);
       console.log(
-        `💰 Creating ${priceDef.lookupKey}: $${amountDisplay} ${priceDef.currency.toUpperCase()}`,
+        `Creating ${priceDef.lookupKey}: $${amountDisplay} ${priceDef.currency.toUpperCase()}`,
       );
       if (!dryRun) {
         price = await stripe.prices.create({
@@ -348,13 +349,13 @@ async function createProductAndPrices(stripe, productDef, dryRun, force) {
           transfer_lookup_key: true,
           metadata: { created_by: 'corates-setup-script' },
         });
-        console.log(`   ✓ Created: ${price.id}`);
+        console.log(`   Created: ${price.id}`);
       } else {
         console.log(`   [DRY RUN] Would create price`);
         price = { id: 'price_dryrun' };
       }
     } else {
-      console.log(`✓ ${priceDef.lookupKey} -> ${price.id}`);
+      console.log(`${priceDef.lookupKey} -> ${price.id}`);
     }
 
     results[priceDef.lookupKey] = price.id;
@@ -411,16 +412,15 @@ async function main() {
   }
 
   if (args.dryRun && !stripeKey) {
-    console.log('⚠️  DRY RUN MODE: Using placeholder key for preview');
+    console.log('WARNING: DRY RUN MODE: Using placeholder key for preview');
   }
 
-  // Keep in sync with STRIPE_API_VERSION in src/lib/stripe.ts
-  const stripe = stripeKey ? new Stripe(stripeKey, { apiVersion: '2026-02-25.clover' }) : null;
+  const stripe = stripeKey ? new Stripe(stripeKey, { apiVersion: STRIPE_API_VERSION }) : null;
 
-  console.log('🚀 Setting up Stripe test products and prices...\n');
+  console.log('Setting up Stripe test products and prices...\n');
 
   if (args.dryRun) {
-    console.log('🔍 DRY RUN MODE - No changes will be made\n');
+    console.log('DRY RUN MODE - No changes will be made\n');
   }
 
   const env = readEnvFile();
@@ -430,7 +430,7 @@ async function main() {
     try {
       await createProductAndPrices(stripe, productDef, args.dryRun, args.force);
     } catch (error) {
-      console.error(`❌ Error creating ${productDef.name}:`, error.message);
+      console.error(`Error creating ${productDef.name}:`, error.message);
       if (!args.dryRun) {
         process.exit(1);
       }
@@ -444,7 +444,7 @@ async function main() {
       updatedEnv.STRIPE_SECRET_KEY = stripeKey;
     }
     writeEnvFile(updatedEnv);
-    console.log(`\n✅ Updated ${envPath} with Stripe configuration`);
+    console.log(`\nUpdated ${envPath} with Stripe configuration`);
   }
 
   // Try to get webhook secrets automatically
@@ -453,7 +453,7 @@ async function main() {
     !currentEnv.STRIPE_WEBHOOK_SECRET_AUTH || currentEnv.STRIPE_WEBHOOK_SECRET_AUTH.startsWith('#');
 
   if (needsAuthSecret && !args.dryRun) {
-    console.log('\n🔐 Attempting to get webhook secrets from Stripe CLI...');
+    console.log('\nAttempting to get webhook secrets from Stripe CLI...');
     console.log('   (Make sure Stripe CLI is installed and authenticated: stripe login)');
 
     const webhookSecrets = {};
@@ -462,9 +462,9 @@ async function main() {
       console.log('   Getting webhook secret for auth endpoint...');
       const secret = await getWebhookSecret(WEBHOOK_FORWARD_URL);
       webhookSecrets.STRIPE_WEBHOOK_SECRET_AUTH = secret;
-      console.log(`   ✓ Got auth webhook secret: ${secret.substring(0, 20)}...`);
+      console.log(`   Got auth webhook secret: ${secret.substring(0, 20)}...`);
     } catch (error) {
-      console.warn(`   ⚠️  Could not get auth webhook secret: ${error.message}`);
+      console.warn(`   WARNING: Could not get auth webhook secret: ${error.message}`);
       console.warn('   You can get it manually by running:');
       console.warn(`   stripe listen --forward-to ${WEBHOOK_FORWARD_URL} --skip-verify`);
     }
@@ -479,18 +479,18 @@ async function main() {
         updatedEnv.STRIPE_SECRET_KEY = stripeKey;
       }
       writeEnvFile(updatedEnv);
-      console.log('   ✓ Updated .env with webhook secrets');
+      console.log('   Updated .env with webhook secrets');
     }
   }
 
   if (needsAuthSecret) {
-    console.log('\n📝 Next steps:');
+    console.log('\nNext steps:');
     console.log('1. Get auth webhook secret:');
     console.log(`   stripe listen --forward-to ${WEBHOOK_FORWARD_URL} --skip-verify`);
     console.log('2. Copy the whsec_... value and add it to your .env file');
     console.log('3. Restart your dev server');
   } else {
-    console.log('\n✅ Setup complete! All Stripe configuration is in place.');
+    console.log('\nSetup complete! All Stripe configuration is in place.');
   }
 }
 

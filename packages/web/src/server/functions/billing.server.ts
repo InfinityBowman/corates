@@ -12,7 +12,7 @@ import { createAuth } from '@corates/workers/auth-config';
 import { countFreeProjectsOwnedByUser } from '@corates/workers/free-project-cap';
 import { syncStripeSubscription } from '@corates/workers/commands/billing';
 import { projects, subscription } from '@corates/db/schema';
-import { and, count, desc, eq, or } from 'drizzle-orm';
+import { and, count, desc, eq, inArray } from 'drizzle-orm';
 import {
   getPlan,
   getGrantPlan,
@@ -377,7 +377,8 @@ export async function fetchInvoices(db: Database, session: Session): Promise<Inv
     .where(
       and(
         eq(subscription.referenceId, orgId),
-        or(eq(subscription.status, 'active'), eq(subscription.status, 'trialing')),
+        // Past-due and unpaid orgs need their invoices most, to pay them.
+        inArray(subscription.status, ['active', 'trialing', 'past_due', 'unpaid']),
       ),
     )
     .orderBy(desc(subscription.createdAt))
