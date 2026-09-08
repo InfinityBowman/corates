@@ -160,7 +160,7 @@ if (recentCount >= MAX_SUBMISSIONS_PER_HOUR) {
 }
 ```
 
-The Better Auth endpoints under `/api/auth/*` use Better Auth's own per-IP limiter with D1 storage (see Rate Limiting in the authentication guide). Nothing relies on an edge rate-limit rule.
+The Better Auth endpoints under `/api/auth/*` use Better Auth's own per-IP limiter with D1 storage (see Rate Limiting in the authentication guide). A single Cloudflare rate-limiting rule blocks any IP that exceeds 300 requests to `/api/*` in 10 seconds, as a flood backstop only; no endpoint relies on it for its own limit.
 
 ## Validation
 

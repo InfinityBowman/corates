@@ -284,7 +284,7 @@ Better Auth's built-in limiter is enabled with `storage: 'database'`, so counts 
 
 The client IP is read from `cf-connecting-ip` first, then `x-forwarded-for`. Cloudflare sets the first header itself, while the second can carry a client-supplied address ahead of the real one, which Better Auth then refuses to trust. A request over the limit gets a 429 with an `X-Retry-After` header; `authFetch` maps it to `SYSTEM_RATE_LIMITED` so the friendly-message system shows "Too many requests" instead of a generic failure. Expired rows are pruned by the limiter itself on each window reset.
 
-The contact and feedback forms count their own recent submissions instead (see Rate limiting in the API development guide). There is no edge rate-limit ruleset on the corates.org zone; Cloudflare only contributes the managed WAF and DDoS protection.
+The contact and feedback forms count their own recent submissions instead (see Rate limiting in the API development guide). The only edge rule is a coarse backstop on the corates.org zone, configured in the Cloudflare dashboard (the Free plan allows one): 300 requests per IP per 10 seconds on `/api/*`, blocking for 10 seconds. It applies to staging too, since the Free plan cannot scope rate-limiting rules by host. Cloudflare otherwise contributes only the managed WAF and DDoS protection.
 
 ## Admin Features
 
