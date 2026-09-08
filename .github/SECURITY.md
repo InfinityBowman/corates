@@ -5,10 +5,12 @@
 If you discover a security vulnerability in CoRATES, please report it responsibly.
 
 - **Do not** open a public GitHub issue for security-related concerns.
-- Email details to **support@corates.org** (or contact the maintainer directly if unavailable).
+- Email details to **support@corates.org**.
 - Include a clear description, steps to reproduce, and potential impact if possible.
 
-We will acknowledge receipt and work to address the issue as quickly as possible.
+We acknowledge reports within 48 hours. The full policy, including scope, response
+targets, and safe harbor, is at https://corates.org/security/disclosure and is
+referenced from https://corates.org/.well-known/security.txt.
 
 ## Scope
 

@@ -200,7 +200,7 @@ function SecurityIllustration() {
 
       <FloatingBadge position='top-4 right-4' border='border-blue-200'>
         <LockIcon className='size-4 text-blue-600' />
-        <span className='text-xs font-medium text-gray-700'>2FA</span>
+        <span className='text-xs font-medium text-gray-700'>Sessions</span>
       </FloatingBadge>
 
       <FloatingBadge position='bottom-6 left-6' border='border-purple-200'>
@@ -539,7 +539,7 @@ export default function FeatureShowcase() {
         'Complete appraisals faster with guided workflows',
         'All-in-one platform replaces scattered tools',
         'Intuitive and blazing-fast interface',
-        'Continue working even without internet access (coming soon)',
+        'Keep working through connection drops; changes sync when you reconnect',
       ],
     },
     {
@@ -549,7 +549,7 @@ export default function FeatureShowcase() {
       illustration: <CollaborationIllustration />,
       bullets: [
         'Independent ratings with blinded mode',
-        'Automatic inter-rater reliability calculation',
+        'Automatic inter-rater agreement for AMSTAR 2 appraisals',
         'Live, real-time collaboration with instant updates',
       ],
     },
@@ -593,8 +593,7 @@ export default function FeatureShowcase() {
       illustration: <SecurityIllustration />,
       bullets: [
         'OAuth, passwordless login',
-        'Two-factor authentication (2FA) for enhanced security',
-        'Role-based access control and audit logging (coming soon)',
+        'Owner and member roles for workspaces and projects',
         'Single Sign-On (SSO) support (coming soon)',
       ],
     },

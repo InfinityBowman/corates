@@ -66,7 +66,7 @@ export async function submitContact(
   }
 
   const contactEmail =
-    (env as unknown as Record<string, string | undefined>).CONTACT_EMAIL ?? 'contact@corates.org';
+    (env as unknown as Record<string, string | undefined>).CONTACT_EMAIL ?? 'support@corates.org';
 
   // The row is already saved, so a notification failure should not surface as
   // a submission failure to the user - just log it.

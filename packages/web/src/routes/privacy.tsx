@@ -58,8 +58,8 @@ function PrivacyPage() {
             <p>
               If you have a disability, you may access this Privacy Policy in an alternative format
               by contacting{' '}
-              <a href='mailto:privacy@corates.org' className='text-blue-600 hover:text-blue-700'>
-                privacy@corates.org
+              <a href='mailto:support@corates.org' className='text-blue-600 hover:text-blue-700'>
+                support@corates.org
               </a>
               .
             </p>
@@ -595,8 +595,8 @@ function PrivacyPage() {
               Personal Information from a child under age 13, we will delete that information as
               quickly as possible. If you believe that a child under 13 may have provided us
               Personal Information, please contact us at{' '}
-              <a href='mailto:privacy@corates.org' className='text-blue-600 hover:text-blue-700'>
-                privacy@corates.org
+              <a href='mailto:support@corates.org' className='text-blue-600 hover:text-blue-700'>
+                support@corates.org
               </a>
               .
             </p>
@@ -613,8 +613,8 @@ function PrivacyPage() {
               entitled to contact us to prevent disclosure of Personal Data to third parties for
               such third parties' direct marketing purposes; in order to submit such a request,
               please contact us at{' '}
-              <a href='mailto:privacy@corates.org' className='text-blue-600 hover:text-blue-700'>
-                privacy@corates.org
+              <a href='mailto:support@corates.org' className='text-blue-600 hover:text-blue-700'>
+                support@corates.org
               </a>
               .
             </p>
@@ -625,8 +625,8 @@ function PrivacyPage() {
               If you are a resident of Nevada, you have the right to opt-out of the sale of certain
               Personal Data to third parties who intend to license or sell that Personal Data. You
               can exercise this right by contacting us at{' '}
-              <a href='mailto:privacy@corates.org' className='text-blue-600 hover:text-blue-700'>
-                privacy@corates.org
+              <a href='mailto:support@corates.org' className='text-blue-600 hover:text-blue-700'>
+                support@corates.org
               </a>{' '}
               with the subject line "Nevada Do Not Sell Request" and providing us with your name and
               the email address associated with your account.
@@ -660,8 +660,8 @@ function PrivacyPage() {
               You have certain rights with respect to your Personal Data, including those set forth
               below. For more information about these rights, or to submit a request, please email
               us at{' '}
-              <a href='mailto:privacy@corates.org' className='text-blue-600 hover:text-blue-700'>
-                privacy@corates.org
+              <a href='mailto:support@corates.org' className='text-blue-600 hover:text-blue-700'>
+                support@corates.org
               </a>
               .
             </p>
@@ -722,8 +722,8 @@ function PrivacyPage() {
               appropriate safeguards for international data transfers, including certification under
               the EU-U.S. Data Privacy Framework or implementation of Standard Contractual Clauses
               approved by the European Commission. You may contact us at{' '}
-              <a href='mailto:privacy@corates.org' className='text-blue-600 hover:text-blue-700'>
-                privacy@corates.org
+              <a href='mailto:support@corates.org' className='text-blue-600 hover:text-blue-700'>
+                support@corates.org
               </a>{' '}
               to request more information about the safeguards we have in place for international
               data transfers.
@@ -758,8 +758,8 @@ function PrivacyPage() {
 
             <p>
               Email:{' '}
-              <a href='mailto:privacy@corates.org' className='text-blue-600 hover:text-blue-700'>
-                privacy@corates.org
+              <a href='mailto:support@corates.org' className='text-blue-600 hover:text-blue-700'>
+                support@corates.org
               </a>
             </p>
           </div>

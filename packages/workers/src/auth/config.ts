@@ -492,7 +492,6 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
   }
 
   return betterAuth({
-    // Rate limiting is a Cloudflare zone WAF rule on the domain, configured in the dashboard, not in this repo.
     rateLimit: { enabled: false },
     database: drizzleAdapter(db, {
       provider: 'sqlite',

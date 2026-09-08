@@ -35,6 +35,7 @@ import { Route as ResourcesIndexRouteImport } from './routes/resources/index'
 import { Route as ResourcesAmstar2RouteImport } from './routes/resources/amstar2'
 import { Route as ResourcesRob2RouteImport } from './routes/resources/rob2'
 import { Route as ResourcesRobinsIRouteImport } from './routes/resources/robins-i'
+import { Route as SecurityDisclosureRouteImport } from './routes/security_.disclosure'
 import { Route as AppProtectedAdminRouteImport } from './routes/_app/_protected/admin'
 import { Route as AppProtectedSettingsRouteImport } from './routes/_app/_protected/settings'
 import { Route as AppChecklistIndexRouteImport } from './routes/_app/checklist.index'
@@ -206,6 +207,11 @@ const ResourcesRob2Route = ResourcesRob2RouteImport.update({
 const ResourcesRobinsIRoute = ResourcesRobinsIRouteImport.update({
   id: '/resources/robins-i',
   path: '/resources/robins-i',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SecurityDisclosureRoute = SecurityDisclosureRouteImport.update({
+  id: '/security_/disclosure',
+  path: '/security/disclosure',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppProtectedAdminRoute = AppProtectedAdminRouteImport.update({
@@ -485,6 +491,7 @@ export interface FileRoutesByFullPath {
   '/resources/amstar2': typeof ResourcesAmstar2Route
   '/resources/rob2': typeof ResourcesRob2Route
   '/resources/robins-i': typeof ResourcesRobinsIRoute
+  '/security/disclosure': typeof SecurityDisclosureRoute
   '/resources/': typeof ResourcesIndexRoute
   '/admin': typeof AppProtectedAdminRouteWithChildren
   '/settings': typeof AppProtectedSettingsRouteWithChildren
@@ -554,6 +561,7 @@ export interface FileRoutesByTo {
   '/resources/amstar2': typeof ResourcesAmstar2Route
   '/resources/rob2': typeof ResourcesRob2Route
   '/resources/robins-i': typeof ResourcesRobinsIRoute
+  '/security/disclosure': typeof SecurityDisclosureRoute
   '/resources': typeof ResourcesIndexRoute
   '/checklist/$checklistId': typeof AppChecklistChecklistIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -626,6 +634,7 @@ export interface FileRoutesById {
   '/resources/amstar2': typeof ResourcesAmstar2Route
   '/resources/rob2': typeof ResourcesRob2Route
   '/resources/robins-i': typeof ResourcesRobinsIRoute
+  '/security_/disclosure': typeof SecurityDisclosureRoute
   '/resources/': typeof ResourcesIndexRoute
   '/_app/_protected/admin': typeof AppProtectedAdminRouteWithChildren
   '/_app/_protected/settings': typeof AppProtectedSettingsRouteWithChildren
@@ -698,6 +707,7 @@ export interface FileRouteTypes {
     | '/resources/amstar2'
     | '/resources/rob2'
     | '/resources/robins-i'
+    | '/security/disclosure'
     | '/resources/'
     | '/admin'
     | '/settings'
@@ -767,6 +777,7 @@ export interface FileRouteTypes {
     | '/resources/amstar2'
     | '/resources/rob2'
     | '/resources/robins-i'
+    | '/security/disclosure'
     | '/resources'
     | '/checklist/$checklistId'
     | '/api/auth/$'
@@ -838,6 +849,7 @@ export interface FileRouteTypes {
     | '/resources/amstar2'
     | '/resources/rob2'
     | '/resources/robins-i'
+    | '/security_/disclosure'
     | '/resources/'
     | '/_app/_protected/admin'
     | '/_app/_protected/settings'
@@ -904,6 +916,7 @@ export interface RootRouteChildren {
   ResourcesAmstar2Route: typeof ResourcesAmstar2Route
   ResourcesRob2Route: typeof ResourcesRob2Route
   ResourcesRobinsIRoute: typeof ResourcesRobinsIRoute
+  SecurityDisclosureRoute: typeof SecurityDisclosureRoute
   ResourcesIndexRoute: typeof ResourcesIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiAuthSessionRoute: typeof ApiAuthSessionRoute
@@ -1106,6 +1119,13 @@ declare module '@tanstack/react-router' {
       path: '/resources/robins-i'
       fullPath: '/resources/robins-i'
       preLoaderRoute: typeof ResourcesRobinsIRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/security_/disclosure': {
+      id: '/security_/disclosure'
+      path: '/security/disclosure'
+      fullPath: '/security/disclosure'
+      preLoaderRoute: typeof SecurityDisclosureRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/_protected/admin': {
@@ -1611,6 +1631,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResourcesAmstar2Route: ResourcesAmstar2Route,
   ResourcesRob2Route: ResourcesRob2Route,
   ResourcesRobinsIRoute: ResourcesRobinsIRoute,
+  SecurityDisclosureRoute: SecurityDisclosureRoute,
   ResourcesIndexRoute: ResourcesIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiAuthSessionRoute: ApiAuthSessionRoute,
