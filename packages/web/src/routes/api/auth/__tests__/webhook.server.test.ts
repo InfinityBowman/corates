@@ -78,6 +78,33 @@ describe('Stripe webhook - phase 1 rejections', () => {
     expect(mockAuthHandler).toHaveBeenCalledTimes(1);
   });
 
+  it('reprocesses a retried payload whose first delivery failed', async () => {
+    const body = JSON.stringify({ id: 'evt_retry', type: 'customer.subscription.updated' });
+    const headers = { 'stripe-signature': 'sig=1' };
+    mockAuthHandler.mockResolvedValueOnce(new Response('handler error', { status: 400 }));
+
+    const first = await handlePost({
+      request: webhookReq(body, headers),
+      context: { db: createDb(env.DB) },
+    });
+    expect(first.status).toBe(400);
+
+    const second = await handlePost({
+      request: webhookReq(body, headers),
+      context: { db: createDb(env.DB) },
+    });
+    expect(second.status).toBe(200);
+    const json = (await second.json()) as { skipped?: string };
+    expect(json.skipped).toBeUndefined();
+    expect(mockAuthHandler).toHaveBeenCalledTimes(2);
+
+    const rows = await readLedger();
+    expect(rows.length).toBe(1);
+    expect(rows[0].status).toBe('processed');
+    expect(rows[0].error).toBeNull();
+    expect(rows[0].stripeEventId).toBe('evt_retry');
+  });
+
   it('rejects test events in production and writes ignored_test_mode row', async () => {
     const originalEnv = env.ENVIRONMENT;
     (env as { ENVIRONMENT: string }).ENVIRONMENT = 'production';

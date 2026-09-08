@@ -108,7 +108,7 @@ export function PlansSettings() {
           </p>
         </div>
 
-        <PricingTable currentTier={tier} />
+        <PricingTable currentTier={tier} currentInterval={subscription.interval} />
 
         <PlanFAQ />
 

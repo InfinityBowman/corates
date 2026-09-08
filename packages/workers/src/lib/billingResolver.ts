@@ -17,6 +17,7 @@ export interface OrgBilling {
   subscription: {
     id: string;
     status: string;
+    periodStart: Date | number | null;
     periodEnd: Date | number | null;
     cancelAtPeriodEnd: boolean | null;
   } | null;
@@ -32,6 +33,7 @@ interface SubscriptionRecord {
   referenceId: string;
   status: string;
   plan: string;
+  periodStart: Date | number | null;
   periodEnd: Date | number | null;
   cancelAtPeriodEnd: boolean | null;
 }
@@ -108,6 +110,7 @@ export async function resolveOrgAccess(
       subscription: {
         id: activeSubscription.id,
         status: activeSubscription.status,
+        periodStart: activeSubscription.periodStart,
         periodEnd: activeSubscription.periodEnd,
         cancelAtPeriodEnd: activeSubscription.cancelAtPeriodEnd,
       },

@@ -21,6 +21,7 @@ import {
   updateLedgerWithVerifiedFields,
   updateLedgerStatus,
   getLedgerByPayloadHash,
+  reopenLedgerEntry,
   LedgerStatus,
 } from '@corates/db/stripe-event-ledger';
 import type { OrgId } from '@corates/shared/ids';
@@ -49,6 +50,11 @@ type HandlerArgs = {
 };
 
 const ROUTE = '/api/auth/stripe/webhook';
+
+// Only these outcomes are final. Anything else (a failed handler, a crash that
+// left the row at `received`, a delivery rejected for its signature) should be
+// processed again when Stripe retries it.
+const SETTLED_STATUSES = new Set<string>([LedgerStatus.PROCESSED, LedgerStatus.IGNORED_TEST_MODE]);
 
 export const handlePost = async ({ request, context }: HandlerArgs) => {
   const { db } = context;
@@ -109,7 +115,7 @@ export const handlePost = async ({ request, context }: HandlerArgs) => {
     const payloadHash = await sha256(rawBody);
 
     const existingEntry = await getLedgerByPayloadHash(db, payloadHash);
-    if (existingEntry) {
+    if (existingEntry && SETTLED_STATUSES.has(existingEntry.status)) {
       log.info('[stripe-webhook] duplicate payload', {
         payloadHash,
         ledgerId: existingEntry.id,
@@ -118,16 +124,27 @@ export const handlePost = async ({ request, context }: HandlerArgs) => {
       return Response.json({ received: true, skipped: 'duplicate_payload' }, { status: 200 });
     }
 
-    ledgerId = crypto.randomUUID();
-    await insertLedgerEntry(db, {
-      id: ledgerId,
-      payloadHash,
-      signaturePresent: true,
-      route: ROUTE,
-      requestId,
-      status: LedgerStatus.RECEIVED,
-    });
-    log.info('[stripe-webhook] received', { payloadHash });
+    if (existingEntry) {
+      ledgerId = existingEntry.id;
+      await reopenLedgerEntry(db, ledgerId, requestId);
+      log.info('[stripe-webhook] retrying', {
+        payloadHash,
+        ledgerId,
+        previousStatus: existingEntry.status,
+        previousError: existingEntry.error,
+      });
+    } else {
+      ledgerId = crypto.randomUUID();
+      await insertLedgerEntry(db, {
+        id: ledgerId,
+        payloadHash,
+        signaturePresent: true,
+        route: ROUTE,
+        requestId,
+        status: LedgerStatus.RECEIVED,
+      });
+      log.info('[stripe-webhook] received', { payloadHash });
+    }
 
     if (env.ENVIRONMENT === 'production') {
       try {
