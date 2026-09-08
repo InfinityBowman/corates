@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { authFetch } from '../auth-client';
+import { authFetch } from '@/api/auth-client';
 
 describe('authFetch', () => {
   it('maps a 429 from the auth limiter to SYSTEM_RATE_LIMITED', async () => {

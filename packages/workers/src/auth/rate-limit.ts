@@ -12,6 +12,7 @@ export const RATE_LIMITED_AUTH_PATHS = [
   '/email-otp/send-verification-otp',
   '/email-otp/verify-email',
   '/forget-password/email-otp',
+  '/email-otp/request-password-reset',
   '/email-otp/reset-password',
   '/onboarding/request-email',
   '/onboarding/confirm-email',

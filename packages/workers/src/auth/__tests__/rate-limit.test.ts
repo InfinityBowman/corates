@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { env } from 'cloudflare:workers';
 import { resetTestDatabase } from '../../__tests__/helpers';
 import { createAuth } from '../config';
-import { AUTH_RATE_LIMIT } from '../rate-limit';
+import { AUTH_RATE_LIMIT, RATE_LIMITED_AUTH_PATHS } from '../rate-limit';
 import type { Env } from '../../types';
 
 const OTP_PATH = '/email-otp/send-verification-otp';
@@ -39,6 +39,14 @@ describe('auth rate limiting', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  // customRules match exact paths, so a renamed or removed endpoint would
+  // silently fall back to the defaults
+  it('lists only paths Better Auth actually serves', () => {
+    const auth = createAuth({ ...env, AUTH_SECRET: 'test-secret-that-is-long-enough' } as Env);
+    const served = new Set(Object.values(auth.api).map(endpoint => endpoint.path));
+    for (const path of RATE_LIMITED_AUTH_PATHS) expect(served).toContain(path);
   });
 
   it('returns 429 with a retry hint once one IP exceeds the OTP send limit', async () => {
