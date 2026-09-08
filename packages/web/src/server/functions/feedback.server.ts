@@ -70,7 +70,7 @@ async function sendFeedbackEmail(
   id: FeedbackId,
 ): Promise<void> {
   const contactEmail =
-    (env as unknown as Record<string, string | undefined>).CONTACT_EMAIL ?? 'contact@corates.org';
+    (env as unknown as Record<string, string | undefined>).CONTACT_EMAIL ?? 'support@corates.org';
   const { name, email } = session.user;
   const ctx = data.context ?? {};
 

@@ -1,0 +1,5 @@
+Contact: mailto:support@corates.org
+Expires: 2027-09-01T00:00:00.000Z
+Policy: https://corates.org/security/disclosure
+Preferred-Languages: en
+Canonical: https://corates.org/.well-known/security.txt

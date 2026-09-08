@@ -371,8 +371,8 @@ function TermsPage() {
             <p>
               <strong>10.5. Communications.</strong> Notices under this Agreement will be provided
               by email. Notices to Syntch LLC must be sent to{' '}
-              <a href='mailto:legal@corates.org' className='text-blue-600 hover:text-blue-700'>
-                legal@corates.org
+              <a href='mailto:support@corates.org' className='text-blue-600 hover:text-blue-700'>
+                support@corates.org
               </a>
               . Notices to Customer will be sent to the email provided through the Service.
             </p>

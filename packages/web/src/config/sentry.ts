@@ -1,5 +1,7 @@
 import * as Sentry from '@sentry/react';
+import type { ErrorEvent } from '@sentry/react';
 import type { Router } from '@tanstack/react-router';
+import { clientLogger } from '@/lib/clientLogger';
 
 const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN || '';
 
@@ -9,12 +11,30 @@ interface CaptureContext {
   [key: string]: unknown;
 }
 
+// Loki gets one short line per crash so the product-health dashboard shows client
+// failures next to server ones. The stack stays in Sentry; Sentry's dedupe
+// integration already collapses a render loop throwing the same error.
+export function crashLogData(event: ErrorEvent): Record<string, unknown> {
+  const exception = event.exception?.values?.[0];
+  return {
+    errorName: exception?.type ?? 'Error',
+    errorMessage: (exception?.value ?? event.message ?? '').slice(0, 200),
+    mechanism: exception?.mechanism?.type,
+    component: event.tags?.component,
+    action: event.tags?.action,
+  };
+}
+
 export function initSentry(): void {
   if (!SENTRY_DSN || Sentry.getClient()) return;
 
   Sentry.init({
     dsn: SENTRY_DSN,
     environment: import.meta.env.MODE,
+    beforeSend(event) {
+      clientLogger.error('client.crash', crashLogData(event));
+      return event;
+    },
     tracesSampleRate: import.meta.env.DEV ? 1.0 : 0.1,
     replaysSessionSampleRate: import.meta.env.DEV ? 0 : 0.1,
     replaysOnErrorSampleRate: 1.0,

@@ -175,6 +175,14 @@ the console.
 Sentry stays for uncaught exceptions and existing `captureException` call sites — do not
 expand it for structured flow logging.
 
+Crashes are the one place both systems get a line. Sentry's `beforeSend` in
+`@/config/sentry.ts` emits `client.crash` through `clientLogger` for every error event the
+SDK captures: window errors, unhandled rejections, React boundary errors via
+`reactErrorHandler`, and explicit `captureException` calls. Loki gets the error name,
+message, mechanism, and the `component` / `action` tags only; the stack stays in Sentry.
+Sentry's dedupe integration collapses a render loop throwing the same error, so identical
+crashes do not flood `/api/client-logs`. No DSN means no Sentry and no crash lines.
+
 The rule of thumb for tolerated degradations is still **warn means console** (metadata
 lookups that fell back, cache writes that missed). A failure the user attempted and that
 did not complete gets a `clientLogger` event at the call site.
@@ -212,6 +220,7 @@ Grafana lives at `grafana.jacobmaynard.dev` with one dashboard, `CoRATES Logs`.
 {service_name="corates-workers-prod"} | json | requestId="3f2b..."   # one request
 {service_name="corates-workers-prod"} | json | service="corates-web-client"   # browser events
 {service_name="corates-workers-prod"} | json | message="client.sync.fatal"
+{service_name="corates-workers-prod"} | json | message="client.crash"        # browser crashes
 {service_name="corates-workers-prod"} | json | message="client.checklist.created"   # usage events
 {service_name="corates-workers-prod"} | json | message="sync.mutation" | projectId="..."   # work inside one project
 ```

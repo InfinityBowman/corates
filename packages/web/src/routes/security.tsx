@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import {
   ShieldIcon,
   LockIcon,
@@ -80,8 +80,8 @@ function SecurityPage() {
                     <h2 className='mb-2 text-lg font-semibold text-gray-900'>Authentication</h2>
                     <p className='text-gray-600'>
                       We support multiple secure authentication methods including OAuth (Google,
-                      ORCID), passwordless login via email, and two-factor authentication (2FA) for
-                      enhanced account security.
+                      ORCID) and passwordless login via email, with active session management so you
+                      can sign out other devices.
                     </p>
                   </div>
                 </div>
@@ -95,9 +95,9 @@ function SecurityPage() {
                   <div>
                     <h2 className='mb-2 text-lg font-semibold text-gray-900'>Abuse Prevention</h2>
                     <p className='text-gray-600'>
-                      We apply rate limiting across the whole domain through Cloudflare, covering
-                      every endpoint including sign-in, registration, password resets, and email
-                      flows, to reduce brute-force attempts and automated abuse.
+                      Cloudflare&apos;s managed WAF and DDoS protection sit in front of every
+                      request, and public forms such as contact and feedback are rate limited to
+                      reduce automated abuse.
                     </p>
                   </div>
                 </div>
@@ -151,15 +151,29 @@ function SecurityPage() {
                     We take security vulnerabilities seriously. If you believe you have found a
                     security vulnerability in CoRATES, we encourage you to report it to us
                     responsibly. We will not pursue legal action against researchers who report
-                    vulnerabilities responsibly and in good faith.
+                    vulnerabilities responsibly and in good faith. Our full{' '}
+                    <Link
+                      to='/security/disclosure'
+                      className='font-medium text-blue-600 hover:text-blue-700'
+                    >
+                      vulnerability disclosure policy
+                    </Link>{' '}
+                    covers scope, response times, and safe harbor, and is referenced from{' '}
+                    <a
+                      href='/.well-known/security.txt'
+                      className='font-medium text-blue-600 hover:text-blue-700'
+                    >
+                      /.well-known/security.txt
+                    </a>
+                    .
                   </p>
                   <p className='mb-4 text-gray-600'>
                     Please send details of the vulnerability to{' '}
                     <a
-                      href='mailto:contact@corates.org'
+                      href='mailto:support@corates.org'
                       className='font-medium text-blue-600 hover:text-blue-700'
                     >
-                      contact@corates.org
+                      support@corates.org
                     </a>
                     . Include as much information as possible, such as:
                   </p>
@@ -191,10 +205,10 @@ function SecurityPage() {
                     If you have any questions about our security practices or would like more
                     information, please contact us at{' '}
                     <a
-                      href='mailto:contact@corates.org'
+                      href='mailto:support@corates.org'
                       className='font-medium text-blue-600 hover:text-blue-700'
                     >
-                      contact@corates.org
+                      support@corates.org
                     </a>
                     .
                   </p>
