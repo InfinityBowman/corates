@@ -11,6 +11,7 @@ import {
   testUtils,
 } from 'better-auth/plugins';
 import { oAuthRelay } from './oauth-relay';
+import { AUTH_RATE_LIMIT } from './rate-limit';
 import { stripe } from '@better-auth/stripe';
 import { createStripeClient } from '@corates/shared/stripe';
 import { STRIPE_PLAN_IDS, getPriceLookupKey } from '@corates/shared/plans';
@@ -492,7 +493,10 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
   }
 
   return betterAuth({
-    rateLimit: { enabled: false },
+    rateLimit: AUTH_RATE_LIMIT,
+    // Cloudflare sets cf-connecting-ip to the real client; x-forwarded-for can
+    // carry a client-supplied value ahead of it, which Better Auth then rejects
+    advanced: { ipAddress: { ipAddressHeaders: ['cf-connecting-ip', 'x-forwarded-for'] } },
     database: drizzleAdapter(db, {
       provider: 'sqlite',
       schema: {
@@ -505,6 +509,7 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
         member: schema.member,
         invitation: schema.invitation,
         subscription: schema.subscription,
+        rateLimit: schema.rateLimit,
       },
     }),
 

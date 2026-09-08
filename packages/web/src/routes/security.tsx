@@ -96,8 +96,8 @@ function SecurityPage() {
                     <h2 className='mb-2 text-lg font-semibold text-gray-900'>Abuse Prevention</h2>
                     <p className='text-gray-600'>
                       Cloudflare&apos;s managed WAF and DDoS protection sit in front of every
-                      request, and public forms such as contact and feedback are rate limited to
-                      reduce automated abuse.
+                      request. Sign-in, sign-up, emailed code, and password reset requests are rate
+                      limited per client, as are public forms such as contact and feedback.
                     </p>
                   </div>
                 </div>

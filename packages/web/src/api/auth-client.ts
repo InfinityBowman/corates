@@ -8,6 +8,7 @@ import {
 import {
   AUTH_ERRORS,
   USER_ERRORS,
+  SYSTEM_ERRORS,
   createDomainError,
   normalizeError,
   type ErrorDefinition,
@@ -62,6 +63,10 @@ export async function authFetch<T>(
   const result = await call;
   if (result.error) {
     const { code, message, status } = result.error;
+    // Better Auth's limiter answers with a bare 429 and no error code
+    if (status === 429) {
+      throw createDomainError(SYSTEM_ERRORS.RATE_LIMITED);
+    }
     const errorDef = code ? BETTER_AUTH_ERROR_MAP[code] : undefined;
     if (errorDef) {
       throw createDomainError(errorDef, undefined, message);

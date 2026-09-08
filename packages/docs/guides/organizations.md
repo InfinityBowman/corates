@@ -213,7 +213,7 @@ Better Auth tracks an `activeOrganizationId` on the session. The `POST /api/orgs
 - **Use the guard functions**, not ad-hoc session + membership checks.
 - **Check `result.ok` and return `result.response` on failure** -- the guards package up domain errors and status codes for you.
 - **Order guards outside-in**: auth → org → project → entitlement → quota → handler.
-- **Keep per-route rate limits colocated** in `@/server/rateLimit` and call `checkRateLimit` before the guards for routes that deserve it.
+- **Rate limit before the guards** for routes that deserve it; see Rate limiting in the API development guide for the pattern.
 
 ### Frontend
 

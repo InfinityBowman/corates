@@ -283,9 +283,10 @@ gets the triad once a library is involved.
   last forty pushes to main failed, mostly locator ambiguity. #697 and #701
   anchored the suite on data-testid selectors; the last four runs are green.
   Post-merge e2e still gates the production deploy, which is intended.
-- **Rate limiting** is a Cloudflare WAF rule managed in the dashboard, not in
-  the repo, which is why `rateLimit: { enabled: false }` in the Better Auth
-  config is correct. Consider Turnstile on signup and contact.
+- **Rate limiting** for the auth endpoints is Better Auth's limiter with D1
+  storage (#717). The corates.org zone has one edge rule as a flood backstop
+  (300 requests per IP per 10 seconds on `/api/*`, added 2026-09-07) plus the
+  free managed WAF. Consider Turnstile on signup and contact.
 - **Un-skip `pdfValidation.test.ts:130`** (files without a PDF signature) or
   fix what it was hiding.
 - **Version-change toast (#299) and afk socket disconnect (#298)** are cheap
