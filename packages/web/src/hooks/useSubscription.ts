@@ -24,6 +24,7 @@ const DEFAULT_SUBSCRIPTION: Subscription = {
   stripeSubscriptionId: null,
   currentPeriodEnd: null,
   cancelAtPeriodEnd: false,
+  interval: null,
   accessMode: 'free',
   source: 'free',
   projectCount: 0,

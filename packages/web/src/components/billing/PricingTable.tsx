@@ -49,6 +49,7 @@ type BillingInterval = 'monthly' | 'yearly';
 
 interface PricingTableProps {
   currentTier?: string;
+  currentInterval?: BillingInterval | null;
   mode?: 'marketing' | 'authenticated';
   getSignUpUrl?: (tier: string, interval?: string) => string;
 }
@@ -57,6 +58,7 @@ const catalog = getBillingPlanCatalog();
 
 export function PricingTable({
   currentTier: currentTierProp,
+  currentInterval = null,
   mode = 'authenticated',
   getSignUpUrl,
 }: PricingTableProps) {
@@ -67,6 +69,14 @@ export function PricingTable({
 
   const isMarketing = mode === 'marketing';
   const currentTier = currentTierProp ?? 'free';
+
+  // The current paid plan can still be switched to the other billing interval.
+  const offersIntervalSwitch = (plan: BillingCatalogPlan) =>
+    !isMarketing &&
+    plan.tier === currentTier &&
+    plan.cta === 'subscribe' &&
+    currentInterval !== null &&
+    currentInterval !== billingInterval;
 
   const buildSignUpUrl = (plan: BillingCatalogPlan) => {
     if (!getSignUpUrl) return '/signup';
@@ -91,7 +101,7 @@ export function PricingTable({
   };
 
   const handleAction = async (plan: BillingCatalogPlan) => {
-    if (plan.tier === currentTier) return;
+    if (plan.tier === currentTier && !offersIntervalSwitch(plan)) return;
     if (plan.cta === 'free') {
       setLoadingTier(plan.tier);
       try {
@@ -112,6 +122,9 @@ export function PricingTable({
   };
 
   const getButtonText = (plan: BillingCatalogPlan) => {
+    if (offersIntervalSwitch(plan)) {
+      return billingInterval === 'yearly' ? 'Switch to annual' : 'Switch to monthly';
+    }
     if (!isMarketing && plan.tier === currentTier) return 'Current Plan';
     if (plan.cta === 'contact') return 'Contact us';
     // Moving to Free means cancelling, which Stripe's portal handles.
@@ -121,7 +134,7 @@ export function PricingTable({
 
   const isButtonDisabled = (plan: BillingCatalogPlan) => {
     if (isMarketing) return false;
-    if (plan.tier === currentTier) return true;
+    if (plan.tier === currentTier && !offersIntervalSwitch(plan)) return true;
     return loadingTier !== null;
   };
 
@@ -193,7 +206,7 @@ export function PricingTable({
   };
 
   const renderCta = (plan: BillingCatalogPlan) => {
-    const isCurrent = !isMarketing && plan.tier === currentTier;
+    const isCurrent = !isMarketing && plan.tier === currentTier && !offersIntervalSwitch(plan);
     const muted = !plan.isPopular;
     const className = `mt-6 h-auto w-full rounded-xl px-4 py-2.5 font-semibold ${
       !isCurrent && muted ? 'bg-foreground text-background hover:bg-foreground/90' : ''

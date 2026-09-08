@@ -117,5 +117,45 @@ describe('fetchSubscription', () => {
     expect(result.accessMode).toBe('full');
     expect(result.projectCount).toBe(1);
     expect(result.currentPeriodEnd).toBeGreaterThan(nowSec);
+    expect(result.interval).toBe('monthly');
+  });
+
+  it('reports a yearly interval from the period length', async () => {
+    const { org, owner } = await buildOrg();
+    const { subscription } = await import('@corates/db/schema');
+    const db = createDb(env.DB);
+
+    const now = Date.now();
+    await db.insert(subscription).values({
+      id: 'sub-1',
+      plan: 'lab',
+      referenceId: org.id,
+      status: 'active',
+      stripeCustomerId: 'cus_test',
+      stripeSubscriptionId: 'sub_test',
+      periodStart: new Date(now),
+      periodEnd: new Date(now + 365 * 86_400_000),
+    });
+
+    const session = mockSession({
+      userId: owner.id,
+      email: owner.email,
+      name: owner.name,
+      activeOrganizationId: org.id,
+    });
+    const result = await fetchSubscription(createDb(env.DB), session);
+    expect(result.interval).toBe('yearly');
+  });
+
+  it('reports no interval on the free plan', async () => {
+    const { org, owner } = await buildOrg();
+    const session = mockSession({
+      userId: owner.id,
+      email: owner.email,
+      name: owner.name,
+      activeOrganizationId: org.id,
+    });
+    const result = await fetchSubscription(createDb(env.DB), session);
+    expect(result.interval).toBeNull();
   });
 });

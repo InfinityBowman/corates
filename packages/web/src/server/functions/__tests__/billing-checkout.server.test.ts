@@ -166,7 +166,9 @@ describe('createCheckout for an existing Stripe subscriber', () => {
       periodEnd: new Date(Date.now() + 86_400_000),
     });
     stripePricesListMock.mockResolvedValueOnce({ data: [{ id: 'price_lab_yearly' }] });
-    stripeRetrieveMock.mockResolvedValueOnce({ items: { data: [{ id: 'si_123' }] } });
+    stripeRetrieveMock.mockResolvedValueOnce({
+      items: { data: [{ id: 'si_123', price: { id: 'price_team_monthly' } }] },
+    });
     stripeUpdateMock.mockResolvedValueOnce({});
     syncStripeSubscriptionMock.mockResolvedValueOnce({ status: 'active' });
 
@@ -188,7 +190,84 @@ describe('createCheckout for an existing Stripe subscriber', () => {
       items: [{ id: 'si_123', price: 'price_lab_yearly' }],
       proration_behavior: 'always_invoice',
     });
-    expect(syncStripeSubscriptionMock).toHaveBeenCalledWith(expect.anything(), db, 'cus_123');
+    expect(syncStripeSubscriptionMock).toHaveBeenCalledWith(
+      expect.anything(),
+      db,
+      'cus_123',
+      'sub_123',
+    );
     expect(upgradeSubscriptionMock).not.toHaveBeenCalled();
+  });
+
+  it('switches the billing interval on the current tier', async () => {
+    const { org, owner } = await buildOrg();
+    const { subscription } = await import('@corates/db/schema');
+    const db = createDb(env.DB);
+    await db.insert(subscription).values({
+      id: 'sub-row',
+      plan: 'team',
+      referenceId: org.id,
+      status: 'active',
+      stripeCustomerId: 'cus_123',
+      stripeSubscriptionId: 'sub_123',
+      periodEnd: new Date(Date.now() + 86_400_000),
+    });
+    stripePricesListMock.mockResolvedValueOnce({ data: [{ id: 'price_team_yearly' }] });
+    stripeRetrieveMock.mockResolvedValueOnce({
+      items: { data: [{ id: 'si_123', price: { id: 'price_team_monthly' } }] },
+    });
+    stripeUpdateMock.mockResolvedValueOnce({});
+    syncStripeSubscriptionMock.mockResolvedValueOnce({ status: 'active' });
+
+    const session = mockSession({
+      userId: owner.id,
+      email: owner.email,
+      name: owner.name,
+      activeOrganizationId: org.id,
+    });
+    const result = await createCheckout(db, session, dummyRequest, 'team', 'yearly');
+
+    expect((result as { url: string }).url).toContain('/settings/billing?success=true');
+    expect(stripeUpdateMock).toHaveBeenCalledWith('sub_123', {
+      items: [{ id: 'si_123', price: 'price_team_yearly' }],
+      proration_behavior: 'always_invoice',
+    });
+  });
+
+  it('rejects the price the subscription is already on', async () => {
+    const { org, owner } = await buildOrg();
+    const { subscription } = await import('@corates/db/schema');
+    const db = createDb(env.DB);
+    await db.insert(subscription).values({
+      id: 'sub-row',
+      plan: 'team',
+      referenceId: org.id,
+      status: 'active',
+      stripeCustomerId: 'cus_123',
+      stripeSubscriptionId: 'sub_123',
+      periodEnd: new Date(Date.now() + 86_400_000),
+    });
+    stripePricesListMock.mockResolvedValueOnce({ data: [{ id: 'price_team_monthly' }] });
+    stripeRetrieveMock.mockResolvedValueOnce({
+      items: { data: [{ id: 'si_123', price: { id: 'price_team_monthly' } }] },
+    });
+
+    const session = mockSession({
+      userId: owner.id,
+      email: owner.email,
+      name: owner.name,
+      activeOrganizationId: org.id,
+    });
+    try {
+      await createCheckout(db, session, dummyRequest, 'team', 'monthly');
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(400);
+      const body = res.toDomainError() as { details?: { reason?: string } };
+      expect(body.details?.reason).toBe('already_on_plan');
+    }
+    expect(stripeUpdateMock).not.toHaveBeenCalled();
+    expect(syncStripeSubscriptionMock).not.toHaveBeenCalled();
   });
 });

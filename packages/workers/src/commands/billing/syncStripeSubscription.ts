@@ -1,16 +1,16 @@
 /**
  * Sync canonical subscription state from Stripe to the local DB.
  *
- * Called from the /sync-after-success endpoint to close the race where a user
- * lands on the billing page before Better Auth's webhook has written the
- * subscription row. Re-fetches the latest subscription from Stripe and
+ * Called after checkout to close the race where a user lands on the billing
+ * page before Better Auth's webhook has written the subscription row, and after
+ * an in-app price change. Re-fetches the subscription from Stripe and
  * overwrites the row, so the DB reflects Stripe rather than whatever partial
  * payload arrived (or didn't).
  *
  * Safe to run concurrently with Better Auth's webhook handler: both write
  * canonical state derived from the same Stripe read.
  */
-import { eq } from 'drizzle-orm';
+import { and, desc, eq, ne } from 'drizzle-orm';
 import { subscription } from '@corates/db/schema';
 import { createStripeClient } from '@corates/shared/stripe';
 import { parsePriceLookupKey } from '@corates/shared/plans';
@@ -33,41 +33,57 @@ export async function syncStripeSubscription(
   env: Env,
   db: Database,
   customerId: string,
+  stripeSubscriptionId?: string,
 ): Promise<SyncStripeSubscriptionResult> {
   const stripe = createStripeClient(env.STRIPE_SECRET_KEY);
 
-  const list = await stripe.subscriptions.list({
-    customer: customerId,
-    limit: 1,
-    status: 'all',
-    expand: ['data.items.data.price'],
-  });
+  // A customer can own several workspaces, each with its own subscription, so
+  // only fall back to "the customer's newest subscription" when the caller
+  // (post-checkout) has nothing more specific to go on.
+  const sub =
+    stripeSubscriptionId ?
+      await stripe.subscriptions.retrieve(stripeSubscriptionId, {
+        expand: ['items.data.price'],
+      })
+    : (
+        await stripe.subscriptions.list({
+          customer: customerId,
+          limit: 1,
+          status: 'all',
+          expand: ['data.items.data.price'],
+        })
+      ).data[0];
 
-  const existing = await db
-    .select()
-    .from(subscription)
-    .where(eq(subscription.stripeCustomerId, customerId))
-    .get();
-
-  if (list.data.length === 0) {
-    if (existing && existing.status !== 'canceled') {
+  if (!sub) {
+    const rows = await db
+      .select()
+      .from(subscription)
+      .where(
+        and(eq(subscription.stripeCustomerId, customerId), ne(subscription.status, 'canceled')),
+      )
+      .all();
+    for (const row of rows) {
       await db
         .update(subscription)
         .set({ status: 'canceled', endedAt: new Date(), updatedAt: new Date() })
-        .where(eq(subscription.id, existing.id));
+        .where(eq(subscription.id, row.id));
       info('billing.subscription_canceled_by_sync', {
-        orgId: existing.referenceId,
+        orgId: row.referenceId,
         stripeCustomerId: customerId,
-        stripeSubscriptionId: existing.stripeSubscriptionId,
-        previousStatus: existing.status,
+        stripeSubscriptionId: row.stripeSubscriptionId,
+        previousStatus: row.status,
       });
     }
     return { status: 'none', stripeSubscriptionId: null };
   }
 
-  const sub = list.data[0];
   const item = sub.items.data[0];
-  const orgId = sub.metadata?.orgId ?? sub.metadata?.referenceId ?? existing?.referenceId;
+  const bySubscriptionId = await db
+    .select()
+    .from(subscription)
+    .where(eq(subscription.stripeSubscriptionId, sub.id))
+    .get();
+  const orgId = sub.metadata?.orgId ?? sub.metadata?.referenceId ?? bySubscriptionId?.referenceId;
 
   // No orgId means there is nothing to key the local row on, so the sync is a
   // no-op and the DB stays stale until a webhook arrives with better metadata.
@@ -80,6 +96,17 @@ export async function syncStripeSubscription(
     });
     return { status: sub.status, stripeSubscriptionId: sub.id };
   }
+
+  // Before the checkout webhook lands, the org's row is the placeholder Better
+  // Auth created at checkout time and has no Stripe subscription id yet.
+  const existing =
+    bySubscriptionId ??
+    (await db
+      .select()
+      .from(subscription)
+      .where(eq(subscription.referenceId, orgId))
+      .orderBy(desc(subscription.createdAt))
+      .get());
 
   const values = {
     plan:

@@ -168,6 +168,30 @@ export async function updateLedgerStatus(
   return result ?? null;
 }
 
+// Stripe retries a rejected delivery with the same body, so a row that never
+// reached `processed` has to be reusable or the retry is dropped as a replay.
+export async function reopenLedgerEntry(
+  db: Database,
+  id: string,
+  requestId: string,
+): Promise<StripeEventLedgerEntry | null> {
+  const result = await db
+    .update(stripeEventLedger)
+    .set({
+      status: LedgerStatus.RECEIVED,
+      requestId,
+      receivedAt: new Date(),
+      processedAt: null,
+      error: null,
+      httpStatus: null,
+    })
+    .where(eq(stripeEventLedger.id, id))
+    .returning()
+    .get();
+
+  return result ?? null;
+}
+
 export async function getLedgerByPayloadHash(
   db: Database,
   payloadHash: string,

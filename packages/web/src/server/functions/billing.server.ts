@@ -63,11 +63,16 @@ export async function fetchSubscription(db: Database, session: Session) {
       getGrantPlan(orgBilling.effectivePlanId as GrantType)
     : getPlan(orgBilling.effectivePlanId);
 
-  const currentPeriodEnd =
-    orgBilling.subscription?.periodEnd ?
-      orgBilling.subscription.periodEnd instanceof Date ?
-        Math.floor(orgBilling.subscription.periodEnd.getTime() / 1000)
-      : orgBilling.subscription.periodEnd
+  const currentPeriodEnd = toUnixSeconds(orgBilling.subscription?.periodEnd);
+
+  // The interval is not stored on the row, but a Stripe billing period is
+  // exactly one month or one year, so the period length identifies it.
+  const periodStart = toUnixSeconds(orgBilling.subscription?.periodStart);
+  const interval: 'monthly' | 'yearly' | null =
+    orgBilling.source === 'subscription' && periodStart && currentPeriodEnd ?
+      currentPeriodEnd - periodStart > 60 * 86_400 ?
+        'yearly'
+      : 'monthly'
     : null;
 
   return {
@@ -81,6 +86,7 @@ export async function fetchSubscription(db: Database, session: Session) {
     stripeSubscriptionId: orgBilling.subscription?.id || null,
     currentPeriodEnd,
     cancelAtPeriodEnd: orgBilling.subscription?.cancelAtPeriodEnd || false,
+    interval,
     accessMode: orgBilling.accessMode,
     source: orgBilling.source,
     projectCount,
@@ -134,6 +140,11 @@ export async function fetchPlanValidation(db: Database, session: Session, target
 }
 
 // --- Helpers ---
+
+function toUnixSeconds(value: Date | number | null | undefined): number | null {
+  if (!value) return null;
+  return value instanceof Date ? Math.floor(value.getTime() / 1000) : value;
+}
 
 function requireOrg(orgId: OrgId | null, action: string, userId: string): asserts orgId is OrgId {
   if (!orgId) {
@@ -193,20 +204,6 @@ export async function createCheckout(
   }
 
   const currentBilling = await resolveOrgAccess(db, orgId);
-  if (currentBilling.source === 'subscription' && currentBilling.effectivePlanId === tier) {
-    warn('billing.checkout_rejected', {
-      orgId,
-      userId: session.user.id,
-      plan: tier,
-      interval,
-      reason: 'already_on_plan',
-    });
-    throwDomainError(
-      VALIDATION_ERRORS.INVALID_INPUT,
-      { reason: 'already_on_plan', currentPlan: tier },
-      `You are already subscribed to the ${tier} plan. To change your billing interval, use the billing portal.`,
-    );
-  }
 
   const validationResult = await validatePlanChange(db, orgId, tier);
   if (!validationResult.valid) {
@@ -240,6 +237,8 @@ export async function createCheckout(
       .where(eq(subscription.id, currentBilling.subscription.id))
       .get();
     if (row?.stripeCustomerId && row.stripeSubscriptionId) {
+      // Same tier on the other interval is a price swap too; same price exactly
+      // is rejected inside once the live subscription has been read.
       return changeSubscriptionPrice(db, {
         orgId,
         userId: session.user.id,
@@ -312,11 +311,25 @@ async function changeSubscriptionPrice(
     if (!item) {
       throwDomainError(VALIDATION_ERRORS.INVALID_INPUT, { reason: 'subscription_has_no_items' });
     }
+    if (item.price.id === priceId) {
+      warn('billing.checkout_rejected', {
+        orgId,
+        userId,
+        plan: tier,
+        interval,
+        reason: 'already_on_plan',
+      });
+      throwDomainError(
+        VALIDATION_ERRORS.INVALID_INPUT,
+        { reason: 'already_on_plan', currentPlan: tier },
+        `You are already subscribed to the ${tier} plan on ${interval} billing.`,
+      );
+    }
     await stripe.subscriptions.update(stripeSubscriptionId, {
       items: [{ id: item.id, price: priceId }],
       proration_behavior: 'always_invoice',
     });
-    await syncStripeSubscription(env, db, stripeCustomerId);
+    await syncStripeSubscription(env, db, stripeCustomerId, stripeSubscriptionId);
   } catch (err) {
     captureError(err, {
       tags: { component: 'billing', action: 'change-price' },
