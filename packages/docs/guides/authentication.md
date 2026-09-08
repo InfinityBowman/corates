@@ -17,7 +17,7 @@ This setup provides comprehensive user authentication using Better Auth with mul
 - Two-factor authentication (TOTP with backup codes)
 - User data stored in D1 database via Drizzle ORM
 - Session management with secure cookies (7-day expiry)
-- Rate limiting on every endpoint via Cloudflare domain-level rules (Better Auth's built-in limiter is disabled)
+- Per-IP rate limiting on the sign-in, sign-up, emailed code, and password reset endpoints (see Rate Limiting)
 - Admin features with user impersonation
 - Account linking and merging
 - WebSocket authentication support
@@ -277,6 +277,14 @@ const { user, session: sessionRow } = session ?? {};
 const user = useAuthStore(selectUser);
 const isLoggedIn = useAuthStore(selectIsLoggedIn);
 ```
+
+## Rate Limiting
+
+Better Auth's built-in limiter is enabled with `storage: 'database'`, so counts live in the `rateLimit` table and are shared across Workers isolates (in-memory storage would be per isolate and effectively no limit). The rules are in `packages/workers/src/auth/rate-limit.ts`: the endpoints that send an email or accept a guessable code or password allow 10 requests per client IP per 60 seconds. Every other auth endpoint keeps Better Auth's defaults (100 requests per 10 seconds, with its own stricter rules for `/sign-in/*`, `/sign-up/*`, and password or email changes).
+
+The client IP is read from `cf-connecting-ip` first, then `x-forwarded-for`. Cloudflare sets the first header itself, while the second can carry a client-supplied address ahead of the real one, which Better Auth then refuses to trust. A request over the limit gets a 429 with an `X-Retry-After` header; `authFetch` maps it to `SYSTEM_RATE_LIMITED` so the friendly-message system shows "Too many requests" instead of a generic failure. Expired rows are pruned by the limiter itself on each window reset.
+
+The contact and feedback forms count their own recent submissions instead (see Rate limiting in the API development guide). There is no edge rate-limit ruleset on the corates.org zone; Cloudflare only contributes the managed WAF and DDoS protection.
 
 ## Admin Features
 

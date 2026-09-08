@@ -48,7 +48,6 @@ Each handler composes checks explicitly -- there is no single middleware pipelin
 | `requireProjectEdit`                             | `@corates/workers/policies`         | Enforces project edit permission |
 | `getProjectMembership`                           | `@corates/workers/policies`         | Looks up project role            |
 | `requireMemberRemoval` / `requireSafeRoleChange` | `@corates/workers/policies`         | Member management safety         |
-| `checkRateLimit`                                 | `@/server/rateLimit`                | Per-endpoint rate limits         |
 | `resolveOrgAccess`                               | `@corates/workers/billing-resolver` | Plan-aware org access check      |
 
 ## API Endpoints

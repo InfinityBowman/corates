@@ -148,19 +148,19 @@ Additional guards live under `@/server/guards/` -- these are route-specific wrap
 
 ## Rate limiting
 
-Per-endpoint rate limiters live in `@/server/rateLimit`. Declare the limit constant in that file and call `checkRateLimit` at the top of the handler.
+There is no shared rate-limit module. Public forms that write a row per submission (contact, feedback) count their own recent rows and throw `SYSTEM_ERRORS.RATE_LIMITED` when the caller is over the limit, so the submissions table is the counter:
 
 ```ts
-import { BILLING_CHECKOUT_RATE_LIMIT, checkRateLimit } from '@/server/rateLimit';
-
-const limit = checkRateLimit(request, env, BILLING_CHECKOUT_RATE_LIMIT);
-if (limit.blocked) return limit.blocked;
-
-// ... happy path ...
-return Response.json(result, { status: 200, headers: limit.headers });
+const [{ count: recentCount }] = await db
+  .select({ count: count() })
+  .from(contactSubmissions)
+  .where(and(eq(contactSubmissions.email, normalizedEmail), gt(contactSubmissions.createdAt, oneHourAgo)));
+if (recentCount >= MAX_SUBMISSIONS_PER_HOUR) {
+  throwDomainError(SYSTEM_ERRORS.RATE_LIMITED);
+}
 ```
 
-Forward `limit.headers` on the success path so clients see remaining-quota headers.
+The Better Auth endpoints under `/api/auth/*` use Better Auth's own per-IP limiter with D1 storage (see Rate Limiting in the authentication guide). Nothing relies on an edge rate-limit rule.
 
 ## Validation
 

@@ -316,6 +316,15 @@ export const twoFactor = sqliteTable('twoFactor', {
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
 });
 
+// Better Auth rate limiter rows. Storage must be the database because each
+// Workers isolate has its own memory, so an in-memory counter is no limit.
+export const rateLimit = sqliteTable('rateLimit', {
+  id: text('id').primaryKey(),
+  key: text('key').notNull().unique(),
+  count: integer('count').notNull(),
+  lastRequest: integer('lastRequest').notNull(),
+});
+
 // Stripe event ledger table (for webhook observability and auditing)
 // Stores all webhook deliveries with two-phase trust model:
 // - Phase 1: Store trust-minimal fields on receipt (before signature verification)

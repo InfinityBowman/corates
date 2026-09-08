@@ -339,4 +339,13 @@ CREATE INDEX \`notifications_userId_readAt_idx\` ON \`notifications\` (\`userId\
 --> statement-breakpoint
 ALTER TABLE \`projects\` ADD \`setupStep\` text;
 --> statement-breakpoint
-ALTER TABLE \`projects\` DROP COLUMN \`description\`;`;
+ALTER TABLE \`projects\` DROP COLUMN \`description\`;
+--> statement-breakpoint
+CREATE TABLE \`rateLimit\` (
+	\`id\` text PRIMARY KEY NOT NULL,
+	\`key\` text NOT NULL,
+	\`count\` integer NOT NULL,
+	\`lastRequest\` integer NOT NULL
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX \`rateLimit_key_unique\` ON \`rateLimit\` (\`key\`);`;

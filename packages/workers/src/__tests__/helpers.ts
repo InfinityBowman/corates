@@ -91,6 +91,7 @@ export async function resetTestDatabase(): Promise<void> {
     'stripe_event_ledger',
     'subscription',
     'twoFactor',
+    'rateLimit',
     'verification',
     'mediaFiles',
     'project_members',
