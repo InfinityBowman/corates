@@ -110,12 +110,12 @@ export const Route = createRootRoute({
     'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
     'Content-Security-Policy': [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://plausible.jacobmaynard.dev https://apis.google.com",
+      "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://analytics.corates.org https://apis.google.com",
       "style-src 'self' 'unsafe-inline'",
       `img-src 'self' data: blob:${import.meta.env.DEV ? ' http://localhost:*' : ''}`,
       import.meta.env.DEV ?
-        "connect-src 'self' http://localhost:* ws://localhost:* https://api.crossref.org https://eutils.ncbi.nlm.nih.gov https://api.unpaywall.org https://plausible.jacobmaynard.dev https://*.ingest.us.sentry.io"
-      : "connect-src 'self' wss://corates.org https://api.crossref.org https://eutils.ncbi.nlm.nih.gov https://api.unpaywall.org https://plausible.jacobmaynard.dev https://*.ingest.us.sentry.io",
+        "connect-src 'self' http://localhost:* ws://localhost:* https://api.crossref.org https://eutils.ncbi.nlm.nih.gov https://api.unpaywall.org https://analytics.corates.org https://*.ingest.us.sentry.io"
+      : "connect-src 'self' wss://corates.org https://api.crossref.org https://eutils.ncbi.nlm.nih.gov https://api.unpaywall.org https://analytics.corates.org https://*.ingest.us.sentry.io",
       "worker-src 'self' blob:",
       "font-src 'self'",
       'frame-src https://docs.google.com',
@@ -177,13 +177,17 @@ export const Route = createRootRoute({
         type: 'application/ld+json',
         children: structuredData,
       },
+      // The legacy script takes an explicit data-api; the newer pa-*.js bakes in the
+      // instance BASE_URL, which is the personal domain the analytics host fronts.
       {
-        src: 'https://plausible.jacobmaynard.dev/js/pa-FwZkTF3ReuZ7O5WTRKBr_.js',
-        async: true,
+        src: 'https://analytics.corates.org/js/script.js',
+        defer: true,
+        'data-domain': 'corates.org',
+        'data-api': 'https://analytics.corates.org/api/event',
       },
       {
         children:
-          'window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};plausible.init()',
+          'window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)}',
       },
     ],
   }),

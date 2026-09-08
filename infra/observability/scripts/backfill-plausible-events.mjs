@@ -35,7 +35,7 @@ if (apply && !process.env.LOKI_PASSWORD) {
 }
 
 const GRAFANA = 'https://grafana.jacobmaynard.dev';
-const LOKI = 'https://loki.jacobmaynard.dev';
+const LOKI = 'https://logs.corates.org';
 const SITE_ID = 3;
 const HOST = 'corates.org';
 const AUTOCAPTURE = ['pageview', 'engagement', 'Form: Submission', 'Outbound Link: Click'];

@@ -2,7 +2,8 @@ name: corates-observability
 
 # Deployed to the homelab box via `./deploy.sh` (docker context "homelab").
 # Bind-mount sources reference paths on the box; deploy.sh rsyncs config/ there first.
-# Traefik (homelab-traefik) picks up the labels and routes the wildcard tunnel hostnames.
+# Traefik (homelab-traefik) picks up the labels. *.jacobmaynard.dev is a wildcard tunnel
+# ingress; logs.corates.org is an explicit tunnel ingress plus a CNAME in the corates.org zone.
 
 services:
   loki:
@@ -20,7 +21,7 @@ services:
       - homelab
     labels:
       traefik.enable: 'true'
-      traefik.http.routers.corates-loki.rule: Host(`loki.jacobmaynard.dev`)
+      traefik.http.routers.corates-loki.rule: Host(`logs.corates.org`) || Host(`loki.jacobmaynard.dev`)
       traefik.http.routers.corates-loki.entrypoints: web
       # Not secure-chain@file: its shared rate-limit 429s Cloudflare's export pushes (see README)
       traefik.http.routers.corates-loki.middlewares: corates-loki-auth

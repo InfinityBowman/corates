@@ -13,7 +13,7 @@ Informational logs are not mirrored into Sentry. Loki already holds 100% of them
 copy would be duplicated volume against a separately metered quota.
 
 ```
-Workers (production) -> OTLP -> loki.jacobmaynard.dev -> Loki -> R2 (corates-loki)
+Workers (production) -> OTLP -> logs.corates.org -> Loki -> R2 (corates-loki)
                                           Grafana queries Loki
 
 Exceptions (all envs with a DSN) -> Sentry

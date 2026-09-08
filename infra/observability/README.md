@@ -5,7 +5,7 @@ chunks stored in the `corates-loki` R2 bucket. Cloudflare Workers Observability 
 OTLP JSON logs directly to Loki's native OTLP endpoint - no collector or tail worker.
 
 ```
-Workers (production) -> OTLP export -> loki.jacobmaynard.dev/otlp/v1/logs -> Loki -> R2
+Workers (production) -> OTLP export -> logs.corates.org/otlp/v1/logs -> Loki -> R2
                                                      Grafana (grafana.jacobmaynard.dev) queries Loki
 ```
 
@@ -88,7 +88,10 @@ Grafana talks to Loki internally over the docker network without auth.
 ## Cloudflare side
 
 - Workers Observability > destinations: type Logs, endpoint
-  `https://loki.jacobmaynard.dev/otlp/v1/logs`, header `Authorization: Basic <see .env>`
+  `https://logs.corates.org/otlp/v1/logs`, header `Authorization: Basic <see .env>`
+- `logs.corates.org` and `analytics.corates.org` are proxied CNAMEs in the corates.org zone
+  to the homelab tunnel, with explicit ingress rules on the tunnel routing them to Traefik.
+  The old `*.jacobmaynard.dev` hostnames still resolve; they are no longer referenced by the app.
 - Worker configs reference the destination by name in `observability.logs.destinations`
   (see `packages/web/wrangler.jsonc`).
   Only the `production` envs export; staging logs stay in Cloudflare Workers Logs so the
