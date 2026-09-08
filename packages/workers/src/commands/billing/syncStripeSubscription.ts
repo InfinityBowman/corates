@@ -77,6 +77,19 @@ export async function syncStripeSubscription(
     return { status: 'none', stripeSubscriptionId: null };
   }
 
+  return applyStripeSubscription(db, customerId, sub);
+}
+
+export type StripeSubscription = Awaited<
+  ReturnType<ReturnType<typeof createStripeClient>['subscriptions']['list']>
+>['data'][number];
+
+/** Write one already-fetched Stripe subscription over the org's local row. */
+export async function applyStripeSubscription(
+  db: Database,
+  customerId: string,
+  sub: StripeSubscription,
+): Promise<SyncStripeSubscriptionResult> {
   const item = sub.items.data[0];
   const bySubscriptionId = await db
     .select()
