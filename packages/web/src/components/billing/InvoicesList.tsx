@@ -5,6 +5,7 @@ import { DownloadIcon, ExternalLinkIcon, FileTextIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { formatDate } from '@/lib/formatDate';
 import { queryKeys } from '@/lib/queryKeys';
 import { getInvoices } from '@/server/functions/billing.functions';
 import type { Invoice, InvoicesResponse } from '@/server/functions/billing.server';
@@ -17,15 +18,6 @@ async function fetchInvoices(): Promise<InvoicesResponse> {
     console.warn('Failed to fetch invoices:', (err as Error).message);
     return { invoices: [] };
   }
-}
-
-function formatDate(timestamp: string | number | null) {
-  if (!timestamp) return null;
-  return new Date(timestamp).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
 }
 
 function formatAmount(amount: number) {
