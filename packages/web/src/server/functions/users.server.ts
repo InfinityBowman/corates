@@ -1,20 +1,9 @@
-import { info } from '@corates/workers/logger';
-import { env } from 'cloudflare:workers';
 import type { Database } from '@corates/db/client';
-import {
-  projects,
-  projectMembers,
-  user,
-  session as sessionTable,
-  account,
-  verification,
-  twoFactor,
-  mediaFiles,
-} from '@corates/db/schema';
+import { projects, projectMembers, user } from '@corates/db/schema';
 import { eq, or, desc, count } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
 import { containsInsensitive } from '@/server/lib/sqlSearch';
-import { kickWorkspaceUser } from '@corates/workers/sync';
+import { deleteUserAccount } from '@/server/lib/accountDeletion';
 import {
   DomainErrorException,
   createValidationError,
@@ -57,31 +46,7 @@ function maskEmail(email: string | null): string | null {
 }
 
 export async function deleteAccount(db: Database, session: Session) {
-  const userId = session.user.id;
-
-  const userProjects = await db
-    .select({ projectId: projectMembers.projectId })
-    .from(projectMembers)
-    .innerJoin(projects, eq(projectMembers.projectId, projects.id))
-    .where(eq(projectMembers.userId, userId));
-
-  // Kick the user's live sync sessions before their memberships disappear;
-  // reconnect attempts re-run authorize against D1 and fail permanently.
-  await Promise.all(userProjects.map(({ projectId }) => kickWorkspaceUser(env, projectId, userId)));
-
-  await db.batch([
-    db.update(mediaFiles).set({ uploadedBy: null }).where(eq(mediaFiles.uploadedBy, userId)),
-    db.delete(projectMembers).where(eq(projectMembers.userId, userId)),
-    db.delete(projects).where(eq(projects.createdBy, userId)),
-    db.delete(twoFactor).where(eq(twoFactor.userId, userId)),
-    db.delete(sessionTable).where(eq(sessionTable.userId, userId)),
-    db.delete(account).where(eq(account.userId, userId)),
-    db.delete(verification).where(eq(verification.identifier, session.user.email)),
-    db.delete(user).where(eq(user.id, userId)),
-  ]);
-
-  info(`Account deleted successfully for user: ${userId}`);
-
+  await deleteUserAccount(db, { userId: session.user.id, email: session.user.email });
   return { success: true as const, message: 'Account deleted successfully' };
 }
 

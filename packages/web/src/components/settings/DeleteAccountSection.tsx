@@ -20,8 +20,8 @@ import {
 import { SettingsSection, SettingsRow } from './primitives';
 
 const CONSEQUENCES = [
-  'Every project you created is deleted, for you and for everyone you shared it with',
-  'The appraisals in those projects are deleted with them',
+  'Projects where you are the only member are deleted, along with their appraisals and PDFs',
+  'Projects you created and shared stay with their members; ownership passes to another owner, or to the longest-standing member',
   'You are removed from projects other people created; those projects stay',
 ];
 
@@ -56,7 +56,7 @@ export function DeleteAccountSection() {
       <SettingsSection title='Danger zone' icon={TriangleAlertIcon} tone='destructive'>
         <SettingsRow
           label='Delete account'
-          description='Permanently delete your account, the projects you created, and their appraisals. This cannot be undone.'
+          description='Permanently delete your account, the projects only you belong to, and their appraisals. This cannot be undone.'
         >
           <Button variant='destructive' onClick={() => setOpen(true)}>
             Delete account
