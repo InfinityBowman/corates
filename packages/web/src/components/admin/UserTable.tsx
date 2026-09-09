@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
-import { CheckCircleIcon, MailIcon } from 'lucide-react';
+import { BadgeCheckIcon, MailIcon } from 'lucide-react';
 import { UserAvatar } from '@/components/ui/avatar';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { AdminDataTable, type AdminColumnDef } from '@/components/admin/ui';
@@ -35,9 +35,20 @@ const PROVIDER_INFO: Record<string, ProviderInfo> = {
 interface UserTableProps {
   users: UserRow[];
   loading?: boolean;
+  refreshing?: boolean;
+  fillRows?: boolean;
+  skeletonRows?: number;
+  emptyState?: React.ReactNode;
 }
 
-export function UserTable({ users, loading }: UserTableProps) {
+export function UserTable({
+  users,
+  loading,
+  refreshing,
+  fillRows,
+  skeletonRows,
+  emptyState,
+}: UserTableProps) {
   const navigate = useNavigate();
 
   const columns = useMemo<AdminColumnDef<UserRow>[]>(
@@ -48,20 +59,26 @@ export function UserTable({ users, loading }: UserTableProps) {
         cell: info => {
           const user = info.row.original;
           return (
-            <div className='flex items-center gap-3'>
-              <UserAvatar src={user.avatarUrl || user.image} name={user.name} className='size-8' />
-              <div>
+            <div className='flex items-center gap-2.5'>
+              <UserAvatar
+                src={user.avatarUrl || user.image}
+                name={user.name}
+                className='size-6.5'
+              />
+              <div className='min-w-0'>
                 <Link
                   to={'/admin/users/$userId' as string}
                   params={{ userId: user.id } as Record<string, string>}
-                  className='text-primary font-medium hover:underline'
+                  className='text-foreground hover:text-primary font-medium transition-colors'
                   onClick={(e: React.MouseEvent) => e.stopPropagation()}
                   data-testid='admin-user-link'
                   data-user-id={user.id}
                 >
                   {user.name || 'Unknown'}
                 </Link>
-                {user.username && <p className='text-muted-foreground text-sm'>@{user.username}</p>}
+                {user.username && (
+                  <p className='text-muted-foreground truncate text-xs'>@{user.username}</p>
+                )}
               </div>
             </div>
           );
@@ -73,12 +90,15 @@ export function UserTable({ users, loading }: UserTableProps) {
         cell: info => {
           const user = info.row.original;
           return (
-            <div className='flex items-center gap-2'>
-              <span className='text-muted-foreground text-sm'>{user.email}</span>
+            <div className='text-muted-foreground flex items-center gap-1.5'>
+              <span>{user.email}</span>
               {user.emailVerified && (
-                <span title='Email verified'>
-                  <CheckCircleIcon className='text-success size-4' />
-                </span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <BadgeCheckIcon className='text-success size-3.5 shrink-0' />
+                  </TooltipTrigger>
+                  <TooltipContent>Email verified</TooltipContent>
+                </Tooltip>
               )}
             </div>
           );
@@ -88,32 +108,31 @@ export function UserTable({ users, loading }: UserTableProps) {
         accessorKey: 'providers',
         header: 'Providers',
         cell: info => {
-          const user = info.row.original;
-          const providers = user.providers || [];
+          const providers = info.row.original.providers || [];
+          if (providers.length === 0) {
+            return <span className='text-muted-foreground/60'>-</span>;
+          }
           return (
             <div className='flex items-center gap-1.5'>
-              {providers.length > 0 ?
-                providers.map(provider => {
-                  const providerInfo = PROVIDER_INFO[provider];
-                  return (
-                    <Tooltip key={provider}>
-                      <TooltipTrigger asChild>
-                        <div className='flex size-5 items-center justify-center'>
-                          {providerInfo?.icon ?
-                            <img
-                              src={providerInfo.icon}
-                              alt={providerInfo.name || provider}
-                              title={providerInfo.name || provider}
-                              className='size-4'
-                            />
-                          : <MailIcon className='text-muted-foreground size-4' />}
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>{providerInfo?.name || provider}</TooltipContent>
-                    </Tooltip>
-                  );
-                })
-              : <span className='text-muted-foreground/70 text-xs'>None</span>}
+              {providers.map(provider => {
+                const providerInfo = PROVIDER_INFO[provider];
+                return (
+                  <Tooltip key={provider}>
+                    <TooltipTrigger asChild>
+                      <span className='flex size-4 items-center justify-center'>
+                        {providerInfo?.icon ?
+                          <img
+                            src={providerInfo.icon}
+                            alt={providerInfo.name || provider}
+                            className='size-4'
+                          />
+                        : <MailIcon className='text-muted-foreground size-4' />}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>{providerInfo?.name || provider}</TooltipContent>
+                  </Tooltip>
+                );
+              })}
             </div>
           );
         },
@@ -121,30 +140,26 @@ export function UserTable({ users, loading }: UserTableProps) {
       {
         accessorKey: 'banned',
         header: 'Status',
-        cell: info => {
-          const user = info.row.original;
-          return user.banned ?
-              <Badge variant='destructive'>Banned</Badge>
-            : <Badge variant='success'>Active</Badge>;
-        },
+        cell: info =>
+          info.row.original.banned ?
+            <Badge variant='destructive'>Banned</Badge>
+          : <Badge variant='secondary'>Active</Badge>,
       },
       {
         accessorKey: 'stripeCustomerId',
-        header: 'Stripe Customer',
+        header: 'Stripe customer',
         cell: info => {
           const value = info.getValue() as string | undefined;
           return value ?
-              <code className='bg-secondary text-secondary-foreground rounded px-2 py-1 text-xs'>
-                {value}
-              </code>
-            : <span className='text-muted-foreground/70 text-sm'>-</span>;
+              <code className='text-muted-foreground font-mono text-xs'>{value}</code>
+            : <span className='text-muted-foreground/60'>-</span>;
         },
       },
       {
         accessorKey: 'createdAt',
         header: 'Joined',
         cell: info => (
-          <span className='text-muted-foreground'>
+          <span className='text-muted-foreground tabular-nums'>
             {formatDate(info.getValue() as string | number | null | undefined)}
           </span>
         ),
@@ -158,12 +173,15 @@ export function UserTable({ users, loading }: UserTableProps) {
       columns={columns}
       data={users || []}
       loading={loading}
-      emptyState='No users found'
+      refreshing={refreshing}
+      fillRows={fillRows}
+      skeletonRows={skeletonRows}
+      emptyState={emptyState ?? 'No users found'}
       enableSorting
-      onRowClick={(_row: UserRow) =>
+      onRowClick={(row: UserRow) =>
         navigate({
           to: '/admin/users/$userId' as string,
-          params: { userId: _row.id } as Record<string, string>,
+          params: { userId: row.id } as Record<string, string>,
         })
       }
     />

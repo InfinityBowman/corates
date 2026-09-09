@@ -1,5 +1,5 @@
-import { FolderIcon } from 'lucide-react';
-import { AdminBox } from '@/components/admin/ui';
+import { Link } from '@tanstack/react-router';
+import { AdminEmpty, AdminPanel, ADMIN_TH, ADMIN_TD, ADMIN_TD_MUTED } from '@/components/admin/ui';
 import { Badge } from '@/components/ui/badge';
 import {
   Table,
@@ -13,46 +13,45 @@ import { formatDate } from '@/lib/formatDate';
 import type { UserProject } from './types';
 
 export function UserProjects({ projects }: { projects?: UserProject[] }) {
+  const rows = projects ?? [];
+
   return (
-    <AdminBox className='mb-6'>
-      <h2 className='text-foreground mb-4 flex items-center text-lg font-semibold'>
-        <FolderIcon className='mr-2 size-5' />
-        Projects ({projects?.length ?? 0})
-      </h2>
-      {(projects?.length ?? 0) > 0 ?
-        <Table>
-          <TableHeader>
-            <TableRow className='border-border bg-muted border-b'>
-              <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
-                Project
-              </TableHead>
-              <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
-                Role
-              </TableHead>
-              <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
-                Joined
-              </TableHead>
+    <AdminPanel title={`Projects (${rows.length})`}>
+      {rows.length === 0 ?
+        <AdminEmpty title='No projects' description='This user is not a member of any project.' />
+      : <Table>
+          <TableHeader className='bg-muted/40'>
+            <TableRow className='border-border hover:bg-transparent'>
+              <TableHead className={ADMIN_TH}>Project</TableHead>
+              <TableHead className={ADMIN_TH}>Role</TableHead>
+              <TableHead className={ADMIN_TH}>Joined</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {projects!.map(project => (
-              <TableRow key={project.id}>
-                <TableCell className='text-foreground px-4 py-3 text-sm font-medium'>
-                  {project.name}
+            {rows.map(project => (
+              <TableRow key={project.id} className='border-border'>
+                <TableCell className={ADMIN_TD}>
+                  <Link
+                    to={'/admin/projects/$projectId' as string}
+                    params={{ projectId: project.id } as Record<string, string>}
+                    className='text-foreground hover:text-primary font-medium transition-colors'
+                  >
+                    {project.name}
+                  </Link>
                 </TableCell>
-                <TableCell className='text-foreground px-4 py-3 text-sm'>
+                <TableCell className={ADMIN_TD}>
                   <Badge variant={project.role === 'owner' ? 'default' : 'secondary'}>
                     {project.role}
                   </Badge>
                 </TableCell>
-                <TableCell className='text-muted-foreground px-4 py-3 text-sm'>
+                <TableCell className={`${ADMIN_TD_MUTED} tabular-nums`}>
                   {formatDate(project.joinedAt)}
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
-      : <p className='text-muted-foreground text-sm'>Not a member of any projects</p>}
-    </AdminBox>
+      }
+    </AdminPanel>
   );
 }

@@ -1,19 +1,21 @@
 import { useState, useMemo } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { ExternalLinkIcon, FilterIcon } from 'lucide-react';
+import { ExternalLinkIcon, ReceiptTextIcon, RefreshCwIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useAdminBillingLedger } from '@/hooks/useAdminQueries';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import {
-  DashboardHeader,
-  AdminBox,
   AdminDataTable,
+  AdminEmpty,
+  AdminPage,
+  AdminPanel,
+  AdminStat,
+  AdminStatRow,
   CopyButton,
   type AdminColumnDef,
 } from '@/components/admin/ui';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
 import {
   Select,
   SelectContent,
@@ -296,53 +298,54 @@ function AdminBillingLedgerPage() {
   );
 
   return (
-    <div className='flex flex-col gap-8'>
-      <DashboardHeader
-        icon={FilterIcon}
-        title='Billing Ledger'
-        description='Stripe event ledger entries with filtering and search'
-        actions={
-          <Button
-            type='button'
-            variant='outline'
-            onClick={() => ledgerQuery.refetch()}
-            disabled={ledgerQuery.isFetching}
-          >
-            {ledgerQuery.isFetching ?
-              <Spinner size='sm' variant='current' />
-            : 'Refresh'}
-          </Button>
-        }
-      />
+    <AdminPage
+      title='Event Ledger'
+      description='Every Stripe webhook the app has received'
+      actions={
+        <Button
+          type='button'
+          variant='outline'
+          size='sm'
+          onClick={() => ledgerQuery.refetch()}
+          disabled={ledgerQuery.isFetching}
+        >
+          <RefreshCwIcon
+            className={ledgerQuery.isFetching ? 'animate-spin' : ''}
+            data-icon='inline-start'
+          />
+          Refresh
+        </Button>
+      }
+    >
+      <AdminStatRow className='lg:grid-cols-5'>
+        <AdminStat label='Total' value={stats.total ?? 0} loading={ledgerQuery.isLoading} />
+        {STATUS_OPTIONS.slice(1, 5).map(option => (
+          <AdminStat
+            key={option.value}
+            label={option.label}
+            value={stats.byStatus?.[option.value] ?? 0}
+            loading={ledgerQuery.isLoading}
+          />
+        ))}
+      </AdminStatRow>
 
-      {/* Stats Summary */}
-      {stats && (
-        <div className='grid grid-cols-2 gap-4 md:grid-cols-5'>
-          <AdminBox className='p-4'>
-            <p className='text-muted-foreground text-sm'>Total</p>
-            <p className='text-foreground text-2xl font-bold'>{stats.total || 0}</p>
-          </AdminBox>
-          {Object.entries(stats.byStatus || {}).map(([status, count]) => (
-            <AdminBox key={status} className='p-4'>
-              <p className='text-muted-foreground text-sm capitalize'>
-                {status.replace(/_/g, ' ')}
-              </p>
-              <p className='text-foreground text-2xl font-bold'>{count as number}</p>
-            </AdminBox>
-          ))}
-        </div>
-      )}
-
-      {/* Filters */}
-      <AdminBox>
-        <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
-          <div>
-            <label className='text-secondary-foreground block text-sm font-medium'>Status</label>
+      <AdminPanel
+        title='Events'
+        action={
+          <>
+            <Input
+              type='text'
+              value={typeFilter}
+              onChange={e => setTypeFilter(e.target.value)}
+              placeholder='Filter by event type...'
+              aria-label='Filter by event type'
+              className='w-full text-[13px] sm:w-64'
+            />
             <Select
               value={statusFilter === '' ? ALL_STATUSES_VALUE : statusFilter}
               onValueChange={v => setStatusFilter(v === ALL_STATUSES_VALUE ? '' : v)}
             >
-              <SelectTrigger className='mt-1 w-full'>
+              <SelectTrigger className='w-44 text-[13px]'>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -356,45 +359,42 @@ function AdminBillingLedgerPage() {
                 ))}
               </SelectContent>
             </Select>
-          </div>
-          <div>
-            <label className='text-secondary-foreground block text-sm font-medium'>
-              Event Type
-            </label>
-            <Input
-              type='text'
-              value={typeFilter}
-              onChange={e => setTypeFilter(e.target.value)}
-              placeholder='e.g., checkout.session.completed'
-              className='mt-1 block w-full'
-            />
-          </div>
-          <div>
-            <label className='text-secondary-foreground block text-sm font-medium'>Limit</label>
             <Select value={String(limit)} onValueChange={v => setLimit(Number(v))}>
-              <SelectTrigger className='mt-1 w-full'>
+              <SelectTrigger className='text-[13px]'>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {LIMIT_OPTIONS.map(opt => (
                   <SelectItem key={opt} value={String(opt)}>
-                    {opt}
+                    {opt} rows
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-          </div>
-        </div>
-      </AdminBox>
-
-      {/* Table */}
-      <AdminDataTable
-        columns={columns}
-        data={entries}
-        loading={ledgerQuery.isLoading}
-        emptyState='No ledger entries found'
-        enableSorting
-      />
-    </div>
+          </>
+        }
+      >
+        <AdminDataTable
+          columns={columns}
+          data={entries}
+          loading={ledgerQuery.isLoading}
+          refreshing={ledgerQuery.isFetching}
+          fillRows
+          skeletonRows={10}
+          emptyState={
+            <AdminEmpty
+              icon={ReceiptTextIcon}
+              title='No ledger entries'
+              description={
+                statusFilter || debouncedTypeFilter ?
+                  'No event matches the current filters.'
+                : undefined
+              }
+            />
+          }
+          enableSorting
+        />
+      </AdminPanel>
+    </AdminPage>
   );
 }

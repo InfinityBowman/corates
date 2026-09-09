@@ -1,5 +1,5 @@
-import { MonitorIcon, ClockIcon, LogOutIcon } from 'lucide-react';
-import { AdminBox } from '@/components/admin/ui';
+import { MonitorIcon, LogOutIcon } from 'lucide-react';
+import { AdminEmpty, AdminPanel } from '@/components/admin/ui';
 import { Button } from '@/components/ui/button';
 import { formatDateTime } from '@/lib/formatDate';
 import type { UserSession } from './types';
@@ -31,14 +31,14 @@ interface UserSessionsProps {
 }
 
 export function UserSessions({ sessions, loading, onRevoke, onRevokeAll }: UserSessionsProps) {
+  const rows = sessions ?? [];
+
   return (
-    <AdminBox className='mb-6'>
-      <div className='mb-4 flex items-center justify-between'>
-        <h2 className='text-foreground flex items-center text-lg font-semibold'>
-          <MonitorIcon className='mr-2 size-5' />
-          Active Sessions ({sessions?.length ?? 0})
-        </h2>
-        {(sessions?.length ?? 0) > 0 && (
+    <AdminPanel
+      title={`Active Sessions (${rows.length})`}
+      bodyClassName='divide-border divide-y'
+      action={
+        rows.length > 0 && (
           <Button
             variant='ghost'
             size='sm'
@@ -47,54 +47,43 @@ export function UserSessions({ sessions, loading, onRevoke, onRevokeAll }: UserS
             disabled={loading}
           >
             <LogOutIcon data-icon='inline-start' />
-            Revoke All
+            Revoke all
           </Button>
-        )}
-      </div>
-      {(sessions?.length ?? 0) > 0 ?
-        <div className='flex flex-col gap-3'>
-          {sessions!.map(session => {
-            const { browser, os } = parseUserAgent(session.userAgent);
-            return (
-              <div
-                key={session.id}
-                className='border-border bg-muted flex items-center justify-between rounded-lg border p-4'
-              >
-                <div className='flex items-center gap-4'>
-                  <div className='bg-card flex size-10 items-center justify-center rounded-full'>
-                    <MonitorIcon className='text-muted-foreground size-5' />
-                  </div>
-                  <div>
-                    <p className='text-foreground text-sm font-medium'>
-                      {browser} on {os}
-                    </p>
-                    <div className='text-muted-foreground flex items-center gap-3 text-xs'>
-                      <span className='flex items-center'>
-                        <ClockIcon className='mr-1 size-3' />
-                        {formatDateTime(session.createdAt)}
-                      </span>
-                      {session.ipAddress && <span>IP: {session.ipAddress}</span>}
-                    </div>
-                    <p className='text-muted-foreground/70 mt-1 text-xs'>
-                      Expires: {formatDateTime(session.expiresAt)}
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  variant='outline'
-                  size='xs'
-                  className='text-destructive border-destructive/20 hover:bg-destructive/10 hover:text-destructive'
-                  onClick={() => onRevoke(session.id)}
-                  disabled={loading}
-                >
-                  <LogOutIcon data-icon='inline-start' />
-                  Revoke
-                </Button>
+        )
+      }
+    >
+      {rows.length === 0 ?
+        <AdminEmpty title='No active sessions' />
+      : rows.map(session => {
+          const { browser, os } = parseUserAgent(session.userAgent);
+          return (
+            <div key={session.id} className='flex items-center gap-3 px-4 py-3'>
+              <span className='bg-muted inline-flex size-7 shrink-0 items-center justify-center rounded-full'>
+                <MonitorIcon className='text-muted-foreground size-4' />
+              </span>
+              <div className='min-w-0 flex-1'>
+                <p className='text-foreground text-[13px] font-medium'>
+                  {browser} on {os}
+                </p>
+                <p className='text-muted-foreground text-xs'>
+                  Started {formatDateTime(session.createdAt)} - expires{' '}
+                  {formatDateTime(session.expiresAt)}
+                  {session.ipAddress && ` - ${session.ipAddress}`}
+                </p>
               </div>
-            );
-          })}
-        </div>
-      : <p className='text-muted-foreground text-sm'>No active sessions</p>}
-    </AdminBox>
+              <Button
+                variant='ghost'
+                size='sm'
+                className='text-destructive hover:text-destructive shrink-0'
+                onClick={() => onRevoke(session.id)}
+                disabled={loading}
+              >
+                Revoke
+              </Button>
+            </div>
+          );
+        })
+      }
+    </AdminPanel>
   );
 }

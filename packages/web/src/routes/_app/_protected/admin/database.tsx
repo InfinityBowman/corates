@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import {
-  DatabaseIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   ArrowUpIcon,
@@ -9,7 +8,6 @@ import {
   RefreshCwIcon,
   KeyRoundIcon,
   LinkIcon,
-  TableIcon,
   XIcon,
 } from 'lucide-react';
 import {
@@ -20,7 +18,7 @@ import {
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
   SelectContent,
@@ -36,7 +34,8 @@ import {
   TableHead,
   TableCell,
 } from '@/components/ui/table';
-import { DashboardHeader, AdminBox } from '@/components/admin/ui';
+import { AdminEmpty, AdminPage, AdminPanel, ADMIN_TH } from '@/components/admin/ui';
+import { navRowClass } from '@/components/layout/navStyles';
 
 export const Route = createFileRoute('/_app/_protected/admin/database')({
   component: DatabaseViewerPage,
@@ -66,14 +65,6 @@ interface TableRowsData {
   };
 }
 
-interface TablesData {
-  tables: TableInfo[];
-}
-
-interface SchemaData {
-  columns: ColumnSchema[];
-}
-
 const formatCellValue = (value: unknown): string => {
   if (value === null || value === undefined) return '-';
   if (typeof value === 'boolean') return value ? 'true' : 'false';
@@ -92,11 +83,12 @@ function DatabaseViewerPage() {
   const [filterValue, setFilterValue] = useState<string | null>(null);
 
   const tablesQuery = useAdminDatabaseTables();
-  const tables = ((tablesQuery.data as TablesData | undefined)?.tables ?? []) as TableInfo[];
+  const tables = ((tablesQuery.data as { tables: TableInfo[] } | undefined)?.tables ??
+    []) as TableInfo[];
 
   const schemaQuery = useAdminTableSchema(selectedTable);
   const schemaColumns = useMemo(
-    () => ((schemaQuery.data as SchemaData | undefined)?.columns ?? []) as ColumnSchema[],
+    () => (schemaQuery.data as { columns: ColumnSchema[] } | undefined)?.columns ?? [],
     [schemaQuery.data],
   );
 
@@ -112,12 +104,7 @@ function DatabaseViewerPage() {
 
   const rowsData = rowsQuery.data as TableRowsData | undefined;
   const rows = useMemo(() => rowsData?.rows ?? [], [rowsData]);
-  const pagination = rowsData?.pagination ?? {
-    page: 1,
-    limit: 50,
-    totalRows: 0,
-    totalPages: 0,
-  };
+  const pagination = rowsData?.pagination ?? { page: 1, limit, totalRows: 0, totalPages: 0 };
 
   const columns = useMemo(() => {
     const firstRow = rows[0];
@@ -150,12 +137,6 @@ function DatabaseViewerPage() {
     setFilterValue(String(value));
   };
 
-  const clearFilter = () => {
-    setFilterColumn(null);
-    setFilterValue(null);
-    setPage(1);
-  };
-
   const handleSort = (column: string) => {
     if (orderBy === column) {
       setOrder(order === 'desc' ? 'asc' : 'desc');
@@ -167,70 +148,63 @@ function DatabaseViewerPage() {
   };
 
   return (
-    <div className='flex flex-col gap-8'>
-      <DashboardHeader
-        icon={DatabaseIcon}
-        title='Database Viewer'
-        description='Browse D1 tables and data (read-only)'
-        iconColor='purple'
-      />
-
-      <div className='flex gap-6'>
-        {/* Table List Sidebar */}
-        <div className='w-64 shrink-0'>
-          <AdminBox className='p-0'>
-            <div className='border-border flex items-center justify-between border-b px-4 py-3'>
-              <h2 className='text-foreground font-semibold'>Tables</h2>
-              <Button
-                type='button'
-                variant='ghost'
-                size='icon'
-                onClick={() => tablesQuery.refetch()}
-                disabled={tablesQuery.isFetching}
-                title='Refresh tables'
-              >
-                <RefreshCwIcon
-                  className={`size-4 ${tablesQuery.isFetching ? 'animate-spin' : ''}`}
-                />
-              </Button>
+    <AdminPage title='Database' description='Browse D1 tables and rows (read-only)'>
+      <div className='flex flex-col gap-6 lg:flex-row'>
+        <AdminPanel
+          title='Tables'
+          className='lg:w-60 lg:shrink-0'
+          bodyClassName='max-h-150 overflow-y-auto p-1.5'
+          action={
+            <Button
+              type='button'
+              variant='ghost'
+              size='icon-sm'
+              onClick={() => tablesQuery.refetch()}
+              disabled={tablesQuery.isFetching}
+              className='text-muted-foreground/70 hover:text-foreground'
+              aria-label='Refresh tables'
+            >
+              <RefreshCwIcon
+                className={`size-3.5 ${tablesQuery.isFetching ? 'animate-spin' : ''}`}
+              />
+            </Button>
+          }
+        >
+          {tablesQuery.isLoading ?
+            <div className='flex flex-col gap-1 p-1'>
+              {Array.from({ length: 10 }, (_, i) => (
+                <Skeleton key={i} className='h-7 w-full' />
+              ))}
             </div>
-            {tablesQuery.isLoading ?
-              <div className='flex justify-center p-4'>
-                <Spinner size='md' />
-              </div>
-            : <div className='max-h-150 overflow-y-auto'>
-                {tables.map(tbl => (
-                  <Button
-                    key={tbl.name}
-                    type='button'
-                    variant='ghost'
-                    onClick={() => handleTableSelect(tbl.name)}
-                    className={`h-auto w-full justify-between rounded-none px-4 py-2 text-left text-sm ${
-                      selectedTable === tbl.name ?
-                        'bg-chart-cat-5/15 text-chart-cat-5 hover:bg-chart-cat-5/15 hover:text-chart-cat-5'
-                      : 'text-secondary-foreground'
-                    }`}
-                  >
-                    <span className='flex items-center gap-2'>
-                      <TableIcon className='size-4' />
-                      {tbl.name}
-                    </span>
-                    <span className='text-muted-foreground/70 text-xs'>{tbl.rowCount}</span>
-                  </Button>
-                ))}
-              </div>
-            }
-          </AdminBox>
-        </div>
+          : tables.map(tbl => (
+              <button
+                key={tbl.name}
+                type='button'
+                onClick={() => handleTableSelect(tbl.name)}
+                className={`${navRowClass(selectedTable === tbl.name)} justify-between`}
+              >
+                <span className='truncate'>{tbl.name}</span>
+                <span className='text-muted-foreground/70 text-xs tabular-nums'>
+                  {tbl.rowCount}
+                </span>
+              </button>
+            ))
+          }
+        </AdminPanel>
 
-        {/* Table Content */}
         <div className='min-w-0 flex-1'>
-          {selectedTable ?
-            <AdminBox className='overflow-hidden p-0'>
-              {/* Table Header */}
-              <div className='border-border flex items-center justify-between border-b px-4 py-3'>
-                <div className='flex items-center gap-3'>
-                  <h2 className='text-foreground font-semibold'>{selectedTable}</h2>
+          {!selectedTable ?
+            <AdminPanel>
+              <AdminEmpty
+                title='No table selected'
+                description='Pick a table on the left to browse its rows.'
+                className='min-h-64'
+              />
+            </AdminPanel>
+          : <AdminPanel
+              title={
+                <span className='flex items-center gap-2'>
+                  <span className='font-mono'>{selectedTable}</span>
                   {filterColumn && (
                     <Badge variant='info'>
                       <LinkIcon />
@@ -239,16 +213,22 @@ function DatabaseViewerPage() {
                         type='button'
                         variant='ghost'
                         size='icon-xs'
-                        onClick={clearFilter}
-                        className='hover:bg-info-border ml-1 size-4'
-                        title='Clear filter'
+                        onClick={() => {
+                          setFilterColumn(null);
+                          setFilterValue(null);
+                          setPage(1);
+                        }}
+                        className='ml-0.5 size-4'
+                        aria-label='Clear filter'
                       >
                         <XIcon className='size-3' />
                       </Button>
                     </Badge>
                   )}
-                </div>
-                <div className='flex items-center gap-4'>
+                </span>
+              }
+              action={
+                <>
                   <Select
                     value={String(limit)}
                     onValueChange={v => {
@@ -256,7 +236,7 @@ function DatabaseViewerPage() {
                       setPage(1);
                     }}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className='text-[13px]'>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -269,152 +249,148 @@ function DatabaseViewerPage() {
                   </Select>
                   <Button
                     type='button'
-                    variant='secondary'
+                    variant='ghost'
+                    size='icon-sm'
                     onClick={() => rowsQuery.refetch()}
                     disabled={rowsQuery.isFetching}
+                    className='text-muted-foreground/70 hover:text-foreground'
+                    aria-label='Refresh rows'
                   >
                     <RefreshCwIcon
-                      className={`size-3 ${rowsQuery.isFetching ? 'animate-spin' : ''}`}
+                      className={`size-3.5 ${rowsQuery.isFetching ? 'animate-spin' : ''}`}
                     />
-                    Refresh
                   </Button>
-                </div>
-              </div>
-
-              {/* Table Data */}
-              {rowsQuery.isLoading ?
-                <div className='flex justify-center p-8'>
-                  <Spinner size='md' />
-                </div>
-              : rows.length > 0 ?
+                </>
+              }
+              footer={
                 <>
-                  <Table className='min-w-full'>
-                    <TableHeader className='bg-muted'>
-                      <TableRow>
-                        {columns.map(col => {
-                          const schema = columnSchemaMap[col];
-                          return (
-                            <TableHead
-                              key={col}
-                              className='text-muted-foreground hover:bg-secondary cursor-pointer px-4 py-2 text-xs font-medium tracking-wider uppercase'
-                              onClick={() => handleSort(col)}
-                            >
-                              <span className='flex items-center gap-1'>
-                                {schema?.primaryKey && (
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <span className='inline-flex'>
-                                        <KeyRoundIcon className='text-warning size-3' />
-                                      </span>
-                                    </TooltipTrigger>
-                                    <TooltipContent>Primary Key</TooltipContent>
-                                  </Tooltip>
-                                )}
-                                {schema?.foreignKey && (
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <span className='inline-flex'>
-                                        <LinkIcon className='text-info size-3' />
-                                      </span>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      FK: {schema.foreignKey.table}.{schema.foreignKey.column}
-                                    </TooltipContent>
-                                  </Tooltip>
-                                )}
-                                {col}
-                                {schema?.type && (
-                                  <span className='bg-secondary text-muted-foreground text-2xs ml-1 rounded px-1 py-0.5 font-normal normal-case'>
-                                    {schema.type}
-                                  </span>
-                                )}
+                  <span className='text-muted-foreground text-[13px] tabular-nums'>
+                    {pagination.totalRows > 0 ?
+                      `${(pagination.page - 1) * pagination.limit + 1}-${Math.min(
+                        pagination.page * pagination.limit,
+                        pagination.totalRows,
+                      )} of ${pagination.totalRows} rows`
+                    : 'No rows'}
+                  </span>
+                  <div className='flex items-center gap-1'>
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='icon-sm'
+                      onClick={() => setPage(p => Math.max(1, p - 1))}
+                      disabled={page <= 1}
+                      aria-label='Previous page'
+                    >
+                      <ChevronLeftIcon className='size-4' />
+                    </Button>
+                    <span className='text-muted-foreground px-1 text-[13px] tabular-nums'>
+                      Page {pagination.page} of {Math.max(1, pagination.totalPages)}
+                    </span>
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='icon-sm'
+                      onClick={() => setPage(p => p + 1)}
+                      disabled={page >= pagination.totalPages}
+                      aria-label='Next page'
+                    >
+                      <ChevronRightIcon className='size-4' />
+                    </Button>
+                  </div>
+                </>
+              }
+            >
+              {rowsQuery.isLoading ?
+                <div className='flex flex-col gap-2 p-4'>
+                  {Array.from({ length: 10 }, (_, i) => (
+                    <Skeleton key={i} className='h-6 w-full' />
+                  ))}
+                </div>
+              : rows.length === 0 ?
+                <AdminEmpty title='No rows in this table' />
+              : <Table>
+                  <TableHeader className='bg-muted/40'>
+                    <TableRow className='border-border hover:bg-transparent'>
+                      {columns.map(col => {
+                        const schema = columnSchemaMap[col];
+                        return (
+                          <TableHead
+                            key={col}
+                            className={`${ADMIN_TH} hover:text-foreground cursor-pointer transition-colors select-none`}
+                            onClick={() => handleSort(col)}
+                          >
+                            <span className='flex items-center gap-1'>
+                              {schema?.primaryKey && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <KeyRoundIcon className='text-warning size-3' />
+                                  </TooltipTrigger>
+                                  <TooltipContent>Primary key</TooltipContent>
+                                </Tooltip>
+                              )}
+                              {schema?.foreignKey && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <LinkIcon className='text-info size-3' />
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    FK: {schema.foreignKey.table}.{schema.foreignKey.column}
+                                  </TooltipContent>
+                                </Tooltip>
+                              )}
+                              <span className='font-mono'>{col}</span>
+                              {schema?.type && (
+                                <span className='text-muted-foreground/60 text-2xs'>
+                                  {schema.type}
+                                </span>
+                              )}
+                              <span className='inline-flex size-3 items-center justify-center'>
                                 {orderBy === col &&
                                   (order === 'desc' ?
                                     <ArrowDownIcon className='size-3' />
                                   : <ArrowUpIcon className='size-3' />)}
                               </span>
-                            </TableHead>
+                            </span>
+                          </TableHead>
+                        );
+                      })}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {rows.map((row, rowIdx) => (
+                      <TableRow key={rowIdx} className='border-border'>
+                        {columns.map(col => {
+                          const fk = columnSchemaMap[col]?.foreignKey;
+                          const cellValue = row[col];
+                          return (
+                            <TableCell
+                              key={col}
+                              className='text-foreground h-10 max-w-xs truncate px-3 text-[13px]'
+                            >
+                              {fk && cellValue != null ?
+                                <button
+                                  type='button'
+                                  onClick={() =>
+                                    navigateToForeignKey(fk.table, fk.column, cellValue)
+                                  }
+                                  className='text-primary hover:text-primary/80 underline decoration-dotted'
+                                  title={`View in ${fk.table}`}
+                                >
+                                  {formatCellValue(cellValue)}
+                                </button>
+                              : formatCellValue(cellValue)}
+                            </TableCell>
                           );
                         })}
                       </TableRow>
-                    </TableHeader>
-                    <TableBody className='bg-card'>
-                      {rows.map((row, rowIdx) => (
-                        <TableRow key={rowIdx}>
-                          {columns.map(col => {
-                            const schema = columnSchemaMap[col];
-                            const cellValue = row[col];
-                            const fk = schema?.foreignKey;
-
-                            return (
-                              <TableCell
-                                key={col}
-                                className='text-secondary-foreground max-w-xs truncate px-4 py-2 text-sm'
-                              >
-                                {fk && cellValue != null ?
-                                  <Button
-                                    type='button'
-                                    variant='link'
-                                    onClick={() =>
-                                      navigateToForeignKey(fk.table, fk.column, cellValue)
-                                    }
-                                    className='hover:text-primary/80 h-auto p-0 underline decoration-dotted'
-                                    title={`View in ${fk.table}`}
-                                  >
-                                    {formatCellValue(cellValue)}
-                                  </Button>
-                                : formatCellValue(cellValue)}
-                              </TableCell>
-                            );
-                          })}
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-
-                  {/* Pagination */}
-                  <div className='border-border flex items-center justify-between border-t px-4 py-3'>
-                    <span className='text-muted-foreground text-sm'>
-                      Showing {(pagination.page - 1) * pagination.limit + 1} to{' '}
-                      {Math.min(pagination.page * pagination.limit, pagination.totalRows)} of{' '}
-                      {pagination.totalRows} rows
-                    </span>
-                    <div className='flex gap-2'>
-                      <Button
-                        type='button'
-                        variant='outline'
-                        size='icon'
-                        onClick={() => setPage(p => Math.max(1, p - 1))}
-                        disabled={page <= 1}
-                      >
-                        <ChevronLeftIcon className='size-5' />
-                      </Button>
-                      <span className='flex items-center px-2 text-sm'>
-                        Page {pagination.page} of {pagination.totalPages}
-                      </span>
-                      <Button
-                        type='button'
-                        variant='outline'
-                        size='icon'
-                        onClick={() => setPage(p => p + 1)}
-                        disabled={page >= pagination.totalPages}
-                      >
-                        <ChevronRightIcon className='size-5' />
-                      </Button>
-                    </div>
-                  </div>
-                </>
-              : <div className='text-muted-foreground flex justify-center p-8'>
-                  <p>No rows in this table</p>
-                </div>
+                    ))}
+                  </TableBody>
+                </Table>
               }
-            </AdminBox>
-          : <div className='border-border bg-muted flex h-64 items-center justify-center rounded-xl border border-dashed'>
-              <p className='text-muted-foreground'>Select a table to view its contents</p>
-            </div>
+            </AdminPanel>
           }
         </div>
       </div>
-    </div>
+    </AdminPage>
   );
 }

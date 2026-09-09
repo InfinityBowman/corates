@@ -1,12 +1,13 @@
 import { useState, useMemo } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { AlertCircleIcon, AlertTriangleIcon, CheckCircleIcon, RefreshCwIcon } from 'lucide-react';
+import { CheckCircleIcon, RefreshCwIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useAdminBillingStuckStates } from '@/hooks/useAdminQueries';
-import { DashboardHeader, AdminBox } from '@/components/admin/ui';
+import { AdminEmpty, AdminPage, AdminPanel } from '@/components/admin/ui';
 import { Input } from '@/components/ui/input';
-import { Spinner } from '@/components/ui/spinner';
+import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
 import { formatDateTime } from '@/lib/formatDate';
 
 interface StuckOrg {
@@ -20,53 +21,33 @@ interface StuckOrg {
   failedCount?: number;
 }
 
-const getStuckStateTypeLabel = (type: string): string => {
-  switch (type) {
-    case 'incomplete_subscription':
-      return 'Incomplete Subscription';
-    case 'checkout_no_subscription':
-      return 'Checkout Without Subscription';
-    case 'repeated_failures':
-      return 'Repeated Failures';
-    case 'past_due_expired':
-      return 'Past Due Expired';
-    default:
-      return type;
-  }
+const TYPE_LABELS: Record<string, string> = {
+  incomplete_subscription: 'Incomplete subscription',
+  checkout_no_subscription: 'Checkout without subscription',
+  repeated_failures: 'Repeated failures',
+  past_due_expired: 'Past due expired',
 };
 
-const getStuckStateSeverityIcon = (type: string) => {
-  if (type === 'checkout_no_subscription') {
-    return AlertTriangleIcon;
-  }
-  return AlertCircleIcon;
+const INVESTIGATION_STEPS: Record<string, string[]> = {
+  checkout_no_subscription: [
+    'Verify Better Auth Stripe plugin configuration',
+    'Check authorizeReference function for this org',
+    'Verify referenceId/orgId mapping matches',
+    'Check Stripe dashboard for subscription creation',
+  ],
+  incomplete_subscription: [
+    'Check Stripe dashboard for payment failures',
+    'Verify customer payment method is valid',
+    'Check webhook delivery logs for errors',
+  ],
+  repeated_failures: [
+    'Review recent webhook error messages in ledger',
+    'Check for API changes or configuration issues',
+    'Verify webhook endpoint is accessible',
+  ],
 };
 
-const getInvestigationSteps = (type: string): string[] => {
-  switch (type) {
-    case 'checkout_no_subscription':
-      return [
-        'Verify Better Auth Stripe plugin configuration',
-        'Check authorizeReference function for this org',
-        'Verify referenceId/orgId mapping matches',
-        'Check Stripe dashboard for subscription creation',
-      ];
-    case 'incomplete_subscription':
-      return [
-        'Check Stripe dashboard for payment failures',
-        'Verify customer payment method is valid',
-        'Check webhook delivery logs for errors',
-      ];
-    case 'repeated_failures':
-      return [
-        'Review recent webhook error messages in ledger',
-        'Check for API changes or configuration issues',
-        'Verify webhook endpoint is accessible',
-      ];
-    default:
-      return ['Review billing state and recent events'];
-  }
-};
+const DEFAULT_STEPS = ['Review billing state and recent events'];
 
 export const Route = createFileRoute('/_app/_protected/admin/billing/stuck-states')({
   component: AdminBillingStuckStatesPage,
@@ -83,175 +64,132 @@ function AdminBillingStuckStatesPage() {
   const data = stuckStatesQuery.data as
     { stuckOrgs: StuckOrg[]; checkedAt?: string | number } | undefined;
   const stuckOrgs = useMemo(() => data?.stuckOrgs || [], [data?.stuckOrgs]);
-  const checkedAt = data?.checkedAt;
 
   const groupedByType = useMemo(() => {
     const groups: Record<string, StuckOrg[]> = {};
     for (const org of stuckOrgs) {
-      const type = org.type;
-      if (!groups[type]) {
-        groups[type] = [];
-      }
-      groups[type].push(org);
+      (groups[org.type] ??= []).push(org);
     }
     return groups;
   }, [stuckOrgs]);
 
   return (
-    <div className='flex flex-col gap-8'>
-      <DashboardHeader
-        icon={AlertTriangleIcon}
-        title='Stuck Billing States'
-        description='Organizations with billing issues requiring attention'
-        iconColor='orange'
-        actions={
-          <div className='flex items-center gap-2'>
-            <div className='flex items-center gap-2'>
-              <label className='text-muted-foreground text-sm'>Threshold (min):</label>
-              <Input
-                type='number'
-                value={incompleteThreshold}
-                onChange={e => setIncompleteThreshold(parseInt(e.target.value, 10) || 30)}
-                min='1'
-                className='w-20'
-              />
-            </div>
-            <Button
-              type='button'
-              variant='outline'
-              onClick={() => stuckStatesQuery.refetch()}
-              disabled={stuckStatesQuery.isFetching}
-            >
-              {stuckStatesQuery.isFetching ?
-                <Spinner size='sm' variant='current' />
-              : <>
-                  <RefreshCwIcon className='size-4' /> Refresh
-                </>
-              }
-            </Button>
-          </div>
-        }
-      />
-
-      {checkedAt && (
-        <p className='text-muted-foreground text-sm'>Last checked: {formatDateTime(checkedAt)}</p>
-      )}
-
-      {/* Summary */}
-      <AdminBox>
-        <div className='flex items-center justify-between'>
-          <div>
-            <p className='text-foreground text-lg font-semibold'>
-              {stuckOrgs.length} Organization{stuckOrgs.length !== 1 ? 's' : ''} with Stuck States
-            </p>
-            <p className='text-muted-foreground text-sm'>
-              Click on an org to view details and run reconciliation
-            </p>
-          </div>
-        </div>
-      </AdminBox>
-
-      {/* Stuck Orgs by Type */}
-      {stuckStatesQuery.isLoading ?
-        <div className='flex items-center justify-center py-12'>
-          <Spinner size='lg' />
-        </div>
-      : stuckOrgs.length === 0 ?
-        <AdminBox className='p-12 text-center'>
-          <CheckCircleIcon className='text-success mx-auto mb-4 size-12' />
-          <p className='text-foreground text-lg font-medium'>No stuck states found</p>
-          <p className='text-muted-foreground text-sm'>
-            All organizations have healthy billing states
-          </p>
-        </AdminBox>
-      : <div className='flex flex-col gap-6'>
-          {Object.entries(groupedByType).map(([type, orgs]) => {
-            const Icon = getStuckStateSeverityIcon(type);
-            const steps = getInvestigationSteps(type);
-            return (
-              <AdminBox key={type} className='overflow-hidden p-0'>
-                <div className='border-border border-b px-6 py-4'>
-                  <div className='flex items-center gap-3'>
-                    <Icon className='text-warning size-5' />
-                    <h2 className='text-foreground text-lg font-semibold'>
-                      {getStuckStateTypeLabel(type)}
-                    </h2>
-                    <Badge variant='warning'>{orgs.length}</Badge>
-                  </div>
-                </div>
-                <div className='p-6'>
-                  <div className='flex flex-col gap-4'>
-                    {orgs.map(org => (
-                      <div key={org.orgId} className='border-border rounded-lg border p-4'>
-                        <div className='flex items-start justify-between'>
-                          <div className='flex-1'>
-                            <div className='flex items-center gap-2'>
-                              <Link
-                                to={'/admin/orgs/$orgId' as string}
-                                params={{ orgId: org.orgId } as Record<string, string>}
-                                className='text-primary hover:text-primary/80 font-medium'
-                              >
-                                Org: {org.orgId.slice(0, 8)}...
-                              </Link>
-                              {org.ageMinutes && (
-                                <span className='text-muted-foreground text-sm'>
-                                  ({org.ageMinutes} minutes)
-                                </span>
-                              )}
-                            </div>
-                            {org.description && (
-                              <p className='text-muted-foreground mt-2 text-sm'>
-                                {org.description}
-                              </p>
-                            )}
-                            {org.subscriptionId && (
-                              <p className='text-muted-foreground mt-1 text-xs'>
-                                Subscription: {org.subscriptionId}
-                              </p>
-                            )}
-                            {org.stripeSubscriptionId && (
-                              <p className='text-muted-foreground mt-1 text-xs'>
-                                Stripe: {org.stripeSubscriptionId}
-                              </p>
-                            )}
-                            {org.stripeEventId && (
-                              <p className='text-muted-foreground mt-1 text-xs'>
-                                Event: {org.stripeEventId}
-                              </p>
-                            )}
-                            {org.failedCount && (
-                              <p className='text-destructive mt-1 text-xs'>
-                                {org.failedCount} webhook failures
-                              </p>
-                            )}
-                          </div>
-                          <Link
-                            to={'/admin/orgs/$orgId' as string}
-                            params={{ orgId: org.orgId } as Record<string, string>}
-                            className='border-border bg-card text-secondary-foreground hover:bg-muted ml-4 rounded-md border px-4 py-2 text-sm font-medium'
-                          >
-                            View Details
-                          </Link>
-                        </div>
-                        <div className='bg-muted mt-4 rounded p-3'>
-                          <p className='text-secondary-foreground mb-2 text-xs font-medium'>
-                            Investigation Steps:
-                          </p>
-                          <ul className='text-muted-foreground flex list-inside list-disc flex-col gap-1 text-xs'>
-                            {steps.map(step => (
-                              <li key={step}>{step}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </AdminBox>
-            );
-          })}
-        </div>
+    <AdminPage
+      title='Stuck States'
+      description='Organizations whose billing needs attention'
+      meta={
+        // Always rendered so the header keeps its height once the check lands.
+        <span className='text-muted-foreground text-xs'>
+          {data?.checkedAt ? `Last checked ${formatDateTime(data.checkedAt)}` : 'Checking...'}
+        </span>
       }
-    </div>
+      actions={
+        <>
+          <div className='flex items-center gap-2'>
+            <Label htmlFor='threshold' className='text-muted-foreground text-[13px]'>
+              Threshold (min)
+            </Label>
+            <Input
+              id='threshold'
+              type='number'
+              value={incompleteThreshold}
+              onChange={e => setIncompleteThreshold(parseInt(e.target.value, 10) || 30)}
+              min='1'
+              className='w-20 text-[13px]'
+            />
+          </div>
+          <Button
+            type='button'
+            variant='outline'
+            size='sm'
+            onClick={() => stuckStatesQuery.refetch()}
+            disabled={stuckStatesQuery.isFetching}
+          >
+            <RefreshCwIcon
+              className={stuckStatesQuery.isFetching ? 'animate-spin' : ''}
+              data-icon='inline-start'
+            />
+            Refresh
+          </Button>
+        </>
+      }
+    >
+      {stuckStatesQuery.isLoading ?
+        <AdminPanel padded>
+          <Skeleton className='h-40 w-full' />
+        </AdminPanel>
+      : stuckOrgs.length === 0 ?
+        <AdminPanel>
+          <AdminEmpty
+            icon={CheckCircleIcon}
+            title='No stuck states'
+            description='Every organization has a healthy billing state.'
+            className='min-h-64'
+          />
+        </AdminPanel>
+      : Object.entries(groupedByType).map(([type, orgs]) => (
+          <AdminPanel
+            key={type}
+            title={
+              <span className='flex items-center gap-2'>
+                {TYPE_LABELS[type] ?? type}
+                <Badge variant='warning'>{orgs.length}</Badge>
+              </span>
+            }
+            bodyClassName='divide-border divide-y'
+          >
+            {orgs.map(org => (
+              <div key={org.orgId} className='px-4 py-3'>
+                <div className='flex items-start justify-between gap-4'>
+                  <div className='min-w-0'>
+                    <Link
+                      to={'/admin/orgs/$orgId' as string}
+                      params={{ orgId: org.orgId } as Record<string, string>}
+                      className='text-foreground hover:text-primary text-[13px] font-medium transition-colors'
+                    >
+                      <code className='font-mono'>{org.orgId}</code>
+                    </Link>
+                    {org.ageMinutes != null && (
+                      <span className='text-muted-foreground ml-2 text-xs tabular-nums'>
+                        {org.ageMinutes} min
+                      </span>
+                    )}
+                    {org.description && (
+                      <p className='text-muted-foreground mt-1 text-[13px]'>{org.description}</p>
+                    )}
+                    <div className='text-muted-foreground/70 mt-1 flex flex-col gap-0.5 text-xs'>
+                      {org.subscriptionId && <span>Subscription: {org.subscriptionId}</span>}
+                      {org.stripeSubscriptionId && <span>Stripe: {org.stripeSubscriptionId}</span>}
+                      {org.stripeEventId && <span>Event: {org.stripeEventId}</span>}
+                      {org.failedCount != null && (
+                        <span className='text-destructive'>{org.failedCount} webhook failures</span>
+                      )}
+                    </div>
+                  </div>
+                  <Button asChild variant='outline' size='sm' className='shrink-0'>
+                    <Link
+                      to={'/admin/orgs/$orgId' as string}
+                      params={{ orgId: org.orgId } as Record<string, string>}
+                    >
+                      View details
+                    </Link>
+                  </Button>
+                </div>
+                <div className='bg-muted/50 mt-3 rounded-md px-3 py-2'>
+                  <p className='text-muted-foreground mb-1 text-xs font-medium'>
+                    Investigation steps
+                  </p>
+                  <ul className='text-muted-foreground flex list-inside list-disc flex-col gap-0.5 text-xs'>
+                    {(INVESTIGATION_STEPS[type] ?? DEFAULT_STEPS).map(step => (
+                      <li key={step}>{step}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ))}
+          </AdminPanel>
+        ))
+      }
+    </AdminPage>
   );
 }

@@ -1,14 +1,15 @@
 /**
  * Sidebar - Desktop (resizable, can be hidden) + Mobile (slide-in overlay)
  *
- * Both render the same body: the app sidebar normally, or the settings
- * sidebar while on /settings routes.
+ * Both render the same body: the app sidebar normally, or the settings or
+ * admin sidebar while on those routes.
  */
 
 import { useState, useEffect, useCallback, useEffectEvent } from 'react';
 import { useLocation } from '@tanstack/react-router';
 import { createPortal } from 'react-dom';
 import { PanelLeftCloseIcon, XIcon } from 'lucide-react';
+import { AdminSidebar } from './sidebar/AdminSidebar';
 import { AppSidebar } from './sidebar/AppSidebar';
 import { SettingsSidebar } from './sidebar/SettingsSidebar';
 
@@ -32,6 +33,7 @@ export function Sidebar({
   const { pathname } = useLocation();
   const [isResizing, setIsResizing] = useState(false);
   const isSettings = pathname.startsWith('/settings');
+  const isAdmin = pathname.startsWith('/admin');
 
   // Close mobile on escape
   useEffect(() => {
@@ -82,9 +84,13 @@ export function Sidebar({
   );
 
   function renderBody(onClose: () => void, closeLabel: string, closeIcon: React.ReactNode) {
-    return isSettings ?
-        <SettingsSidebar onClose={onClose} closeLabel={closeLabel} closeIcon={closeIcon} />
-      : <AppSidebar onClose={onClose} closeLabel={closeLabel} closeIcon={closeIcon} />;
+    if (isSettings) {
+      return <SettingsSidebar onClose={onClose} closeLabel={closeLabel} closeIcon={closeIcon} />;
+    }
+    if (isAdmin) {
+      return <AdminSidebar onClose={onClose} closeLabel={closeLabel} closeIcon={closeIcon} />;
+    }
+    return <AppSidebar onClose={onClose} closeLabel={closeLabel} closeIcon={closeIcon} />;
   }
 
   return (

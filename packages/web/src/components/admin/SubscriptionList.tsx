@@ -1,9 +1,8 @@
-import { useState } from 'react';
-import { Trash2Icon, PencilIcon, CopyIcon, CheckIcon } from 'lucide-react';
-import { showToast } from '@/lib/toast';
+import { PencilIcon, XCircleIcon } from 'lucide-react';
+import { AdminEmpty, AdminPanel, CopyButton } from '@/components/admin/ui';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
+import { Skeleton } from '@/components/ui/skeleton';
 import { formatDateTime } from '@/lib/formatDate';
 
 interface Subscription {
@@ -30,6 +29,16 @@ interface SubscriptionListProps {
   onEdit: (_subscription: Subscription) => void;
 }
 
+function StripeId({ label, value }: { label: string; value: string }) {
+  return (
+    <span className='bg-muted text-muted-foreground inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs'>
+      {label}
+      <code className='text-foreground font-mono'>{value.slice(0, 14)}...</code>
+      <CopyButton text={value} label={label} />
+    </span>
+  );
+}
+
 export function SubscriptionList({
   subscriptions: subscriptionsProp,
   effectiveSubscriptionId,
@@ -39,165 +48,81 @@ export function SubscriptionList({
   onEdit,
 }: SubscriptionListProps) {
   const subscriptions = subscriptionsProp || [];
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-
-  const handleCopyId = async (id: string, type: string) => {
-    try {
-      await navigator.clipboard.writeText(id);
-      setCopiedId(`${type}-${id}`);
-      showToast.success('Copied', `${type} ID copied to clipboard`);
-      setTimeout(() => setCopiedId(null), 2000);
-    } catch (err) {
-      const { handleError } = await import('@/lib/error-utils');
-      await handleError(err, { toastTitle: 'Copy Failed' });
-    }
-  };
-
-  const isEffective = (subscription: Subscription): boolean => {
-    return !!effectiveSubscriptionId && subscription.id === effectiveSubscriptionId;
-  };
 
   return (
-    <div className='border-border bg-card rounded-lg border'>
-      <div className='border-border border-b px-6 py-4'>
-        <h2 className='text-foreground text-lg font-semibold'>Subscriptions</h2>
-      </div>
+    <AdminPanel title='Subscriptions' bodyClassName='divide-border divide-y'>
       {isLoading ?
-        <div className='flex items-center justify-center py-12'>
-          <Spinner size='lg' />
+        <div className='p-4'>
+          <Skeleton className='h-24 w-full' />
         </div>
-      : <div className='p-6'>
-          {subscriptions.length > 0 ?
-            <div className='flex flex-col gap-4'>
-              {subscriptions.map(subscription => (
-                <div
-                  key={subscription.id}
-                  className={`rounded-lg border p-4 ${
-                    isEffective(subscription) ?
-                      'border-primary/30 bg-primary/5'
-                    : 'border-border bg-card'
-                  }`}
-                >
-                  <div className='flex items-start justify-between'>
-                    <div className='flex-1'>
-                      <div className='flex items-center gap-2'>
-                        <p className='text-foreground font-medium'>{subscription.plan}</p>
-                        <Badge
-                          variant={
-                            subscription.status === 'active' || subscription.status === 'trialing' ?
-                              'success'
-                            : 'secondary'
-                          }
-                        >
-                          {subscription.status}
-                        </Badge>
-                        {isEffective(subscription) && <Badge variant='info'>Effective</Badge>}
-                      </div>
-                      <div className='text-muted-foreground mt-2 grid grid-cols-1 gap-3 text-sm md:grid-cols-2'>
-                        <div className='flex flex-col gap-1'>
-                          <p>Period Start: {formatDateTime(subscription.periodStart)}</p>
-                          <p>Period End: {formatDateTime(subscription.periodEnd)}</p>
-                          {subscription.cancelAtPeriodEnd && (
-                            <p className='text-warning'>Cancels at period end</p>
-                          )}
-                        </div>
-                        <div className='flex flex-col gap-1'>
-                          <p>Created: {formatDateTime(subscription.createdAt)}</p>
-                          {subscription.updatedAt && (
-                            <p>Updated: {formatDateTime(subscription.updatedAt)}</p>
-                          )}
-                          {subscription.canceledAt && (
-                            <p className='text-destructive'>
-                              Canceled: {formatDateTime(subscription.canceledAt)}
-                            </p>
-                          )}
-                          {subscription.endedAt && (
-                            <p className='text-destructive'>
-                              Ended: {formatDateTime(subscription.endedAt)}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      {/* Stripe IDs */}
-                      {(subscription.stripeCustomerId || subscription.stripeSubscriptionId) && (
-                        <div className='mt-3 flex flex-wrap gap-2'>
-                          {subscription.stripeCustomerId && (
-                            <div className='bg-secondary flex items-center gap-1 rounded px-2 py-1'>
-                              <span className='text-muted-foreground text-xs font-medium'>
-                                Customer:
-                              </span>
-                              <code className='text-foreground font-mono text-xs'>
-                                {subscription.stripeCustomerId.slice(0, 12)}...
-                              </code>
-                              <Button
-                                variant='ghost'
-                                size='icon-xs'
-                                onClick={() =>
-                                  handleCopyId(subscription.stripeCustomerId!, 'customer')
-                                }
-                                className='text-muted-foreground hover:text-secondary-foreground ml-1'
-                                title='Copy customer ID'
-                              >
-                                {copiedId === `customer-${subscription.stripeCustomerId}` ?
-                                  <CheckIcon className='text-success size-3' />
-                                : <CopyIcon className='size-3' />}
-                              </Button>
-                            </div>
-                          )}
-                          {subscription.stripeSubscriptionId && (
-                            <div className='bg-secondary flex items-center gap-1 rounded px-2 py-1'>
-                              <span className='text-muted-foreground text-xs font-medium'>
-                                Subscription:
-                              </span>
-                              <code className='text-foreground font-mono text-xs'>
-                                {subscription.stripeSubscriptionId.slice(0, 12)}...
-                              </code>
-                              <Button
-                                variant='ghost'
-                                size='icon-xs'
-                                onClick={() =>
-                                  handleCopyId(subscription.stripeSubscriptionId!, 'subscription')
-                                }
-                                className='text-muted-foreground hover:text-secondary-foreground ml-1'
-                                title='Copy subscription ID'
-                              >
-                                {copiedId === `subscription-${subscription.stripeSubscriptionId}` ?
-                                  <CheckIcon className='text-success size-3' />
-                                : <CopyIcon className='size-3' />}
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    <div className='ml-4 flex gap-2'>
-                      <Button
-                        variant='outline'
-                        size='icon'
-                        onClick={() => onEdit?.(subscription)}
-                        disabled={loading}
-                        aria-label='Edit subscription'
-                      >
-                        <PencilIcon />
-                      </Button>
-                      <Button
-                        variant='outline'
-                        size='icon'
-                        onClick={() => onCancel?.(subscription.id)}
-                        disabled={loading}
-                        className='border-destructive/30 text-destructive hover:bg-destructive/10'
-                        aria-label='Cancel subscription'
-                      >
-                        <Trash2Icon />
-                      </Button>
-                    </div>
-                  </div>
+      : subscriptions.length === 0 ?
+        <AdminEmpty title='No subscriptions' />
+      : subscriptions.map(subscription => {
+          const isEffective =
+            !!effectiveSubscriptionId && subscription.id === effectiveSubscriptionId;
+          return (
+            <div key={subscription.id} className='flex items-start justify-between gap-4 px-4 py-3'>
+              <div className='min-w-0'>
+                <div className='flex flex-wrap items-center gap-2'>
+                  <p className='text-foreground text-[13px] font-medium'>{subscription.plan}</p>
+                  <Badge
+                    variant={
+                      subscription.status === 'active' || subscription.status === 'trialing' ?
+                        'success'
+                      : 'secondary'
+                    }
+                  >
+                    {subscription.status}
+                  </Badge>
+                  {isEffective && <Badge variant='info'>Effective</Badge>}
+                  {subscription.cancelAtPeriodEnd && (
+                    <Badge variant='warning'>Cancels at period end</Badge>
+                  )}
                 </div>
-              ))}
+                <p className='text-muted-foreground mt-1 text-xs'>
+                  {formatDateTime(subscription.periodStart)} -{' '}
+                  {formatDateTime(subscription.periodEnd)}
+                  {subscription.canceledAt &&
+                    ` - canceled ${formatDateTime(subscription.canceledAt)}`}
+                  {subscription.endedAt && ` - ended ${formatDateTime(subscription.endedAt)}`}
+                </p>
+                {(subscription.stripeCustomerId || subscription.stripeSubscriptionId) && (
+                  <div className='mt-2 flex flex-wrap gap-1.5'>
+                    {subscription.stripeCustomerId && (
+                      <StripeId label='Customer' value={subscription.stripeCustomerId} />
+                    )}
+                    {subscription.stripeSubscriptionId && (
+                      <StripeId label='Subscription' value={subscription.stripeSubscriptionId} />
+                    )}
+                  </div>
+                )}
+              </div>
+              <div className='flex shrink-0 items-center gap-1'>
+                <Button
+                  variant='ghost'
+                  size='icon-sm'
+                  onClick={() => onEdit(subscription)}
+                  disabled={loading}
+                  className='text-muted-foreground/70 hover:text-foreground'
+                  aria-label='Edit subscription'
+                >
+                  <PencilIcon />
+                </Button>
+                <Button
+                  variant='ghost'
+                  size='icon-sm'
+                  onClick={() => onCancel(subscription.id)}
+                  disabled={loading}
+                  className='text-muted-foreground/70 hover:text-destructive'
+                  aria-label='Cancel subscription'
+                >
+                  <XCircleIcon />
+                </Button>
+              </div>
             </div>
-          : <p className='text-muted-foreground text-sm'>No subscriptions</p>}
-        </div>
+          );
+        })
       }
-    </div>
+    </AdminPanel>
   );
 }

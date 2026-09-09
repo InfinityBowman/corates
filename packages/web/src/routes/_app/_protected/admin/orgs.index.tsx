@@ -1,17 +1,18 @@
 import { useState, useMemo } from 'react';
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
-import { SearchIcon, HomeIcon, UsersIcon, FolderIcon } from 'lucide-react';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { BuildingIcon } from 'lucide-react';
 import { useAdminOrgs } from '@/hooks/useAdminQueries';
 import { formatDate } from '@/lib/formatDate';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import {
-  DashboardHeader,
-  AdminSection,
   AdminDataTable,
+  AdminEmpty,
+  AdminPage,
+  AdminPanel,
+  AdminSearch,
   ServerPagination,
   type AdminColumnDef,
 } from '@/components/admin/ui';
-import { Input } from '@/components/ui/input';
 
 interface OrgRow {
   id: string;
@@ -25,6 +26,8 @@ interface OrgRow {
   createdAt?: string | number;
 }
 
+const PAGE_SIZE = 10;
+
 export const Route = createFileRoute('/_app/_protected/admin/orgs/')({
   component: AdminOrgList,
 });
@@ -37,7 +40,7 @@ function AdminOrgList() {
 
   const orgsDataQuery = useAdminOrgs({
     page,
-    limit: 20,
+    limit: PAGE_SIZE,
     search: debouncedSearch,
   });
   const orgsData = orgsDataQuery.data as
@@ -47,8 +50,8 @@ function AdminOrgList() {
       }
     | undefined;
 
-  const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
     setPage(1);
   };
 
@@ -57,25 +60,13 @@ function AdminOrgList() {
       {
         accessorKey: 'name',
         header: 'Organization',
-        cell: info => {
-          const org = info.row.original;
-          return (
-            <div className='flex items-center gap-3'>
-              <div className='bg-info-bg flex size-10 items-center justify-center rounded-lg'>
-                <HomeIcon className='text-info size-5' />
-              </div>
-              <div>
-                <p className='text-foreground font-medium'>{org.name}</p>
-              </div>
-            </div>
-          );
-        },
+        cell: info => <span className='text-foreground font-medium'>{info.row.original.name}</span>,
       },
       {
         accessorKey: 'slug',
         header: 'Slug',
         cell: info => (
-          <code className='bg-secondary text-secondary-foreground rounded px-2 py-1 text-sm'>
+          <code className='text-muted-foreground font-mono text-xs'>
             {info.getValue() as string}
           </code>
         ),
@@ -83,87 +74,73 @@ function AdminOrgList() {
       {
         accessorKey: 'stats.memberCount',
         header: 'Members',
-        cell: info => {
-          const org = info.row.original;
-          return (
-            <div className='text-muted-foreground flex items-center gap-1'>
-              <UsersIcon className='text-muted-foreground/70 size-4' />
-              <span>{org.stats?.memberCount ?? '-'}</span>
-            </div>
-          );
-        },
+        cell: info => (
+          <span className='text-muted-foreground tabular-nums'>
+            {info.row.original.stats?.memberCount ?? 0}
+          </span>
+        ),
       },
       {
         accessorKey: 'stats.projectCount',
         header: 'Projects',
-        cell: info => {
-          const org = info.row.original;
-          return (
-            <div className='text-muted-foreground flex items-center gap-1'>
-              <FolderIcon className='text-muted-foreground/70 size-4' />
-              <span>{org.stats?.projectCount ?? '-'}</span>
-            </div>
-          );
-        },
+        cell: info => (
+          <span className='text-muted-foreground tabular-nums'>
+            {info.row.original.stats?.projectCount ?? 0}
+          </span>
+        ),
       },
       {
         accessorKey: 'createdAt',
         header: 'Created',
         cell: info => (
-          <span className='text-muted-foreground'>
+          <span className='text-muted-foreground tabular-nums'>
             {formatDate(info.getValue() as string | number | null | undefined)}
           </span>
         ),
-      },
-      {
-        id: 'actions',
-        header: '',
-        cell: info => {
-          const org = info.row.original;
-          return (
-            <Link
-              to={'/admin/orgs/$orgId' as string}
-              params={{ orgId: org.id } as Record<string, string>}
-              className='bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-ring/50 inline-flex items-center rounded-lg px-3 py-2 text-sm font-medium focus:ring-[3px] focus:outline-none'
-              onClick={(e: React.MouseEvent) => e.stopPropagation()}
-            >
-              Details
-            </Link>
-          );
-        },
       },
     ],
     [],
   );
 
-  return (
-    <div className='flex flex-col gap-8'>
-      <DashboardHeader
-        icon={HomeIcon}
-        title='Organizations'
-        description='Manage organizations and billing'
-      />
+  const pagination = orgsData?.pagination;
 
-      <AdminSection
-        title='Organizations'
-        cta={
-          <div className='relative'>
-            <SearchIcon className='text-muted-foreground/70 absolute top-1/2 left-3 size-4 -translate-y-1/2' />
-            <Input
-              type='text'
-              placeholder='Search by name or slug...'
-              value={search}
-              onChange={handleSearchInput}
-              className='w-64 pl-10'
-            />
-          </div>
+  return (
+    <AdminPage title='Organizations' description='Every workspace on the platform'>
+      <AdminPanel
+        title='All organizations'
+        action={
+          <AdminSearch
+            value={search}
+            onChange={handleSearchChange}
+            placeholder='Search by name or slug...'
+            className='w-full sm:w-72'
+          />
+        }
+        footer={
+          <ServerPagination
+            page={page}
+            totalPages={pagination?.totalPages ?? 1}
+            total={pagination?.total ?? 0}
+            limit={pagination?.limit ?? PAGE_SIZE}
+            onPageChange={setPage}
+            label='organizations'
+          />
         }
       >
         <AdminDataTable
           columns={columns}
           data={orgsData?.orgs || []}
           loading={orgsDataQuery.isLoading}
-          emptyState='No organizations found'
+          refreshing={orgsDataQuery.isFetching}
+          fillRows
+          skeletonRows={PAGE_SIZE}
+          emptyState={
+            <AdminEmpty
+              icon={BuildingIcon}
+              title='No organizations found'
+              description={search ? 'Try a different name or slug.' : undefined}
+            />
+          }
           enableSorting
           onRowClick={(row: OrgRow) =>
             navigate({
@@ -172,18 +149,7 @@ function AdminOrgList() {
             })
           }
         />
-
-        {orgsData?.pagination && (
-          <ServerPagination
-            page={page}
-            totalPages={orgsData.pagination.totalPages || 1}
-            total={orgsData.pagination.total || 0}
-            limit={orgsData.pagination.limit || 20}
-            onPageChange={setPage}
-            label='organizations'
-          />
-        )}
-      </AdminSection>
-    </div>
+      </AdminPanel>
+    </AdminPage>
   );
 }

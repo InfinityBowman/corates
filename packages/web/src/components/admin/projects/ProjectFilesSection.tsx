@@ -1,6 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { FileTextIcon } from 'lucide-react';
-import { AdminBox } from '@/components/admin/ui';
+import { AdminEmpty, AdminPanel, ADMIN_TH, ADMIN_TD, ADMIN_TD_MUTED } from '@/components/admin/ui';
 import {
   Table,
   TableHeader,
@@ -14,51 +13,33 @@ import { formatDate } from '@/lib/formatDate';
 import type { ProjectFile } from './types';
 
 export function ProjectFilesSection({ files }: { files?: ProjectFile[] }) {
+  const rows = files ?? [];
+
   return (
-    <AdminBox className='mb-6'>
-      <h2 className='text-foreground mb-4 flex items-center text-lg font-semibold'>
-        <FileTextIcon className='mr-2 size-5' />
-        Files ({files?.length ?? 0})
-      </h2>
-      {(files?.length ?? 0) > 0 ?
-        <Table>
-          <TableHeader>
-            <TableRow className='border-border bg-muted border-b'>
-              <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
-                File
-              </TableHead>
-              <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
-                Type
-              </TableHead>
-              <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
-                Size
-              </TableHead>
-              <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
-                Uploaded By
-              </TableHead>
-              <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
-                Uploaded
-              </TableHead>
+    <AdminPanel title={`Files (${rows.length})`}>
+      {rows.length === 0 ?
+        <AdminEmpty title='No files uploaded' />
+      : <Table>
+          <TableHeader className='bg-muted/40'>
+            <TableRow className='border-border hover:bg-transparent'>
+              <TableHead className={ADMIN_TH}>File</TableHead>
+              <TableHead className={ADMIN_TH}>Type</TableHead>
+              <TableHead className={ADMIN_TH}>Size</TableHead>
+              <TableHead className={ADMIN_TH}>Uploaded by</TableHead>
+              <TableHead className={ADMIN_TH}>Uploaded</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {files!.map(file => (
-              <TableRow key={file.id}>
-                <TableCell className='text-foreground px-4 py-3 text-sm'>
-                  <div className='flex items-center gap-2'>
-                    <FileTextIcon className='text-muted-foreground/70 size-4' />
-                    <span className='text-foreground font-medium'>
-                      {file.originalName || file.filename}
-                    </span>
-                  </div>
+            {rows.map(file => (
+              <TableRow key={file.id} className='border-border'>
+                <TableCell className={`${ADMIN_TD} font-medium`}>
+                  {file.originalName || file.filename}
                 </TableCell>
-                <TableCell className='text-muted-foreground px-4 py-3 text-sm'>
-                  {file.fileType || '-'}
-                </TableCell>
-                <TableCell className='text-muted-foreground px-4 py-3 text-sm'>
+                <TableCell className={ADMIN_TD_MUTED}>{file.fileType || '-'}</TableCell>
+                <TableCell className={`${ADMIN_TD_MUTED} tabular-nums`}>
                   {formatFileSize(file.fileSize ?? 0)}
                 </TableCell>
-                <TableCell className='text-foreground px-4 py-3 text-sm'>
+                <TableCell className={ADMIN_TD}>
                   {file.uploadedBy ?
                     <Link
                       to={'/admin/users/$userId' as string}
@@ -67,16 +48,16 @@ export function ProjectFilesSection({ files }: { files?: ProjectFile[] }) {
                     >
                       {file.uploaderDisplayName || file.uploaderName}
                     </Link>
-                  : <span className='text-muted-foreground/70'>-</span>}
+                  : <span className='text-muted-foreground/60'>-</span>}
                 </TableCell>
-                <TableCell className='text-muted-foreground px-4 py-3 text-sm'>
+                <TableCell className={`${ADMIN_TD_MUTED} tabular-nums`}>
                   {formatDate(file.createdAt)}
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
-      : <p className='text-muted-foreground text-sm'>No files uploaded</p>}
-    </AdminBox>
+      }
+    </AdminPanel>
   );
 }

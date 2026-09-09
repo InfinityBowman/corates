@@ -1,12 +1,6 @@
 import { useState, useCallback, Suspense } from 'react';
-import { createFileRoute, Link, useNavigate, useRouter } from '@tanstack/react-router';
-import {
-  ArrowLeftIcon,
-  ShieldIcon,
-  UserXIcon,
-  CheckCircleIcon,
-  AlertCircleIcon,
-} from 'lucide-react';
+import { createFileRoute, useNavigate, useRouter } from '@tanstack/react-router';
+import { ShieldIcon, UserXIcon, CheckCircleIcon } from 'lucide-react';
 import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
 import { adminUserDetailsQueryOptions } from '@/hooks/useAdminQueries';
 import { queryClient } from '@/lib/queryClient';
@@ -21,10 +15,10 @@ import {
 import { showToast } from '@/lib/toast';
 import { UserAvatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
 import { handleError } from '@/lib/error-utils';
 import { queryKeys } from '@/lib/queryKeys';
+import { AdminError, AdminPage, AdminPanel } from '@/components/admin/ui';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { UserData } from '@/components/admin/users/types';
 import { UserActions } from '@/components/admin/users/UserActions';
 import { UserProfileSection } from '@/components/admin/users/UserProfileSection';
@@ -38,6 +32,8 @@ import {
   RevokeAllSessionsDialog,
 } from '@/components/admin/users/UserDialogs';
 
+const BACK_TO_DASHBOARD = { to: '/admin', label: 'Back to Admin Dashboard' };
+
 export const Route = createFileRoute('/_app/_protected/admin/users/$userId')({
   loader: async ({ params: { userId } }) => {
     await queryClient.prefetchQuery(adminUserDetailsQueryOptions(userId));
@@ -49,45 +45,26 @@ export const Route = createFileRoute('/_app/_protected/admin/users/$userId')({
 function UserDetailError() {
   const router = useRouter();
   return (
-    <div className='border-destructive/20 bg-destructive/10 rounded-lg border p-6 text-center'>
-      <AlertCircleIcon className='text-destructive mx-auto mb-2 size-8' />
-      <p className='text-destructive'>Failed to load user details</p>
-      <Button variant='link' className='text-destructive mt-2' onClick={() => router.invalidate()}>
-        Try again
-      </Button>
-    </div>
+    <AdminPage title='User' back={BACK_TO_DASHBOARD}>
+      <AdminError title='Failed to load user details' onRetry={() => router.invalidate()} />
+    </AdminPage>
+  );
+}
+
+/** Holds the page's shape while the suspense query resolves. */
+function UserDetailSkeleton() {
+  return (
+    <AdminPage title='User' loadingTitle description=' ' back={BACK_TO_DASHBOARD}>
+      <AdminPanel padded>
+        <Skeleton className='h-40 w-full' />
+      </AdminPanel>
+    </AdminPage>
   );
 }
 
 function UserDetailPage() {
-  const { isAdmin, isAdminChecked } = useAdminStore();
-
-  if (!isAdminChecked) {
-    return (
-      <div className='flex min-h-100 items-center justify-center'>
-        <Spinner size='lg' />
-      </div>
-    );
-  }
-
-  if (!isAdmin) {
-    return (
-      <div className='text-muted-foreground flex min-h-100 flex-col items-center justify-center'>
-        <AlertCircleIcon className='mb-4 size-12' />
-        <p className='text-lg font-medium'>Access Denied</p>
-        <p className='text-sm'>You do not have admin privileges.</p>
-      </div>
-    );
-  }
-
   return (
-    <Suspense
-      fallback={
-        <div className='flex min-h-64 items-center justify-center'>
-          <Spinner size='lg' />
-        </div>
-      }
-    >
+    <Suspense fallback={<UserDetailSkeleton />}>
       <UserDetailContent />
     </Suspense>
   );
@@ -100,6 +77,7 @@ function UserDetailContent() {
 
   const { data } = useSuspenseQuery(adminUserDetailsQueryOptions(userId));
   const userData = data as unknown as UserData;
+  const user = userData.user;
 
   const [confirmDialog, setConfirmDialog] = useState<{
     type: 'delete' | 'revoke-all';
@@ -190,66 +168,55 @@ function UserDetailContent() {
   };
 
   return (
-    <>
-      {/* Back link */}
-      <Link
-        to={'/admin' as string}
-        className='text-muted-foreground hover:text-secondary-foreground mb-6 inline-flex items-center text-sm'
-      >
-        <ArrowLeftIcon className='mr-2 size-4' />
-        Back to Admin Dashboard
-      </Link>
-      {/* Header */}
-      <div className='mb-8 flex items-start justify-between'>
-        <div className='flex items-center gap-4'>
-          <UserAvatar
-            src={userData.user.avatarUrl || userData.user.image}
-            name={userData.user.name}
-            size='lg'
-          />
-          <div>
-            <h1 className='text-foreground text-2xl font-bold'>{userData.user.name}</h1>
-            <p className='text-muted-foreground'>{userData.user.email}</p>
-            <div className='mt-1 flex items-center gap-2'>
-              {userData.user.role === 'admin' && (
-                <Badge variant='default'>
-                  <ShieldIcon data-icon='inline-start' />
-                  Admin
-                </Badge>
-              )}
-              {userData.user.banned && (
-                <Badge variant='destructive'>
-                  <UserXIcon data-icon='inline-start' />
-                  Banned
-                </Badge>
-              )}
-              {userData.user.emailVerified && (
-                <Badge variant='success'>
-                  <CheckCircleIcon data-icon='inline-start' />
-                  Verified
-                </Badge>
-              )}
-              {userData.user.twoFactorEnabled && (
-                <Badge variant='info'>
-                  <ShieldIcon data-icon='inline-start' />
-                  2FA
-                </Badge>
-              )}
-            </div>
-          </div>
-        </div>
-
+    <AdminPage
+      back={BACK_TO_DASHBOARD}
+      title={
+        <span className='flex items-center gap-3'>
+          <UserAvatar src={user.avatarUrl || user.image} name={user.name} className='size-8' />
+          {user.name}
+        </span>
+      }
+      description={user.email}
+      meta={
+        <>
+          {user.role === 'admin' && (
+            <Badge variant='default'>
+              <ShieldIcon data-icon='inline-start' />
+              Admin
+            </Badge>
+          )}
+          {user.banned && (
+            <Badge variant='destructive'>
+              <UserXIcon data-icon='inline-start' />
+              Banned
+            </Badge>
+          )}
+          {user.emailVerified && (
+            <Badge variant='success'>
+              <CheckCircleIcon data-icon='inline-start' />
+              Verified
+            </Badge>
+          )}
+          {user.twoFactorEnabled && (
+            <Badge variant='info'>
+              <ShieldIcon data-icon='inline-start' />
+              2FA
+            </Badge>
+          )}
+        </>
+      }
+      actions={
         <UserActions
-          user={userData.user}
+          user={user}
           loading={loading}
           onImpersonate={handleImpersonate}
           onUnban={handleUnban}
           onBan={() => setBanDialogOpen(true)}
           onDelete={() => setConfirmDialog({ type: 'delete' })}
         />
-      </div>
-
-      <UserProfileSection user={userData.user} />
+      }
+    >
+      <UserProfileSection user={user} />
       <UserLinkedAccounts accounts={userData.accounts} />
       <UserOrganizations orgs={userData.orgs} />
       <UserProjects projects={userData.projects} />
@@ -278,6 +245,6 @@ function UserDetailContent() {
         onConfirm={handleRevokeAllSessions}
         loading={loading}
       />
-    </>
+    </AdminPage>
   );
 }

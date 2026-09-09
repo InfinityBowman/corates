@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
-import { UsersIcon, UserMinusIcon } from 'lucide-react';
-import { AdminBox } from '@/components/admin/ui';
+import { UserMinusIcon } from 'lucide-react';
+import { AdminEmpty, AdminPanel, ADMIN_TH, ADMIN_TD, ADMIN_TD_MUTED } from '@/components/admin/ui';
 import { UserAvatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -22,68 +22,59 @@ interface ProjectMembersSectionProps {
 }
 
 export function ProjectMembersSection({ members, loading, onRemove }: ProjectMembersSectionProps) {
+  const rows = members ?? [];
+
   return (
-    <AdminBox className='mb-6'>
-      <h2 className='text-foreground mb-4 flex items-center text-lg font-semibold'>
-        <UsersIcon className='mr-2 size-5' />
-        Members ({members?.length ?? 0})
-      </h2>
-      {(members?.length ?? 0) > 0 ?
-        <Table>
-          <TableHeader>
-            <TableRow className='border-border bg-muted border-b'>
-              <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
-                User
-              </TableHead>
-              <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
-                Role
-              </TableHead>
-              <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
-                Joined
-              </TableHead>
-              <TableHead className='text-muted-foreground px-6 py-3 text-right text-xs font-medium tracking-wider uppercase'>
-                Actions
-              </TableHead>
+    <AdminPanel title={`Members (${rows.length})`}>
+      {rows.length === 0 ?
+        <AdminEmpty title='No members' />
+      : <Table>
+          <TableHeader className='bg-muted/40'>
+            <TableRow className='border-border hover:bg-transparent'>
+              <TableHead className={ADMIN_TH}>User</TableHead>
+              <TableHead className={ADMIN_TH}>Role</TableHead>
+              <TableHead className={ADMIN_TH}>Joined</TableHead>
+              <TableHead className={`${ADMIN_TH} text-right`}>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {members!.map(member => (
-              <TableRow key={member.id}>
-                <TableCell className='text-foreground px-4 py-3 text-sm'>
-                  <div className='flex items-center gap-3'>
+            {rows.map(member => (
+              <TableRow key={member.id} className='border-border'>
+                <TableCell className={ADMIN_TD}>
+                  <div className='flex items-center gap-2.5'>
                     <UserAvatar
                       src={member.userAvatar}
                       name={member.userDisplayName || member.userName}
-                      size='sm'
+                      className='size-6.5'
                     />
-                    <div>
+                    <div className='min-w-0'>
                       <Link
                         to={'/admin/users/$userId' as string}
                         params={{ userId: member.userId } as Record<string, string>}
-                        className='text-primary hover:text-primary/80 font-medium'
+                        className='text-foreground hover:text-primary font-medium transition-colors'
                       >
                         {member.userDisplayName || member.userName}
                       </Link>
-                      <p className='text-muted-foreground text-xs'>{member.userEmail}</p>
+                      <p className='text-muted-foreground truncate text-xs'>{member.userEmail}</p>
                     </div>
                   </div>
                 </TableCell>
-                <TableCell className='text-foreground px-4 py-3 text-sm'>
+                <TableCell className={ADMIN_TD}>
                   <Badge variant={member.role === 'owner' ? 'default' : 'secondary'}>
                     {member.role}
                   </Badge>
                 </TableCell>
-                <TableCell className='text-muted-foreground px-4 py-3 text-sm'>
+                <TableCell className={`${ADMIN_TD_MUTED} tabular-nums`}>
                   {formatDate(member.joinedAt)}
                 </TableCell>
-                <TableCell className='text-foreground px-4 py-3 text-right text-sm'>
+                <TableCell className={`${ADMIN_TD} text-right`}>
                   <Button
                     variant='ghost'
                     size='icon-sm'
-                    className='text-destructive hover:text-destructive'
+                    className='text-muted-foreground/70 hover:text-destructive'
                     onClick={() => onRemove(member)}
                     disabled={loading}
-                    title='Remove member'
+                    aria-label={`Remove ${member.userDisplayName || member.userName}`}
                   >
                     <UserMinusIcon />
                   </Button>
@@ -92,7 +83,7 @@ export function ProjectMembersSection({ members, loading, onRemove }: ProjectMem
             ))}
           </TableBody>
         </Table>
-      : <p className='text-muted-foreground text-sm'>No members</p>}
-    </AdminBox>
+      }
+    </AdminPanel>
   );
 }

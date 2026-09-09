@@ -1,17 +1,8 @@
 import { useState, useCallback } from 'react';
-import { createFileRoute, Link } from '@tanstack/react-router';
-import {
-  ArrowLeftIcon,
-  HomeIcon,
-  UsersIcon,
-  FolderIcon,
-  ShieldIcon,
-  AlertCircleIcon,
-} from 'lucide-react';
+import { createFileRoute } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAdminOrgDetails, useAdminOrgBilling } from '@/hooks/useAdminQueries';
 import {
-  useAdminStore,
   createOrgSubscription,
   updateOrgSubscription,
   cancelOrgSubscription,
@@ -32,9 +23,7 @@ import {
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
 import { handleError } from '@/lib/error-utils';
-import { AdminBox } from '@/components/admin/ui';
-import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
+import { AdminError, AdminPage, AdminStat, AdminStatRow } from '@/components/admin/ui';
 import { formatDateInput } from '@/lib/formatDate';
 import { OrgBillingSummary } from '@/components/admin/OrgBillingSummary';
 import { OrgQuickActions } from '@/components/admin/OrgQuickActions';
@@ -44,6 +33,8 @@ import { GrantList } from '@/components/admin/GrantList';
 import { GrantDialog } from '@/components/admin/GrantDialog';
 import { OrgBillingReconcilePanel } from '@/components/admin/OrgBillingReconcilePanel';
 import { queryKeys } from '@/lib/queryKeys';
+
+const BACK_TO_ORGS = { to: '/admin/orgs', label: 'Back to Organizations' };
 
 export const Route = createFileRoute('/_app/_protected/admin/orgs/$orgId')({
   component: OrgDetailPage,
@@ -94,7 +85,6 @@ interface BillingData {
 function OrgDetailPage() {
   const { orgId } = Route.useParams();
   const queryClient = useQueryClient();
-  const { isAdmin, isAdminChecked } = useAdminStore();
 
   const orgDetailsQuery = useAdminOrgDetails(orgId);
   const billingQuery = useAdminOrgBilling(orgId);
@@ -336,154 +326,69 @@ function OrgDetailPage() {
 
   const billingData = billing?.billing;
 
-  if (!isAdminChecked) {
+  if (orgDetailsQuery.isError) {
     return (
-      <div className='flex min-h-[400px] items-center justify-center'>
-        <Spinner size='lg' />
-      </div>
-    );
-  }
-
-  if (!isAdmin) {
-    return (
-      <div className='text-muted-foreground flex min-h-[400px] flex-col items-center justify-center'>
-        <ShieldIcon className='mb-4 size-12' />
-        <p className='text-lg font-medium'>Access Denied</p>
-        <p className='text-sm'>You do not have admin privileges.</p>
-      </div>
+      <AdminPage title='Organization' back={BACK_TO_ORGS}>
+        <AdminError
+          title='Failed to load organization details'
+          description='This organization may have been deleted.'
+          onRetry={() => orgDetailsQuery.refetch()}
+        />
+      </AdminPage>
     );
   }
 
   return (
-    <>
-      {/* Back link (always visible) */}
-      <Link
-        to={'/admin/orgs' as string}
-        className='text-muted-foreground hover:text-secondary-foreground mb-4 inline-flex items-center text-sm'
-      >
-        <ArrowLeftIcon className='mr-1 size-4' />
-        Back to Organizations
-      </Link>
+    <AdminPage
+      back={BACK_TO_ORGS}
+      title={orgDetails?.org?.name ?? 'Organization'}
+      description={orgDetails?.org?.slug ? `@${orgDetails.org.slug}` : ' '}
+      loadingTitle={orgDetailsQuery.isLoading}
+    >
+      <AdminStatRow className='lg:grid-cols-2'>
+        <AdminStat
+          label='Members'
+          value={orgDetails?.stats?.memberCount ?? 0}
+          loading={orgDetailsQuery.isLoading}
+        />
+        <AdminStat
+          label='Projects'
+          value={orgDetails?.stats?.projectCount ?? 0}
+          loading={orgDetailsQuery.isLoading}
+        />
+      </AdminStatRow>
 
-      {/* Loading state */}
-      {orgDetailsQuery.isLoading && (
-        <div className='flex min-h-64 items-center justify-center'>
-          <Spinner size='lg' />
-        </div>
-      )}
+      <OrgBillingSummary billing={billingData ?? null} isLoading={billingQuery.isLoading} />
 
-      {/* Error state */}
-      {orgDetailsQuery.isError && (
-        <div className='border-destructive/20 bg-destructive/10 rounded-lg border p-6 text-center'>
-          <AlertCircleIcon className='text-destructive mx-auto mb-2 size-8' />
-          <p className='text-destructive'>Failed to load organization details</p>
-          <p className='text-muted-foreground mt-1 text-sm'>
-            This organization may have been deleted.
-          </p>
-          <Button
-            type='button'
-            variant='ghost'
-            onClick={() => orgDetailsQuery.refetch()}
-            className='text-destructive hover:text-destructive/80 mt-2'
-          >
-            Try again
-          </Button>
-        </div>
-      )}
+      <OrgQuickActions
+        loading={loading}
+        onGrantTrial={handleQuickTrial}
+        onGrantSingleProject={handleQuickSingleProject}
+        onCreateSubscription={handleOpenSubscriptionDialog}
+        onCreateGrant={handleOpenGrantDialog}
+      />
 
-      {/* Header */}
-      {orgDetails && (
-        <>
-          <div className='mb-6'>
-            <div className='flex items-center gap-3'>
-              <div className='bg-info-bg flex size-12 items-center justify-center rounded-lg'>
-                <HomeIcon className='text-info size-6' />
-              </div>
-              <div>
-                <h1 className='text-foreground text-2xl font-bold'>
-                  {orgDetails?.org?.name || 'Organization'}
-                </h1>
-                <p className='text-muted-foreground text-sm'>
-                  <code>{orgDetails?.org?.slug || ''}</code>
-                </p>
-              </div>
-            </div>
-          </div>
+      <SubscriptionList
+        subscriptions={billing?.subscriptions}
+        effectiveSubscriptionId={billingData?.subscription?.id}
+        loading={loading}
+        isLoading={billingQuery.isLoading}
+        onCancel={(_subscriptionId: string) =>
+          setConfirmDialog({ type: 'cancel-subscription', subscriptionId: _subscriptionId })
+        }
+        onEdit={handleEditSubscription}
+      />
 
-          {/* Stats */}
-          <div className='mb-6 grid grid-cols-1 gap-4 md:grid-cols-3'>
-            <AdminBox className='p-4'>
-              <div className='flex items-center gap-2'>
-                <UsersIcon className='text-muted-foreground/70 size-5' />
-                <div>
-                  <p className='text-muted-foreground text-sm'>Members</p>
-                  <p className='text-foreground text-2xl font-bold'>
-                    {orgDetails.stats?.memberCount ?? 0}
-                  </p>
-                </div>
-              </div>
-            </AdminBox>
-            <AdminBox className='p-4'>
-              <div className='flex items-center gap-2'>
-                <FolderIcon className='text-muted-foreground/70 size-5' />
-                <div>
-                  <p className='text-muted-foreground text-sm'>Projects</p>
-                  <p className='text-foreground text-2xl font-bold'>
-                    {orgDetails.stats?.projectCount ?? 0}
-                  </p>
-                </div>
-              </div>
-            </AdminBox>
-          </div>
+      <GrantList
+        grants={billing?.grants ?? []}
+        loading={loading}
+        isLoading={billingQuery.isLoading}
+        onRevoke={(_grantId: string) =>
+          setConfirmDialog({ type: 'revoke-grant', grantId: _grantId })
+        }
+      />
 
-          {/* Billing Summary */}
-          <div className='mb-6'>
-            <OrgBillingSummary billing={billingData ?? null} />
-          </div>
-
-          {/* Quick Actions */}
-          <div className='mb-6'>
-            <OrgQuickActions
-              loading={loading}
-              onGrantTrial={handleQuickTrial}
-              onGrantSingleProject={handleQuickSingleProject}
-              onCreateSubscription={handleOpenSubscriptionDialog}
-              onCreateGrant={handleOpenGrantDialog}
-            />
-          </div>
-
-          {/* Subscriptions */}
-          <div className='mb-6'>
-            <SubscriptionList
-              subscriptions={billing?.subscriptions}
-              effectiveSubscriptionId={billingData?.subscription?.id}
-              loading={loading}
-              isLoading={billingQuery.isLoading}
-              onCancel={(_subscriptionId: string) =>
-                setConfirmDialog({ type: 'cancel-subscription', subscriptionId: _subscriptionId })
-              }
-              onEdit={handleEditSubscription}
-            />
-          </div>
-
-          {/* Grants */}
-          <div className='mb-6'>
-            <GrantList
-              grants={billing?.grants ?? []}
-              loading={loading}
-              isLoading={billingQuery.isLoading}
-              onRevoke={(_grantId: string) =>
-                setConfirmDialog({ type: 'revoke-grant', grantId: _grantId })
-              }
-            />
-          </div>
-
-          {/* Billing Reconciliation */}
-          <div className='mb-6'>
-            <OrgBillingReconcilePanel orgId={orgId} />
-          </div>
-        </>
-      )}
+      <OrgBillingReconcilePanel orgId={orgId} />
 
       {/* Subscription Dialog */}
       <SubscriptionDialog
@@ -595,6 +500,6 @@ function OrgDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </AdminPage>
   );
 }
