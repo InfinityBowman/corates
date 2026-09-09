@@ -125,9 +125,7 @@ describe('validatePdfFile', () => {
       expect(result.valid).toBe(true);
     });
 
-    // JSDOM does not support file.slice().arrayBuffer() properly, so magic byte
-    // validation silently falls through. This test belongs in browser tests.
-    it.skip('should reject files without PDF signature', async () => {
+    it('should reject files without PDF signature', async () => {
       const pngSignature = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
       const blob = new Blob([pngSignature], { type: 'application/pdf' });
       const file = new File([blob], 'fake.pdf', { type: 'application/pdf' });
