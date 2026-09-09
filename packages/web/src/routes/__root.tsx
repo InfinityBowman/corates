@@ -1,5 +1,5 @@
 import { useSyncExternalStore, useEffect, lazy, Suspense } from 'react';
-import { HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-router';
+import { HeadContent, Outlet, Scripts, createRootRoute, useRouter } from '@tanstack/react-router';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
 import { AuthProvider } from '@/components/auth/AuthProvider';
@@ -11,6 +11,7 @@ import { FeedbackDialog } from '@/components/feedback/FeedbackDialog';
 import appCss from '../styles.css?url';
 import type { ErrorComponentProps } from '@tanstack/react-router';
 import { captureException } from '@/config/sentry';
+import { isStaleChunkError } from '@/lib/staleChunk';
 import { TriangleAlertIcon, RefreshCwIcon } from 'lucide-react';
 
 const LazyDevPanel =
@@ -212,7 +213,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   );
 }
 
-function RootError({ error, reset }: ErrorComponentProps) {
+function RootError({ error }: ErrorComponentProps) {
+  const router = useRouter();
+  const staleChunk = isStaleChunkError(error);
+
   useEffect(() => {
     captureException(error, { component: 'RootError', action: 'render' });
   }, [error]);
@@ -228,9 +232,9 @@ function RootError({ error, reset }: ErrorComponentProps) {
         </div>
         <h3 className='text-foreground mb-1 text-base font-semibold'>Something went wrong</h3>
         <p className='text-muted-foreground mb-5 text-sm'>{message}</p>
-        <Button onClick={reset}>
+        <Button onClick={() => (staleChunk ? window.location.reload() : router.invalidate())}>
           <RefreshCwIcon className='size-3.5' />
-          Try again
+          {staleChunk ? 'Reload page' : 'Try again'}
         </Button>
       </div>
     </div>

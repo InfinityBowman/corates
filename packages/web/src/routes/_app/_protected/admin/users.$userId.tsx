@@ -1,6 +1,5 @@
 import { useState, useCallback, Suspense } from 'react';
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
-import type { ErrorComponentProps } from '@tanstack/react-router';
+import { createFileRoute, Link, useNavigate, useRouter } from '@tanstack/react-router';
 import {
   ArrowLeftIcon,
   ShieldIcon,
@@ -47,12 +46,13 @@ export const Route = createFileRoute('/_app/_protected/admin/users/$userId')({
   errorComponent: UserDetailError,
 });
 
-function UserDetailError({ reset }: ErrorComponentProps) {
+function UserDetailError() {
+  const router = useRouter();
   return (
     <div className='border-destructive/20 bg-destructive/10 rounded-lg border p-6 text-center'>
       <AlertCircleIcon className='text-destructive mx-auto mb-2 size-8' />
       <p className='text-destructive'>Failed to load user details</p>
-      <Button variant='link' className='text-destructive mt-2' onClick={reset}>
+      <Button variant='link' className='text-destructive mt-2' onClick={() => router.invalidate()}>
         Try again
       </Button>
     </div>
