@@ -6,8 +6,15 @@ import { StartClient } from '@tanstack/react-start/client';
 import { hydrateRoot } from 'react-dom/client';
 import * as Sentry from '@sentry/react';
 import { initSentry } from '@/config/sentry';
+import { reloadOnceForStaleChunk } from '@/lib/staleChunk';
 
 initSentry();
+
+// Route components already reload themselves on a missing chunk (TanStack Router);
+// this covers React.lazy, inline import() calls, and CSS preloads.
+window.addEventListener('vite:preloadError', event => {
+  if (reloadOnceForStaleChunk(event.payload)) event.preventDefault();
+});
 
 hydrateRoot(document, <StartClient />, {
   onUncaughtError: Sentry.reactErrorHandler(),
