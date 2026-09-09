@@ -36,6 +36,12 @@ describe('reloadOnceForStaleChunk', () => {
     expect(reload).toHaveBeenCalledTimes(1);
   });
 
+  // vite:preloadError also fires when a lazily loaded module throws while evaluating
+  it('does not reload for an error that is not a missing chunk', () => {
+    expect(reloadOnceForStaleChunk(new Error('boom during module evaluation'))).toBe(false);
+    expect(reload).not.toHaveBeenCalled();
+  });
+
   it('keys the guard on the failing chunk', () => {
     reloadOnceForStaleChunk(new Error('Failed to fetch dynamically imported module: /assets/a.js'));
     expect(

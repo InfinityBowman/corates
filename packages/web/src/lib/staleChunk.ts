@@ -18,6 +18,7 @@ export function isStaleChunkError(error: unknown): boolean {
 // One reload per failing chunk per tab, so a chunk that is genuinely gone surfaces
 // as an error instead of a reload loop. Returns whether a reload was started.
 export function reloadOnceForStaleChunk(error: unknown): boolean {
+  if (!isStaleChunkError(error)) return false;
   const key = `stale-chunk-reload:${(error as { message?: string } | null)?.message ?? ''}`;
   try {
     if (sessionStorage.getItem(key)) return false;
