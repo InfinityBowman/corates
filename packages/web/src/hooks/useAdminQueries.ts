@@ -3,7 +3,7 @@
  * Provides hooks for admin dashboard data fetching
  */
 
-import { useQuery, queryOptions } from '@tanstack/react-query';
+import { useQuery, queryOptions, keepPreviousData } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
 import { fetchOrgBillingReconcile } from '@/stores/adminStore';
 import {
@@ -38,6 +38,13 @@ const ADMIN_QUERY_CONFIG = {
   refetchOnMount: 'always' as const,
 };
 
+// Paged and searched lists keep the previous page on screen while the next one
+// loads, so typing in a search box never collapses the table to a skeleton.
+const ADMIN_LIST_QUERY_CONFIG = {
+  ...ADMIN_QUERY_CONFIG,
+  placeholderData: keepPreviousData,
+};
+
 export function useAdminStats() {
   return useQuery({
     queryKey: queryKeys.admin.stats,
@@ -56,7 +63,7 @@ export function useAdminUsers(params: { page?: number; limit?: number; search?: 
       getAdminUsersAction({
         data: { page, limit, ...(search ? { search } : {}) },
       }),
-    ...ADMIN_QUERY_CONFIG,
+    ...ADMIN_LIST_QUERY_CONFIG,
   });
 }
 
@@ -81,7 +88,7 @@ export function useAdminProjects(
       getAdminProjectsAction({
         data: { page, limit, ...(search ? { search } : {}), ...(orgId ? { orgId } : {}) },
       }),
-    ...ADMIN_QUERY_CONFIG,
+    ...ADMIN_LIST_QUERY_CONFIG,
   });
 }
 
@@ -121,7 +128,7 @@ export function useStorageDocuments(
           ...(search ? { search } : {}),
         },
       }),
-    ...ADMIN_QUERY_CONFIG,
+    ...ADMIN_LIST_QUERY_CONFIG,
   });
 }
 
@@ -132,7 +139,7 @@ export function useAdminOrgs(params: { page?: number; limit?: number; search?: s
   return useQuery({
     queryKey: queryKeys.admin.orgs(page, limit, search),
     queryFn: () => getAdminOrgsAction({ data: { page, limit, ...(search ? { search } : {}) } }),
-    ...ADMIN_QUERY_CONFIG,
+    ...ADMIN_LIST_QUERY_CONFIG,
   });
 }
 
@@ -165,7 +172,7 @@ export function useAdminBillingLedger(
   return useQuery({
     queryKey: queryKeys.admin.billingLedger(queryParams),
     queryFn: () => getAdminBillingLedgerAction({ data: queryParams }),
-    ...ADMIN_QUERY_CONFIG,
+    ...ADMIN_LIST_QUERY_CONFIG,
   });
 }
 
@@ -265,6 +272,6 @@ export function useAdminTableRows(
         },
       }),
     enabled: !!tableName,
-    ...ADMIN_QUERY_CONFIG,
+    ...ADMIN_LIST_QUERY_CONFIG,
   });
 }

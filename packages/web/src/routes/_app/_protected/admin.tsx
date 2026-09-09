@@ -1,52 +1,20 @@
 /**
- * Admin Layout route
- * Provides shared tab navbar navigation for all admin routes.
- * Checks admin status on mount and redirects non-admins to /dashboard.
+ * Admin layout route. The app sidebar swaps to the admin sections while on
+ * these routes, so this only guards access and frames the page content.
  */
 
 import { useEffect } from 'react';
-import { createFileRoute, Outlet, Link, useLocation, useNavigate } from '@tanstack/react-router';
-import {
-  ShieldIcon,
-  HomeIcon,
-  DatabaseIcon,
-  FilterIcon,
-  AlertTriangleIcon,
-  AlertCircleIcon,
-  ServerIcon,
-  FolderIcon,
-  CreditCardIcon,
-} from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import { createFileRoute, Outlet, useNavigate } from '@tanstack/react-router';
+import { ShieldOffIcon } from 'lucide-react';
 import { useAdminStore } from '@/stores/adminStore';
 import { SectionErrorBoundary } from '@/components/project/SectionErrorBoundary';
-import { Spinner } from '@/components/ui/spinner';
 
-interface NavItem {
-  path: string;
-  label: string;
-  icon: LucideIcon;
-}
-
-const navItems: NavItem[] = [
-  { path: '/admin', label: 'Dashboard', icon: ShieldIcon },
-  { path: '/admin/orgs', label: 'Organizations', icon: HomeIcon },
-  { path: '/admin/projects', label: 'Projects', icon: FolderIcon },
-  { path: '/admin/storage', label: 'Storage', icon: DatabaseIcon },
-  { path: '/admin/database', label: 'Database', icon: ServerIcon },
-  { path: '/admin/billing/ledger', label: 'Event Ledger', icon: FilterIcon },
-  { path: '/admin/billing/stuck-states', label: 'Stuck States', icon: AlertTriangleIcon },
-  { path: '/admin/billing/stripe-tools', label: 'Stripe Tools', icon: CreditCardIcon },
-];
-
-// Route path will be registered once the route tree is regenerated
 export const Route = createFileRoute('/_app/_protected/admin')({
   component: AdminLayout,
 });
 
 function AdminLayout() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { isAdmin, isAdminChecked, checkAdminStatus } = useAdminStore();
 
   useEffect(() => {
@@ -57,68 +25,27 @@ function AdminLayout() {
     });
   }, [checkAdminStatus, navigate]);
 
-  const isActive = (path: string) => {
-    const currentPath = location.pathname;
-    if (path === '/admin') {
-      return currentPath === '/admin' || currentPath === '/admin/';
-    }
-    return currentPath.startsWith(path);
-  };
-
+  // Nothing renders until the check resolves: pages fetch admin-only data, and
+  // a flash of content before the redirect reads as a permissions bug.
   if (!isAdminChecked) {
-    return (
-      <div className='flex min-h-100 items-center justify-center'>
-        <Spinner size='lg' />
-      </div>
-    );
+    return <div className='min-h-0 flex-1' />;
   }
 
   if (!isAdmin) {
     return (
-      <div className='text-muted-foreground flex min-h-100 flex-col items-center justify-center'>
-        <AlertCircleIcon className='mb-4 size-12' />
-        <p className='text-lg font-medium'>Access Denied</p>
-        <p className='text-sm'>You do not have admin privileges.</p>
+      <div className='text-muted-foreground flex min-h-100 flex-col items-center justify-center gap-1'>
+        <ShieldOffIcon className='mb-3 size-8' />
+        <p className='text-foreground text-sm font-medium'>Access denied</p>
+        <p className='text-[13px]'>You do not have admin privileges.</p>
       </div>
     );
   }
 
   return (
-    <div className='min-h-screen'>
-      {/* Navbar */}
-      <div className='border-border bg-card border-b'>
-        <nav
-          className='mx-auto flex max-w-screen-2xl gap-1 px-4 md:px-6 lg:px-8'
-          role='navigation'
-          aria-label='Admin navigation'
-        >
-          {navItems.map(item => {
-            const Icon = item.icon;
-            const active = isActive(item.path);
-            return (
-              <Link
-                key={item.path}
-                to={item.path as string}
-                className={`flex items-center gap-2 rounded-t-lg border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
-                  active ?
-                    'border-primary bg-info-bg text-primary'
-                  : 'text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground border-transparent'
-                }`}
-              >
-                <Icon className='size-4' />
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
-      </div>
-
-      {/* Page Content */}
-      <div className='mx-auto max-w-screen-2xl px-4 pt-8 pb-16 md:px-6 lg:px-8'>
-        <SectionErrorBoundary name='Admin'>
-          <Outlet />
-        </SectionErrorBoundary>
-      </div>
+    <div className='bg-background flex min-h-0 flex-1 flex-col'>
+      <SectionErrorBoundary name='Admin'>
+        <Outlet />
+      </SectionErrorBoundary>
     </div>
   );
 }

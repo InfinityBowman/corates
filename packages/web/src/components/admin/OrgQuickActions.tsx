@@ -1,4 +1,5 @@
 import { PlusIcon } from 'lucide-react';
+import { AdminPanel } from '@/components/admin/ui';
 import { Button } from '@/components/ui/button';
 
 interface OrgQuickActionsProps {
@@ -17,26 +18,25 @@ export function OrgQuickActions({
   loading,
 }: OrgQuickActionsProps) {
   return (
-    <div className='border-border bg-card rounded-lg border p-6 shadow-sm'>
-      <h2 className='text-foreground mb-4 text-lg font-semibold'>Quick Actions</h2>
-      <div className='flex flex-wrap gap-3'>
-        <Button onClick={() => onGrantTrial?.()} disabled={loading}>
+    <AdminPanel title='Quick Actions' padded>
+      <div className='flex flex-wrap gap-2'>
+        <Button size='sm' onClick={onGrantTrial} disabled={loading}>
           <PlusIcon data-icon='inline-start' />
-          Grant Trial (14 days)
+          Grant trial (14 days)
         </Button>
-        <Button onClick={() => onGrantSingleProject?.()} disabled={loading}>
+        <Button size='sm' onClick={onGrantSingleProject} disabled={loading}>
           <PlusIcon data-icon='inline-start' />
-          Grant Single Project (6 months)
+          Grant single project (6 months)
         </Button>
-        <Button variant='outline' onClick={() => onCreateSubscription?.()} disabled={loading}>
+        <Button size='sm' variant='outline' onClick={onCreateSubscription} disabled={loading}>
           <PlusIcon data-icon='inline-start' />
-          Create Subscription
+          Create subscription
         </Button>
-        <Button variant='outline' onClick={() => onCreateGrant?.()} disabled={loading}>
+        <Button size='sm' variant='outline' onClick={onCreateGrant} disabled={loading}>
           <PlusIcon data-icon='inline-start' />
-          Create Grant
+          Create grant
         </Button>
       </div>
-    </div>
+    </AdminPanel>
   );
 }

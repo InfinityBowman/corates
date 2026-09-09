@@ -10,6 +10,10 @@ interface ServerPaginationProps {
   label?: string;
 }
 
+/**
+ * Renders as an AdminPanel footer. It stays mounted on a single page of results
+ * so the panel keeps its height when a filter narrows the list to one page.
+ */
 export function ServerPagination({
   page,
   totalPages,
@@ -18,38 +22,40 @@ export function ServerPagination({
   onPageChange,
   label = 'results',
 }: ServerPaginationProps) {
-  if (totalPages <= 1) return null;
+  const pages = Math.max(1, totalPages);
 
   return (
-    <div className='flex items-center justify-between'>
-      <p className='text-muted-foreground text-sm'>
+    <>
+      <p className='text-muted-foreground text-[13px] tabular-nums'>
         {total > 0 ?
-          `Showing ${(page - 1) * limit + 1} to ${Math.min(page * limit, total)} of ${total} ${label}`
-        : `No ${label} found`}
+          `${(page - 1) * limit + 1}-${Math.min(page * limit, total)} of ${total} ${label}`
+        : `No ${label}`}
       </p>
-      <div className='flex items-center gap-2'>
+      <div className='flex items-center gap-1'>
         <Button
           type='button'
-          variant='outline'
-          size='icon'
+          variant='ghost'
+          size='icon-sm'
           onClick={() => onPageChange(Math.max(1, page - 1))}
-          disabled={page === 1}
+          disabled={page <= 1}
+          aria-label='Previous page'
         >
-          <ChevronLeftIcon />
+          <ChevronLeftIcon className='size-4' />
         </Button>
-        <span className='text-muted-foreground text-sm'>
-          Page {page} of {totalPages}
+        <span className='text-muted-foreground px-1 text-[13px] tabular-nums'>
+          Page {page} of {pages}
         </span>
         <Button
           type='button'
-          variant='outline'
-          size='icon'
-          onClick={() => onPageChange(Math.min(totalPages, page + 1))}
-          disabled={page >= totalPages}
+          variant='ghost'
+          size='icon-sm'
+          onClick={() => onPageChange(Math.min(pages, page + 1))}
+          disabled={page >= pages}
+          aria-label='Next page'
         >
-          <ChevronRightIcon />
+          <ChevronRightIcon className='size-4' />
         </Button>
       </div>
-    </div>
+    </>
   );
 }

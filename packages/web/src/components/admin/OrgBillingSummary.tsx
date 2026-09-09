@@ -1,4 +1,6 @@
+import { AdminPanel, AdminField, AdminFieldGrid } from '@/components/admin/ui';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface BillingPlan {
   name?: string;
@@ -6,100 +8,72 @@ interface BillingPlan {
   quotas?: Record<string, number | null | undefined>;
 }
 
-interface BillingSubscription {
-  plan?: string;
-}
-
-interface BillingGrant {
-  type?: string;
-}
-
 interface BillingState {
   plan?: BillingPlan;
   effectivePlanId?: string;
   accessMode?: 'full' | 'readOnly';
   source?: 'free' | 'subscription' | 'grant';
-  subscription?: BillingSubscription | null;
-  grant?: BillingGrant | null;
+  subscription?: { plan?: string } | null;
+  grant?: { type?: string } | null;
 }
 
 interface OrgBillingSummaryProps {
   billing: BillingState | null | undefined;
+  isLoading?: boolean;
 }
 
-export function OrgBillingSummary({ billing }: OrgBillingSummaryProps) {
-  if (!billing) return null;
+const humanize = (key: string) => key.replace(/([A-Z])/g, ' $1').trim();
 
-  const currentPlan = billing.plan?.name || 'Free';
-  const effectivePlanId = billing.effectivePlanId || 'free';
+export function OrgBillingSummary({ billing, isLoading }: OrgBillingSummaryProps) {
+  if (isLoading || !billing) {
+    return (
+      <AdminPanel title='Billing Summary' padded>
+        <Skeleton className='h-32 w-full' />
+      </AdminPanel>
+    );
+  }
+
   const accessMode = billing.accessMode || 'readOnly';
   const billingSource = billing.source || 'free';
-  const entitlements = billing.plan?.entitlements || {};
-  const quotas = billing.plan?.quotas || {};
-  const effectiveSubscription = billing.subscription;
-  const effectiveGrant = billing.grant;
+  const entitlementEntries = Object.entries(billing.plan?.entitlements || {});
+  const quotaEntries = Object.entries(billing.plan?.quotas || {});
 
-  const getSourceReason = (): string => {
-    if (billingSource === 'subscription' && effectiveSubscription) {
-      return `Active subscription (${effectiveSubscription.plan})`;
-    }
-    if (billingSource === 'grant' && effectiveGrant) {
-      return `Active grant (${effectiveGrant.type})`;
-    }
-    if (billingSource === 'free') {
-      return 'No active subscription or grant';
-    }
-    return `Source: ${billingSource}`;
-  };
-
-  const entitlementEntries = Object.entries(entitlements);
-  const quotaEntries = Object.entries(quotas);
+  const sourceReason =
+    billingSource === 'subscription' && billing.subscription ?
+      `Active subscription (${billing.subscription.plan})`
+    : billingSource === 'grant' && billing.grant ? `Active grant (${billing.grant.type})`
+    : 'No active subscription or grant';
 
   return (
-    <div className='border-border bg-card rounded-lg border p-6 shadow-sm'>
-      <div className='mb-4 flex items-center justify-between'>
-        <h2 className='text-foreground text-lg font-semibold'>Billing Summary</h2>
-      </div>
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
-        <div>
-          <p className='text-muted-foreground text-sm'>Effective Plan</p>
-          <p className='text-foreground mt-1 text-lg font-medium'>{currentPlan}</p>
-          <p className='text-muted-foreground/70 mt-1 font-mono text-xs'>{effectivePlanId}</p>
-        </div>
-        <div>
-          <p className='text-muted-foreground text-sm'>Access Mode</p>
-          <p className='mt-1'>
-            {accessMode === 'full' ?
-              <Badge variant='success'>Full Access</Badge>
-            : <Badge variant='warning'>Read Only</Badge>}
-          </p>
-        </div>
-        <div>
-          <p className='text-muted-foreground text-sm'>Source</p>
-          <p className='text-foreground mt-1 text-lg font-medium capitalize'>{billingSource}</p>
-        </div>
-      </div>
+    <AdminPanel title='Billing Summary' padded>
+      <AdminFieldGrid>
+        <AdminField label='Effective plan'>
+          <span className='font-medium'>{billing.plan?.name || 'Free'}</span>
+          <code className='text-muted-foreground font-mono text-xs'>
+            {billing.effectivePlanId || 'free'}
+          </code>
+        </AdminField>
+        <AdminField label='Access mode'>
+          {accessMode === 'full' ?
+            <Badge variant='success'>Full access</Badge>
+          : <Badge variant='warning'>Read only</Badge>}
+        </AdminField>
+        <AdminField label='Source'>
+          <span className='capitalize'>{billingSource}</span>
+          <span className='text-muted-foreground'>- {sourceReason}</span>
+        </AdminField>
+      </AdminFieldGrid>
 
-      {/* Reason */}
-      <div className='bg-muted mt-4 rounded-lg p-3'>
-        <p className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
-          Effective Because
-        </p>
-        <p className='text-secondary-foreground mt-1 text-sm'>{getSourceReason()}</p>
-      </div>
-
-      {/* Entitlements and Quotas */}
       <div className='mt-6 grid grid-cols-1 gap-6 md:grid-cols-2'>
         <div>
-          <h3 className='text-foreground mb-3 text-sm font-semibold'>Entitlements</h3>
-          <dl className='flex flex-col gap-2'>
-            {entitlementEntries.length > 0 ?
-              entitlementEntries.map(([key, value]) => (
-                <div key={key} className='border-border-subtle flex justify-between border-b pb-2'>
-                  <dt className='text-muted-foreground text-sm capitalize'>
-                    {key.replace(/([A-Z])/g, ' $1').trim()}
-                  </dt>
-                  <dd className='text-foreground text-sm font-medium'>
+          <h3 className='text-foreground mb-2 text-[13px] font-medium'>Entitlements</h3>
+          <dl className='divide-border divide-y'>
+            {entitlementEntries.length === 0 ?
+              <p className='text-muted-foreground text-[13px]'>No entitlements</p>
+            : entitlementEntries.map(([key, value]) => (
+                <div key={key} className='flex justify-between py-1.5 text-[13px]'>
+                  <dt className='text-muted-foreground capitalize'>{humanize(key)}</dt>
+                  <dd className='text-foreground font-medium'>
                     {typeof value === 'boolean' ?
                       value ?
                         'Yes'
@@ -108,27 +82,26 @@ export function OrgBillingSummary({ billing }: OrgBillingSummaryProps) {
                   </dd>
                 </div>
               ))
-            : <p className='text-muted-foreground text-sm'>No entitlements</p>}
+            }
           </dl>
         </div>
         <div>
-          <h3 className='text-foreground mb-3 text-sm font-semibold'>Quotas</h3>
-          <dl className='flex flex-col gap-2'>
-            {quotaEntries.length > 0 ?
-              quotaEntries.map(([key, value]) => (
-                <div key={key} className='border-border-subtle flex justify-between border-b pb-2'>
-                  <dt className='text-muted-foreground text-sm capitalize'>
-                    {key.replace(/([A-Z])/g, ' $1').trim()}
-                  </dt>
-                  <dd className='text-foreground text-sm font-medium'>
+          <h3 className='text-foreground mb-2 text-[13px] font-medium'>Quotas</h3>
+          <dl className='divide-border divide-y'>
+            {quotaEntries.length === 0 ?
+              <p className='text-muted-foreground text-[13px]'>No quotas</p>
+            : quotaEntries.map(([key, value]) => (
+                <div key={key} className='flex justify-between py-1.5 text-[13px]'>
+                  <dt className='text-muted-foreground capitalize'>{humanize(key)}</dt>
+                  <dd className='text-foreground font-medium tabular-nums'>
                     {value === null || value === undefined ? 'Unlimited' : String(value)}
                   </dd>
                 </div>
               ))
-            : <p className='text-muted-foreground text-sm'>No quotas</p>}
+            }
           </dl>
         </div>
       </div>
-    </div>
+    </AdminPanel>
   );
 }

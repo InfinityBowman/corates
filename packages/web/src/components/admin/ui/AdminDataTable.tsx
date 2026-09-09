@@ -11,7 +11,7 @@ import {
   type RowData,
   type SortingState,
 } from '@tanstack/react-table';
-import { ChevronUpIcon, ChevronDownIcon } from 'lucide-react';
+import { ChevronUpIcon, ChevronDownIcon, ChevronsUpDownIcon } from 'lucide-react';
 import {
   Table,
   TableHeader,
@@ -21,6 +21,7 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 // V9 resolves the default 'auto' sort only against registered functions;
 // these two are what V8 picked for our string columns.
@@ -39,6 +40,15 @@ interface AdminDataTableProps<T extends RowData> {
   emptyState?: React.ReactNode;
   enableSorting?: boolean;
   onRowClick?: (_row: T) => void;
+  /**
+   * Skeleton rows drawn while loading. Set to the page size so a full page of
+   * results lands at the same height the placeholder occupied.
+   */
+  skeletonRows?: number;
+  /** Dims the rows in place while a new page or search result is in flight. */
+  refreshing?: boolean;
+  /** Pads short result sets to `skeletonRows` so the panel keeps one height. */
+  fillRows?: boolean;
 }
 
 export function AdminDataTable<T extends RowData>({
@@ -48,6 +58,9 @@ export function AdminDataTable<T extends RowData>({
   emptyState = 'No data available',
   enableSorting = false,
   onRowClick,
+  skeletonRows = 8,
+  refreshing,
+  fillRows,
 }: AdminDataTableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([]);
 
@@ -60,79 +73,106 @@ export function AdminDataTable<T extends RowData>({
     enableSorting,
   });
 
+  const rows = table.getRowModel().rows;
+
+  const fillerCount = fillRows ? Math.max(0, skeletonRows - rows.length) : 0;
+
   return (
-    <div className='border-border overflow-hidden rounded-xl border'>
-      <Table>
-        <TableHeader className='border-border bg-muted'>
-          {table.getHeaderGroups().map(headerGroup => (
-            <TableRow key={headerGroup.id}>
-              {headerGroup.headers.map(header => (
+    <Table>
+      <TableHeader className='bg-muted/40'>
+        {table.getHeaderGroups().map(headerGroup => (
+          <TableRow key={headerGroup.id} className='border-border hover:bg-transparent'>
+            {headerGroup.headers.map(header => {
+              const sortable = enableSorting && header.column.getCanSort();
+              const sorted = header.column.getIsSorted();
+              return (
                 <TableHead
                   key={header.id}
-                  className={`text-muted-foreground px-4 py-2 text-xs tracking-wider uppercase ${
-                    header.column.getCanSort() && enableSorting ?
-                      'hover:bg-secondary cursor-pointer select-none'
-                    : ''
-                  }`}
-                  onClick={enableSorting ? header.column.getToggleSortingHandler() : undefined}
+                  aria-sort={
+                    sorted === 'asc' ? 'ascending'
+                    : sorted === 'desc' ?
+                      'descending'
+                    : undefined
+                  }
+                  className={cn(
+                    'text-muted-foreground h-9 px-3 text-xs font-medium',
+                    sortable &&
+                      'hover:text-foreground cursor-pointer transition-colors select-none',
+                  )}
+                  onClick={sortable ? header.column.getToggleSortingHandler() : undefined}
                 >
                   <div className='flex items-center gap-1'>
                     {header.isPlaceholder ? null : (
                       flexRender(header.column.columnDef.header, header.getContext())
                     )}
-                    {enableSorting && header.column.getCanSort() && (
-                      <span className='text-muted-foreground/70 ml-1'>
-                        {header.column.getIsSorted() === 'asc' ?
-                          <ChevronUpIcon className='size-4' />
-                        : header.column.getIsSorted() === 'desc' ?
-                          <ChevronDownIcon className='size-4' />
-                        : <span className='size-4' />}
+                    {sortable && (
+                      <span className='inline-flex size-3.5 items-center justify-center'>
+                        {sorted === 'asc' ?
+                          <ChevronUpIcon className='size-3.5' />
+                        : sorted === 'desc' ?
+                          <ChevronDownIcon className='size-3.5' />
+                        : <ChevronsUpDownIcon className='size-3.5 opacity-30' />}
                       </span>
                     )}
                   </div>
                 </TableHead>
+              );
+            })}
+          </TableRow>
+        ))}
+      </TableHeader>
+      <TableBody
+        className={cn('transition-opacity duration-150', refreshing && 'opacity-60')}
+        aria-busy={refreshing || loading}
+      >
+        {loading &&
+          Array.from({ length: skeletonRows }, (_, i) => (
+            <TableRow key={`skeleton-${i}`} className='border-border hover:bg-transparent'>
+              {columns.map((_, j) => (
+                <TableCell key={`skeleton-cell-${j}`} className='h-12 px-3'>
+                  <Skeleton className='h-3.5' style={{ width: `${45 + ((j * 17) % 40)}%` }} />
+                </TableCell>
               ))}
             </TableRow>
           ))}
-        </TableHeader>
-        <TableBody className='divide-border bg-card divide-y'>
-          {loading &&
-            Array.from({ length: 5 }, (_, i) => (
-              <TableRow key={`skeleton-${i}`}>
-                {columns.map((_, j) => (
-                  <TableCell key={`skeleton-cell-${j}`} className='px-4 py-2'>
-                    <Skeleton className='h-4 w-3/4' />
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
 
-          {!loading && table.getRowModel().rows.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={columns.length || 1} className='px-4 py-8 text-center'>
-                <div className='text-muted-foreground/70 flex flex-col items-center gap-2'>
-                  {emptyState}
-                </div>
-              </TableCell>
+        {!loading && rows.length === 0 && (
+          <TableRow className='hover:bg-transparent'>
+            <TableCell
+              colSpan={columns.length || 1}
+              className='text-muted-foreground px-3 text-center whitespace-normal'
+              style={fillRows ? { height: skeletonRows * 48 } : { height: 160 }}
+            >
+              {emptyState}
+            </TableCell>
+          </TableRow>
+        )}
+
+        {!loading &&
+          rows.map(row => (
+            <TableRow
+              key={row.id}
+              className={cn('border-border', onRowClick && 'cursor-pointer')}
+              onClick={() => onRowClick?.(row.original)}
+            >
+              {row.getAllCells().map(cell => (
+                <TableCell key={cell.id} className='text-foreground h-12 px-3 text-[13px]'>
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </TableCell>
+              ))}
             </TableRow>
-          )}
+          ))}
 
-          {!loading &&
-            table.getRowModel().rows.map(row => (
-              <TableRow
-                key={row.id}
-                className={onRowClick ? 'cursor-pointer' : ''}
-                onClick={() => onRowClick?.(row.original)}
-              >
-                {row.getAllCells().map(cell => (
-                  <TableCell key={cell.id} className='text-foreground px-4 py-2 text-sm'>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
-        </TableBody>
-      </Table>
-    </div>
+        {/* Holds the panel at one page's height, so narrowing a search or
+            landing on a short last page never resizes it. */}
+        {!loading &&
+          rows.length > 0 &&
+          Array.from({ length: fillerCount }, (_, i) => (
+            <TableRow key={`filler-${i}`} className='border-border hover:bg-transparent'>
+              <TableCell colSpan={columns.length || 1} className='h-12 px-3' />
+            </TableRow>
+          ))}
+      </TableBody>
+    </Table>
   );
 }

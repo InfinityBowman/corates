@@ -1,14 +1,6 @@
 import { useState, useCallback } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
-import {
-  Trash2Icon,
-  SearchIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  DatabaseIcon,
-  CheckSquareIcon,
-  SquareIcon,
-} from 'lucide-react';
+import { Trash2Icon, ChevronLeftIcon, ChevronRightIcon, FileIcon } from 'lucide-react';
 import { useStorageDocuments } from '@/hooks/useAdminQueries';
 import { deleteStorageDocuments } from '@/stores/adminStore';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
@@ -24,11 +16,21 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
-import { DashboardHeader, AdminSection, AdminBox } from '@/components/admin/ui';
+import {
+  AdminEmpty,
+  AdminPage,
+  AdminPanel,
+  AdminSearch,
+  ADMIN_TH,
+  ADMIN_TD,
+  ADMIN_TD_MUTED,
+} from '@/components/admin/ui';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import { Spinner } from '@/components/ui/spinner';
+import { Skeleton } from '@/components/ui/skeleton';
 import { formatDateTime } from '@/lib/formatDate';
+import { formatFileSize } from '@corates/shared';
 import {
   Table,
   TableHeader,
@@ -58,13 +60,7 @@ interface StorageDocumentsData {
   truncated?: boolean;
 }
 
-const formatFileSize = (bytes: number | null | undefined): string => {
-  if (!bytes) return '0 B';
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
-};
+const PAGE_SIZE = 50;
 
 function StorageManagementPage() {
   const [search, setSearch] = useState('');
@@ -74,86 +70,74 @@ function StorageManagementPage() {
   const [cursorHistory, setCursorHistory] = useState<Array<string | null>>([]);
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
   const [deleteKeys, setDeleteKeys] = useState<string[] | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  const limit = 50;
+  const [deleting, setDeleting] = useState(false);
 
   const documentsDataQuery = useStorageDocuments({
     cursor,
-    limit,
+    limit: PAGE_SIZE,
     prefix,
     search: debouncedSearch,
   });
   const documentsData = documentsDataQuery.data as StorageDocumentsData | undefined;
+  const documents = documentsData?.documents ?? [];
 
-  const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
+  const resetPaging = () => {
     setCursor(null);
     setCursorHistory([]);
     setSelectedKeys(new Set());
   };
 
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    resetPaging();
+  };
+
   const handlePrefixChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPrefix(e.target.value);
-    setCursor(null);
-    setCursorHistory([]);
-    setSelectedKeys(new Set());
+    resetPaging();
   };
 
   const handleNextPage = () => {
     if (documentsData?.nextCursor) {
       setCursorHistory(prev => [...prev, cursor]);
-      setCursor(documentsData.nextCursor);
+      setCursor(documentsData.nextCursor ?? null);
     }
   };
 
   const handlePrevPage = () => {
-    if (cursorHistory.length > 0) {
-      const prevCursor = cursorHistory[cursorHistory.length - 1];
-      setCursorHistory(prev => prev.slice(0, -1));
-      setCursor(prevCursor ?? null);
-    } else {
-      setCursor(null);
-    }
+    setCursorHistory(prev => {
+      setCursor(prev.length > 0 ? (prev[prev.length - 1] ?? null) : null);
+      return prev.slice(0, -1);
+    });
   };
 
   const toggleSelect = useCallback((key: string) => {
     setSelectedKeys(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(key)) {
-        newSet.delete(key);
-      } else {
-        newSet.add(key);
-      }
-      return newSet;
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
     });
   }, []);
 
+  const allCurrentPageSelected =
+    documents.length > 0 && documents.every(doc => selectedKeys.has(doc.key));
+
   const toggleSelectAll = () => {
-    const docs = documentsData?.documents ?? [];
-    const currentKeys = new Set(docs.map(d => d.key));
-
-    const allCurrentPageSelected = docs.length > 0 && docs.every(doc => selectedKeys.has(doc.key));
-
-    if (allCurrentPageSelected) {
-      setSelectedKeys(prev => {
-        const newSet = new Set(prev);
-        currentKeys.forEach(key => newSet.delete(key));
-        return newSet;
-      });
-    } else {
-      setSelectedKeys(prev => {
-        const newSet = new Set(prev);
-        currentKeys.forEach(key => newSet.add(key));
-        return newSet;
-      });
-    }
+    setSelectedKeys(prev => {
+      const next = new Set(prev);
+      for (const doc of documents) {
+        if (allCurrentPageSelected) next.delete(doc.key);
+        else next.add(doc.key);
+      }
+      return next;
+    });
   };
 
   const handleDelete = async () => {
     if (!deleteKeys || deleteKeys.length === 0) return;
 
-    setLoading(true);
+    setDeleting(true);
     try {
       const result = (await deleteStorageDocuments(deleteKeys)) as {
         deleted: number;
@@ -164,290 +148,224 @@ function StorageManagementPage() {
 
       if (result.failed > 0) {
         showToast.warning(
-          'Partial Delete Success',
+          'Partial delete success',
           `Deleted ${result.deleted} documents. ${result.failed} failed.`,
         );
       } else {
-        showToast.success('Documents Deleted', `Successfully deleted ${result.deleted} documents.`);
+        showToast.success('Documents deleted', `Successfully deleted ${result.deleted} documents.`);
       }
 
       documentsDataQuery.refetch();
     } catch (error) {
-      showToast.error('Delete Failed', (error as Error).message || 'Failed to delete documents');
+      showToast.error('Delete failed', (error as Error).message || 'Failed to delete documents');
     } finally {
-      setLoading(false);
+      setDeleting(false);
     }
-  };
-
-  const handleBulkDelete = () => {
-    const keys = Array.from(selectedKeys);
-    if (keys.length === 0) return;
-    setDeleteKeys(keys);
-  };
-
-  const handleSingleDelete = (key: string) => {
-    setDeleteKeys([key]);
   };
 
   const handleRowClick = (e: React.MouseEvent, key: string) => {
     const selection = window.getSelection();
     if (selection && selection.toString().length > 0) return;
-
-    const target = e.target as HTMLElement;
-    const interactive = target.closest('button, input, textarea, [role="button"]');
-    if (interactive) return;
-
+    if ((e.target as HTMLElement).closest('button, input, [role="checkbox"]')) return;
     toggleSelect(key);
   };
 
-  const allCurrentPageSelected = (() => {
-    const docs = documentsData?.documents ?? [];
-    return docs.length > 0 && docs.every(doc => selectedKeys.has(doc.key));
-  })();
-
   return (
-    <div className='flex flex-col gap-8'>
-      <DashboardHeader
-        icon={DatabaseIcon}
-        title='Storage Management'
-        description='Manage documents in R2 storage'
-      />
-
-      {/* Info Banner */}
-      <div className='border-info-border bg-info-bg rounded-lg border p-4'>
-        <p className='text-info text-sm'>
-          <strong>Note:</strong> This dashboard shows all PDFs in R2 storage. PDFs marked as
-          &quot;Orphaned&quot; are files in R2 that are not tracked in the mediaFiles database table
-          (e.g., from failed cleanup). You can safely delete orphaned PDFs to free up storage space.
-        </p>
+    <AdminPage
+      title='Storage'
+      description='PDFs in R2. Files marked orphaned exist in R2 but are not tracked in the mediaFiles table, usually from a failed cleanup, and are safe to delete.'
+    >
+      <div className='flex flex-col gap-3 sm:flex-row'>
+        <AdminSearch
+          value={search}
+          onChange={handleSearchChange}
+          placeholder='Search by file name...'
+          className='flex-1'
+        />
+        <Input
+          type='text'
+          placeholder='Filter by prefix (e.g. projects/{id}/)'
+          value={prefix}
+          onChange={handlePrefixChange}
+          className='text-[13px] sm:w-72'
+        />
       </div>
 
-      {/* Filters and Search */}
-      <div className='flex flex-col gap-4 sm:flex-row'>
-        <div className='relative flex-1'>
-          <SearchIcon className='text-muted-foreground/70 absolute top-1/2 left-3 size-4 -translate-y-1/2' />
-          <Input
-            type='text'
-            placeholder='Search by file name...'
-            value={search}
-            onChange={handleSearchInput}
-            className='w-full pl-10'
-          />
-        </div>
-        <div className='sm:w-64'>
-          <Input
-            type='text'
-            placeholder='Filter by prefix (e.g., projects/{id}/)'
-            value={prefix}
-            onChange={handlePrefixChange}
-            className='w-full'
-          />
-        </div>
-      </div>
-
-      {/* Bulk Actions Bar */}
-      {selectedKeys.size > 0 && (
-        <div className='border-info-border bg-info-bg flex items-center justify-between rounded-lg border p-4'>
-          <span className='text-info text-sm font-medium'>
-            {selectedKeys.size} document{selectedKeys.size === 1 ? '' : 's'} selected
-          </span>
-          <div className='flex items-center gap-3'>
-            <Button type='button' variant='outline' onClick={() => setSelectedKeys(new Set())}>
-              Clear Selection
-            </Button>
-            <Button type='button' variant='destructive' onClick={handleBulkDelete}>
-              Delete Selected
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Documents Table */}
-      <AdminSection title='Documents'>
-        <AdminBox className='overflow-hidden p-0'>
-          <Table>
-            <TableHeader className='border-border bg-muted border-b'>
-              <TableRow className='border-border border-b'>
-                <TableHead className='px-6 py-3'>
-                  <Button
-                    type='button'
-                    variant='ghost'
-                    size='icon'
-                    onClick={toggleSelectAll}
-                    className='text-muted-foreground/70 hover:text-muted-foreground'
-                    title='Select all'
-                  >
-                    {allCurrentPageSelected ?
-                      <CheckSquareIcon className='text-info size-4' />
-                    : <SquareIcon className='size-4' />}
-                  </Button>
-                </TableHead>
-                <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
-                  File Name
-                </TableHead>
-                <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
-                  Size
-                </TableHead>
-                <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
-                  Project ID
-                </TableHead>
-                <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
-                  Study ID
-                </TableHead>
-                <TableHead className='text-muted-foreground px-6 py-3 text-xs font-medium tracking-wider uppercase'>
-                  Uploaded
-                </TableHead>
-                <TableHead className='text-muted-foreground px-6 py-3 text-right text-xs font-medium tracking-wider uppercase'>
-                  Actions
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {documentsDataQuery.isLoading ?
-                <TableRow>
-                  <TableCell colSpan={7} className='px-6 py-12 text-center'>
-                    <div className='flex items-center justify-center'>
-                      <Spinner size='lg' />
-                    </div>
-                  </TableCell>
-                </TableRow>
-              : (documentsData?.documents ?? []).length > 0 ?
-                (documentsData?.documents ?? []).map(doc => (
-                  <TableRow
-                    key={doc.key}
-                    className={doc.orphaned ? 'bg-warning-bg' : ''}
-                    onClick={e => handleRowClick(e, doc.key)}
-                  >
-                    <TableCell className='text-foreground px-6 py-4 text-sm'>
-                      <Button
-                        type='button'
-                        variant='ghost'
-                        size='icon'
-                        onClick={e => {
-                          e.stopPropagation();
-                          toggleSelect(doc.key);
-                        }}
-                        className='text-muted-foreground/70 hover:text-muted-foreground'
-                      >
-                        {selectedKeys.has(doc.key) ?
-                          <CheckSquareIcon className='text-info size-4' />
-                        : <SquareIcon className='size-4' />}
-                      </Button>
-                    </TableCell>
-                    <TableCell className='text-foreground px-6 py-4 text-sm'>
-                      <div className='flex items-center gap-2'>
-                        <span className='text-foreground font-mono text-sm'>{doc.fileName}</span>
-                        {doc.orphaned && (
-                          <Badge
-                            variant='warning'
-                            title='Orphaned: File exists in R2 but is not tracked in mediaFiles database table'
-                          >
-                            Orphaned
-                          </Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className='text-muted-foreground px-6 py-4 text-sm'>
-                      {formatFileSize(doc.size)}
-                    </TableCell>
-                    <TableCell className='text-foreground px-6 py-4 text-sm'>
-                      <span className='text-muted-foreground font-mono text-xs'>
-                        {doc.projectId}
-                      </span>
-                    </TableCell>
-                    <TableCell className='text-foreground px-6 py-4 text-sm'>
-                      <span className='text-muted-foreground font-mono text-xs'>{doc.studyId}</span>
-                    </TableCell>
-                    <TableCell className='text-muted-foreground px-6 py-4 text-sm'>
-                      {formatDateTime(doc.uploaded)}
-                    </TableCell>
-                    <TableCell className='text-foreground px-6 py-4 text-right text-sm'>
-                      <Button
-                        type='button'
-                        variant='ghost'
-                        size='icon'
-                        onClick={e => {
-                          e.stopPropagation();
-                          handleSingleDelete(doc.key);
-                        }}
-                        className='text-destructive hover:bg-destructive/10'
-                        title='Delete'
-                      >
-                        <Trash2Icon className='size-4' />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              : <TableRow>
-                  <TableCell colSpan={7} className='text-muted-foreground px-6 py-12 text-center'>
-                    No documents found
-                  </TableCell>
-                </TableRow>
-              }
-            </TableBody>
-          </Table>
-
-          {/* Pagination */}
-          {documentsData && (
-            <div className='border-border flex items-center justify-between border-t px-6 py-4'>
-              <div className='flex flex-col gap-1'>
-                <p className='text-muted-foreground text-sm'>
-                  Showing {documentsData.documents?.length ?? 0} document
-                  {documentsData.documents?.length === 1 ? '' : 's'}
-                </p>
-                {documentsData.truncated && (
-                  <p className='text-warning text-xs'>
-                    Results truncated after processing 10,000 objects. Use pagination to continue.
-                  </p>
-                )}
-              </div>
-              <div className='flex items-center gap-2'>
-                <Button
-                  type='button'
-                  variant='outline'
-                  size='icon'
-                  onClick={handlePrevPage}
-                  disabled={cursorHistory.length === 0}
-                >
-                  <ChevronLeftIcon className='size-4' />
-                </Button>
-                <span className='text-muted-foreground text-sm'>
-                  {cursorHistory.length + 1}
-                  {documentsData.nextCursor ? ' ->' : ''}
+      <AdminPanel
+        title='Documents'
+        action={
+          // Rendered as a fixed-height slot so selecting rows does not shift the table.
+          <div className='flex h-8 items-center gap-2'>
+            {selectedKeys.size > 0 && (
+              <>
+                <span className='text-muted-foreground text-[13px] tabular-nums'>
+                  {selectedKeys.size} selected
                 </span>
                 <Button
                   type='button'
-                  variant='outline'
-                  size='icon'
-                  onClick={handleNextPage}
-                  disabled={!documentsData.nextCursor}
+                  variant='ghost'
+                  size='sm'
+                  onClick={() => setSelectedKeys(new Set())}
                 >
-                  <ChevronRightIcon className='size-4' />
+                  Clear
                 </Button>
-              </div>
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='sm'
+                  className='text-destructive hover:text-destructive'
+                  onClick={() => setDeleteKeys(Array.from(selectedKeys))}
+                >
+                  Delete selected
+                </Button>
+              </>
+            )}
+          </div>
+        }
+        footer={
+          <>
+            <p className='text-muted-foreground text-[13px] tabular-nums'>
+              {documents.length} document{documents.length === 1 ? '' : 's'}
+              {documentsData?.truncated && ' - truncated after 10,000 objects'}
+            </p>
+            <div className='flex items-center gap-1'>
+              <Button
+                type='button'
+                variant='ghost'
+                size='icon-sm'
+                onClick={handlePrevPage}
+                disabled={cursorHistory.length === 0}
+                aria-label='Previous page'
+              >
+                <ChevronLeftIcon className='size-4' />
+              </Button>
+              <span className='text-muted-foreground px-1 text-[13px] tabular-nums'>
+                Page {cursorHistory.length + 1}
+              </span>
+              <Button
+                type='button'
+                variant='ghost'
+                size='icon-sm'
+                onClick={handleNextPage}
+                disabled={!documentsData?.nextCursor}
+                aria-label='Next page'
+              >
+                <ChevronRightIcon className='size-4' />
+              </Button>
             </div>
-          )}
-        </AdminBox>
-      </AdminSection>
+          </>
+        }
+      >
+        <Table>
+          <TableHeader className='bg-muted/40'>
+            <TableRow className='border-border hover:bg-transparent'>
+              <TableHead className={`${ADMIN_TH} w-10`}>
+                <Checkbox
+                  checked={allCurrentPageSelected}
+                  onCheckedChange={toggleSelectAll}
+                  aria-label='Select all on this page'
+                />
+              </TableHead>
+              <TableHead className={ADMIN_TH}>File name</TableHead>
+              <TableHead className={ADMIN_TH}>Size</TableHead>
+              <TableHead className={ADMIN_TH}>Project</TableHead>
+              <TableHead className={ADMIN_TH}>Study</TableHead>
+              <TableHead className={ADMIN_TH}>Uploaded</TableHead>
+              <TableHead className={`${ADMIN_TH} w-12`} />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {documentsDataQuery.isLoading ?
+              Array.from({ length: 10 }, (_, i) => (
+                <TableRow key={`skeleton-${i}`} className='border-border hover:bg-transparent'>
+                  {Array.from({ length: 7 }, (__, j) => (
+                    <TableCell key={j} className='h-11 px-3'>
+                      <Skeleton className='h-3.5 w-3/4' />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            : documents.length === 0 ?
+              <TableRow className='hover:bg-transparent'>
+                <TableCell colSpan={7} className='p-0'>
+                  <AdminEmpty
+                    icon={FileIcon}
+                    title='No documents found'
+                    description={search || prefix ? 'No object matches the filters.' : undefined}
+                  />
+                </TableCell>
+              </TableRow>
+            : documents.map(doc => (
+                <TableRow
+                  key={doc.key}
+                  className='border-border cursor-pointer'
+                  data-state={selectedKeys.has(doc.key) ? 'selected' : undefined}
+                  onClick={e => handleRowClick(e, doc.key)}
+                >
+                  <TableCell className={ADMIN_TD}>
+                    <Checkbox
+                      checked={selectedKeys.has(doc.key)}
+                      onCheckedChange={() => toggleSelect(doc.key)}
+                      aria-label={`Select ${doc.fileName}`}
+                    />
+                  </TableCell>
+                  <TableCell className={ADMIN_TD}>
+                    <div className='flex items-center gap-2'>
+                      <span className='font-mono'>{doc.fileName}</span>
+                      {doc.orphaned && <Badge variant='warning'>Orphaned</Badge>}
+                    </div>
+                  </TableCell>
+                  <TableCell className={`${ADMIN_TD_MUTED} tabular-nums`}>
+                    {formatFileSize(doc.size ?? 0)}
+                  </TableCell>
+                  <TableCell className={`${ADMIN_TD_MUTED} font-mono text-xs`}>
+                    {doc.projectId || '-'}
+                  </TableCell>
+                  <TableCell className={`${ADMIN_TD_MUTED} font-mono text-xs`}>
+                    {doc.studyId || '-'}
+                  </TableCell>
+                  <TableCell className={`${ADMIN_TD_MUTED} tabular-nums`}>
+                    {formatDateTime(doc.uploaded)}
+                  </TableCell>
+                  <TableCell className={`${ADMIN_TD} text-right`}>
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='icon-sm'
+                      onClick={e => {
+                        e.stopPropagation();
+                        setDeleteKeys([doc.key]);
+                      }}
+                      className='text-muted-foreground/70 hover:text-destructive'
+                      aria-label={`Delete ${doc.fileName}`}
+                    >
+                      <Trash2Icon className='size-4' />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            }
+          </TableBody>
+        </Table>
+      </AdminPanel>
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!deleteKeys} onOpenChange={_open => !_open && setDeleteKeys(null)}>
+      <AlertDialog open={!!deleteKeys} onOpenChange={open => !open && setDeleteKeys(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Documents</AlertDialogTitle>
+            <AlertDialogTitle>Delete documents</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete {deleteKeys?.length ?? 0} document
-              {deleteKeys?.length === 1 ? '' : 's'}? This action cannot be undone.
+              Permanently delete {deleteKeys?.length ?? 0} document
+              {deleteKeys?.length === 1 ? '' : 's'} from R2. This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
-            <AlertDialogAction variant='destructive' onClick={handleDelete} disabled={loading}>
-              {loading ? 'Deleting...' : 'Delete'}
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction variant='destructive' onClick={handleDelete} disabled={deleting}>
+              {deleting ? 'Deleting...' : 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </AdminPage>
   );
 }

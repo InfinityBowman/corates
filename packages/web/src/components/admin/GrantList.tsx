@@ -1,7 +1,8 @@
 import { Trash2Icon } from 'lucide-react';
+import { AdminEmpty, AdminPanel } from '@/components/admin/ui';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
+import { Skeleton } from '@/components/ui/skeleton';
 import { formatDateTime } from '@/lib/formatDate';
 
 interface Grant {
@@ -24,59 +25,42 @@ export function GrantList({ grants: grantsProp, loading, isLoading, onRevoke }: 
   const grants = grantsProp || [];
 
   return (
-    <div className='border-border bg-card rounded-lg border'>
-      <div className='border-border border-b px-6 py-4'>
-        <h2 className='text-foreground text-lg font-semibold'>Grants</h2>
-      </div>
+    <AdminPanel title='Grants' bodyClassName='divide-border divide-y'>
       {isLoading ?
-        <div className='flex items-center justify-center py-12'>
-          <Spinner size='lg' />
+        <div className='p-4'>
+          <Skeleton className='h-20 w-full' />
         </div>
-      : <div className='p-6'>
-          {grants.length > 0 ?
-            <div className='flex flex-col gap-4'>
-              {grants.map(grant => (
-                <div key={grant.id} className='border-border rounded-lg border p-4'>
-                  <div className='flex items-start justify-between'>
-                    <div className='flex-1'>
-                      <div className='flex items-center gap-2'>
-                        <p className='text-foreground font-medium capitalize'>{grant.type}</p>
-                        {grant.revokedAt ?
-                          <Badge variant='destructive'>Revoked</Badge>
-                        : <Badge variant='success'>Active</Badge>}
-                      </div>
-                      <div className='text-muted-foreground mt-2 grid grid-cols-2 gap-4 text-sm'>
-                        <div>
-                          <p>Starts: {formatDateTime(grant.startsAt)}</p>
-                          <p>Expires: {formatDateTime(grant.expiresAt)}</p>
-                        </div>
-                        <div>
-                          <p>Created: {formatDateTime(grant.createdAt)}</p>
-                          {grant.revokedAt && <p>Revoked: {formatDateTime(grant.revokedAt)}</p>}
-                        </div>
-                      </div>
-                    </div>
-                    {!grant.revokedAt && (
-                      <div className='ml-4'>
-                        <Button
-                          variant='outline'
-                          size='icon'
-                          onClick={() => onRevoke?.(grant.id)}
-                          disabled={loading}
-                          className='border-destructive/30 text-destructive hover:bg-destructive/10'
-                          aria-label='Revoke grant'
-                        >
-                          <Trash2Icon />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
+      : grants.length === 0 ?
+        <AdminEmpty title='No grants' />
+      : grants.map(grant => (
+          <div key={grant.id} className='flex items-start justify-between gap-4 px-4 py-3'>
+            <div className='min-w-0'>
+              <div className='flex items-center gap-2'>
+                <p className='text-foreground text-[13px] font-medium capitalize'>{grant.type}</p>
+                {grant.revokedAt ?
+                  <Badge variant='destructive'>Revoked</Badge>
+                : <Badge variant='success'>Active</Badge>}
+              </div>
+              <p className='text-muted-foreground mt-1 text-xs'>
+                {formatDateTime(grant.startsAt)} - {formatDateTime(grant.expiresAt)}
+                {grant.revokedAt && ` - revoked ${formatDateTime(grant.revokedAt)}`}
+              </p>
             </div>
-          : <p className='text-muted-foreground text-sm'>No grants</p>}
-        </div>
+            {!grant.revokedAt && (
+              <Button
+                variant='ghost'
+                size='icon-sm'
+                onClick={() => onRevoke(grant.id)}
+                disabled={loading}
+                className='text-muted-foreground/70 hover:text-destructive shrink-0'
+                aria-label='Revoke grant'
+              >
+                <Trash2Icon />
+              </Button>
+            )}
+          </div>
+        ))
       }
-    </div>
+    </AdminPanel>
   );
 }

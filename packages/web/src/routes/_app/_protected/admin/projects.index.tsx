@@ -1,25 +1,19 @@
 import { useState, useMemo } from 'react';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
-import {
-  SearchIcon,
-  FolderIcon,
-  UsersIcon,
-  FileTextIcon,
-  AlertCircleIcon,
-  HomeIcon,
-} from 'lucide-react';
+import { FolderIcon } from 'lucide-react';
 import { useAdminProjects, useAdminOrgs } from '@/hooks/useAdminQueries';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { formatDate } from '@/lib/formatDate';
 import {
-  DashboardHeader,
-  AdminSection,
   AdminDataTable,
+  AdminEmpty,
+  AdminError,
+  AdminPage,
+  AdminPanel,
+  AdminSearch,
   ServerPagination,
   type AdminColumnDef,
 } from '@/components/admin/ui';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -49,6 +43,9 @@ interface OrgOption {
   name: string;
 }
 
+const PAGE_SIZE = 10;
+const ALL_ORGS_VALUE = 'all';
+
 export const Route = createFileRoute('/_app/_protected/admin/projects/')({
   component: AdminProjectList,
 });
@@ -59,11 +56,10 @@ function AdminProjectList() {
   const [search, setSearch] = useState('');
   const [selectedOrgId, setSelectedOrgId] = useState('');
   const debouncedSearch = useDebouncedValue(search, 300);
-  const limit = 20;
 
   const projectsQuery = useAdminProjects({
     page,
-    limit,
+    limit: PAGE_SIZE,
     search: debouncedSearch,
     orgId: selectedOrgId,
   });
@@ -78,16 +74,16 @@ function AdminProjectList() {
   const orgsData = orgsQuery.data as { orgs: OrgOption[] } | undefined;
 
   const projects = projectsData?.projects || [];
-  const pagination = projectsData?.pagination || { page: 1, total: 0, totalPages: 1 };
+  const pagination = projectsData?.pagination;
   const orgs = orgsData?.orgs || [];
 
-  const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
     setPage(1);
   };
 
   const handleOrgFilter = (orgId: string) => {
-    setSelectedOrgId(orgId || '');
+    setSelectedOrgId(orgId);
     setPage(1);
   };
 
@@ -96,21 +92,7 @@ function AdminProjectList() {
       {
         accessorKey: 'name',
         header: 'Project',
-        cell: info => {
-          const project = info.row.original;
-          return (
-            <Link
-              to={'/admin/projects/$projectId' as string}
-              params={{ projectId: project.id } as Record<string, string>}
-              className='flex items-center gap-3'
-            >
-              <div className='bg-success-bg flex size-10 items-center justify-center rounded-lg'>
-                <FolderIcon className='text-success size-5' />
-              </div>
-              <p className='text-primary hover:text-primary/80 font-medium'>{project.name}</p>
-            </Link>
-          );
-        },
+        cell: info => <span className='text-foreground font-medium'>{info.row.original.name}</span>,
       },
       {
         accessorKey: 'orgName',
@@ -118,18 +100,14 @@ function AdminProjectList() {
         cell: info => {
           const project = info.row.original;
           return (
-            <div>
-              <Link
-                to={'/admin/orgs/$orgId' as string}
-                params={{ orgId: project.orgId } as Record<string, string>}
-                className='text-secondary-foreground hover:text-primary flex items-center gap-2'
-                onClick={(e: React.MouseEvent) => e.stopPropagation()}
-              >
-                <HomeIcon className='size-4' />
-                <span>{project.orgName}</span>
-              </Link>
-              <p className='text-muted-foreground text-xs'>@{project.orgSlug}</p>
-            </div>
+            <Link
+              to={'/admin/orgs/$orgId' as string}
+              params={{ orgId: project.orgId } as Record<string, string>}
+              className='text-muted-foreground hover:text-primary transition-colors'
+              onClick={(e: React.MouseEvent) => e.stopPropagation()}
+            >
+              {project.orgName}
+            </Link>
           );
         },
       },
@@ -137,27 +115,21 @@ function AdminProjectList() {
         accessorKey: 'memberCount',
         header: 'Members',
         cell: info => (
-          <Badge variant='secondary'>
-            <UsersIcon />
-            {info.getValue() as number}
-          </Badge>
+          <span className='text-muted-foreground tabular-nums'>{info.getValue() as number}</span>
         ),
       },
       {
         accessorKey: 'fileCount',
         header: 'Files',
         cell: info => (
-          <Badge variant='secondary'>
-            <FileTextIcon />
-            {info.getValue() as number}
-          </Badge>
+          <span className='text-muted-foreground tabular-nums'>{info.getValue() as number}</span>
         ),
       },
       {
         accessorKey: 'createdAt',
         header: 'Created',
         cell: info => (
-          <span className='text-muted-foreground'>
+          <span className='text-muted-foreground tabular-nums'>
             {formatDate(info.getValue() as string | number | null | undefined)}
           </span>
         ),
@@ -166,110 +138,96 @@ function AdminProjectList() {
     [],
   );
 
+  if (projectsQuery.isError) {
+    return (
+      <AdminPage title='Projects' description='Every project across all organizations'>
+        <AdminError title='Failed to load projects' onRetry={() => projectsQuery.refetch()} />
+      </AdminPage>
+    );
+  }
+
   return (
-    <div className='flex flex-col gap-8'>
-      <DashboardHeader
-        icon={FolderIcon}
-        title='Projects'
-        description='Manage all projects across organizations'
-        iconColor='green'
-      />
-
-      {/* Search and Filter Bar */}
-      <div className='flex flex-col gap-4 sm:flex-row'>
-        <div className='relative flex-1'>
-          <SearchIcon className='text-muted-foreground/70 pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2' />
-          <Input
-            type='text'
-            value={search}
-            onChange={handleSearchInput}
-            placeholder='Search by project name...'
-            className='w-full pl-10'
-          />
-        </div>
-
-        {/* Org Filter */}
-        <div className='w-full sm:w-64'>
-          <Select
-            value={selectedOrgId || 'all'}
-            onValueChange={v => handleOrgFilter(v === 'all' ? '' : v)}
-          >
-            <SelectTrigger className='w-full'>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='all'>All Organizations</SelectItem>
-              {orgs.map(org => (
-                <SelectItem key={org.id} value={org.id}>
-                  {org.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {/* Error State */}
-      {projectsQuery.isError && (
-        <div className='border-destructive/20 bg-destructive/10 rounded-lg border p-6 text-center'>
-          <AlertCircleIcon className='text-destructive mx-auto mb-2 size-8' />
-          <p className='text-destructive'>Failed to load projects</p>
-          <Button
-            type='button'
-            variant='link'
-            onClick={() => projectsQuery.refetch()}
-            className='text-destructive hover:text-destructive/80 mt-2'
-          >
-            Try again
-          </Button>
-        </div>
-      )}
-
-      {/* Projects Table */}
-      {!projectsQuery.isError && (
-        <AdminSection title='All Projects'>
-          <AdminDataTable
-            columns={columns}
-            data={projects}
-            loading={projectsQuery.isLoading}
-            emptyState={
-              <div className='flex flex-col items-center gap-2'>
-                <FolderIcon className='text-muted-foreground/50 size-8' />
-                <span className='text-muted-foreground'>No projects found</span>
-                {(search || selectedOrgId) && (
-                  <Button
-                    type='button'
-                    variant='link'
-                    onClick={() => {
-                      setSearch('');
-                      setSelectedOrgId('');
-                    }}
-                    className='text-primary hover:text-primary/80'
-                  >
-                    Clear filters
-                  </Button>
-                )}
-              </div>
-            }
-            enableSorting
-            onRowClick={(row: ProjectRow) =>
-              navigate({
-                to: '/admin/projects/$projectId' as string,
-                params: { projectId: row.id } as Record<string, string>,
-              })
-            }
-          />
-
+    <AdminPage title='Projects' description='Every project across all organizations'>
+      <AdminPanel
+        title='All projects'
+        action={
+          <>
+            <AdminSearch
+              value={search}
+              onChange={handleSearchChange}
+              placeholder='Search by project name...'
+              className='w-full sm:w-64'
+            />
+            <Select
+              value={selectedOrgId || ALL_ORGS_VALUE}
+              onValueChange={v => handleOrgFilter(v === ALL_ORGS_VALUE ? '' : v)}
+            >
+              <SelectTrigger className='w-48 text-[13px]'>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL_ORGS_VALUE}>All organizations</SelectItem>
+                {orgs.map(org => (
+                  <SelectItem key={org.id} value={org.id}>
+                    {org.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </>
+        }
+        footer={
           <ServerPagination
             page={page}
-            totalPages={pagination.totalPages}
-            total={pagination.total}
-            limit={limit}
+            totalPages={pagination?.totalPages ?? 1}
+            total={pagination?.total ?? 0}
+            limit={PAGE_SIZE}
             onPageChange={setPage}
             label='projects'
           />
-        </AdminSection>
-      )}
-    </div>
+        }
+      >
+        <AdminDataTable
+          columns={columns}
+          data={projects}
+          loading={projectsQuery.isLoading}
+          refreshing={projectsQuery.isFetching}
+          fillRows
+          skeletonRows={PAGE_SIZE}
+          emptyState={
+            <AdminEmpty
+              icon={FolderIcon}
+              title='No projects found'
+              description={
+                search || selectedOrgId ? 'No project matches the current filters.' : undefined
+              }
+              action={
+                (search || selectedOrgId) && (
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    onClick={() => {
+                      setSearch('');
+                      setSelectedOrgId('');
+                      setPage(1);
+                    }}
+                  >
+                    Clear filters
+                  </Button>
+                )
+              }
+            />
+          }
+          enableSorting
+          onRowClick={(row: ProjectRow) =>
+            navigate({
+              to: '/admin/projects/$projectId' as string,
+              params: { projectId: row.id } as Record<string, string>,
+            })
+          }
+        />
+      </AdminPanel>
+    </AdminPage>
   );
 }

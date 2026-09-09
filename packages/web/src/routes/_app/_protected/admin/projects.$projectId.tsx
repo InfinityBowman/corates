@@ -1,22 +1,15 @@
 import { useState, useCallback } from 'react';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
-import {
-  ArrowLeftIcon,
-  FolderIcon,
-  UsersIcon,
-  FileTextIcon,
-  Trash2Icon,
-  AlertCircleIcon,
-  HomeIcon,
-} from 'lucide-react';
+import { Trash2Icon } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAdminProjectDetails, useAdminWorkspaceStats } from '@/hooks/useAdminQueries';
-import { useAdminStore, removeProjectMember, deleteProject } from '@/stores/adminStore';
+import { removeProjectMember, deleteProject } from '@/stores/adminStore';
 import { showToast } from '@/lib/toast';
 import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
+import { Skeleton } from '@/components/ui/skeleton';
 import { handleError } from '@/lib/error-utils';
 import { queryKeys } from '@/lib/queryKeys';
+import { AdminError, AdminPage, AdminPanel } from '@/components/admin/ui';
 import type { ProjectData, WorkspaceStats, ProjectMember } from '@/components/admin/projects/types';
 import { ProjectInfoSection } from '@/components/admin/projects/ProjectInfoSection';
 import { WorkspaceStorageSection } from '@/components/admin/projects/WorkspaceStorageSection';
@@ -28,6 +21,8 @@ import {
   RemoveMemberDialog,
 } from '@/components/admin/projects/ProjectDialogs';
 
+const BACK_TO_PROJECTS = { to: '/admin/projects', label: 'Back to Projects' };
+
 export const Route = createFileRoute('/_app/_protected/admin/projects/$projectId')({
   component: ProjectDetailPage,
 });
@@ -36,7 +31,6 @@ function ProjectDetailPage() {
   const { projectId } = Route.useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { isAdmin, isAdminChecked } = useAdminStore();
 
   const projectQuery = useAdminProjectDetails(projectId);
   const projectData = projectQuery.data as ProjectData | undefined;
@@ -84,116 +78,73 @@ function ProjectDetailPage() {
     }
   };
 
-  if (!isAdminChecked) {
+  if (projectQuery.isError) {
     return (
-      <div className='flex min-h-100 items-center justify-center'>
-        <Spinner size='lg' />
-      </div>
+      <AdminPage title='Project' back={BACK_TO_PROJECTS}>
+        <AdminError
+          title='Failed to load project details'
+          description='This project may have been deleted.'
+          onRetry={() => projectQuery.refetch()}
+        />
+      </AdminPage>
     );
   }
 
-  if (!isAdmin) {
+  const project = projectData?.project;
+
+  if (!project) {
     return (
-      <div className='text-muted-foreground flex min-h-100 flex-col items-center justify-center'>
-        <AlertCircleIcon className='mb-4 size-12' />
-        <p className='text-lg font-medium'>Access Denied</p>
-        <p className='text-sm'>You do not have admin privileges.</p>
-      </div>
+      <AdminPage title='Project' loadingTitle description=' ' back={BACK_TO_PROJECTS}>
+        <AdminPanel padded>
+          <Skeleton className='h-40 w-full' />
+        </AdminPanel>
+      </AdminPage>
     );
   }
 
   return (
-    <>
-      {/* Back link */}
-      <Link
-        to={'/admin/projects' as string}
-        className='text-muted-foreground hover:text-secondary-foreground mb-6 inline-flex items-center text-sm'
-      >
-        <ArrowLeftIcon className='mr-2 size-4' />
-        Back to Projects
-      </Link>
-
-      {/* Loading state */}
-      {projectQuery.isLoading && (
-        <div className='flex min-h-64 items-center justify-center'>
-          <Spinner size='lg' />
-        </div>
-      )}
-
-      {/* Error state */}
-      {projectQuery.isError && (
-        <div className='border-destructive/20 bg-destructive/10 rounded-lg border p-6 text-center'>
-          <AlertCircleIcon className='text-destructive mx-auto mb-2 size-8' />
-          <p className='text-destructive'>Failed to load project details</p>
-          <Button
-            variant='link'
-            className='text-destructive mt-2'
-            onClick={() => projectQuery.refetch()}
-          >
-            Try again
-          </Button>
-        </div>
-      )}
-
-      {/* Project details */}
-      {projectData?.project && (
+    <AdminPage
+      back={BACK_TO_PROJECTS}
+      title={project.name}
+      description={
         <>
-          {/* Header */}
-          <div className='mb-8 flex items-start justify-between'>
-            <div className='flex items-center gap-4'>
-              <div className='bg-info-bg flex size-16 items-center justify-center rounded-lg'>
-                <FolderIcon className='text-info size-8' />
-              </div>
-              <div>
-                <h1 className='text-foreground text-2xl font-bold'>{projectData.project.name}</h1>
-                <div className='text-muted-foreground mt-2 flex items-center gap-4 text-sm'>
-                  <Link
-                    to={'/admin/orgs/$orgId' as string}
-                    params={{ orgId: projectData.project.orgId } as Record<string, string>}
-                    className='hover:text-primary flex items-center'
-                  >
-                    <HomeIcon className='mr-1 size-4' />
-                    {projectData.project.orgName}
-                  </Link>
-                  <span className='flex items-center'>
-                    <UsersIcon className='mr-1 size-4' />
-                    {projectData.stats.memberCount} members
-                  </span>
-                  <span className='flex items-center'>
-                    <FileTextIcon className='mr-1 size-4' />
-                    {projectData.stats.fileCount} files
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <Button
-              variant='destructive'
-              onClick={() => setConfirmDialog({ type: 'delete-project' })}
-              disabled={loading}
-            >
-              <Trash2Icon data-icon='inline-start' />
-              Delete Project
-            </Button>
-          </div>
-
-          <ProjectInfoSection project={projectData.project} stats={projectData.stats} />
-          <WorkspaceStorageSection
-            stats={workspaceStats}
-            isLoading={statsQuery.isLoading}
-            isError={statsQuery.isError}
-            isFetching={statsQuery.isFetching}
-            onRefresh={() => statsQuery.refetch()}
-          />
-          <ProjectMembersSection
-            members={projectData.members}
-            loading={loading}
-            onRemove={member => setConfirmDialog({ type: 'remove-member', member })}
-          />
-          <ProjectFilesSection files={projectData.files} />
-          <ProjectInvitationsSection invitations={projectData.invitations} />
+          <Link
+            to={'/admin/orgs/$orgId' as string}
+            params={{ orgId: project.orgId } as Record<string, string>}
+            className='hover:text-foreground transition-colors'
+          >
+            {project.orgName}
+          </Link>
+          {` - ${projectData.stats.memberCount} members - ${projectData.stats.fileCount} files`}
         </>
-      )}
+      }
+      actions={
+        <Button
+          variant='outline'
+          className='text-destructive hover:text-destructive'
+          onClick={() => setConfirmDialog({ type: 'delete-project' })}
+          disabled={loading}
+        >
+          <Trash2Icon data-icon='inline-start' />
+          Delete project
+        </Button>
+      }
+    >
+      <ProjectInfoSection project={project} stats={projectData.stats} />
+      <WorkspaceStorageSection
+        stats={workspaceStats}
+        isLoading={statsQuery.isLoading}
+        isError={statsQuery.isError}
+        isFetching={statsQuery.isFetching}
+        onRefresh={() => statsQuery.refetch()}
+      />
+      <ProjectMembersSection
+        members={projectData.members}
+        loading={loading}
+        onRemove={member => setConfirmDialog({ type: 'remove-member', member })}
+      />
+      <ProjectFilesSection files={projectData.files} />
+      <ProjectInvitationsSection invitations={projectData.invitations} />
 
       <DeleteProjectDialog
         open={confirmDialog?.type === 'delete-project'}
@@ -216,6 +167,6 @@ function ProjectDetailPage() {
         }}
         loading={loading}
       />
-    </>
+    </AdminPage>
   );
 }
