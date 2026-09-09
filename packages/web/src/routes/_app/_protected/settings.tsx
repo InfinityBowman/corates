@@ -13,7 +13,7 @@ export const Route = createFileRoute('/_app/_protected/settings')({
 
 function SettingsLayout() {
   return (
-    <div className='bg-background flex min-h-0 flex-1 flex-col overflow-auto'>
+    <div className='bg-background flex flex-1 flex-col'>
       <Outlet />
     </div>
   );

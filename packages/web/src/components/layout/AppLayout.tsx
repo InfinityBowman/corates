@@ -17,6 +17,7 @@ import { LOCAL_PROJECT_ID } from '@/project/localProject';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { PaymentIssueBanner } from '@/components/billing/PaymentIssueBanner';
+import { MAIN_SCROLL_ID } from '@/config/scroll';
 import { Sidebar } from './Sidebar';
 import { MobileBar } from './MobileBar';
 
@@ -140,7 +141,10 @@ export function AppLayout() {
           </div>
         )}
 
-        <main className='text-foreground flex flex-1 flex-col overflow-auto'>
+        <main
+          data-scroll-restoration-id={MAIN_SCROLL_ID}
+          className='text-foreground flex flex-1 flex-col overflow-auto'
+        >
           <PaymentIssueBanner />
           <Outlet />
         </main>
