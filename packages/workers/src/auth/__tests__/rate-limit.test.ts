@@ -32,6 +32,21 @@ async function statuses(ip: string, n: number): Promise<number[]> {
   return out;
 }
 
+function signInWithPassword(ip: string) {
+  const auth = createAuth({ ...env, AUTH_SECRET: 'test-secret-that-is-long-enough' } as Env);
+  return auth.handler(
+    new Request('http://localhost:8787/api/auth/sign-in/email', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        origin: 'http://localhost:3010',
+        'cf-connecting-ip': ip,
+      },
+      body: JSON.stringify({ email: 'nobody@example.com', password: 'wrong-password-123' }),
+    }),
+  );
+}
+
 describe('auth rate limiting', () => {
   beforeEach(async () => {
     await resetTestDatabase();
@@ -58,6 +73,16 @@ describe('auth rate limiting', () => {
     expect(blocked.status).toBe(429);
     expect(Number(blocked.headers.get('X-Retry-After'))).toBeGreaterThan(0);
     expect(await blocked.json()).toMatchObject({ message: expect.stringMatching(/too many/i) });
+  });
+
+  // Password sign-in is intentionally left on Better Auth's own 3 per 10 second
+  // rule rather than the minute-long custom window
+  it('locks password sign-in after three attempts from one IP', async () => {
+    expect(RATE_LIMITED_AUTH_PATHS).not.toContain('/sign-in/email');
+    const results: number[] = [];
+    for (let i = 0; i < 4; i++) results.push((await signInWithPassword('203.0.113.10')).status);
+    expect(results.slice(0, 3).every(s => s !== 429)).toBe(true);
+    expect(results[3]).toBe(429);
   });
 
   it('keys the limit on cf-connecting-ip, not on a client-supplied x-forwarded-for', async () => {
