@@ -23,6 +23,19 @@ export declare function kickWorkspaceUser(
 ): Promise<void>;
 
 /**
+ * Refresh-disconnect a project's live sync sessions so reconnects re-run
+ * authorize (fresh role stamps) and clients refetch the member list.
+ * Best-effort: failures are logged, never thrown.
+ */
+export declare function refreshWorkspaceSessions(env: unknown, projectId: string): Promise<void>;
+
+/**
+ * Project deletion: close every session permanently, then wipe the workspace
+ * storage. Best-effort: failures are logged, never thrown.
+ */
+export declare function teardownWorkspace(env: unknown, projectId: string): Promise<void>;
+
+/**
  * Typed admin surface over one project's workspace for same-worker callers
  * (stats/export/import/reset/disconnect). Only what web consumes is declared.
  */

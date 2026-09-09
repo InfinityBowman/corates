@@ -7,9 +7,6 @@ import {
   projects,
   projectMembers,
   account,
-  verification,
-  twoFactor,
-  mediaFiles,
   member,
   organization,
 } from '@corates/db/schema';
@@ -28,7 +25,7 @@ import {
 } from '@corates/shared';
 import { isAdminUser } from '@corates/workers/auth-admin';
 import { resolveOrgAccess } from '@corates/workers/billing-resolver';
-import { kickWorkspaceUser } from '@corates/workers/sync';
+import { deleteUserAccount } from '@/server/lib/accountDeletion';
 import { createAuth } from '@corates/workers/auth-config';
 import type { Session } from '@/server/middleware/auth';
 
@@ -263,26 +260,7 @@ export async function deleteAdminUser(session: Session, db: Database, userId: st
     throwDomainError(USER_ERRORS.NOT_FOUND, { userId });
   }
 
-  const userProjects = await db
-    .select({ projectId: projectMembers.projectId, orgId: projects.orgId })
-    .from(projectMembers)
-    .innerJoin(projects, eq(projectMembers.projectId, projects.id))
-    .where(eq(projectMembers.userId, userId));
-
-  // Kick the user's live sync sessions before their memberships disappear;
-  // reconnect attempts re-run authorize against D1 and fail permanently.
-  await Promise.all(userProjects.map(({ projectId }) => kickWorkspaceUser(env, projectId, userId)));
-
-  await db.batch([
-    db.update(mediaFiles).set({ uploadedBy: null }).where(eq(mediaFiles.uploadedBy, userId)),
-    db.delete(projectMembers).where(eq(projectMembers.userId, userId)),
-    db.delete(projects).where(eq(projects.createdBy, userId)),
-    db.delete(twoFactor).where(eq(twoFactor.userId, userId)),
-    db.delete(sessionTable).where(eq(sessionTable.userId, userId)),
-    db.delete(account).where(eq(account.userId, userId)),
-    db.delete(verification).where(eq(verification.identifier, userToDelete.email)),
-    db.delete(user).where(eq(user.id, userId)),
-  ]);
+  await deleteUserAccount(db, { userId, email: userToDelete.email });
 
   return { success: true, message: 'User deleted successfully' };
 }
