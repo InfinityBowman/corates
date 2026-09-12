@@ -8,6 +8,8 @@ contactPoints:
     receivers:
       - uid: corates-email
         type: email
+        # Firing only; a resolved notice for something already fixed by hand is noise
+        disableResolveMessage: true
         settings:
           addresses: $ALERT_EMAIL_TO
           singleEmail: true

@@ -191,7 +191,8 @@ re-run deploy.sh. Deleting a rule needs a `deleteRules` entry, or Grafana keeps 
 
 Notifications go over Postmark SMTP (`GF_SMTP_*` in compose.yaml), so a Postmark outage
 silences the alerts about email failing to send - the rules still fire in the UI, only
-delivery is lost.
+delivery is lost. Firing only: `disableResolveMessage` is on, so a rule clearing is visible
+in Grafana but does not mail.
 
 `invitations.yaml` covers invitation delivery end to end:
 
