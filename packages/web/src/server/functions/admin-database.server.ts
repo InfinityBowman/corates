@@ -1,6 +1,6 @@
 import type { Database } from '@corates/db/client';
 import { dbSchema, mediaFiles, organization, projects, user } from '@corates/db/schema';
-import { and, asc, count, desc, eq } from 'drizzle-orm';
+import { and, asc, count, desc, eq, sql } from 'drizzle-orm';
 import { throwDomainError, AUTH_ERRORS } from '@corates/shared';
 import { isAdminUser } from '@corates/workers/auth-admin';
 import { ALLOWED_TABLES, isAllowedTable, type AllowedTableName } from '@/server/lib/dbTables';
@@ -29,7 +29,17 @@ export async function listAdminDatabaseTables(session: Session, db: Database) {
     }),
   );
 
-  return { tables: tables.filter(t => t !== null) };
+  const counted = tables.filter(t => t !== null);
+
+  // D1 exposes no size API and blocks the page_count pragma, but every query's
+  // meta carries the database size, so a no-op statement is the cheapest read.
+  const sizeProbe = await db.run(sql`SELECT 1`);
+
+  return {
+    tables: counted,
+    totalRows: counted.reduce((sum, t) => sum + t.rowCount, 0),
+    databaseSizeBytes: sizeProbe.meta?.size_after ?? 0,
+  };
 }
 
 interface DrizzleColumn {

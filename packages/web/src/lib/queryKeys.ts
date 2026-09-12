@@ -85,6 +85,7 @@ export const queryKeys = {
       ['adminWorkspaceStats', projectId] as const,
     storageDocuments: (cursor: string | null, limit: number, prefix: string, search: string) =>
       ['storageDocuments', cursor, limit, prefix, search] as const,
+    storageSummary: ['adminStorageSummary'] as const,
     billingLedger: (params: Record<string, unknown>) => ['adminBillingLedger', params] as const,
     billingStuckStates: (params: Record<string, unknown>) =>
       ['adminBillingStuckStates', params] as const,
