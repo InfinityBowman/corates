@@ -17,6 +17,7 @@ import {
 import type { Database } from '@corates/db/client';
 import { projectInvitations, projects, user } from '@corates/db/schema';
 import { and, desc, eq, gt, isNull } from 'drizzle-orm';
+import { normalizeEmail } from '@corates/shared/email';
 import type { Session } from '@/server/middleware/auth';
 
 export interface AcceptResult {
@@ -119,7 +120,7 @@ export async function listPendingInvitationsForUser(
     .leftJoin(user, eq(user.id, projectInvitations.invitedBy))
     .where(
       and(
-        eq(projectInvitations.email, session.user.email.toLowerCase()),
+        eq(projectInvitations.email, normalizeEmail(session.user.email)),
         isNull(projectInvitations.acceptedAt),
         gt(projectInvitations.expiresAt, new Date()),
       ),
@@ -150,7 +151,7 @@ export async function declineInvitation(
     .where(eq(projectInvitations.id, invitationId))
     .get();
 
-  if (!invitation || invitation.email !== session.user.email.toLowerCase()) {
+  if (!invitation || invitation.email !== normalizeEmail(session.user.email)) {
     throw new DomainErrorException(
       createDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, {
         field: 'invitationId',

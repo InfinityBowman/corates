@@ -374,10 +374,25 @@ describe('listPendingInvitationsForUser', () => {
       project: { name: 'Pending Project' },
     });
 
+    // One row per project and address, so the dead states live on sibling projects
+    const stale = await buildProject({ owner: inviter });
+    const done = await buildProject({ owner: inviter });
     const base = { orgId: org.id, projectId: project.id, invitedBy: inviter.id };
     const pending = await buildProjectInvitation({ ...base, email: 'invitee@example.com' });
-    await buildProjectInvitation({ ...base, email: 'invitee@example.com', status: 'expired' });
-    await buildProjectInvitation({ ...base, email: 'invitee@example.com', status: 'accepted' });
+    await buildProjectInvitation({
+      orgId: stale.org.id,
+      projectId: stale.project.id,
+      invitedBy: inviter.id,
+      email: 'invitee@example.com',
+      status: 'expired',
+    });
+    await buildProjectInvitation({
+      orgId: done.org.id,
+      projectId: done.project.id,
+      invitedBy: inviter.id,
+      email: 'invitee@example.com',
+      status: 'accepted',
+    });
     await buildProjectInvitation({ ...base, email: 'someone-else@example.com' });
 
     currentUser = { id: 'invitee-user', email: 'Invitee@Example.com' };

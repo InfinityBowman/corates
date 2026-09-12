@@ -32,7 +32,7 @@ Schema lives in `packages/db/src/schema.ts` -- the canonical reference. Relevant
 - `organization`, `member`, `invitation` -- Better Auth organization plugin. `member.role`: `owner | admin | member`.
 - `projects` -- `id`, `name`, `description`, `orgId` (FK, cascade), `createdBy`.
 - `projectMembers` -- `projectId` (FK), `userId` (FK), `role` (`owner | member`), `joinedAt`.
-- `projectInvitations` -- `orgId`, `projectId`, `email`, `role`, `orgRole`, `grantOrgMembership`, `token` (unique), `expiresAt`, `acceptedAt`.
+- `projectInvitations` -- `orgId`, `projectId`, `email`, `role`, `orgRole`, `grantOrgMembership`, `token` (unique), `expiresAt`, `acceptedAt`, `emailSentAt`, `emailStatus`. Unique on (`projectId`, `email`).
 
 The `grantOrgMembership` flag on an invitation says "also add this user to the org at `orgRole` when they accept." Defaults to `false`; only org admins/owners can set it to `true`.
 
@@ -193,14 +193,16 @@ Backed by Better Auth's `authClient.organization.list()` plus auth-aware `enable
 
 Every project add is an invitation: whether the owner picks an existing user or types an unknown email, the server creates a `projectInvitations` row and emails a link, and membership is only created when the recipient accepts. Direct membership writes are reserved for internal/test tooling (`addMember` command, dev routes).
 
-1. Project owner calls `POST /api/orgs/:orgId/projects/:projectId/invitations` with `{ email, role, grantOrgMembership?, orgRole? }`.
-2. Server creates a `projectInvitations` row with a unique token and sends a magic link.
-3. Invitee clicks the link, lands on `/complete-profile?invitation=TOKEN`, completes profile if needed.
-4. Frontend calls `POST /api/invitations/accept` with the token.
-5. Server validates: token exists, not expired, not accepted. The invited email is a delivery address, not an identity check: membership binds to whichever authenticated account accepts the token, so someone invited at an institutional alias can accept from an account keyed to a different address.
-6. If `grantOrgMembership === true`, the server adds org membership with `orgRole` (if the user isn't already a member).
-7. Server adds `projectMembers` with `role`.
-8. Frontend redirects to the project.
+1. Project owner calls `addMemberToProject` with `{ userId | email, role }`.
+2. Server checks the collaborator quota (non-owner members plus live invitations to people not yet in the workspace count as seats; inviting an existing workspace member takes none), then `createInvitation` applies the send caps from `INVITATION_LIMITS`: at most 20 live invitations per project, at most 30 created per inviter per hour, and one email per address per 10 minutes.
+3. Server creates or updates the `projectInvitations` row (one per project and address) and queues an email carrying `/invite/<token>`. The result reports `delivery` as `queued`, `recently_sent` (inside the cooldown, no new email) or `not_sent` (queue failure or an address that cannot take mail); the invite modal's toast reflects it. An account matching the address also gets an `invitation.received` notification.
+4. The queue consumer acks a permanently rejected address (Postmark 300/406) without retrying and marks the row `emailStatus = 'undeliverable'`; a dead-lettered message does the same. The pending-invitations list shows "Email could not be delivered" for that row.
+5. Invitee opens the link, lands on `/invite/$token`, and signs up or signs in if needed.
+6. Frontend calls `acceptInvitation` with the token.
+7. Server validates: token exists, not expired, not accepted. The invited email is a delivery address, not an identity check: membership binds to whichever authenticated account accepts the token, so someone invited at an institutional alias can accept from an account keyed to a different address.
+8. If `grantOrgMembership === true`, the server adds org membership with `orgRole` (if the user isn't already a member).
+9. Server adds `projectMembers` with `role`.
+10. Frontend redirects to the dashboard.
 
 ## Active Organization
 

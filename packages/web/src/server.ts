@@ -125,7 +125,10 @@ const workerHandler = {
         env: (env as SentryEnv).ENVIRONMENT,
         context: { queue: isDeadLetter ? 'email-dlq' : 'email', batchSize: batch.messages.length },
       },
-      () => (isDeadLetter ? handleEmailDeadLetter(batch) : handleEmailQueue(batch, env as never)),
+      () =>
+        isDeadLetter ?
+          handleEmailDeadLetter(batch, env as never)
+        : handleEmailQueue(batch, env as never),
     );
   },
 };

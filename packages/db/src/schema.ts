@@ -381,9 +381,18 @@ export const projectInvitations = sqliteTable(
       .references(() => user.id, { onDelete: 'cascade' }),
     expiresAt: integer('expiresAt', { mode: 'timestamp' }).notNull(),
     acceptedAt: integer('acceptedAt', { mode: 'timestamp' }),
+    // Last time an invitation email was queued; null when no email has gone out
+    emailSentAt: integer('emailSentAt', { mode: 'timestamp' }),
+    // 'queued' once handed to the email queue, 'undeliverable' when the
+    // provider rejected the address for good or retries ran out
+    emailStatus: text('emailStatus').$type<'queued' | 'undeliverable'>(),
     createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
   },
-  t => [index('project_invitations_projectId_idx').on(t.projectId)],
+  t => [
+    index('project_invitations_projectId_idx').on(t.projectId),
+    // Create-or-resend is read-then-write; this closes the double-submit gap
+    uniqueIndex('project_invitations_projectId_email_uidx').on(t.projectId, t.email),
+  ],
 );
 
 // Public contact form submissions. The row is written before the notification

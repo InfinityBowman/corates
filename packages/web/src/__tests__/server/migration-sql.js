@@ -348,4 +348,8 @@ CREATE TABLE \`rateLimit\` (
 	\`lastRequest\` integer NOT NULL
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX \`rateLimit_key_unique\` ON \`rateLimit\` (\`key\`);`;
+CREATE UNIQUE INDEX \`rateLimit_key_unique\` ON \`rateLimit\` (\`key\`);
+--> statement-breakpoint
+ALTER TABLE \`project_invitations\` ADD \`emailSentAt\` integer;--> statement-breakpoint
+ALTER TABLE \`project_invitations\` ADD \`emailStatus\` text;--> statement-breakpoint
+CREATE UNIQUE INDEX \`project_invitations_projectId_email_uidx\` ON \`project_invitations\` (\`projectId\`,\`email\`);`;

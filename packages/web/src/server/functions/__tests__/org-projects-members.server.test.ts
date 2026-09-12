@@ -9,11 +9,14 @@ import { resetTestDatabase } from '@/__tests__/server/helpers';
 import {
   buildProjectWithMembers,
   buildProject,
+  buildProjectInvitation,
   buildSelfRemovalScenario,
   buildOrgMember,
   resetCounter,
   asUserId,
 } from '@/__tests__/server/factories';
+import { resolveOrgAccess } from '@corates/workers/billing-resolver';
+import { INVITATION_LIMITS } from '@corates/workers/constants';
 import type { Session } from '@/server/middleware/auth';
 import { DomainErrorException } from '@corates/shared';
 import {
@@ -216,6 +219,122 @@ describe('addProjectMember', () => {
       const body = res.toDomainError() as { code: string };
       expect(body.code).toMatch(/FORBIDDEN/);
     }
+  });
+
+  it('reports whether the email was queued', async () => {
+    const { project, org, owner } = await buildProject();
+    currentUser = { id: owner.id, email: owner.email };
+    const db = createDb(env.DB);
+
+    const first = (await addProjectMember(mockSession(), db, org.id, project.id, {
+      email: 'fresh@example.com',
+    })) as { delivery: string };
+    expect(first.delivery).toBe('queued');
+
+    const row = await db
+      .select({
+        emailStatus: projectInvitations.emailStatus,
+        sentAt: projectInvitations.emailSentAt,
+      })
+      .from(projectInvitations)
+      .where(eq(projectInvitations.email, 'fresh@example.com'))
+      .get();
+    expect(row?.emailStatus).toBe('queued');
+    expect(row?.sentAt).toBeInstanceOf(Date);
+
+    // Re-inviting right away updates the row but does not send another email
+    const again = (await addProjectMember(mockSession(), db, org.id, project.id, {
+      email: 'fresh@example.com',
+      role: 'owner',
+    })) as { delivery: string };
+    expect(again.delivery).toBe('recently_sent');
+
+    const rows = await db
+      .select({ role: projectInvitations.role })
+      .from(projectInvitations)
+      .where(eq(projectInvitations.email, 'fresh@example.com'));
+    expect(rows).toEqual([{ role: 'owner' }]);
+  });
+
+  it('keeps one row when the same address is invited twice at once', async () => {
+    const { project, org, owner } = await buildProject();
+    currentUser = { id: owner.id, email: owner.email };
+    const db = createDb(env.DB);
+
+    const results = await Promise.all([
+      addProjectMember(mockSession(), db, org.id, project.id, { email: 'twice@example.com' }),
+      addProjectMember(mockSession(), db, org.id, project.id, { email: 'twice@example.com' }),
+    ]);
+    expect(results.map(r => (r as { invitation: boolean }).invitation)).toEqual([true, true]);
+
+    const rows = await db
+      .select({ id: projectInvitations.id })
+      .from(projectInvitations)
+      .where(eq(projectInvitations.email, 'twice@example.com'));
+    expect(rows).toHaveLength(1);
+  });
+
+  it('caps live invitations per project', async () => {
+    const { project, org, owner } = await buildProject();
+    currentUser = { id: owner.id, email: owner.email };
+
+    for (let i = 0; i < INVITATION_LIMITS.MAX_PENDING_PER_PROJECT; i++) {
+      await buildProjectInvitation({ orgId: org.id, projectId: project.id, invitedBy: owner.id });
+    }
+
+    await expect(
+      addProjectMember(mockSession(), createDb(env.DB), org.id, project.id, {
+        email: 'one-too-many@example.com',
+      }),
+    ).rejects.toMatchObject({ statusCode: 429 });
+  });
+
+  it('caps invitations created per inviter per hour', async () => {
+    const { project, org, owner } = await buildProject();
+    const other = await buildProject({ owner });
+    currentUser = { id: owner.id, email: owner.email };
+
+    // Spread across two projects so the per-project cap is not what trips
+    for (let i = 0; i < INVITATION_LIMITS.MAX_CREATED_PER_INVITER_PER_HOUR; i++) {
+      await buildProjectInvitation({
+        orgId: i % 2 ? org.id : other.org.id,
+        projectId: i % 2 ? project.id : other.project.id,
+        invitedBy: owner.id,
+      });
+    }
+
+    await expect(
+      addProjectMember(mockSession(), createDb(env.DB), org.id, project.id, {
+        email: 'one-too-many@example.com',
+      }),
+    ).rejects.toMatchObject({ statusCode: 429 });
+  });
+
+  it('counts live invitations against the collaborator quota', async () => {
+    const { project, org, owner } = await buildProject();
+    const { user: existing } = await buildOrgMember({ orgId: org.id, role: 'member' });
+    currentUser = { id: owner.id, email: owner.email };
+    vi.mocked(resolveOrgAccess).mockResolvedValue({
+      accessMode: 'write',
+      source: 'free',
+      quotas: { 'projects.max': 10, 'collaborators.org.max': 2 },
+      entitlements: { 'project.create': true },
+    } as never);
+
+    await buildProjectInvitation({ orgId: org.id, projectId: project.id, invitedBy: owner.id });
+
+    // One member plus one pending invitation fills a quota of two
+    await expect(
+      addProjectMember(mockSession(), createDb(env.DB), org.id, project.id, {
+        email: 'third@example.com',
+      }),
+    ).rejects.toMatchObject({ statusCode: 403 });
+
+    // Someone already in the workspace takes no seat
+    const result = (await addProjectMember(mockSession(), createDb(env.DB), org.id, project.id, {
+      userId: existing.id,
+    })) as { invitation: boolean };
+    expect(result.invitation).toBe(true);
   });
 
   it('defaults invitation role to member', async () => {

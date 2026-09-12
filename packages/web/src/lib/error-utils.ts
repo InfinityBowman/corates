@@ -45,6 +45,10 @@ const USER_FRIENDLY_MESSAGES: Record<string, string> = {
   PROJECT_LAST_OWNER: 'Projects must have at least one owner',
   PROJECT_INVALID_ROLE: 'Please select a valid role',
   PROJECT_INVITATION_ALREADY_ACCEPTED: 'This invitation has already been accepted',
+  PROJECT_INVITATION_LIMIT_REACHED:
+    'This project has too many pending invitations. Cancel some before inviting more people.',
+  PROJECT_INVITATION_RATE_LIMITED:
+    'You have sent a lot of invitations in the past hour. Try again later.',
 
   // File errors
   FILE_TOO_LARGE: 'This file is too large. Please choose a smaller file.',

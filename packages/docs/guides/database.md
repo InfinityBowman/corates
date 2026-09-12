@@ -132,27 +132,38 @@ export const projectMembers = sqliteTable('project_members', {
 Project invitations include optional org membership granting:
 
 ```js
-export const projectInvitations = sqliteTable('project_invitations', {
-  id: text('id').primaryKey(),
-  orgId: text('orgId')
-    .notNull()
-    .references(() => organization.id, { onDelete: 'cascade' }),
-  projectId: text('projectId')
-    .notNull()
-    .references(() => projects.id, { onDelete: 'cascade' }),
-  email: text('email').notNull(),
-  role: text('role').default('member'), // project role to assign
-  orgRole: text('orgRole').default('member'), // org role if grantOrgMembership is true
-  grantOrgMembership: integer('grantOrgMembership', { mode: 'boolean' }).default(false).notNull(),
-  token: text('token').notNull().unique(),
-  invitedBy: text('invitedBy')
-    .notNull()
-    .references(() => user.id, { onDelete: 'cascade' }),
-  expiresAt: integer('expiresAt', { mode: 'timestamp' }).notNull(),
-  acceptedAt: integer('acceptedAt', { mode: 'timestamp' }),
-  createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
-});
+export const projectInvitations = sqliteTable(
+  'project_invitations',
+  {
+    id: text('id').primaryKey(),
+    orgId: text('orgId')
+      .notNull()
+      .references(() => organization.id, { onDelete: 'cascade' }),
+    projectId: text('projectId')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    email: text('email').notNull(),
+    role: text('role').default('member'), // project role to assign
+    orgRole: text('orgRole').default('member'), // org role if grantOrgMembership is true
+    grantOrgMembership: integer('grantOrgMembership', { mode: 'boolean' }).default(false).notNull(),
+    token: text('token').notNull().unique(),
+    invitedBy: text('invitedBy')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    expiresAt: integer('expiresAt', { mode: 'timestamp' }).notNull(),
+    acceptedAt: integer('acceptedAt', { mode: 'timestamp' }),
+    emailSentAt: integer('emailSentAt', { mode: 'timestamp' }), // last time an email was queued
+    emailStatus: text('emailStatus'), // 'queued' | 'undeliverable' | null
+    createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
+  },
+  t => [
+    index('project_invitations_projectId_idx').on(t.projectId),
+    uniqueIndex('project_invitations_projectId_email_uidx').on(t.projectId, t.email),
+  ],
+);
 ```
+
+One row per project and address: re-inviting the same email updates the existing row (role, expiry, token if it had been accepted) rather than adding another. `emailStatus` becomes `undeliverable` when Postmark rejects the address for good (suppressed or malformed) or the queue exhausts its retries; the pending-invitations list shows that to the inviter.
 
 **Note:** Projects are always invite-only. By default, accepting an invitation grants project membership only. The `grantOrgMembership` field can be set to `true` by org admins/owners to also grant organization membership (for governance/billing purposes).
 

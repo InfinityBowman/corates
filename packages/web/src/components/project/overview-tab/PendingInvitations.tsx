@@ -19,6 +19,7 @@ interface PendingInvitation {
   role: string;
   expiresAt: string | Date;
   createdAt: string | Date;
+  emailStatus: 'queued' | 'undeliverable' | null;
 }
 
 function expiryText(expiresAt: string | Date): { text: string; expired: boolean } {
@@ -74,6 +75,7 @@ export function PendingInvitations({
     <div className='mt-1 flex flex-col gap-1'>
       {invitations.map(invitation => {
         const expiry = expiryText(invitation.expiresAt);
+        const undeliverable = invitation.emailStatus === 'undeliverable';
         return (
           <div key={invitation.id} className='flex items-center gap-2 py-1 text-sm'>
             <div className='border-border flex size-6 shrink-0 items-center justify-center rounded-full border border-dashed'>
@@ -84,9 +86,9 @@ export function PendingInvitations({
                 {invitation.email}
               </div>
               <div
-                className={`text-xs ${expiry.expired ? 'text-destructive' : 'text-muted-foreground'}`}
+                className={`text-xs ${expiry.expired || undeliverable ? 'text-destructive' : 'text-muted-foreground'}`}
               >
-                {expiry.text}
+                {undeliverable ? 'Email could not be delivered' : expiry.text}
               </div>
             </div>
             <span className='text-muted-foreground shrink-0 text-xs capitalize'>
