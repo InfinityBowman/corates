@@ -291,3 +291,15 @@ export async function getAdminStripeCustomerSubscriptions(
     hasMore: subscriptions.has_more,
   };
 }
+
+export type AdminStripeCustomerLookup = Awaited<ReturnType<typeof lookupAdminStripeCustomer>>;
+export type AdminStripeCustomerFound = Extract<AdminStripeCustomerLookup, { found: true }>;
+export type AdminStripeInvoice = Awaited<
+  ReturnType<typeof getAdminStripeCustomerInvoices>
+>['invoices'][number];
+export type AdminStripePaymentMethod = Awaited<
+  ReturnType<typeof getAdminStripeCustomerPaymentMethods>
+>['paymentMethods'][number];
+export type AdminStripeSubscription = Awaited<
+  ReturnType<typeof getAdminStripeCustomerSubscriptions>
+>['subscriptions'][number];

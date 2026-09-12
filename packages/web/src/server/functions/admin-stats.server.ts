@@ -7,7 +7,7 @@ import {
   organization,
   stripeEventLedger,
 } from '@corates/db/schema';
-import { count, gte, sql } from 'drizzle-orm';
+import { count, gt, gte, sql } from 'drizzle-orm';
 import { throwDomainError, AUTH_ERRORS } from '@corates/shared';
 import { isAdminUser } from '@corates/workers/auth-admin';
 import { TIME_DURATIONS } from '@corates/workers/constants';
@@ -27,7 +27,7 @@ export async function getAdminStats(session: Session, db: Database) {
   const [userCount, projectCount, sessionCount] = await Promise.all([
     db.select({ count: count() }).from(user),
     db.select({ count: count() }).from(projects),
-    db.select({ count: count() }).from(sessionTable),
+    db.select({ count: count() }).from(sessionTable).where(gt(sessionTable.expiresAt, new Date())),
   ]);
 
   const sevenDaysAgo = Math.floor(Date.now() / 1000) - TIME_DURATIONS.STATS_RECENT_DAYS_SEC;
@@ -195,15 +195,18 @@ export async function getAdminWebhookStats(
   };
 }
 
+const SUBSCRIPTION_STATUS_SCAN_LIMIT = 100;
+
 export async function getAdminSubscriptionStats(session: Session) {
   assertAdmin(session);
 
   const stripe = createStripeClient(env.STRIPE_SECRET_KEY);
+  const limit = SUBSCRIPTION_STATUS_SCAN_LIMIT;
   const statusCounts = await Promise.all([
-    stripe.subscriptions.search({ query: 'status:"active"', limit: 100 }),
-    stripe.subscriptions.search({ query: 'status:"trialing"', limit: 100 }),
-    stripe.subscriptions.search({ query: 'status:"past_due"', limit: 100 }),
-    stripe.subscriptions.search({ query: 'status:"canceled"', limit: 100 }),
+    stripe.subscriptions.search({ query: 'status:"active"', limit }),
+    stripe.subscriptions.search({ query: 'status:"trialing"', limit }),
+    stripe.subscriptions.search({ query: 'status:"past_due"', limit }),
+    stripe.subscriptions.search({ query: 'status:"canceled"', limit }),
   ]);
 
   return {
@@ -211,7 +214,10 @@ export async function getAdminSubscriptionStats(session: Session) {
     trialing: statusCounts[1].data.length,
     pastDue: statusCounts[2].data.length,
     canceled: statusCounts[3].data.length,
-    hasMore: statusCounts.some(r => r.has_more),
+    // Stripe has no count API, so each status is a capped scan; once one fills
+    // its page every count here is a floor rather than a total.
+    truncated: statusCounts.some(r => r.has_more),
+    statusScanLimit: SUBSCRIPTION_STATUS_SCAN_LIMIT,
   };
 }
 

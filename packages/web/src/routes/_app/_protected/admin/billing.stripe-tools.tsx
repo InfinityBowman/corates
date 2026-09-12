@@ -46,65 +46,18 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { formatDateTime } from '@/lib/formatDate';
+import type {
+  AdminStripeCustomerFound,
+  AdminStripeInvoice,
+  AdminStripePaymentMethod,
+  AdminStripeSubscription,
+} from '@/server/functions/admin-stripe.server';
 
-interface StripeCustomer {
-  id: string;
-  email?: string;
-  name?: string;
-  created?: number;
-  balance?: number;
-  currency?: string;
-  delinquent?: boolean;
-  livemode?: boolean;
-}
-
-interface CustomerData {
-  found: boolean;
-  message?: string;
-  customer: StripeCustomer;
-  stripeDashboardUrl?: string;
-  linkedUser?: { id: string; name?: string; email?: string };
-  linkedOrg?: { id: string; name?: string };
-}
-
-interface StripeSubscription {
-  id: string;
-  status: string;
-  currentPeriodStart?: number;
-  currentPeriodEnd?: number;
-  cancelAtPeriodEnd?: boolean;
-  trialEnd?: number;
-  currency?: string;
-  items?: Array<{ unitAmount?: number; interval?: string }>;
-}
-
-interface StripeInvoice {
-  id: string;
-  number?: string;
-  status: string;
-  total?: number;
-  currency?: string;
-  created?: number;
-  hostedInvoiceUrl?: string;
-  invoicePdf?: string;
-}
-
-interface StripePaymentMethod {
-  id: string;
-  card?: {
-    brand?: string;
-    last4?: string;
-    expMonth?: number;
-    expYear?: number;
-    funding?: string;
-  };
-}
-
-const formatCurrency = (amount: number | null | undefined, currency = 'usd'): string => {
+const formatCurrency = (amount: number | null | undefined, currency?: string | null): string => {
   if (amount === null || amount === undefined) return '-';
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: currency.toUpperCase(),
+    currency: (currency || 'usd').toUpperCase(),
   }).format(amount / 100);
 };
 
@@ -137,15 +90,21 @@ function StripeToolsPage() {
   const [searchType, setSearchType] = useState<'email' | 'customerId'>('email');
   const [searchInput, setSearchInput] = useState('');
   const [searching, setSearching] = useState(false);
-  const [customerData, setCustomerData] = useState<CustomerData | null>(null);
+  const [customerData, setCustomerData] = useState<AdminStripeCustomerFound | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
 
   const [loadingInvoices, setLoadingInvoices] = useState(false);
   const [loadingPaymentMethods, setLoadingPaymentMethods] = useState(false);
   const [loadingSubscriptions, setLoadingSubscriptions] = useState(false);
-  const [invoices, setInvoices] = useState<StripeInvoice[] | null>(null);
-  const [paymentMethods, setPaymentMethods] = useState<StripePaymentMethod[] | null>(null);
-  const [subscriptions, setSubscriptions] = useState<StripeSubscription[] | null>(null);
+  const [invoices, setInvoices] = useState<{
+    rows: AdminStripeInvoice[];
+    hasMore: boolean;
+  } | null>(null);
+  const [paymentMethods, setPaymentMethods] = useState<AdminStripePaymentMethod[] | null>(null);
+  const [subscriptions, setSubscriptions] = useState<{
+    rows: AdminStripeSubscription[];
+    hasMore: boolean;
+  } | null>(null);
 
   const [generatingPortal, setGeneratingPortal] = useState(false);
   const [portalUrl, setPortalUrl] = useState<string | null>(null);
@@ -166,10 +125,11 @@ function StripeToolsPage() {
       const query =
         searchType === 'email' ? { email: searchInput.trim() } : { customerId: searchInput.trim() };
 
-      const data = (await lookupAdminStripeCustomerAction({ data: query })) as CustomerData;
-      setCustomerData(data);
+      const data = await lookupAdminStripeCustomerAction({ data: query });
 
-      if (!data.found) {
+      if (data.found) {
+        setCustomerData(data);
+      } else {
         setSearchError(data.message || 'Customer not found');
       }
     } catch (error) {
@@ -189,7 +149,7 @@ function StripeToolsPage() {
       const data = await getAdminStripeCustomerInvoicesAction({
         data: { customerId: customerData.customer.id },
       });
-      setInvoices(data.invoices as StripeInvoice[]);
+      setInvoices({ rows: data.invoices, hasMore: data.hasMore });
     } catch (error) {
       showToast.error('Failed to load invoices', (error as Error).message);
     } finally {
@@ -205,7 +165,7 @@ function StripeToolsPage() {
       const data = await getAdminStripeCustomerPaymentMethodsAction({
         data: { customerId: customerData.customer.id },
       });
-      setPaymentMethods(data.paymentMethods as StripePaymentMethod[]);
+      setPaymentMethods(data.paymentMethods);
     } catch (error) {
       showToast.error('Failed to load payment methods', (error as Error).message);
     } finally {
@@ -221,7 +181,7 @@ function StripeToolsPage() {
       const data = await getAdminStripeCustomerSubscriptionsAction({
         data: { customerId: customerData.customer.id },
       });
-      setSubscriptions(data.subscriptions as StripeSubscription[]);
+      setSubscriptions({ rows: data.subscriptions, hasMore: data.hasMore });
     } catch (error) {
       showToast.error('Failed to load subscriptions', (error as Error).message);
     } finally {
@@ -427,12 +387,12 @@ function StripeToolsPage() {
 
           {subscriptions && (
             <AdminPanel
-              title={`Subscriptions (${subscriptions.length})`}
+              title={`Subscriptions (${subscriptions.rows.length}${subscriptions.hasMore ? '+' : ''})`}
               bodyClassName='divide-border divide-y'
             >
-              {subscriptions.length === 0 ?
+              {subscriptions.rows.length === 0 ?
                 <AdminEmpty title='No subscriptions' />
-              : subscriptions.map(sub => (
+              : subscriptions.rows.map(sub => (
                   <div key={sub.id} className='flex items-start justify-between gap-4 px-4 py-3'>
                     <div className='min-w-0'>
                       <div className='flex flex-wrap items-center gap-2'>
@@ -443,13 +403,13 @@ function StripeToolsPage() {
                         )}
                       </div>
                       <p className='text-muted-foreground mt-1 text-xs'>
-                        {formatDateTime(sub.currentPeriodStart)} -{' '}
-                        {formatDateTime(sub.currentPeriodEnd)}
+                        {formatDateTime(sub.items[0]?.currentPeriodStart)} -{' '}
+                        {formatDateTime(sub.items[0]?.currentPeriodEnd)}
                         {sub.trialEnd &&
                           sub.status === 'trialing' &&
                           ` - trial ends ${formatDateTime(sub.trialEnd)}`}
                       </p>
-                      {sub.items && sub.items.length > 0 && (
+                      {sub.items.length > 0 && (
                         <p className='text-muted-foreground mt-1 text-xs'>
                           {sub.items
                             .map(
@@ -476,8 +436,10 @@ function StripeToolsPage() {
           )}
 
           {invoices && (
-            <AdminPanel title={`Recent Invoices (${invoices.length})`}>
-              {invoices.length === 0 ?
+            <AdminPanel
+              title={`Recent Invoices (${invoices.rows.length}${invoices.hasMore ? '+' : ''})`}
+            >
+              {invoices.rows.length === 0 ?
                 <AdminEmpty title='No invoices' />
               : <Table>
                   <TableHeader className='bg-muted/40'>
@@ -490,13 +452,15 @@ function StripeToolsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {invoices.map(invoice => (
+                    {invoices.rows.map(invoice => (
                       <TableRow key={invoice.id} className='border-border'>
                         <TableCell className={`${ADMIN_TD} font-mono`}>
                           {invoice.number || invoice.id}
                         </TableCell>
                         <TableCell className={ADMIN_TD}>
-                          <Badge variant={getStatusVariant(invoice.status)}>{invoice.status}</Badge>
+                          <Badge variant={getStatusVariant(invoice.status ?? 'unknown')}>
+                            {invoice.status ?? 'unknown'}
+                          </Badge>
                         </TableCell>
                         <TableCell className={`${ADMIN_TD} text-right tabular-nums`}>
                           {formatCurrency(invoice.total, invoice.currency)}

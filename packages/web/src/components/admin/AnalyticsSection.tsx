@@ -299,6 +299,11 @@ export function AnalyticsSection() {
       <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
         <AdminPanel
           title='Subscriptions'
+          description={
+            subscriptionData?.truncated ?
+              `At least ${subscriptionData.statusScanLimit} in one status - counts are floors`
+            : undefined
+          }
           padded
           action={
             <RefreshButton

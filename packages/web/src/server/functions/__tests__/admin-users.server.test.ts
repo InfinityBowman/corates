@@ -64,14 +64,18 @@ function mockAdminSession(overrides?: { userId?: string }): Session {
   } as Session;
 }
 
-async function seedSessionRow(id: string, userId: string, opts: Partial<{ ip: string }> = {}) {
+async function seedSessionRow(
+  id: string,
+  userId: string,
+  opts: Partial<{ ip: string; expiresAt: Date }> = {},
+) {
   const db = createDb(env.DB);
   const now = new Date();
   await db.insert(session).values({
     id,
     token: `${id}-token`,
     userId,
-    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    expiresAt: opts.expiresAt ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     createdAt: now,
     updatedAt: now,
     ipAddress: opts.ip ?? null,
@@ -110,6 +114,15 @@ describe('getAdminStats', () => {
     expect(result.activeSessions).toBeGreaterThanOrEqual(1);
     expect(result.recentSignups).toBeGreaterThanOrEqual(2);
     void admin;
+  });
+
+  it('counts only sessions that have not expired', async () => {
+    const u = await buildUser();
+    await seedSessionRow('s-live', u.id);
+    await seedSessionRow('s-expired', u.id, { expiresAt: new Date(Date.now() - 60_000) });
+
+    const result = await getAdminStats(mockAdminSession(), createDb(env.DB));
+    expect(result.activeSessions).toBe(1);
   });
 });
 

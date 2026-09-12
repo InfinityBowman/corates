@@ -169,7 +169,7 @@ describe('getAdminSubscriptionStats', () => {
     expect(result.trialing).toBe(1);
     expect(result.pastDue).toBe(0);
     expect(result.canceled).toBe(2);
-    expect(result.hasMore).toBe(true);
+    expect(result.truncated).toBe(true);
   });
 
   it('throws when Stripe throws', async () => {

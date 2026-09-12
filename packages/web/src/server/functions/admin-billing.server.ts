@@ -1,6 +1,6 @@
 import type { Database } from '@corates/db/client';
 import { stripeEventLedger, subscription } from '@corates/db/schema';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, count, desc, eq } from 'drizzle-orm';
 import { throwDomainError, AUTH_ERRORS } from '@corates/shared';
 import { isAdminUser } from '@corates/workers/auth-admin';
 import { LedgerStatus } from '@corates/db/stripe-event-ledger';
@@ -26,41 +26,28 @@ export async function getAdminBillingLedger(
   const conditions = [];
   if (status) conditions.push(eq(stripeEventLedger.status, status));
   if (eventType) conditions.push(eq(stripeEventLedger.type, eventType));
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-  const entries =
-    conditions.length > 0 ?
-      await db
-        .select()
-        .from(stripeEventLedger)
-        .where(and(...conditions))
-        .orderBy(desc(stripeEventLedger.receivedAt))
-        .limit(limit)
-        .all()
-    : await db
-        .select()
-        .from(stripeEventLedger)
-        .orderBy(desc(stripeEventLedger.receivedAt))
-        .limit(limit)
-        .all();
+  const entries = await db
+    .select()
+    .from(stripeEventLedger)
+    .where(whereClause)
+    .orderBy(desc(stripeEventLedger.receivedAt))
+    .limit(limit)
+    .all();
+
+  // Counted over every matching row rather than the page above, so the totals
+  // are not just the page size.
+  const statusCounts = await db
+    .select({ status: stripeEventLedger.status, count: count() })
+    .from(stripeEventLedger)
+    .where(whereClause)
+    .groupBy(stripeEventLedger.status)
+    .all();
 
   const stats = {
-    total: entries.length,
-    byStatus: entries.reduce(
-      (acc, e) => {
-        acc[e.status] = (acc[e.status] || 0) + 1;
-        return acc;
-      },
-      {} as Record<string, number>,
-    ),
-    byType: entries
-      .filter(e => e.type)
-      .reduce(
-        (acc, e) => {
-          if (e.type) acc[e.type] = (acc[e.type] || 0) + 1;
-          return acc;
-        },
-        {} as Record<string, number>,
-      ),
+    total: statusCounts.reduce((sum, row) => sum + row.count, 0),
+    byStatus: Object.fromEntries(statusCounts.map(row => [row.status, row.count])),
   };
 
   return {
