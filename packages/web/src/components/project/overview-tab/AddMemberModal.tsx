@@ -220,7 +220,7 @@ export function AddMemberModal({
       } else {
         showToast.warning(
           'Invitation created, but no email was sent',
-          `${sentTo} can still accept from their CoRATES notifications. Invite them again later to retry the email.`,
+          `${sentTo} can still accept it from their notifications in CoRATES.`,
         );
       }
       // The invitations list is a D1 fact read through React Query. Nothing
