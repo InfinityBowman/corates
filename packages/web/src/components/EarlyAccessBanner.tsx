@@ -1,10 +1,10 @@
 import { InfoIcon } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
-import { useAuthStore, selectIsLoggedIn } from '@/stores/authStore';
+import { useIsLoggedIn } from '@/hooks/useIsLoggedIn';
 import { useFeedbackStore } from '@/stores/feedbackStore';
 
 export default function EarlyAccessBanner() {
-  const isLoggedIn = useAuthStore(selectIsLoggedIn);
+  const isLoggedIn = useIsLoggedIn();
   const openFeedback = useFeedbackStore(s => s.open);
 
   return (

@@ -10,7 +10,8 @@
  * protected page. This test pins the synchronous load.
  *
  * (The hydration mismatch this once tried to fix, Sentry CORATES-WEB-C, is now
- * handled in the Navbar via useHydrated(), NOT by nulling cachedUser here.)
+ * handled by useIsLoggedIn() in every SSR'd component, NOT by nulling
+ * cachedUser here.)
  */
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
