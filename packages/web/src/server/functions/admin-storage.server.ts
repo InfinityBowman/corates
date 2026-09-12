@@ -149,6 +149,62 @@ export async function listAdminStorageDocuments(
   return response;
 }
 
+// R2 has no aggregate API, so a total means walking the bucket a page at a
+// time. The cap keeps one page load bounded; past it the figures are floors.
+const SUMMARY_SCAN_CAP = 50000;
+
+export async function getAdminStorageSummary(session: Session, db: Database) {
+  assertAdmin(session);
+
+  const trackedKeys = await db.select({ bucketKey: mediaFiles.bucketKey }).from(mediaFiles);
+  const trackedKeysSet = new Set(trackedKeys.map(row => row.bucketKey));
+
+  let objectCount = 0;
+  let totalBytes = 0;
+  let documentCount = 0;
+  let documentBytes = 0;
+  let orphanedCount = 0;
+  let orphanedBytes = 0;
+  let cursor: string | undefined = undefined;
+  let truncated = false;
+
+  while (objectCount < SUMMARY_SCAN_CAP) {
+    const listOptions: { limit: number; cursor?: string } = { limit: 1000 };
+    if (cursor) listOptions.cursor = cursor;
+    const listed = await env.PDF_BUCKET.list(listOptions);
+
+    for (const obj of listed.objects) {
+      objectCount += 1;
+      totalBytes += obj.size;
+
+      // The bucket also holds avatars, which mediaFiles never tracks. Only
+      // study documents can be orphaned, so only they are classified.
+      if (!parseKey(obj.key)) continue;
+      documentCount += 1;
+      documentBytes += obj.size;
+      if (!trackedKeysSet.has(obj.key)) {
+        orphanedCount += 1;
+        orphanedBytes += obj.size;
+      }
+    }
+
+    if (!listed.truncated) break;
+    cursor = listed.cursor;
+    if (objectCount >= SUMMARY_SCAN_CAP) truncated = true;
+  }
+
+  return {
+    objectCount,
+    totalBytes,
+    documentCount,
+    documentBytes,
+    orphanedCount,
+    orphanedBytes,
+    truncated,
+    scanCap: SUMMARY_SCAN_CAP,
+  };
+}
+
 export async function deleteAdminStorageDocuments(session: Session, params: { keys: string[] }) {
   assertAdmin(session);
 

@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { Trash2Icon, ChevronLeftIcon, ChevronRightIcon, FileIcon } from 'lucide-react';
-import { useStorageDocuments } from '@/hooks/useAdminQueries';
+import { useStorageDocuments, useAdminStorageSummary } from '@/hooks/useAdminQueries';
 import { deleteStorageDocuments } from '@/stores/adminStore';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { showToast } from '@/lib/toast';
@@ -21,6 +21,8 @@ import {
   AdminPage,
   AdminPanel,
   AdminSearch,
+  AdminStat,
+  AdminStatRow,
   ADMIN_TH,
   ADMIN_TD,
   ADMIN_TD_MUTED,
@@ -64,6 +66,10 @@ function StorageManagementPage() {
   });
   const documentsData = documentsDataQuery.data;
   const documents = documentsData?.documents ?? [];
+
+  const summaryQuery = useAdminStorageSummary();
+  const summary = summaryQuery.data;
+  const scannedHint = summary?.truncated ? `first ${summary.scanCap} objects` : undefined;
 
   const resetPaging = () => {
     setCursor(null);
@@ -159,6 +165,35 @@ function StorageManagementPage() {
       title='Storage'
       description='PDFs in R2. Files marked orphaned exist in R2 but are not tracked in the mediaFiles table, usually from a failed cleanup, and are safe to delete.'
     >
+      <AdminStatRow>
+        <AdminStat
+          label='Total size'
+          value={formatFileSize(summary?.totalBytes ?? 0)}
+          hint={scannedHint ?? `${formatFileSize(summary?.documentBytes ?? 0)} in documents`}
+          loading={summaryQuery.isLoading}
+        />
+        <AdminStat
+          label='Objects'
+          value={(summary?.objectCount ?? 0).toLocaleString()}
+          hint={scannedHint ?? `${(summary?.documentCount ?? 0).toLocaleString()} documents`}
+          loading={summaryQuery.isLoading}
+        />
+        <AdminStat
+          label='Orphaned'
+          value={(summary?.orphanedCount ?? 0).toLocaleString()}
+          hint='Documents missing from mediaFiles'
+          tone={summary?.orphanedCount ? 'warning' : 'default'}
+          loading={summaryQuery.isLoading}
+        />
+        <AdminStat
+          label='Orphaned size'
+          value={formatFileSize(summary?.orphanedBytes ?? 0)}
+          hint='Reclaimable by deleting'
+          tone={summary?.orphanedBytes ? 'warning' : 'default'}
+          loading={summaryQuery.isLoading}
+        />
+      </AdminStatRow>
+
       <div className='flex flex-col gap-3 sm:flex-row'>
         <AdminSearch
           value={search}

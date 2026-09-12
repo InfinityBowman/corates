@@ -25,7 +25,10 @@ import {
   getAdminBillingLedgerAction,
   getAdminBillingStuckStatesAction,
 } from '@/server/functions/admin-billing.functions';
-import { listAdminStorageDocumentsAction } from '@/server/functions/admin-storage.functions';
+import {
+  listAdminStorageDocumentsAction,
+  getAdminStorageSummaryAction,
+} from '@/server/functions/admin-storage.functions';
 import {
   listAdminDatabaseTablesAction,
   getAdminTableSchemaAction,
@@ -210,6 +213,17 @@ export function useAdminOrgBillingReconcile(
     queryFn: () => fetchOrgBillingReconcile(orgId!, queryParams),
     enabled: !!orgId,
     ...ADMIN_QUERY_CONFIG,
+  });
+}
+
+// A full bucket walk, so it is not refetched on every mount the way the
+// cheaper admin queries are.
+export function useAdminStorageSummary() {
+  return useQuery({
+    queryKey: queryKeys.admin.storageSummary,
+    queryFn: () => getAdminStorageSummaryAction(),
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 30,
   });
 }
 

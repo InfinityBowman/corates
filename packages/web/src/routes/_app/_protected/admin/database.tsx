@@ -35,8 +35,16 @@ import {
   TableHead,
   TableCell,
 } from '@/components/ui/table';
-import { AdminEmpty, AdminPage, AdminPanel, ADMIN_TH } from '@/components/admin/ui';
+import {
+  AdminEmpty,
+  AdminPage,
+  AdminPanel,
+  AdminStat,
+  AdminStatRow,
+  ADMIN_TH,
+} from '@/components/admin/ui';
 import { navRowClass } from '@/components/layout/navStyles';
+import { formatFileSize } from '@corates/shared';
 
 export const Route = createFileRoute('/_app/_protected/admin/database')({
   component: DatabaseViewerPage,
@@ -63,6 +71,8 @@ function DatabaseViewerPage() {
 
   const tablesQuery = useAdminDatabaseTables();
   const tables = tablesQuery.data?.tables ?? [];
+  const databaseSizeBytes = tablesQuery.data?.databaseSizeBytes ?? 0;
+  const totalRows = tablesQuery.data?.totalRows ?? 0;
 
   const schemaQuery = useAdminTableSchema(selectedTable);
   const schemaColumns = useMemo(() => schemaQuery.data?.columns ?? [], [schemaQuery.data]);
@@ -126,6 +136,26 @@ function DatabaseViewerPage() {
 
   return (
     <AdminPage title='Database' description='Browse D1 tables and rows (read-only)'>
+      <AdminStatRow className='lg:grid-cols-3'>
+        <AdminStat
+          label='Database size'
+          value={formatFileSize(databaseSizeBytes)}
+          loading={tablesQuery.isLoading}
+        />
+        <AdminStat
+          label='Total rows'
+          value={totalRows.toLocaleString()}
+          hint='Across the tables listed'
+          loading={tablesQuery.isLoading}
+        />
+        <AdminStat
+          label='Tables'
+          value={tables.length}
+          hint='Browsable in the viewer'
+          loading={tablesQuery.isLoading}
+        />
+      </AdminStatRow>
+
       <div className='flex flex-col gap-6 lg:flex-row'>
         <AdminPanel
           title='Tables'
