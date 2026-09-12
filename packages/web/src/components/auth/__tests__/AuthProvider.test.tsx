@@ -4,7 +4,7 @@
  * which is what a 429 on first load used to do.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 
 const sessionState = vi.hoisted(() => ({
   value: {
@@ -70,6 +70,21 @@ describe('AuthProvider session outcomes', () => {
 
     // The mount refetch fires at 100ms; the backoff retry follows at 2s
     await vi.advanceTimersByTimeAsync(2_100);
+    expect(sessionState.value.refetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('holds the retry while offline and schedules it again on reconnect', async () => {
+    const store = await renderWithCachedUser({ status: 503 });
+    await vi.advanceTimersByTimeAsync(100);
+    expect(sessionState.value.refetch).toHaveBeenCalledTimes(1);
+
+    act(() => store.useAuthStore.getState().setOnline(false));
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(sessionState.value.refetch).toHaveBeenCalledTimes(1);
+
+    // The mount-time schedule already consumed the 2s slot, so this is the 4s retry
+    act(() => store.useAuthStore.getState().setOnline(true));
+    await vi.advanceTimersByTimeAsync(4_000);
     expect(sessionState.value.refetch).toHaveBeenCalledTimes(2);
   });
 });

@@ -63,13 +63,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       retryDelayRef.current = RETRY_BASE_MS;
       return;
     }
+    // Wait for the online event to reschedule rather than firing into the void
+    if (!isOnline) return;
     const delay = retryDelayRef.current;
     retryDelayRef.current = Math.min(delay * 2, RETRY_MAX_MS);
-    const timer = setTimeout(() => {
-      if (navigator.onLine) refetchSession?.();
-    }, delay);
+    const timer = setTimeout(() => refetchSession?.(), delay);
     return () => clearTimeout(timer);
-  }, [transientError, sessionError, refetchSession]);
+  }, [transientError, sessionError, refetchSession, isOnline]);
 
   // Cache user data when session is fetched (only when online)
   useEffect(() => {
