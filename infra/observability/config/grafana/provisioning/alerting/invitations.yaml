@@ -1,0 +1,146 @@
+apiVersion: 1
+
+# Invitation delivery alerts, prod only (staging is off the Loki export).
+# Every rule looks back 6h, not one interval, because Cloudflare re-delivers failed
+# OTLP batches hours late. `or vector(0)` keeps a Normal series alive so No Data
+# means Loki is broken rather than "nothing failed".
+groups:
+  - orgId: 1
+    name: invitations
+    folder: CoRATES
+    interval: 5m
+    rules:
+      - uid: corates-email-send-failed
+        title: Email failed to send
+        condition: threshold
+        for: 5m
+        data:
+          - refId: query
+            relativeTimeRange: { from: 21600, to: 0 }
+            datasourceUid: P8E80F9AEF21F6940
+            model:
+              refId: query
+              queryType: instant
+              expr: >-
+                sum by (subject) (count_over_time({service_name="corates-workers-prod"}
+                | json | level="error" | component="email-queue" [6h])) or vector(0)
+          - refId: threshold
+            relativeTimeRange: { from: 21600, to: 0 }
+            datasourceUid: __expr__
+            model:
+              refId: threshold
+              type: threshold
+              expression: query
+              conditions:
+                - evaluator: { type: gt, params: [0] }
+        noDataState: NoData
+        execErrState: Error
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Postmark rejected or dropped an email: {{ $labels.subject }}'
+          description: >-
+            Retried 3 times, then dead-lettered. An invitation subject here means the
+            invite row exists but the invitee was never mailed.
+            Logs: {service_name="corates-workers-prod"} | json | component="email-queue" | level="error"
+
+      - uid: corates-email-dead-lettered
+        title: Email gave up and was dead-lettered
+        condition: threshold
+        for: 5m
+        data:
+          - refId: query
+            relativeTimeRange: { from: 21600, to: 0 }
+            datasourceUid: P8E80F9AEF21F6940
+            model:
+              refId: query
+              queryType: instant
+              expr: >-
+                sum by (subject) (count_over_time({service_name="corates-workers-prod"}
+                | json | message="email.dead_lettered" [6h])) or vector(0)
+          - refId: threshold
+            relativeTimeRange: { from: 21600, to: 0 }
+            datasourceUid: __expr__
+            model:
+              refId: threshold
+              type: threshold
+              expression: query
+              conditions:
+                - evaluator: { type: gt, params: [0] }
+        noDataState: NoData
+        execErrState: Error
+        labels:
+          severity: critical
+        annotations:
+          summary: 'Email was never delivered and has been discarded: {{ $labels.subject }}'
+          description: >-
+            Final - nothing retries after this. An invitation subject here means the
+            invitee has to be re-invited by hand.
+            Logs: {service_name="corates-workers-prod"} | json | message="email.dead_lettered"
+
+      - uid: corates-invitation-email-not-queued
+        title: Invitation created but email never queued
+        condition: threshold
+        for: 5m
+        data:
+          - refId: query
+            relativeTimeRange: { from: 21600, to: 0 }
+            datasourceUid: P8E80F9AEF21F6940
+            model:
+              refId: query
+              queryType: instant
+              expr: >-
+                sum(count_over_time({service_name="corates-workers-prod"}
+                | json | message="invitation.created" | emailQueued="false" [6h])) or vector(0)
+          - refId: threshold
+            relativeTimeRange: { from: 21600, to: 0 }
+            datasourceUid: __expr__
+            model:
+              refId: threshold
+              type: threshold
+              expression: query
+              conditions:
+                - evaluator: { type: gt, params: [0] }
+        noDataState: NoData
+        execErrState: Error
+        labels:
+          severity: warning
+        annotations:
+          summary: An invitation was created without its email reaching the queue
+          description: >-
+            The invite is visible in-app but no mail was queued: either the queue send
+            threw, or the address is a synthetic ORCID placeholder, which is skipped.
+            Logs: {service_name="corates-workers-prod"} | json | message="invitation.created" | emailQueued="false"
+
+      - uid: corates-invitation-errors
+        title: Invitation create, view or accept failed
+        condition: threshold
+        for: 5m
+        data:
+          - refId: query
+            relativeTimeRange: { from: 21600, to: 0 }
+            datasourceUid: P8E80F9AEF21F6940
+            model:
+              refId: query
+              queryType: instant
+              expr: >-
+                sum by (component, action) (count_over_time({service_name="corates-workers-prod"}
+                | json | level="error" | component=~"invitations?" [6h])) or vector(0)
+          - refId: threshold
+            relativeTimeRange: { from: 21600, to: 0 }
+            datasourceUid: __expr__
+            model:
+              refId: threshold
+              type: threshold
+              expression: query
+              conditions:
+                - evaluator: { type: gt, params: [0] }
+        noDataState: NoData
+        execErrState: Error
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Invitation error in {{ $labels.component }} ({{ $labels.action }})'
+          description: >-
+            An invitation command threw: create, load /invite/<token>, or accept.
+            Logs: {service_name="corates-workers-prod"} | json | level="error" | component=~"invitations?"

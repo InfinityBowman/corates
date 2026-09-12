@@ -5,3 +5,4 @@
 // workers Env type; the runtime cast happens inside packages/web/src/server.ts.
 
 export declare function handleEmailQueue(batch: unknown, env: unknown): Promise<void>;
+export declare function handleEmailDeadLetter(batch: unknown): Promise<void>;

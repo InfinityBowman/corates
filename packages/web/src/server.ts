@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/cloudflare';
 import { createStartHandler, defaultStreamHandler } from '@tanstack/react-start/server';
-import { handleEmailQueue } from '@corates/workers/queue';
+import { handleEmailDeadLetter, handleEmailQueue } from '@corates/workers/queue';
 import { reconcileStripeSubscriptions } from '@corates/workers/commands/billing';
 import { runWithLogger, warn } from '@corates/workers/logger';
 import { createDb } from '@corates/db/client';
@@ -117,13 +117,15 @@ const workerHandler = {
   },
 
   async queue(batch: MessageBatch<unknown>, env: unknown): Promise<void> {
+    // One handler serves both queues; only the name tells them apart
+    const isDeadLetter = batch.queue.endsWith('-dlq');
     return runWithLogger(
       {
         requestId: crypto.randomUUID(),
         env: (env as SentryEnv).ENVIRONMENT,
-        context: { queue: 'email', batchSize: batch.messages.length },
+        context: { queue: isDeadLetter ? 'email-dlq' : 'email', batchSize: batch.messages.length },
       },
-      () => handleEmailQueue(batch, env as never),
+      () => (isDeadLetter ? handleEmailDeadLetter(batch) : handleEmailQueue(batch, env as never)),
     );
   },
 };

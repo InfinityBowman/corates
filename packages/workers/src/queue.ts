@@ -3,7 +3,7 @@
  * worker (`packages/web/src/server.ts`) wires this into its Cloudflare
  * Workers `queue()` handler.
  */
-import { captureError, info, runWithContext } from './lib/logger';
+import { captureError, info, runWithContext, warn } from './lib/logger';
 import { createEmailService } from './auth/email';
 import type { EmailPayload } from '@corates/shared/email';
 import type { Env } from './types';
@@ -59,7 +59,8 @@ export async function handleEmailQueue(batch: MessageBatch<unknown>, env: Env): 
           } else {
             captureError(new Error(`Email send failed for ${msg.body.to}: ${result.error}`), {
               tags: { component: 'email-queue' },
-              extra: { attempt: msg.attempts },
+              // subject is all that tells an invitation from a magic link here
+              extra: { attempt: msg.attempts, to: msg.body.to, subject: msg.body.subject },
             });
             const delay = Math.min(30 * 2 ** msg.attempts, 1800);
             msg.retry({ delaySeconds: delay });
@@ -67,7 +68,7 @@ export async function handleEmailQueue(batch: MessageBatch<unknown>, env: Env): 
         } catch (error) {
           captureError(error, {
             tags: { component: 'email-queue' },
-            extra: { attempt: msg.attempts },
+            extra: { attempt: msg.attempts, to: msg.body.to, subject: msg.body.subject },
           });
           const delay = Math.min(30 * 2 ** msg.attempts, 1800);
           msg.retry({ delaySeconds: delay });
@@ -75,4 +76,17 @@ export async function handleEmailQueue(batch: MessageBatch<unknown>, env: Env): 
       }),
     ),
   );
+}
+
+// A dead-lettered message is already undeliverable; recording it is all that is left
+export async function handleEmailDeadLetter(batch: MessageBatch<unknown>): Promise<void> {
+  for (const msg of batch.messages as Message<EmailPayload>[]) {
+    warn('email.dead_lettered', {
+      to: msg.body.to,
+      subject: msg.body.subject,
+      queueMessageId: msg.id,
+      enqueuedAt: msg.timestamp.toISOString(),
+    });
+    msg.ack();
+  }
 }

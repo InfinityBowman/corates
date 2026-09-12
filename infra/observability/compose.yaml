@@ -40,6 +40,16 @@ services:
       GF_PLUGINS_PREINSTALL_SYNC: grafana-clickhouse-datasource
       # Read by the datasource provisioning file, not by Grafana itself
       CLICKHOUSE_GRAFANA_PASSWORD: ${CLICKHOUSE_GRAFANA_PASSWORD}
+      # Postmark SMTP: token is both user and password, From must be a verified signature
+      GF_SMTP_ENABLED: 'true'
+      GF_SMTP_HOST: smtp.postmarkapp.com:587
+      GF_SMTP_USER: ${POSTMARK_SERVER_TOKEN}
+      GF_SMTP_PASSWORD: ${POSTMARK_SERVER_TOKEN}
+      GF_SMTP_FROM_ADDRESS: support@corates.org
+      GF_SMTP_FROM_NAME: CoRATES Grafana
+      GF_SMTP_STARTTLS_POLICY: MandatoryStartTLS
+      # Read by the alerting provisioning file, not by Grafana itself
+      ALERT_EMAIL_TO: ${ALERT_EMAIL_TO}
     volumes:
       - grafana-data:/var/lib/grafana
       - /home/jacob/corates/observability/grafana/provisioning:/etc/grafana/provisioning:ro

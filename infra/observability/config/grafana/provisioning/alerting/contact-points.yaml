@@ -1,0 +1,22 @@
+apiVersion: 1
+
+# Sends over Postmark (GF_SMTP_* in compose.yaml), so a Postmark outage takes the
+# alert channel down with the thing it alerts on.
+contactPoints:
+  - orgId: 1
+    name: corates-email
+    receivers:
+      - uid: corates-email
+        type: email
+        settings:
+          addresses: $ALERT_EMAIL_TO
+          singleEmail: true
+
+# A provisioned root policy replaces Grafana's default: every rule routes here.
+policies:
+  - orgId: 1
+    receiver: corates-email
+    group_by: [grafana_folder, alertname]
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 24h
