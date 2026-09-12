@@ -13,7 +13,7 @@ Workers (production) -> OTLP export -> logs.corates.org/otlp/v1/logs -> Loki -> 
 
 - `compose.yaml` - Loki 3.7 (monolithic) + Grafana, joined to the box's shared `homelab`
   network so `homelab-traefik` routes the wildcard tunnel hostnames via labels
-- `config/` - Loki config and Grafana datasource provisioning; rsynced to
+- `config/` - Loki config and Grafana datasource + alerting provisioning; rsynced to
   `/home/jacob/corates/observability/` on the box by deploy.sh (bind mounts resolve
   remotely when using a docker context)
 - `dashboards/` - Grafana dashboard JSON, imported via Dashboards > New > Import or the API:
@@ -28,7 +28,8 @@ Workers (production) -> OTLP export -> logs.corates.org/otlp/v1/logs -> Loki -> 
   - `corates-web-analytics.json` - what the Plausible UI shows (visitors, visits, bounce,
     pages, sources, countries, devices, goals), read from Plausible's ClickHouse. Filtered to
     the `Host` variable because the Plausible script also runs on staging and local dev.
-- `.env` (gitignored) - R2 S3 credentials, Loki basic-auth htpasswd, Grafana admin password
+- `.env` (gitignored) - R2 S3 credentials, Loki basic-auth htpasswd, Grafana admin password,
+  Postmark server token and alert recipient
 - `deploy.sh` - rsync config, then `docker --context homelab compose up -d`
 
 ## Plausible
@@ -181,6 +182,36 @@ far above the truth and is not monotonic in the time range - widening from 2d to
   One evaluation, exact answer, no sparkline.
 
 The same rule applies to the `topk` tables, which were already instant.
+
+## Alerting
+
+Alert rules and the email contact point are provisioned from
+`config/grafana/provisioning/alerting/`, so they are read-only in the UI: edit the file and
+re-run deploy.sh. Deleting a rule needs a `deleteRules` entry, or Grafana keeps the orphan.
+
+Notifications go over Postmark SMTP (`GF_SMTP_*` in compose.yaml), so a Postmark outage
+silences the alerts about email failing to send - the rules still fire in the UI, only
+delivery is lost. Firing only: `disableResolveMessage` is on, so a rule clearing is visible
+in Grafana but does not mail.
+
+`invitations.yaml` covers invitation delivery end to end:
+
+| Rule                                      | Fires on                                                                                                           |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Email failed to send                      | `component="email-queue"` errors, grouped by `subject` so the notification names the email type                    |
+| Email gave up and was dead-lettered       | `email.dead_lettered` from the DLQ consumer in `packages/workers/src/queue.ts`. Final - nothing retries after this |
+| Invitation created but email never queued | `invitation.created` with `emailQueued=false`                                                                      |
+| Invitation create, view or accept failed  | `level="error"` with `component=~"invitations?"`                                                                   |
+
+Two constraints shape every rule, both explained in the file header: a 6h lookback (Cloudflare
+re-delivers failed OTLP batches hours late) and a trailing `or vector(0)` (without it, "nothing
+is failing" and "Loki is down" both read as No Data).
+
+The DLQ shares the worker's `queue()` handler - `batch.queue.endsWith('-dlq')` routes to
+`handleEmailDeadLetter`, which logs and acks.
+
+Postmark bounces and spam complaints that happen _after_ it accepts a message never reach the
+app; there is no webhook handler. Use Postmark's own bounce alerts.
 
 ## Useful LogQL
 

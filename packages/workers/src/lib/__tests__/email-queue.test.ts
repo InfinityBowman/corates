@@ -257,3 +257,26 @@ describe('Email Queue Producer', () => {
     }
   });
 });
+
+describe('Dead-letter consumer', () => {
+  it('logs every dead-lettered message and acks it', async () => {
+    const logged: Record<string, unknown>[] = [];
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(line => {
+      logged.push(JSON.parse(line as string));
+    });
+
+    const { handleEmailDeadLetter } = await import('../../queue.js');
+    const messages = [createMockMessage(makePayload(0)), createMockMessage(makePayload(1))];
+
+    await handleEmailDeadLetter(createMockBatch(messages));
+
+    expect(logged.map(e => e.message)).toEqual(['email.dead_lettered', 'email.dead_lettered']);
+    expect(logged[0]).toMatchObject({ to: 'user0@example.com', subject: 'Test email 0' });
+    for (const msg of messages) {
+      expect(msg.ack).toHaveBeenCalledTimes(1);
+      expect(msg.retry).not.toHaveBeenCalled();
+    }
+
+    warnSpy.mockRestore();
+  });
+});
