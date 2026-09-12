@@ -31,6 +31,7 @@ import {
   StepsIndicator,
   StepsSeparator,
   StepsContent,
+  StepsViewport,
   StepsPrevTrigger,
   StepsCompletedContent,
 } from '@/components/ui/steps';
@@ -44,6 +45,12 @@ const STEPS_CONFIG = [
   { title: 'Institution', description: 'Academic details' },
   { title: 'Role', description: 'Your background' },
 ];
+
+// Ark UI keeps every panel mounted and toggles `hidden`, so an unscoped
+// animate-in would run once on mount and never replay. Scoping it to the open
+// state re-triggers it on each step change.
+const STEP_PANEL =
+  'data-[state=open]:animate-in data-[state=open]:fade-in data-[state=open]:slide-in-from-right-2 duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:animate-none';
 
 // Users with a completed profile don't need onboarding; if they arrived here
 // holding an invitation (query param or a stashed token), acceptance happens
@@ -326,7 +333,7 @@ function CompleteProfilePage() {
   }
 
   return (
-    <div className='border-border bg-card relative w-full max-w-md rounded-xl border p-5 shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-10'>
+    <div className='border-border bg-card relative w-full max-w-md rounded-xl border p-5 pb-2 shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-10 sm:pb-3'>
       <a href='/' className='absolute top-4 left-4 sm:top-5 sm:left-5'>
         <img src='/logo.svg' alt='CoRATES' className='h-6 w-auto sm:h-7' />
       </a>
@@ -349,241 +356,245 @@ function CompleteProfilePage() {
                   {stepInfo.title}
                 </span>
               </StepsTrigger>
-              {/* size-8 indicator: mt-[15px] puts the 2px line's center at the circle's 16px midline */}
               {index < STEPS_CONFIG.length - 1 && (
-                <StepsSeparator className='data-complete:bg-primary data-current:bg-secondary data-incomplete:bg-secondary mx-2 mt-[15px] h-0.5 w-8 self-start transition-colors sm:w-12' />
+                <StepsSeparator className='data-complete:bg-primary data-current:bg-secondary data-incomplete:bg-secondary mx-2 mt-3.75 h-0.5 w-8 self-start transition-colors sm:w-12' />
               )}
             </StepsItem>
           ))}
         </StepsList>
 
-        {/* Step 1: Name and Title */}
-        <StepsContent index={0}>
-          <div className='mb-5 text-center'>
-            <h2 className='text-foreground mb-1 text-xl font-bold sm:text-2xl'>
-              Complete Your Profile
-            </h2>
-            <p className='text-muted-foreground text-xs sm:text-sm'>
-              Just a few details to get you started
-            </p>
-          </div>
+        <StepsViewport>
+          {/* Step 1: Name and Title */}
+          <StepsContent index={0} className={STEP_PANEL}>
+            <div className='mb-5 text-center'>
+              <h2 className='text-foreground mb-1 text-xl font-bold sm:text-2xl'>
+                Complete Your Profile
+              </h2>
+              <p className='text-muted-foreground text-xs sm:text-sm'>
+                Just a few details to get you started
+              </p>
+            </div>
 
-          <form onSubmit={handleStep1Next} className='flex flex-col gap-4' autoComplete='off'>
-            <div className='grid grid-cols-2 gap-3'>
-              <div>
-                <Label className='mb-1' htmlFor='first-name-input'>
-                  First Name
-                </Label>
-                <Input
-                  type='text'
-                  autoComplete='given-name'
-                  autoCapitalize='words'
-                  spellCheck='false'
-                  value={firstName}
-                  onChange={e => {
-                    setHasEditedName(true);
-                    setFirstName(e.target.value);
-                  }}
-                  className='h-auto py-2 text-sm'
-                  required
-                  id='first-name-input'
-                  placeholder='First'
-                  aria-describedby={error ? 'profile-step1-error' : undefined}
-                />
+            <form onSubmit={handleStep1Next} className='flex flex-col gap-4' autoComplete='off'>
+              <div className='grid grid-cols-2 gap-3'>
+                <div>
+                  <Label className='mb-1' htmlFor='first-name-input'>
+                    First Name
+                  </Label>
+                  <Input
+                    type='text'
+                    autoComplete='given-name'
+                    autoCapitalize='words'
+                    spellCheck='false'
+                    value={firstName}
+                    onChange={e => {
+                      setHasEditedName(true);
+                      setFirstName(e.target.value);
+                    }}
+                    className='h-auto py-2 text-sm'
+                    required
+                    id='first-name-input'
+                    placeholder='First'
+                    aria-describedby={error ? 'profile-step1-error' : undefined}
+                  />
+                </div>
+                <div>
+                  <Label className='mb-1' htmlFor='last-name-input'>
+                    Last Name{' '}
+                    <span className='text-muted-foreground/70 font-normal'>(optional)</span>
+                  </Label>
+                  <Input
+                    type='text'
+                    autoComplete='family-name'
+                    autoCapitalize='words'
+                    spellCheck='false'
+                    value={lastName}
+                    onChange={e => {
+                      setHasEditedName(true);
+                      setLastName(e.target.value);
+                    }}
+                    className='h-auto py-2 text-sm'
+                    id='last-name-input'
+                    placeholder='Last'
+                    aria-describedby={error ? 'profile-step1-error' : undefined}
+                  />
+                </div>
               </div>
-              <div>
-                <Label className='mb-1' htmlFor='last-name-input'>
-                  Last Name <span className='text-muted-foreground/70 font-normal'>(optional)</span>
+
+              <div className='flex flex-col gap-2'>
+                <Label htmlFor='title-select' className='mb-1'>
+                  Title <span className='text-muted-foreground/70 font-normal'>(optional)</span>
                 </Label>
-                <Input
-                  type='text'
-                  autoComplete='family-name'
-                  autoCapitalize='words'
-                  spellCheck='false'
-                  value={lastName}
-                  onChange={e => {
-                    setHasEditedName(true);
-                    setLastName(e.target.value);
-                  }}
-                  className='h-auto py-2 text-sm'
-                  id='last-name-input'
-                  placeholder='Last'
-                  aria-describedby={error ? 'profile-step1-error' : undefined}
-                />
+                <Select value={titleSelection} onValueChange={v => setTitleSelection(v)}>
+                  <SelectTrigger id='title-select' className='w-full'>
+                    <SelectValue placeholder='Select a title (optional)' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TITLE_OPTIONS.map(option => (
+                      <SelectItem key={option.value || '__none'} value={option.value || '__none'}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {isCustomTitle && (
+                  <Input
+                    type='text'
+                    value={customTitle}
+                    onChange={e => setCustomTitle(e.target.value)}
+                    className='h-auto py-2 text-sm'
+                    placeholder='Enter your title'
+                    maxLength={50}
+                  />
+                )}
               </div>
-            </div>
 
-            <div className='flex flex-col gap-2'>
-              <Label htmlFor='title-select' className='mb-1'>
-                Title <span className='text-muted-foreground/70 font-normal'>(optional)</span>
-              </Label>
-              <Select value={titleSelection} onValueChange={v => setTitleSelection(v)}>
-                <SelectTrigger id='title-select' className='w-full'>
-                  <SelectValue placeholder='Select a title (optional)' />
-                </SelectTrigger>
-                <SelectContent>
-                  {TITLE_OPTIONS.map(option => (
-                    <SelectItem key={option.value || '__none'} value={option.value || '__none'}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {isCustomTitle && (
-                <Input
-                  type='text'
-                  value={customTitle}
-                  onChange={e => setCustomTitle(e.target.value)}
-                  className='h-auto py-2 text-sm'
-                  placeholder='Enter your title'
-                  maxLength={50}
-                />
-              )}
-            </div>
+              <ErrorMessage error={error} id='profile-step1-error' />
 
-            <ErrorMessage error={error} id='profile-step1-error' />
-
-            <PrimaryButton loading={false}>Next</PrimaryButton>
-          </form>
-        </StepsContent>
-
-        {/* Step 2: Institution Details */}
-        <StepsContent index={1}>
-          <div className='mb-5 text-center'>
-            <h2 className='text-foreground mb-1 text-xl font-bold sm:text-2xl'>
-              Institution Details
-            </h2>
-            <p className='text-muted-foreground text-xs sm:text-sm'>
-              Optional - helps us understand your background
-            </p>
-          </div>
-
-          <form onSubmit={handleStep2Next} className='flex flex-col gap-4' autoComplete='off'>
-            <div>
-              <Label className='mb-1' htmlFor='institution-input'>
-                University / Institution
-              </Label>
-              <Input
-                type='text'
-                id='institution-input'
-                autoComplete='organization'
-                value={institution}
-                onChange={e => setInstitution(e.target.value)}
-                className='h-auto py-2 text-sm'
-                placeholder='e.g., University of Oxford'
-                maxLength={200}
-              />
-            </div>
-
-            <div>
-              <Label className='mb-1' htmlFor='department-input'>
-                Department / Faculty
-              </Label>
-              <Input
-                type='text'
-                id='department-input'
-                value={department}
-                onChange={e => setDepartment(e.target.value)}
-                className='h-auto py-2 text-sm'
-                placeholder='e.g., Department of Medicine'
-                maxLength={200}
-              />
-            </div>
-
-            <ErrorMessage error={error} id='profile-step2-error' />
-
-            <div className='flex gap-3'>
-              <StepsPrevTrigger asChild>
-                <Button
-                  type='button'
-                  variant='outline'
-                  className='h-auto flex-1 rounded-lg py-2 font-semibold sm:rounded-xl sm:py-3 sm:text-base'
-                >
-                  Back
-                </Button>
-              </StepsPrevTrigger>
-              <Button
-                type='submit'
-                className='h-auto flex-1 rounded-lg py-2 font-semibold sm:rounded-xl sm:py-3 sm:text-base'
-              >
+              <PrimaryButton loading={false} className='mb-2 sm:mb-3'>
                 Next
-              </Button>
+              </PrimaryButton>
+            </form>
+          </StepsContent>
+
+          {/* Step 2: Institution Details */}
+          <StepsContent index={1} className={STEP_PANEL}>
+            <div className='mb-5 text-center'>
+              <h2 className='text-foreground mb-1 text-xl font-bold sm:text-2xl'>
+                Institution Details
+              </h2>
+              <p className='text-muted-foreground text-xs sm:text-sm'>
+                Optional - helps us understand your background
+              </p>
             </div>
 
-            <Button
-              type='button'
-              variant='link'
-              onClick={() => setCurrentStep(2)}
-              className='text-muted-foreground hover:text-secondary-foreground mx-auto'
-            >
-              Skip for now
-            </Button>
-          </form>
-        </StepsContent>
+            <form onSubmit={handleStep2Next} className='flex flex-col gap-4' autoComplete='off'>
+              <div>
+                <Label className='mb-1' htmlFor='institution-input'>
+                  University / Institution
+                </Label>
+                <Input
+                  type='text'
+                  id='institution-input'
+                  autoComplete='organization'
+                  value={institution}
+                  onChange={e => setInstitution(e.target.value)}
+                  className='h-auto py-2 text-sm'
+                  placeholder='e.g., University of Oxford'
+                  maxLength={200}
+                />
+              </div>
 
-        {/* Step 3: Persona Selection */}
-        <StepsContent index={2}>
-          <div className='mb-5 text-center'>
-            <h2 className='text-foreground mb-1 text-xl font-bold sm:text-2xl'>
-              What best describes you?
-            </h2>
-            <p className='text-muted-foreground text-xs sm:text-sm'>
-              You can change this later in settings.
-            </p>
-          </div>
+              <div>
+                <Label className='mb-1' htmlFor='department-input'>
+                  Department / Faculty
+                </Label>
+                <Input
+                  type='text'
+                  id='department-input'
+                  value={department}
+                  onChange={e => setDepartment(e.target.value)}
+                  className='h-auto py-2 text-sm'
+                  placeholder='e.g., Department of Medicine'
+                  maxLength={200}
+                />
+              </div>
 
-          <form
-            onSubmit={e => {
-              e.preventDefault();
-              handleSubmit(persona);
-            }}
-            className='flex flex-col gap-4'
-          >
-            <RoleSelector selectedRole={persona} onSelect={setPersona} />
+              <ErrorMessage error={error} id='profile-step2-error' />
 
-            <ErrorMessage error={error} id='profile-step3-error' />
-
-            <div className='flex gap-3'>
-              <StepsPrevTrigger asChild>
+              <div className='flex gap-3'>
+                <StepsPrevTrigger asChild>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    className='h-auto flex-1 rounded-lg py-2 font-semibold sm:rounded-xl sm:py-3 sm:text-base'
+                  >
+                    Back
+                  </Button>
+                </StepsPrevTrigger>
                 <Button
-                  type='button'
-                  variant='outline'
+                  type='submit'
                   className='h-auto flex-1 rounded-lg py-2 font-semibold sm:rounded-xl sm:py-3 sm:text-base'
                 >
-                  Back
+                  Next
                 </Button>
-              </StepsPrevTrigger>
-              <PrimaryButton
-                loading={loading}
-                loadingText='Finishing...'
-                disabled={!persona}
-                className='flex-[3]'
+              </div>
+
+              <Button
+                type='button'
+                variant='link'
+                onClick={() => setCurrentStep(2)}
+                className='text-muted-foreground hover:text-secondary-foreground mx-auto -mt-2'
               >
-                Finish Setup
-              </PrimaryButton>
+                Skip for now
+              </Button>
+            </form>
+          </StepsContent>
+
+          {/* Step 3: Persona Selection */}
+          <StepsContent index={2} className={STEP_PANEL}>
+            <div className='mb-5 text-center'>
+              <h2 className='text-foreground mb-1 text-xl font-bold sm:text-2xl'>
+                What best describes you?
+              </h2>
+              <p className='text-muted-foreground text-xs sm:text-sm'>
+                You can change this later in settings.
+              </p>
             </div>
 
-            <Button
-              type='button'
-              variant='link'
-              onClick={() => handleSubmit('other')}
-              disabled={loading}
-              className='text-muted-foreground hover:text-secondary-foreground mx-auto'
+            <form
+              onSubmit={e => {
+                e.preventDefault();
+                handleSubmit(persona);
+              }}
+              className='flex flex-col gap-4'
             >
-              Skip and finish
-            </Button>
-          </form>
-        </StepsContent>
+              <RoleSelector selectedRole={persona} onSelect={setPersona} />
 
-        <StepsCompletedContent>
-          <div className='flex flex-col items-center justify-center py-8'>
-            <div className='bg-success-bg mb-4 flex size-16 items-center justify-center rounded-full'>
-              <CheckIcon className='text-success size-8' />
+              <ErrorMessage error={error} id='profile-step3-error' />
+
+              <div className='flex gap-3'>
+                <StepsPrevTrigger asChild>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    className='h-auto flex-1 rounded-lg py-2 font-semibold sm:rounded-xl sm:py-3 sm:text-base'
+                  >
+                    Back
+                  </Button>
+                </StepsPrevTrigger>
+                <PrimaryButton
+                  loading={loading}
+                  loadingText='Finishing...'
+                  disabled={!persona}
+                  className='flex-3'
+                >
+                  Finish Setup
+                </PrimaryButton>
+              </div>
+
+              <Button
+                type='button'
+                variant='link'
+                onClick={() => handleSubmit('other')}
+                disabled={loading}
+                className='text-muted-foreground hover:text-secondary-foreground mx-auto -mt-2'
+              >
+                Skip and finish
+              </Button>
+            </form>
+          </StepsContent>
+
+          <StepsCompletedContent className={STEP_PANEL}>
+            <div className='flex flex-col items-center justify-center py-8'>
+              <div className='bg-success-bg mb-4 flex size-16 items-center justify-center rounded-full'>
+                <CheckIcon className='text-success size-8' />
+              </div>
+              <h2 className='text-foreground mb-2 text-xl font-bold'>Profile Saved</h2>
+              <p className='text-muted-foreground text-sm'>Redirecting to your dashboard...</p>
             </div>
-            <h2 className='text-foreground mb-2 text-xl font-bold'>Profile Saved</h2>
-            <p className='text-muted-foreground text-sm'>Redirecting to your dashboard...</p>
-          </div>
-        </StepsCompletedContent>
+          </StepsCompletedContent>
+        </StepsViewport>
       </Steps>
     </div>
   );
