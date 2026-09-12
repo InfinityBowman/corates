@@ -96,13 +96,13 @@ export function AddMemberModal({
   }, [isOpen]);
 
   useEffect(() => {
-    if (!settled || debouncedQuery.length < 2) return;
+    if (!settled || debouncedQuery.length < 2 || !orgId) return;
     let cancelled = false;
     setSearching(true);
     (async () => {
       try {
         const found = await searchUsers({
-          data: { q: debouncedQuery, projectId: projectId || undefined },
+          data: { q: debouncedQuery, orgId, projectId: projectId || undefined },
         });
         if (cancelled) return;
         setResults(found);
@@ -119,7 +119,7 @@ export function AddMemberModal({
       cancelled = true;
       setSearching(false);
     };
-  }, [settled, debouncedQuery, projectId]);
+  }, [settled, debouncedQuery, orgId, projectId]);
 
   // A typed email with no matching account is offered as its own row once the
   // search has settled, so it does not flash before the account row arrives.
