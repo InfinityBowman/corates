@@ -263,7 +263,7 @@ export function getProjectInvitationEmailHtml({
   role,
   expiryDays = 7,
 }: ProjectInvitationEmailParams): string {
-  const roleText = role === 'owner' ? 'Owner' : 'Member';
+  const roleText = role === 'owner' ? 'Lead' : 'Reviewer';
   const safeInviter = escapeHtml(inviterName);
   const safeProject = escapeHtml(projectName);
 
@@ -290,7 +290,7 @@ export function getProjectInvitationEmailText({
   role,
   expiryDays = 7,
 }: ProjectInvitationEmailParams): string {
-  const roleText = role === 'owner' ? 'Owner' : 'Member';
+  const roleText = role === 'owner' ? 'Lead' : 'Reviewer';
 
   return `Hi there,
 
@@ -314,7 +314,7 @@ export function getProjectMemberAddedEmailHtml({
   projectUrl,
   role,
 }: ProjectMemberAddedEmailParams): string {
-  const roleText = role === 'owner' ? 'Owner' : 'Member';
+  const roleText = role === 'owner' ? 'Lead' : 'Reviewer';
   const safeInviter = escapeHtml(inviterName);
   const safeProject = escapeHtml(projectName);
 
@@ -336,7 +336,7 @@ export function getProjectMemberAddedEmailText({
   projectUrl,
   role,
 }: ProjectMemberAddedEmailParams): string {
-  const roleText = role === 'owner' ? 'Owner' : 'Member';
+  const roleText = role === 'owner' ? 'Lead' : 'Reviewer';
 
   return `Hi there,
 

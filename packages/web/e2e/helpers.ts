@@ -506,6 +506,8 @@ export async function getAuthCode(
 export async function submitEmailCodeSignIn(page: Page, email: string) {
   const emailInput = page.locator('#email-code-email');
   await emailInput.click();
+  // The invite page seeds this field, so clear before typing
+  await emailInput.fill('');
   await emailInput.pressSequentially(email, { delay: 20 });
   await page.getByRole('button', { name: /Continue with Email|Send Code/i }).click();
   await expect(page.getByText('Enter your code')).toBeVisible({ timeout: 10_000 });

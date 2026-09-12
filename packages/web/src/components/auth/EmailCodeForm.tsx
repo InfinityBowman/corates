@@ -16,14 +16,20 @@ interface EmailCodeFormProps {
   callbackPath?: string;
   buttonText?: string;
   description?: string;
+  /** Seeds the field when the address is already known, as on an invite link. */
+  initialEmail?: string;
+  /** Runs once the visitor commits to the email flow, before the code is sent. */
+  onBeforeSend?: () => void;
 }
 
 export function EmailCodeForm({
   callbackPath = '/complete-profile',
   buttonText = 'Send Code',
   description = 'We email you a six-digit code. No password needed.',
+  initialEmail = '',
+  onBeforeSend,
 }: EmailCodeFormProps) {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(initialEmail);
   const [code, setCode] = useState('');
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -41,6 +47,7 @@ export function EmailCodeForm({
     }
     setLoading(true);
     try {
+      onBeforeSend?.();
       localStorage.setItem('pendingName', email);
       await sendSignInCode(email);
       setSent(true);

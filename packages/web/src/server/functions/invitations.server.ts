@@ -58,9 +58,22 @@ export async function handleAcceptInvitation(
   }
 }
 
-export async function handleGetInvitation(data: { token: string }): Promise<InvitationSummary> {
+/** The viewer picks which call to action is painted, never what is shown. */
+export interface InviteView {
+  invitation: InvitationSummary;
+  viewer: { email: string } | null;
+}
+
+export async function handleGetInvitation(
+  data: { token: string },
+  session: Session | null,
+): Promise<InviteView> {
   try {
-    return await getInvitationByToken(env, { token: data.token });
+    const invitation = await getInvitationByToken(env, { token: data.token });
+    return {
+      invitation,
+      viewer: session ? { email: session.user.email } : null,
+    };
   } catch (err) {
     if (isDomainError(err)) {
       throw new DomainErrorException(err as DomainError);

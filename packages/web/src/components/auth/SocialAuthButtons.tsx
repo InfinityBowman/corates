@@ -4,46 +4,24 @@
 
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { cn } from '@/lib/utils';
 
 interface SocialButtonProps {
   loading?: boolean;
   onClick?: () => void;
-  iconOnly?: boolean;
 }
 
-export function GoogleButton({ loading, onClick, iconOnly }: SocialButtonProps) {
-  if (iconOnly) {
-    return (
-      <Button
-        type='button'
-        variant='outline'
-        size='icon'
-        onClick={onClick}
-        disabled={loading}
-        className='size-auto rounded-lg p-3 sm:rounded-xl sm:p-3.5'
-        title='Continue with Google'
-        aria-label='Continue with Google'
-      >
-        {loading ?
-          <Spinner
-            size='sm'
-            variant='current'
-            label='Signing in with Google'
-            className='size-5 sm:size-6'
-          />
-        : <img src='/logos/google.svg' alt='' className='size-5 sm:h-6 sm:w-6' aria-hidden='true' />
-        }
-      </Button>
-    );
-  }
+const SOCIAL_BUTTON_CLASS =
+  'h-auto w-full gap-3 rounded-lg py-2.5 text-sm font-medium sm:rounded-xl sm:py-3';
 
+export function GoogleButton({ loading, onClick }: SocialButtonProps) {
   return (
     <Button
       type='button'
       variant='outline'
       onClick={onClick}
       disabled={loading}
-      className='h-auto w-full gap-3 rounded-lg py-2.5 text-sm font-semibold sm:rounded-xl sm:py-3 sm:text-base'
+      className={SOCIAL_BUTTON_CLASS}
     >
       {loading ?
         <Spinner size='sm' variant='current' label='Signing in with Google' className='size-5' />
@@ -53,38 +31,14 @@ export function GoogleButton({ loading, onClick, iconOnly }: SocialButtonProps) 
   );
 }
 
-export function OrcidButton({ loading, onClick, iconOnly }: SocialButtonProps) {
-  if (iconOnly) {
-    return (
-      <Button
-        type='button'
-        variant='outline'
-        size='icon'
-        onClick={onClick}
-        disabled={loading}
-        className='size-auto rounded-lg p-3 sm:rounded-xl sm:p-3.5'
-        title='Continue with ORCID'
-        aria-label='Continue with ORCID'
-      >
-        {loading ?
-          <Spinner
-            size='sm'
-            variant='current'
-            label='Signing in with ORCID'
-            className='size-5 sm:size-6'
-          />
-        : <img src='/logos/orcid.svg' alt='' className='size-5 sm:h-6 sm:w-6' aria-hidden='true' />}
-      </Button>
-    );
-  }
-
+export function OrcidButton({ loading, onClick }: SocialButtonProps) {
   return (
     <Button
       type='button'
       variant='outline'
       onClick={onClick}
       disabled={loading}
-      className='h-auto w-full gap-3 rounded-lg py-2.5 text-sm font-semibold sm:rounded-xl sm:py-3 sm:text-base'
+      className={SOCIAL_BUTTON_CLASS}
     >
       {loading ?
         <Spinner size='sm' variant='current' label='Signing in with ORCID' className='size-5' />
@@ -94,19 +48,14 @@ export function OrcidButton({ loading, onClick, iconOnly }: SocialButtonProps) {
   );
 }
 
-interface SocialAuthContainerProps {
-  children: React.ReactNode;
-  buttonCount?: number;
+export function SocialAuthContainer({ children }: { children: React.ReactNode }) {
+  return <div className='flex w-full flex-col gap-3'>{children}</div>;
 }
 
-export function SocialAuthContainer({ children, buttonCount = 1 }: SocialAuthContainerProps) {
-  const isCompact = buttonCount > 1;
-  return <div className={isCompact ? 'flex justify-center gap-3' : 'w-full'}>{children}</div>;
-}
-
-export function AuthDivider() {
+// The margins suit block layouts; a flex parent with its own gap passes my-0.
+export function AuthDivider({ className }: { className?: string }) {
   return (
-    <div className='relative my-2 sm:my-3'>
+    <div className={cn('relative my-2 sm:my-3', className)}>
       <div className='absolute inset-0 flex items-center'>
         <div className='border-border w-full border-t' />
       </div>

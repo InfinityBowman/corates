@@ -2,8 +2,8 @@
  * Look up a project invitation by token for the public invite landing page.
  *
  * The token is the capability: anyone holding it may see the invitation
- * summary (project name, inviter, invited email, role) — the same details
- * already present in the invitation email.
+ * summary (project name, inviter, invited email, role, days left) — the same
+ * details already present in the invitation email.
  *
  * @throws DomainError FIELD_INVALID_FORMAT if no invitation matches the token
  */
@@ -24,6 +24,8 @@ export interface InvitationSummary {
   inviterName: string;
   email: string;
   role: string | null;
+  /** Rounded up so a fresh invitation reads the same 7 days the email promises. */
+  daysUntilExpiry: number;
 }
 
 export async function getInvitationByToken(
@@ -64,10 +66,12 @@ export async function getInvitationByToken(
     .where(eq(user.id, invitation.invitedBy))
     .get();
 
+  const msUntilExpiry = invitation.expiresAt.getTime() - Date.now();
+
   let status: InvitationSummary['status'] = 'pending';
   if (invitation.acceptedAt) {
     status = 'accepted';
-  } else if (Date.now() > invitation.expiresAt.getTime()) {
+  } else if (msUntilExpiry < 0) {
     status = 'expired';
   }
 
@@ -77,5 +81,6 @@ export async function getInvitationByToken(
     inviterName: inviter?.givenName || inviter?.name || inviter?.email || 'Someone',
     email: invitation.email,
     role: invitation.role,
+    daysUntilExpiry: Math.max(0, Math.ceil(msUntilExpiry / 86_400_000)),
   };
 }

@@ -70,13 +70,34 @@ describe('handleGetInvitation', () => {
       status: 'pending',
     });
 
-    const result = await handleGetInvitation({ token });
+    const { invitation, viewer } = await handleGetInvitation({ token }, null);
 
-    expect(result.status).toBe('pending');
-    expect(result.projectName).toBe(project.name);
-    expect(result.email).toBe('invitee@example.com');
-    expect(result.role).toBe('member');
-    expect(result.inviterName).toBeTruthy();
+    expect(invitation.status).toBe('pending');
+    expect(invitation.projectName).toBe(project.name);
+    expect(invitation.email).toBe('invitee@example.com');
+    expect(invitation.role).toBe('member');
+    expect(invitation.inviterName).toBeTruthy();
+    expect(invitation.daysUntilExpiry).toBeGreaterThan(0);
+    expect(viewer).toBeNull();
+  });
+
+  it('reports the signed-in viewer so the page can offer Accept', async () => {
+    const { project, org, owner } = await buildProject();
+    const token = 'viewer-token';
+
+    await buildProjectInvitation({
+      orgId: org.id,
+      projectId: project.id,
+      email: 'invitee@example.com',
+      token,
+      invitedBy: owner.id,
+      status: 'pending',
+    });
+
+    const session = mockSession();
+    const { viewer } = await handleGetInvitation({ token }, session);
+
+    expect(viewer).toEqual({ email: session.user.email });
   });
 
   it('returns expired status for expired invitation', async () => {
@@ -92,10 +113,11 @@ describe('handleGetInvitation', () => {
       status: 'expired',
     });
 
-    const result = await handleGetInvitation({ token });
+    const { invitation } = await handleGetInvitation({ token }, null);
 
-    expect(result.status).toBe('expired');
-    expect(result.projectName).toBe(project.name);
+    expect(invitation.status).toBe('expired');
+    expect(invitation.projectName).toBe(project.name);
+    expect(invitation.daysUntilExpiry).toBe(0);
   });
 
   it('returns accepted status for used invitation', async () => {
@@ -111,16 +133,16 @@ describe('handleGetInvitation', () => {
       status: 'accepted',
     });
 
-    const result = await handleGetInvitation({ token });
+    const { invitation } = await handleGetInvitation({ token }, null);
 
-    expect(result.status).toBe('accepted');
+    expect(invitation.status).toBe('accepted');
   });
 
   it('throws for unknown token', async () => {
     await buildProject();
 
     try {
-      await handleGetInvitation({ token: 'no-such-token' });
+      await handleGetInvitation({ token: 'no-such-token' }, null);
       expect.unreachable('should have thrown');
     } catch (err) {
       const res = err as DomainErrorException;
