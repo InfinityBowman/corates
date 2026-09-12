@@ -83,9 +83,8 @@ export async function searchUsers(
     throw new DomainErrorException(error);
   }
 
-  // Only people already in the workspace are searchable; anyone else is
-  // invited by typing their address, so the user table is never enumerable
-  // across workspaces.
+  // Only people already in the workspace are searchable, so the user table is
+  // never enumerable across workspaces. Anyone else is invited by address.
   const orgMembership = await requireOrgMembership(session, db, params.orgId as OrgId);
   if (!orgMembership.ok) throw orgMembership.error;
 
@@ -107,6 +106,7 @@ export async function searchUsers(
       and(
         eq(member.organizationId, params.orgId),
         or(
+          containsInsensitive(user.email, params.q),
           containsInsensitive(user.name, params.q),
           containsInsensitive(user.givenName, params.q),
           containsInsensitive(user.familyName, params.q),

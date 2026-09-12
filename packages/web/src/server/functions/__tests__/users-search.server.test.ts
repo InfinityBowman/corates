@@ -79,16 +79,16 @@ describe('searchUsers', () => {
     }
   });
 
-  it('does not match on email inside the workspace', async () => {
+  it('matches a workspace member by email', async () => {
     const { org } = await buildWorkspace();
     const colleague = await buildUser({ name: 'Ada Lovelace', email: 'ada@example.com' });
     await buildOrgMember({ orgId: org.id, user: colleague });
 
     const result = await searchUsers(createDb(env.DB), mockSession(), dummyRequest, {
-      q: '@example',
+      q: 'ada@example.com',
       orgId: org.id,
     });
-    expect(result).toEqual([]);
+    expect(result.map(u => u.id)).toEqual([colleague.id]);
   });
 
   it('rejects a caller who is not in the workspace', async () => {
