@@ -8,8 +8,8 @@ import {
   AdminDataTable,
   AdminEmpty,
   AdminError,
+  AdminListPage,
   AdminPage,
-  AdminPanel,
   AdminSearch,
   ServerPagination,
   type AdminColumnDef,
@@ -43,7 +43,7 @@ interface OrgOption {
   name: string;
 }
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 25;
 const ALL_ORGS_VALUE = 'all';
 
 export const Route = createFileRoute('/_app/_protected/admin/projects/')({
@@ -112,8 +112,30 @@ function AdminProjectList() {
         },
       },
       {
+        accessorKey: 'creatorDisplayName',
+        header: 'Created by',
+        cell: info => {
+          const project = info.row.original;
+          const name = project.creatorDisplayName || project.creatorName;
+          if (!name && !project.creatorEmail) {
+            return <span className='text-muted-foreground/60'>-</span>;
+          }
+          return (
+            <Link
+              to={'/admin/users/$userId' as string}
+              params={{ userId: project.createdBy } as Record<string, string>}
+              className='text-muted-foreground hover:text-primary transition-colors'
+              onClick={(e: React.MouseEvent) => e.stopPropagation()}
+            >
+              {name || project.creatorEmail}
+            </Link>
+          );
+        },
+      },
+      {
         accessorKey: 'memberCount',
         header: 'Members',
+        meta: { className: 'w-24', align: 'right' },
         cell: info => (
           <span className='text-muted-foreground tabular-nums'>{info.getValue() as number}</span>
         ),
@@ -121,6 +143,7 @@ function AdminProjectList() {
       {
         accessorKey: 'fileCount',
         header: 'Files',
+        meta: { className: 'w-20', align: 'right' },
         cell: info => (
           <span className='text-muted-foreground tabular-nums'>{info.getValue() as number}</span>
         ),
@@ -128,6 +151,7 @@ function AdminProjectList() {
       {
         accessorKey: 'createdAt',
         header: 'Created',
+        meta: { className: 'w-32' },
         cell: info => (
           <span className='text-muted-foreground tabular-nums'>
             {formatDate(info.getValue() as string | number | null | undefined)}
@@ -147,87 +171,86 @@ function AdminProjectList() {
   }
 
   return (
-    <AdminPage title='Projects' description='Every project across all organizations'>
-      <AdminPanel
-        title='All projects'
-        action={
-          <>
-            <AdminSearch
-              value={search}
-              onChange={handleSearchChange}
-              placeholder='Search by project name...'
-              className='w-full sm:w-64'
-            />
-            <Select
-              value={selectedOrgId || ALL_ORGS_VALUE}
-              onValueChange={v => handleOrgFilter(v === ALL_ORGS_VALUE ? '' : v)}
-            >
-              <SelectTrigger className='w-48 text-[13px]'>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL_ORGS_VALUE}>All organizations</SelectItem>
-                {orgs.map(org => (
-                  <SelectItem key={org.id} value={org.id}>
-                    {org.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </>
-        }
-        footer={
-          <ServerPagination
-            page={page}
-            totalPages={pagination?.totalPages ?? 1}
-            total={pagination?.total ?? 0}
-            limit={PAGE_SIZE}
-            onPageChange={setPage}
-            label='projects'
+    <AdminListPage
+      title='Projects'
+      count={pagination?.total}
+      filters={
+        <>
+          <AdminSearch
+            value={search}
+            onChange={handleSearchChange}
+            placeholder='Search by project name...'
+            className='w-full max-w-64'
+          />
+          <Select
+            value={selectedOrgId || ALL_ORGS_VALUE}
+            onValueChange={v => handleOrgFilter(v === ALL_ORGS_VALUE ? '' : v)}
+          >
+            <SelectTrigger className='w-48 text-[13px]'>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_ORGS_VALUE}>All organizations</SelectItem>
+              {orgs.map(org => (
+                <SelectItem key={org.id} value={org.id}>
+                  {org.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </>
+      }
+      footer={
+        <ServerPagination
+          page={page}
+          totalPages={pagination?.totalPages ?? 1}
+          total={pagination?.total ?? 0}
+          limit={PAGE_SIZE}
+          onPageChange={setPage}
+          label='projects'
+        />
+      }
+    >
+      <AdminDataTable
+        columns={columns}
+        data={projects}
+        loading={projectsQuery.isLoading}
+        refreshing={projectsQuery.isFetching}
+        skeletonRows={PAGE_SIZE}
+        variant='page'
+        emptyState={
+          <AdminEmpty
+            icon={FolderIcon}
+            title='No projects found'
+            description={
+              search || selectedOrgId ? 'No project matches the current filters.' : undefined
+            }
+            action={
+              (search || selectedOrgId) && (
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='sm'
+                  onClick={() => {
+                    setSearch('');
+                    setSelectedOrgId('');
+                    setPage(1);
+                  }}
+                >
+                  Clear filters
+                </Button>
+              )
+            }
           />
         }
-      >
-        <AdminDataTable
-          columns={columns}
-          data={projects}
-          loading={projectsQuery.isLoading}
-          refreshing={projectsQuery.isFetching}
-          fillRows
-          skeletonRows={PAGE_SIZE}
-          emptyState={
-            <AdminEmpty
-              icon={FolderIcon}
-              title='No projects found'
-              description={
-                search || selectedOrgId ? 'No project matches the current filters.' : undefined
-              }
-              action={
-                (search || selectedOrgId) && (
-                  <Button
-                    type='button'
-                    variant='outline'
-                    size='sm'
-                    onClick={() => {
-                      setSearch('');
-                      setSelectedOrgId('');
-                      setPage(1);
-                    }}
-                  >
-                    Clear filters
-                  </Button>
-                )
-              }
-            />
-          }
-          enableSorting
-          onRowClick={(row: ProjectRow) =>
-            navigate({
-              to: '/admin/projects/$projectId' as string,
-              params: { projectId: row.id } as Record<string, string>,
-            })
-          }
-        />
-      </AdminPanel>
-    </AdminPage>
+        enableSorting
+        onRowClick={(row: ProjectRow) =>
+          navigate({
+            to: '/admin/projects/$projectId' as string,
+            params: { projectId: row.id } as Record<string, string>,
+          })
+        }
+      />
+    </AdminListPage>
   );
 }

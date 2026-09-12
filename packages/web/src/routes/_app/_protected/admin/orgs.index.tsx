@@ -7,8 +7,7 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import {
   AdminDataTable,
   AdminEmpty,
-  AdminPage,
-  AdminPanel,
+  AdminListPage,
   AdminSearch,
   ServerPagination,
   type AdminColumnDef,
@@ -22,11 +21,10 @@ interface OrgRow {
     memberCount?: number;
     projectCount?: number;
   };
-  plan?: string;
   createdAt?: string | number;
 }
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 25;
 
 export const Route = createFileRoute('/_app/_protected/admin/orgs/')({
   component: AdminOrgList,
@@ -74,6 +72,7 @@ function AdminOrgList() {
       {
         accessorKey: 'stats.memberCount',
         header: 'Members',
+        meta: { className: 'w-24', align: 'right' },
         cell: info => (
           <span className='text-muted-foreground tabular-nums'>
             {info.row.original.stats?.memberCount ?? 0}
@@ -83,6 +82,7 @@ function AdminOrgList() {
       {
         accessorKey: 'stats.projectCount',
         header: 'Projects',
+        meta: { className: 'w-24', align: 'right' },
         cell: info => (
           <span className='text-muted-foreground tabular-nums'>
             {info.row.original.stats?.projectCount ?? 0}
@@ -92,6 +92,7 @@ function AdminOrgList() {
       {
         accessorKey: 'createdAt',
         header: 'Created',
+        meta: { className: 'w-32' },
         cell: info => (
           <span className='text-muted-foreground tabular-nums'>
             {formatDate(info.getValue() as string | number | null | undefined)}
@@ -105,51 +106,50 @@ function AdminOrgList() {
   const pagination = orgsData?.pagination;
 
   return (
-    <AdminPage title='Organizations' description='Every workspace on the platform'>
-      <AdminPanel
-        title='All organizations'
-        action={
-          <AdminSearch
-            value={search}
-            onChange={handleSearchChange}
-            placeholder='Search by name or slug...'
-            className='w-full sm:w-72'
-          />
-        }
-        footer={
-          <ServerPagination
-            page={page}
-            totalPages={pagination?.totalPages ?? 1}
-            total={pagination?.total ?? 0}
-            limit={pagination?.limit ?? PAGE_SIZE}
-            onPageChange={setPage}
-            label='organizations'
-          />
-        }
-      >
-        <AdminDataTable
-          columns={columns}
-          data={orgsData?.orgs || []}
-          loading={orgsDataQuery.isLoading}
-          refreshing={orgsDataQuery.isFetching}
-          fillRows
-          skeletonRows={PAGE_SIZE}
-          emptyState={
-            <AdminEmpty
-              icon={BuildingIcon}
-              title='No organizations found'
-              description={search ? 'Try a different name or slug.' : undefined}
-            />
-          }
-          enableSorting
-          onRowClick={(row: OrgRow) =>
-            navigate({
-              to: '/admin/orgs/$orgId' as string,
-              params: { orgId: row.id } as Record<string, string>,
-            })
-          }
+    <AdminListPage
+      title='Organizations'
+      count={pagination?.total}
+      filters={
+        <AdminSearch
+          value={search}
+          onChange={handleSearchChange}
+          placeholder='Search by name or slug...'
+          className='w-full max-w-72'
         />
-      </AdminPanel>
-    </AdminPage>
+      }
+      footer={
+        <ServerPagination
+          page={page}
+          totalPages={pagination?.totalPages ?? 1}
+          total={pagination?.total ?? 0}
+          limit={pagination?.limit ?? PAGE_SIZE}
+          onPageChange={setPage}
+          label='organizations'
+        />
+      }
+    >
+      <AdminDataTable
+        columns={columns}
+        data={orgsData?.orgs || []}
+        loading={orgsDataQuery.isLoading}
+        refreshing={orgsDataQuery.isFetching}
+        skeletonRows={PAGE_SIZE}
+        variant='page'
+        emptyState={
+          <AdminEmpty
+            icon={BuildingIcon}
+            title='No organizations found'
+            description={search ? 'Try a different name or slug.' : undefined}
+          />
+        }
+        enableSorting
+        onRowClick={(row: OrgRow) =>
+          navigate({
+            to: '/admin/orgs/$orgId' as string,
+            params: { orgId: row.id } as Record<string, string>,
+          })
+        }
+      />
+    </AdminListPage>
   );
 }

@@ -76,6 +76,7 @@ import { Route as AppProtectedAdminOrgsIndexRouteImport } from './routes/_app/_p
 import { Route as AppProtectedAdminOrgsOrgIdRouteImport } from './routes/_app/_protected/admin/orgs.$orgId'
 import { Route as AppProtectedAdminProjectsIndexRouteImport } from './routes/_app/_protected/admin/projects.index'
 import { Route as AppProtectedAdminProjectsProjectIdRouteImport } from './routes/_app/_protected/admin/projects.$projectId'
+import { Route as AppProtectedAdminUsersIndexRouteImport } from './routes/_app/_protected/admin/users.index'
 import { Route as AppProtectedAdminUsersUserIdRouteImport } from './routes/_app/_protected/admin/users.$userId'
 import { Route as AppProtectedProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRouteImport } from './routes/_app/_protected/projects.$projectId/studies.$studyId.checklists.$checklistId'
 import { Route as ApiOrgsOrgIdProjectsProjectIdStudiesStudyIdPdfsRouteImport } from './routes/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs'
@@ -433,6 +434,12 @@ const AppProtectedAdminProjectsProjectIdRoute =
     path: '/projects/$projectId',
     getParentRoute: () => AppProtectedAdminRoute,
   } as any)
+const AppProtectedAdminUsersIndexRoute =
+  AppProtectedAdminUsersIndexRouteImport.update({
+    id: '/users/',
+    path: '/users/',
+    getParentRoute: () => AppProtectedAdminRoute,
+  } as any)
 const AppProtectedAdminUsersUserIdRoute =
   AppProtectedAdminUsersUserIdRouteImport.update({
     id: '/users/$userId',
@@ -534,6 +541,7 @@ export interface FileRoutesByFullPath {
   '/admin/users/$userId': typeof AppProtectedAdminUsersUserIdRoute
   '/admin/orgs/': typeof AppProtectedAdminOrgsIndexRoute
   '/admin/projects/': typeof AppProtectedAdminProjectsIndexRoute
+  '/admin/users/': typeof AppProtectedAdminUsersIndexRoute
   '/projects/$projectId/studies/$studyId/checklists/$checklistId': typeof AppProtectedProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRoute
   '/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs': typeof ApiOrgsOrgIdProjectsProjectIdStudiesStudyIdPdfsRouteWithChildren
   '/projects/$projectId/studies/$studyId/reconcile/$checklist1Id/$checklist2Id': typeof AppProtectedProjectsProjectIdStudiesStudyIdReconcileChecklist1IdChecklist2IdRoute
@@ -602,6 +610,7 @@ export interface FileRoutesByTo {
   '/admin/users/$userId': typeof AppProtectedAdminUsersUserIdRoute
   '/admin/orgs': typeof AppProtectedAdminOrgsIndexRoute
   '/admin/projects': typeof AppProtectedAdminProjectsIndexRoute
+  '/admin/users': typeof AppProtectedAdminUsersIndexRoute
   '/projects/$projectId/studies/$studyId/checklists/$checklistId': typeof AppProtectedProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRoute
   '/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs': typeof ApiOrgsOrgIdProjectsProjectIdStudiesStudyIdPdfsRouteWithChildren
   '/projects/$projectId/studies/$studyId/reconcile/$checklist1Id/$checklist2Id': typeof AppProtectedProjectsProjectIdStudiesStudyIdReconcileChecklist1IdChecklist2IdRoute
@@ -677,6 +686,7 @@ export interface FileRoutesById {
   '/_app/_protected/admin/users/$userId': typeof AppProtectedAdminUsersUserIdRoute
   '/_app/_protected/admin/orgs/': typeof AppProtectedAdminOrgsIndexRoute
   '/_app/_protected/admin/projects/': typeof AppProtectedAdminProjectsIndexRoute
+  '/_app/_protected/admin/users/': typeof AppProtectedAdminUsersIndexRoute
   '/_app/_protected/projects/$projectId/studies/$studyId/checklists/$checklistId': typeof AppProtectedProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRoute
   '/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs': typeof ApiOrgsOrgIdProjectsProjectIdStudiesStudyIdPdfsRouteWithChildren
   '/_app/_protected/projects/$projectId/studies/$studyId/reconcile/$checklist1Id/$checklist2Id': typeof AppProtectedProjectsProjectIdStudiesStudyIdReconcileChecklist1IdChecklist2IdRoute
@@ -750,6 +760,7 @@ export interface FileRouteTypes {
     | '/admin/users/$userId'
     | '/admin/orgs/'
     | '/admin/projects/'
+    | '/admin/users/'
     | '/projects/$projectId/studies/$studyId/checklists/$checklistId'
     | '/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs'
     | '/projects/$projectId/studies/$studyId/reconcile/$checklist1Id/$checklist2Id'
@@ -818,6 +829,7 @@ export interface FileRouteTypes {
     | '/admin/users/$userId'
     | '/admin/orgs'
     | '/admin/projects'
+    | '/admin/users'
     | '/projects/$projectId/studies/$studyId/checklists/$checklistId'
     | '/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs'
     | '/projects/$projectId/studies/$studyId/reconcile/$checklist1Id/$checklist2Id'
@@ -892,6 +904,7 @@ export interface FileRouteTypes {
     | '/_app/_protected/admin/users/$userId'
     | '/_app/_protected/admin/orgs/'
     | '/_app/_protected/admin/projects/'
+    | '/_app/_protected/admin/users/'
     | '/_app/_protected/projects/$projectId/studies/$studyId/checklists/$checklistId'
     | '/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs'
     | '/_app/_protected/projects/$projectId/studies/$studyId/reconcile/$checklist1Id/$checklist2Id'
@@ -1408,6 +1421,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProtectedAdminProjectsProjectIdRouteImport
       parentRoute: typeof AppProtectedAdminRoute
     }
+    '/_app/_protected/admin/users/': {
+      id: '/_app/_protected/admin/users/'
+      path: '/users'
+      fullPath: '/admin/users/'
+      preLoaderRoute: typeof AppProtectedAdminUsersIndexRouteImport
+      parentRoute: typeof AppProtectedAdminRoute
+    }
     '/_app/_protected/admin/users/$userId': {
       id: '/_app/_protected/admin/users/$userId'
       path: '/users/$userId'
@@ -1458,6 +1478,7 @@ interface AppProtectedAdminRouteChildren {
   AppProtectedAdminUsersUserIdRoute: typeof AppProtectedAdminUsersUserIdRoute
   AppProtectedAdminOrgsIndexRoute: typeof AppProtectedAdminOrgsIndexRoute
   AppProtectedAdminProjectsIndexRoute: typeof AppProtectedAdminProjectsIndexRoute
+  AppProtectedAdminUsersIndexRoute: typeof AppProtectedAdminUsersIndexRoute
 }
 
 const AppProtectedAdminRouteChildren: AppProtectedAdminRouteChildren = {
@@ -1475,6 +1496,7 @@ const AppProtectedAdminRouteChildren: AppProtectedAdminRouteChildren = {
   AppProtectedAdminUsersUserIdRoute: AppProtectedAdminUsersUserIdRoute,
   AppProtectedAdminOrgsIndexRoute: AppProtectedAdminOrgsIndexRoute,
   AppProtectedAdminProjectsIndexRoute: AppProtectedAdminProjectsIndexRoute,
+  AppProtectedAdminUsersIndexRoute: AppProtectedAdminUsersIndexRoute,
 }
 
 const AppProtectedAdminRouteWithChildren =

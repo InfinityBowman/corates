@@ -379,7 +379,7 @@ function AdminBillingLedgerPage() {
           data={entries}
           loading={ledgerQuery.isLoading}
           refreshing={ledgerQuery.isFetching}
-          fillRows
+          fillRows={10}
           skeletonRows={10}
           emptyState={
             <AdminEmpty

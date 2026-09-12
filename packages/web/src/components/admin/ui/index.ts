@@ -1,6 +1,7 @@
-export { AdminDataTable, type AdminColumnDef } from './AdminDataTable';
+export { AdminDataTable, type AdminColumnDef, type AdminColumnMeta } from './AdminDataTable';
 export { AdminEmpty, AdminError } from './AdminEmpty';
 export { AdminField, AdminFieldGrid } from './AdminField';
+export { AdminListPage } from './AdminListPage';
 export { AdminPage } from './AdminPage';
 export { AdminPanel } from './AdminPanel';
 export { AdminSearch } from './AdminSearch';

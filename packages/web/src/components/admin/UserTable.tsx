@@ -36,8 +36,8 @@ interface UserTableProps {
   users: UserRow[];
   loading?: boolean;
   refreshing?: boolean;
-  fillRows?: boolean;
   skeletonRows?: number;
+  variant?: 'panel' | 'page';
   emptyState?: React.ReactNode;
 }
 
@@ -45,8 +45,8 @@ export function UserTable({
   users,
   loading,
   refreshing,
-  fillRows,
   skeletonRows,
+  variant,
   emptyState,
 }: UserTableProps) {
   const navigate = useNavigate();
@@ -107,6 +107,7 @@ export function UserTable({
       {
         accessorKey: 'providers',
         header: 'Providers',
+        meta: { className: 'w-28' },
         cell: info => {
           const providers = info.row.original.providers || [];
           if (providers.length === 0) {
@@ -140,6 +141,7 @@ export function UserTable({
       {
         accessorKey: 'banned',
         header: 'Status',
+        meta: { className: 'w-24' },
         cell: info =>
           info.row.original.banned ?
             <Badge variant='destructive'>Banned</Badge>
@@ -148,6 +150,7 @@ export function UserTable({
       {
         accessorKey: 'stripeCustomerId',
         header: 'Stripe customer',
+        meta: { className: 'w-44' },
         cell: info => {
           const value = info.getValue() as string | undefined;
           return value ?
@@ -158,6 +161,7 @@ export function UserTable({
       {
         accessorKey: 'createdAt',
         header: 'Joined',
+        meta: { className: 'w-28' },
         cell: info => (
           <span className='text-muted-foreground tabular-nums'>
             {formatDate(info.getValue() as string | number | null | undefined)}
@@ -174,8 +178,8 @@ export function UserTable({
       data={users || []}
       loading={loading}
       refreshing={refreshing}
-      fillRows={fillRows}
       skeletonRows={skeletonRows}
+      variant={variant}
       emptyState={emptyState ?? 'No users found'}
       enableSorting
       onRowClick={(row: UserRow) =>
