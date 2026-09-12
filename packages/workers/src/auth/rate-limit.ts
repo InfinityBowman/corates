@@ -25,7 +25,14 @@ export const RATE_LIMITED_AUTH_PATHS = [
 export const AUTH_RATE_LIMIT = {
   enabled: true,
   storage: 'database',
-  customRules: Object.fromEntries(
-    RATE_LIMITED_AUTH_PATHS.map(path => [path, { window: WINDOW_SECONDS, max: MAX_PER_WINDOW }]),
-  ),
+  customRules: {
+    ...(Object.fromEntries(
+      RATE_LIMITED_AUTH_PATHS.map(path => [path, { window: WINDOW_SECONDS, max: MAX_PER_WINDOW }]),
+    ) as Record<(typeof RATE_LIMITED_AUTH_PATHS)[number], { window: number; max: number }>),
+    // Every page load reads the session several times, so a classroom behind
+    // one NAT (or the 4-worker e2e runner) trips the 100 per 10 second default
+    // and renders signed out. It is a cookie-authenticated read with nothing
+    // to guess; the edge rule on /api/* stays as the flood backstop.
+    '/get-session': false,
+  },
 } satisfies BetterAuthOptions['rateLimit'];
