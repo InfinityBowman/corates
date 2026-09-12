@@ -73,6 +73,19 @@ describe('authStore protected-route guard invariant (CORATES-WEB-C follow-up)', 
     expect(mod.selectIsAuthLoading(state)).toBe(true);
   });
 
+  it('keeps a cached user logged in when the session check fails without a 401', async () => {
+    localStorage.setItem(AUTH_CACHE_KEY, JSON.stringify({ id: 'u1', email: 'a@b.com' }));
+    localStorage.setItem(AUTH_CACHE_TIMESTAMP_KEY, Date.now().toString());
+    const mod = await loadStoreFresh();
+    // What AuthProvider reports after a 429, 5xx, or network error on first load
+    mod.useAuthStore.getState().setSessionData(null, false, null, true);
+    const state = mod.useAuthStore.getState();
+
+    expect(mod.selectIsLoggedIn(state)).toBe(true);
+    expect(mod.selectIsAuthLoading(state)).toBe(false);
+    expect(mod.selectUser(state)).toMatchObject({ id: 'u1' });
+  });
+
   it('reports logged-out once the session settles with no user', async () => {
     localStorage.clear();
     const mod = await loadStoreFresh();

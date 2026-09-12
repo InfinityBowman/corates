@@ -18,6 +18,9 @@ import { queryClient } from '@/lib/queryClient';
 import { queryKeys } from '@/lib/queryKeys';
 import { setSentryUser } from '@/config/sentry';
 
+const RETRY_BASE_MS = 2_000;
+const RETRY_MAX_MS = 30_000;
+
 interface AuthProviderProps {
   children: React.ReactNode;
 }
@@ -31,6 +34,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const setCachedUser = useAuthStore(state => state.setCachedUser);
   const setCachedAvatarUrl = useAuthStore(state => state.setCachedAvatarUrl);
 
+  // A 401 is the server saying there is no session. Anything else (429, 5xx,
+  // network) means we could not find out, and the cached user stays in force.
+  const transientError = !!session.error && session.error.status !== 401;
+
   // Sync Better Auth session into Zustand store
   useEffect(() => {
     const rawUser = session.data?.user;
@@ -43,9 +50,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
       : null;
 
-    setSessionData(user, loading, refetch);
+    setSessionData(user, loading, refetch, transientError);
     setSentryUser(user ? { id: user.id, email: user.email, name: user.name } : null);
-  }, [session, setSessionData]);
+  }, [session, transientError, setSessionData]);
+
+  // Retry a failed check with backoff so a rate-limited or offline-ish page
+  // load converges on the real session instead of living on the cache
+  const retryDelayRef = useRef(RETRY_BASE_MS);
+  const { error: sessionError, refetch: refetchSession } = session;
+  useEffect(() => {
+    if (!transientError) {
+      retryDelayRef.current = RETRY_BASE_MS;
+      return;
+    }
+    const delay = retryDelayRef.current;
+    retryDelayRef.current = Math.min(delay * 2, RETRY_MAX_MS);
+    const timer = setTimeout(() => {
+      if (navigator.onLine) refetchSession?.();
+    }, delay);
+    return () => clearTimeout(timer);
+  }, [transientError, sessionError, refetchSession]);
 
   // Cache user data when session is fetched (only when online)
   useEffect(() => {
@@ -68,11 +92,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
           if (dataUrl) setCachedAvatarUrl(dataUrl);
         });
       }
-    } else if (!loading) {
+    } else if (!loading && !transientError) {
       saveCachedAuth(null);
       setCachedUser(null);
     }
-  }, [session.data, session.isPending, isOnline, setCachedUser, setCachedAvatarUrl]);
+  }, [
+    session.data,
+    session.isPending,
+    transientError,
+    isOnline,
+    setCachedUser,
+    setCachedAvatarUrl,
+  ]);
 
   // Force session refresh on initial mount when online
   useEffect(() => {
