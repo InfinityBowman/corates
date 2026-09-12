@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { getOnboardingStep, isSyntheticEmail, makeSyntheticEmail } from '../email';
+import {
+  getOnboardingStep,
+  isSyntheticEmail,
+  isValidEmail,
+  makeSyntheticEmail,
+  normalizeEmail,
+} from '../email';
 
 describe('isSyntheticEmail', () => {
   it('matches only the placeholder domain', () => {
@@ -31,5 +37,32 @@ describe('getOnboardingStep', () => {
         profileCompletedAt: 1,
       }),
     ).toBe('email');
+  });
+});
+
+describe('normalizeEmail', () => {
+  it('trims and lowercases', () => {
+    expect(normalizeEmail('  Someone@Example.ORG ')).toBe('someone@example.org');
+  });
+
+  it('strips invisible characters that survive trim', () => {
+    // A word joiner pasted with the address made Postmark reject the send
+    expect(normalizeEmail('\u2060someone@example.org')).toBe('someone@example.org');
+    expect(normalizeEmail('some\u200bone@example.org')).toBe('someone@example.org');
+    expect(normalizeEmail('someone@example.org\ufeff')).toBe('someone@example.org');
+    expect(normalizeEmail('someone@exam\u00adple.org')).toBe('someone@example.org');
+  });
+
+  it('leaves a normalized address alone', () => {
+    expect(normalizeEmail('someone@example.org')).toBe('someone@example.org');
+  });
+});
+
+describe('isValidEmail', () => {
+  it('accepts a normalized address and rejects junk', () => {
+    expect(isValidEmail('someone@example.org')).toBe(true);
+    expect(isValidEmail('someone')).toBe(false);
+    expect(isValidEmail('someone@example')).toBe(false);
+    expect(isValidEmail('')).toBe(false);
   });
 });

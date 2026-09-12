@@ -7,6 +7,7 @@
 import { useState, useEffect, useRef, useId } from 'react';
 import { Link } from '@tanstack/react-router';
 import { MailIcon, TriangleAlertIcon, XIcon } from 'lucide-react';
+import { isValidEmail, normalizeEmail } from '@corates/shared/email';
 import { showToast } from '@/lib/toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Avatar, AvatarImage, AvatarFallback, getInitials } from '@/components/ui/avatar';
@@ -50,8 +51,6 @@ const ROLES: { value: Role; label: string; description: string }[] = [
 ];
 
 type Target = { kind: 'user'; user: UserSearchResult } | { kind: 'email'; email: string };
-
-const isValidEmail = (str: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str);
 
 function rowId(listboxId: string, target: Target) {
   return `${listboxId}-${target.kind === 'user' ? target.user.id : 'email'}`;
@@ -124,7 +123,9 @@ export function AddMemberModal({
 
   // A typed email with no matching account is offered as its own row once the
   // search has settled, so it does not flash before the account row arrives.
-  const emailQuery = isValidEmail(trimmedQuery) ? trimmedQuery : null;
+  // Pasted addresses can carry zero-width characters that trim() leaves behind
+  const emailCandidate = normalizeEmail(trimmedQuery);
+  const emailQuery = isValidEmail(emailCandidate) ? emailCandidate : null;
   const emailHasAccount =
     !!emailQuery && results.some(u => u.email?.toLowerCase() === emailQuery.toLowerCase());
   const offerEmail = !!emailQuery && !emailHasAccount && settled && !searching;

@@ -24,8 +24,13 @@ export async function queueEmail(queue: EmailQueue, payload: EmailPayload): Prom
   await queue.send(payload);
 }
 
+// Addresses pasted from chat apps and PDFs often carry zero-width joiners or a
+// BOM. They survive trim(), and Postmark then rejects the whole send, so the
+// invite is silently never delivered.
+const INVISIBLE_CHARS = /[\u00ad\u200b-\u200f\u2060-\u2064\ufeff]/g;
+
 export function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase();
+  return email.replace(INVISIBLE_CHARS, '').trim().toLowerCase();
 }
 
 export function isValidEmail(email: string): boolean {

@@ -113,6 +113,20 @@ describe('AddMemberModal', () => {
     });
   });
 
+  it('sends a pasted address without the invisible characters around it', async () => {
+    addMemberToProject.mockResolvedValue({ invitation: true, email: 'new@example.org' });
+    renderModal();
+
+    fireEvent.change(searchBox(), { target: { value: '\u2060new@example.org' } });
+
+    const row = await screen.findByTestId('invite-email-option');
+    expect(row).toHaveTextContent('new@example.org');
+
+    fireEvent.click(sendButton());
+    await waitFor(() => expect(addMemberToProject).toHaveBeenCalledTimes(1));
+    expect(addMemberToProject.mock.calls[0][0].data).toMatchObject({ email: 'new@example.org' });
+  });
+
   it('does not offer an email row when the address already has an account', async () => {
     renderModal();
 

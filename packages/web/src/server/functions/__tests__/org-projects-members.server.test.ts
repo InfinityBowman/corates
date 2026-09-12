@@ -135,6 +135,36 @@ describe('addProjectMember', () => {
     expect(result.email).toBe(newMember.email);
   });
 
+  it('strips invisible characters pasted into the address', async () => {
+    const { project, org, owner } = await buildProject();
+    currentUser = { id: owner.id, email: owner.email };
+
+    const result = (await addProjectMember(mockSession(), createDb(env.DB), org.id, project.id, {
+      email: '\u2060pasted@example.com',
+      role: 'member',
+    })) as { email: string };
+    expect(result.email).toBe('pasted@example.com');
+
+    const invitation = await createDb(env.DB)
+      .select({ email: projectInvitations.email })
+      .from(projectInvitations)
+      .where(eq(projectInvitations.projectId, project.id))
+      .get();
+    expect(invitation?.email).toBe('pasted@example.com');
+  });
+
+  it('rejects an address that is not parseable', async () => {
+    const { project, org, owner } = await buildProject();
+    currentUser = { id: owner.id, email: owner.email };
+
+    await expect(
+      addProjectMember(mockSession(), createDb(env.DB), org.id, project.id, {
+        email: 'not-an-address',
+        role: 'member',
+      }),
+    ).rejects.toThrow(DomainErrorException);
+  });
+
   it('creates invitation when user not found', async () => {
     const { project, org, owner } = await buildProject();
     currentUser = { id: owner.id, email: owner.email };
