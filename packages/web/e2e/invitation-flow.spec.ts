@@ -83,16 +83,15 @@ test.describe('Invitation flows', () => {
       const p = await inviteeCtx.newPage();
       await p.goto(inviteUrl);
 
-      await expect(p.getByRole('heading', { name: /You.re Invited/i })).toBeVisible({
+      await expect(p.getByRole('heading', { name: 'Invitation Flow Test' })).toBeVisible({
         timeout: 15_000,
       });
-      await expect(p.getByText('Invitation Flow Test')).toBeVisible();
-      await expect(p.getByText(inviteeEmail)).toBeVisible();
+      await expect(
+        p.getByRole('heading', { name: /Create your account to accept/i }),
+      ).toBeVisible();
+      await expect(p.locator('#email-code-email')).toHaveValue(inviteeEmail);
 
-      // Create an account via email code signup
-      await p.getByRole('button', { name: /Create account and join/i }).click();
-      await expect(p).toHaveURL(/\/signup/, { timeout: 10_000 });
-
+      // Sign-up happens on the invite page itself, with no trip to /signup
       await submitEmailCodeSignIn(p, inviteeEmail);
       await expect(p).toHaveURL(/\/complete-profile/, { timeout: 15_000 });
 
@@ -159,7 +158,7 @@ test.describe('Invitation flows', () => {
       const p = await inviteeCtx.newPage();
       await p.goto(inviteUrl);
 
-      await expect(p.getByRole('heading', { name: /You.re Invited/i })).toBeVisible({
+      await expect(p.getByRole('heading', { name: 'Invitation Existing User Test' })).toBeVisible({
         timeout: 15_000,
       });
 
@@ -242,7 +241,7 @@ test.describe('Invitation flows', () => {
       const p = await inviteeCtx.newPage();
       await p.goto(inviteUrl);
 
-      await expect(p.getByRole('heading', { name: /You.re Invited/i })).toBeVisible({
+      await expect(p.getByRole('heading', { name: 'Invite Anchoring Test' })).toBeVisible({
         timeout: 15_000,
       });
 
@@ -256,6 +255,8 @@ test.describe('Invitation flows', () => {
 
       await expect(p).toHaveURL(/\/invite\//, { timeout: 15_000 });
       await expect(p.getByText(`Signed in as`)).toBeVisible({ timeout: 15_000 });
+      // The mismatch is called out rather than left for the invitee to notice
+      await expect(p.getByText(invitedEmail)).toBeVisible();
       await p.getByRole('button', { name: 'Accept invitation', exact: true }).click();
 
       // Membership binds to the signed-in account despite the email mismatch

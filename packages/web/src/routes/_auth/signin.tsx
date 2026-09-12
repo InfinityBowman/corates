@@ -76,7 +76,6 @@ function SignInPage() {
   const setAuthError = useAuthStore(s => s.setAuthError);
   const authError = useAuthStore(s => s.authError);
 
-  const socialProviderCount = 2;
   const displayError = error || authError;
 
   const resetSocialLoading = useCallback(() => {
@@ -417,17 +416,9 @@ function SignInPage() {
 
           <AuthDivider />
 
-          <SocialAuthContainer buttonCount={socialProviderCount}>
-            <GoogleButton
-              loading={googleLoading}
-              onClick={() => handleGoogleSignIn()}
-              iconOnly={socialProviderCount > 1}
-            />
-            <OrcidButton
-              loading={orcidLoading}
-              onClick={() => handleOrcidSignIn()}
-              iconOnly={socialProviderCount > 1}
-            />
+          <SocialAuthContainer>
+            <GoogleButton loading={googleLoading} onClick={() => handleGoogleSignIn()} />
+            <OrcidButton loading={orcidLoading} onClick={() => handleOrcidSignIn()} />
           </SocialAuthContainer>
 
           <div className='text-muted-foreground mt-2 text-center text-xs sm:mt-4 sm:text-sm'>

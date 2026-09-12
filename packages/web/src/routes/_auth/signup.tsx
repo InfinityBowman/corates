@@ -34,7 +34,6 @@ function SignUpPage() {
   const authError = useAuthStore(s => s.authError);
 
   const displayError = error || authError;
-  const socialProviderCount = 2;
 
   const resetSocialLoading = useCallback(() => {
     setGoogleLoading(false);
@@ -98,17 +97,9 @@ function SignUpPage() {
         <p className='text-muted-foreground text-xs sm:text-sm'>Get started with CoRATES</p>
       </div>
 
-      <SocialAuthContainer buttonCount={socialProviderCount}>
-        <GoogleButton
-          loading={googleLoading}
-          onClick={handleGoogleSignUp}
-          iconOnly={socialProviderCount > 1}
-        />
-        <OrcidButton
-          loading={orcidLoading}
-          onClick={handleOrcidSignUp}
-          iconOnly={socialProviderCount > 1}
-        />
+      <SocialAuthContainer>
+        <GoogleButton loading={googleLoading} onClick={handleGoogleSignUp} />
+        <OrcidButton loading={orcidLoading} onClick={handleOrcidSignUp} />
       </SocialAuthContainer>
 
       <AuthDivider />

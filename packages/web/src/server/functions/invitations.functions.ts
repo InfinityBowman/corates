@@ -1,6 +1,6 @@
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
-import { authMiddleware } from '@/server/middleware/auth';
+import { authMiddleware, optionalAuthMiddleware } from '@/server/middleware/auth';
 import {
   handleAcceptInvitation,
   handleGetInvitation,
@@ -14,10 +14,12 @@ export const acceptInvitation = createServerFn({ method: 'POST' })
   .handler(async ({ data, context: { session } }) => handleAcceptInvitation(session, data));
 
 // Public: the invite landing page must render for signed-out users.
-// The token itself is the access capability.
+// The token itself is the access capability; the session only decides whether
+// the page offers Accept or sign-up.
 export const getInvitation = createServerFn({ method: 'GET' })
+  .middleware([optionalAuthMiddleware])
   .validator(z.object({ token: z.string().min(1) }))
-  .handler(async ({ data }) => handleGetInvitation(data));
+  .handler(async ({ data, context: { session } }) => handleGetInvitation(data, session));
 
 export const listMyPendingInvitations = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])

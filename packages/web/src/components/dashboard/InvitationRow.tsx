@@ -62,7 +62,7 @@ export function InvitationRow({ invitation }: InvitationRowProps) {
         <span className='text-foreground font-medium'>{invitation.inviterName} invited you</span>
         <span className='text-muted-foreground'>
           {' '}
-          to {invitation.projectName} as {invitation.role === 'owner' ? 'an owner' : 'a reviewer'}
+          to {invitation.projectName} as {invitation.role === 'owner' ? 'Lead' : 'Reviewer'}
         </span>
       </span>
       <Button
