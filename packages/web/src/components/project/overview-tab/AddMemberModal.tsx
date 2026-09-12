@@ -232,7 +232,7 @@ export function AddMemberModal({
       }}
     >
       <DialogContent
-        className='gap-0 overflow-hidden p-0 sm:max-w-md'
+        className='gap-0 p-0 sm:max-w-md'
         showCloseButton={false}
         data-testid='invite-member-dialog'
       >
@@ -260,7 +260,7 @@ export function AddMemberModal({
           )}
 
           <div className='px-4 pt-3 pb-4'>
-            <div className='border-input focus-within:border-ring focus-within:ring-ring/50 dark:bg-input/30 rounded-lg border transition-colors focus-within:ring-3'>
+            <div className='border-input focus-within:border-ring focus-within:ring-ring/50 dark:bg-input/30 relative rounded-lg border transition-colors focus-within:ring-3'>
               <div className='flex min-h-9 flex-wrap items-center gap-1.5 py-1 pr-1 pl-2.5'>
                 {target && (
                   <span className='bg-muted text-foreground inline-flex h-6 max-w-full items-center gap-1.5 rounded-md pr-0.5 pl-1 text-xs font-medium'>
@@ -328,7 +328,7 @@ export function AddMemberModal({
                   id={listboxId}
                   role='listbox'
                   aria-label='People'
-                  className='max-h-56 overflow-y-auto border-t p-1'
+                  className='bg-popover text-popover-foreground ring-foreground/10 absolute top-full right-0 left-0 z-50 mt-1 max-h-56 overflow-y-auto rounded-lg p-1 shadow-md ring-1'
                 >
                   {rows.map((row, index) => (
                     <div
@@ -386,7 +386,7 @@ export function AddMemberModal({
             )}
           </div>
 
-          <div className='bg-muted/50 flex items-center justify-end gap-1.5 border-t px-4 py-2.5'>
+          <div className='bg-muted/50 flex items-center justify-end gap-1.5 rounded-b-xl border-t px-4 py-2.5'>
             <Button
               type='button'
               variant='outline'
