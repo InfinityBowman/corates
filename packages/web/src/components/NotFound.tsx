@@ -11,7 +11,7 @@ import { useEffect } from 'react';
 import { Link, useLocation } from '@tanstack/react-router';
 import { CompassIcon, Link2OffIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useAuthStore, selectIsLoggedIn } from '@/stores/authStore';
+import { useIsLoggedIn } from '@/hooks/useIsLoggedIn';
 import { clientLogger } from '@/lib/clientLogger';
 
 const TITLE = 'Page not found - CoRATES';
@@ -88,7 +88,7 @@ function NotFoundBody({ path, description, primary, secondary }: NotFoundBodyPro
 
 export function NotFoundPage() {
   const path = useMissedPath();
-  const isLoggedIn = useAuthStore(selectIsLoggedIn);
+  const isLoggedIn = useIsLoggedIn();
 
   return (
     <div className='bg-background text-foreground relative flex min-h-screen flex-col'>
