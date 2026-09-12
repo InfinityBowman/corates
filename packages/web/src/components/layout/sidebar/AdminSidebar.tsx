@@ -6,6 +6,7 @@
 import { Link, useLocation } from '@tanstack/react-router';
 import {
   LayoutDashboardIcon,
+  UsersIcon,
   BuildingIcon,
   FolderIcon,
   HardDriveIcon,
@@ -34,6 +35,7 @@ const NAV_GROUPS: Array<{ label: string; items: NavItem[] }> = [
   {
     label: 'Directory',
     items: [
+      { label: 'Users', icon: UsersIcon, path: '/admin/users' },
       { label: 'Organizations', icon: BuildingIcon, path: '/admin/orgs' },
       { label: 'Projects', icon: FolderIcon, path: '/admin/projects' },
     ],
@@ -55,10 +57,9 @@ const NAV_GROUPS: Array<{ label: string; items: NavItem[] }> = [
   },
 ];
 
-// User detail pages are reached from the dashboard, so they keep it highlighted.
 function isItemActive(pathname: string, path: string): boolean {
   if (path === '/admin') {
-    return pathname === '/admin' || pathname === '/admin/' || pathname.startsWith('/admin/users');
+    return pathname === '/admin' || pathname === '/admin/';
   }
   return pathname === path || pathname.startsWith(`${path}/`);
 }

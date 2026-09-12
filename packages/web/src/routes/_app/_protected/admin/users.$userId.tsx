@@ -32,7 +32,7 @@ import {
   RevokeAllSessionsDialog,
 } from '@/components/admin/users/UserDialogs';
 
-const BACK_TO_DASHBOARD = { to: '/admin', label: 'Back to Admin Dashboard' };
+const BACK_TO_USERS = { to: '/admin/users', label: 'Back to Users' };
 
 export const Route = createFileRoute('/_app/_protected/admin/users/$userId')({
   loader: async ({ params: { userId } }) => {
@@ -45,7 +45,7 @@ export const Route = createFileRoute('/_app/_protected/admin/users/$userId')({
 function UserDetailError() {
   const router = useRouter();
   return (
-    <AdminPage title='User' back={BACK_TO_DASHBOARD}>
+    <AdminPage title='User' back={BACK_TO_USERS}>
       <AdminError title='Failed to load user details' onRetry={() => router.invalidate()} />
     </AdminPage>
   );
@@ -54,7 +54,7 @@ function UserDetailError() {
 /** Holds the page's shape while the suspense query resolves. */
 function UserDetailSkeleton() {
   return (
-    <AdminPage title='User' loadingTitle description=' ' back={BACK_TO_DASHBOARD}>
+    <AdminPage title='User' loadingTitle description=' ' back={BACK_TO_USERS}>
       <AdminPanel padded>
         <Skeleton className='h-40 w-full' />
       </AdminPanel>
@@ -160,7 +160,7 @@ function UserDetailContent() {
       await deleteUser(userId);
       showToast.success('Success', 'User deleted successfully');
       setConfirmDialog(null);
-      navigate({ to: '/admin' as string });
+      navigate({ to: '/admin/users' as string });
     } catch (error) {
       await handleError(error, { showToast: true });
       setLoading(false);
@@ -169,7 +169,7 @@ function UserDetailContent() {
 
   return (
     <AdminPage
-      back={BACK_TO_DASHBOARD}
+      back={BACK_TO_USERS}
       title={
         <span className='flex items-center gap-3'>
           <UserAvatar src={user.avatarUrl || user.image} name={user.name} className='size-8' />

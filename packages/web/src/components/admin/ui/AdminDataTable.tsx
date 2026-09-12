@@ -33,6 +33,13 @@ const features = tableFeatures({
 
 export type AdminColumnDef<T extends RowData> = ColumnDef<typeof features, T, unknown>;
 
+/** Set on a column's `meta`. */
+export interface AdminColumnMeta {
+  /** Applied to the header and body cell alike, so widths stay in step. */
+  className?: string;
+  align?: 'left' | 'right';
+}
+
 interface AdminDataTableProps<T extends RowData> {
   columns: AdminColumnDef<T>[];
   data: T[];
@@ -47,8 +54,10 @@ interface AdminDataTableProps<T extends RowData> {
   skeletonRows?: number;
   /** Dims the rows in place while a new page or search result is in flight. */
   refreshing?: boolean;
-  /** Pads short result sets to `skeletonRows` so the panel keeps one height. */
-  fillRows?: boolean;
+  /** Pads the body out to this many rows so the panel keeps one height. */
+  fillRows?: number;
+  /** 'page' fills the shell and scrolls under a pinned header; 'panel' sits in a card. */
+  variant?: 'panel' | 'page';
 }
 
 export function AdminDataTable<T extends RowData>({
@@ -61,6 +70,7 @@ export function AdminDataTable<T extends RowData>({
   skeletonRows = 8,
   refreshing,
   fillRows,
+  variant = 'panel',
 }: AdminDataTableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([]);
 
@@ -75,16 +85,23 @@ export function AdminDataTable<T extends RowData>({
 
   const rows = table.getRowModel().rows;
 
-  const fillerCount = fillRows ? Math.max(0, skeletonRows - rows.length) : 0;
+  const fillerCount = fillRows ? Math.max(0, fillRows - rows.length) : 0;
+  const isPage = variant === 'page';
+  // Rows span the full width, so the edge cells carry the header bar's inset.
+  const edgeInset =
+    isPage ?
+      '[&_td:first-child]:pl-6 [&_th:first-child]:pl-6 [&_td:last-child]:pr-6 [&_th:last-child]:pr-6'
+    : '';
 
   return (
-    <Table>
-      <TableHeader className='bg-muted/40'>
+    <Table className={edgeInset} containerClassName={cn(isPage && 'min-h-0 flex-1')}>
+      <TableHeader className={cn('bg-muted/40', isPage && 'bg-background sticky top-0 z-10')}>
         {table.getHeaderGroups().map(headerGroup => (
           <TableRow key={headerGroup.id} className='border-border hover:bg-transparent'>
             {headerGroup.headers.map(header => {
               const sortable = enableSorting && header.column.getCanSort();
               const sorted = header.column.getIsSorted();
+              const meta = header.column.columnDef.meta as AdminColumnMeta | undefined;
               return (
                 <TableHead
                   key={header.id}
@@ -96,12 +113,19 @@ export function AdminDataTable<T extends RowData>({
                   }
                   className={cn(
                     'text-muted-foreground h-9 px-3 text-xs font-medium',
+                    isPage && 'bg-muted/40',
                     sortable &&
                       'hover:text-foreground cursor-pointer transition-colors select-none',
+                    meta?.className,
                   )}
                   onClick={sortable ? header.column.getToggleSortingHandler() : undefined}
                 >
-                  <div className='flex items-center gap-1'>
+                  <div
+                    className={cn(
+                      'flex items-center gap-1',
+                      meta?.align === 'right' && 'justify-end',
+                    )}
+                  >
                     {header.isPlaceholder ? null : (
                       flexRender(header.column.columnDef.header, header.getContext())
                     )}
@@ -129,7 +153,10 @@ export function AdminDataTable<T extends RowData>({
           Array.from({ length: skeletonRows }, (_, i) => (
             <TableRow key={`skeleton-${i}`} className='border-border hover:bg-transparent'>
               {columns.map((_, j) => (
-                <TableCell key={`skeleton-cell-${j}`} className='h-12 px-3'>
+                <TableCell
+                  key={`skeleton-cell-${j}`}
+                  className={cn('px-3', isPage ? 'h-10' : 'h-11')}
+                >
                   <Skeleton className='h-3.5' style={{ width: `${45 + ((j * 17) % 40)}%` }} />
                 </TableCell>
               ))}
@@ -141,7 +168,12 @@ export function AdminDataTable<T extends RowData>({
             <TableCell
               colSpan={columns.length || 1}
               className='text-muted-foreground px-3 text-center whitespace-normal'
-              style={fillRows ? { height: skeletonRows * 48 } : { height: 160 }}
+              style={
+                isPage ? { height: '40vh' }
+                : fillRows ?
+                  { height: fillRows * 44 }
+                : { height: 160 }
+              }
             >
               {emptyState}
             </TableCell>
@@ -155,11 +187,22 @@ export function AdminDataTable<T extends RowData>({
               className={cn('border-border', onRowClick && 'cursor-pointer')}
               onClick={() => onRowClick?.(row.original)}
             >
-              {row.getAllCells().map(cell => (
-                <TableCell key={cell.id} className='text-foreground h-12 px-3 text-[13px]'>
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </TableCell>
-              ))}
+              {row.getAllCells().map(cell => {
+                const meta = cell.column.columnDef.meta as AdminColumnMeta | undefined;
+                return (
+                  <TableCell
+                    key={cell.id}
+                    className={cn(
+                      'text-foreground px-3 text-[13px]',
+                      isPage ? 'h-10' : 'h-11',
+                      meta?.align === 'right' && 'text-right',
+                      meta?.className,
+                    )}
+                  >
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                );
+              })}
             </TableRow>
           ))}
 
@@ -169,7 +212,10 @@ export function AdminDataTable<T extends RowData>({
           rows.length > 0 &&
           Array.from({ length: fillerCount }, (_, i) => (
             <TableRow key={`filler-${i}`} className='border-border hover:bg-transparent'>
-              <TableCell colSpan={columns.length || 1} className='h-12 px-3' />
+              <TableCell
+                colSpan={columns.length || 1}
+                className={cn('px-3', isPage ? 'h-10' : 'h-11')}
+              />
             </TableRow>
           ))}
       </TableBody>
