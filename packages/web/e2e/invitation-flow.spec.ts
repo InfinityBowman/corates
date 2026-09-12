@@ -46,8 +46,11 @@ async function sendInvitationViaUI(page: Page, email: string) {
 
   await dialog.getByLabel('Search by name or email').fill(email);
 
-  // No matching user -> the modal offers an email invitation row
-  await expect(dialog.getByTestId('invite-email-option')).toBeVisible({ timeout: 5_000 });
+  // No matching user -> the modal offers an email invitation row. Pick it
+  // rather than submitting the raw query: the list floats over the footer, so
+  // Send is not clickable until choosing a row closes it.
+  await dialog.getByTestId('invite-email-option').click({ timeout: 5_000 });
+  await expect(dialog.getByTestId('invite-email-option')).toBeHidden({ timeout: 5_000 });
   await dialog.getByRole('button', { name: 'Send invitation', exact: true }).click();
 
   await expect(dialog).toBeHidden({ timeout: 5_000 });
