@@ -8,7 +8,7 @@ import { captureError, info } from '../../lib/logger';
 import { createDb } from '@corates/db/client';
 import { projectInvitations, projects, user } from '@corates/db/schema';
 import { eq, and, sql } from 'drizzle-orm';
-import { isSyntheticEmail } from '@corates/shared/email';
+import { isSyntheticEmail, normalizeEmail } from '@corates/shared/email';
 import { TIME_DURATIONS } from '../../config/constants';
 import type { Env } from '../../types';
 import { createNotification } from '../notifications';
@@ -35,7 +35,7 @@ export async function createInvitation(
   { orgId, projectId, email, role }: CreateInvitationParams,
 ): Promise<CreateInvitationResult> {
   const db = createDb(env.DB);
-  const normalizedEmail = email.toLowerCase();
+  const normalizedEmail = normalizeEmail(email);
 
   const existingInvitation = await db
     .select({
@@ -114,11 +114,11 @@ export async function createInvitation(
   let emailQueued = false;
   try {
     // Synthetic ORCID addresses bounce and poison sender reputation
-    if (!isSyntheticEmail(email)) {
+    if (!isSyntheticEmail(normalizedEmail)) {
       const { sendInvitationEmail } = await import('../../lib/send-invitation-email.js');
       const result = await sendInvitationEmail({
         env,
-        email,
+        email: normalizedEmail,
         token,
         projectName,
         inviterName,

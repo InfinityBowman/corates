@@ -13,6 +13,7 @@ import {
   VALIDATION_ERRORS,
   type DomainError,
 } from '@corates/shared';
+import { isValidEmail, normalizeEmail } from '@corates/shared/email';
 import type { OrgId, ProjectId, UserId, ProjectInvitationId } from '@corates/shared/ids';
 import type { ProjectSetupStep } from '@corates/shared';
 import { createProject } from '@corates/workers/commands/projects';
@@ -250,12 +251,17 @@ export async function addProjectMember(
   if (!access.ok) throw access.error;
 
   const role = data.role ?? 'member';
+  const email = data.email ? normalizeEmail(data.email) : undefined;
 
-  if (!data.userId && !data.email) {
+  if (!data.userId && !email) {
     throwDomainError(VALIDATION_ERRORS.FIELD_REQUIRED, {
       field: 'userId/email',
       detail: 'userId_or_email_required',
     });
+  }
+
+  if (email && !isValidEmail(email)) {
+    throwDomainError(VALIDATION_ERRORS.FIELD_INVALID_FORMAT, { field: 'email' });
   }
 
   try {
@@ -272,11 +278,11 @@ export async function addProjectMember(
       if (!userToAdd) {
         throwDomainError(USER_ERRORS.NOT_FOUND, { userId: data.userId });
       }
-    } else if (data.email) {
+    } else if (email) {
       userToAdd = await db
         .select({ id: user.id, email: user.email })
         .from(user)
-        .where(eq(user.email, data.email.toLowerCase()))
+        .where(eq(user.email, email))
         .get();
     }
 
@@ -296,7 +302,7 @@ export async function addProjectMember(
       }
     }
 
-    const inviteEmail = userToAdd?.email || data.email;
+    const inviteEmail = userToAdd?.email || email;
     if (!inviteEmail) {
       throwDomainError(VALIDATION_ERRORS.FIELD_REQUIRED, { field: 'email' });
     }
