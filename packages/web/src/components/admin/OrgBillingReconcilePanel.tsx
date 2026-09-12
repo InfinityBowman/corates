@@ -91,7 +91,13 @@ function ThresholdField({
   );
 }
 
-export function OrgBillingReconcilePanel({ orgId }: { orgId: string }) {
+export function OrgBillingReconcilePanel({
+  orgId,
+  onHide,
+}: {
+  orgId: string;
+  onHide?: () => void;
+}) {
   const [incompleteThreshold, setIncompleteThreshold] = useState(30);
   const [checkoutNoSubThreshold, setCheckoutNoSubThreshold] = useState(15);
   const [processingLagThreshold, setProcessingLagThreshold] = useState(5);
@@ -114,18 +120,25 @@ export function OrgBillingReconcilePanel({ orgId }: { orgId: string }) {
       title='Billing Reconciliation'
       padded
       action={
-        <Button
-          variant='outline'
-          size='sm'
-          onClick={() => reconcileQuery.refetch()}
-          disabled={reconcileQuery.isFetching}
-        >
-          <RefreshCwIcon
-            className={reconcileQuery.isFetching ? 'animate-spin' : ''}
-            data-icon='inline-start'
-          />
-          Refresh
-        </Button>
+        <>
+          {onHide && (
+            <Button variant='ghost' size='sm' onClick={onHide}>
+              Hide
+            </Button>
+          )}
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={() => reconcileQuery.refetch()}
+            disabled={reconcileQuery.isFetching}
+          >
+            <RefreshCwIcon
+              className={reconcileQuery.isFetching ? 'animate-spin' : ''}
+              data-icon='inline-start'
+            />
+            Refresh
+          </Button>
+        </>
       }
     >
       <div className='border-border bg-muted/40 mb-5 grid grid-cols-1 gap-4 rounded-lg border p-4 md:grid-cols-4'>

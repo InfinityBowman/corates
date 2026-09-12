@@ -23,7 +23,7 @@ import {
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
 import { handleError } from '@/lib/error-utils';
-import { AdminError, AdminPage, AdminStat, AdminStatRow } from '@/components/admin/ui';
+import { AdminError, AdminPage } from '@/components/admin/ui';
 import { formatDateInput } from '@/lib/formatDate';
 import { OrgBillingSummary } from '@/components/admin/OrgBillingSummary';
 import { OrgQuickActions } from '@/components/admin/OrgQuickActions';
@@ -32,6 +32,9 @@ import { SubscriptionDialog } from '@/components/admin/SubscriptionDialog';
 import { GrantList } from '@/components/admin/GrantList';
 import { GrantDialog } from '@/components/admin/GrantDialog';
 import { OrgBillingReconcilePanel } from '@/components/admin/OrgBillingReconcilePanel';
+import { OrgMembersSection } from '@/components/admin/orgs/OrgMembersSection';
+import { OrgProjectsSection } from '@/components/admin/orgs/OrgProjectsSection';
+import type { AdminOrgDetails } from '@/server/functions/admin-orgs.server';
 import { queryKeys } from '@/lib/queryKeys';
 
 const BACK_TO_ORGS = { to: '/admin/orgs', label: 'Back to Organizations' };
@@ -39,11 +42,6 @@ const BACK_TO_ORGS = { to: '/admin/orgs', label: 'Back to Organizations' };
 export const Route = createFileRoute('/_app/_protected/admin/orgs/$orgId')({
   component: OrgDetailPage,
 });
-
-interface OrgDetails {
-  org?: { name?: string; slug?: string };
-  stats?: { memberCount?: number; projectCount?: number };
-}
 
 interface SubscriptionRecord {
   id: string;
@@ -88,9 +86,13 @@ function OrgDetailPage() {
 
   const orgDetailsQuery = useAdminOrgDetails(orgId);
   const billingQuery = useAdminOrgBilling(orgId);
-  const orgDetails = orgDetailsQuery.data as OrgDetails | undefined;
+  const orgDetails = orgDetailsQuery.data as AdminOrgDetails | undefined;
   const billing = billingQuery.data as BillingData | undefined;
 
+  const memberCount = orgDetails?.stats?.memberCount ?? 0;
+  const projectCount = orgDetails?.stats?.projectCount ?? 0;
+
+  const [reconcileOpen, setReconcileOpen] = useState(false);
   const [subscriptionDialogOpen, setSubscriptionDialogOpen] = useState(false);
   const [grantDialogOpen, setGrantDialogOpen] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -342,21 +344,24 @@ function OrgDetailPage() {
     <AdminPage
       back={BACK_TO_ORGS}
       title={orgDetails?.org?.name ?? 'Organization'}
-      description={orgDetails?.org?.slug ? `@${orgDetails.org.slug}` : ' '}
+      description={
+        orgDetails?.org?.slug ?
+          `@${orgDetails.org.slug} - ${memberCount} members - ${projectCount} projects`
+        : ' '
+      }
       loadingTitle={orgDetailsQuery.isLoading}
     >
-      <AdminStatRow className='lg:grid-cols-2'>
-        <AdminStat
-          label='Members'
-          value={orgDetails?.stats?.memberCount ?? 0}
-          loading={orgDetailsQuery.isLoading}
-        />
-        <AdminStat
-          label='Projects'
-          value={orgDetails?.stats?.projectCount ?? 0}
-          loading={orgDetailsQuery.isLoading}
-        />
-      </AdminStatRow>
+      <OrgMembersSection
+        members={orgDetails?.members}
+        total={memberCount}
+        isLoading={orgDetailsQuery.isLoading}
+      />
+
+      <OrgProjectsSection
+        projects={orgDetails?.projects}
+        total={projectCount}
+        isLoading={orgDetailsQuery.isLoading}
+      />
 
       <OrgBillingSummary billing={billingData ?? null} isLoading={billingQuery.isLoading} />
 
@@ -388,7 +393,17 @@ function OrgDetailPage() {
         }
       />
 
-      <OrgBillingReconcilePanel orgId={orgId} />
+      {reconcileOpen ?
+        <OrgBillingReconcilePanel orgId={orgId} onHide={() => setReconcileOpen(false)} />
+      : <button
+          type='button'
+          onClick={() => setReconcileOpen(true)}
+          className='border-border bg-card hover:bg-muted/40 flex min-h-13 w-full items-center justify-between gap-3 rounded-xl border px-4 text-left shadow-xs transition-colors'
+        >
+          <span className='text-foreground text-sm font-semibold'>Billing Reconciliation</span>
+          <span className='text-muted-foreground text-[13px]'>Check for stuck states</span>
+        </button>
+      }
 
       {/* Subscription Dialog */}
       <SubscriptionDialog
