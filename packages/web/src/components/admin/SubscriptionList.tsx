@@ -4,29 +4,15 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDateTime } from '@/lib/formatDate';
-
-interface Subscription {
-  id: string;
-  plan: string;
-  status: string;
-  periodStart?: string | number | Date;
-  periodEnd?: string | number | Date;
-  cancelAtPeriodEnd?: boolean;
-  createdAt?: string | number | Date;
-  updatedAt?: string | number | Date | null;
-  canceledAt?: string | number | Date | null;
-  endedAt?: string | number | Date | null;
-  stripeCustomerId?: string;
-  stripeSubscriptionId?: string;
-}
+import type { AdminOrgSubscription } from '@/server/functions/admin-orgs.server';
 
 interface SubscriptionListProps {
-  subscriptions?: Subscription[];
+  subscriptions?: AdminOrgSubscription[];
   effectiveSubscriptionId?: string;
   loading?: boolean;
   isLoading?: boolean;
   onCancel: (_subscriptionId: string) => void;
-  onEdit: (_subscription: Subscription) => void;
+  onEdit: (_subscription: AdminOrgSubscription) => void;
 }
 
 function StripeId({ label, value }: { label: string; value: string }) {
@@ -92,7 +78,10 @@ export function SubscriptionList({
                       <StripeId label='Customer' value={subscription.stripeCustomerId} />
                     )}
                     {subscription.stripeSubscriptionId && (
-                      <StripeId label='Subscription' value={subscription.stripeSubscriptionId} />
+                      <StripeId
+                        label='AdminOrgSubscription'
+                        value={subscription.stripeSubscriptionId}
+                      />
                     )}
                   </div>
                 )}

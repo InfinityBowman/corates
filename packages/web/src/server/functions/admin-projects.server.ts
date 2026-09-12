@@ -301,6 +301,9 @@ export interface WorkspaceStats {
   };
 }
 
+export type AdminProjectListItem = Awaited<
+  ReturnType<typeof listAdminProjects>
+>['projects'][number];
 export type AdminProjectDetails = Awaited<ReturnType<typeof getAdminProjectDetails>>;
 export type AdminProjectMember = AdminProjectDetails['members'][number];
 export type AdminProjectFile = AdminProjectDetails['files'][number];

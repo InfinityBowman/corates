@@ -9,7 +9,7 @@ export const Route = createFileRoute('/_app/_protected/admin/')({
 
 function AdminDashboard() {
   const statsQuery = useAdminStats();
-  const stats = statsQuery.data as Record<string, number> | undefined;
+  const stats = statsQuery.data;
 
   return (
     <AdminPage title='Admin Dashboard' description='Platform activity at a glance'>

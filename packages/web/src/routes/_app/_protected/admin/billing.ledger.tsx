@@ -24,26 +24,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { formatDateTime } from '@/lib/formatDate';
-
-interface LedgerEntry {
-  receivedAt?: string | number;
-  processedAt?: string | number;
-  status: string;
-  type?: string;
-  stripeEventId?: string;
-  orgId?: string;
-  stripeCustomerId?: string;
-  stripeSubscriptionId?: string;
-  stripeCheckoutSessionId?: string;
-  requestId?: string;
-  error?: string;
-  httpStatus?: number;
-}
-
-interface LedgerStats {
-  total?: number;
-  byStatus?: Record<string, number>;
-}
+import type { AdminLedgerEntry } from '@/server/functions/admin-billing.server';
 
 const STATUS_OPTIONS = [
   { value: '', label: 'All Statuses' },
@@ -110,11 +91,11 @@ function AdminBillingLedgerPage() {
     type: debouncedTypeFilter || undefined,
   });
 
-  const data = ledgerQuery.data as { entries: LedgerEntry[]; stats: LedgerStats } | undefined;
+  const data = ledgerQuery.data;
   const entries = data?.entries || [];
-  const stats = data?.stats || {};
+  const stats = data?.stats;
 
-  const columns = useMemo<AdminColumnDef<LedgerEntry>[]>(
+  const columns = useMemo<AdminColumnDef<AdminLedgerEntry>[]>(
     () => [
       {
         accessorKey: 'receivedAt',
@@ -318,12 +299,12 @@ function AdminBillingLedgerPage() {
       }
     >
       <AdminStatRow className='lg:grid-cols-5'>
-        <AdminStat label='Total' value={stats.total ?? 0} loading={ledgerQuery.isLoading} />
+        <AdminStat label='Total' value={stats?.total ?? 0} loading={ledgerQuery.isLoading} />
         {STATUS_OPTIONS.slice(1, 5).map(option => (
           <AdminStat
             key={option.value}
             label={option.label}
-            value={stats.byStatus?.[option.value] ?? 0}
+            value={stats?.byStatus?.[option.value] ?? 0}
             loading={ledgerQuery.isLoading}
           />
         ))}

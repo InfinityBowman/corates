@@ -22,12 +22,7 @@ function AdminUserList() {
     limit: PAGE_SIZE,
     search: debouncedSearch,
   });
-  const usersData = usersDataQuery.data as
-    | {
-        users: Array<{ id: string; [key: string]: unknown }>;
-        pagination: { limit: number; total: number; totalPages: number };
-      }
-    | undefined;
+  const usersData = usersDataQuery.data;
 
   const handleSearchChange = (value: string) => {
     setSearch(value);

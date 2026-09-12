@@ -19,7 +19,6 @@ import { handleError } from '@/lib/error-utils';
 import { queryKeys } from '@/lib/queryKeys';
 import { AdminError, AdminPage, AdminPanel } from '@/components/admin/ui';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { AdminUserDetails } from '@/server/functions/admin-users.server';
 import { UserActions } from '@/components/admin/users/UserActions';
 import { UserProfileSection } from '@/components/admin/users/UserProfileSection';
 import { UserLinkedAccounts } from '@/components/admin/users/UserLinkedAccounts';
@@ -76,7 +75,7 @@ function UserDetailContent() {
   const qc = useQueryClient();
 
   const { data } = useSuspenseQuery(adminUserDetailsQueryOptions(userId));
-  const userData = data as unknown as AdminUserDetails;
+  const userData = data;
   const user = userData.user;
 
   const [confirmDialog, setConfirmDialog] = useState<{

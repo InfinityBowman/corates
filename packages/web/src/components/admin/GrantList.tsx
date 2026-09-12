@@ -4,18 +4,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDateTime } from '@/lib/formatDate';
-
-interface Grant {
-  id: string;
-  type: string;
-  startsAt?: string | number | Date;
-  expiresAt?: string | number | Date;
-  createdAt?: string | number | Date;
-  revokedAt?: string | number | Date | null;
-}
+import type { AdminOrgGrant } from '@/server/functions/admin-orgs.server';
 
 interface GrantListProps {
-  grants: Grant[];
+  grants: AdminOrgGrant[];
   loading: boolean;
   isLoading: boolean;
   onRevoke: (_grantId: string) => void;

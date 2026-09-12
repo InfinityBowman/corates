@@ -264,6 +264,11 @@ export async function getAdminOrgDetails(session: Session, db: Database, orgId: 
   };
 }
 
+export type AdminOrgBilling = Awaited<ReturnType<typeof getAdminOrgBilling>>;
+export type AdminOrgBillingState = AdminOrgBilling['billing'];
+export type AdminOrgSubscription = AdminOrgBilling['subscriptions'][number];
+export type AdminOrgGrant = AdminOrgBilling['grants'][number];
+export type AdminOrgListItem = Awaited<ReturnType<typeof listAdminOrgs>>['orgs'][number];
 export type AdminOrgDetails = Awaited<ReturnType<typeof getAdminOrgDetails>>;
 export type AdminOrgMember = AdminOrgDetails['members'][number];
 export type AdminOrgProject = AdminOrgDetails['projects'][number];

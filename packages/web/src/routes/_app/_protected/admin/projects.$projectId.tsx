@@ -10,11 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { handleError } from '@/lib/error-utils';
 import { queryKeys } from '@/lib/queryKeys';
 import { AdminError, AdminPage, AdminPanel } from '@/components/admin/ui';
-import type {
-  AdminProjectDetails,
-  AdminProjectMember,
-  WorkspaceStats,
-} from '@/server/functions/admin-projects.server';
+import type { AdminProjectMember } from '@/server/functions/admin-projects.server';
 import { ProjectInfoSection } from '@/components/admin/projects/ProjectInfoSection';
 import { WorkspaceStorageSection } from '@/components/admin/projects/WorkspaceStorageSection';
 import { ProjectMembersSection } from '@/components/admin/projects/ProjectMembersSection';
@@ -37,13 +33,13 @@ function ProjectDetailPage() {
   const queryClient = useQueryClient();
 
   const projectQuery = useAdminProjectDetails(projectId);
-  const projectData = projectQuery.data as AdminProjectDetails | undefined;
+  const projectData = projectQuery.data;
 
   // DO storage stats are fetched separately because they route through the
   // ProjectDoc DO and are slower than the D1 details query. Loading them as
   // a sibling query lets the rest of the page render immediately.
   const statsQuery = useAdminWorkspaceStats(projectId);
-  const workspaceStats = statsQuery.data as WorkspaceStats | undefined;
+  const workspaceStats = statsQuery.data;
 
   const [confirmDialog, setConfirmDialog] = useState<{
     type: 'delete-project' | 'remove-member';

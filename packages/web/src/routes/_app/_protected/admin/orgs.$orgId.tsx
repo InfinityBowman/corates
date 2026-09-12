@@ -34,7 +34,7 @@ import { GrantDialog } from '@/components/admin/GrantDialog';
 import { OrgBillingReconcilePanel } from '@/components/admin/OrgBillingReconcilePanel';
 import { OrgMembersSection } from '@/components/admin/orgs/OrgMembersSection';
 import { OrgProjectsSection } from '@/components/admin/orgs/OrgProjectsSection';
-import type { AdminOrgDetails } from '@/server/functions/admin-orgs.server';
+import type { AdminOrgSubscription } from '@/server/functions/admin-orgs.server';
 import { queryKeys } from '@/lib/queryKeys';
 
 const BACK_TO_ORGS = { to: '/admin/orgs', label: 'Back to Organizations' };
@@ -43,51 +43,14 @@ export const Route = createFileRoute('/_app/_protected/admin/orgs/$orgId')({
   component: OrgDetailPage,
 });
 
-interface SubscriptionRecord {
-  id: string;
-  plan: string;
-  status: string;
-  periodStart?: string | number | Date;
-  periodEnd?: string | number | Date;
-  cancelAtPeriodEnd?: boolean;
-  canceledAt?: string | number | Date | null;
-  endedAt?: string | number | Date | null;
-  stripeCustomerId?: string;
-  stripeSubscriptionId?: string;
-}
-
-interface BillingData {
-  billing?: {
-    plan?: {
-      name?: string;
-      entitlements?: Record<string, boolean | string | number>;
-      quotas?: Record<string, number | null | undefined>;
-    };
-    effectivePlanId?: string;
-    accessMode?: 'full' | 'readOnly';
-    source?: 'free' | 'subscription' | 'grant';
-    subscription?: { id?: string; plan?: string } | null;
-    grant?: { type?: string } | null;
-  };
-  subscriptions?: SubscriptionRecord[];
-  grants?: Array<{
-    id: string;
-    type: string;
-    startsAt?: string | number | Date;
-    expiresAt?: string | number | Date;
-    createdAt?: string | number | Date;
-    revokedAt?: string | number | Date | null;
-  }>;
-}
-
 function OrgDetailPage() {
   const { orgId } = Route.useParams();
   const queryClient = useQueryClient();
 
   const orgDetailsQuery = useAdminOrgDetails(orgId);
   const billingQuery = useAdminOrgBilling(orgId);
-  const orgDetails = orgDetailsQuery.data as AdminOrgDetails | undefined;
-  const billing = billingQuery.data as BillingData | undefined;
+  const orgDetails = orgDetailsQuery.data;
+  const billing = billingQuery.data;
 
   const memberCount = orgDetails?.stats?.memberCount ?? 0;
   const projectCount = orgDetails?.stats?.projectCount ?? 0;
@@ -101,7 +64,7 @@ function OrgDetailPage() {
     grantId?: string;
   } | null>(null);
   const [loading, setLoading] = useState(false);
-  const [editingSubscription, setEditingSubscription] = useState<SubscriptionRecord | null>(null);
+  const [editingSubscription, setEditingSubscription] = useState<AdminOrgSubscription | null>(null);
 
   // Subscription form state
   const [subPlan, setSubPlan] = useState('team');
@@ -237,7 +200,7 @@ function OrgDetailPage() {
     }
   };
 
-  const handleEditSubscription = (subscription: SubscriptionRecord) => {
+  const handleEditSubscription = (subscription: AdminOrgSubscription) => {
     setEditingSubscription(subscription);
     setSubPlan(subscription.plan);
     setSubStatus(subscription.status);

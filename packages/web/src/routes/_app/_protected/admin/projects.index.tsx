@@ -3,6 +3,7 @@ import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { FolderIcon } from 'lucide-react';
 import { useAdminProjects, useAdminOrgs } from '@/hooks/useAdminQueries';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import type { AdminProjectListItem } from '@/server/functions/admin-projects.server';
 import { formatDate } from '@/lib/formatDate';
 import {
   AdminDataTable,
@@ -22,26 +23,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
-interface ProjectRow {
-  id: string;
-  name: string;
-  orgId: string;
-  orgName: string;
-  orgSlug: string;
-  createdBy: string;
-  creatorDisplayName?: string;
-  creatorName?: string;
-  creatorEmail?: string;
-  memberCount: number;
-  fileCount: number;
-  createdAt?: string | number;
-}
-
-interface OrgOption {
-  id: string;
-  name: string;
-}
 
 const PAGE_SIZE = 25;
 const ALL_ORGS_VALUE = 'all';
@@ -63,15 +44,10 @@ function AdminProjectList() {
     search: debouncedSearch,
     orgId: selectedOrgId,
   });
-  const projectsData = projectsQuery.data as
-    | {
-        projects: ProjectRow[];
-        pagination: { page: number; total: number; totalPages: number };
-      }
-    | undefined;
+  const projectsData = projectsQuery.data;
 
   const orgsQuery = useAdminOrgs({ page: 1, limit: 100, search: '' });
-  const orgsData = orgsQuery.data as { orgs: OrgOption[] } | undefined;
+  const orgsData = orgsQuery.data;
 
   const projects = projectsData?.projects || [];
   const pagination = projectsData?.pagination;
@@ -87,7 +63,7 @@ function AdminProjectList() {
     setPage(1);
   };
 
-  const columns = useMemo<AdminColumnDef<ProjectRow>[]>(
+  const columns = useMemo<AdminColumnDef<AdminProjectListItem>[]>(
     () => [
       {
         accessorKey: 'name',
@@ -112,11 +88,11 @@ function AdminProjectList() {
         },
       },
       {
-        accessorKey: 'creatorDisplayName',
+        accessorKey: 'creatorName',
         header: 'Created by',
         cell: info => {
           const project = info.row.original;
-          const name = project.creatorDisplayName || project.creatorName;
+          const name = project.creatorName;
           if (!name && !project.creatorEmail) {
             return <span className='text-muted-foreground/60'>-</span>;
           }
@@ -244,7 +220,7 @@ function AdminProjectList() {
           />
         }
         enableSorting
-        onRowClick={(row: ProjectRow) =>
+        onRowClick={(row: AdminProjectListItem) =>
           navigate({
             to: '/admin/projects/$projectId' as string,
             params: { projectId: row.id } as Record<string, string>,

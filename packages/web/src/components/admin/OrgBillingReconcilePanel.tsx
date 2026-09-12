@@ -10,40 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
-interface StuckState {
-  type: string;
-  severity: string;
-  description: string;
-  ageMinutes?: number;
-  threshold?: number;
-  subscriptionId?: string;
-  stripeSubscriptionId?: string;
-  stripeEventId?: string;
-  localStatus?: string;
-  stripeStatus?: string;
-}
-
-interface ReconcileSummary {
-  stuckStateCount?: number;
-  failedWebhooks?: number;
-  ignoredWebhooks?: number;
-}
-
-interface StripeComparison {
-  error?: string;
-  noActiveSubscription?: boolean;
-  match?: boolean;
-  localStatus?: string;
-  stripeStatus?: string;
-}
-
-interface ReconcileData {
-  stuckStates?: StuckState[];
-  summary?: ReconcileSummary;
-  stripeComparison?: StripeComparison;
-}
-
-const getSeverityIcon = (severity: string) => {
+const getSeverityIcon = (severity: string | undefined) => {
   switch (severity) {
     case 'critical':
       return AlertTriangleIcon;
@@ -55,7 +22,7 @@ const getSeverityIcon = (severity: string) => {
   }
 };
 
-const getSeverityVariant = (severity: string) => {
+const getSeverityVariant = (severity: string | undefined) => {
   switch (severity) {
     case 'critical':
       return 'destructive' as const;
@@ -110,9 +77,9 @@ export function OrgBillingReconcilePanel({
     processingLagThreshold,
   });
 
-  const reconcileData = reconcileQuery.data as ReconcileData | undefined;
+  const reconcileData = reconcileQuery.data;
   const stuckStates = reconcileData?.stuckStates ?? [];
-  const summary = reconcileData?.summary ?? {};
+  const summary = reconcileData?.summary;
   const isLoading = reconcileQuery.isLoading;
 
   return (
@@ -176,7 +143,7 @@ export function OrgBillingReconcilePanel({
       </div>
 
       <div className='mb-5 grid grid-cols-2 gap-3 md:grid-cols-5'>
-        <AdminStat label='Total stuck' value={summary.stuckStateCount ?? 0} loading={isLoading} />
+        <AdminStat label='Total stuck' value={summary?.stuckStateCount ?? 0} loading={isLoading} />
         <AdminStat
           label='Critical'
           value={stuckStates.filter(s => s.severity === 'critical').length}
@@ -191,12 +158,12 @@ export function OrgBillingReconcilePanel({
         />
         <AdminStat
           label='Failed webhooks'
-          value={summary.failedWebhooks ?? 0}
+          value={summary?.failedWebhooks ?? 0}
           loading={isLoading}
         />
         <AdminStat
           label='Ignored webhooks'
-          value={summary.ignoredWebhooks ?? 0}
+          value={summary?.ignoredWebhooks ?? 0}
           loading={isLoading}
         />
       </div>

@@ -6,20 +6,7 @@ import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip
 import { AdminDataTable, type AdminColumnDef } from '@/components/admin/ui';
 import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/lib/formatDate';
-
-interface UserRow {
-  id: string;
-  name?: string;
-  username?: string;
-  email?: string;
-  emailVerified?: boolean;
-  avatarUrl?: string;
-  image?: string;
-  providers?: string[];
-  banned?: boolean;
-  stripeCustomerId?: string;
-  createdAt?: string | number;
-}
+import type { AdminUserListItem } from '@/server/functions/admin-users.server';
 
 interface ProviderInfo {
   name: string;
@@ -33,7 +20,7 @@ const PROVIDER_INFO: Record<string, ProviderInfo> = {
 };
 
 interface UserTableProps {
-  users: UserRow[];
+  users: AdminUserListItem[];
   loading?: boolean;
   refreshing?: boolean;
   skeletonRows?: number;
@@ -51,7 +38,7 @@ export function UserTable({
 }: UserTableProps) {
   const navigate = useNavigate();
 
-  const columns = useMemo<AdminColumnDef<UserRow>[]>(
+  const columns = useMemo<AdminColumnDef<AdminUserListItem>[]>(
     () => [
       {
         accessorKey: 'name',
@@ -61,7 +48,7 @@ export function UserTable({
           return (
             <div className='flex items-center gap-2.5'>
               <UserAvatar
-                src={user.avatarUrl || user.image}
+                src={user.avatarUrl || user.image || undefined}
                 name={user.name}
                 className='size-6.5'
               />
@@ -182,7 +169,7 @@ export function UserTable({
       variant={variant}
       emptyState={emptyState ?? 'No users found'}
       enableSorting
-      onRowClick={(row: UserRow) =>
+      onRowClick={(row: AdminUserListItem) =>
         navigate({
           to: '/admin/users/$userId' as string,
           params: { userId: row.id } as Record<string, string>,
