@@ -13,12 +13,12 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import { formatDate } from '@/lib/formatDate';
-import type { ProjectMember } from './types';
+import type { AdminProjectMember } from '@/server/functions/admin-projects.server';
 
 interface ProjectMembersSectionProps {
-  members?: ProjectMember[];
+  members?: AdminProjectMember[];
   loading: boolean;
-  onRemove: (member: ProjectMember) => void;
+  onRemove: (member: AdminProjectMember) => void;
 }
 
 export function ProjectMembersSection({ members, loading, onRemove }: ProjectMembersSectionProps) {
@@ -43,8 +43,8 @@ export function ProjectMembersSection({ members, loading, onRemove }: ProjectMem
                 <TableCell className={ADMIN_TD}>
                   <div className='flex items-center gap-2.5'>
                     <UserAvatar
-                      src={member.userAvatar}
-                      name={member.userDisplayName || member.userName}
+                      src={member.userAvatar ?? undefined}
+                      name={member.userName ?? undefined}
                       className='size-6.5'
                     />
                     <div className='min-w-0'>
@@ -53,7 +53,7 @@ export function ProjectMembersSection({ members, loading, onRemove }: ProjectMem
                         params={{ userId: member.userId } as Record<string, string>}
                         className='text-foreground hover:text-primary font-medium transition-colors'
                       >
-                        {member.userDisplayName || member.userName}
+                        {member.userName}
                       </Link>
                       <p className='text-muted-foreground truncate text-xs'>{member.userEmail}</p>
                     </div>
@@ -74,7 +74,7 @@ export function ProjectMembersSection({ members, loading, onRemove }: ProjectMem
                     className='text-muted-foreground/70 hover:text-destructive'
                     onClick={() => onRemove(member)}
                     disabled={loading}
-                    aria-label={`Remove ${member.userDisplayName || member.userName}`}
+                    aria-label={`Remove ${member.userName}`}
                   >
                     <UserMinusIcon />
                   </Button>

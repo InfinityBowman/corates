@@ -2,11 +2,11 @@ import { Link } from '@tanstack/react-router';
 import { AdminPanel, AdminField, AdminFieldGrid, CopyButton } from '@/components/admin/ui';
 import { formatFileSize } from '@corates/shared';
 import { formatDateTime } from '@/lib/formatDate';
-import type { ProjectData } from './types';
+import type { AdminProjectDetails } from '@/server/functions/admin-projects.server';
 
 interface ProjectInfoSectionProps {
-  project: ProjectData['project'];
-  stats: ProjectData['stats'];
+  project: AdminProjectDetails['project'];
+  stats: AdminProjectDetails['stats'];
 }
 
 export function ProjectInfoSection({ project, stats }: ProjectInfoSectionProps) {
@@ -33,7 +33,7 @@ export function ProjectInfoSection({ project, stats }: ProjectInfoSectionProps) 
             params={{ userId: project.createdBy } as Record<string, string>}
             className='text-primary hover:text-primary/80'
           >
-            {project.creatorDisplayName || project.creatorName || project.creatorEmail}
+            {project.creatorName || project.creatorEmail}
           </Link>
         </AdminField>
         <AdminField label='Created'>{formatDateTime(project.createdAt)}</AdminField>

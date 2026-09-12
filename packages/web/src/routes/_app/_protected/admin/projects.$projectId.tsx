@@ -10,7 +10,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { handleError } from '@/lib/error-utils';
 import { queryKeys } from '@/lib/queryKeys';
 import { AdminError, AdminPage, AdminPanel } from '@/components/admin/ui';
-import type { ProjectData, WorkspaceStats, ProjectMember } from '@/components/admin/projects/types';
+import type {
+  AdminProjectDetails,
+  AdminProjectMember,
+  WorkspaceStats,
+} from '@/server/functions/admin-projects.server';
 import { ProjectInfoSection } from '@/components/admin/projects/ProjectInfoSection';
 import { WorkspaceStorageSection } from '@/components/admin/projects/WorkspaceStorageSection';
 import { ProjectMembersSection } from '@/components/admin/projects/ProjectMembersSection';
@@ -33,7 +37,7 @@ function ProjectDetailPage() {
   const queryClient = useQueryClient();
 
   const projectQuery = useAdminProjectDetails(projectId);
-  const projectData = projectQuery.data as ProjectData | undefined;
+  const projectData = projectQuery.data as AdminProjectDetails | undefined;
 
   // DO storage stats are fetched separately because they route through the
   // ProjectDoc DO and are slower than the D1 details query. Loading them as
@@ -43,7 +47,7 @@ function ProjectDetailPage() {
 
   const [confirmDialog, setConfirmDialog] = useState<{
     type: 'delete-project' | 'remove-member';
-    member?: ProjectMember;
+    member?: AdminProjectMember;
   } | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -156,9 +160,7 @@ function ProjectDetailPage() {
         open={confirmDialog?.type === 'remove-member'}
         onOpenChange={open => !open && setConfirmDialog(null)}
         memberName={
-          confirmDialog?.member?.userDisplayName ||
-          confirmDialog?.member?.userName ||
-          confirmDialog?.member?.userEmail
+          confirmDialog?.member?.userName || confirmDialog?.member?.userEmail || undefined
         }
         onConfirm={() => {
           if (confirmDialog?.member?.id) {

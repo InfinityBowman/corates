@@ -1,7 +1,7 @@
 import { MailIcon } from 'lucide-react';
 import { AdminEmpty, AdminPanel } from '@/components/admin/ui';
 import { formatDate } from '@/lib/formatDate';
-import type { UserAccount } from './types';
+import type { AdminUserAccount } from '@/server/functions/admin-users.server';
 
 const PROVIDER_LABEL: Record<string, string> = {
   google: 'Google',
@@ -14,7 +14,7 @@ const PROVIDER_LOGO: Record<string, string> = {
   orcid: '/logos/orcid.svg',
 };
 
-export function UserLinkedAccounts({ accounts }: { accounts?: UserAccount[] }) {
+export function UserLinkedAccounts({ accounts }: { accounts?: AdminUserAccount[] }) {
   const rows = accounts ?? [];
 
   return (

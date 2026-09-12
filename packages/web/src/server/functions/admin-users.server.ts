@@ -238,6 +238,12 @@ export async function getAdminUserDetails(session: Session, db: Database, userId
   };
 }
 
+export type AdminUserDetails = Awaited<ReturnType<typeof getAdminUserDetails>>;
+export type AdminUserProject = AdminUserDetails['projects'][number];
+export type AdminUserSession = AdminUserDetails['sessions'][number];
+export type AdminUserAccount = AdminUserDetails['accounts'][number];
+export type AdminUserOrg = AdminUserDetails['orgs'][number];
+
 export async function deleteAdminUser(session: Session, db: Database, userId: string) {
   assertAdmin(session);
 

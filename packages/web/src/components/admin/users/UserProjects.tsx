@@ -10,9 +10,9 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import { formatDate } from '@/lib/formatDate';
-import type { UserProject } from './types';
+import type { AdminUserProject } from '@/server/functions/admin-users.server';
 
-export function UserProjects({ projects }: { projects?: UserProject[] }) {
+export function UserProjects({ projects }: { projects?: AdminUserProject[] }) {
   const rows = projects ?? [];
 
   return (
