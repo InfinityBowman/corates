@@ -85,6 +85,13 @@
       "when": 1788838105585,
       "tag": "0011_auth_rate_limit",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1789240765851,
+      "tag": "0012_invitation_email_status",
+      "breakpoints": true
     }
   ]
 }

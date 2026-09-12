@@ -19,6 +19,7 @@ interface SendInvitationEmailParams {
   projectName: string;
   inviterName: string;
   role: string;
+  invitationId: string;
 }
 
 interface SendInvitationEmailResult {
@@ -34,7 +35,7 @@ interface SendInvitationEmailResult {
 export async function sendInvitationEmail(
   params: SendInvitationEmailParams,
 ): Promise<SendInvitationEmailResult> {
-  const { env, email, token, projectName, inviterName, role } = params;
+  const { env, email, token, projectName, inviterName, role, invitationId } = params;
 
   const invitationUrl = buildAppUrl(env, `/invite/${token}`);
 
@@ -85,6 +86,7 @@ export async function sendInvitationEmail(
       subject: `${safeInviterName} invited you to "${safeProjectName}" on CoRATES`,
       html: emailHtml,
       text: emailText,
+      invitationId,
     });
     info('invitation.email_queued', { email, projectName });
     return { emailQueued: true };

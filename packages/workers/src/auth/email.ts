@@ -23,7 +23,12 @@ interface EmailResult {
   success: boolean;
   id?: string;
   error?: string;
+  /** The address itself is rejected; retrying can never succeed */
+  permanent?: boolean;
 }
+
+// Postmark API codes: 300 malformed recipient, 406 recipient on the suppression list
+const PERMANENT_POSTMARK_CODES = new Set([300, 406]);
 
 interface EmailService {
   sendEmail: (_params: SendEmailParams) => Promise<EmailResult>;
@@ -83,9 +88,10 @@ export function createEmailService(env: Env): EmailService {
 
       return { success: true, id: response.MessageID };
     } catch (err) {
-      const error = err as Error;
-      captureError(err, { tags: { component: 'email' } });
-      return { success: false, error: error.message };
+      const error = err as Error & { code?: unknown };
+      const permanent = typeof error.code === 'number' && PERMANENT_POSTMARK_CODES.has(error.code);
+      captureError(err, { tags: { component: 'email' }, extra: { permanent } });
+      return { success: false, error: error.message, permanent };
     }
   }
 

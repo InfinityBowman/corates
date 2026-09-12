@@ -36,21 +36,34 @@ function createMockMessage(payload: EmailPayload, attempts = 0) {
 }
 
 // In-memory stand-in for the processed_emails table so tests exercise the
-// real dedup behavior: SELECT reads the set, INSERT adds to it.
+// real dedup behavior: SELECT reads the set, INSERT adds to it. Every other
+// statement (the invitation status update) is recorded for assertions.
 function createMockDb() {
   const processed = new Set<string>();
+  const statements: { sql: string; params: unknown[] }[] = [];
   return {
+    statements,
     prepare: (sql: string) => ({
-      bind: (id: string) => ({
-        first: () => Promise.resolve(processed.has(id) ? { 1: 1 } : null),
-        run: () => {
-          const changes = sql.startsWith('INSERT') && !processed.has(id) ? 1 : 0;
-          if (sql.startsWith('INSERT')) processed.add(id);
-          return Promise.resolve({ meta: { changes } });
-        },
-      }),
+      bind: (...params: unknown[]) => {
+        const id = params[0] as string;
+        statements.push({ sql, params });
+        return {
+          first: () => Promise.resolve(processed.has(id) ? { 1: 1 } : null),
+          run: () => {
+            const changes = sql.startsWith('INSERT') && !processed.has(id) ? 1 : 0;
+            if (sql.startsWith('INSERT')) processed.add(id);
+            return Promise.resolve({ meta: { changes }, success: true });
+          },
+        };
+      },
     }),
   };
+}
+
+function undeliverableUpdates(db: ReturnType<typeof createMockDb>) {
+  return db.statements.filter(
+    s => /update "project_invitations"/i.test(s.sql) && s.params.includes('undeliverable'),
+  );
 }
 
 function createMockBatch(messages: ReturnType<typeof createMockMessage>[]) {
@@ -101,6 +114,37 @@ describe('Email Queue Consumer', () => {
     expect(acked).toHaveLength(100);
     expect(retried).toHaveLength(0);
     expect(mockSendEmail).toHaveBeenCalledTimes(100);
+  });
+
+  it('acks a permanently rejected address without retrying and flags the invitation', async () => {
+    mockSendEmail.mockResolvedValue({
+      success: false,
+      permanent: true,
+      error: 'Inactive recipient',
+    });
+    const db = createMockDb();
+    const env = { ...(testEnv as object), DB: db } as never;
+
+    const msg = createMockMessage({ ...makePayload(0), invitationId: 'inv-1' });
+    await workerHandler.queue(createMockBatch([msg]), env);
+
+    expect(msg.ack).toHaveBeenCalledTimes(1);
+    expect(msg.retry).not.toHaveBeenCalled();
+    const updates = undeliverableUpdates(db);
+    expect(updates).toHaveLength(1);
+    expect(updates[0].params).toContain('inv-1');
+  });
+
+  it('does not touch the database for a permanent failure with no invitation', async () => {
+    mockSendEmail.mockResolvedValue({ success: false, permanent: true, error: 'Bad address' });
+    const db = createMockDb();
+    const env = { ...(testEnv as object), DB: db } as never;
+
+    const msg = createMockMessage(makePayload(0));
+    await workerHandler.queue(createMockBatch([msg]), env);
+
+    expect(msg.ack).toHaveBeenCalledTimes(1);
+    expect(undeliverableUpdates(db)).toHaveLength(0);
   });
 
   it('should retry with exponential backoff capped at 1800s', async () => {
@@ -266,9 +310,13 @@ describe('Dead-letter consumer', () => {
     });
 
     const { handleEmailDeadLetter } = await import('../../queue.js');
-    const messages = [createMockMessage(makePayload(0)), createMockMessage(makePayload(1))];
+    const db = createMockDb();
+    const messages = [
+      createMockMessage({ ...makePayload(0), invitationId: 'inv-dead' }),
+      createMockMessage(makePayload(1)),
+    ];
 
-    await handleEmailDeadLetter(createMockBatch(messages));
+    await handleEmailDeadLetter(createMockBatch(messages), { DB: db } as never);
 
     expect(logged.map(e => e.message)).toEqual(['email.dead_lettered', 'email.dead_lettered']);
     expect(logged[0]).toMatchObject({ to: 'user0@example.com', subject: 'Test email 0' });
@@ -276,6 +324,9 @@ describe('Dead-letter consumer', () => {
       expect(msg.ack).toHaveBeenCalledTimes(1);
       expect(msg.retry).not.toHaveBeenCalled();
     }
+    const updates = undeliverableUpdates(db);
+    expect(updates).toHaveLength(1);
+    expect(updates[0].params).toContain('inv-dead');
 
     warnSpy.mockRestore();
   });

@@ -138,6 +138,17 @@ export const PROJECT_ERRORS = {
     defaultMessage: 'This invitation has already been accepted.',
     statusCode: 400,
   },
+  INVITATION_LIMIT_REACHED: {
+    code: 'PROJECT_INVITATION_LIMIT_REACHED',
+    defaultMessage:
+      'This project has too many pending invitations. Cancel some before inviting more people.',
+    statusCode: 429,
+  },
+  INVITATION_RATE_LIMITED: {
+    code: 'PROJECT_INVITATION_RATE_LIMITED',
+    defaultMessage: 'You have sent a lot of invitations in the past hour. Try again later.',
+    statusCode: 429,
+  },
 } as const;
 
 export type ProjectErrorCode = (typeof PROJECT_ERRORS)[keyof typeof PROJECT_ERRORS]['code'];

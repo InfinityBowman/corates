@@ -6,7 +6,16 @@ export interface EmailPayload {
   html?: string;
   text?: string;
   replyTo?: string;
+  // Lets the queue consumer mark the invitation row when the address is undeliverable
+  invitationId?: string;
 }
+
+/**
+ * What happened to the invitation email. recently_sent is a resend inside the
+ * cooldown; not_sent covers a queue failure and an address that cannot take
+ * mail, in both cases the in-app notification is the delivery path.
+ */
+export type InvitationDelivery = 'queued' | 'recently_sent' | 'not_sent';
 
 interface EmailQueue {
   send(payload: EmailPayload): Promise<unknown>;

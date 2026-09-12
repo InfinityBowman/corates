@@ -19,3 +19,11 @@ export const TIME_DURATIONS = {
   ONE_HOUR_MS: 60 * 60 * 1000,
   ONE_HOUR_SEC: 60 * 60,
 } as const;
+
+// Invitation emails go out through the shared Postmark account, so one project
+// owner must not be able to turn the invite form into a bulk sender.
+export const INVITATION_LIMITS = {
+  MAX_PENDING_PER_PROJECT: 20,
+  MAX_CREATED_PER_INVITER_PER_HOUR: 30,
+  RESEND_COOLDOWN_MS: 10 * 60 * 1000,
+} as const;

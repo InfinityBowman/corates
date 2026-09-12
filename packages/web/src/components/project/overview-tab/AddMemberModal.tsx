@@ -7,7 +7,7 @@
 import { useState, useEffect, useRef, useId } from 'react';
 import { Link } from '@tanstack/react-router';
 import { MailIcon, TriangleAlertIcon, XIcon } from 'lucide-react';
-import { isValidEmail, normalizeEmail } from '@corates/shared/email';
+import { isValidEmail, normalizeEmail, type InvitationDelivery } from '@corates/shared/email';
 import { showToast } from '@/lib/toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Avatar, AvatarImage, AvatarFallback, getInitials } from '@/components/ui/avatar';
@@ -96,13 +96,13 @@ export function AddMemberModal({
   }, [isOpen]);
 
   useEffect(() => {
-    if (!settled || debouncedQuery.length < 2) return;
+    if (!settled || debouncedQuery.length < 2 || !orgId) return;
     let cancelled = false;
     setSearching(true);
     (async () => {
       try {
         const found = await searchUsers({
-          data: { q: debouncedQuery, projectId: projectId || undefined },
+          data: { q: debouncedQuery, orgId, projectId: projectId || undefined },
         });
         if (cancelled) return;
         setResults(found);
@@ -119,7 +119,7 @@ export function AddMemberModal({
       cancelled = true;
       setSearching(false);
     };
-  }, [settled, debouncedQuery, projectId]);
+  }, [settled, debouncedQuery, orgId, projectId]);
 
   // A typed email with no matching account is offered as its own row once the
   // search has settled, so it does not flash before the account row arrives.
@@ -202,15 +202,27 @@ export function AddMemberModal({
             { userId: pending.user.id, role }
           : { email: pending.email, role }),
         },
-      })) as { invitation?: boolean; email?: string };
+      })) as { email?: string; delivery?: InvitationDelivery };
       clientLogger.info('client.collaborator.invited', { method: 'email' });
       const sentTo =
         result.email ||
         (pending.kind === 'user' ? pending.user.name || pending.user.email : pending.email);
-      showToast.success(
-        'Invitation sent',
-        `${sentTo} can join the project from the link in the email.`,
-      );
+      if (result.delivery === 'queued') {
+        showToast.success(
+          'Invitation sent',
+          `${sentTo} can join the project from the link in the email.`,
+        );
+      } else if (result.delivery === 'recently_sent') {
+        showToast.success(
+          'Invitation updated',
+          `${sentTo} was emailed a link a few minutes ago, so no new email was sent.`,
+        );
+      } else {
+        showToast.warning(
+          'Invitation created, but no email was sent',
+          `${sentTo} can still accept it from their notifications in CoRATES.`,
+        );
+      }
       // The invitations list is a D1 fact read through React Query. Nothing
       // pushes it to this client, so refetch after the write.
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.invitations(projectId) });

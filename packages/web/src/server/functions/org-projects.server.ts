@@ -1,8 +1,8 @@
 import { captureError, info } from '@corates/workers/logger';
 import { env } from 'cloudflare:workers';
 import type { Database } from '@corates/db/client';
-import { projects, projectMembers, projectInvitations, user } from '@corates/db/schema';
-import { eq, and, count, desc, isNull } from 'drizzle-orm';
+import { projects, projectMembers, projectInvitations, user, member } from '@corates/db/schema';
+import { eq, and, count, desc, gt, isNull, ne, notExists, sql } from 'drizzle-orm';
 import {
   DomainErrorException,
   isDomainError,
@@ -282,7 +282,7 @@ export async function addProjectMember(
       userToAdd = await db
         .select({ id: user.id, email: user.email })
         .from(user)
-        .where(eq(user.email, email))
+        .where(eq(sql`lower(${user.email})`, email))
         .get();
     }
 
@@ -307,6 +307,23 @@ export async function addProjectMember(
       throwDomainError(VALIDATION_ERRORS.FIELD_REQUIRED, { field: 'email' });
     }
 
+    // Accepting is what consumes a collaborator seat, but the invite modal is
+    // the only entry point, so the plan cap is applied here too. Someone
+    // already in the workspace takes no new seat.
+    const orgMember =
+      userToAdd &&
+      (await db
+        .select({ id: member.id })
+        .from(member)
+        .where(and(eq(member.organizationId, orgId), eq(member.userId, userToAdd.id)))
+        .get());
+    if (!orgMember) {
+      const quota = await requireQuota(db, orgId, 'collaborators.org.max', () =>
+        countCollaboratorSeats(db, orgId),
+      );
+      if (!quota.ok) throw quota.error;
+    }
+
     const result = await createInvitation(
       env,
       { id: access.context.userId },
@@ -316,10 +333,7 @@ export async function addProjectMember(
     return {
       success: true,
       invitation: true,
-      message:
-        result.emailQueued ?
-          'Invitation sent successfully'
-        : 'Invitation created but email delivery may be delayed',
+      delivery: result.delivery,
       email: inviteEmail,
     };
   } catch (err) {
@@ -334,6 +348,39 @@ export async function addProjectMember(
       originalError: error.message,
     });
   }
+}
+
+// Seats in use: non-owner members plus live invitations to people not yet in the workspace
+async function countCollaboratorSeats(db: Database, orgId: OrgId): Promise<number> {
+  const [members] = await db
+    .select({ count: count() })
+    .from(member)
+    .where(and(eq(member.organizationId, orgId), ne(member.role, 'owner')));
+
+  const [pending] = await db
+    .select({ count: count() })
+    .from(projectInvitations)
+    .where(
+      and(
+        eq(projectInvitations.orgId, orgId),
+        isNull(projectInvitations.acceptedAt),
+        gt(projectInvitations.expiresAt, new Date()),
+        notExists(
+          db
+            .select({ id: member.id })
+            .from(member)
+            .innerJoin(user, eq(user.id, member.userId))
+            .where(
+              and(
+                eq(member.organizationId, orgId),
+                eq(sql`lower(${user.email})`, projectInvitations.email),
+              ),
+            ),
+        ),
+      ),
+    );
+
+  return (members?.count ?? 0) + (pending?.count ?? 0);
 }
 
 export async function removeProjectMember(
@@ -411,6 +458,7 @@ export async function listProjectInvitations(
         orgRole: projectInvitations.orgRole,
         expiresAt: projectInvitations.expiresAt,
         acceptedAt: projectInvitations.acceptedAt,
+        emailStatus: projectInvitations.emailStatus,
         createdAt: projectInvitations.createdAt,
         invitedBy: projectInvitations.invitedBy,
       })

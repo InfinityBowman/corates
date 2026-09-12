@@ -1,6 +1,6 @@
 import type { Database } from '@corates/db/client';
-import { projects, projectMembers, user } from '@corates/db/schema';
-import { eq, or, desc, count } from 'drizzle-orm';
+import { projects, projectMembers, user, member } from '@corates/db/schema';
+import { eq, and, or, desc, count } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
 import { containsInsensitive } from '@/server/lib/sqlSearch';
 import { deleteUserAccount } from '@/server/lib/accountDeletion';
@@ -12,6 +12,8 @@ import {
 } from '@corates/shared';
 
 import type { Session } from '@/server/middleware/auth';
+import type { OrgId } from '@corates/shared/ids';
+import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 
 export interface UserProject {
   id: string;
@@ -35,14 +37,6 @@ export interface UserSearchResult {
   username: string | null;
   image: string | null;
   email: string | null;
-}
-
-function maskEmail(email: string | null): string | null {
-  if (!email) return null;
-  const [local, domain] = email.split('@');
-  if (!domain) return email;
-  const masked = local.length > 2 ? local.slice(0, 2) + '***' : local + '***';
-  return `${masked}@${domain}`;
 }
 
 export async function deleteAccount(db: Database, session: Session) {
@@ -81,13 +75,18 @@ export async function searchUsers(
   db: Database,
   session: Session,
   _request: Request,
-  params: { q: string; projectId?: string; limit?: number },
+  params: { q: string; orgId: string; projectId?: string; limit?: number },
 ) {
   if (!params.q || params.q.length < 2) {
     const error = createValidationError('q', VALIDATION_ERRORS.FIELD_TOO_SHORT.code, params.q);
     error.message = 'Search query must be at least 2 characters';
     throw new DomainErrorException(error);
   }
+
+  // Only people already in the workspace are searchable, so the user table is
+  // never enumerable across workspaces. Anyone else is invited by address.
+  const orgMembership = await requireOrgMembership(session, db, params.orgId as OrgId);
+  if (!orgMembership.ok) throw orgMembership.error;
 
   const limit = Math.min(params.limit && Number.isFinite(params.limit) ? params.limit : 10, 20);
 
@@ -102,13 +101,17 @@ export async function searchUsers(
       image: user.image,
     })
     .from(user)
+    .innerJoin(member, eq(member.userId, user.id))
     .where(
-      or(
-        containsInsensitive(user.email, params.q),
-        containsInsensitive(user.name, params.q),
-        containsInsensitive(user.givenName, params.q),
-        containsInsensitive(user.familyName, params.q),
-        containsInsensitive(user.username, params.q),
+      and(
+        eq(member.organizationId, params.orgId),
+        or(
+          containsInsensitive(user.email, params.q),
+          containsInsensitive(user.name, params.q),
+          containsInsensitive(user.givenName, params.q),
+          containsInsensitive(user.familyName, params.q),
+          containsInsensitive(user.username, params.q),
+        ),
       ),
     )
     .limit(limit);
@@ -131,7 +134,7 @@ export async function searchUsers(
     familyName: u.familyName,
     username: u.username,
     image: u.image,
-    email: params.q.includes('@') ? u.email : maskEmail(u.email),
+    email: u.email,
   }));
 
   return sanitized;

@@ -16,6 +16,7 @@ export const searchUsers = createServerFn({ method: 'GET' })
   .validator(
     z.object({
       q: z.string(),
+      orgId: z.string(),
       projectId: z.string().optional(),
       limit: z.number().optional(),
     }),

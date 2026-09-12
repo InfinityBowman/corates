@@ -5,6 +5,9 @@
  */
 import { captureError, info, runWithContext, warn } from './lib/logger';
 import { createEmailService } from './auth/email';
+import { createDb } from '@corates/db/client';
+import { projectInvitations } from '@corates/db/schema';
+import { eq } from 'drizzle-orm';
 import type { EmailPayload } from '@corates/shared/email';
 import type { Env } from './types';
 
@@ -27,6 +30,16 @@ async function markProcessed(db: D1Database, messageId: string): Promise<void> {
     )
     .bind(messageId)
     .run();
+}
+
+// Surfaces the failure on the pending-invitations list, since nothing else
+// tells the inviter that the address never received anything.
+async function markInvitationUndeliverable(env: Env, payload: EmailPayload): Promise<void> {
+  if (!payload.invitationId) return;
+  await createDb(env.DB)
+    .update(projectInvitations)
+    .set({ emailStatus: 'undeliverable' })
+    .where(eq(projectInvitations.id, payload.invitationId));
 }
 
 export async function handleEmailQueue(batch: MessageBatch<unknown>, env: Env): Promise<void> {
@@ -60,10 +73,20 @@ export async function handleEmailQueue(batch: MessageBatch<unknown>, env: Env): 
             captureError(new Error(`Email send failed for ${msg.body.to}: ${result.error}`), {
               tags: { component: 'email-queue' },
               // subject is all that tells an invitation from a magic link here
-              extra: { attempt: msg.attempts, to: msg.body.to, subject: msg.body.subject },
+              extra: {
+                attempt: msg.attempts,
+                to: msg.body.to,
+                subject: msg.body.subject,
+                permanent: result.permanent,
+              },
             });
-            const delay = Math.min(30 * 2 ** msg.attempts, 1800);
-            msg.retry({ delaySeconds: delay });
+            if (result.permanent) {
+              await markInvitationUndeliverable(env, msg.body);
+              msg.ack();
+            } else {
+              const delay = Math.min(30 * 2 ** msg.attempts, 1800);
+              msg.retry({ delaySeconds: delay });
+            }
           }
         } catch (error) {
           captureError(error, {
@@ -78,8 +101,8 @@ export async function handleEmailQueue(batch: MessageBatch<unknown>, env: Env): 
   );
 }
 
-// A dead-lettered message is already undeliverable; recording it is all that is left
-export async function handleEmailDeadLetter(batch: MessageBatch<unknown>): Promise<void> {
+// A dead-lettered message has exhausted its retries; record it and flag the invitation
+export async function handleEmailDeadLetter(batch: MessageBatch<unknown>, env: Env): Promise<void> {
   for (const msg of batch.messages as Message<EmailPayload>[]) {
     warn('email.dead_lettered', {
       to: msg.body.to,
@@ -87,6 +110,11 @@ export async function handleEmailDeadLetter(batch: MessageBatch<unknown>): Promi
       queueMessageId: msg.id,
       enqueuedAt: msg.timestamp.toISOString(),
     });
+    try {
+      await markInvitationUndeliverable(env, msg.body);
+    } catch (error) {
+      captureError(error, { tags: { component: 'email-dlq' }, extra: { to: msg.body.to } });
+    }
     msg.ack();
   }
 }

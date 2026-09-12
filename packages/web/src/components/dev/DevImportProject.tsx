@@ -436,6 +436,7 @@ export function DevImportProject() {
                     <UserSearchField
                       key={templateUserId}
                       label={templateUserLabel(templateUserId)}
+                      orgId={resolvedOrgId}
                       selectedUserId={roleAssignments[templateUserId] || null}
                       currentUser={currentUser}
                       excludeUserIds={Object.entries(roleAssignments)
@@ -514,6 +515,7 @@ export function DevImportProject() {
                 <UserSearchField
                   key={snapshotUserId}
                   label={templateUserLabel(snapshotUserId)}
+                  orgId={resolvedOrgId}
                   selectedUserId={jsonAssignments[snapshotUserId] || null}
                   currentUser={currentUser}
                   excludeUserIds={Object.entries(jsonAssignments)
@@ -568,6 +570,7 @@ export function DevImportProject() {
 
 interface UserSearchFieldProps {
   label: string;
+  orgId: string | null;
   selectedUserId: string | null;
   currentUser: { id: string; name?: string; email: string; image?: string | null } | null;
   excludeUserIds: string[];
@@ -578,6 +581,7 @@ interface UserSearchFieldProps {
 
 function UserSearchField({
   label,
+  orgId,
   selectedUserId,
   currentUser,
   excludeUserIds,
@@ -595,7 +599,7 @@ function UserSearchField({
   const debouncedQuery = useDebouncedValue(query, 300);
 
   useEffect(() => {
-    if (debouncedQuery.length < 2) {
+    if (debouncedQuery.length < 2 || !orgId) {
       setResults([]);
       setSearching(false);
       return;
@@ -604,7 +608,7 @@ function UserSearchField({
     (async () => {
       setSearching(true);
       try {
-        const data = await searchUsers({ data: { q: debouncedQuery } });
+        const data = await searchUsers({ data: { q: debouncedQuery, orgId } });
         if (!cancelled) setResults(data as SearchResult[]);
       } catch {
         if (!cancelled) setResults([]);
@@ -615,7 +619,7 @@ function UserSearchField({
     return () => {
       cancelled = true;
     };
-  }, [debouncedQuery]);
+  }, [debouncedQuery, orgId]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {

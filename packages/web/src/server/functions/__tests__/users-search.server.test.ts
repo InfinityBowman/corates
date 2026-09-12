@@ -5,6 +5,8 @@ import { createDb } from '@corates/db/client';
 import { resetTestDatabase } from '@/__tests__/server/helpers';
 import {
   buildUser,
+  buildOrg,
+  buildOrgMember,
   buildProject,
   buildProjectMember,
   resetCounter,
@@ -28,81 +30,116 @@ beforeEach(async () => {
 
 const dummyRequest = new Request('http://localhost/api/users/search');
 
-describe('GET /api/users/search', () => {
-  it('searches users by email', async () => {
-    const me = await buildUser({ email: 'user1@example.com' });
-    const user2 = await buildUser({ email: 'user2@example.com' });
-    await buildUser({ email: 'user3@example.com' });
-    currentUser = { id: me.id, email: me.email };
+async function buildWorkspace() {
+  const { org, owner } = await buildOrg();
+  currentUser = { id: owner.id, email: owner.email };
+  return { org, owner };
+}
+
+describe('searchUsers', () => {
+  it('finds workspace members by name, given name, and username', async () => {
+    const { org } = await buildWorkspace();
+    const byName = await buildUser({ name: 'John Doe' });
+    const byGiven = await buildUser({ givenName: 'Johnny' });
+    const byUsername = await buildUser({ username: 'johndoe' });
+    for (const user of [byName, byGiven, byUsername]) {
+      await buildOrgMember({ orgId: org.id, user });
+    }
 
     const result = await searchUsers(createDb(env.DB), mockSession(), dummyRequest, {
-      q: 'user2',
+      q: 'JOHN',
+      orgId: org.id,
     });
-    expect(result).toHaveLength(1);
-    expect(result[0].id).toBe(user2.id);
+    expect(result.map(u => u.id).sort()).toEqual([byName.id, byGiven.id, byUsername.id].sort());
   });
 
-  it('masks email when query does not include @', async () => {
-    const me = await buildUser({ email: 'current@example.com' });
-    await buildUser({ email: 'user2@example.com' });
-    currentUser = { id: me.id, email: me.email };
+  it('returns the full email of a workspace member', async () => {
+    const { org } = await buildWorkspace();
+    const colleague = await buildUser({ name: 'Ada Lovelace', email: 'ada@example.com' });
+    await buildOrgMember({ orgId: org.id, user: colleague });
 
     const result = await searchUsers(createDb(env.DB), mockSession(), dummyRequest, {
-      q: 'user',
-    });
-    const u = result.find(x => x.email?.startsWith('us'));
-    expect(u).toBeDefined();
-    expect(u!.email).toMatch(/^us\*\*\*@example\.com$/);
-  });
-
-  it('returns full email when query includes @', async () => {
-    const me = await buildUser({ email: 'current@example.com' });
-    const user2 = await buildUser({ email: 'user2@example.com' });
-    currentUser = { id: me.id, email: me.email };
-
-    const result = await searchUsers(createDb(env.DB), mockSession(), dummyRequest, {
-      q: 'user2@example.com',
+      q: 'ada',
+      orgId: org.id,
     });
     expect(result).toHaveLength(1);
-    expect(result[0].email).toBe(user2.email);
+    expect(result[0].email).toBe('ada@example.com');
+  });
+
+  it('never returns users outside the workspace, even by exact email', async () => {
+    const { org } = await buildWorkspace();
+    await buildUser({ name: 'John Outsider', email: 'john@elsewhere.org' });
+
+    for (const q of ['john', 'john@elsewhere.org', '@elsewhere']) {
+      const result = await searchUsers(createDb(env.DB), mockSession(), dummyRequest, {
+        q,
+        orgId: org.id,
+      });
+      expect(result).toEqual([]);
+    }
+  });
+
+  it('matches a workspace member by email', async () => {
+    const { org } = await buildWorkspace();
+    const colleague = await buildUser({ name: 'Ada Lovelace', email: 'ada@example.com' });
+    await buildOrgMember({ orgId: org.id, user: colleague });
+
+    const result = await searchUsers(createDb(env.DB), mockSession(), dummyRequest, {
+      q: 'ada@example.com',
+      orgId: org.id,
+    });
+    expect(result.map(u => u.id)).toEqual([colleague.id]);
+  });
+
+  it('rejects a caller who is not in the workspace', async () => {
+    const { org } = await buildOrg();
+    const stranger = await buildUser();
+    currentUser = { id: stranger.id, email: stranger.email };
+
+    await expect(
+      searchUsers(createDb(env.DB), mockSession(), dummyRequest, { q: 'any', orgId: org.id }),
+    ).rejects.toMatchObject({ statusCode: 403 });
   });
 
   it('rejects query shorter than 2 characters', async () => {
+    const { org } = await buildWorkspace();
     try {
-      await searchUsers(createDb(env.DB), mockSession(), dummyRequest, { q: 'a' });
+      await searchUsers(createDb(env.DB), mockSession(), dummyRequest, { q: 'a', orgId: org.id });
       expect.fail('Should have thrown');
     } catch (err) {
       const res = err as DomainErrorException;
       expect(res.statusCode).toBe(400);
-      const body = res.toDomainError() as any;
+      const body = res.toDomainError() as { code: string; message: string };
       expect(body.code).toMatch(/VALIDATION/);
       expect(body.message).toMatch(/2 characters|too short/i);
     }
   });
 
   it('caps limit at 20', async () => {
-    const me = await buildUser({ email: 'current@example.com' });
+    const { org } = await buildWorkspace();
     for (let i = 0; i < 25; i++) {
-      await buildUser({ email: `searchuser${i}@example.com` });
+      const user = await buildUser({ name: `Searchuser ${i}` });
+      await buildOrgMember({ orgId: org.id, user });
     }
-    currentUser = { id: me.id, email: me.email };
 
     const result = await searchUsers(createDb(env.DB), mockSession(), dummyRequest, {
       q: 'searchuser',
+      orgId: org.id,
       limit: 100,
     });
     expect(result.length).toBeLessThanOrEqual(20);
   });
 
-  it('excludes current user', async () => {
-    const me = await buildUser({ name: 'Current User', email: 'user1@example.com' });
-    const other = await buildUser({ name: 'Other User', email: 'user2@example.com' });
-    currentUser = { id: me.id, email: me.email };
+  it('excludes the current user', async () => {
+    const { org, owner } = await buildWorkspace();
+    const other = await buildUser({ name: 'Other User' });
+    await buildOrgMember({ orgId: org.id, user: other });
 
     const result = await searchUsers(createDb(env.DB), mockSession(), dummyRequest, {
       q: 'user',
+      orgId: org.id,
     });
-    expect(result.find(u => u.id === me.id)).toBeUndefined();
+    expect(result.find(u => u.id === owner.id)).toBeUndefined();
     expect(result.find(u => u.id === other.id)).toBeDefined();
   });
 
@@ -113,62 +150,16 @@ describe('GET /api/users/search', () => {
       orgId: org.id,
       role: 'member',
     });
-    const outsider = await buildUser({ email: 'user3@example.com' });
+    const colleague = await buildUser({ name: 'User Three' });
+    await buildOrgMember({ orgId: org.id, user: colleague });
     currentUser = { id: owner.id, email: owner.email };
 
     const result = await searchUsers(createDb(env.DB), mockSession(), dummyRequest, {
       q: 'user',
+      orgId: org.id,
       projectId: project.id,
     });
     expect(result.find(u => u.id === projectMember.user.id)).toBeUndefined();
-    expect(result.find(u => u.id === outsider.id)).toBeDefined();
-  });
-
-  it('searches by name', async () => {
-    const me = await buildUser({ email: 'current@example.com' });
-    const john = await buildUser({ name: 'John Doe', email: 'john@example.com' });
-    currentUser = { id: me.id, email: me.email };
-
-    const result = await searchUsers(createDb(env.DB), mockSession(), dummyRequest, {
-      q: 'john',
-    });
-    expect(result).toHaveLength(1);
-    expect(result[0].name).toBe(john.name);
-  });
-
-  it('searches by givenName', async () => {
-    const me = await buildUser({ email: 'current@example.com' });
-    const johnny = await buildUser({ givenName: 'Johnny', email: 'user2@example.com' });
-    currentUser = { id: me.id, email: me.email };
-
-    const result = await searchUsers(createDb(env.DB), mockSession(), dummyRequest, {
-      q: 'johnny',
-    });
-    expect(result).toHaveLength(1);
-    expect(result[0].givenName).toBe(johnny.givenName);
-  });
-
-  it('searches by username', async () => {
-    const me = await buildUser({ email: 'current@example.com' });
-    const johndoe = await buildUser({ username: 'johndoe', email: 'user2@example.com' });
-    currentUser = { id: me.id, email: me.email };
-
-    const result = await searchUsers(createDb(env.DB), mockSession(), dummyRequest, {
-      q: 'johndoe',
-    });
-    expect(result).toHaveLength(1);
-    expect(result[0].username).toBe(johndoe.username);
-  });
-
-  it('is case-insensitive', async () => {
-    const me = await buildUser({ email: 'current@example.com' });
-    const john = await buildUser({ name: 'John Doe', email: 'john@example.com' });
-    currentUser = { id: me.id, email: me.email };
-
-    const result = await searchUsers(createDb(env.DB), mockSession(), dummyRequest, {
-      q: 'JOHN',
-    });
-    expect(result).toHaveLength(1);
-    expect(result[0].name).toBe(john.name);
+    expect(result.find(u => u.id === colleague.id)).toBeDefined();
   });
 });
