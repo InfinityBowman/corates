@@ -71,6 +71,7 @@ WEB_SECRETS=(
   ADMIN_EMAIL
   STRIPE_SECRET_KEY
   STRIPE_WEBHOOK_SECRET_AUTH
+  SYNC_ADMIN_TOKEN
 )
 
 echo "=== web worker (packages/web) --env $ENV ==="
