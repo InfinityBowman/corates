@@ -307,3 +307,5 @@ export async function getAdminTableRows(
     },
   };
 }
+
+export type AdminTableColumn = Awaited<ReturnType<typeof getAdminTableSchema>>['columns'][number];

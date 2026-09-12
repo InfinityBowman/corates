@@ -4,6 +4,7 @@ import { BuildingIcon } from 'lucide-react';
 import { useAdminOrgs } from '@/hooks/useAdminQueries';
 import { formatDate } from '@/lib/formatDate';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import type { AdminOrgListItem } from '@/server/functions/admin-orgs.server';
 import {
   AdminDataTable,
   AdminEmpty,
@@ -12,17 +13,6 @@ import {
   ServerPagination,
   type AdminColumnDef,
 } from '@/components/admin/ui';
-
-interface OrgRow {
-  id: string;
-  name: string;
-  slug: string;
-  stats?: {
-    memberCount?: number;
-    projectCount?: number;
-  };
-  createdAt?: string | number;
-}
 
 const PAGE_SIZE = 25;
 
@@ -41,19 +31,14 @@ function AdminOrgList() {
     limit: PAGE_SIZE,
     search: debouncedSearch,
   });
-  const orgsData = orgsDataQuery.data as
-    | {
-        orgs: OrgRow[];
-        pagination: { limit: number; total: number; totalPages: number };
-      }
-    | undefined;
+  const orgsData = orgsDataQuery.data;
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
     setPage(1);
   };
 
-  const columns = useMemo<AdminColumnDef<OrgRow>[]>(
+  const columns = useMemo<AdminColumnDef<AdminOrgListItem>[]>(
     () => [
       {
         accessorKey: 'name',
@@ -143,7 +128,7 @@ function AdminOrgList() {
           />
         }
         enableSorting
-        onRowClick={(row: OrgRow) =>
+        onRowClick={(row: AdminOrgListItem) =>
           navigate({
             to: '/admin/orgs/$orgId' as string,
             params: { orgId: row.id } as Record<string, string>,

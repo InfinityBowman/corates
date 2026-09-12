@@ -2,7 +2,7 @@ import { MonitorIcon, LogOutIcon } from 'lucide-react';
 import { AdminEmpty, AdminPanel } from '@/components/admin/ui';
 import { Button } from '@/components/ui/button';
 import { formatDateTime } from '@/lib/formatDate';
-import type { UserSession } from './types';
+import type { AdminUserSession } from '@/server/functions/admin-users.server';
 
 const parseUserAgent = (ua: string | undefined): { browser: string; os: string } => {
   if (!ua) return { browser: 'Unknown', os: 'Unknown' };
@@ -24,7 +24,7 @@ const parseUserAgent = (ua: string | undefined): { browser: string; os: string }
 };
 
 interface UserSessionsProps {
-  sessions?: UserSession[];
+  sessions?: AdminUserSession[];
   loading: boolean;
   onRevoke: (sessionId: string) => void;
   onRevokeAll: () => void;
@@ -55,7 +55,7 @@ export function UserSessions({ sessions, loading, onRevoke, onRevokeAll }: UserS
       {rows.length === 0 ?
         <AdminEmpty title='No active sessions' />
       : rows.map(session => {
-          const { browser, os } = parseUserAgent(session.userAgent);
+          const { browser, os } = parseUserAgent(session.userAgent ?? undefined);
           return (
             <div key={session.id} className='flex items-center gap-3 px-4 py-3'>
               <span className='bg-muted inline-flex size-7 shrink-0 items-center justify-center rounded-full'>

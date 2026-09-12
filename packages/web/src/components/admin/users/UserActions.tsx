@@ -1,9 +1,9 @@
 import { LogInIcon, UserCheckIcon, UserXIcon, Trash2Icon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { UserData } from './types';
+import type { AdminUserDetails } from '@/server/functions/admin-users.server';
 
 interface UserActionsProps {
-  user: UserData['user'];
+  user: AdminUserDetails['user'];
   loading: boolean;
   onImpersonate: () => void;
   onUnban: () => void;

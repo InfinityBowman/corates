@@ -10,9 +10,9 @@ import {
 } from '@/components/ui/table';
 import { formatFileSize } from '@corates/shared';
 import { formatDate } from '@/lib/formatDate';
-import type { ProjectFile } from './types';
+import type { AdminProjectFile } from '@/server/functions/admin-projects.server';
 
-export function ProjectFilesSection({ files }: { files?: ProjectFile[] }) {
+export function ProjectFilesSection({ files }: { files?: AdminProjectFile[] }) {
   const rows = files ?? [];
 
   return (
@@ -46,7 +46,7 @@ export function ProjectFilesSection({ files }: { files?: ProjectFile[] }) {
                       params={{ userId: file.uploadedBy } as Record<string, string>}
                       className='text-primary hover:text-primary/80'
                     >
-                      {file.uploaderDisplayName || file.uploaderName}
+                      {file.uploaderName}
                     </Link>
                   : <span className='text-muted-foreground/60'>-</span>}
                 </TableCell>

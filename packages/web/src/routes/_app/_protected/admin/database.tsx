@@ -15,6 +15,7 @@ import {
   useAdminTableRows,
   useAdminTableSchema,
 } from '@/hooks/useAdminQueries';
+import type { AdminTableColumn } from '@/server/functions/admin-database.server';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -43,28 +44,6 @@ export const Route = createFileRoute('/_app/_protected/admin/database')({
 
 const LIMIT_OPTIONS = [25, 50, 100];
 
-interface TableInfo {
-  name: string;
-  rowCount?: number;
-}
-
-interface ColumnSchema {
-  name: string;
-  type?: string;
-  primaryKey?: boolean;
-  foreignKey?: { table: string; column: string } | null;
-}
-
-interface TableRowsData {
-  rows: Array<Record<string, unknown>>;
-  pagination: {
-    page: number;
-    limit: number;
-    totalRows: number;
-    totalPages: number;
-  };
-}
-
 const formatCellValue = (value: unknown): string => {
   if (value === null || value === undefined) return '-';
   if (typeof value === 'boolean') return value ? 'true' : 'false';
@@ -83,14 +62,10 @@ function DatabaseViewerPage() {
   const [filterValue, setFilterValue] = useState<string | null>(null);
 
   const tablesQuery = useAdminDatabaseTables();
-  const tables = ((tablesQuery.data as { tables: TableInfo[] } | undefined)?.tables ??
-    []) as TableInfo[];
+  const tables = tablesQuery.data?.tables ?? [];
 
   const schemaQuery = useAdminTableSchema(selectedTable);
-  const schemaColumns = useMemo(
-    () => (schemaQuery.data as { columns: ColumnSchema[] } | undefined)?.columns ?? [],
-    [schemaQuery.data],
-  );
+  const schemaColumns = useMemo(() => schemaQuery.data?.columns ?? [], [schemaQuery.data]);
 
   const rowsQuery = useAdminTableRows({
     tableName: selectedTable ?? undefined,
@@ -102,8 +77,10 @@ function DatabaseViewerPage() {
     filterValue,
   });
 
-  const rowsData = rowsQuery.data as TableRowsData | undefined;
-  const rows = useMemo(() => rowsData?.rows ?? [], [rowsData]);
+  const rowsData = rowsQuery.data;
+  // The viewer renders whatever table was picked at runtime, so the rows are
+  // read by column name rather than as one known shape.
+  const rows = useMemo(() => (rowsData?.rows ?? []) as Record<string, unknown>[], [rowsData]);
   const pagination = rowsData?.pagination ?? { page: 1, limit, totalRows: 0, totalPages: 0 };
 
   const columns = useMemo(() => {
@@ -112,7 +89,7 @@ function DatabaseViewerPage() {
   }, [rows]);
 
   const columnSchemaMap = useMemo(() => {
-    const map: Record<string, ColumnSchema> = {};
+    const map: Record<string, AdminTableColumn> = {};
     for (const col of schemaColumns) {
       map[col.name] = col;
     }

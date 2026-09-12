@@ -19,7 +19,6 @@ import { handleError } from '@/lib/error-utils';
 import { queryKeys } from '@/lib/queryKeys';
 import { AdminError, AdminPage, AdminPanel } from '@/components/admin/ui';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { UserData } from '@/components/admin/users/types';
 import { UserActions } from '@/components/admin/users/UserActions';
 import { UserProfileSection } from '@/components/admin/users/UserProfileSection';
 import { UserLinkedAccounts } from '@/components/admin/users/UserLinkedAccounts';
@@ -76,7 +75,7 @@ function UserDetailContent() {
   const qc = useQueryClient();
 
   const { data } = useSuspenseQuery(adminUserDetailsQueryOptions(userId));
-  const userData = data as unknown as UserData;
+  const userData = data;
   const user = userData.user;
 
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -172,7 +171,11 @@ function UserDetailContent() {
       back={BACK_TO_USERS}
       title={
         <span className='flex items-center gap-3'>
-          <UserAvatar src={user.avatarUrl || user.image} name={user.name} className='size-8' />
+          <UserAvatar
+            src={user.avatarUrl || user.image || undefined}
+            name={user.name}
+            className='size-8'
+          />
           {user.name}
         </span>
       }

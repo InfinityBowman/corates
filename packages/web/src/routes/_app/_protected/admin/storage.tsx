@@ -44,22 +44,6 @@ export const Route = createFileRoute('/_app/_protected/admin/storage')({
   component: StorageManagementPage,
 });
 
-interface StorageDocument {
-  key: string;
-  fileName: string;
-  size?: number;
-  projectId?: string;
-  studyId?: string;
-  uploaded?: string;
-  orphaned?: boolean;
-}
-
-interface StorageDocumentsData {
-  documents: StorageDocument[];
-  nextCursor?: string | null;
-  truncated?: boolean;
-}
-
 const PAGE_SIZE = 50;
 
 function StorageManagementPage() {
@@ -78,7 +62,7 @@ function StorageManagementPage() {
     prefix,
     search: debouncedSearch,
   });
-  const documentsData = documentsDataQuery.data as StorageDocumentsData | undefined;
+  const documentsData = documentsDataQuery.data;
   const documents = documentsData?.documents ?? [];
 
   const resetPaging = () => {

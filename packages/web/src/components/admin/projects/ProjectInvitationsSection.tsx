@@ -10,12 +10,12 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import { formatDate } from '@/lib/formatDate';
-import type { ProjectInvitation } from './types';
+import type { AdminProjectInvitation } from '@/server/functions/admin-projects.server';
 
-function invitationStatus(invitation: ProjectInvitation): 'accepted' | 'pending' | 'expired' {
+function invitationStatus(invitation: AdminProjectInvitation): 'accepted' | 'pending' | 'expired' {
   if (invitation.acceptedAt) return 'accepted';
   if (!invitation.expiresAt) return 'pending';
-  return new Date(invitation.expiresAt * 1000) > new Date() ? 'pending' : 'expired';
+  return invitation.expiresAt > new Date() ? 'pending' : 'expired';
 }
 
 const STATUS_BADGE = {
@@ -24,7 +24,11 @@ const STATUS_BADGE = {
   expired: { variant: 'destructive', label: 'Expired' },
 } as const;
 
-export function ProjectInvitationsSection({ invitations }: { invitations?: ProjectInvitation[] }) {
+export function ProjectInvitationsSection({
+  invitations,
+}: {
+  invitations?: AdminProjectInvitation[];
+}) {
   const rows = invitations ?? [];
 
   return (
@@ -62,7 +66,7 @@ export function ProjectInvitationsSection({ invitations }: { invitations?: Proje
                       params={{ userId: invitation.invitedBy } as Record<string, string>}
                       className='text-primary hover:text-primary/80'
                     >
-                      {invitation.inviterDisplayName || invitation.inviterName}
+                      {invitation.inviterName}
                     </Link>
                   </TableCell>
                   <TableCell className={`${ADMIN_TD_MUTED} tabular-nums`}>

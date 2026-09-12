@@ -1,24 +1,10 @@
 import { AdminPanel, AdminField, AdminFieldGrid } from '@/components/admin/ui';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-
-interface BillingPlan {
-  name?: string;
-  entitlements?: Record<string, boolean | string | number>;
-  quotas?: Record<string, number | null | undefined>;
-}
-
-interface BillingState {
-  plan?: BillingPlan;
-  effectivePlanId?: string;
-  accessMode?: 'full' | 'readOnly';
-  source?: 'free' | 'subscription' | 'grant';
-  subscription?: { plan?: string } | null;
-  grant?: { type?: string } | null;
-}
+import type { AdminOrgBillingState } from '@/server/functions/admin-orgs.server';
 
 interface OrgBillingSummaryProps {
-  billing: BillingState | null | undefined;
+  billing: AdminOrgBillingState | null | undefined;
   isLoading?: boolean;
 }
 
@@ -40,7 +26,7 @@ export function OrgBillingSummary({ billing, isLoading }: OrgBillingSummaryProps
 
   const sourceReason =
     billingSource === 'subscription' && billing.subscription ?
-      `Active subscription (${billing.subscription.plan})`
+      `Active subscription (${billing.plan?.name})`
     : billingSource === 'grant' && billing.grant ? `Active grant (${billing.grant.type})`
     : 'No active subscription or grant';
 

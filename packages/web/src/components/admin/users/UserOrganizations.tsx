@@ -10,9 +10,9 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import { formatDate } from '@/lib/formatDate';
-import type { UserOrg } from './types';
+import type { AdminUserOrg } from '@/server/functions/admin-users.server';
 
-export function UserOrganizations({ orgs }: { orgs?: UserOrg[] }) {
+export function UserOrganizations({ orgs }: { orgs?: AdminUserOrg[] }) {
   const rows = orgs ?? [];
 
   return (
@@ -50,9 +50,9 @@ export function UserOrganizations({ orgs }: { orgs?: UserOrg[] }) {
                   <Badge
                     variant={
                       org.billing.accessMode === 'full' ? 'success'
-                      : org.billing.accessMode === 'limited' ?
+                      : org.billing.accessMode === 'readOnly' ?
                         'warning'
-                      : 'destructive'
+                      : 'secondary'
                     }
                   >
                     {org.billing.accessMode}

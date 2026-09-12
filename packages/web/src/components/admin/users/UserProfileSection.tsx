@@ -1,9 +1,9 @@
 import { ExternalLinkIcon } from 'lucide-react';
 import { AdminPanel, AdminField, AdminFieldGrid, CopyButton } from '@/components/admin/ui';
 import { formatDateTime } from '@/lib/formatDate';
-import type { UserData } from './types';
+import type { AdminUserDetails } from '@/server/functions/admin-users.server';
 
-export function UserProfileSection({ user }: { user: UserData['user'] }) {
+export function UserProfileSection({ user }: { user: AdminUserDetails['user'] }) {
   return (
     <AdminPanel title='Profile Information' padded>
       <AdminFieldGrid>

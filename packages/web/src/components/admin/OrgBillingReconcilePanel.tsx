@@ -10,40 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
-interface StuckState {
-  type: string;
-  severity: string;
-  description: string;
-  ageMinutes?: number;
-  threshold?: number;
-  subscriptionId?: string;
-  stripeSubscriptionId?: string;
-  stripeEventId?: string;
-  localStatus?: string;
-  stripeStatus?: string;
-}
-
-interface ReconcileSummary {
-  stuckStateCount?: number;
-  failedWebhooks?: number;
-  ignoredWebhooks?: number;
-}
-
-interface StripeComparison {
-  error?: string;
-  noActiveSubscription?: boolean;
-  match?: boolean;
-  localStatus?: string;
-  stripeStatus?: string;
-}
-
-interface ReconcileData {
-  stuckStates?: StuckState[];
-  summary?: ReconcileSummary;
-  stripeComparison?: StripeComparison;
-}
-
-const getSeverityIcon = (severity: string) => {
+const getSeverityIcon = (severity: string | undefined) => {
   switch (severity) {
     case 'critical':
       return AlertTriangleIcon;
@@ -55,7 +22,7 @@ const getSeverityIcon = (severity: string) => {
   }
 };
 
-const getSeverityVariant = (severity: string) => {
+const getSeverityVariant = (severity: string | undefined) => {
   switch (severity) {
     case 'critical':
       return 'destructive' as const;
@@ -91,7 +58,13 @@ function ThresholdField({
   );
 }
 
-export function OrgBillingReconcilePanel({ orgId }: { orgId: string }) {
+export function OrgBillingReconcilePanel({
+  orgId,
+  onHide,
+}: {
+  orgId: string;
+  onHide?: () => void;
+}) {
   const [incompleteThreshold, setIncompleteThreshold] = useState(30);
   const [checkoutNoSubThreshold, setCheckoutNoSubThreshold] = useState(15);
   const [processingLagThreshold, setProcessingLagThreshold] = useState(5);
@@ -104,9 +77,9 @@ export function OrgBillingReconcilePanel({ orgId }: { orgId: string }) {
     processingLagThreshold,
   });
 
-  const reconcileData = reconcileQuery.data as ReconcileData | undefined;
+  const reconcileData = reconcileQuery.data;
   const stuckStates = reconcileData?.stuckStates ?? [];
-  const summary = reconcileData?.summary ?? {};
+  const summary = reconcileData?.summary;
   const isLoading = reconcileQuery.isLoading;
 
   return (
@@ -114,18 +87,25 @@ export function OrgBillingReconcilePanel({ orgId }: { orgId: string }) {
       title='Billing Reconciliation'
       padded
       action={
-        <Button
-          variant='outline'
-          size='sm'
-          onClick={() => reconcileQuery.refetch()}
-          disabled={reconcileQuery.isFetching}
-        >
-          <RefreshCwIcon
-            className={reconcileQuery.isFetching ? 'animate-spin' : ''}
-            data-icon='inline-start'
-          />
-          Refresh
-        </Button>
+        <>
+          {onHide && (
+            <Button variant='ghost' size='sm' onClick={onHide}>
+              Hide
+            </Button>
+          )}
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={() => reconcileQuery.refetch()}
+            disabled={reconcileQuery.isFetching}
+          >
+            <RefreshCwIcon
+              className={reconcileQuery.isFetching ? 'animate-spin' : ''}
+              data-icon='inline-start'
+            />
+            Refresh
+          </Button>
+        </>
       }
     >
       <div className='border-border bg-muted/40 mb-5 grid grid-cols-1 gap-4 rounded-lg border p-4 md:grid-cols-4'>
@@ -163,7 +143,7 @@ export function OrgBillingReconcilePanel({ orgId }: { orgId: string }) {
       </div>
 
       <div className='mb-5 grid grid-cols-2 gap-3 md:grid-cols-5'>
-        <AdminStat label='Total stuck' value={summary.stuckStateCount ?? 0} loading={isLoading} />
+        <AdminStat label='Total stuck' value={summary?.stuckStateCount ?? 0} loading={isLoading} />
         <AdminStat
           label='Critical'
           value={stuckStates.filter(s => s.severity === 'critical').length}
@@ -178,12 +158,12 @@ export function OrgBillingReconcilePanel({ orgId }: { orgId: string }) {
         />
         <AdminStat
           label='Failed webhooks'
-          value={summary.failedWebhooks ?? 0}
+          value={summary?.failedWebhooks ?? 0}
           loading={isLoading}
         />
         <AdminStat
           label='Ignored webhooks'
-          value={summary.ignoredWebhooks ?? 0}
+          value={summary?.ignoredWebhooks ?? 0}
           loading={isLoading}
         />
       </div>

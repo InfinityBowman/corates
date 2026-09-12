@@ -1,7 +1,7 @@
 import { captureError, info } from '@corates/workers/logger';
 import { env } from 'cloudflare:workers';
 import type { Database } from '@corates/db/client';
-import { organization, member, projects, subscription } from '@corates/db/schema';
+import { organization, member, projects, subscription, user } from '@corates/db/schema';
 import { and, count, desc, eq, or, sql } from 'drizzle-orm';
 import { containsInsensitive } from '@/server/lib/sqlSearch';
 import {
@@ -175,6 +175,10 @@ export async function listAdminOrgs(
   };
 }
 
+// The detail page shows counts from the real totals, so the rows themselves can
+// stay capped without the page reporting a smaller org than it is.
+const ORG_DETAIL_ROW_LIMIT = 50;
+
 export async function getAdminOrgDetails(session: Session, db: Database, orgId: OrgId) {
   assertAdmin(session);
 
@@ -197,6 +201,43 @@ export async function getAdminOrgDetails(session: Session, db: Database, orgId: 
     .all();
   const projectCount = projectCountResult?.count || 0;
 
+  const members = await db
+    .select({
+      id: member.id,
+      userId: member.userId,
+      role: member.role,
+      joinedAt: member.createdAt,
+      userName: user.name,
+      userEmail: user.email,
+      userAvatar: user.avatarUrl,
+      userBanned: user.banned,
+    })
+    .from(member)
+    .leftJoin(user, eq(member.userId, user.id))
+    .where(eq(member.organizationId, orgId))
+    .orderBy(
+      sql`CASE ${member.role} WHEN 'owner' THEN 0 WHEN 'admin' THEN 1 ELSE 2 END`,
+      desc(member.createdAt),
+    )
+    .limit(ORG_DETAIL_ROW_LIMIT)
+    .all();
+
+  const orgProjects = await db
+    .select({
+      id: projects.id,
+      name: projects.name,
+      createdBy: projects.createdBy,
+      creatorName: user.name,
+      creatorEmail: user.email,
+      createdAt: projects.createdAt,
+    })
+    .from(projects)
+    .leftJoin(user, eq(projects.createdBy, user.id))
+    .where(eq(projects.orgId, orgId))
+    .orderBy(desc(projects.createdAt))
+    .limit(ORG_DETAIL_ROW_LIMIT)
+    .all();
+
   const orgBilling = await resolveOrgAccess(db, orgId);
   const effectivePlan =
     orgBilling.source === 'grant' ?
@@ -206,6 +247,8 @@ export async function getAdminOrgDetails(session: Session, db: Database, orgId: 
   return {
     org,
     stats: { memberCount, projectCount },
+    members,
+    projects: orgProjects,
     billing: {
       effectivePlanId: orgBilling.effectivePlanId,
       source: orgBilling.source,
@@ -220,6 +263,15 @@ export async function getAdminOrgDetails(session: Session, db: Database, orgId: 
     },
   };
 }
+
+export type AdminOrgBilling = Awaited<ReturnType<typeof getAdminOrgBilling>>;
+export type AdminOrgBillingState = AdminOrgBilling['billing'];
+export type AdminOrgSubscription = AdminOrgBilling['subscriptions'][number];
+export type AdminOrgGrant = AdminOrgBilling['grants'][number];
+export type AdminOrgListItem = Awaited<ReturnType<typeof listAdminOrgs>>['orgs'][number];
+export type AdminOrgDetails = Awaited<ReturnType<typeof getAdminOrgDetails>>;
+export type AdminOrgMember = AdminOrgDetails['members'][number];
+export type AdminOrgProject = AdminOrgDetails['projects'][number];
 
 export async function getAdminOrgBilling(session: Session, db: Database, orgId: OrgId) {
   assertAdmin(session);

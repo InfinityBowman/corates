@@ -23,7 +23,7 @@ import {
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
 import { handleError } from '@/lib/error-utils';
-import { AdminError, AdminPage, AdminStat, AdminStatRow } from '@/components/admin/ui';
+import { AdminError, AdminPage } from '@/components/admin/ui';
 import { formatDateInput } from '@/lib/formatDate';
 import { OrgBillingSummary } from '@/components/admin/OrgBillingSummary';
 import { OrgQuickActions } from '@/components/admin/OrgQuickActions';
@@ -32,6 +32,9 @@ import { SubscriptionDialog } from '@/components/admin/SubscriptionDialog';
 import { GrantList } from '@/components/admin/GrantList';
 import { GrantDialog } from '@/components/admin/GrantDialog';
 import { OrgBillingReconcilePanel } from '@/components/admin/OrgBillingReconcilePanel';
+import { OrgMembersSection } from '@/components/admin/orgs/OrgMembersSection';
+import { OrgProjectsSection } from '@/components/admin/orgs/OrgProjectsSection';
+import type { AdminOrgSubscription } from '@/server/functions/admin-orgs.server';
 import { queryKeys } from '@/lib/queryKeys';
 
 const BACK_TO_ORGS = { to: '/admin/orgs', label: 'Back to Organizations' };
@@ -40,57 +43,19 @@ export const Route = createFileRoute('/_app/_protected/admin/orgs/$orgId')({
   component: OrgDetailPage,
 });
 
-interface OrgDetails {
-  org?: { name?: string; slug?: string };
-  stats?: { memberCount?: number; projectCount?: number };
-}
-
-interface SubscriptionRecord {
-  id: string;
-  plan: string;
-  status: string;
-  periodStart?: string | number | Date;
-  periodEnd?: string | number | Date;
-  cancelAtPeriodEnd?: boolean;
-  canceledAt?: string | number | Date | null;
-  endedAt?: string | number | Date | null;
-  stripeCustomerId?: string;
-  stripeSubscriptionId?: string;
-}
-
-interface BillingData {
-  billing?: {
-    plan?: {
-      name?: string;
-      entitlements?: Record<string, boolean | string | number>;
-      quotas?: Record<string, number | null | undefined>;
-    };
-    effectivePlanId?: string;
-    accessMode?: 'full' | 'readOnly';
-    source?: 'free' | 'subscription' | 'grant';
-    subscription?: { id?: string; plan?: string } | null;
-    grant?: { type?: string } | null;
-  };
-  subscriptions?: SubscriptionRecord[];
-  grants?: Array<{
-    id: string;
-    type: string;
-    startsAt?: string | number | Date;
-    expiresAt?: string | number | Date;
-    createdAt?: string | number | Date;
-    revokedAt?: string | number | Date | null;
-  }>;
-}
-
 function OrgDetailPage() {
   const { orgId } = Route.useParams();
   const queryClient = useQueryClient();
 
   const orgDetailsQuery = useAdminOrgDetails(orgId);
   const billingQuery = useAdminOrgBilling(orgId);
-  const orgDetails = orgDetailsQuery.data as OrgDetails | undefined;
-  const billing = billingQuery.data as BillingData | undefined;
+  const orgDetails = orgDetailsQuery.data;
+  const billing = billingQuery.data;
 
+  const memberCount = orgDetails?.stats?.memberCount ?? 0;
+  const projectCount = orgDetails?.stats?.projectCount ?? 0;
+
+  const [reconcileOpen, setReconcileOpen] = useState(false);
   const [subscriptionDialogOpen, setSubscriptionDialogOpen] = useState(false);
   const [grantDialogOpen, setGrantDialogOpen] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -99,7 +64,7 @@ function OrgDetailPage() {
     grantId?: string;
   } | null>(null);
   const [loading, setLoading] = useState(false);
-  const [editingSubscription, setEditingSubscription] = useState<SubscriptionRecord | null>(null);
+  const [editingSubscription, setEditingSubscription] = useState<AdminOrgSubscription | null>(null);
 
   // Subscription form state
   const [subPlan, setSubPlan] = useState('team');
@@ -235,7 +200,7 @@ function OrgDetailPage() {
     }
   };
 
-  const handleEditSubscription = (subscription: SubscriptionRecord) => {
+  const handleEditSubscription = (subscription: AdminOrgSubscription) => {
     setEditingSubscription(subscription);
     setSubPlan(subscription.plan);
     setSubStatus(subscription.status);
@@ -342,21 +307,24 @@ function OrgDetailPage() {
     <AdminPage
       back={BACK_TO_ORGS}
       title={orgDetails?.org?.name ?? 'Organization'}
-      description={orgDetails?.org?.slug ? `@${orgDetails.org.slug}` : ' '}
+      description={
+        orgDetails?.org?.slug ?
+          `@${orgDetails.org.slug} - ${memberCount} members - ${projectCount} projects`
+        : ' '
+      }
       loadingTitle={orgDetailsQuery.isLoading}
     >
-      <AdminStatRow className='lg:grid-cols-2'>
-        <AdminStat
-          label='Members'
-          value={orgDetails?.stats?.memberCount ?? 0}
-          loading={orgDetailsQuery.isLoading}
-        />
-        <AdminStat
-          label='Projects'
-          value={orgDetails?.stats?.projectCount ?? 0}
-          loading={orgDetailsQuery.isLoading}
-        />
-      </AdminStatRow>
+      <OrgMembersSection
+        members={orgDetails?.members}
+        total={memberCount}
+        isLoading={orgDetailsQuery.isLoading}
+      />
+
+      <OrgProjectsSection
+        projects={orgDetails?.projects}
+        total={projectCount}
+        isLoading={orgDetailsQuery.isLoading}
+      />
 
       <OrgBillingSummary billing={billingData ?? null} isLoading={billingQuery.isLoading} />
 
@@ -388,7 +356,17 @@ function OrgDetailPage() {
         }
       />
 
-      <OrgBillingReconcilePanel orgId={orgId} />
+      {reconcileOpen ?
+        <OrgBillingReconcilePanel orgId={orgId} onHide={() => setReconcileOpen(false)} />
+      : <button
+          type='button'
+          onClick={() => setReconcileOpen(true)}
+          className='border-border bg-card hover:bg-muted/40 flex min-h-13 w-full items-center justify-between gap-3 rounded-xl border px-4 text-left shadow-xs transition-colors'
+        >
+          <span className='text-foreground text-sm font-semibold'>Billing Reconciliation</span>
+          <span className='text-muted-foreground text-[13px]'>Check for stuck states</span>
+        </button>
+      }
 
       {/* Subscription Dialog */}
       <SubscriptionDialog

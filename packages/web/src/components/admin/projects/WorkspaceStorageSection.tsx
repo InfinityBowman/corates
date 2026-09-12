@@ -2,7 +2,7 @@ import { RefreshCwIcon } from 'lucide-react';
 import { AdminPanel, AdminField, AdminFieldGrid, AdminStat } from '@/components/admin/ui';
 import { Button } from '@/components/ui/button';
 import { formatFileSize } from '@corates/shared';
-import type { WorkspaceStats } from './types';
+import type { WorkspaceStats } from '@/server/functions/admin-projects.server';
 
 interface WorkspaceStorageSectionProps {
   stats?: WorkspaceStats;

@@ -215,3 +215,5 @@ export async function getAdminBillingStuckStates(
     stuckOrgs,
   };
 }
+
+export type AdminLedgerEntry = Awaited<ReturnType<typeof getAdminBillingLedger>>['entries'][number];
