@@ -312,6 +312,13 @@ function AdminBillingLedgerPage() {
 
       <AdminPanel
         title='Events'
+        footer={
+          stats && entries.length < stats.total ?
+            <span className='text-muted-foreground text-[13px]'>
+              Showing the {entries.length} most recent of {stats.total}.
+            </span>
+          : undefined
+        }
         action={
           <>
             <Input

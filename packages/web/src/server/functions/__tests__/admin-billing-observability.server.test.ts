@@ -228,6 +228,48 @@ describe('getAdminBillingLedger', () => {
     result.entries.forEach(e => expect(e.status).toBe('failed'));
   });
 
+  it('counts every matching row, not just the page it returns', async () => {
+    const nowSec = Math.floor(Date.now() / 1000);
+    for (let i = 0; i < 5; i++) {
+      await seedStripeEventLedger({
+        id: `lt${i}`,
+        payloadHash: `ht${i}`,
+        receivedAt: nowSec + i,
+        route: '/webhooks/stripe',
+        requestId: `rt${i}`,
+        status: i < 3 ? 'processed' : 'failed',
+      });
+    }
+
+    const result = await getAdminBillingLedger(mockAdminSession(), createDb(env.DB), { limit: 2 });
+    expect(result.entries.length).toBe(2);
+    expect(result.stats.total).toBe(5);
+    expect(result.stats.byStatus.processed).toBe(3);
+    expect(result.stats.byStatus.failed).toBe(2);
+  });
+
+  it('narrows the stats to the active filter', async () => {
+    const nowSec = Math.floor(Date.now() / 1000);
+    for (let i = 0; i < 5; i++) {
+      await seedStripeEventLedger({
+        id: `lf${i}`,
+        payloadHash: `hf${i}`,
+        receivedAt: nowSec + i,
+        route: '/webhooks/stripe',
+        requestId: `rf${i}`,
+        status: i < 3 ? 'processed' : 'failed',
+      });
+    }
+
+    const result = await getAdminBillingLedger(mockAdminSession(), createDb(env.DB), {
+      status: 'failed',
+      limit: 1,
+    });
+    expect(result.entries.length).toBe(1);
+    expect(result.stats.total).toBe(2);
+    expect(result.stats.byStatus).toEqual({ failed: 2 });
+  });
+
   it('filters by type', async () => {
     const nowSec = Math.floor(Date.now() / 1000);
     await seedStripeEventLedger({
