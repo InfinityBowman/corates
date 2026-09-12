@@ -24,7 +24,7 @@ export interface InvitationSummary {
   inviterName: string;
   email: string;
   role: string | null;
-  /** Derived server-side so the SSR and hydrated renders agree. */
+  /** Rounded up so a fresh invitation reads the same 7 days the email promises. */
   daysUntilExpiry: number;
 }
 
@@ -81,6 +81,6 @@ export async function getInvitationByToken(
     inviterName: inviter?.givenName || inviter?.name || inviter?.email || 'Someone',
     email: invitation.email,
     role: invitation.role,
-    daysUntilExpiry: Math.max(0, Math.floor(msUntilExpiry / 86_400_000)),
+    daysUntilExpiry: Math.max(0, Math.ceil(msUntilExpiry / 86_400_000)),
   };
 }
