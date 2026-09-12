@@ -85,6 +85,22 @@ describe('auth rate limiting', () => {
     expect(results[3]).toBe(429);
   });
 
+  // Better Auth's default is 100 per 10 seconds; the app reads the session on
+  // every page load, so one shared IP must not be able to exhaust it
+  it('never rate limits get-session', async () => {
+    const auth = createAuth({ ...env, AUTH_SECRET: 'test-secret-that-is-long-enough' } as Env);
+    const results: number[] = [];
+    for (let i = 0; i < 105; i++) {
+      const res = await auth.handler(
+        new Request('http://localhost:8787/api/auth/get-session', {
+          headers: { origin: 'http://localhost:3010', 'cf-connecting-ip': '203.0.113.10' },
+        }),
+      );
+      results.push(res.status);
+    }
+    expect(results.every(s => s === 200)).toBe(true);
+  });
+
   it('keys the limit on cf-connecting-ip, not on a client-supplied x-forwarded-for', async () => {
     await statuses('203.0.113.10', OTP_RULE.max);
     expect((await sendOtp('203.0.113.10', { 'x-forwarded-for': '198.51.100.7' })).status).toBe(429);

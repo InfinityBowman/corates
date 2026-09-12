@@ -58,6 +58,9 @@ interface AuthState {
   // These are synced from AuthProvider (Better Auth useSession)
   sessionUser: AuthUser | null;
   sessionLoading: boolean;
+  // The last session check failed for a reason other than 401 (rate limit,
+  // 5xx, network), so the server has not actually said "no session"
+  sessionUnavailable: boolean;
   sessionRefetch: (() => Promise<void>) | null;
 }
 
@@ -70,6 +73,7 @@ interface AuthActions {
     user: AuthUser | null,
     loading: boolean,
     refetch: (() => Promise<void>) | null,
+    unavailable?: boolean,
   ) => void;
 
   // Auth API methods
@@ -177,14 +181,20 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
   authError: null,
   sessionUser: null,
   sessionLoading: true,
+  sessionUnavailable: false,
   sessionRefetch: null,
 
   setOnline: online => set({ isOnline: online }),
   setCachedUser: user => set({ cachedUser: user }),
   setCachedAvatarUrl: url => set({ cachedAvatarUrl: url }),
   setAuthError: error => set({ authError: error }),
-  setSessionData: (user, loading, refetch) =>
-    set({ sessionUser: user, sessionLoading: loading, sessionRefetch: refetch }),
+  setSessionData: (user, loading, refetch, unavailable = false) =>
+    set({
+      sessionUser: user,
+      sessionLoading: loading,
+      sessionRefetch: refetch,
+      sessionUnavailable: unavailable,
+    }),
 
   signup: async (email, password, name, role = null) => {
     try {
@@ -548,9 +558,15 @@ if (typeof window !== 'undefined') {
 
 // Derived selectors (composing session + cached state)
 
+// Only a settled answer from the server can sign a cached user out. While the
+// check is still running, or failed without a 401, the cache stands in.
+function cacheStandsIn(state: AuthState): boolean {
+  return !!state.cachedUser && (state.sessionLoading || state.sessionUnavailable);
+}
+
 export function selectIsLoggedIn(state: AuthState): boolean {
   if (state.isOnline) {
-    if (state.sessionLoading && state.cachedUser) return true;
+    if (cacheStandsIn(state)) return true;
     return !!state.sessionUser;
   }
   return !!state.cachedUser;
@@ -558,7 +574,7 @@ export function selectIsLoggedIn(state: AuthState): boolean {
 
 export function selectIsAuthLoading(state: AuthState): boolean {
   if (!state.isOnline) return false;
-  if (state.sessionLoading && state.cachedUser) return false;
+  if (cacheStandsIn(state)) return false;
   return state.sessionLoading;
 }
 
@@ -572,7 +588,7 @@ export function selectUser(state: AuthState): AuthUser | null {
   if (state.isOnline) {
     const currentUser = state.sessionUser;
     if (currentUser) return currentUser;
-    if (state.sessionLoading) return state.cachedUser;
+    if (cacheStandsIn(state)) return state.cachedUser;
     return null;
   }
   return state.cachedUser;

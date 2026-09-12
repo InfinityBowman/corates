@@ -137,7 +137,7 @@ const isLoggedIn = useAuthStore(selectIsLoggedIn);
 const user = useAuthStore(selectUser);
 ```
 
-`selectIsLoggedIn` returns `true` when a cached user exists and the session is still loading, so protected routes don't flash a redirect on reload.
+`selectIsLoggedIn` returns `true` when a cached user exists and the session is still loading, so protected routes don't flash a redirect on reload. The same holds when the session check failed for any reason other than a 401 (`sessionUnavailable`: rate limit, 5xx, network): only the server settling with no session clears the cache and signs the user out. `AuthProvider` retries a failed check with backoff (2s doubling to 30s). A revoked session therefore shows the cached user until a request returns 401, which is the local-first tradeoff.
 
 ### Auth actions
 
@@ -280,7 +280,7 @@ const isLoggedIn = useAuthStore(selectIsLoggedIn);
 
 ## Rate Limiting
 
-Better Auth's built-in limiter is enabled with `storage: 'database'`, so counts live in the `rateLimit` table and are shared across Workers isolates (in-memory storage would be per isolate and effectively no limit). The rules are in `packages/workers/src/auth/rate-limit.ts`: the endpoints that send an email or accept a guessable code allow 10 requests per client IP per 60 seconds. Password sign-in and sign-up (`/sign-in/email`, `/sign-up/email`) deliberately stay on Better Auth's own rule of 3 requests per 10 seconds, so a mistyped password locks the IP out for seconds rather than a minute. Every other auth endpoint keeps Better Auth's defaults (100 requests per 10 seconds, with its stricter rules for `/sign-in/*`, `/sign-up/*`, and password or email changes).
+Better Auth's built-in limiter is enabled with `storage: 'database'`, so counts live in the `rateLimit` table and are shared across Workers isolates (in-memory storage would be per isolate and effectively no limit). The rules are in `packages/workers/src/auth/rate-limit.ts`: the endpoints that send an email or accept a guessable code allow 10 requests per client IP per 60 seconds. Password sign-in and sign-up (`/sign-in/email`, `/sign-up/email`) deliberately stay on Better Auth's own rule of 3 requests per 10 seconds, so a mistyped password locks the IP out for seconds rather than a minute. Every other auth endpoint keeps Better Auth's defaults (100 requests per 10 seconds, with its stricter rules for `/sign-in/*`, `/sign-up/*`, and password or email changes), except `/get-session`, which is exempt: the app reads the session several times per page load, so a shared IP (a classroom NAT, the e2e runner) would exhaust the default and render signed out. It is a cookie-authenticated read with nothing to guess, and the edge rule below still caps it.
 
 The client IP is read from `cf-connecting-ip` first, then `x-forwarded-for`. Cloudflare sets the first header itself, while the second can carry a client-supplied address ahead of the real one, which Better Auth then refuses to trust. A request over the limit gets a 429 with an `X-Retry-After` header; `authFetch` maps it to `SYSTEM_RATE_LIMITED` so the friendly-message system shows "Too many requests" instead of a generic failure. Expired rows are pruned by the limiter itself on each window reset.
 
