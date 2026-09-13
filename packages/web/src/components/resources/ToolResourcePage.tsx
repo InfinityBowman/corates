@@ -15,6 +15,7 @@ import {
   GitBranchIcon,
 } from 'lucide-react';
 import { config } from '@/lib/config';
+import { ResourceCta } from '@/components/resources/ResourceCta';
 import type { ToolContent, ScoreLevel, DomainSummary, FaqEntry } from '@/lib/tool-content';
 
 const COLOR_CONFIG = {
@@ -262,6 +263,25 @@ function ToolContentView({ tool }: { tool: ToolContent }) {
               </SectionCard>
             )}
 
+            <div className='border-t border-gray-200 pt-8'>
+              <h2 className='mb-4 text-xl font-semibold text-gray-900'>Scoring</h2>
+              <p className='mb-6 text-gray-600'>{tool.scoringDescription}</p>
+
+              <div className='grid gap-4'>
+                {tool.scoreLevels.map(level => (
+                  <ScoreLevelCard key={level.name} level={level} />
+                ))}
+              </div>
+            </div>
+
+            {tool.workflowInCoRATES && (
+              <SectionCard icon={ZapIcon} title='How CoRATES supports this tool'>
+                <p className='text-gray-600'>{tool.workflowInCoRATES}</p>
+              </SectionCard>
+            )}
+
+            <ResourceCta tool={tool} placement='workflow' />
+
             <SectionCard icon={ExternalLinkIcon} title='Reference Documents'>
               <ul className='flex flex-col gap-3 text-gray-600'>
                 {tool.referenceLinks.map(link => (
@@ -279,23 +299,6 @@ function ToolContentView({ tool }: { tool: ToolContent }) {
                 ))}
               </ul>
             </SectionCard>
-
-            <div className='border-t border-gray-200 pt-8'>
-              <h2 className='mb-4 text-xl font-semibold text-gray-900'>Scoring</h2>
-              <p className='mb-6 text-gray-600'>{tool.scoringDescription}</p>
-
-              <div className='grid gap-4'>
-                {tool.scoreLevels.map(level => (
-                  <ScoreLevelCard key={level.name} level={level} />
-                ))}
-              </div>
-            </div>
-
-            {tool.workflowInCoRATES && (
-              <SectionCard icon={ZapIcon} title='How CoRATES supports this tool'>
-                <p className='text-gray-600'>{tool.workflowInCoRATES}</p>
-              </SectionCard>
-            )}
 
             {tool.versionHistory && (
               <SectionCard icon={HistoryIcon} title='Version history'>
@@ -351,6 +354,8 @@ function ToolContentView({ tool }: { tool: ToolContent }) {
                 </ul>
               </SectionCard>
             )}
+
+            <ResourceCta tool={tool} placement='page-end' />
 
             <div className='rounded-lg border border-gray-200 bg-gray-50 p-6'>
               <p className='text-sm leading-relaxed text-gray-600'>
