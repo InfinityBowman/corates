@@ -23,6 +23,7 @@ import { clientLogger } from '@/lib/clientLogger';
 import { PROJECT_SUPERSEDED_ERROR, SESSION_EXPIRED_ERROR } from '@/constants/errors';
 import { db, deleteProjectData, trackSyncCache } from '@/primitives/db.js';
 import { loadLegacyLocalRows } from './localProject';
+import { migrateLocalRows } from './localMigrations';
 import {
   createLocalCollections,
   seedLocalCollections,
@@ -253,10 +254,10 @@ class ConnectionPool {
   }
 
   /**
-   * Local practice: seed collections from persisted rows, or — first run
-   * after this migration — from the legacy Dexie Y.Doc, which is then left
-   * in place untouched as a rollback source until the cleanup migration
-   * drops it.
+   * Local practice: replay the shared schema migrations over the persisted
+   * rows (or, on the first run after the row-plane cutover, over the legacy
+   * Dexie Y.Doc's conversion — the doc stays untouched as a rollback source
+   * until the cleanup migration drops it), then seed the collections.
    */
   private async initializeLocalRows(
     projectId: string,
@@ -266,17 +267,23 @@ class ConnectionPool {
     try {
       let stored = await db.localProjects.get(projectId);
       if (cancelled()) return;
-
       if (!stored) {
-        const legacyRows = await loadLegacyLocalRows(projectId);
+        stored = {
+          id: projectId,
+          updatedAt: Date.now(),
+          rows: await loadLegacyLocalRows(projectId),
+        };
         if (cancelled()) return;
-        stored = { id: projectId, updatedAt: Date.now(), rows: legacyRows };
-        await db.localProjects.put(stored);
+      }
+
+      const migrated = migrateLocalRows(stored);
+      if (stored.schemaVersion !== migrated.schemaVersion) {
+        await db.localProjects.put({ ...stored, ...migrated, updatedAt: Date.now() });
         if (cancelled()) return;
       }
 
       entry.localCollections = createLocalCollections(projectId);
-      seedLocalCollections(entry.localCollections, stored.rows);
+      seedLocalCollections(entry.localCollections, migrated.rows);
       useProjectStore.getState().setConnectionState(projectId, 'synced');
     } catch (err) {
       console.error('Local practice initialization failed:', err);
@@ -311,12 +318,21 @@ class ConnectionPool {
     entry.localPersistInFlight = true;
     entry.localPersistQueued = false;
     return db.localProjects
-      .put({ id: projectId, updatedAt: Date.now(), rows: snapshotLocalCollections(collections) })
+      .put(this.localProjectRow(projectId, collections))
       .catch(err => console.error('Local practice persist failed:', err))
       .then(() => {
         entry.localPersistInFlight = false;
         if (entry.localPersistQueued) return this.persistLocalNow(projectId, entry);
       });
+  }
+
+  private localProjectRow(projectId: string, collections: ProjectCollections) {
+    return {
+      id: projectId,
+      updatedAt: Date.now(),
+      schemaVersion: syncApp.version,
+      rows: snapshotLocalCollections(collections),
+    };
   }
 
   /**
@@ -469,14 +485,7 @@ class ConnectionPool {
 
     if (entry.localCollections && entry.localPersistQueued) {
       // A follow-up snapshot was pending; capture it before the entry dies.
-      const collections = entry.localCollections;
-      db.localProjects
-        .put({
-          id: projectId,
-          updatedAt: Date.now(),
-          rows: snapshotLocalCollections(collections),
-        })
-        .catch(() => {});
+      db.localProjects.put(this.localProjectRow(projectId, entry.localCollections)).catch(() => {});
     }
 
     if (entry.workspace) void entry.workspace.destroy();

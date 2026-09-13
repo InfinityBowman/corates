@@ -69,8 +69,15 @@ channel, throttled and never stored.
 Local projects (ids prefixed `local-`) have no engine session. Their rows
 live in local-only collections, persisted to the Dexie `localProjects`
 store by the pool on every mutation, and mutated by the same shared mutator
-functions via `applyLocalMutation`. Legacy local Y.Docs are converted to
-rows once on first load (`loadLegacyLocalRows`).
+functions via `applyLocalMutation`. The persisted row carries the sync
+schema version it was written under; on load the pool replays the shared
+schema migrations from that version and validates the rows against the
+current schema (`migrateLocalRows`), exactly as the workspace Durable Object
+does on wake, so a migration is written once. Every practice study is a
+single-reviewer study whose reviewer is `LOCAL_REVIEWER_ID`, so local rows
+have the same shape as online rows. Legacy local Y.Docs are converted to
+rows once on first load (`loadLegacyLocalRows`) and go through the same
+replay.
 
 ## Related
 

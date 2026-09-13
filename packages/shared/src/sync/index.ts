@@ -50,6 +50,10 @@ export {
   type JsonValue,
 } from './answer-rows.js';
 export { answerRowId, appraisalRowId, reconciliationRowId } from './ids.js';
+// The engine's migration runner, for the local practice plane that has no
+// workspace to run it: replay from a stored version, as the DO does on wake.
+export { migrationPath } from '@cf-sync/protocol/internal';
+export type { MigrationTx } from '@cf-sync/protocol';
 export {
   deriveFinalized,
   rob2JudgementsFromRows,

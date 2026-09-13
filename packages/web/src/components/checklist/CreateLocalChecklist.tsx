@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select';
 import { connectionPool } from '@/project/ConnectionPool';
 import { applyLocalMutation } from '@/project/localWrites';
-import { LOCAL_PROJECT_ID } from '@/project/localProject';
+import { LOCAL_PROJECT_ID, LOCAL_REVIEWER_ID } from '@/project/localProject';
 import { db } from '@/primitives/db';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -90,6 +90,11 @@ export function CreateLocalChecklist({ type: typeParam }: { type?: string }) {
           description: '',
           now,
         });
+        applyLocalMutation(LOCAL_PROJECT_ID, 'study.assignReviewers', {
+          id,
+          reviewer1: LOCAL_REVIEWER_ID,
+          now,
+        });
 
         // ROB2/ROBINS-I require an outcome; local practice gets a placeholder.
         let outcomeId: string | null = null;
@@ -107,7 +112,7 @@ export function CreateLocalChecklist({ type: typeParam }: { type?: string }) {
           id,
           studyId: id,
           type: checklistType,
-          assignedTo: null,
+          assignedTo: LOCAL_REVIEWER_ID,
           outcomeId,
           now,
         });

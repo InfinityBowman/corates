@@ -23,6 +23,12 @@ import type { ChecklistHandler } from '@/primitives/useProject/handlers/base';
 import { db } from '@/primitives/db';
 
 export const LOCAL_PROJECT_ID = 'local-practice';
+/**
+ * The one reviewer of every practice study. Local rows keep the shape of a
+ * single-reviewer online study so the shared mutators and migrations apply
+ * unchanged; the null assignee is reserved for consensus checklists.
+ */
+export const LOCAL_REVIEWER_ID = 'local';
 // Set once in the Y.Doc's meta map after the first successful import from the
 // legacy `localChecklists` Dexie table. The migration itself is idempotent
 // (seedIfEmpty never overwrites), so re-runs are harmless — the flag is just

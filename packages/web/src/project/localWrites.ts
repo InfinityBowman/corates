@@ -9,8 +9,8 @@
  * collections and saves rows debounced; this module only mutates.
  */
 
-import { syncApp, syncSchema } from '@corates/shared/sync';
-import type { ProjectCollections } from './localCollections';
+import { syncApp } from '@corates/shared/sync';
+import { standardParse, validateLocalRow, type ProjectCollections } from './localCollections';
 import { connectionPool } from './ConnectionPool';
 
 type MutatorDefLike = {
@@ -26,20 +26,6 @@ interface LocalTx {
   ): Array<{ id: string; data: unknown }>;
   put(tbl: string, id: string, data: unknown): void;
   del(tbl: string, id: string): void;
-}
-
-function standardParse(
-  schema: { '~standard': { validate: (v: unknown) => unknown } },
-  value: unknown,
-): unknown {
-  const result = schema['~standard'].validate(value) as {
-    value?: unknown;
-    issues?: Array<{ message: string }>;
-  };
-  if (result.issues) {
-    throw new Error(`local mutation validation failed: ${result.issues[0]?.message ?? 'invalid'}`);
-  }
-  return result.value;
 }
 
 function makeTx(collections: ProjectCollections): LocalTx {
@@ -62,10 +48,7 @@ function makeTx(collections: ProjectCollections): LocalTx {
         .map(row => ({ id: row.id, data: row }));
     },
     put: (tbl, id, data) => {
-      const tableSchema = (
-        syncSchema.tables as Record<string, { '~standard': { validate: (v: unknown) => unknown } }>
-      )[tbl];
-      const validated = tableSchema ? standardParse(tableSchema, data) : data;
+      const validated = validateLocalRow(tbl, data);
       const col = cols[tbl];
       if (!col) return;
       if (col.has(id)) col.delete(id);

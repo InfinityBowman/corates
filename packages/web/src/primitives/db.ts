@@ -65,17 +65,20 @@ interface LocalChecklistPdfRow {
 }
 
 /** Persisted local-practice rows (post-Y.Doc local data plane). Rows written
- * before outcomes/reconciliations were persisted may lack those keys — the
- * seed path defaults them to empty. */
+ * by older builds may lack later tables and the schema stamp; the pool
+ * replays the shared migrations over them on load (see localMigrations). */
 interface LocalProjectRow {
   id: string;
   updatedAt: number;
+  /** The sync schema version the rows are stored under. */
+  schemaVersion?: number;
   rows: {
     studies: unknown[];
     checklists: unknown[];
     answers: unknown[];
     outcomes?: unknown[];
     reconciliations?: unknown[];
+    appraisals?: unknown[];
   };
 }
 

@@ -16,6 +16,7 @@ import { createCollection, localOnlyCollectionOptions, type Collection } from '@
 import {
   answerRowId,
   reconciliationRowId,
+  syncSchema,
   type AnnotationRow,
   type AnswerRow,
   type AppraisalRow,
@@ -80,15 +81,47 @@ function asNumber(value: unknown): number {
   return typeof value === 'number' ? value : 0;
 }
 
+/** The tables local practice persists; annotations and pdfs stay in memory. */
+export const LOCAL_TABLES = [
+  'studies',
+  'checklists',
+  'appraisals',
+  'answers',
+  'outcomes',
+  'reconciliations',
+] as const;
+export type LocalTable = (typeof LOCAL_TABLES)[number];
+
+/** Persisted rows as written by any past build: later tables may be absent. */
 export interface LocalRows {
   studies: unknown[];
   checklists: unknown[];
   answers: unknown[];
-  /** Absent in rows persisted before local reconciliation was supported. */
   outcomes?: unknown[];
   reconciliations?: unknown[];
-  /** Absent in rows persisted before the appraisal plan existed. */
   appraisals?: unknown[];
+}
+
+/** Rows after `migrateLocalRows`: every table present, every row validated. */
+export type MigratedLocalRows = Required<LocalRows>;
+
+type StandardSchema = { '~standard': { validate: (v: unknown) => unknown } };
+
+export function standardParse(schema: StandardSchema, value: unknown): unknown {
+  const result = schema['~standard'].validate(value) as {
+    value?: unknown;
+    issues?: Array<{ message: string }>;
+  };
+  if (result.issues) {
+    throw new Error(`local row validation failed: ${result.issues[0]?.message ?? 'invalid'}`);
+  }
+  return result.value;
+}
+
+/** Parses a row through its table schema, applying defaults, as the server does at flush. */
+export function validateLocalRow(table: string, row: unknown): unknown {
+  const tableSchema = (syncSchema.tables as Record<string, StandardSchema>)[table];
+  return tableSchema ? standardParse(tableSchema, row) : row;
 }
 
 /** One-time conversion of a legacy local-practice Y.Doc into plain rows. */
@@ -96,7 +129,8 @@ export function rowsFromLocalDoc(ydoc: Y.Doc): LocalRows {
   const reviews = ydoc.getMap('reviews');
   {
     const studies = new Map<string, StudyRow>();
-    const checklists = new Map<string, ChecklistRow>();
+    // Version 1 shape: `kind` did not exist; migrateLocalRows derives it.
+    const checklists = new Map<string, Omit<ChecklistRow, 'kind'>>();
     const answers = new Map<string, AnswerRow>();
     const outcomes: OutcomeRow[] = [];
     const reconciliations: ReconciliationRow[] = [];
@@ -132,15 +166,13 @@ export function rowsFromLocalDoc(ydoc: Y.Doc): LocalRows {
         const checklist = checklistValue as Y.Map<unknown>;
         if (!(checklist instanceof Y.Map)) continue;
         const type = asString(checklist.get('type'), 'AMSTAR2') as ChecklistRow['type'];
-        const status = asString(checklist.get('status'), 'pending') as ChecklistRow['status'];
         checklists.set(checklistId, {
           id: checklistId,
           studyId,
           type,
-          kind: legacyKind(status),
           title: asString(checklist.get('title')),
           assignedTo: (checklist.get('assignedTo') as string | null) ?? null,
-          status,
+          status: asString(checklist.get('status'), 'pending') as ChecklistRow['status'],
           outcomeId: (checklist.get('outcomeId') as string | null) ?? null,
           createdAt: asNumber(checklist.get('createdAt')),
           updatedAt: asNumber(checklist.get('updatedAt')),
@@ -196,32 +228,23 @@ export function rowsFromLocalDoc(ydoc: Y.Doc): LocalRows {
   }
 }
 
-/**
- * Kind of a local checklist persisted before `kind` existed. Local practice
- * never sees the engine's migrations, and its reviewer checklists are
- * unassigned too, so the null-assignee rule cannot apply; only a consensus
- * checklist ever reaches the reconciling or finalized status.
- */
-function legacyKind(status: ChecklistRow['status']): ChecklistRow['kind'] {
-  return status === 'reconciling' || status === 'finalized' ? 'consensus' : 'reviewer';
-}
-
-/** Seed freshly created collections from persisted rows. */
-export function seedLocalCollections(collections: ProjectCollections, rows: LocalRows): void {
+/** Seed freshly created collections from migrated rows. */
+export function seedLocalCollections(
+  collections: ProjectCollections,
+  rows: MigratedLocalRows,
+): void {
   for (const row of rows.studies) collections.studies.insert(row as StudyRow);
-  for (const row of rows.checklists) {
-    const stored = row as ChecklistRow;
-    collections.checklists.insert({ ...stored, kind: stored.kind ?? legacyKind(stored.status) });
-  }
-  for (const row of rows.appraisals ?? []) collections.appraisals.insert(row as AppraisalRow);
+  for (const row of rows.checklists) collections.checklists.insert(row as ChecklistRow);
+  for (const row of rows.appraisals) collections.appraisals.insert(row as AppraisalRow);
   for (const row of rows.answers) collections.answers.insert(row as AnswerRow);
-  for (const row of rows.outcomes ?? []) collections.outcomes.insert(row as OutcomeRow);
-  for (const row of rows.reconciliations ?? [])
+  for (const row of rows.outcomes) collections.outcomes.insert(row as OutcomeRow);
+  for (const row of rows.reconciliations) {
     collections.reconciliations.insert(row as ReconciliationRow);
+  }
 }
 
 /** The current rows, for persistence. */
-export function snapshotLocalCollections(collections: ProjectCollections): LocalRows {
+export function snapshotLocalCollections(collections: ProjectCollections): MigratedLocalRows {
   return {
     studies: [...collections.studies.toArray],
     checklists: [...collections.checklists.toArray],
