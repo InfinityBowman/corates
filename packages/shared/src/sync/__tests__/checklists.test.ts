@@ -496,10 +496,14 @@ describe('checklist.changeOutcome', () => {
       updatedAt: LATER,
     });
     expect(engine.get('checklists', 'chk-2')?.outcomeId).toBe('out-2');
-    expect(engine.get('reconciliations', reconciliationRowId('study-1', 'out-1'))).toBeNull();
-    expect(engine.get('reconciliations', reconciliationRowId('study-1', 'out-2'))).toMatchObject({
+    expect(
+      engine.get('reconciliations', reconciliationRowId('study-1', 'ROBINS_I:out-1')),
+    ).toBeNull();
+    expect(
+      engine.get('reconciliations', reconciliationRowId('study-1', 'ROBINS_I:out-2')),
+    ).toMatchObject({
       outcomeId: 'out-2',
-      outcomeKey: 'out-2',
+      outcomeKey: 'ROBINS_I:out-2',
       checklist1Id: 'chk-1',
       checklist2Id: 'chk-2',
     });

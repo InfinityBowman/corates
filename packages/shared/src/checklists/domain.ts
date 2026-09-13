@@ -323,10 +323,12 @@ export function findReconciledChecklistForOutcome(
 }
 
 /**
- * Derives a consistent key for outcome-based grouping
+ * The key of one (instrument, outcome) cell within a study. The instrument is
+ * part of it because one outcome may be appraised with more than one
+ * instrument, and each needs its own plan row, reconciliation and grouping.
  */
 export function getOutcomeKey(outcomeId: string | null | undefined, type: string): string {
-  return outcomeId || `type:${type}`;
+  return outcomeId ? `${type}:${outcomeId}` : `type:${type}`;
 }
 
 /**

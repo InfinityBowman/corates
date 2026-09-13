@@ -141,7 +141,8 @@ export const syncSchema = defineSchema({
 
   /**
    * The appraisal plan: one row per (study, instrument, outcome) cell — row id
-   * `${studyId}:${outcomeKey}`, matching `reconciliations`. A planned cell
+   * `${studyId}:${outcomeKey}` where outcomeKey is `getOutcomeKey(outcomeId, type)`,
+   * matching `reconciliations`. A planned cell
    * nobody owns yet is a row here with no checklist rows; reviewer checklists
    * materialize when a study slot is filled. A cell that does not apply to a
    * study simply has no row.
@@ -181,7 +182,7 @@ export const syncSchema = defineSchema({
   }),
 
   /**
-   * Reconciliation session state, one row per (study, outcome group) — row id
+   * Reconciliation session state, one row per (study, instrument, outcome) — row id
    * `${studyId}:${outcomeKey}` where outcomeKey is `getOutcomeKey(outcomeId, type)`.
    * Consolidated answers are not here: they are `answers` rows of the third,
    * reconciled checklist.

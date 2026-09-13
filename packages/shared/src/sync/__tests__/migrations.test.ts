@@ -48,6 +48,21 @@ describe('migration to version 2', () => {
       'c-orphan': v1Checklist('c-orphan', 's1', 'ROB2', 'carol', 'o1', 'in-progress'),
       'c-amstar': v1Checklist('c-amstar', 's2', 'AMSTAR2', 'alice', null),
     },
+    // Version 1 keyed this by outcome alone.
+    reconciliations: {
+      's1:o1': {
+        id: 's1:o1',
+        studyId: 's1',
+        outcomeKey: 'o1',
+        outcomeId: 'o1',
+        type: 'ROB2',
+        checklist1Id: 'c-alice',
+        checklist2Id: 'c-bob',
+        reconciledChecklistId: 'c-consensus',
+        currentPage: 2,
+        updatedAt: NOW,
+      },
+    },
   };
 
   function migrated() {
@@ -75,11 +90,11 @@ describe('migration to version 2', () => {
     const engine = migrated();
     const plans = engine.list('appraisals').map(row => row.data);
     expect(plans).toHaveLength(2);
-    expect(engine.get('appraisals', 's1:o1')).toMatchObject({
+    expect(engine.get('appraisals', 's1:ROB2:o1')).toMatchObject({
       studyId: 's1',
       type: 'ROB2',
       outcomeId: 'o1',
-      outcomeKey: 'o1',
+      outcomeKey: 'ROB2:o1',
       createdAt: NOW,
     });
     expect(engine.get('appraisals', 's2:type:AMSTAR2')).toMatchObject({
@@ -88,6 +103,22 @@ describe('migration to version 2', () => {
       outcomeId: null,
       outcomeKey: 'type:AMSTAR2',
     });
+  });
+
+  it('moves a reconciliation row to the instrument-qualified key', () => {
+    const engine = migrated();
+    expect(engine.get('reconciliations', 's1:o1')).toBeNull();
+    expect(engine.get('reconciliations', 's1:ROB2:o1')).toMatchObject({
+      id: 's1:ROB2:o1',
+      outcomeKey: 'ROB2:o1',
+      outcomeId: 'o1',
+      type: 'ROB2',
+      checklist1Id: 'c-alice',
+      checklist2Id: 'c-bob',
+      reconciledChecklistId: 'c-consensus',
+      currentPage: 2,
+    });
+    expect(engine.list('reconciliations')).toHaveLength(1);
   });
 
   it('does not materialize checklists for already-filled slots', () => {

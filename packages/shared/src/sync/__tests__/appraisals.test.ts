@@ -78,7 +78,7 @@ describe('checklist.create with the plan', () => {
     });
     expect(result.error).toBeUndefined();
     expect(engine.get('checklists', 'chk-1')?.kind).toBe('reviewer');
-    expect(engine.get('appraisals', 's1:o1')).toMatchObject({
+    expect(engine.get('appraisals', 's1:ROB2:o1')).toMatchObject({
       studyId: 's1',
       type: 'ROB2',
       outcomeId: 'o1',
@@ -181,7 +181,7 @@ describe('appraisal.create', () => {
         .list('appraisals')
         .map(r => r.id)
         .sort(),
-    ).toEqual(['s1:o1', 's1:o2', 's2:type:AMSTAR2']);
+    ).toEqual(['s1:ROB2:o1', 's1:ROB2:o2', 's2:type:AMSTAR2']);
     expect(engine.list('checklists')).toHaveLength(0);
     expect(engine.get('studies', 's1')?.updatedAt).toBe(NOW);
   });
@@ -251,7 +251,7 @@ describe('appraisal.delete', () => {
       now: LATER,
     });
     expect(result.error).toBeUndefined();
-    expect(engine.get('appraisals', 's1:o1')).toBeNull();
+    expect(engine.get('appraisals', 's1:ROB2:o1')).toBeNull();
     expect(checklistsOf(engine, 's1')).toHaveLength(0);
     expect(engine.list('answers')).toHaveLength(0);
   });
@@ -264,12 +264,12 @@ describe('appraisal.delete', () => {
     expect(engine.mutate('appraisal.delete', { cells, now: LATER }).error?.code).toBe(
       'AppraisalHasAnswers',
     );
-    expect(engine.get('appraisals', 's1:o1')).not.toBeNull();
+    expect(engine.get('appraisals', 's1:ROB2:o1')).not.toBeNull();
 
     expect(
       engine.mutate('appraisal.delete', { cells, force: true, now: LATER }).error,
     ).toBeUndefined();
-    expect(engine.get('appraisals', 's1:o1')).toBeNull();
+    expect(engine.get('appraisals', 's1:ROB2:o1')).toBeNull();
     expect(engine.get('checklists', aliceId)).toBeNull();
     expect(engine.get('answers', answerRowId(aliceId, 'd1_1'))).toBeNull();
   });
@@ -474,7 +474,7 @@ describe('plan cascades', () => {
       now: LATER,
     });
     expect(engine.mutate('outcome.delete', { id: 'o1' }).error).toBeUndefined();
-    expect(engine.get('appraisals', 's1:o1')).toBeNull();
+    expect(engine.get('appraisals', 's1:ROB2:o1')).toBeNull();
   });
 
   it('checklist.changeOutcome moves the plan row', () => {
@@ -494,7 +494,7 @@ describe('plan cascades', () => {
       now: LATER,
     });
     expect(result.error).toBeUndefined();
-    expect(engine.get('appraisals', 's1:o1')).toBeNull();
-    expect(engine.get('appraisals', 's1:o2')).toMatchObject({ outcomeId: 'o2' });
+    expect(engine.get('appraisals', 's1:ROB2:o1')).toBeNull();
+    expect(engine.get('appraisals', 's1:ROB2:o2')).toMatchObject({ outcomeId: 'o2' });
   });
 });
