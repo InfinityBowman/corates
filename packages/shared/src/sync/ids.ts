@@ -15,3 +15,17 @@ export function answerRowId(checklistId: string, flatKey: string): string {
 export function reconciliationRowId(studyId: string, outcomeKey: string): string {
   return `${studyId}:${outcomeKey}`;
 }
+
+/** Row id in `appraisals`: one row per (study, outcome group) plan cell. */
+export function appraisalRowId(studyId: string, outcomeKey: string): string {
+  return `${studyId}:${outcomeKey}`;
+}
+
+/**
+ * Id of the reviewer checklist a plan cell materializes for one reviewer.
+ * Mutators run twice (optimistic, then authoritative) and cannot draw random
+ * ids, so a materialized checklist is named by its cell and reviewer.
+ */
+export function materializedChecklistId(appraisalId: string, userId: string): string {
+  return `${appraisalId}:${userId}`;
+}

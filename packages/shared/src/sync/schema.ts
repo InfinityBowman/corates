@@ -20,6 +20,11 @@ export type ChecklistType = (typeof CHECKLIST_TYPE_VALUES)[number];
 
 const checklistTypeSchema = z.enum(CHECKLIST_TYPE_VALUES);
 
+export const CHECKLIST_KIND_VALUES = ['reviewer', 'consensus'] as const;
+export type ChecklistKind = (typeof CHECKLIST_KIND_VALUES)[number];
+
+const checklistKindSchema = z.enum(CHECKLIST_KIND_VALUES);
+
 const CHECKLIST_STATUS_VALUES = [
   'pending',
   'in-progress',
@@ -84,11 +89,16 @@ export const syncSchema = defineSchema({
     ...studyMetadataSchema.shape,
   }),
 
-  /** One row per checklist instance; answers live in `answers`, one row per field. */
+  /**
+   * One row per checklist instance; answers live in `answers`, one row per field.
+   * `kind` tells a reviewer's own appraisal from the reconciled consensus;
+   * `assignedTo` is null on consensus rows and on local practice rows.
+   */
   checklists: z.object({
     id: z.string(),
     studyId: z.string(),
     type: checklistTypeSchema,
+    kind: checklistKindSchema.default('reviewer'),
     title: z.string(),
     assignedTo: z.string().nullable().default(null),
     status: checklistStatusSchema.default('pending'),
@@ -127,6 +137,22 @@ export const syncSchema = defineSchema({
     updatedAt: z.number(),
     /** Set on rows cloned by `annotation.merge`: the source checklist id. */
     mergedFrom: z.string().optional(),
+  }),
+
+  /**
+   * The appraisal plan: one row per (study, instrument, outcome) cell — row id
+   * `${studyId}:${outcomeKey}`, matching `reconciliations`. A planned cell
+   * nobody owns yet is a row here with no checklist rows; reviewer checklists
+   * materialize when a study slot is filled. A cell that does not apply to a
+   * study simply has no row.
+   */
+  appraisals: z.object({
+    id: z.string(),
+    studyId: z.string(),
+    type: checklistTypeSchema,
+    outcomeId: z.string().nullable().default(null),
+    outcomeKey: z.string(),
+    createdAt: z.number(),
   }),
 
   /** One row per outcome (was `meta.outcomes[outcomeId]`). */
@@ -180,6 +206,7 @@ export type SyncSchema = typeof syncSchema;
 // Stored row shapes (schema output, defaults applied) — the read-side types.
 export type StudyRow = RowOf<SyncSchema, 'studies'>;
 export type ChecklistRow = RowOf<SyncSchema, 'checklists'>;
+export type AppraisalRow = RowOf<SyncSchema, 'appraisals'>;
 export type AnswerRow = RowOf<SyncSchema, 'answers'>;
 export type AnnotationRow = RowOf<SyncSchema, 'annotations'>;
 export type OutcomeRow = RowOf<SyncSchema, 'outcomes'>;

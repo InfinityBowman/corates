@@ -161,11 +161,19 @@ export interface ROBINSIChecklist extends ChecklistMetadata {
 export interface StudyChecklist {
   id: string;
   type: string;
+  /** Absent means reviewer: only the row plane stamps it, and local practice never has consensus. */
+  kind?: 'reviewer' | 'consensus';
   status?: string;
   assignedTo?: string | null;
   outcomeId?: string | null;
   createdAt?: number | string;
   answers?: Record<string, unknown> | null;
+}
+
+/** One planned (study, instrument, outcome) cell. */
+export interface StudyAppraisal {
+  type: string;
+  outcomeId?: string | null;
 }
 
 /**
@@ -178,6 +186,7 @@ export interface Study {
   reviewer1?: string | null;
   reviewer2?: string | null;
   checklists?: StudyChecklist[];
+  appraisals?: StudyAppraisal[];
   reconciliation?: {
     checklist1Id?: string;
     checklist2Id?: string;

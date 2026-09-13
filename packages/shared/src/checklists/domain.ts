@@ -15,14 +15,13 @@ export interface ChecklistGroup {
 }
 
 /**
- * Checks if a checklist is a reconciled checklist
- * Reconciled checklists are identified by having no assignedTo (null) since they represent consensus
+ * Checks if a checklist is the reconciled consensus for its cell
  * @param checklist - The checklist object
  * @returns True if the checklist is a reconciled checklist
  */
 export function isReconciledChecklist(checklist: StudyChecklist | null | undefined): boolean {
   if (!checklist) return false;
-  return checklist.assignedTo === null;
+  return checklist.kind === 'consensus';
 }
 
 /**
@@ -416,6 +415,66 @@ export function getSendBackToTodoPlan(
   if (reconciledChecklists.some(c => c.status === CHECKLIST_STATUS.FINALIZED)) return null;
 
   return { reviewerChecklists, reconciledChecklist: reconciledChecklists[0] ?? null };
+}
+
+export interface AppraisalCell extends ChecklistGroup {
+  /** Planned but no checklist exists yet: nobody has been assigned or started. */
+  planned: boolean;
+}
+
+/**
+ * Every cell of the study's appraisal plan with the checklists it holds, plus
+ * any cell that holds checklists outside the plan (work from before the plan
+ * existed). Lets a listing show a planned cell instead of a blank.
+ */
+export function getAppraisalCells(study: Study | null | undefined): AppraisalCell[] {
+  if (!study) return [];
+
+  const cells = new Map<string, AppraisalCell>();
+  const cellFor = (type: string, outcomeId: string | null | undefined): AppraisalCell => {
+    const key = getOutcomeKey(outcomeId, type);
+    let cell = cells.get(key);
+    if (!cell) {
+      cell = { outcomeId: outcomeId || null, type, checklists: [], planned: true };
+      cells.set(key, cell);
+    }
+    return cell;
+  };
+
+  for (const plan of study.appraisals || []) cellFor(plan.type, plan.outcomeId);
+  for (const checklist of study.checklists || []) {
+    const cell = cellFor(checklist.type, checklist.outcomeId);
+    cell.checklists.push(checklist);
+    cell.planned = false;
+  }
+
+  return Array.from(cells.values());
+}
+
+/**
+ * The in-progress checklists a slot change would take away from reviewers who
+ * leave the study. Mirrors the `study.assignReviewers` guard so the UI can ask
+ * whether to hand them over or discard them before sending the mutation.
+ * Pending checklists move or vanish silently; completed ones are never touched.
+ */
+export function getInProgressChecklistsOfLeavingReviewers(
+  study: Study | null | undefined,
+  next: { reviewer1?: string | null; reviewer2?: string | null },
+): StudyChecklist[] {
+  if (!study) return [];
+  const before = [study.reviewer1 ?? null, study.reviewer2 ?? null];
+  const after = [
+    next.reviewer1 === undefined ? before[0] : next.reviewer1,
+    next.reviewer2 === undefined ? before[1] : next.reviewer2,
+  ];
+  const leavers = before.filter(u => u && !after.includes(u));
+  if (leavers.length === 0) return [];
+  return (study.checklists || []).filter(
+    c =>
+      !isReconciledChecklist(c) &&
+      c.status === CHECKLIST_STATUS.IN_PROGRESS &&
+      leavers.includes(c.assignedTo ?? null),
+  );
 }
 
 /**

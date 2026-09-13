@@ -662,6 +662,7 @@ describe('checklist.sendBackToTodo', () => {
   function seedConsensus(engine: Engine, status: 'reconciling' | 'finalized' = 'reconciling') {
     engine.mutate('checklist.create', {
       id: 'chk-consensus',
+      kind: 'consensus',
       studyId: 'study-1',
       type: 'AMSTAR2',
       assignedTo: null,
