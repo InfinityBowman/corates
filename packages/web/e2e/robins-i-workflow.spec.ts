@@ -107,13 +107,9 @@ test('Dual-Reviewer ROBINS-I Workflow', async ({ context, page }) => {
   await switchUser(context, scenario.cookiesB);
   await page.goto(`/projects/${projectId}`);
   await page.getByRole('tab', { name: /To-Do/i }).click();
-  await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
-    timeout: 30_000,
-  });
-
-  await addROBINSIChecklist(page, 'Mortality');
+  // User A's ROBINS-I for this outcome planned the cell; User B's copy is waiting.
   await expect(page.getByRole('button', { name: 'Open', exact: true })).toBeVisible({
-    timeout: 10_000,
+    timeout: 30_000,
   });
 
   await page.getByRole('button', { name: 'Open', exact: true }).last().click();

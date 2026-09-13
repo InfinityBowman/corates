@@ -15,3 +15,8 @@ export function answerRowId(checklistId: string, flatKey: string): string {
 export function reconciliationRowId(studyId: string, outcomeKey: string): string {
   return `${studyId}:${outcomeKey}`;
 }
+
+/** Row id in `appraisals`: one row per (study, outcome group) plan cell. */
+export function appraisalRowId(studyId: string, outcomeKey: string): string {
+  return `${studyId}:${outcomeKey}`;
+}

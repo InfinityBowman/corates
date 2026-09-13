@@ -31,17 +31,28 @@ test.afterAll(async () => {
   if (scenario) await cleanupScenario(scenario);
 });
 
-/** Add an AMSTAR2 checklist, answer every question, and mark it complete. */
-async function addAndCompleteChecklist(page: Page, projectId: string, answer: 'Yes' | 'No') {
+/**
+ * Answer every question of an AMSTAR2 checklist and mark it complete. The
+ * first reviewer adds it; that plans the cell, so the second reviewer's copy
+ * is already waiting and `create` is false.
+ */
+async function addAndCompleteChecklist(
+  page: Page,
+  projectId: string,
+  answer: 'Yes' | 'No',
+  create = true,
+) {
   await page.getByRole('tab', { name: /To-Do/i }).click();
-  await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
-    timeout: 10_000,
-  });
+  if (create) {
+    await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
+      timeout: 10_000,
+    });
 
-  await page.getByRole('button', { name: /Select Checklist/i }).click();
-  await page.getByRole('button', { name: /Add Checklist/i }).click();
+    await page.getByRole('button', { name: /Select Checklist/i }).click();
+    await page.getByRole('button', { name: /Add Checklist/i }).click();
+  }
   await expect(page.getByRole('button', { name: 'Open', exact: true })).toBeVisible({
-    timeout: 10_000,
+    timeout: 15_000,
   });
   await page.getByRole('button', { name: 'Open', exact: true }).last().click();
   await expect(page).toHaveURL(/\/checklists\//, { timeout: 10_000 });
@@ -117,7 +128,7 @@ test('Send appraisals back to To-Do from the Reconcile tab', async ({ browser, c
   await page.goto(`/projects/${projectId}`);
   await expect(page.getByText('Send Back E2E').first()).toBeVisible({ timeout: 15_000 });
 
-  await addAndCompleteChecklist(page, projectId, 'No');
+  await addAndCompleteChecklist(page, projectId, 'No', false);
 
   await page.getByRole('tab', { name: /Reconcile/i }).click();
   await expect(page.getByText('Ready')).toBeVisible({ timeout: 10_000 });

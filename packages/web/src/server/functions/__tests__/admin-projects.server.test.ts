@@ -21,6 +21,7 @@ import {
   removeAdminProjectMember,
   deleteAdminProject,
 } from '@/server/functions/admin-projects.server';
+import { syncApp } from '@corates/shared/sync';
 
 beforeEach(async () => {
   await resetTestDatabase();
@@ -181,7 +182,7 @@ describe('getAdminWorkspaceStats', () => {
       extension?: { fields: number };
     };
     expect(result.workspaceId).toBe(project.id);
-    expect(result.schemaVersion).toBe(1);
+    expect(result.schemaVersion).toBe(syncApp.version);
     expect(result.rows).toEqual({ live: 0, tombstones: 0 });
     // The Yjs fields add-on is mounted on the workspace DO.
     expect(result.extension?.fields).toBe(0);

@@ -18,6 +18,7 @@ import {
   reconciliationRowId,
   type AnnotationRow,
   type AnswerRow,
+  type AppraisalRow,
   type ChecklistRow,
   type OutcomeRow,
   type PdfRow,
@@ -29,6 +30,7 @@ import {
 export interface ProjectCollections {
   studies: Collection<StudyRow>;
   checklists: Collection<ChecklistRow>;
+  appraisals: Collection<AppraisalRow>;
   answers: Collection<AnswerRow>;
   annotations: Collection<AnnotationRow>;
   outcomes: Collection<OutcomeRow>;
@@ -47,6 +49,7 @@ function localSet(idPrefix: string): ProjectCollections {
   return {
     studies: make<StudyRow>('studies'),
     checklists: make<ChecklistRow>('checklists'),
+    appraisals: make<AppraisalRow>('appraisals'),
     answers: make<AnswerRow>('answers'),
     annotations: make<AnnotationRow>('annotations'),
     outcomes: make<OutcomeRow>('outcomes'),
@@ -84,6 +87,8 @@ export interface LocalRows {
   /** Absent in rows persisted before local reconciliation was supported. */
   outcomes?: unknown[];
   reconciliations?: unknown[];
+  /** Absent in rows persisted before the appraisal plan existed. */
+  appraisals?: unknown[];
 }
 
 /** One-time conversion of a legacy local-practice Y.Doc into plain rows. */
@@ -127,14 +132,15 @@ export function rowsFromLocalDoc(ydoc: Y.Doc): LocalRows {
         const checklist = checklistValue as Y.Map<unknown>;
         if (!(checklist instanceof Y.Map)) continue;
         const type = asString(checklist.get('type'), 'AMSTAR2') as ChecklistRow['type'];
+        const status = asString(checklist.get('status'), 'pending') as ChecklistRow['status'];
         checklists.set(checklistId, {
           id: checklistId,
           studyId,
           type,
+          kind: legacyKind(status),
           title: asString(checklist.get('title')),
           assignedTo: (checklist.get('assignedTo') as string | null) ?? null,
-          status:
-            (asString(checklist.get('status'), 'pending') as ChecklistRow['status']) ?? 'pending',
+          status,
           outcomeId: (checklist.get('outcomeId') as string | null) ?? null,
           createdAt: asNumber(checklist.get('createdAt')),
           updatedAt: asNumber(checklist.get('updatedAt')),
@@ -190,10 +196,24 @@ export function rowsFromLocalDoc(ydoc: Y.Doc): LocalRows {
   }
 }
 
+/**
+ * Kind of a local checklist persisted before `kind` existed. Local practice
+ * never sees the engine's migrations, and its reviewer checklists are
+ * unassigned too, so the null-assignee rule cannot apply; only a consensus
+ * checklist ever reaches the reconciling or finalized status.
+ */
+function legacyKind(status: ChecklistRow['status']): ChecklistRow['kind'] {
+  return status === 'reconciling' || status === 'finalized' ? 'consensus' : 'reviewer';
+}
+
 /** Seed freshly created collections from persisted rows. */
 export function seedLocalCollections(collections: ProjectCollections, rows: LocalRows): void {
   for (const row of rows.studies) collections.studies.insert(row as StudyRow);
-  for (const row of rows.checklists) collections.checklists.insert(row as ChecklistRow);
+  for (const row of rows.checklists) {
+    const stored = row as ChecklistRow;
+    collections.checklists.insert({ ...stored, kind: stored.kind ?? legacyKind(stored.status) });
+  }
+  for (const row of rows.appraisals ?? []) collections.appraisals.insert(row as AppraisalRow);
   for (const row of rows.answers) collections.answers.insert(row as AnswerRow);
   for (const row of rows.outcomes ?? []) collections.outcomes.insert(row as OutcomeRow);
   for (const row of rows.reconciliations ?? [])
@@ -205,6 +225,7 @@ export function snapshotLocalCollections(collections: ProjectCollections): Local
   return {
     studies: [...collections.studies.toArray],
     checklists: [...collections.checklists.toArray],
+    appraisals: [...collections.appraisals.toArray],
     answers: [...collections.answers.toArray],
     outcomes: [...collections.outcomes.toArray],
     reconciliations: [...collections.reconciliations.toArray],

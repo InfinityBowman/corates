@@ -20,7 +20,10 @@ type MutatorDefLike = {
 
 interface LocalTx {
   get(tbl: string, id: string): unknown;
-  list(tbl: string): Array<{ id: string; data: unknown }>;
+  list(
+    tbl: string,
+    options?: { where?: Record<string, unknown> },
+  ): Array<{ id: string; data: unknown }>;
   put(tbl: string, id: string, data: unknown): void;
   del(tbl: string, id: string): void;
 }
@@ -52,7 +55,12 @@ function makeTx(collections: ProjectCollections): LocalTx {
   >;
   return {
     get: (tbl, id) => cols[tbl]?.get(id) ?? null,
-    list: tbl => (cols[tbl]?.toArray ?? []).map(row => ({ id: row.id, data: row })),
+    list: (tbl, options) => {
+      const where = Object.entries(options?.where ?? {}).filter(([, v]) => v !== undefined);
+      return (cols[tbl]?.toArray ?? [])
+        .filter(row => where.every(([field, v]) => (row as Record<string, unknown>)[field] === v))
+        .map(row => ({ id: row.id, data: row }));
+    },
     put: (tbl, id, data) => {
       const tableSchema = (
         syncSchema.tables as Record<string, { '~standard': { validate: (v: unknown) => unknown } }>
@@ -87,12 +95,15 @@ export function applyLocalMutation(projectId: string, name: string, args: unknow
 
   const parsedArgs = def.args ? standardParse(def.args, args) : args;
   // Non-authoritative ctx: the write gate only enforces on authoritative
-  // runs, and local practice has no principal.
+  // runs, and local practice has no principal. A local mutation runs once,
+  // so minted ids need only be unique, not reproducible from the seed.
   def.apply(makeTx(collections), parsedArgs, {
     clientId: 'local',
     principal: undefined,
     auth: undefined,
     authoritative: false,
+    seed: crypto.randomUUID(),
+    nextId: () => crypto.randomUUID(),
   });
   connectionPool.scheduleLocalPersist(projectId);
 }

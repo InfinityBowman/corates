@@ -34,26 +34,33 @@ test.afterAll(async () => {
   if (scenario) await cleanupScenario(scenario);
 });
 
-/** Add a ROB2 checklist for the given outcome, fill it, and mark it complete. */
+/**
+ * Fill a ROB2 checklist for the given outcome and mark it complete. The first
+ * reviewer adds it; that plans the cell, so the second reviewer's copy is
+ * already waiting and `create` is false.
+ */
 async function fillROB2ChecklistForOutcome(
   page: Page,
   projectId: string,
   outcomeName: string,
   answer: string,
+  create = true,
 ) {
   await page.getByRole('tab', { name: /To-Do/i }).click();
-  await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
-    timeout: 30_000,
-  });
+  if (create) {
+    await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
+      timeout: 30_000,
+    });
 
-  await page.getByRole('button', { name: /Select Checklist/i }).click();
-  await page.getByText(/AMSTAR 2/i).click();
-  await page.getByRole('option', { name: /RoB 2/i }).click();
-  await page.getByText(/Select outcome/i).click();
-  await page.getByRole('option', { name: outcomeName }).click();
-  await page.getByRole('button', { name: /Add Checklist/i }).click();
+    await page.getByRole('button', { name: /Select Checklist/i }).click();
+    await page.getByText(/AMSTAR 2/i).click();
+    await page.getByRole('option', { name: /RoB 2/i }).click();
+    await page.getByText(/Select outcome/i).click();
+    await page.getByRole('option', { name: outcomeName }).click();
+    await page.getByRole('button', { name: /Add Checklist/i }).click();
+  }
   await expect(page.getByRole('button', { name: 'Open', exact: true })).toBeVisible({
-    timeout: 10_000,
+    timeout: 30_000,
   });
 
   await page.getByRole('button', { name: 'Open', exact: true }).last().click();
@@ -105,7 +112,7 @@ test('Change outcome from Reconcile and Completed tabs', async ({ context, page 
 
   await switchUser(context, scenario.cookiesB);
   await page.goto(`/projects/${projectId}`);
-  await fillROB2ChecklistForOutcome(page, projectId, 'Employment', 'N');
+  await fillROB2ChecklistForOutcome(page, projectId, 'Employment', 'N', false);
 
   // ================================================================
   // Reconcile tab: ready pair shows under Employment; move it to

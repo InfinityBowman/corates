@@ -16,12 +16,15 @@ export {
   type SyncAuthContext,
   type SyncMutators,
 } from './mutators.js';
+export { syncMigrations } from './migrations.js';
 export {
+  CHECKLIST_KIND_VALUES,
   CHECKLIST_TYPE_VALUES,
   pdfCitationMetadataSchema,
   pdfTagSchema,
   studyMetadataSchema,
   syncSchema,
+  type ChecklistKind,
   type ChecklistType,
   type PdfCitationMetadata,
   type PdfTag,
@@ -29,6 +32,7 @@ export {
   type SyncSchema,
   type StudyRow,
   type ChecklistRow,
+  type AppraisalRow,
   type AnswerRow,
   type AnnotationRow,
   type OutcomeRow,
@@ -45,7 +49,7 @@ export {
   type ChecklistAnswerInput,
   type JsonValue,
 } from './answer-rows.js';
-export { answerRowId, reconciliationRowId } from './ids.js';
+export { answerRowId, appraisalRowId, reconciliationRowId } from './ids.js';
 export {
   deriveFinalized,
   rob2JudgementsFromRows,

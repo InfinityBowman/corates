@@ -41,6 +41,7 @@ export interface PdfEntry {
 export interface ChecklistEntry {
   id: string;
   type: string;
+  kind: 'reviewer' | 'consensus';
   title: string | null;
   assignedTo: string | null;
   outcomeId: string | null;
@@ -50,6 +51,11 @@ export interface ChecklistEntry {
   score: string | null;
   answers: Record<string, unknown> | null;
   consolidatedAnswers?: Record<string, string | null> | null;
+}
+
+export interface AppraisalEntry {
+  type: string;
+  outcomeId: string | null;
 }
 
 interface ReconciliationEntry {
@@ -125,6 +131,8 @@ export interface StudyInfo {
   createdAt: number;
   updatedAt: number;
   checklists: ChecklistEntry[];
+  /** The study's planned cells; a cell with no checklist is planned, not blank. */
+  appraisals: AppraisalEntry[];
   pdfs: PdfEntry[];
   reconciliation?: ReconciliationEntry;
 }

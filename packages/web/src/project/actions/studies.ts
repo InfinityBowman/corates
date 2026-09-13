@@ -291,6 +291,25 @@ export const studyActions = {
     });
   },
 
+  /**
+   * Fill, swap, or clear reviewer slots. The mutator moves or materializes
+   * checklists to match; `onInProgress` is required when a leaving reviewer
+   * has in-progress work (see `getInProgressChecklistsOfLeavingReviewers`).
+   */
+  assignReviewers(
+    studyId: string,
+    slots: { reviewer1?: string | null; reviewer2?: string | null },
+    onInProgress?: 'handOver' | 'discard',
+  ): void {
+    const client = requireClient();
+    void client.mutate.study.assignReviewers({
+      id: studyId,
+      ...slots,
+      ...(onInProgress && { onInProgress }),
+      now: Date.now(),
+    });
+  },
+
   async delete(studyId: string): Promise<void> {
     const projectId = connectionPool.getActiveProjectId();
     const orgId = connectionPool.getActiveOrgId();

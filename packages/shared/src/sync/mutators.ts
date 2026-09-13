@@ -21,12 +21,15 @@ import {
   expandAnswerUpdate,
   type ChecklistAnswerInput,
 } from './answer-rows.js';
-import { answerRowId, reconciliationRowId } from './ids.js';
+import { answerRowId, appraisalRowId, reconciliationRowId } from './ids.js';
 import {
   pdfCitationMetadataSchema,
   pdfTagSchema,
   studyMetadataSchema,
   syncSchema,
+  type ChecklistKind,
+  type ChecklistRow,
+  type ChecklistType,
   type StudyMetadata,
 } from './schema.js';
 
@@ -40,6 +43,13 @@ export type SyncAuthContext = z.infer<typeof authContextSchema>;
 const timestamp = z.number().int().nonnegative();
 
 const CHECKLIST_TYPE = z.enum(['AMSTAR2', 'ROB2', 'ROBINS_I']);
+const CHECKLIST_KIND = z.enum(['reviewer', 'consensus']);
+
+const cellSchema = z.object({
+  studyId: z.string(),
+  type: CHECKLIST_TYPE,
+  outcomeId: z.string().nullable().default(null),
+});
 
 /** Default cap `checklist.setText` applies, matching the old `setTextValue`. */
 export const DEFAULT_TEXT_MAX_LENGTH = 2000;
@@ -140,6 +150,149 @@ function deleteAnswerRows(tx: Tx, checklistId: string): void {
   }
 }
 
+/** Removes a checklist and everything keyed to it. */
+function discardChecklist(tx: Tx, checklistId: string): void {
+  tx.del('checklists', checklistId);
+  deleteAnswerRows(tx, checklistId);
+  for (const row of tx.list('annotations', { where: { checklistId } })) {
+    tx.del('annotations', row.id);
+  }
+}
+
+interface CellRef {
+  studyId: string;
+  type: ChecklistType;
+  outcomeId: string | null;
+}
+
+function cellKey(studyId: string, type: string, outcomeId: string | null | undefined): string {
+  return appraisalRowId(studyId, getOutcomeKey(outcomeId ?? null, type));
+}
+
+/** The plan row for a cell, created if missing. Returns its id. */
+function ensureAppraisal(tx: Tx, cell: CellRef, now: number): string {
+  const outcomeKey = getOutcomeKey(cell.outcomeId, cell.type);
+  const id = appraisalRowId(cell.studyId, outcomeKey);
+  if (!tx.get('appraisals', id)) {
+    tx.put('appraisals', id, {
+      id,
+      studyId: cell.studyId,
+      type: cell.type,
+      outcomeId: cell.outcomeId,
+      outcomeKey,
+      createdAt: now,
+    });
+  }
+  return id;
+}
+
+function checklistsInCell(tx: Tx, cell: CellRef) {
+  return tx
+    .list('checklists', { where: { studyId: cell.studyId, type: cell.type } })
+    .filter(row => (row.data.outcomeId ?? null) === cell.outcomeId)
+    .map(row => row.data);
+}
+
+interface NewChecklist extends CellRef {
+  id: string;
+  kind: ChecklistKind;
+  assignedTo: string | null;
+}
+
+function createChecklistRow(tx: Tx, checklist: NewChecklist, now: number): void {
+  const { id, studyId, type, kind, assignedTo, outcomeId } = checklist;
+  tx.put('checklists', id, {
+    id,
+    studyId,
+    type,
+    kind,
+    title: `${type} Checklist`,
+    assignedTo,
+    status: CHECKLIST_STATUS.PENDING,
+    outcomeId,
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  for (const [key, value] of Object.entries(defaultAnswerRows(type))) {
+    tx.put('answers', answerRowId(id, key), {
+      id: answerRowId(id, key),
+      studyId,
+      checklistId: id,
+      key,
+      value,
+    });
+  }
+
+  // ROBINS-I starts Section A prefilled with the outcome name.
+  if (type === 'ROBINS_I' && outcomeId) {
+    const outcome = tx.get('outcomes', outcomeId);
+    if (outcome?.name) {
+      const key = 'sectionA.outcome';
+      tx.put('answers', answerRowId(id, key), {
+        id: answerRowId(id, key),
+        studyId,
+        checklistId: id,
+        key,
+        value: outcome.name,
+      });
+    }
+  }
+}
+
+/** `${cellKey}|${userId}` for every reviewer checklist, so materialization can skip held cells. */
+function heldCellIndex(tx: Tx): Set<string> {
+  const held = new Set<string>();
+  for (const row of tx.list('checklists', { where: { kind: 'reviewer' } })) {
+    const c = row.data;
+    if (c.assignedTo) held.add(`${cellKey(c.studyId, c.type, c.outcomeId)}|${c.assignedTo}`);
+  }
+  return held;
+}
+
+/** Creates the reviewer checklist for every plan cell on the study the user does not already hold. */
+function materializeForReviewer(
+  tx: Tx,
+  ctx: { nextId: () => string },
+  studyId: string,
+  userId: string,
+  held: Set<string>,
+  now: number,
+): void {
+  for (const plan of tx.list('appraisals', { where: { studyId } })) {
+    const key = `${plan.id}|${userId}`;
+    if (held.has(key)) continue;
+    held.add(key);
+    createChecklistRow(
+      tx,
+      {
+        id: ctx.nextId(),
+        studyId,
+        type: plan.data.type,
+        outcomeId: plan.data.outcomeId,
+        kind: 'reviewer',
+        assignedTo: userId,
+      },
+      now,
+    );
+  }
+}
+
+/** True once anything beyond the instrument's blank defaults has been recorded. */
+function hasAnswers(
+  tx: Tx,
+  checklist: { id: string; type: ChecklistType; status: string },
+): boolean {
+  if (checklist.status !== CHECKLIST_STATUS.PENDING) return true;
+  const defaults = defaultAnswerRows(checklist.type);
+  for (const row of tx.list('answers', { where: { checklistId: checklist.id } })) {
+    // Prefilled at creation, not a recorded answer.
+    if (row.data.key === 'sectionA.outcome') continue;
+    if (JSON.stringify(row.data.value) !== JSON.stringify(defaults[row.data.key])) return true;
+  }
+  return false;
+}
+
 export const syncMutators = defineMutators(
   syncSchema,
   {
@@ -177,6 +330,8 @@ export const syncMutators = defineMutators(
           description: z.string().optional(),
           // Null means un-assign; the merge deletes the key so the stored row
           // never carries a null (the row schema keeps plain optional strings).
+          // Slots here are a raw write (seeds, queued older clients); the app
+          // assigns through `study.assignReviewers`, which owns the swap rules.
           reviewer1: z.string().nullable().optional(),
           reviewer2: z.string().nullable().optional(),
           ...studyMetadataSchema.shape,
@@ -196,6 +351,92 @@ export const syncMutators = defineMutators(
       },
     },
 
+    /**
+     * Fill, swap, or clear a study's reviewer slots, keeping checklists in step.
+     *
+     * A joining reviewer gets a checklist for every planned cell. A leaving
+     * reviewer's pending checklists move to whoever takes their place (or go
+     * away when the slot is cleared); in-progress ones need the caller to say
+     * `handOver` or `discard`; completed and finalized ones are history and
+     * stay put, since reconciliation pairs on them.
+     */
+    'study.assignReviewers': {
+      args: z.object({
+        id: z.string(),
+        reviewer1: z.string().nullable().optional(),
+        reviewer2: z.string().nullable().optional(),
+        onInProgress: z.enum(['handOver', 'discard']).optional(),
+        now: timestamp,
+      }),
+      apply: (tx, { id, reviewer1, reviewer2, onInProgress, now }, ctx) => {
+        assertWritable(ctx);
+        const study = tx.get('studies', id);
+        if (!study) throw new AppError('NotFound', `Study ${id} does not exist`);
+
+        const before = [study.reviewer1 ?? null, study.reviewer2 ?? null];
+        const after = [
+          reviewer1 === undefined ? before[0] : reviewer1,
+          reviewer2 === undefined ? before[1] : reviewer2,
+        ];
+        if (after[0] && after[0] === after[1]) {
+          throw new AppError(
+            'DuplicateReviewer',
+            'The same person cannot fill both reviewer slots',
+          );
+        }
+        const leavers = before.filter((u): u is string => !!u && !after.includes(u));
+        const joiners = after.filter((u): u is string => !!u && !before.includes(u));
+
+        const held = heldCellIndex(tx);
+        // Decide every move before writing, so a refusal leaves nothing half-applied.
+        const moves: Array<{ checklist: ChecklistRow; to: string | null }> = [];
+        leavers.forEach((leaver, i) => {
+          const successor = joiners[i] ?? null;
+          const where = { studyId: id, kind: 'reviewer' as const, assignedTo: leaver };
+          for (const row of tx.list('checklists', { where })) {
+            const checklist = row.data;
+            const successorHolds =
+              successor !== null &&
+              held.has(`${cellKey(id, checklist.type, checklist.outcomeId)}|${successor}`);
+            const to = successor && !successorHolds ? successor : null;
+
+            if (checklist.status === CHECKLIST_STATUS.PENDING) {
+              moves.push({ checklist, to });
+            } else if (checklist.status === CHECKLIST_STATUS.IN_PROGRESS) {
+              if (onInProgress === 'handOver' && to) moves.push({ checklist, to });
+              else if (onInProgress === 'discard') moves.push({ checklist, to: null });
+              else {
+                throw new AppError(
+                  'InProgressChecklists',
+                  'This reviewer has appraisals in progress. Say whether to hand them over or discard them.',
+                );
+              }
+            }
+          }
+        });
+
+        for (const { checklist, to } of moves) {
+          if (to) {
+            tx.put('checklists', checklist.id, { ...checklist, assignedTo: to, updatedAt: now });
+            held.add(`${cellKey(id, checklist.type, checklist.outcomeId)}|${to}`);
+          } else {
+            discardChecklist(tx, checklist.id);
+          }
+        }
+        for (const joiner of joiners) materializeForReviewer(tx, ctx, id, joiner, held, now);
+
+        const merged = { ...study };
+        for (const [slot, holder] of [
+          ['reviewer1', after[0]],
+          ['reviewer2', after[1]],
+        ] as const) {
+          if (holder) merged[slot] = holder;
+          else delete merged[slot];
+        }
+        tx.put('studies', id, { ...merged, updatedAt: now });
+      },
+    },
+
     'study.delete': {
       args: z.object({ id: z.string() }),
       apply: (tx, { id }, ctx) => {
@@ -210,6 +451,7 @@ export const syncMutators = defineMutators(
           'annotations',
           'pdfs',
           'reconciliations',
+          'appraisals',
         ] as const) {
           for (const row of tx.list(table)) {
             if (row.data.studyId === id) tx.del(table, row.id);
@@ -218,16 +460,23 @@ export const syncMutators = defineMutators(
       },
     },
 
+    /**
+     * One checklist for one cell — the To-Do escape hatch and the consensus
+     * row. Also plans the cell, so the plan stays truthful whichever path
+     * created the work, and gives every other reviewer on the study their
+     * checklist for it: a filled slot always holds every planned cell.
+     */
     'checklist.create': {
       args: z.object({
         id: z.string(),
         studyId: z.string(),
         type: CHECKLIST_TYPE,
+        kind: CHECKLIST_KIND.default('reviewer'),
         assignedTo: z.string().nullable().default(null),
         outcomeId: z.string().nullable().default(null),
         now: timestamp,
       }),
-      apply: (tx, { id, studyId, type, assignedTo, outcomeId, now }, ctx) => {
+      apply: (tx, { id, studyId, type, kind, assignedTo, outcomeId, now }, ctx) => {
         assertWritable(ctx);
         if (requiresOutcome(type) && !outcomeId) {
           throw new AppError('OutcomeRequired', `${type} checklists require an outcome`);
@@ -236,58 +485,27 @@ export const syncMutators = defineMutators(
         if (!study) throw new AppError('NotFound', `Study ${studyId} does not exist`);
 
         if (requiresOutcome(type) && outcomeId) {
-          for (const row of tx.list('checklists')) {
-            if (
-              row.data.studyId === studyId &&
-              row.data.type === type &&
-              row.data.outcomeId === outcomeId &&
-              row.data.assignedTo === assignedTo
-            ) {
-              throw new AppError(
-                'DuplicateChecklist',
-                `A ${type} checklist for this outcome and reviewer already exists`,
-              );
+          const where = { studyId, type, outcomeId, kind, assignedTo };
+          if (tx.list('checklists', { where }).length > 0) {
+            throw new AppError(
+              'DuplicateChecklist',
+              `A ${type} checklist for this outcome and reviewer already exists`,
+            );
+          }
+        }
+
+        const held = heldCellIndex(tx);
+        const cell = { studyId, type, outcomeId };
+        ensureAppraisal(tx, cell, now);
+        createChecklistRow(tx, { id, ...cell, kind, assignedTo }, now);
+        if (kind === 'reviewer') {
+          if (assignedTo) held.add(`${cellKey(studyId, type, outcomeId)}|${assignedTo}`);
+          for (const holder of new Set([study.reviewer1, study.reviewer2])) {
+            if (holder && holder !== assignedTo) {
+              materializeForReviewer(tx, ctx, studyId, holder, held, now);
             }
           }
         }
-
-        tx.put('checklists', id, {
-          id,
-          studyId,
-          type,
-          title: `${type} Checklist`,
-          assignedTo,
-          status: CHECKLIST_STATUS.PENDING,
-          outcomeId,
-          createdAt: now,
-          updatedAt: now,
-        });
-
-        for (const [key, value] of Object.entries(defaultAnswerRows(type))) {
-          tx.put('answers', answerRowId(id, key), {
-            id: answerRowId(id, key),
-            studyId,
-            checklistId: id,
-            key,
-            value,
-          });
-        }
-
-        // ROBINS-I starts Section A prefilled with the outcome name.
-        if (type === 'ROBINS_I' && outcomeId) {
-          const outcome = tx.get('outcomes', outcomeId);
-          if (outcome?.name) {
-            const key = 'sectionA.outcome';
-            tx.put('answers', answerRowId(id, key), {
-              id: answerRowId(id, key),
-              studyId,
-              checklistId: id,
-              key,
-              value: outcome.name,
-            });
-          }
-        }
-
         tx.put('studies', studyId, { ...study, updatedAt: now });
       },
     },
@@ -400,6 +618,8 @@ export const syncMutators = defineMutators(
 
         const fromKey = getOutcomeKey(fromOutcomeId, type);
         const toKey = getOutcomeKey(toOutcomeId, type);
+        ensureAppraisal(tx, { studyId, type, outcomeId: toOutcomeId }, now);
+        tx.del('appraisals', appraisalRowId(studyId, fromKey));
         const oldEntry = tx.get('reconciliations', reconciliationRowId(studyId, fromKey));
         if (oldEntry) {
           tx.put('reconciliations', reconciliationRowId(studyId, toKey), {
@@ -445,7 +665,7 @@ export const syncMutators = defineMutators(
           const checklist = row.data;
           if (checklist.studyId !== studyId || checklist.type !== type) continue;
           if (checklist.outcomeId !== outcomeId) continue;
-          if (checklist.assignedTo === null) reconciledChecklists.push(checklist);
+          if (checklist.kind === 'consensus') reconciledChecklists.push(checklist);
           else if (checklist.status === CHECKLIST_STATUS.REVIEWER_COMPLETED) {
             reviewerChecklists.push(checklist);
           }
@@ -548,6 +768,74 @@ export const syncMutators = defineMutators(
       },
     },
 
+    /**
+     * Plan many cells in one commit. Each cell gets its plan row, and every
+     * reviewer already on the study gets a checklist for it, so planning an
+     * assigned study produces work immediately.
+     */
+    'appraisal.create': {
+      args: z.object({ cells: z.array(cellSchema).min(1), now: timestamp }),
+      apply: (tx, { cells, now }, ctx) => {
+        assertWritable(ctx);
+        const held = heldCellIndex(tx);
+        for (const cell of cells) {
+          if (requiresOutcome(cell.type) && !cell.outcomeId) {
+            throw new AppError('OutcomeRequired', `${cell.type} appraisals require an outcome`);
+          }
+          if (!requiresOutcome(cell.type) && cell.outcomeId) {
+            throw new AppError(
+              'InvalidOutcomeChange',
+              `${cell.type} appraisals are not linked to outcomes`,
+            );
+          }
+          const study = tx.get('studies', cell.studyId);
+          if (!study) throw new AppError('NotFound', `Study ${cell.studyId} does not exist`);
+          if (cell.outcomeId && !tx.get('outcomes', cell.outcomeId)) {
+            throw new AppError('NotFound', `Outcome ${cell.outcomeId} does not exist`);
+          }
+          ensureAppraisal(tx, cell, now);
+          for (const holder of new Set([study.reviewer1, study.reviewer2])) {
+            if (holder) materializeForReviewer(tx, ctx, cell.studyId, holder, held, now);
+          }
+          tx.put('studies', cell.studyId, { ...study, updatedAt: now });
+        }
+      },
+    },
+
+    /**
+     * Unplan cells. A cell whose checklists hold any answers is refused unless
+     * `force`, in which case the checklists, their answers and annotations,
+     * and the reconciliation row go with it. Unknown cells are a no-op.
+     */
+    'appraisal.delete': {
+      args: z.object({
+        cells: z.array(cellSchema).min(1),
+        force: z.boolean().default(false),
+        now: timestamp,
+      }),
+      apply: (tx, { cells, force, now }, ctx) => {
+        assertWritable(ctx);
+        const doomed = cells.map(cell => ({ cell, checklists: checklistsInCell(tx, cell) }));
+        if (!force) {
+          for (const { checklists } of doomed) {
+            if (checklists.some(checklist => hasAnswers(tx, checklist))) {
+              throw new AppError(
+                'AppraisalHasAnswers',
+                'An appraisal in this selection already has answers. Confirm to delete it anyway.',
+              );
+            }
+          }
+        }
+        for (const { cell, checklists } of doomed) {
+          for (const checklist of checklists) discardChecklist(tx, checklist.id);
+          const outcomeKey = getOutcomeKey(cell.outcomeId, cell.type);
+          tx.del('reconciliations', reconciliationRowId(cell.studyId, outcomeKey));
+          tx.del('appraisals', appraisalRowId(cell.studyId, outcomeKey));
+          touchStudy(tx, cell.studyId, now);
+        }
+      },
+    },
+
     'outcome.create': {
       args: z.object({
         id: z.string(),
@@ -579,13 +867,15 @@ export const syncMutators = defineMutators(
       args: z.object({ id: z.string() }),
       apply: (tx, { id }, ctx) => {
         assertWritable(ctx);
-        for (const row of tx.list('checklists')) {
-          if (row.data.outcomeId === id) {
-            throw new AppError(
-              'OutcomeInUse',
-              'This outcome is assigned to existing checklists and cannot be deleted',
-            );
-          }
+        if (tx.list('checklists', { where: { outcomeId: id } }).length > 0) {
+          throw new AppError(
+            'OutcomeInUse',
+            'This outcome is assigned to existing checklists and cannot be deleted',
+          );
+        }
+        // Past the guard, plan rows for this outcome hold no work; they go with it.
+        for (const row of tx.list('appraisals', { where: { outcomeId: id } })) {
+          tx.del('appraisals', row.id);
         }
         tx.del('outcomes', id);
       },

@@ -31,6 +31,7 @@ import {
   seedProject,
   seedProjectMember,
 } from '../../__tests__/helpers';
+import { syncApp } from '@corates/shared/sync';
 
 vi.mock('../../auth/config', () => {
   const mockVerifyAuth = vi.fn(async () => ({
@@ -103,7 +104,7 @@ describe('sync workspace routes', () => {
     expect(response?.status).toBe(200);
     const stats = (await response!.json()) as Record<string, unknown>;
     expect(stats.workspaceId).toBe(PROJECT);
-    expect(stats.schemaVersion).toBe(1);
+    expect(stats.schemaVersion).toBe(syncApp.version);
     expect(stats.rows).toEqual({ live: 0, tombstones: 0 });
   });
 
@@ -230,7 +231,7 @@ async function fieldClient(projectId: string, clientId: string) {
     JSON.stringify({
       type: 'hello',
       protocolVersion: PROTOCOL_VERSION,
-      schemaVersion: 1,
+      schemaVersion: syncApp.version,
       cursor: null,
     }),
   );

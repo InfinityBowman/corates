@@ -10,6 +10,7 @@ import {
   resetCounter,
 } from '@/__tests__/server/factories';
 import { deleteAccount } from '@/server/functions/users.server';
+import { syncApp } from '@corates/shared/sync';
 
 let currentUser = { id: 'user-1', email: 'user1@example.com' };
 
@@ -31,7 +32,7 @@ async function seedWorkspaceStudy(projectId: string) {
   const now = Date.now();
   await projectWorkspace(env, projectId).import({
     formatVersion: 1,
-    schemaVersion: 1,
+    schemaVersion: syncApp.version,
     rows: [
       {
         tbl: 'studies',

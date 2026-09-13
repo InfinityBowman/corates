@@ -50,8 +50,8 @@
   },
   "dependencies": {
     "@better-auth/stripe": "^1.7.2",
-    "@cf-sync/server": "^0.2.1",
-    "@cf-sync/yjs": "^0.2.0",
+    "@cf-sync/server": "^0.3.0",
+    "@cf-sync/yjs": "^0.2.1",
     "@corates/db": "workspace:*",
     "@corates/shared": "workspace:*",
     "@sentry/cloudflare": "^10.73.0",
@@ -62,7 +62,7 @@
     "zod": "^4.5.4"
   },
   "devDependencies": {
-    "@cf-sync/protocol": "^0.1.1",
+    "@cf-sync/protocol": "^0.2.0",
     "@cloudflare/vitest-plugin": "^1.1.3",
     "@vitest/runner": "^4.1.11",
     "@vitest/snapshot": "^4.1.11",
