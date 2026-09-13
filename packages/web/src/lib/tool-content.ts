@@ -10,6 +10,10 @@
  * verbatim content from the official publications.
  */
 
+import { CHECKLIST_TYPES } from '@/checklist-registry';
+
+type ChecklistTypeValue = (typeof CHECKLIST_TYPES)[keyof typeof CHECKLIST_TYPES];
+
 interface ReferenceLink {
   href: string;
   text: string;
@@ -44,6 +48,8 @@ export interface ToolContent {
   id: string;
   name: string;
   slug: string;
+  /** Preselected on /checklist when a visitor follows this page's CTA */
+  checklistType: ChecklistTypeValue;
   description: string;
   /** Short blurb for tool cards; bestUsedFor carries the full detail-page text */
   summary: string;
@@ -74,6 +80,7 @@ const TOOL_CONTENT: Record<string, ToolContent> = {
     id: 'amstar2',
     name: 'AMSTAR 2',
     slug: 'amstar2',
+    checklistType: CHECKLIST_TYPES.AMSTAR2,
     fullName: 'A MeaSurement Tool to Assess systematic Reviews, version 2',
     developedBy:
       'Beverley J. Shea, Barnaby C. Reeves, George Wells, Micere Thuku, Candyce Hamel, Julian Moran, David Moher, Peter Tugwell, Vivian Welch, Elizabeth Kristjansson, and David A. Henry. The original publication appeared in the BMJ in September 2017 (Shea et al., BMJ 2017;358:j4008).',
@@ -265,6 +272,7 @@ const TOOL_CONTENT: Record<string, ToolContent> = {
     id: 'robinsI',
     name: 'ROBINS-I V2',
     slug: 'robins-i',
+    checklistType: CHECKLIST_TYPES.ROBINS_I,
     fullName: 'Risk Of Bias In Non-randomized Studies - of Interventions, Version 2',
     developedBy:
       'Members of the Cochrane Bias Methods Group and the Cochrane Non-Randomised Studies Methods Group, led by Jonathan Sterne and Julian Higgins. Development of ROBINS-I V2 was funded in part by Medical Research Council (MRC) grant MR/M025209/1.',
@@ -451,6 +459,7 @@ const TOOL_CONTENT: Record<string, ToolContent> = {
     id: 'rob2',
     name: 'RoB 2',
     slug: 'rob2',
+    checklistType: CHECKLIST_TYPES.ROB2,
     fullName: 'Cochrane Risk of Bias tool for randomized trials, version 2',
     developedBy:
       'Members of the RoB 2 Development Group, including Julian P.T. Higgins, Jelena Savovic, Matthew J. Page, Roy G. Elbers, and Jonathan A.C. Sterne, with contributions from many additional collaborators across the Cochrane Bias Methods Group. The tool was published in the BMJ in 2019 (Sterne et al., BMJ 2019;366:l4898).',
