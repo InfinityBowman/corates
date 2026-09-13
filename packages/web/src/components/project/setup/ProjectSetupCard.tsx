@@ -17,6 +17,7 @@ import { useProjectSetup, type SetupStep } from './useProjectSetup';
 export function ProjectSetupCard() {
   const setup = useProjectSetup();
   const { steps, activeKey, doneCount, dismiss, isDismissing } = setup;
+  const allDone = doneCount === steps.length;
 
   return (
     <div className='border-border bg-card overflow-hidden rounded-xl border'>
@@ -39,13 +40,13 @@ export function ProjectSetupCard() {
           ))}
         </div>
         <Button
-          variant='ghost'
+          variant={allDone ? 'outline' : 'ghost'}
           size='xs'
-          className='text-muted-foreground ml-auto'
+          className={cn('ml-auto', !allDone && 'text-muted-foreground')}
           onClick={dismiss}
           disabled={isDismissing}
         >
-          Finish later
+          {allDone ? 'Done' : 'Finish later'}
         </Button>
       </div>
 
@@ -112,7 +113,7 @@ function StudiesBody({ setup }: { setup: Setup }) {
       <p className='text-muted-foreground text-xs'>
         {count} {count === 1 ? 'study' : 'studies'} added, {withPdf} with PDFs
       </p>
-      <Button variant='outline' size='xs' className='self-start' onClick={setup.steps[0].onOpen}>
+      <Button size='xs' className='self-start' onClick={setup.steps[0].onOpen}>
         <PlusIcon />
         Add more
       </Button>

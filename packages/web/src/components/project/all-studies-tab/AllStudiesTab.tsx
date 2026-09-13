@@ -10,6 +10,7 @@ import { AddStudiesForm, type AddStudiesFormState } from '../add-studies/AddStud
 import type { MergedStudy } from '@/hooks/useAddStudies/deduplication';
 import { GoogleDrivePickerModal } from '../google-drive/GoogleDrivePickerModal';
 import { StudyCard } from './study-card/StudyCard';
+import { StudiesExplainer } from './StudiesExplainer';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import { useFileDragStore } from '@/stores/fileDragStore';
 import { useAllStudies } from '@/project/workspace-data';
@@ -20,7 +21,8 @@ import { useProjectContext } from '../ProjectContext';
 import { saveFormState } from '@/lib/formStatePersistence.js';
 
 export function AllStudiesTab() {
-  const { projectId, getMember, isOwner, openAssignSheet } = useProjectContext();
+  const { projectId, getMember, isOwner, openAssignSheet, setAddStudiesSheetOpen } =
+    useProjectContext();
 
   const [showGoogleDriveModal, setShowGoogleDriveModal] = useState(false);
   const [googleDriveTargetStudyId, setGoogleDriveTargetStudyId] = useState<string | null>(null);
@@ -104,6 +106,8 @@ export function AllStudiesTab() {
           <p className='text-muted-foreground/70'>Loading studies...</p>
         </div>
       )}
+
+      {studies.length > 0 && <StudiesExplainer onAddStudies={() => setAddStudiesSheetOpen(true)} />}
 
       {studies.length > 0 && (
         <div className='mb-3 flex items-center justify-between'>
