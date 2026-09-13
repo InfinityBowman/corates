@@ -419,7 +419,7 @@ export const studyActions = {
             }
           }
 
-          if (!pdfAttached && study.pdfUrl && !study.pdfAccessible) {
+          if (!pdfAttached && study.pdfUrl) {
             manualPdfCount++;
           }
 

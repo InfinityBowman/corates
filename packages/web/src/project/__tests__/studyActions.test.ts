@@ -77,7 +77,7 @@ import { studyActions } from '../actions/studies';
 import { extractPdfTitle, extractPdfDoi } from '@/lib/pdfUtils.js';
 import { fetchFromDOI } from '@/lib/referenceLookup.js';
 import { importFromDrive } from '@/server/functions/google-drive.functions';
-import { uploadPdf } from '@/api/pdf-api';
+import { uploadPdf, fetchPdfViaProxy } from '@/api/pdf-api';
 
 describe('studyActions.addBatch', () => {
   beforeEach(() => {
@@ -213,6 +213,18 @@ describe('studyActions.addBatch', () => {
     ]);
 
     expect(result.successCount).toBe(3);
+    expect(result.manualPdfCount).toBe(1);
+  });
+
+  it('counts a failed fetch of an accessible PDF as needing manual download', async () => {
+    mockStudyCreate.mockResolvedValueOnce(undefined);
+    vi.mocked(fetchPdfViaProxy).mockRejectedValueOnce(new Error('domain not allowed'));
+
+    const result = await studyActions.addBatch([
+      { title: 'A', doi: '10.1/a', pdfUrl: 'https://x.com/a.pdf', pdfAccessible: true },
+    ]);
+
+    expect(result.successCount).toBe(1);
     expect(result.manualPdfCount).toBe(1);
   });
 });
