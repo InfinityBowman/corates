@@ -1,7 +1,7 @@
 /**
  * CreateProjectModal - Composer-style dialog for creating a new project.
  *
- * Collects a project name, then lands the owner on the Studies tab where
+ * Collects a project name, then lands the owner on the Overview tab where
  * first-run setup lives. The project always belongs to the user's own
  * workspace, since only workspace owners can create projects.
  */
@@ -9,11 +9,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { CheckIcon, ChevronRightIcon, CommandIcon, CornerDownLeftIcon } from 'lucide-react';
+import { CheckIcon, CommandIcon, CornerDownLeftIcon } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { getInitials } from '@/components/ui/avatar';
 import { showToast } from '@/lib/toast';
 import { useOrgs } from '@/hooks/useOrgs';
 import { queryKeys } from '@/lib/queryKeys';
@@ -113,7 +112,6 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
       navigate({
         to: '/projects/$projectId',
         params: { projectId: newProject.id },
-        search: { tab: 'all-studies' },
       });
     } catch (error: unknown) {
       const domainError = getDomainError(error);
@@ -161,30 +159,23 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
         showCloseButton={false}
         data-testid='create-project-dialog'
       >
-        <DialogTitle className='sr-only'>Create a new project</DialogTitle>
+        <div className='border-b px-4 py-3.5'>
+          <DialogTitle className='text-[15px] font-semibold'>New project</DialogTitle>
+        </div>
 
         <form onSubmit={handleSubmit} onKeyDown={handleKeyDown}>
-          <div className='text-muted-foreground flex items-center gap-2 px-4 pt-3 text-xs'>
-            <span className='bg-muted text-muted-foreground inline-flex h-6 items-center gap-1.5 rounded-md px-1.5 font-medium'>
-              <span className='bg-primary/15 text-primary flex size-3.5 items-center justify-center rounded-sm text-[9px] font-semibold'>
-                {getInitials(resolvedOrg?.name).charAt(0)}
-              </span>
-              {resolvedOrg?.name}
-            </span>
-            <ChevronRightIcon className='size-3' />
-            <span>New project</span>
-          </div>
-
-          <div className='flex flex-col px-4 pt-2.5 pb-4'>
+          <div className='flex flex-col gap-1.5 px-4 pt-4 pb-5'>
+            <label htmlFor='project-name' className='text-sm font-medium'>
+              Project name
+            </label>
             <Input
               id='project-name'
               type='text'
-              placeholder='Project name'
-              aria-label='Project name'
+              placeholder='Exercise therapy for chronic low back pain'
+              required
               value={projectName}
               onChange={e => setProjectName(e.target.value)}
               autoFocus
-              className='h-auto rounded-none border-0 px-0 py-1 text-lg font-semibold tracking-tight shadow-none focus-visible:ring-0 md:text-lg'
             />
           </div>
 
