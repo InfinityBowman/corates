@@ -77,6 +77,7 @@ export function ReviewerAssignment({
   }).length;
   const hasEmptySlot = rows.some(row => !draft[row.id]?.reviewer1 || !draft[row.id]?.reviewer2);
   const canAutoFill = hasEmptySlot || autoFilled.size > 0;
+  const isReshuffle = autoFilled.size > 0 && !hasEmptySlot;
 
   const setSlot = (studyId: string, slot: keyof ReviewerSlots, userId: string | null) => {
     setDraft(prev => ({ ...prev, [studyId]: { ...prev[studyId], [slot]: userId } }));
@@ -183,16 +184,26 @@ export function ReviewerAssignment({
             })}
           </div>
           <div className='flex shrink-0 -space-x-px'>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={handleAutoFill}
-              disabled={!canAutoFill}
-              className='rounded-r-none'
-            >
-              <WandSparklesIcon />
-              {autoFilled.size > 0 && !hasEmptySlot ? 'Reshuffle' : 'Auto-fill'}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={handleAutoFill}
+                  disabled={!canAutoFill}
+                  className='rounded-r-none'
+                >
+                  <WandSparklesIcon />
+                  {isReshuffle ? 'Reshuffle' : 'Auto-fill'}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className='max-w-64'>
+                {isReshuffle ?
+                  'Picks reviewers again for the slots Auto-fill chose. Reviewers you picked by hand stay.'
+                : 'Fills every empty reviewer slot, giving each study to whoever is furthest below their share of the project.'
+                }
+              </TooltipContent>
+            </Tooltip>
             <AutoFillSettings
               members={members}
               currentUserId={currentUserId}

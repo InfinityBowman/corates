@@ -21,6 +21,7 @@ import type { MergedStudy } from '@/hooks/useAddStudies/deduplication';
 import { useSortedStudyIds } from '@/project/workspace-data';
 import { project } from '@/project';
 import { useProjectContext } from '../ProjectContext';
+import { useFileDragStore } from '@/stores/fileDragStore';
 import {
   saveFormState,
   getFormState,
@@ -39,7 +40,8 @@ export function AddStudiesSheet({ open, onOpenChange, onAdded }: AddStudiesSheet
   const { projectId } = useProjectContext();
 
   const [restoredState, setRestoredState] = useState<AddStudiesFormState | null>(null);
-  const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const isDraggingOver = useFileDragStore(s => s.isDraggingFiles);
+  const studyDropTargetsMounted = useFileDragStore(s => s.studyDropTargetsMounted);
 
   const studies = useAddStudies({});
   const studyIds = useSortedStudyIds(projectId);
@@ -81,7 +83,9 @@ export function AddStudiesSheet({ open, onOpenChange, onAdded }: AddStudiesSheet
   }, [projectId]);
 
   // Global drag-and-drop while the sheet is closed. The empty-project inline
-  // form has its own dropzone, so this only arms once studies exist.
+  // form has its own dropzone, so this only arms once studies exist. Study
+  // cards handle their own drops and stop propagation, so a drop that reaches
+  // the document is one that landed outside any study.
   // Uses refs so the handlers are registered once without stale closures.
   const isArmedRef = useRef(false);
   isArmedRef.current = !open && studyIds.length > 0;
@@ -93,16 +97,17 @@ export function AddStudiesSheet({ open, onOpenChange, onAdded }: AddStudiesSheet
   handlePdfSelectRef.current = studies.handlePdfSelect;
 
   useEffect(() => {
+    const { setDraggingFiles } = useFileDragStore.getState();
     const handleDragEnter = (e: Event) => {
       const de = e as globalThis.DragEvent;
       if (isArmedRef.current && de.dataTransfer?.types?.includes('Files')) {
-        setIsDraggingOver(true);
+        setDraggingFiles(true);
       }
     };
 
     const handleDragLeave = (e: Event) => {
       if (!(e as globalThis.DragEvent).relatedTarget) {
-        setIsDraggingOver(false);
+        setDraggingFiles(false);
       }
     };
 
@@ -115,7 +120,7 @@ export function AddStudiesSheet({ open, onOpenChange, onAdded }: AddStudiesSheet
     const handleDrop = (e: Event) => {
       if (isArmedRef.current && isDraggingOverRef.current) {
         e.preventDefault();
-        setIsDraggingOver(false);
+        setDraggingFiles(false);
         const de = e as globalThis.DragEvent;
         const files = Array.from(de.dataTransfer?.files || []);
         if (files.length > 0) {
@@ -167,7 +172,8 @@ export function AddStudiesSheet({ open, onOpenChange, onAdded }: AddStudiesSheet
 
   return (
     <>
-      {isDraggingOver && (
+      {/* The studies tab shows its own drop zone next to the study cards. */}
+      {isDraggingOver && !studyDropTargetsMounted && (
         <div className='pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-blue-500/10'>
           <div className='bg-card rounded-xl border-2 border-dashed border-blue-500 p-8'>
             <p className='text-lg font-medium text-blue-600'>Drop PDFs to add studies</p>

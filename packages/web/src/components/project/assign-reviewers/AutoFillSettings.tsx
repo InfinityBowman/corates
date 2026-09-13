@@ -6,6 +6,7 @@ import { useId } from 'react';
 import { SlidersHorizontalIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import type { MemberEntry } from '@/stores/projectStore';
 import { MemberAvatar, memberDisplayName } from '../MemberAvatar';
@@ -42,17 +43,19 @@ export function AutoFillSettings({
 
   return (
     <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant='outline'
-          size='icon-sm'
-          disabled={disabled}
-          aria-label='Auto-fill shares'
-          className='rounded-l-none'
-        >
-          <SlidersHorizontalIcon />
-        </Button>
-      </PopoverTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <PopoverTrigger asChild>
+            <Button variant='outline' size='sm' disabled={disabled} className='rounded-l-none'>
+              <SlidersHorizontalIcon />
+              {isEven ? 'Even shares' : 'Custom shares'}
+            </Button>
+          </PopoverTrigger>
+        </TooltipTrigger>
+        <TooltipContent className='max-w-64'>
+          Set how much of the project each person takes on when Auto-fill hands out studies.
+        </TooltipContent>
+      </Tooltip>
       <PopoverContent align='end' className='w-120 max-w-[calc(100vw-2rem)] gap-0 p-0'>
         <div className='px-3 pt-3 pb-2'>
           <p className='text-sm font-medium'>Share of studies</p>
@@ -123,7 +126,7 @@ export function AutoFillSettings({
             disabled={isEven}
             onClick={() => onChange(evenShares(members.map(m => m.userId)))}
           >
-            Even split
+            Reset to even
           </Button>
         </div>
       </PopoverContent>
