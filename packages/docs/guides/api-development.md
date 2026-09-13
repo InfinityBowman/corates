@@ -239,6 +239,8 @@ try {
 
 The frontend error helpers (`@/lib/error-utils`) understand this schema and surface user-friendly messages automatically.
 
+Server functions (`server/functions/*.functions.ts`) are the exception: throw a `DomainErrorException` (or call `throwDomainError`) instead of returning a Response, because a returned Response reaches the caller as resolved data. `src/start.ts` registers a serialization adapter so the thrown error arrives in the browser with its `code`, `statusCode` and `details`. Without it, TanStack Start serializes only the message, and the client cannot tell a provider-not-connected error from a crash.
+
 ## Catch-all 404
 
 `routes/api/$.ts` returns a JSON `SYSTEM_ROUTE_NOT_FOUND` for any `/api/*` path that no concrete route claims. This prevents API clients from receiving the SPA HTML shell. Leave it in place; do not add route-specific 404s unless the request shape demands one.
