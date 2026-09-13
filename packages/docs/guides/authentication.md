@@ -86,7 +86,7 @@ The following endpoints require authentication:
 - `/api/sync/:projectId` - Sync-engine workspace WebSocket (requires auth + project membership, checked against D1 on connect)
 - `/api/admin/*` - Admin endpoints (requires admin role)
 - `/api/billing/*` - Billing endpoints (requires auth)
-- `/api/google-drive/*` - Google Drive integration (requires auth)
+- Google Drive integration is exposed as TanStack Start server functions in `packages/web/src/server/functions/google-drive.functions.ts` (requires auth), not as REST routes
 - `/api/invitations/accept` - Accept project invitations (requires auth)
 
 See the [Organizations Guide](/guides/organizations) for detailed org/project route patterns.

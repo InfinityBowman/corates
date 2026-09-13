@@ -12,6 +12,12 @@ import {
 import type { Session } from '@/server/middleware/auth';
 import { DomainErrorException } from '@corates/shared';
 
+// A real 50MB body is too heavy for the test isolate; shrink the limit instead
+vi.mock('@corates/shared', async importOriginal => {
+  const actual = await importOriginal<typeof import('@corates/shared')>();
+  return { ...actual, PDF_LIMITS: { ...actual.PDF_LIMITS, MAX_SIZE: 16 } };
+});
+
 let currentUser: { id: string; email: string } = { id: 'user-1', email: 'user1@example.com' };
 
 const originalFetch = globalThis.fetch;
@@ -242,10 +248,31 @@ describe('getPickerToken', () => {
 });
 
 describe('disconnectGoogle', () => {
-  it('disconnects Google account', async () => {
+  it('revokes the grant with Google and deletes the account row', async () => {
     const user = await buildUser({ email: 'user1@example.com' });
     await seedGoogleAccount(user.id);
     currentUser = { id: user.id, email: user.email };
+    mockFetch.mockResolvedValueOnce(new Response(null, { status: 200 }));
+
+    const result = await disconnectGoogle(createDb(env.DB), mockSession());
+    expect(result.success).toBe(true);
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    const [url, init] = mockFetch.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('https://oauth2.googleapis.com/revoke');
+    expect(String(init.body)).toBe('token=refresh-123');
+
+    const acct = await env.DB.prepare('SELECT * FROM account WHERE userId = ?1 AND providerId = ?2')
+      .bind(user.id, 'google')
+      .first();
+    expect(acct).toBeNull();
+  });
+
+  it('still deletes the account row when Google rejects the revoke', async () => {
+    const user = await buildUser({ email: 'user1@example.com' });
+    await seedGoogleAccount(user.id);
+    currentUser = { id: user.id, email: user.email };
+    mockFetch.mockResolvedValueOnce(new Response('{"error":"invalid_token"}', { status: 400 }));
 
     const result = await disconnectGoogle(createDb(env.DB), mockSession());
     expect(result.success).toBe(true);
@@ -254,6 +281,14 @@ describe('disconnectGoogle', () => {
       .bind(user.id, 'google')
       .first();
     expect(acct).toBeNull();
+  });
+
+  it('skips the revoke call when no Google account is linked', async () => {
+    const user = await buildUser({ email: 'user1@example.com' });
+    currentUser = { id: user.id, email: user.email };
+
+    await disconnectGoogle(createDb(env.DB), mockSession());
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 });
 
@@ -271,7 +306,7 @@ describe('importFromDrive', () => {
             id: 'file-123',
             name: 'document.pdf',
             mimeType: 'application/pdf',
-            size: '1024',
+            size: '5',
           }),
           { headers: { 'Content-Type': 'application/json' } },
         ),
@@ -291,6 +326,90 @@ describe('importFromDrive', () => {
     expect(result.success).toBe(true);
     expect(result.file.fileName).toBe('document.pdf');
     expect(result.file.source).toBe('google-drive');
+
+    // Shared-drive files need supportsAllDrives on both requests
+    for (const call of mockFetch.mock.calls) {
+      expect(String(call[0])).toContain('supportsAllDrives=true');
+    }
+  });
+
+  it('rejects a download larger than the limit when Drive omits size', async () => {
+    const { project, owner } = await buildProject();
+    await seedGoogleAccount(owner.id);
+    currentUser = { id: owner.id, email: owner.email };
+
+    const pdfData = new Uint8Array(32);
+    pdfData.set([0x25, 0x50, 0x44, 0x46, 0x2d]);
+    mockFetch
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({ id: 'file-123', name: 'document.pdf', mimeType: 'application/pdf' }),
+          { headers: { 'Content-Type': 'application/json' } },
+        ),
+      )
+      .mockResolvedValueOnce(new Response(pdfData.buffer as ArrayBuffer));
+
+    try {
+      await importFromDrive(createDb(env.DB), mockSession(), {
+        fileId: 'file-123',
+        projectId: project.id,
+        studyId: 'study-1',
+      });
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      const res = err as DomainErrorException;
+      expect(res.statusCode).toBe(413);
+      expect(res.code).toBe('FILE_TOO_LARGE');
+    }
+
+    const listed = await env.PDF_BUCKET.list({ prefix: `projects/${project.id}/` });
+    expect(listed.objects).toHaveLength(0);
+  });
+
+  it('deletes the R2 object and fails when the mediaFiles insert fails', async () => {
+    const { project, owner } = await buildProject();
+    await seedGoogleAccount(owner.id);
+    currentUser = { id: owner.id, email: owner.email };
+
+    const pdfData = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d]);
+    mockFetch
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            id: 'file-123',
+            name: 'document.pdf',
+            mimeType: 'application/pdf',
+            size: '5',
+          }),
+          { headers: { 'Content-Type': 'application/json' } },
+        ),
+      )
+      .mockResolvedValueOnce(new Response(pdfData.buffer as ArrayBuffer));
+
+    const db = createDb(env.DB);
+    vi.spyOn(db, 'insert').mockImplementationOnce(() => {
+      throw new Error('D1 write failed');
+    });
+
+    try {
+      await importFromDrive(db, mockSession(), {
+        fileId: 'file-123',
+        projectId: project.id,
+        studyId: 'study-1',
+      });
+      expect.unreachable('should have thrown');
+    } catch (err) {
+      const res = err as DomainErrorException;
+      expect(res).toBeInstanceOf(DomainErrorException);
+      expect(res.code).toBe('FILE_UPLOAD_FAILED');
+    }
+
+    const listed = await env.PDF_BUCKET.list({ prefix: `projects/${project.id}/` });
+    expect(listed.objects).toHaveLength(0);
+    const rows = await env.DB.prepare('SELECT COUNT(*) AS n FROM mediaFiles').first<{
+      n: number;
+    }>();
+    expect(rows?.n).toBe(0);
   });
 
   it('rejects non-PDF files', async () => {
