@@ -104,6 +104,13 @@ export async function pickGooglePdfFiles(
       .setSelectFolderEnabled(false)
       .setMimeTypes('application/pdf');
 
+    // setEnableDrives(true) shows only shared drives, so My Drive needs its own view
+    const sharedDrivesView = new picker.DocsView()
+      .setEnableDrives(true)
+      .setIncludeFolders(true)
+      .setSelectFolderEnabled(false)
+      .setMimeTypes('application/pdf');
+
     let builder = new picker.PickerBuilder()
       .setOAuthToken(options.oauthToken)
       .setDeveloperKey(options.developerKey)
@@ -128,6 +135,7 @@ export async function pickGooglePdfFiles(
         resolve(files);
       })
       .addView(docsView)
+      .addView(sharedDrivesView)
       .setOrigin(window.location.origin);
 
     if (options.multiselect) {

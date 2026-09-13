@@ -134,9 +134,9 @@ Stripe integration for subscriptions and payments (main app Worker):
 
 Admin-only endpoints for user management and system stats.
 
-### Google Drive (`/api/google-drive`)
+### Google Drive
 
-Google Drive integration endpoints for importing documents.
+There are no `/api/google-drive` REST routes. Drive status, disconnect, picker token, and import are TanStack Start server functions in `packages/web/src/server/functions/google-drive.functions.ts`; the OAuth link itself goes through Better Auth's `/api/auth/link-social`.
 
 ### Durable Object Routes
 

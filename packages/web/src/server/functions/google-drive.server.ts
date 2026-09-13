@@ -1,4 +1,4 @@
-import { captureError, info } from '@corates/workers/logger';
+import { captureError, info, warn } from '@corates/workers/logger';
 import { env } from 'cloudflare:workers';
 import type { Database } from '@corates/db/client';
 import { account, projects, mediaFiles } from '@corates/db/schema';
@@ -11,6 +11,7 @@ import {
   isValidPdfFilename,
   isPdfSignature,
   PDF_MAGIC_BYTES,
+  PDF_LIMITS,
   AUTH_ERRORS,
   FILE_ERRORS,
   SYSTEM_ERRORS,
@@ -48,7 +49,33 @@ export async function getStatus(db: Database, session: Session) {
   };
 }
 
+// Google only issues a refresh token on the first consent for a client. Revoking
+// the grant on disconnect means a later reconnect is a fresh consent that gets
+// one again, instead of an access token that dies after an hour.
+async function revokeGoogleGrant(
+  userId: string,
+  tokens: { refreshToken: string | null; accessToken: string | null },
+) {
+  const token = tokens.refreshToken ?? tokens.accessToken;
+  if (!token) return;
+  try {
+    const response = await fetch('https://oauth2.googleapis.com/revoke', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ token }),
+    });
+    if (!response.ok) {
+      warn('google.revoke_failed', { userId, status: response.status });
+    }
+  } catch (error) {
+    captureError(error, { tags: { component: 'google-drive', action: 'revoke' } });
+  }
+}
+
 export async function disconnectGoogle(db: Database, session: Session) {
+  const tokens = await getGoogleTokens(db, session.user.id);
+  if (tokens) await revokeGoogleGrant(session.user.id, tokens);
+
   await db
     .delete(account)
     .where(and(eq(account.userId, session.user.id), eq(account.providerId, 'google')));
@@ -128,7 +155,7 @@ export async function importFromDrive(
     const accessToken = await getValidAccessToken(env, db, session.user.id, tokens);
 
     const metaResponse = await fetch(
-      `https://www.googleapis.com/drive/v3/files/${fileId}?fields=id,name,mimeType,size`,
+      `https://www.googleapis.com/drive/v3/files/${fileId}?fields=id,name,mimeType,size&supportsAllDrives=true`,
       { headers: { Authorization: `Bearer ${accessToken}` } },
     );
 
@@ -159,16 +186,15 @@ export async function importFromDrive(
       });
     }
 
-    const maxSize = 50 * 1024 * 1024;
-    if (fileMeta.size && parseInt(fileMeta.size, 10) > maxSize) {
+    if (fileMeta.size && parseInt(fileMeta.size, 10) > PDF_LIMITS.MAX_SIZE) {
       throwDomainError(FILE_ERRORS.TOO_LARGE, {
-        maxSize: maxSize,
+        maxSize: PDF_LIMITS.MAX_SIZE,
         fileSize: parseInt(fileMeta.size, 10),
       });
     }
 
     const downloadResponse = await fetch(
-      `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+      `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&supportsAllDrives=true`,
       { headers: { Authorization: `Bearer ${accessToken}` } },
     );
 
@@ -180,6 +206,14 @@ export async function importFromDrive(
     }
 
     const fileContent = await downloadResponse.arrayBuffer();
+
+    // Drive omits size for some files, so the metadata check above is not enough
+    if (fileContent.byteLength > PDF_LIMITS.MAX_SIZE) {
+      throwDomainError(FILE_ERRORS.TOO_LARGE, {
+        maxSize: PDF_LIMITS.MAX_SIZE,
+        fileSize: fileContent.byteLength,
+      });
+    }
 
     const header = new Uint8Array(fileContent.slice(0, PDF_MAGIC_BYTES.length));
     if (!isPdfSignature(header)) {
@@ -246,6 +280,15 @@ export async function importFromDrive(
       });
     } catch (dbError) {
       captureError(dbError, { tags: { component: 'google-drive', action: 'import-insert-media' } });
+      try {
+        await env.PDF_BUCKET.delete(r2Key);
+      } catch (cleanupError) {
+        captureError(cleanupError, { tags: { component: 'google-drive', action: 'cleanup-r2' } });
+      }
+      throwDomainError(FILE_ERRORS.UPLOAD_FAILED, {
+        operation: 'import_google_drive_db_insert',
+        originalError: dbError instanceof Error ? dbError.message : String(dbError),
+      });
     }
 
     info('pdf.drive_imported', {
