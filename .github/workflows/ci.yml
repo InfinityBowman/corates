@@ -198,6 +198,10 @@ jobs:
           VITE_GOOGLE_PICKER_APP_ID: ${{ vars.VITE_GOOGLE_PICKER_APP_ID }}
         run: pnpm --filter web build
 
+      # build.target says what to emit but never verifies it
+      - name: Check client bundle against the browser floor
+        run: pnpm --filter web check:client-syntax
+
       - name: Migrate staging database
         if: github.event_name == 'push'
         env:
