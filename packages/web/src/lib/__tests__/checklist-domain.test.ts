@@ -18,6 +18,8 @@ import {
   getReadyReconciliationPairs,
   getReopenableReconciledChecklist,
   getSendBackToTodoPlan,
+  getAppraisalCells,
+  getInProgressChecklistsOfLeavingReviewers,
   CHECKLIST_STATUS,
 } from '@corates/shared/checklists';
 
@@ -54,13 +56,18 @@ describe('checklist-domain', () => {
   });
 
   describe('isReconciledChecklist', () => {
-    it('returns true for checklist with assignedTo null', () => {
-      const checklist = createChecklist({ assignedTo: null });
+    it('returns true for a consensus checklist', () => {
+      const checklist = createChecklist({ assignedTo: null, kind: 'consensus' });
       expect(isReconciledChecklist(checklist)).toBe(true);
     });
 
     it('returns false for checklist assigned to a user', () => {
       const checklist = createChecklist({ assignedTo: 'user-1' });
+      expect(isReconciledChecklist(checklist)).toBe(false);
+    });
+
+    it('returns false for an unassigned reviewer checklist', () => {
+      const checklist = createChecklist({ assignedTo: null });
       expect(isReconciledChecklist(checklist)).toBe(false);
     });
   });
@@ -200,7 +207,8 @@ describe('checklist-domain', () => {
           checklists: [
             createChecklist({
               id: 'cl-1',
-              assignedTo: null, // Reconciled
+              assignedTo: null,
+              kind: 'consensus',
               status: CHECKLIST_STATUS.FINALIZED,
             }),
           ],
@@ -229,6 +237,7 @@ describe('checklist-domain', () => {
               id: 'cl-reconciled',
               type: 'AMSTAR2',
               assignedTo: null,
+              kind: 'consensus',
               status: CHECKLIST_STATUS.FINALIZED,
             }),
           ],
@@ -468,6 +477,7 @@ describe('checklist-domain', () => {
             type: 'ROB2',
             outcomeId: 'outcome-1',
             assignedTo: null,
+            kind: 'consensus',
             status: CHECKLIST_STATUS.FINALIZED,
           }),
           // outcome-2: both reviewers done, no reconciled checklist yet
@@ -530,6 +540,7 @@ describe('checklist-domain', () => {
       createChecklist({
         id: 'cl-reconciled',
         assignedTo: null,
+        kind: 'consensus',
         status: reconciledStatus,
       }),
     ];
@@ -598,6 +609,7 @@ describe('checklist-domain', () => {
             type: 'ROB2',
             outcomeId: 'outcome-1',
             assignedTo: null,
+            kind: 'consensus',
             status: CHECKLIST_STATUS.FINALIZED,
           }),
           createChecklist({
@@ -605,6 +617,7 @@ describe('checklist-domain', () => {
             type: 'ROB2',
             outcomeId: 'outcome-2',
             assignedTo: null,
+            kind: 'consensus',
             status: CHECKLIST_STATUS.FINALIZED,
           }),
         ],
@@ -646,6 +659,7 @@ describe('checklist-domain', () => {
           createChecklist({
             id: 'cl-reconciled',
             assignedTo: null,
+            kind: 'consensus',
             status: CHECKLIST_STATUS.RECONCILING,
           }),
         ],
@@ -693,6 +707,7 @@ describe('checklist-domain', () => {
           createChecklist({
             id: 'cl-reconciled',
             assignedTo: null,
+            kind: 'consensus',
             status: CHECKLIST_STATUS.FINALIZED,
           }),
         ],
@@ -722,6 +737,108 @@ describe('checklist-domain', () => {
       });
       expect(getSendBackToTodoPlan(study, 'outcome-1', 'ROB2')?.reviewerChecklists).toHaveLength(1);
       expect(getSendBackToTodoPlan(study, 'outcome-3', 'ROB2')).toBe(null);
+    });
+  });
+
+  describe('plan-first cells', () => {
+    // One outcome group: a planned cell nobody owns, a slot-1 reviewer with
+    // work done, an empty slot 2, and a consensus row from before the plan.
+    const study = createStudy({
+      reviewer1: 'user-1',
+      reviewer2: null,
+      appraisals: [
+        { type: 'ROB2', outcomeId: 'outcome-1' },
+        { type: 'ROB2', outcomeId: 'outcome-2' },
+      ],
+      checklists: [
+        createChecklist({
+          id: 'cl-1',
+          type: 'ROB2',
+          outcomeId: 'outcome-1',
+          assignedTo: 'user-1',
+          status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+        }),
+        createChecklist({
+          id: 'cl-consensus',
+          type: 'ROB2',
+          outcomeId: 'outcome-1',
+          assignedTo: null,
+          kind: 'consensus',
+          status: CHECKLIST_STATUS.RECONCILING,
+        }),
+      ],
+    });
+
+    it('lists the planned cell as planned and the started cell with its checklists', () => {
+      const cells = getAppraisalCells(study);
+      expect(cells).toHaveLength(2);
+      const started = cells.find(c => c.outcomeId === 'outcome-1');
+      expect(started?.planned).toBe(false);
+      expect(started?.checklists.map(c => c.id)).toEqual(['cl-1', 'cl-consensus']);
+      const planned = cells.find(c => c.outcomeId === 'outcome-2');
+      expect(planned?.planned).toBe(true);
+      expect(planned?.checklists).toEqual([]);
+    });
+
+    it('lists a cell that holds checklists outside the plan', () => {
+      const unplanned = createStudy({
+        appraisals: [],
+        checklists: [createChecklist({ id: 'cl-a', type: 'AMSTAR2' })],
+      });
+      expect(getAppraisalCells(unplanned)).toEqual([
+        { outcomeId: null, type: 'AMSTAR2', checklists: unplanned.checklists, planned: false },
+      ]);
+    });
+
+    it('does not mistake the consensus row for a second reviewer', () => {
+      expect(shouldShowInTab(study, 'reconcile')).toBe(false);
+      expect(getReconciliationChecklistsByOutcome(study)).toEqual([
+        { outcomeId: 'outcome-1', type: 'ROB2', checklists: [study.checklists[0]] },
+      ]);
+      expect(getReadyReconciliationPairs(study)).toEqual([]);
+    });
+
+    it('keeps the study on the To-Do tab for the empty slot only once it is filled', () => {
+      expect(shouldShowInTab(study, 'todo', 'user-2')).toBe(false);
+      expect(shouldShowInTab({ ...study, reviewer2: 'user-2' }, 'todo', 'user-2')).toBe(true);
+    });
+  });
+
+  describe('getInProgressChecklistsOfLeavingReviewers', () => {
+    const study = createStudy({
+      reviewer1: 'user-1',
+      reviewer2: 'user-2',
+      checklists: [
+        createChecklist({ id: 'cl-1', assignedTo: 'user-1', status: CHECKLIST_STATUS.IN_PROGRESS }),
+        createChecklist({ id: 'cl-2', assignedTo: 'user-2', status: CHECKLIST_STATUS.IN_PROGRESS }),
+        createChecklist({ id: 'cl-3', assignedTo: 'user-2', status: CHECKLIST_STATUS.PENDING }),
+        createChecklist({
+          id: 'cl-4',
+          assignedTo: 'user-2',
+          status: CHECKLIST_STATUS.REVIEWER_COMPLETED,
+        }),
+      ],
+    });
+
+    it('returns only in-progress checklists of reviewers who leave', () => {
+      const blocked = getInProgressChecklistsOfLeavingReviewers(study, { reviewer2: 'user-3' });
+      expect(blocked.map(c => c.id)).toEqual(['cl-2']);
+    });
+
+    it('returns nothing when the slots merely swap places', () => {
+      expect(
+        getInProgressChecklistsOfLeavingReviewers(study, {
+          reviewer1: 'user-2',
+          reviewer2: 'user-1',
+        }),
+      ).toEqual([]);
+    });
+
+    it('treats an omitted slot as unchanged and a null slot as cleared', () => {
+      expect(getInProgressChecklistsOfLeavingReviewers(study, {}).map(c => c.id)).toEqual([]);
+      expect(
+        getInProgressChecklistsOfLeavingReviewers(study, { reviewer1: null }).map(c => c.id),
+      ).toEqual(['cl-1']);
     });
   });
 });

@@ -37,6 +37,7 @@ import {
 import { CHECKLIST_STATUS, getOutcomeKey } from '@corates/shared/checklists';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import type {
+  AppraisalEntry,
   ChecklistEntry,
   MemberEntry,
   OutcomeEntry,
@@ -316,6 +317,10 @@ export function useAllStudies(projectId: string): StudyInfo[] {
     queryKey: ['answers', key],
     query: q => q.from({ answer: collections.answers }),
   });
+  const { data: appraisals } = useLiveQuery({
+    queryKey: ['appraisals', key],
+    query: q => q.from({ appraisal: collections.appraisals }),
+  });
 
   return useMemo(() => {
     const answersByChecklist = new Map<string, Record<string, unknown>>();
@@ -333,6 +338,7 @@ export function useAllStudies(projectId: string): StudyInfo[] {
       let entry: ChecklistEntry = {
         id: row.id,
         type: row.type,
+        kind: row.kind,
         title: row.title ?? null,
         assignedTo: row.assignedTo,
         outcomeId: row.outcomeId,
@@ -358,6 +364,13 @@ export function useAllStudies(projectId: string): StudyInfo[] {
     }
     for (const list of checklistsByStudy.values()) {
       list.sort((a, b) => a.createdAt - b.createdAt);
+    }
+
+    const appraisalsByStudy = new Map<string, AppraisalEntry[]>();
+    for (const row of appraisals ?? []) {
+      const list = appraisalsByStudy.get(row.studyId) ?? [];
+      list.push({ type: row.type, outcomeId: row.outcomeId });
+      appraisalsByStudy.set(row.studyId, list);
     }
 
     const pdfsByStudy = new Map<string, PdfEntry[]>();
@@ -393,11 +406,12 @@ export function useAllStudies(projectId: string): StudyInfo[] {
       createdAt: study.createdAt,
       updatedAt: study.updatedAt,
       checklists: checklistsByStudy.get(study.id) ?? [],
+      appraisals: appraisalsByStudy.get(study.id) ?? [],
       pdfs: pdfsByStudy.get(study.id) ?? [],
     }));
     result.sort((a, b) => a.createdAt - b.createdAt);
     return result;
-  }, [studies, checklists, pdfs, answers]);
+  }, [studies, checklists, appraisals, pdfs, answers]);
 }
 
 export function useStudy(projectId: string, studyId: string): StudyInfo | undefined {

@@ -351,6 +351,7 @@ export function ReconciliationWrapper({
       id: newChecklistId,
       studyId,
       type: checklistType,
+      kind: 'consensus' as const,
       assignedTo: null,
       outcomeId,
       now: Date.now(),

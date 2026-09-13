@@ -78,6 +78,12 @@ function rejectionMessage(code: string, mutationName: string): string {
       return 'Reconciliation is in progress for this outcome. Finish it before changing the outcome.';
     case 'AssigneeConflict':
       return 'A checklist for the target outcome already exists for one of the reviewers.';
+    case 'InProgressChecklists':
+      return 'That reviewer has appraisals in progress. Choose whether to hand them over or discard them.';
+    case 'AppraisalHasAnswers':
+      return 'An appraisal in that selection already has answers. Confirm to delete it anyway.';
+    case 'DuplicateReviewer':
+      return 'The same person cannot fill both reviewer slots.';
     default:
       return `Your change (${mutationName}) was rejected and has been rolled back.`;
   }

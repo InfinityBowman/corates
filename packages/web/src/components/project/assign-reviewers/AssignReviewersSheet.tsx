@@ -47,7 +47,9 @@ export function AssignReviewersSheet({ open, onOpenChange }: AssignReviewersShee
           studies={studies}
           members={members}
           currentUserId={user?.id ?? null}
-          onSave={(studyId, slots) => project.study.update(studyId, { ...slots })}
+          onSave={(studyId, slots, onInProgress) =>
+            project.study.assignReviewers(studyId, slots, onInProgress)
+          }
           onClose={() => onOpenChange(false)}
         />
       </SheetContent>

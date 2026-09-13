@@ -312,7 +312,15 @@ export function planAddStudy(
   for (const checklist of checklists) {
     plan.push({
       name: 'checklist.create',
-      args: { id: checklist.id, studyId, type, assignedTo: checklist.assignedTo, outcomeId, now },
+      args: {
+        id: checklist.id,
+        studyId,
+        type,
+        kind: checklist.assignedTo === null ? 'consensus' : 'reviewer',
+        assignedTo: checklist.assignedTo,
+        outcomeId,
+        now,
+      },
     });
     plan.push(
       ...planChecklistAnswers(
@@ -448,6 +456,8 @@ function planTemplateStudy(
         id: checklist.id,
         studyId: study.id,
         type,
+        // Templates predate `kind` and mark consensus the old way.
+        kind: checklist.assignedTo === null ? 'consensus' : 'reviewer',
         assignedTo: mapUser(checklist.assignedTo),
         outcomeId: checklist.outcomeId ?? null,
         now,

@@ -18,6 +18,7 @@ import {
   reconciliationRowId,
   type AnnotationRow,
   type AnswerRow,
+  type AppraisalRow,
   type ChecklistRow,
   type OutcomeRow,
   type PdfRow,
@@ -29,6 +30,7 @@ import {
 export interface ProjectCollections {
   studies: Collection<StudyRow>;
   checklists: Collection<ChecklistRow>;
+  appraisals: Collection<AppraisalRow>;
   answers: Collection<AnswerRow>;
   annotations: Collection<AnnotationRow>;
   outcomes: Collection<OutcomeRow>;
@@ -47,6 +49,7 @@ function localSet(idPrefix: string): ProjectCollections {
   return {
     studies: make<StudyRow>('studies'),
     checklists: make<ChecklistRow>('checklists'),
+    appraisals: make<AppraisalRow>('appraisals'),
     answers: make<AnswerRow>('answers'),
     annotations: make<AnnotationRow>('annotations'),
     outcomes: make<OutcomeRow>('outcomes'),
@@ -84,6 +87,8 @@ export interface LocalRows {
   /** Absent in rows persisted before local reconciliation was supported. */
   outcomes?: unknown[];
   reconciliations?: unknown[];
+  /** Absent in rows persisted before the appraisal plan existed. */
+  appraisals?: unknown[];
 }
 
 /** One-time conversion of a legacy local-practice Y.Doc into plain rows. */
@@ -131,6 +136,7 @@ export function rowsFromLocalDoc(ydoc: Y.Doc): LocalRows {
           id: checklistId,
           studyId,
           type,
+          kind: 'reviewer',
           title: asString(checklist.get('title')),
           assignedTo: (checklist.get('assignedTo') as string | null) ?? null,
           status:
@@ -193,7 +199,14 @@ export function rowsFromLocalDoc(ydoc: Y.Doc): LocalRows {
 /** Seed freshly created collections from persisted rows. */
 export function seedLocalCollections(collections: ProjectCollections, rows: LocalRows): void {
   for (const row of rows.studies) collections.studies.insert(row as StudyRow);
-  for (const row of rows.checklists) collections.checklists.insert(row as ChecklistRow);
+  // Local practice never sees the engine's migrations, so rows persisted
+  // before `kind` existed default here; local checklists are always a
+  // reviewer's own.
+  for (const row of rows.checklists) {
+    const stored = row as ChecklistRow;
+    collections.checklists.insert({ ...stored, kind: stored.kind ?? 'reviewer' });
+  }
+  for (const row of rows.appraisals ?? []) collections.appraisals.insert(row as AppraisalRow);
   for (const row of rows.answers) collections.answers.insert(row as AnswerRow);
   for (const row of rows.outcomes ?? []) collections.outcomes.insert(row as OutcomeRow);
   for (const row of rows.reconciliations ?? [])
@@ -205,6 +218,7 @@ export function snapshotLocalCollections(collections: ProjectCollections): Local
   return {
     studies: [...collections.studies.toArray],
     checklists: [...collections.checklists.toArray],
+    appraisals: [...collections.appraisals.toArray],
     answers: [...collections.answers.toArray],
     outcomes: [...collections.outcomes.toArray],
     reconciliations: [...collections.reconciliations.toArray],

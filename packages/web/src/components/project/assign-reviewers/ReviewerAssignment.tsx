@@ -5,6 +5,18 @@
 
 import { useState } from 'react';
 import { CheckIcon, WandSparklesIcon } from 'lucide-react';
+import { getInProgressChecklistsOfLeavingReviewers } from '@corates/shared/checklists';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogIcon,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { SheetFooter } from '@/components/ui/sheet';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -24,9 +36,11 @@ interface ReviewerAssignmentProps {
   studies: StudyInfo[];
   members: MemberEntry[];
   currentUserId: string | null;
-  onSave: (studyId: string, slots: ReviewerSlots) => void;
+  onSave: (studyId: string, slots: ReviewerSlots, onInProgress?: InProgressPolicy) => void;
   onClose: () => void;
 }
+
+type InProgressPolicy = 'handOver' | 'discard';
 
 function slotsOf(study: StudyInfo): ReviewerSlots {
   return { reviewer1: study.reviewer1, reviewer2: study.reviewer2 };
@@ -38,6 +52,15 @@ function sameSlots(a: ReviewerSlots, b: ReviewerSlots): boolean {
 
 function firstName(member: MemberEntry): string {
   return member.givenName || memberDisplayName(member).split(' ')[0];
+}
+
+/** Hand-over needs someone to hand to: a joiner for every reviewer who leaves. */
+function canHandOver(study: StudyInfo, next: ReviewerSlots): boolean {
+  const before = [study.reviewer1, study.reviewer2].filter(Boolean);
+  const after = [next.reviewer1, next.reviewer2].filter(Boolean);
+  const leavers = before.filter(u => !after.includes(u));
+  const joiners = after.filter(u => !before.includes(u));
+  return joiners.length >= leavers.length;
 }
 
 export function ReviewerAssignment({
@@ -111,11 +134,35 @@ export function ReviewerAssignment({
     setAutoFilled(chosen);
   };
 
-  const handleSave = async () => {
+  // Rows whose outgoing reviewer has in-progress work; saving asks first.
+  const [inProgressPrompt, setInProgressPrompt] = useState<{
+    count: number;
+    canHandOver: boolean;
+  } | null>(null);
+
+  const handleSave = () => {
+    const blockedRows = changedRows.filter(
+      row => getInProgressChecklistsOfLeavingReviewers(row, draft[row.id]).length > 0,
+    );
+    if (blockedRows.length > 0) {
+      setInProgressPrompt({
+        count: blockedRows.reduce(
+          (n, row) => n + getInProgressChecklistsOfLeavingReviewers(row, draft[row.id]).length,
+          0,
+        ),
+        canHandOver: blockedRows.every(row => canHandOver(row, draft[row.id])),
+      });
+      return;
+    }
+    void commitSave(undefined);
+  };
+
+  const commitSave = async (onInProgress: InProgressPolicy | undefined) => {
+    setInProgressPrompt(null);
     let saved = 0;
     for (const row of changedRows) {
       try {
-        onSave(row.id, draft[row.id]);
+        onSave(row.id, draft[row.id], onInProgress);
         saved++;
       } catch (err) {
         const { handleError } = await import('@/lib/error-utils');
@@ -283,6 +330,42 @@ export function ReviewerAssignment({
           Save reviewers
         </Button>
       </SheetFooter>
+
+      <AlertDialog
+        open={inProgressPrompt !== null}
+        onOpenChange={open => !open && setInProgressPrompt(null)}
+      >
+        <AlertDialogContent data-testid='in-progress-prompt'>
+          <AlertDialogHeader>
+            <AlertDialogIcon variant='warning' />
+            <div>
+              <AlertDialogTitle>Appraisals in progress</AlertDialogTitle>
+              <AlertDialogDescription>
+                {inProgressPrompt?.count === 1 ?
+                  'A reviewer being removed has started an appraisal.'
+                : `Reviewers being removed have started ${inProgressPrompt?.count ?? 0} appraisals.`
+                }{' '}
+                {inProgressPrompt?.canHandOver ?
+                  'Hand the work over to the new reviewer, or discard it so they start fresh.'
+                : 'Discarding removes those answers; assign a replacement first to hand the work over instead.'
+                }{' '}
+                Completed appraisals are kept either way.
+              </AlertDialogDescription>
+            </div>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction variant='destructive' onClick={() => void commitSave('discard')}>
+              Discard
+            </AlertDialogAction>
+            {inProgressPrompt?.canHandOver && (
+              <AlertDialogAction onClick={() => void commitSave('handOver')}>
+                Hand over
+              </AlertDialogAction>
+            )}
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
