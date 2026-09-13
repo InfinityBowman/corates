@@ -124,7 +124,7 @@ function renderTextFooter(footerReason: string): string {
 CoRATES is operated by Syntch LLC. Questions? Email ${SUPPORT_EMAIL}`;
 }
 
-export const AUTH_CODE_EXPIRY_MINUTES = 10;
+export const AUTH_CODE_EXPIRY_MINUTES = 15;
 
 export type AuthCodePurpose = 'sign-in' | 'email-verification' | 'forget-password' | 'change-email';
 

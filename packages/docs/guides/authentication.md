@@ -343,7 +343,7 @@ Users receive backup codes when enabling 2FA. These can be used if the authentic
 
 ## Email Verification
 
-Every emailed secret is a six-digit code (Better Auth `emailOTP` plugin with `overrideDefaultEmailVerification`), never a link: mail security scanners consume single-use links, and a link opened on another device loses the browser state the flow depends on. Codes expire after `AUTH_CODE_EXPIRY_MINUTES` (10) and allow five wrong guesses. A password sign-in on an unverified address sends a code and the client moves to `/verify-email`, where a correct code verifies the address and signs the user in. In `DEV_MODE` the pending code can be read back through `GET /api/test/auth-code?email=&type=` for e2e tests.
+Every emailed secret is a six-digit code (Better Auth `emailOTP` plugin with `overrideDefaultEmailVerification`), never a link: mail security scanners consume single-use links, and a link opened on another device loses the browser state the flow depends on. Codes expire after `AUTH_CODE_EXPIRY_MINUTES` (15) and allow five wrong guesses. A password sign-in on an unverified address sends a code and the client moves to `/verify-email`, where a correct code verifies the address and signs the user in. In `DEV_MODE` the pending code can be read back through `GET /api/test/auth-code?email=&type=` for e2e tests.
 
 ## Password Reset
 
