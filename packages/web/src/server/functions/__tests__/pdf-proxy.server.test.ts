@@ -2,6 +2,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { proxyPdfFetch } from '@/server/functions/pdf-proxy.server';
 import type { Session } from '@/server/middleware/auth';
 import { DomainErrorException } from '@corates/shared';
+import { warn } from '@corates/workers/logger';
+
+vi.mock('@corates/workers/logger', () => ({ warn: vi.fn() }));
 
 const originalFetch = globalThis.fetch;
 
@@ -48,6 +51,35 @@ describe('proxyPdfFetch', () => {
         expect(body.code).toBe('VALIDATION_INVALID_INPUT');
       }
     }
+  });
+
+  it('logs the hostname when a URL is rejected by the allowlist', async () => {
+    try {
+      await proxyPdfFetch(mockSession(), { url: 'https://evil-site.com/malicious.pdf' });
+      expect.unreachable('should have thrown');
+    } catch {
+      expect(warn).toHaveBeenCalledWith(
+        'pdf_proxy.url_rejected',
+        expect.objectContaining({ hostname: 'evil-site.com' }),
+      );
+    }
+  });
+
+  it('accepts publisher hosts that Unpaywall reports as open access', async () => {
+    const pdfBytes = new Uint8Array([0x25, 0x50, 0x44, 0x46]);
+    globalThis.fetch = vi.fn(
+      async () =>
+        new Response(pdfBytes, {
+          status: 200,
+          headers: { 'content-type': 'application/pdf' },
+        }),
+    ) as unknown as typeof fetch;
+
+    const result = await proxyPdfFetch(mockSession(), {
+      url: 'https://brieflands.com/articles/asjsm-120485.pdf',
+    });
+
+    expect(new Uint8Array(result)).toEqual(pdfBytes);
   });
 
   it('returns PDF bytes on happy path', async () => {

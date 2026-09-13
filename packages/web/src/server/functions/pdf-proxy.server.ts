@@ -1,5 +1,6 @@
 import { validatePdfProxyUrl } from '@corates/workers/ssrf-protection';
 import { throwDomainError, FILE_ERRORS, SYSTEM_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
+import { warn } from '@corates/workers/logger';
 import type { Session } from '@/server/middleware/auth';
 
 export async function proxyPdfFetch(
@@ -14,6 +15,13 @@ export async function proxyPdfFetch(
 
   const validation = validatePdfProxyUrl(url);
   if (!validation.valid) {
+    // The client only sends Unpaywall locations, so a rejection here usually
+    // means a legitimate publisher is missing from the allowlist
+    warn('pdf_proxy.url_rejected', {
+      url,
+      hostname: validation.hostname,
+      reason: validation.error,
+    });
     throwDomainError(VALIDATION_ERRORS.INVALID_INPUT, {
       field: 'url',
       reason: validation.error,
