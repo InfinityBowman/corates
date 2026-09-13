@@ -58,6 +58,8 @@ function getQueryClient(): QueryClient {
     if (event.type === 'updated' && event.query.state.error) {
       const domainError = getDomainError(event.query.state.error);
       if (domainError?.code === 'AUTH_REQUIRED' || domainError?.code === 'AUTH_EXPIRED') {
+        // A signed-out query failing on the sign-in page itself would otherwise reload it forever
+        if (window.location.pathname === '/signin') return;
         window.location.href = '/signin';
       }
     }

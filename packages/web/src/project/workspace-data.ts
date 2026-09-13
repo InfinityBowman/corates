@@ -521,6 +521,8 @@ export function useProjectMeta(projectId: string): ProjectMetaInfo {
   const { data } = useQuery({
     queryKey: queryKeys.projects.all,
     queryFn: () => getMyProjects(),
+    // Callers outside a project (the dev panel on every page) pass '' and must not fetch
+    enabled: Boolean(projectId),
     ...QUERY_STABLE,
   });
   return useMemo(() => {
