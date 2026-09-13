@@ -132,15 +132,15 @@ export function rowsFromLocalDoc(ydoc: Y.Doc): LocalRows {
         const checklist = checklistValue as Y.Map<unknown>;
         if (!(checklist instanceof Y.Map)) continue;
         const type = asString(checklist.get('type'), 'AMSTAR2') as ChecklistRow['type'];
+        const status = asString(checklist.get('status'), 'pending') as ChecklistRow['status'];
         checklists.set(checklistId, {
           id: checklistId,
           studyId,
           type,
-          kind: 'reviewer',
+          kind: legacyKind(status),
           title: asString(checklist.get('title')),
           assignedTo: (checklist.get('assignedTo') as string | null) ?? null,
-          status:
-            (asString(checklist.get('status'), 'pending') as ChecklistRow['status']) ?? 'pending',
+          status,
           outcomeId: (checklist.get('outcomeId') as string | null) ?? null,
           createdAt: asNumber(checklist.get('createdAt')),
           updatedAt: asNumber(checklist.get('updatedAt')),
@@ -196,15 +196,22 @@ export function rowsFromLocalDoc(ydoc: Y.Doc): LocalRows {
   }
 }
 
+/**
+ * Kind of a local checklist persisted before `kind` existed. Local practice
+ * never sees the engine's migrations, and its reviewer checklists are
+ * unassigned too, so the null-assignee rule cannot apply; only a consensus
+ * checklist ever reaches the reconciling or finalized status.
+ */
+function legacyKind(status: ChecklistRow['status']): ChecklistRow['kind'] {
+  return status === 'reconciling' || status === 'finalized' ? 'consensus' : 'reviewer';
+}
+
 /** Seed freshly created collections from persisted rows. */
 export function seedLocalCollections(collections: ProjectCollections, rows: LocalRows): void {
   for (const row of rows.studies) collections.studies.insert(row as StudyRow);
-  // Local practice never sees the engine's migrations, so rows persisted
-  // before `kind` existed default here; local checklists are always a
-  // reviewer's own.
   for (const row of rows.checklists) {
     const stored = row as ChecklistRow;
-    collections.checklists.insert({ ...stored, kind: stored.kind ?? 'reviewer' });
+    collections.checklists.insert({ ...stored, kind: stored.kind ?? legacyKind(stored.status) });
   }
   for (const row of rows.appraisals ?? []) collections.appraisals.insert(row as AppraisalRow);
   for (const row of rows.answers) collections.answers.insert(row as AnswerRow);
