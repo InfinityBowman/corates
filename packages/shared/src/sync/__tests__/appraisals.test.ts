@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createTestEngine } from '@cf-sync/server/testing';
 import { syncApp } from '../app.js';
 import { defaultAnswerRows } from '../answer-rows.js';
-import { answerRowId, materializedChecklistId } from '../ids.js';
+import { answerRowId } from '../ids.js';
 import type { ChecklistAnswerInput } from '../answer-rows.js';
 
 const ROB2_ANSWER: ChecklistAnswerInput = {
@@ -50,6 +50,15 @@ function checklistsOf(engine: Engine, studyId: string) {
     .filter(c => c.studyId === studyId);
 }
 
+/** Id of the reviewer checklist `userId` holds for one cell; materialized ids are engine-minted. */
+function heldChecklistId(engine: Engine, studyId: string, userId: string, outcomeId: string) {
+  const mine = checklistsOf(engine, studyId).filter(
+    c => c.kind === 'reviewer' && c.assignedTo === userId && c.outcomeId === outcomeId,
+  );
+  expect(mine).toHaveLength(1);
+  return mine[0]!.id;
+}
+
 function answerCount(engine: Engine, checklistId: string) {
   return engine.list('answers').filter(row => row.data.checklistId === checklistId).length;
 }
@@ -91,10 +100,7 @@ describe('checklist.create with the plan', () => {
     expect(result.error).toBeUndefined();
     const bobs = checklistsOf(engine, 's1').filter(c => c.assignedTo === 'bob');
     expect(bobs).toHaveLength(1);
-    expect(bobs[0]).toMatchObject({
-      id: materializedChecklistId('s1:o1', 'bob'),
-      status: 'pending',
-    });
+    expect(bobs[0]).toMatchObject({ status: 'pending', kind: 'reviewer', outcomeId: 'o1' });
     // Alice keeps the id she chose and gets no second checklist.
     expect(
       checklistsOf(engine, 's1')
@@ -191,7 +197,7 @@ describe('appraisal.create', () => {
     const checklists = checklistsOf(engine, 's1');
     expect(checklists.map(c => c.assignedTo).sort()).toEqual(['alice', 'bob']);
     expect(checklists.every(c => c.kind === 'reviewer' && c.status === 'pending')).toBe(true);
-    const aliceId = materializedChecklistId('s1:o1', 'alice');
+    const aliceId = heldChecklistId(engine, 's1', 'alice', 'o1');
     expect(engine.get('checklists', aliceId)).not.toBeNull();
     expect(answerCount(engine, aliceId)).toBe(Object.keys(defaultAnswerRows('ROB2')).length);
   });
@@ -252,7 +258,7 @@ describe('appraisal.delete', () => {
 
   it('refuses a cell with answers unless forced', () => {
     const engine = planned();
-    const aliceId = materializedChecklistId('s1:o1', 'alice');
+    const aliceId = heldChecklistId(engine, 's1', 'alice', 'o1');
     engine.mutate('checklist.updateAnswer', { checklistId: aliceId, input: ROB2_ANSWER, now: NOW });
     const cells = [{ studyId: 's1', type: 'ROB2' as const, outcomeId: 'o1' }];
     expect(engine.mutate('appraisal.delete', { cells, now: LATER }).error?.code).toBe(
@@ -270,7 +276,7 @@ describe('appraisal.delete', () => {
 
   it('treats typed text on a pending checklist as answers', () => {
     const engine = planned();
-    const aliceId = materializedChecklistId('s1:o1', 'alice');
+    const aliceId = heldChecklistId(engine, 's1', 'alice', 'o1');
     engine.mutate('checklist.setText', { checklistId: aliceId, key: 'preliminary.aim', text: 'x' });
     expect(engine.get('checklists', aliceId)?.status).toBe('pending');
     const cells = [{ studyId: 's1', type: 'ROB2' as const, outcomeId: 'o1' }];
@@ -313,7 +319,7 @@ describe('study.assignReviewers', () => {
 
   it('swapping a slot moves pending checklists to the new holder silently', () => {
     const engine = plannedStudy({ reviewer1: 'alice', reviewer2: 'bob' });
-    const bobId = materializedChecklistId('s1:o1', 'bob');
+    const bobId = heldChecklistId(engine, 's1', 'bob', 'o1');
     const result = engine.mutate('study.assignReviewers', {
       id: 's1',
       reviewer2: 'carol',
@@ -330,7 +336,7 @@ describe('study.assignReviewers', () => {
 
   it('refuses to swap over in-progress work without a policy', () => {
     const engine = plannedStudy({ reviewer1: 'alice', reviewer2: 'bob' });
-    const bobId = materializedChecklistId('s1:o1', 'bob');
+    const bobId = heldChecklistId(engine, 's1', 'bob', 'o1');
     engine.mutate('checklist.updateAnswer', { checklistId: bobId, input: ROB2_ANSWER, now: NOW });
     const result = engine.mutate('study.assignReviewers', {
       id: 's1',
@@ -344,7 +350,7 @@ describe('study.assignReviewers', () => {
 
   it('hands in-progress work over, or discards it with its answers', () => {
     const handOver = plannedStudy({ reviewer1: 'alice', reviewer2: 'bob' });
-    const bobId = materializedChecklistId('s1:o1', 'bob');
+    const bobId = heldChecklistId(handOver, 's1', 'bob', 'o1');
     handOver.mutate('checklist.updateAnswer', { checklistId: bobId, input: ROB2_ANSWER, now: NOW });
     expect(
       handOver.mutate('study.assignReviewers', {
@@ -361,7 +367,8 @@ describe('study.assignReviewers', () => {
     expect(handOver.get('answers', answerRowId(bobId, 'd1_1'))?.value).toBe('Y');
 
     const discard = plannedStudy({ reviewer1: 'alice', reviewer2: 'bob' });
-    discard.mutate('checklist.updateAnswer', { checklistId: bobId, input: ROB2_ANSWER, now: NOW });
+    const bobId2 = heldChecklistId(discard, 's1', 'bob', 'o1');
+    discard.mutate('checklist.updateAnswer', { checklistId: bobId2, input: ROB2_ANSWER, now: NOW });
     expect(
       discard.mutate('study.assignReviewers', {
         id: 's1',
@@ -370,17 +377,17 @@ describe('study.assignReviewers', () => {
         now: LATER,
       }).error,
     ).toBeUndefined();
-    expect(discard.get('checklists', bobId)).toBeNull();
-    expect(answerCount(discard, bobId)).toBe(0);
+    expect(discard.get('checklists', bobId2)).toBeNull();
+    expect(answerCount(discard, bobId2)).toBe(0);
     // Carol still gets a fresh checklist for the cell.
-    expect(discard.get('checklists', materializedChecklistId('s1:o1', 'carol'))).toMatchObject({
+    expect(discard.get('checklists', heldChecklistId(discard, 's1', 'carol', 'o1'))).toMatchObject({
       status: 'pending',
     });
   });
 
   it('never touches completed or finalized checklists', () => {
     const engine = plannedStudy({ reviewer1: 'alice', reviewer2: 'bob' });
-    const bobO1 = materializedChecklistId('s1:o1', 'bob');
+    const bobO1 = heldChecklistId(engine, 's1', 'bob', 'o1');
     engine.mutate('checklist.update', {
       checklistId: bobO1,
       updates: { status: 'reviewer-completed' },
@@ -463,7 +470,7 @@ describe('plan cascades', () => {
     expect(engine.mutate('outcome.delete', { id: 'o1' }).error?.code).toBe('OutcomeInUse');
 
     engine.mutate('checklist.delete', {
-      checklistId: materializedChecklistId('s1:o1', 'alice'),
+      checklistId: heldChecklistId(engine, 's1', 'alice', 'o1'),
       now: LATER,
     });
     expect(engine.mutate('outcome.delete', { id: 'o1' }).error).toBeUndefined();

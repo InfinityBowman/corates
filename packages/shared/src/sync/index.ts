@@ -49,12 +49,7 @@ export {
   type ChecklistAnswerInput,
   type JsonValue,
 } from './answer-rows.js';
-export {
-  answerRowId,
-  appraisalRowId,
-  materializedChecklistId,
-  reconciliationRowId,
-} from './ids.js';
+export { answerRowId, appraisalRowId, reconciliationRowId } from './ids.js';
 export {
   deriveFinalized,
   rob2JudgementsFromRows,

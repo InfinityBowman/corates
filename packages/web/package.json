@@ -39,8 +39,8 @@
   },
   "dependencies": {
     "@ark-ui/react": "^5.39.1",
-    "@cf-sync/client": "^0.2.0",
-    "@cf-sync/yjs": "^0.2.0",
+    "@cf-sync/client": "^0.3.0",
+    "@cf-sync/yjs": "^0.2.1",
     "@corates/db": "workspace:*",
     "@corates/shared": "workspace:*",
     "@corates/workers": "workspace:*",
@@ -109,7 +109,7 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
-    "@cf-sync/server": "^0.2.1",
+    "@cf-sync/server": "^0.3.0",
     "@cloudflare/vite-plugin": "^1.54.3",
     "@cloudflare/vitest-plugin": "^1.1.3",
     "@cloudflare/workers-types": "^5.20260902.1",

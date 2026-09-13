@@ -265,25 +265,22 @@ export function planAddStudy(
     }
   }
 
-  plan.push(
-    {
-      name: 'study.create',
-      args: {
-        id: studyId,
-        name: `Generated Study ${num}`,
-        description: `Auto-generated ${type} study`,
-        metadata: {
-          originalTitle: `Generated Study ${num}`,
-          firstAuthor: `Author${num}`,
-          publicationYear: String(2020 + (num % 5)),
-          authors: `Author${num} A, Author${num} B`,
-          journal: 'Generated Journal',
-        },
-        now,
+  plan.push({
+    name: 'study.create',
+    args: {
+      id: studyId,
+      name: `Generated Study ${num}`,
+      description: `Auto-generated ${type} study`,
+      metadata: {
+        originalTitle: `Generated Study ${num}`,
+        firstAuthor: `Author${num}`,
+        publicationYear: String(2020 + (num % 5)),
+        authors: `Author${num} A, Author${num} B`,
+        journal: 'Generated Journal',
       },
+      now,
     },
-    { name: 'study.update', args: { id: studyId, updates: { reviewer1, reviewer2 }, now } },
-  );
+  });
 
   const checklists: Array<{ id: string; assignedTo: string | null; status: string; seed: number }> =
     [
@@ -335,6 +332,14 @@ export function planAddStudy(
       args: { checklistId: checklist.id, updates: { status: checklist.status }, now },
     });
   }
+
+  // Slots are filled after the checklists exist: checklist.create hands every
+  // slot holder a copy of a new cell, which would collide with the explicit
+  // ids above. study.update is a raw field merge and materializes nothing.
+  plan.push({
+    name: 'study.update',
+    args: { id: studyId, updates: { reviewer1, reviewer2 }, now },
+  });
 
   if (reconcile && reconciledChecklistId) {
     plan.push({
@@ -432,22 +437,6 @@ function planTemplateStudy(
       now,
     },
   });
-  const reviewer1 = mapUser(study.reviewer1);
-  const reviewer2 = mapUser(study.reviewer2);
-  if (reviewer1 || reviewer2) {
-    plan.push({
-      name: 'study.update',
-      args: {
-        id: study.id,
-        updates: {
-          ...(reviewer1 ? { reviewer1 } : {}),
-          ...(reviewer2 ? { reviewer2 } : {}),
-        },
-        now,
-      },
-    });
-  }
-
   for (const checklist of study.checklists) {
     const type = checklist.type as ChecklistType;
     plan.push({
@@ -477,6 +466,24 @@ function planTemplateStudy(
     if (Object.keys(updates).length > 0) {
       plan.push({ name: 'checklist.update', args: { checklistId: checklist.id, updates, now } });
     }
+  }
+
+  // Filled after the checklists for the same reason as planAddStudy: the
+  // template declares every checklist explicitly.
+  const reviewer1 = mapUser(study.reviewer1);
+  const reviewer2 = mapUser(study.reviewer2);
+  if (reviewer1 || reviewer2) {
+    plan.push({
+      name: 'study.update',
+      args: {
+        id: study.id,
+        updates: {
+          ...(reviewer1 ? { reviewer1 } : {}),
+          ...(reviewer2 ? { reviewer2 } : {}),
+        },
+        now,
+      },
+    });
   }
 
   for (const pdf of study.pdfs) {
