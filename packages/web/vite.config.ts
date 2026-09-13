@@ -8,6 +8,10 @@ import { sentryVitePlugin } from '@sentry/vite-plugin';
 import type { PluginOption } from 'vite';
 
 export default defineConfig({
+  environments: {
+    // Researchers run institution-issued machines and old tablets. Lower default target.
+    client: { build: { target: ['chrome87', 'edge88', 'firefox78', 'safari14'] } },
+  },
   build: {
     sourcemap: true,
     rollupOptions: {
