@@ -438,6 +438,9 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^6.1.1
         version: 6.1.1(vite@8.2.2(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.46.0)(tsx@4.23.13)(yaml@2.8.2))
+      acorn:
+        specifier: ^8.18.0
+        version: 8.18.0
       concurrently:
         specifier: ^10.0.5
         version: 10.0.5
