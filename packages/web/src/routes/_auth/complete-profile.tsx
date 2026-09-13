@@ -40,6 +40,9 @@ import { PrimaryButton } from '@/components/auth/AuthButtons';
 import { CodeInput, ResendCode } from '@/components/auth/CodeInput';
 import { RoleSelector, TITLE_OPTIONS } from '@/components/auth/RoleSelector';
 
+// Radix Select rejects an empty-string item value, so "None" needs a sentinel
+const NONE = '__none';
+
 const STEPS_CONFIG = [
   { title: 'Your Name', description: 'Basic information' },
   { title: 'Institution', description: 'Academic details' },
@@ -147,7 +150,8 @@ function CompleteProfilePage() {
 
   const title = useMemo(() => {
     if (titleSelection === 'other') return customTitle.trim();
-    return titleSelection || '';
+    if (titleSelection === NONE) return '';
+    return titleSelection;
   }, [titleSelection, customTitle]);
 
   const isCustomTitle = titleSelection === 'other';
@@ -431,7 +435,7 @@ function CompleteProfilePage() {
                   </SelectTrigger>
                   <SelectContent>
                     {TITLE_OPTIONS.map(option => (
-                      <SelectItem key={option.value || '__none'} value={option.value || '__none'}>
+                      <SelectItem key={option.value || NONE} value={option.value || NONE}>
                         {option.label}
                       </SelectItem>
                     ))}
