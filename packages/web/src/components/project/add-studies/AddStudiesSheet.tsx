@@ -172,14 +172,11 @@ export function AddStudiesSheet({ open, onOpenChange, onAdded }: AddStudiesSheet
 
   return (
     <>
-      {isDraggingOver && (
-        <div className='pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center'>
-          <div className='bg-card rounded-xl border-2 border-dashed border-blue-500 px-6 py-3 shadow-lg'>
-            <p className='font-medium text-blue-600'>
-              {studyDropTargetsMounted ?
-                'Drop on a study to attach the PDF, or anywhere else to add a new study'
-              : 'Drop PDFs to add studies'}
-            </p>
+      {/* The studies tab shows its own drop zone next to the study cards. */}
+      {isDraggingOver && !studyDropTargetsMounted && (
+        <div className='pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-blue-500/10'>
+          <div className='bg-card rounded-xl border-2 border-dashed border-blue-500 p-8'>
+            <p className='text-lg font-medium text-blue-600'>Drop PDFs to add studies</p>
           </div>
         </div>
       )}
