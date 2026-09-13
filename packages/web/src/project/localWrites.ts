@@ -9,74 +9,14 @@
  * collections and saves rows debounced; this module only mutates.
  */
 
-import { syncApp, syncSchema } from '@corates/shared/sync';
-import type { ProjectCollections } from './localCollections';
+import { syncApp } from '@corates/shared/sync';
+import { localTx, standardParse, type LocalTx } from './localCollections';
 import { connectionPool } from './ConnectionPool';
 
 type MutatorDefLike = {
   args?: { '~standard': { validate: (v: unknown) => unknown } };
   apply: (tx: LocalTx, args: unknown, ctx: unknown) => void;
 };
-
-interface LocalTx {
-  get(tbl: string, id: string): unknown;
-  list(
-    tbl: string,
-    options?: { where?: Record<string, unknown> },
-  ): Array<{ id: string; data: unknown }>;
-  put(tbl: string, id: string, data: unknown): void;
-  del(tbl: string, id: string): void;
-}
-
-function standardParse(
-  schema: { '~standard': { validate: (v: unknown) => unknown } },
-  value: unknown,
-): unknown {
-  const result = schema['~standard'].validate(value) as {
-    value?: unknown;
-    issues?: Array<{ message: string }>;
-  };
-  if (result.issues) {
-    throw new Error(`local mutation validation failed: ${result.issues[0]?.message ?? 'invalid'}`);
-  }
-  return result.value;
-}
-
-function makeTx(collections: ProjectCollections): LocalTx {
-  const cols = collections as unknown as Record<
-    string,
-    {
-      get(id: string): unknown;
-      has(id: string): boolean;
-      insert(row: unknown): void;
-      delete(id: string): void;
-      toArray: Array<{ id: string }>;
-    }
-  >;
-  return {
-    get: (tbl, id) => cols[tbl]?.get(id) ?? null,
-    list: (tbl, options) => {
-      const where = Object.entries(options?.where ?? {}).filter(([, v]) => v !== undefined);
-      return (cols[tbl]?.toArray ?? [])
-        .filter(row => where.every(([field, v]) => (row as Record<string, unknown>)[field] === v))
-        .map(row => ({ id: row.id, data: row }));
-    },
-    put: (tbl, id, data) => {
-      const tableSchema = (
-        syncSchema.tables as Record<string, { '~standard': { validate: (v: unknown) => unknown } }>
-      )[tbl];
-      const validated = tableSchema ? standardParse(tableSchema, data) : data;
-      const col = cols[tbl];
-      if (!col) return;
-      if (col.has(id)) col.delete(id);
-      col.insert(validated);
-    },
-    del: (tbl, id) => {
-      const col = cols[tbl];
-      if (col?.has(id)) col.delete(id);
-    },
-  };
-}
 
 /**
  * Run one named mutation against a local project's collections. Args are
@@ -97,7 +37,7 @@ export function applyLocalMutation(projectId: string, name: string, args: unknow
   // Non-authoritative ctx: the write gate only enforces on authoritative
   // runs, and local practice has no principal. A local mutation runs once,
   // so minted ids need only be unique, not reproducible from the seed.
-  def.apply(makeTx(collections), parsedArgs, {
+  def.apply(localTx(collections), parsedArgs, {
     clientId: 'local',
     principal: undefined,
     auth: undefined,
