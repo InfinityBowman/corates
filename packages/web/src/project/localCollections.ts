@@ -124,6 +124,67 @@ export function validateLocalRow(table: string, row: unknown): unknown {
   return tableSchema ? standardParse(tableSchema, row) : row;
 }
 
+/** The transaction shape the shared mutators and migrations run against. */
+export interface LocalTx {
+  get(tbl: string, id: string): unknown;
+  list(
+    tbl: string,
+    options?: { where?: Record<string, unknown> },
+  ): Array<{ id: string; data: unknown }>;
+  put(tbl: string, id: string, data: unknown): void;
+  del(tbl: string, id: string): void;
+}
+
+/**
+ * A mutator transaction over local-only collections. Reads see earlier
+ * writes because these collections apply synchronously. An existing row is
+ * updated in place rather than deleted and reinserted: the collection
+ * confirms writes asynchronously, and two delete-plus-insert cycles on one
+ * key in a single mutation settle as a net delete.
+ */
+export function localTx(collections: ProjectCollections): LocalTx {
+  const cols = collections as unknown as Record<
+    string,
+    {
+      get(id: string): unknown;
+      has(id: string): boolean;
+      insert(row: unknown): void;
+      update(id: string, callback: (draft: Record<string, unknown>) => void): void;
+      delete(id: string): void;
+      toArray: Array<{ id: string }>;
+    }
+  >;
+  return {
+    get: (tbl, id) => cols[tbl]?.get(id) ?? null,
+    list: (tbl, options) => {
+      const where = Object.entries(options?.where ?? {}).filter(([, v]) => v !== undefined);
+      return (cols[tbl]?.toArray ?? [])
+        .filter(row => where.every(([field, v]) => (row as Record<string, unknown>)[field] === v))
+        .map(row => ({ id: row.id, data: row }));
+    },
+    put: (tbl, id, data) => {
+      const validated = validateLocalRow(tbl, data) as Record<string, unknown>;
+      const col = cols[tbl];
+      if (!col) return;
+      if (!col.has(id)) {
+        col.insert(validated);
+        return;
+      }
+      col.update(id, draft => {
+        // Deleting a draft key is not tracked as a change; undefined is.
+        for (const key of Object.keys(draft)) {
+          if (!(key in validated) && !key.startsWith('$')) draft[key] = undefined;
+        }
+        Object.assign(draft, validated);
+      });
+    },
+    del: (tbl, id) => {
+      const col = cols[tbl];
+      if (col?.has(id)) col.delete(id);
+    },
+  };
+}
+
 /** One-time conversion of a legacy local-practice Y.Doc into plain rows. */
 export function rowsFromLocalDoc(ydoc: Y.Doc): LocalRows {
   const reviews = ydoc.getMap('reviews');
