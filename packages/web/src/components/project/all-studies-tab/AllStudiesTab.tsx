@@ -2,7 +2,7 @@
  * AllStudiesTab - All studies as expandable cards
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { UsersIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import type { MergedStudy } from '@/hooks/useAddStudies/deduplication';
 import { GoogleDrivePickerModal } from '../google-drive/GoogleDrivePickerModal';
 import { StudyCard } from './study-card/StudyCard';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
+import { useFileDragStore } from '@/stores/fileDragStore';
 import { useAllStudies } from '@/project/workspace-data';
 import { useAddStudies } from '@/hooks/useAddStudies';
 import { useProjectExport } from '@/hooks/useProjectExport';
@@ -31,6 +32,13 @@ export function AllStudiesTab() {
   const connectionState = useProjectStore(s => selectConnectionPhase(s, projectId));
   const hasData = connectionState.phase === 'synced' || studies.length > 0;
   const unassignedCount = studies.filter(s => !s.reviewer1 && !s.reviewer2).length;
+
+  // Tells the page-wide drop hint that study cards are on screen to drop onto.
+  useEffect(() => {
+    const { setStudyDropTargetsMounted } = useFileDragStore.getState();
+    setStudyDropTargetsMounted(true);
+    return () => setStudyDropTargetsMounted(false);
+  }, []);
 
   const handleSaveState = useCallback(
     async (state: AddStudiesFormState) => {

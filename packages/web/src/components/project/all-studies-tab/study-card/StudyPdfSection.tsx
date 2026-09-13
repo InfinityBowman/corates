@@ -3,24 +3,29 @@
  * Uses the typed project singleton for all PDF operations.
  */
 
-import { useState, useMemo, useRef, useCallback } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { PlusIcon } from 'lucide-react';
-import { showToast } from '@/lib/toast';
 import { Button } from '@/components/ui/button';
 import { PdfListItem } from '@/components/pdf/PdfListItem';
 import { EditPdfMetadataModal } from '../EditPdfMetadataModal';
 import { project } from '@/project';
-import { validatePdfFile } from '@/lib/pdfValidation.js';
 import type { StudyInfo, PdfEntry } from '@/stores/projectStore';
 
 interface StudyPdfSectionProps {
   study: StudyInfo;
+  uploading: boolean;
+  onUploadFiles: (files: File[]) => void;
   onOpenGoogleDrive?: (studyId: string) => void;
   readOnly?: boolean;
 }
 
-export function StudyPdfSection({ study, onOpenGoogleDrive, readOnly }: StudyPdfSectionProps) {
-  const [uploading, setUploading] = useState(false);
+export function StudyPdfSection({
+  study,
+  uploading,
+  onUploadFiles,
+  onOpenGoogleDrive,
+  readOnly,
+}: StudyPdfSectionProps) {
   const [editingPdf, setEditingPdf] = useState<PdfEntry | null>(null);
   const [metadataModalOpen, setMetadataModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -41,31 +46,11 @@ export function StudyPdfSection({ study, onOpenGoogleDrive, readOnly }: StudyPdf
   const hasPrimary = pdfs.some(p => p.tag === 'primary');
   const hasProtocol = pdfs.some(p => p.tag === 'protocol');
 
-  const handleFileSelect = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-
-      const validation = await validatePdfFile(file);
-      if (!validation.valid) {
-        showToast.error('That file cannot be used', validation.details.message);
-        if (fileInputRef.current) fileInputRef.current.value = '';
-        return;
-      }
-
-      setUploading(true);
-      try {
-        await project.pdf.upload(study.id, file);
-      } catch (err) {
-        const { handleError } = await import('@/lib/error-utils');
-        await handleError(err, { toastTitle: 'Could not upload the PDF' });
-      } finally {
-        setUploading(false);
-        if (fileInputRef.current) fileInputRef.current.value = '';
-      }
-    },
-    [study.id],
-  );
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = '';
+    if (files.length > 0) onUploadFiles(files);
+  };
 
   return (
     <div className='px-4 pb-4'>
@@ -73,6 +58,7 @@ export function StudyPdfSection({ study, onOpenGoogleDrive, readOnly }: StudyPdf
         ref={fileInputRef}
         type='file'
         accept='application/pdf'
+        multiple
         className='hidden'
         onChange={handleFileSelect}
       />
