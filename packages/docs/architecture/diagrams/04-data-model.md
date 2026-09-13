@@ -84,12 +84,20 @@ erDiagram
         date createdAt
     }
 
+    APPRAISAL {
+        string id PK "studyId:outcomeKey"
+        string studyId FK
+        string type "AMSTAR2, ROB2, ROBINS_I"
+        string outcomeId "nullable"
+    }
+
     CHECKLIST {
         string id PK
         string title
-        string assignedTo
+        string kind "reviewer, consensus"
+        string assignedTo "null on consensus"
         string status
-        string type "AMSTAR2, ROBINS-I"
+        string type "AMSTAR2, ROB2, ROBINS_I"
     }
 
     ANSWER {
@@ -119,9 +127,13 @@ Research project container belonging to an organization. Basic metadata (id, nam
 
 A systematic review or research paper being assessed. Stored entirely in the workspace Durable Object (sync-engine rows). Can have an associated PDF stored in R2.
 
+### Appraisal
+
+The plan: one row per (study, instrument, outcome) cell that the project intends to appraise. A planned cell nobody owns yet has no checklist rows; reviewer checklists materialize when a study's reviewer slot is filled. Stored in the workspace Durable Object.
+
 ### Checklist
 
-An assessment using a specific tool (AMSTAR-2, ROBINS-I). Stored entirely in the workspace Durable Object (sync-engine rows). Assigned to a team member.
+An assessment using a specific tool (AMSTAR-2, RoB 2, ROBINS-I). Stored entirely in the workspace Durable Object (sync-engine rows). `kind` separates a reviewer's own appraisal (assigned to a team member) from the reconciled consensus (no assignee).
 
 ### Answer
 

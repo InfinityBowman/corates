@@ -107,12 +107,7 @@ test('Dual-Reviewer ROB2 Workflow', async ({ context, page }) => {
   await page.getByRole('tab', { name: /To-Do/i }).click();
   await expect(page.getByText(/Petrie2019/i).first()).toBeVisible({ timeout: 30_000 });
 
-  await page.getByRole('button', { name: /Select Checklist/i }).click();
-  await page.getByText(/AMSTAR 2/i).click();
-  await page.getByRole('option', { name: /RoB 2/i }).click();
-  await page.getByText(/Select outcome/i).click();
-  await page.getByRole('option', { name: /Pain reduction/i }).click();
-  await page.getByRole('button', { name: /Add Checklist/i }).click();
+  // User A's RoB 2 for this outcome planned the cell; User B's copy is waiting.
   await expect(page.getByRole('button', { name: 'Open', exact: true })).toBeVisible({
     timeout: 10_000,
   });

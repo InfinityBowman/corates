@@ -128,17 +128,13 @@ test('Presence avatars, cursor sync, and text editing sync during reconciliation
   await page.goto(`${BASE_URL}/projects/${projectId}`);
   await expect(page.getByRole('tab', { name: /To-Do/i })).toBeVisible({ timeout: 15_000 });
 
-  // User B: add AMSTAR2 checklist, answer No to everything, mark complete
+  // User B: open the AMSTAR2 checklist User A's addition planned for them,
+  // answer No to everything, mark complete
   await switchUser(setupCtx, scenario.cookiesB);
   await page.goto(`${BASE_URL}/projects/${projectId}`);
   await expect(page.getByText('Realtime Reconcile Test').first()).toBeVisible({ timeout: 15_000 });
 
   await page.getByRole('tab', { name: /To-Do/i }).click();
-  await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
-    timeout: 10_000,
-  });
-  await page.getByRole('button', { name: /Select Checklist/i }).click();
-  await page.getByRole('button', { name: /Add Checklist/i }).click();
   await expect(page.getByRole('button', { name: 'Open', exact: true })).toBeVisible({
     timeout: 10_000,
   });

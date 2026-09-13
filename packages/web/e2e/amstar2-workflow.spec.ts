@@ -59,13 +59,9 @@ test('Dual-Reviewer AMSTAR2 Workflow', async ({ context, page }) => {
   await page.goto(`/projects/${projectId}`);
   await expect(page.getByText('AMSTAR2 E2E Test').first()).toBeVisible({ timeout: 15_000 });
 
+  // User A's checklist planned the cell, so User B's own checklist is
+  // already waiting: nothing to add.
   await page.getByRole('tab', { name: /To-Do/i }).click();
-  await expect(page.getByRole('button', { name: /Select Checklist/i })).toBeVisible({
-    timeout: 10_000,
-  });
-
-  await page.getByRole('button', { name: /Select Checklist/i }).click();
-  await page.getByRole('button', { name: /Add Checklist/i }).click();
   await expect(page.getByRole('button', { name: 'Open', exact: true })).toBeVisible({
     timeout: 10_000,
   });

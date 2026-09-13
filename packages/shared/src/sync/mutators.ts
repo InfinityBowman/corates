@@ -481,7 +481,8 @@ export const syncMutators = defineMutators(
     /**
      * One checklist for one cell — the To-Do escape hatch and the consensus
      * row. Also plans the cell, so the plan stays truthful whichever path
-     * created the work.
+     * created the work, and gives every other reviewer on the study their
+     * checklist for it: a filled slot always holds every planned cell.
      */
     'checklist.create': {
       args: z.object({
@@ -518,8 +519,18 @@ export const syncMutators = defineMutators(
           }
         }
 
-        ensureAppraisal(tx, { studyId, type, outcomeId }, now);
-        createChecklistRow(tx, { id, studyId, type, kind, assignedTo, outcomeId }, now);
+        const held = heldCellIndex(tx);
+        const cell = { studyId, type, outcomeId };
+        ensureAppraisal(tx, cell, now);
+        createChecklistRow(tx, { id, ...cell, kind, assignedTo }, now);
+        if (kind === 'reviewer') {
+          if (assignedTo) held.add(`${cellKey(studyId, type, outcomeId)}|${assignedTo}`);
+          for (const holder of new Set([study.reviewer1, study.reviewer2])) {
+            if (holder && holder !== assignedTo) {
+              materializeForReviewer(tx, studyId, holder, held, now);
+            }
+          }
+        }
         tx.put('studies', studyId, { ...study, updatedAt: now });
       },
     },

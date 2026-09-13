@@ -76,6 +76,48 @@ describe('checklist.create with the plan', () => {
     });
   });
 
+  it('gives the other slot holder a checklist for the newly planned cell', () => {
+    const engine = newEngine();
+    seedStudy(engine, 's1', { reviewer1: 'alice', reviewer2: 'bob' });
+    seedOutcome(engine, 'o1');
+    const result = engine.mutate('checklist.create', {
+      id: 'chk-alice',
+      studyId: 's1',
+      type: 'ROB2',
+      assignedTo: 'alice',
+      outcomeId: 'o1',
+      now: NOW,
+    });
+    expect(result.error).toBeUndefined();
+    const bobs = checklistsOf(engine, 's1').filter(c => c.assignedTo === 'bob');
+    expect(bobs).toHaveLength(1);
+    expect(bobs[0]).toMatchObject({
+      id: materializedChecklistId('s1:o1', 'bob'),
+      status: 'pending',
+    });
+    // Alice keeps the id she chose and gets no second checklist.
+    expect(
+      checklistsOf(engine, 's1')
+        .filter(c => c.assignedTo === 'alice')
+        .map(c => c.id),
+    ).toEqual(['chk-alice']);
+  });
+
+  it('a consensus row plans nothing new and materializes nothing', () => {
+    const engine = newEngine();
+    seedStudy(engine, 's1', { reviewer1: 'alice', reviewer2: 'bob' });
+    engine.mutate('checklist.create', {
+      id: 'chk-c',
+      studyId: 's1',
+      type: 'AMSTAR2',
+      kind: 'consensus',
+      assignedTo: null,
+      outcomeId: null,
+      now: NOW,
+    });
+    expect(checklistsOf(engine, 's1')).toHaveLength(1);
+  });
+
   it('allows a consensus row beside a reviewer row for the same cell', () => {
     const engine = newEngine();
     seedStudy(engine, 's1');
