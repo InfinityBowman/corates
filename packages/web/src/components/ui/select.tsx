@@ -18,8 +18,21 @@ function SelectGroup({ className, ...props }: React.ComponentProps<typeof Select
   );
 }
 
-function SelectValue({ ...props }: React.ComponentProps<typeof SelectPrimitive.Value>) {
-  return <SelectPrimitive.Value data-slot='select-value' {...props} />;
+// Browser page translation (Chrome) replaces bare text nodes with <font>
+// wrappers, and React then crashes removing text it no longer owns. Keeping the
+// placeholder and the portaled item label inside spans lets React remove the
+// span instead of the text node.
+function SelectValue({
+  placeholder,
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.Value>) {
+  return (
+    <SelectPrimitive.Value
+      data-slot='select-value'
+      placeholder={typeof placeholder === 'string' ? <span>{placeholder}</span> : placeholder}
+      {...props}
+    />
+  );
 }
 
 function SelectTrigger({
@@ -115,7 +128,9 @@ function SelectItem({
           <CheckIcon className='pointer-events-none' />
         </SelectPrimitive.ItemIndicator>
       </span>
-      <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+      <SelectPrimitive.ItemText>
+        <span>{children}</span>
+      </SelectPrimitive.ItemText>
     </SelectPrimitive.Item>
   );
 }

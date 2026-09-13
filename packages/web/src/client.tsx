@@ -7,8 +7,10 @@ import { hydrateRoot } from 'react-dom/client';
 import * as Sentry from '@sentry/react';
 import { initSentry } from '@/config/sentry';
 import { reloadOnceForStaleChunk } from '@/lib/staleChunk';
+import { installTranslationGuard } from '@/lib/translationGuard';
 
 initSentry();
+installTranslationGuard();
 
 // Route components already reload themselves on a missing chunk (TanStack Router);
 // this covers React.lazy, inline import() calls, and CSS preloads.
