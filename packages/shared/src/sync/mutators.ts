@@ -19,6 +19,7 @@ import {
   ROBINS_I_KEY_SCHEMAS,
   defaultAnswerRows,
   expandAnswerUpdate,
+  hasRecordedAnswers,
   type ChecklistAnswerInput,
 } from './answer-rows.js';
 import { answerRowId, appraisalRowId, reconciliationRowId } from './ids.js';
@@ -278,19 +279,15 @@ function materializeForReviewer(
   }
 }
 
-/** True once anything beyond the instrument's blank defaults has been recorded. */
 function hasAnswers(
   tx: Tx,
   checklist: { id: string; type: ChecklistType; status: string },
 ): boolean {
   if (checklist.status !== CHECKLIST_STATUS.PENDING) return true;
-  const defaults = defaultAnswerRows(checklist.type);
-  for (const row of tx.list('answers', { where: { checklistId: checklist.id } })) {
-    // Prefilled at creation, not a recorded answer.
-    if (row.data.key === 'sectionA.outcome') continue;
-    if (JSON.stringify(row.data.value) !== JSON.stringify(defaults[row.data.key])) return true;
-  }
-  return false;
+  return hasRecordedAnswers(
+    checklist,
+    tx.list('answers', { where: { checklistId: checklist.id } }).map(row => row.data),
+  );
 }
 
 export const syncMutators = defineMutators(

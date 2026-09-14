@@ -43,6 +43,7 @@ export { presenceSchema, type PresenceState } from './presence.js';
 export {
   defaultAnswerRows,
   expandAnswerUpdate,
+  hasRecordedAnswers,
   resolveNestedTextValue,
   textAnswerKeys,
   type AnswerWrite,

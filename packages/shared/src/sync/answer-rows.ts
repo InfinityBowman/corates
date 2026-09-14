@@ -36,6 +36,7 @@ import {
   type RobinsIAnswers,
   type RobinsIKey,
 } from '../checklists/robins-i/index.js';
+import { CHECKLIST_STATUS } from '../checklists/status.js';
 import type { ChecklistType } from './schema.js';
 
 export type JsonValue =
@@ -108,6 +109,25 @@ export function defaultAnswerRows(type: ChecklistType): Record<string, JsonValue
     case 'ROBINS_I':
       return defaultRobinsIRows();
   }
+}
+
+/**
+ * True once anything beyond the instrument's blank defaults has been
+ * recorded on a checklist. The `appraisal.delete` guard and the client's
+ * pre-delete confirm both use this so they cannot disagree.
+ */
+export function hasRecordedAnswers(
+  checklist: { type: ChecklistType; status: string },
+  answers: Iterable<{ key: string; value: unknown }>,
+): boolean {
+  if (checklist.status !== CHECKLIST_STATUS.PENDING) return true;
+  const defaults = defaultAnswerRows(checklist.type);
+  for (const row of answers) {
+    // Prefilled at creation, not a recorded answer.
+    if (row.key === 'sectionA.outcome') continue;
+    if (JSON.stringify(row.value) !== JSON.stringify(defaults[row.key])) return true;
+  }
+  return false;
 }
 
 function defaultAmstar2Rows(): Record<string, JsonValue> {
