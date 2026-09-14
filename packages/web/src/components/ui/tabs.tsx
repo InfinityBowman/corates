@@ -24,7 +24,8 @@ function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPr
       className={cn(
         'inline-flex items-center px-4 py-3 text-sm font-medium whitespace-nowrap',
         'transition-colors',
-        'focus-visible:ring-ring/50 focus-visible:ring-3 focus-visible:outline-none',
+        // Inset: a horizontal scroll container clips both axes, slicing an outer ring.
+        'focus-visible:inset-ring-ring/50 focus-visible:inset-ring-3 focus-visible:outline-none',
         'disabled:pointer-events-none disabled:opacity-50',
         className,
       )}

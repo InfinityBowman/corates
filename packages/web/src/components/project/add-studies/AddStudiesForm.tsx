@@ -100,7 +100,8 @@ export function AddStudiesForm({
   const tabContent = (
     <>
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className='relative flex gap-1 overflow-x-auto pb-px'>
+        {/* A single pixel rounds away and shaves the indicator at bottom-0. */}
+        <TabsList className='relative flex gap-1 overflow-x-auto pb-0.5'>
           {TABS.map(tab => {
             const count = getTabCount(tab.value, studies);
             return (
