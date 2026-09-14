@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { autoFillSlots, countLoad } from '../autoFill';
+import { autoFillSlots, countLoad, unassignedFirst } from '../autoFill';
 
 // Keeps the shuffle a no-op so tie-breaks follow member order.
 const random = () => 0;
@@ -69,5 +69,27 @@ describe('autoFillSlots', () => {
   it('returns rows untouched with no members', () => {
     const rows = emptyRows(1);
     expect(autoFillSlots(rows, { memberIds: [], random })).toBe(rows);
+  });
+
+  it('lays cleared rows out again with the load counted from scratch', () => {
+    const options = { memberIds: ['a', 'b', 'c'], random };
+    const first = autoFillSlots(emptyRows(6), options);
+    const cleared = Object.fromEntries(
+      Object.keys(first).map(id => [id, { reviewer1: null, reviewer2: null }]),
+    );
+    expect(countLoad(cleared, {})).toEqual({});
+    expect(countLoad(autoFillSlots(cleared, options), {})).toEqual({ a: 4, b: 4, c: 4 });
+  });
+});
+
+describe('unassignedFirst', () => {
+  it('puts studies with empty slots first and keeps the rest in order', () => {
+    const ids = unassignedFirst([
+      { id: 'full', reviewer1: 'a', reviewer2: 'b' },
+      { id: 'half', reviewer1: 'a', reviewer2: null },
+      { id: 'empty', reviewer1: null, reviewer2: null },
+      { id: 'full2', reviewer1: 'b', reviewer2: 'c' },
+    ]);
+    expect(ids).toEqual(['empty', 'half', 'full', 'full2']);
   });
 });

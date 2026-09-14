@@ -1,7 +1,7 @@
 /**
  * AssignReviewersSheet - Hosts ReviewerAssignment in a side sheet, scoped by
- * whoever opened it: the header (all unassigned), the post-add toast (just
- * added), or a study card (that study).
+ * whoever opened it: the header or Overview (every study), the post-add
+ * toast (just added), or a study card (that study).
  */
 
 import {

@@ -33,6 +33,18 @@ export function countLoad(
   return load;
 }
 
+function emptySlotCount(slots: ReviewerSlots): number {
+  return (slots.reviewer1 ? 0 : 1) + (slots.reviewer2 ? 0 : 1);
+}
+
+/** Ids of `studies` with the ones still needing reviewers first, otherwise in the given order. */
+export function unassignedFirst(studies: Array<ReviewerSlots & { id: string }>): string[] {
+  return studies
+    .map((study, index) => ({ study, index }))
+    .sort((a, b) => emptySlotCount(b.study) - emptySlotCount(a.study) || a.index - b.index)
+    .map(({ study }) => study.id);
+}
+
 function shuffle<T>(items: T[], random: () => number): T[] {
   const out = [...items];
   for (let i = out.length - 1; i > 0; i--) {

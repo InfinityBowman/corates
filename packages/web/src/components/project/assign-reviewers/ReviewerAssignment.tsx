@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { CheckIcon, WandSparklesIcon } from 'lucide-react';
+import { EraserIcon, WandSparklesIcon, XIcon } from 'lucide-react';
 import { getInProgressChecklistsOfLeavingReviewers } from '@corates/shared/checklists';
 import {
   AlertDialog,
@@ -27,7 +27,13 @@ import { MemberAvatar, memberDisplayName } from '../MemberAvatar';
 import type { AssignSheetScope } from '../ProjectContext';
 import { ReviewerPicker } from './ReviewerPicker';
 import { AutoFillSettings, evenShares } from './AutoFillSettings';
-import { autoFillSlots, countLoad, type ReviewerSlots, type SlotRows } from './autoFill';
+import {
+  autoFillSlots,
+  countLoad,
+  unassignedFirst,
+  type ReviewerSlots,
+  type SlotRows,
+} from './autoFill';
 
 const SLOTS = ['reviewer1', 'reviewer2'] as const;
 
@@ -72,9 +78,7 @@ export function ReviewerAssignment({
   onClose,
 }: ReviewerAssignmentProps) {
   // Snapshot on open so rows do not move while editing.
-  const [studyIds] = useState(
-    () => scope?.studyIds ?? studies.filter(s => !s.reviewer1 && !s.reviewer2).map(s => s.id),
-  );
+  const [studyIds] = useState(() => scope?.studyIds ?? unassignedFirst(studies));
   const [draft, setDraft] = useState<SlotRows>(() =>
     Object.fromEntries(studies.filter(s => studyIds.includes(s.id)).map(s => [s.id, slotsOf(s)])),
   );
@@ -99,6 +103,7 @@ export function ReviewerAssignment({
     return slots?.reviewer1 && slots.reviewer2;
   }).length;
   const hasEmptySlot = rows.some(row => !draft[row.id]?.reviewer1 || !draft[row.id]?.reviewer2);
+  const hasFilledSlot = rows.some(row => draft[row.id]?.reviewer1 || draft[row.id]?.reviewer2);
   const canAutoFill = hasEmptySlot || autoFilled.size > 0;
   const isReshuffle = autoFilled.size > 0 && !hasEmptySlot;
 
@@ -109,6 +114,21 @@ export function ReviewerAssignment({
       next.delete(`${studyId}:${slot}`);
       return next;
     });
+  };
+
+  const clearRow = (studyId: string) => {
+    setDraft(prev => ({ ...prev, [studyId]: { reviewer1: null, reviewer2: null } }));
+    setAutoFilled(prev => {
+      const next = new Set(prev);
+      next.delete(`${studyId}:reviewer1`);
+      next.delete(`${studyId}:reviewer2`);
+      return next;
+    });
+  };
+
+  const handleClearAll = () => {
+    setDraft(Object.fromEntries(studyIds.map(id => [id, { reviewer1: null, reviewer2: null }])));
+    setAutoFilled(new Set());
   };
 
   const handleAutoFill = () => {
@@ -182,15 +202,9 @@ export function ReviewerAssignment({
     return (
       <>
         <div className='flex-1 p-4'>
-          {scope ?
-            <p className='text-muted-foreground text-sm'>
-              These studies are no longer in the project.
-            </p>
-          : <div className='text-success flex items-center gap-2 text-sm'>
-              <CheckIcon className='size-4' />
-              Every study already has two reviewers.
-            </div>
-          }
+          <p className='text-muted-foreground text-sm'>
+            {scope ? 'These studies are no longer in the project.' : 'No studies to assign yet.'}
+          </p>
         </div>
         <SheetFooter className='flex-row justify-end'>
           <Button variant='outline' onClick={onClose}>
@@ -202,7 +216,7 @@ export function ReviewerAssignment({
   }
 
   const scopeLabel =
-    scope?.label ?? `${rows.length} ${rows.length === 1 ? 'study' : 'studies'} without reviewers`;
+    scope?.label ?? `All ${rows.length} ${rows.length === 1 ? 'study' : 'studies'}`;
 
   return (
     <>
@@ -230,41 +244,62 @@ export function ReviewerAssignment({
               );
             })}
           </div>
-          <div className='flex shrink-0 -space-x-px'>
+          <div className='flex shrink-0 items-center gap-1'>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  variant='outline'
+                  variant='ghost'
                   size='sm'
-                  onClick={handleAutoFill}
-                  disabled={!canAutoFill}
-                  className='rounded-r-none'
+                  onClick={handleClearAll}
+                  disabled={!hasFilledSlot}
+                  data-testid='clear-all-reviewers'
                 >
-                  <WandSparklesIcon />
-                  {isReshuffle ? 'Reshuffle' : 'Auto-fill'}
+                  <EraserIcon />
+                  Clear all
                 </Button>
               </TooltipTrigger>
               <TooltipContent className='max-w-64'>
-                {isReshuffle ?
-                  'Picks reviewers again for the slots Auto-fill chose. Reviewers you picked by hand stay.'
-                : 'Fills every empty reviewer slot, giving each study to whoever is furthest below their share of the project.'
-                }
+                Empties every reviewer slot in this list so Auto-fill can lay them out again.
+                Nothing changes until you save.
               </TooltipContent>
             </Tooltip>
-            <AutoFillSettings
-              members={members}
-              currentUserId={currentUserId}
-              shares={effectiveShares}
-              onChange={setShares}
-              disabled={!canAutoFill}
-            />
+            <div className='flex -space-x-px'>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={handleAutoFill}
+                    disabled={!canAutoFill}
+                    className='rounded-r-none'
+                  >
+                    <WandSparklesIcon />
+                    {isReshuffle ? 'Reshuffle' : 'Auto-fill'}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className='max-w-64'>
+                  {isReshuffle ?
+                    'Picks reviewers again for the slots Auto-fill chose. Reviewers you picked by hand stay.'
+                  : 'Fills every empty reviewer slot, giving each study to whoever is furthest below their share of the project.'
+                  }
+                </TooltipContent>
+              </Tooltip>
+              <AutoFillSettings
+                members={members}
+                currentUserId={currentUserId}
+                shares={effectiveShares}
+                onChange={setShares}
+                disabled={!canAutoFill}
+              />
+            </div>
           </div>
         </div>
 
-        <div className='text-2xs text-muted-foreground hidden grid-cols-[1fr_9rem_9rem] gap-x-2 px-4 pt-3 pb-1.5 font-semibold tracking-wide uppercase sm:grid'>
+        <div className='text-2xs text-muted-foreground hidden grid-cols-[1fr_9rem_9rem_1.5rem] gap-x-2 px-4 pt-3 pb-1.5 font-semibold tracking-wide uppercase sm:grid'>
           <span className='truncate'>{scopeLabel}</span>
           <span>Reviewer 1</span>
           <span>Reviewer 2</span>
+          <span />
         </div>
         <p className='text-2xs text-muted-foreground px-4 pt-3 pb-1.5 font-semibold tracking-wide uppercase sm:hidden'>
           {scopeLabel}
@@ -273,18 +308,19 @@ export function ReviewerAssignment({
         <ul className='divide-border divide-y'>
           {rows.map(row => {
             const slots = draft[row.id] ?? slotsOf(row);
+            const rowFilled = Boolean(slots.reviewer1 || slots.reviewer2);
             const studyName = row.name || 'Untitled study';
             const citation = getCitationLine(sortStudyPdfs(row.pdfs ?? []), row);
             return (
               <li
                 key={row.id}
-                className='hover:bg-muted/40 grid grid-cols-1 items-center gap-x-2 gap-y-2 px-4 py-2 sm:grid-cols-[1fr_9rem_9rem]'
+                className='hover:bg-muted/40 grid grid-cols-1 items-center gap-x-2 gap-y-2 px-4 py-2 sm:grid-cols-[1fr_9rem_9rem_1.5rem]'
               >
                 <div className='min-w-0'>
                   <p className='text-foreground truncate text-sm font-medium'>{studyName}</p>
                   {citation && <p className='text-muted-foreground truncate text-xs'>{citation}</p>}
                 </div>
-                <div className='grid grid-cols-2 gap-2 sm:contents'>
+                <div className='grid grid-cols-[1fr_1fr_1.5rem] gap-2 sm:contents'>
                   <ReviewerPicker
                     slotLabel='Reviewer 1'
                     testId='reviewer-picker-1'
@@ -309,6 +345,16 @@ export function ReviewerAssignment({
                     currentUserId={currentUserId}
                     load={load}
                   />
+                  <Button
+                    variant='ghost'
+                    size='icon-xs'
+                    onClick={() => clearRow(row.id)}
+                    disabled={!rowFilled}
+                    aria-label={`Clear reviewers for ${studyName}`}
+                    className='text-muted-foreground hover:text-foreground disabled:invisible'
+                  >
+                    <XIcon className='size-3.5' />
+                  </Button>
                 </div>
               </li>
             );

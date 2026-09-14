@@ -37,7 +37,7 @@ interface ProjectContextValue {
   setAddStudiesSheetOpen: (open: boolean) => void;
   assignSheetOpen: boolean;
   setAssignSheetOpen: (open: boolean) => void;
-  /** null means every unassigned study. */
+  /** null means every study, unassigned first. */
   assignSheetScope: AssignSheetScope | null;
   openAssignSheet: (scope?: AssignSheetScope) => void;
   outcomesSheetOpen: boolean;

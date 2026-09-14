@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { PlusIcon, XIcon } from 'lucide-react';
+import { PlusIcon, UsersIcon, XIcon } from 'lucide-react';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { project } from '@/project';
 import { showToast } from '@/lib/toast';
@@ -64,7 +64,7 @@ function DisabledInviteButton({ reason }: { reason: string }) {
 export function MembersPanel({ members, progressFor }: MembersPanelProps) {
   const user = useAuthStore(selectUser);
   const navigate = useNavigate();
-  const { projectId, orgId, isOwner } = useProjectContext();
+  const { projectId, orgId, isOwner, openAssignSheet } = useProjectContext();
   const { hasQuota, quotas } = useSubscription();
   const { members: orgMembers } = useMembers();
 
@@ -107,21 +107,34 @@ export function MembersPanel({ members, progressFor }: MembersPanelProps) {
           Members
           <span className='ml-1.5 font-medium tabular-nums'>{members.length}</span>
         </h2>
-        {!isOwner ?
-          <DisabledInviteButton reason='Only the project owner can invite members.' />
-        : canAddMember ?
-          <Button
-            variant='ghost'
-            size='xs'
-            className='text-primary hover:text-primary'
-            onClick={() => setShowAddMemberModal(true)}
-            data-testid='invite-member-button'
-          >
-            <PlusIcon className='size-3.5' />
-            Invite
-          </Button>
-        : <DisabledInviteButton reason='Collaborator limit reached. Upgrade your plan to add more team members.' />
-        }
+        <div className='flex items-center gap-1'>
+          {isOwner && (
+            <Button
+              variant='ghost'
+              size='xs'
+              className='text-muted-foreground'
+              onClick={() => openAssignSheet()}
+            >
+              <UsersIcon className='size-3.5' />
+              Assign
+            </Button>
+          )}
+          {!isOwner ?
+            <DisabledInviteButton reason='Only the project owner can invite members.' />
+          : canAddMember ?
+            <Button
+              variant='ghost'
+              size='xs'
+              className='text-primary hover:text-primary'
+              onClick={() => setShowAddMemberModal(true)}
+              data-testid='invite-member-button'
+            >
+              <PlusIcon className='size-3.5' />
+              Invite
+            </Button>
+          : <DisabledInviteButton reason='Collaborator limit reached. Upgrade your plan to add more team members.' />
+          }
+        </div>
       </div>
 
       <div className='flex flex-col gap-1'>
