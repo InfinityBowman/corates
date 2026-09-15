@@ -49,7 +49,41 @@ interface StudyAppraisalsProps {
 
 type Confirm =
   | { kind: 'remove'; cell: AppraisalCellRef; label: string }
-  | { kind: 'switch'; to: string; cells: AppraisalCellRef[]; withAnswers: boolean };
+  | {
+      kind: 'switch';
+      to: string;
+      cells: AppraisalCellRef[];
+      labels: string[];
+      withAnswers: boolean;
+    };
+
+function joinNames(names: string[]): string {
+  if (names.length <= 1) return names.join('');
+  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+}
+
+/** Body of the switch-tool confirm, naming the outcomes while there are few enough to read. */
+export function switchToolCopy(opts: {
+  from: string;
+  to: string;
+  labels: string[];
+  outcomeLinked: boolean;
+  withAnswers: boolean;
+}): string {
+  const { from, to, labels, outcomeLinked, withAnswers } = opts;
+  const n = labels.length;
+  const plural = n === 1 ? 'appraisal' : 'appraisals';
+  const what =
+    outcomeLinked && n <= 3 ? `${from} ${plural} on ${joinNames(labels)}`
+    : n === 1 ? `${from} appraisal`
+    : `${n} ${from} appraisals`;
+  const them = n === 1 ? 'it' : 'them';
+  const lost =
+    withAnswers ?
+      `the reviewers' checklists and the answers already recorded in ${them}`
+    : `the checklists the reviewers were given for ${them}`;
+  return `Its ${what} will be removed, along with ${lost}. You can then choose what to appraise with ${to}.`;
+}
 
 function cellStatus(cell: AppraisalCell | undefined, hasReviewers: boolean): string {
   if (!cell) return '';
@@ -111,7 +145,14 @@ export function StudyAppraisals({
       return;
     }
     const refs = toolCells.map(c => toRef(c.outcomeId));
-    setConfirm({ kind: 'switch', to: next, cells: refs, withAnswers: refs.some(cellHasAnswers) });
+    const labels = toolCells.map(c => outcomes.find(o => o.id === c.outcomeId)?.name ?? 'outcome');
+    setConfirm({
+      kind: 'switch',
+      to: next,
+      cells: refs,
+      labels,
+      withAnswers: refs.some(cellHasAnswers),
+    });
   }
 
   function runConfirm() {
@@ -226,25 +267,33 @@ export function StudyAppraisals({
             <div>
               <AlertDialogTitle>
                 {confirm?.kind === 'switch' ?
-                  `Switch to ${getChecklistMetadata(confirm.to).shortName}?`
+                  `Switch this study to ${getChecklistMetadata(confirm.to).shortName}?`
                 : 'Remove this appraisal?'}
               </AlertDialogTitle>
               <AlertDialogDescription>
                 {confirm?.kind === 'switch' ?
-                  `This study uses one tool. Its ${confirm.cells.length} ${toolName} ${
-                    confirm.cells.length === 1 ? 'appraisal' : 'appraisals'
-                  } and every checklist on ${confirm.cells.length === 1 ? 'it' : 'them'}${
-                    confirm.withAnswers ? ', including recorded answers,' : ''
-                  } will be removed.`
-                : `${toolName} on ${confirm?.label ?? 'this outcome'} already has answers. Removing it deletes every reviewer's checklist for it and any reconciliation.`
+                  switchToolCopy({
+                    from: toolName,
+                    to: getChecklistMetadata(confirm.to).shortName,
+                    labels: confirm.labels,
+                    outcomeLinked,
+                    withAnswers: confirm.withAnswers,
+                  })
+                : `${toolName} on ${confirm?.label ?? 'this outcome'} already has answers. Removing it deletes ${
+                    reviewers.length > 1 ? "both reviewers' checklists" : "the reviewer's checklist"
+                  }, the answers in ${reviewers.length > 1 ? 'them' : 'it'}, and any reconciliation.`
                 }
               </AlertDialogDescription>
             </div>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Keep</AlertDialogCancel>
+            <AlertDialogCancel>
+              {confirm?.kind === 'switch' ? `Keep ${toolName}` : 'Keep'}
+            </AlertDialogCancel>
             <AlertDialogAction variant='destructive' onClick={runConfirm}>
-              {confirm?.kind === 'switch' ? 'Switch tool' : 'Remove anyway'}
+              {confirm?.kind === 'switch' ?
+                `Switch to ${getChecklistMetadata(confirm.to).shortName}`
+              : 'Remove anyway'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

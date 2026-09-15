@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
-import { StudyAppraisals } from '../StudyAppraisals';
+import { StudyAppraisals, switchToolCopy } from '../StudyAppraisals';
 import type { StudyInfo, ChecklistEntry, OutcomeEntry } from '@/stores/projectStore';
 
 const outcomes: OutcomeEntry[] = [
@@ -147,6 +147,29 @@ describe('StudyAppraisals', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Manage outcomes' }));
     expect(onManageOutcomes).toHaveBeenCalled();
     expect(screen.queryByTestId('appraisal-toggle-o1')).not.toBeInTheDocument();
+  });
+
+  it('names the outcomes in the switch confirm while there are few enough to read', () => {
+    const base = { from: 'RoB 2', to: 'AMSTAR 2', outcomeLinked: true };
+    expect(switchToolCopy({ ...base, labels: ['Mortality', 'Pain'], withAnswers: false })).toBe(
+      'Its RoB 2 appraisals on Mortality and Pain will be removed, along with the checklists the reviewers were given for them. You can then choose what to appraise with AMSTAR 2.',
+    );
+    expect(switchToolCopy({ ...base, labels: ['Mortality'], withAnswers: true })).toBe(
+      "Its RoB 2 appraisal on Mortality will be removed, along with the reviewers' checklists and the answers already recorded in it. You can then choose what to appraise with AMSTAR 2.",
+    );
+    expect(switchToolCopy({ ...base, labels: ['A', 'B', 'C', 'D'], withAnswers: false })).toMatch(
+      /^Its 4 RoB 2 appraisals will be removed/,
+    );
+    expect(
+      switchToolCopy({
+        ...base,
+        from: 'AMSTAR 2',
+        to: 'RoB 2',
+        outcomeLinked: false,
+        labels: ['x'],
+        withAnswers: false,
+      }),
+    ).toMatch(/^Its AMSTAR 2 appraisal will be removed/);
   });
 
   it('is read-only for non-owners', () => {
