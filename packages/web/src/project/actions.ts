@@ -17,6 +17,7 @@ import { studyActions } from './actions/studies';
 import { pdfActions } from './actions/pdfs';
 import { projectActions } from './actions/project';
 import { memberActions } from './actions/members';
+import { appraisalActions } from './actions/appraisals';
 
 function requireClient() {
   const client = connectionPool.getActiveClient();
@@ -40,6 +41,7 @@ export const project = {
   pdf: pdfActions,
   project: projectActions,
   member: memberActions,
+  appraisal: appraisalActions,
 
   checklist: {
     create(studyId: string, type: string, assigneeId: string | null, outcomeId?: string): boolean {

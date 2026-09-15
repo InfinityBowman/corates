@@ -1,5 +1,6 @@
 /**
- * ProjectSheets - the Add studies, Assign reviewers and Outcomes sheets,
+ * ProjectSheets - the Add studies, Assign reviewers, Outcomes and Study
+ * appraisals sheets,
  * mounted once per project view. Anything can open them through the
  * project context; the header only triggers them.
  */
@@ -9,6 +10,7 @@ import { useProjectMembers } from '@/project/workspace-data';
 import { AddStudiesSheet } from './add-studies/AddStudiesSheet';
 import { AssignReviewersSheet } from './assign-reviewers/AssignReviewersSheet';
 import { OutcomesSheet } from './outcomes/OutcomesSheet';
+import { StudyAppraisalsSheet } from './study-appraisals/StudyAppraisalsSheet';
 import { useProjectContext } from './ProjectContext';
 
 export function ProjectSheets() {
@@ -22,6 +24,8 @@ export function ProjectSheets() {
     openAssignSheet,
     outcomesSheetOpen,
     setOutcomesSheetOpen,
+    appraisalsSheetStudyId,
+    closeAppraisalsSheet,
   } = useProjectContext();
   const members = useProjectMembers(projectId);
 
@@ -49,6 +53,7 @@ export function ProjectSheets() {
       />
       {isOwner && <AssignReviewersSheet open={assignSheetOpen} onOpenChange={setAssignSheetOpen} />}
       <OutcomesSheet open={outcomesSheetOpen} onOpenChange={setOutcomesSheetOpen} />
+      <StudyAppraisalsSheet studyId={appraisalsSheetStudyId} onClose={closeAppraisalsSheet} />
     </>
   );
 }

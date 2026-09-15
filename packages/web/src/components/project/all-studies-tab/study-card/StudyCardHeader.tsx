@@ -35,6 +35,7 @@ import { useProjectContext, type ProjectMember } from '@/components/project/Proj
 import { MemberAvatar, memberDisplayName } from '@/components/project/MemberAvatar';
 import type { StudyInfo } from '@/stores/projectStore';
 import { project } from '@/project';
+import { studyCitation } from '@/components/project/studyCitation';
 
 interface StudyCardHeaderProps {
   study: StudyInfo;
@@ -55,13 +56,12 @@ export function StudyCardHeader({
   onExportPdf,
   getMember,
 }: StudyCardHeaderProps) {
-  const { isOwner } = useProjectContext();
+  const { isOwner, openAppraisalsSheet } = useProjectContext();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const hasChecklists = study.checklists.length > 0;
-  const primaryPdf = useMemo(() => {
-    const pdfs = study.pdfs || [];
-    return pdfs.find(p => p.tag === 'primary') || pdfs[0];
-  }, [study.pdfs]);
+  const appraisalCount = new Set(
+    [...study.appraisals, ...study.checklists].map(c => `${c.type}:${c.outcomeId ?? ''}`),
+  ).size;
 
   const assignedReviewers = useMemo(() => {
     const reviewers: ProjectMember[] = [];
@@ -77,16 +77,7 @@ export function StudyCardHeader({
   const hasReviewers = !!study.reviewer1 || !!study.reviewer2;
   const studyName = study.name || 'Untitled study';
 
-  const citationLine = useMemo(() => {
-    const parts: string[] = [];
-    const author = primaryPdf?.firstAuthor || study.firstAuthor;
-    const year = primaryPdf?.publicationYear || study.publicationYear;
-    const journal = primaryPdf?.journal || study.journal;
-    if (author) parts.push(author);
-    if (year) parts.push(`(${year})`);
-    if (journal) parts.push(`- ${journal}`);
-    return parts.join(' ');
-  }, [primaryPdf, study]);
+  const citationLine = studyCitation(study);
 
   const handleNameChange = useCallback(
     (newName: string) => {
@@ -104,9 +95,9 @@ export function StudyCardHeader({
         'button, [role="button"], [role="menuitem"], input, textarea, [data-editable], [data-scope="menu"], [data-scope="editable"], [data-selectable]',
       );
       if (interactive) return;
-      onToggle();
+      openAppraisalsSheet(study.id);
     },
-    [onToggle],
+    [openAppraisalsSheet, study.id],
   );
 
   return (
@@ -115,11 +106,18 @@ export function StudyCardHeader({
         className='flex cursor-pointer items-center gap-3 px-4 py-3 select-none'
         onClick={handleHeaderClick}
       >
-        <div className='-ml-1 shrink-0 p-1'>
+        <button
+          type='button'
+          onClick={onToggle}
+          aria-label={expanded ? 'Hide PDFs' : 'Show PDFs'}
+          aria-expanded={expanded}
+          data-testid='study-card-expand'
+          className='hover:bg-secondary -ml-1 shrink-0 rounded-md p-1 transition-colors'
+        >
           <ChevronRightIcon
             className={`text-muted-foreground/70 size-5 transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`}
           />
-        </div>
+        </button>
 
         <div className='min-w-0 flex-1'>
           <InlineEdit
@@ -139,6 +137,17 @@ export function StudyCardHeader({
             </p>
           )}
         </div>
+
+        <span
+          data-testid='study-appraisals-count'
+          className={`shrink-0 text-xs whitespace-nowrap ${
+            appraisalCount > 0 ? 'text-muted-foreground' : 'text-muted-foreground/70 italic'
+          }`}
+        >
+          {appraisalCount === 0 ?
+            'No appraisals'
+          : `${appraisalCount} ${appraisalCount === 1 ? 'appraisal' : 'appraisals'}`}
+        </span>
 
         {hasReviewers ?
           <div className='flex shrink-0 -space-x-1.5' data-selectable>
