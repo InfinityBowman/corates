@@ -12,6 +12,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { DEFAULT_CHECKLIST_TYPE } from '@/checklist-registry';
+import { InlineEdit } from '@/components/ui/inline-edit';
 import { useAllStudies, useProjectOutcomes } from '@/project/workspace-data';
 import { project } from '@/project';
 import type { StudyInfo } from '@/stores/projectStore';
@@ -98,7 +99,19 @@ function StudySheetBody({ study, ...appraisalProps }: StudySheetBodyProps) {
       {...dropProps}
     >
       <SheetHeader>
-        <SheetTitle className='truncate'>{study.name || 'Untitled study'}</SheetTitle>
+        <SheetTitle className='truncate'>
+          <InlineEdit
+            key={study.name}
+            value={study.name || 'Untitled study'}
+            onCommit={name => {
+              if (name.trim() && name !== study.name) {
+                project.study.update(study.id, { name: name.trim() });
+              }
+            }}
+            showEditIcon
+            ariaLabel='Rename study'
+          />
+        </SheetTitle>
         <SheetDescription>
           {citation || 'Choose the tool and the outcomes this study is appraised on.'}
         </SheetDescription>
