@@ -93,13 +93,27 @@ describe('getStatus', () => {
     expect(result.hasRefreshToken).toBe(true);
   });
 
-  it('stays connected for accounts that granted the legacy drive.readonly scope', async () => {
+  it('reports disconnected for accounts that only granted the legacy drive.readonly scope', async () => {
     const user = await buildUser({ email: 'user1@example.com' });
     await seedGoogleAccount(
       user.id,
       'token-123',
       'refresh-123',
       'openid email profile https://www.googleapis.com/auth/drive.readonly',
+    );
+    currentUser = { id: user.id, email: user.email };
+
+    const result = await getStatus(createDb(env.DB), mockSession());
+    expect(result.connected).toBe(false);
+  });
+
+  it('stays connected when drive.file sits alongside the legacy drive.readonly scope', async () => {
+    const user = await buildUser({ email: 'user1@example.com' });
+    await seedGoogleAccount(
+      user.id,
+      'token-123',
+      'refresh-123',
+      'openid email profile https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.file',
     );
     currentUser = { id: user.id, email: user.email };
 
