@@ -4,36 +4,14 @@
  * per project, so a lead with several projects sees it once.
  */
 
-import { useState } from 'react';
 import { CloudUploadIcon, FileTextIcon, PaperclipIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useAuthStore, selectUser } from '@/stores/authStore';
-
-const STORAGE_KEY_PREFIX = 'studiesExplainerDismissed:';
-
-function readDismissed(key: string) {
-  try {
-    return localStorage.getItem(key) === 'true';
-  } catch {
-    return false;
-  }
-}
+import { useDismissedHint } from '@/hooks/useDismissedHint';
 
 export function StudiesExplainer({ onAddStudies }: { onAddStudies: () => void }) {
-  const user = useAuthStore(selectUser);
-  const storageKey = `${STORAGE_KEY_PREFIX}${user?.id ?? 'anonymous'}`;
-  const [dismissed, setDismissed] = useState(() => readDismissed(storageKey));
+  const { dismissed, dismiss } = useDismissedHint('studiesExplainer');
 
   if (dismissed) return null;
-
-  const dismiss = () => {
-    setDismissed(true);
-    try {
-      localStorage.setItem(storageKey, 'true');
-    } catch {
-      // Private browsing can refuse writes; the card simply returns next visit.
-    }
-  };
 
   return (
     <div className='border-border bg-card mb-4 overflow-hidden rounded-xl border'>

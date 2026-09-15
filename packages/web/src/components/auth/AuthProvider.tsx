@@ -45,8 +45,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const loading = session.isPending;
     const refetch =
       session.refetch ?
-        async () => {
-          await session.refetch();
+        async (options?: { disableCookieCache?: boolean }) => {
+          await session.refetch(options ? { query: options } : undefined);
         }
       : null;
 

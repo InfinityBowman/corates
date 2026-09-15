@@ -8,7 +8,10 @@ import {
   DomainErrorException,
   createValidationError,
   VALIDATION_ERRORS,
+  parseUserPreferences,
+  type HintId,
   type ProjectSetupStep,
+  type UserPreferences,
 } from '@corates/shared';
 
 import type { Session } from '@/server/middleware/auth';
@@ -42,6 +45,28 @@ export interface UserSearchResult {
 export async function deleteAccount(db: Database, session: Session) {
   await deleteUserAccount(db, { userId: session.user.id, email: session.user.email });
   return { success: true as const, message: 'Account deleted successfully' };
+}
+
+// Read-merge-write on the server so a stale client cannot drop hints dismissed
+// from another device, and so keys this code does not know about survive.
+export async function dismissHint(
+  db: Database,
+  session: Session,
+  hintId: HintId,
+): Promise<UserPreferences> {
+  const [row] = await db
+    .select({ preferences: user.preferences })
+    .from(user)
+    .where(eq(user.id, session.user.id));
+  const current = parseUserPreferences(row?.preferences);
+  if (current.dismissedHints.includes(hintId)) return current;
+
+  const next = { ...current, dismissedHints: [...current.dismissedHints, hintId] };
+  await db
+    .update(user)
+    .set({ preferences: JSON.stringify(next), updatedAt: new Date() })
+    .where(eq(user.id, session.user.id));
+  return next;
 }
 
 export async function fetchMyProjects(db: Database, session: Session) {
