@@ -4,6 +4,7 @@
 
 import { useMemo, useCallback, useState } from 'react';
 import {
+  ChevronRightIcon,
   UsersIcon,
   Trash2Icon,
   MoreVerticalIcon,
@@ -35,6 +36,7 @@ import { MemberAvatar, memberDisplayName } from '@/components/project/MemberAvat
 import type { StudyInfo } from '@/stores/projectStore';
 import { project } from '@/project';
 import { studyCitation } from '@/components/project/studyCitation';
+import { StudyAppraisalChips } from './StudyAppraisalChips';
 
 interface StudyCardHeaderProps {
   study: StudyInfo;
@@ -54,9 +56,6 @@ export function StudyCardHeader({
   const { isOwner, openStudySheet } = useProjectContext();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const hasChecklists = study.checklists.length > 0;
-  const appraisalCount = new Set(
-    [...study.appraisals, ...study.checklists].map(c => `${c.type}:${c.outcomeId ?? ''}`),
-  ).size;
 
   const assignedReviewers = useMemo(() => {
     const reviewers: ProjectMember[] = [];
@@ -89,17 +88,29 @@ export function StudyCardHeader({
       const interactive = target.closest(
         'button, [role="button"], [role="menuitem"], input, textarea, [data-editable], [data-scope="menu"], [data-scope="editable"], [data-selectable]',
       );
-      if (interactive) return;
+      // The header itself carries role=button, so only nested controls count.
+      if (interactive && interactive !== e.currentTarget) return;
       openStudySheet(study.id);
     },
     [openStudySheet, study.id],
   );
 
+  const handleHeaderKeyDown = (e: React.KeyboardEvent) => {
+    if (e.target !== e.currentTarget) return;
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    openStudySheet(study.id);
+  };
+
   return (
     <>
       <div
-        className='flex cursor-pointer items-center gap-3 px-4 py-3 select-none'
+        role='button'
+        tabIndex={0}
+        aria-label={`Open ${studyName}`}
+        className='group focus-visible:ring-ring/50 flex cursor-pointer items-center gap-3 rounded-lg px-4 py-3 select-none focus-visible:ring-3 focus-visible:outline-none'
         onClick={handleHeaderClick}
+        onKeyDown={handleHeaderKeyDown}
       >
         <div className='min-w-0 flex-1'>
           <InlineEdit
@@ -108,7 +119,7 @@ export function StudyCardHeader({
             onCommit={handleNameChange}
             showEditIcon
             ariaLabel='Rename study'
-            className='text-foreground -ml-2 font-medium'
+            className='text-foreground font-medium'
           />
           {citationLine && (
             <p
@@ -120,16 +131,7 @@ export function StudyCardHeader({
           )}
         </div>
 
-        <span
-          data-testid='study-appraisals-count'
-          className={`shrink-0 text-xs whitespace-nowrap ${
-            appraisalCount > 0 ? 'text-muted-foreground' : 'text-muted-foreground/70 italic'
-          }`}
-        >
-          {appraisalCount === 0 ?
-            'No appraisals'
-          : `${appraisalCount} ${appraisalCount === 1 ? 'appraisal' : 'appraisals'}`}
-        </span>
+        <StudyAppraisalChips study={study} />
 
         {hasReviewers ?
           <div className='flex shrink-0 -space-x-1.5' data-selectable>
@@ -201,6 +203,11 @@ export function StudyCardHeader({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+
+        <ChevronRightIcon
+          aria-hidden
+          className='text-muted-foreground/50 group-hover:text-muted-foreground size-4 shrink-0 transition-colors'
+        />
       </div>
 
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>

@@ -39,7 +39,7 @@ export function StudyCard({
       data-testid='study-card'
       data-drop-over={isOver || undefined}
       className={cn(
-        'border-border bg-card relative rounded-lg border transition-colors',
+        'border-border bg-card hover:border-muted-foreground/30 hover:bg-muted/40 relative rounded-lg border transition-colors',
         showTargets && 'border-primary/50 border-dashed',
         isOver && 'border-primary bg-primary/5 border-solid',
       )}
