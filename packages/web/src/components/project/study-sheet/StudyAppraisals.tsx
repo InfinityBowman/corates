@@ -28,12 +28,10 @@ import {
   AlertDialogIcon,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { MemberAvatar, memberDisplayName } from '@/components/project/MemberAvatar';
 import type { ProjectMember } from '@/components/project/ProjectContext';
 import type { AppraisalCellRef } from '@/project/actions/appraisals';
 import type { OutcomeEntry, StudyInfo } from '@/stores/projectStore';
-import { studyCitation } from '../studyCitation';
 
 interface StudyAppraisalsProps {
   study: StudyInfo;
@@ -127,109 +125,99 @@ export function StudyAppraisals({
     setConfirm(null);
   }
 
-  const citation = studyCitation(study);
   const rows =
     outcomeLinked ?
       outcomes.map(o => ({ outcomeId: o.id, label: o.name }))
     : [{ outcomeId: null, label: `Appraise with ${toolName}` }];
 
   return (
-    <>
-      <SheetHeader>
-        <SheetTitle className='truncate'>{study.name || 'Untitled study'}</SheetTitle>
-        <SheetDescription>
-          {citation || 'Choose the tool and the outcomes this study is appraised on.'}
-        </SheetDescription>
-      </SheetHeader>
+    <div data-testid='study-appraisals'>
+      <dl className='grid grid-cols-[6rem_1fr] items-center gap-x-3 gap-y-3 px-4 pt-4 pb-4 text-sm'>
+        <dt className='text-muted-foreground'>Reviewers</dt>
+        <dd className='flex min-w-0 flex-wrap items-center gap-2'>
+          {reviewers.map(member => (
+            <span key={member.userId} className='flex items-center gap-1.5'>
+              <MemberAvatar member={member} className='size-5 text-[10px]' />
+              <span className='truncate'>{memberDisplayName(member)}</span>
+            </span>
+          ))}
+          {!hasReviewers && <span className='text-muted-foreground italic'>None yet</span>}
+          {!readOnly && (
+            <Button variant='ghost' size='xs' onClick={onAssignReviewers}>
+              {hasReviewers ? 'Change' : 'Assign'}
+            </Button>
+          )}
+        </dd>
 
-      <div className='flex min-h-0 flex-1 flex-col overflow-y-auto'>
-        <dl className='grid grid-cols-[6rem_1fr] items-center gap-x-3 gap-y-3 px-4 pb-4 text-sm'>
-          <dt className='text-muted-foreground'>Reviewers</dt>
-          <dd className='flex min-w-0 flex-wrap items-center gap-2'>
-            {reviewers.map(member => (
-              <span key={member.userId} className='flex items-center gap-1.5'>
-                <MemberAvatar member={member} className='size-5 text-[10px]' />
-                <span className='truncate'>{memberDisplayName(member)}</span>
-              </span>
-            ))}
-            {!hasReviewers && <span className='text-muted-foreground italic'>None yet</span>}
-            {!readOnly && (
-              <Button variant='ghost' size='xs' onClick={onAssignReviewers}>
-                {hasReviewers ? 'Change' : 'Assign'}
-              </Button>
-            )}
-          </dd>
+        <dt className='text-muted-foreground'>Tool</dt>
+        <dd>
+          {readOnly ?
+            <span>{toolName}</span>
+          : <Select value={tool} onValueChange={changeTool}>
+              <SelectTrigger size='sm' className='w-fit min-w-40' aria-label='Tool'>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {getChecklistTypeOptions().map(option => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          }
+        </dd>
+      </dl>
 
-          <dt className='text-muted-foreground'>Tool</dt>
-          <dd>
-            {readOnly ?
-              <span>{toolName}</span>
-            : <Select value={tool} onValueChange={changeTool}>
-                <SelectTrigger size='sm' className='w-fit min-w-40' aria-label='Tool'>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {getChecklistTypeOptions().map(option => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            }
-          </dd>
-        </dl>
+      <p className='text-2xs text-muted-foreground border-border border-t px-4 pt-3 pb-1.5 font-semibold tracking-wide uppercase'>
+        Appraisals
+      </p>
 
-        <p className='text-2xs text-muted-foreground border-border border-t px-4 pt-3 pb-1.5 font-semibold tracking-wide uppercase'>
-          Appraisals
-        </p>
-
-        {outcomeLinked && outcomes.length === 0 ?
-          <div className='border-warning-border bg-warning-bg mx-4 my-2 rounded-lg border p-3'>
-            <p className='text-warning-foreground text-sm font-medium'>No outcomes yet</p>
-            <p className='text-warning mt-1 text-xs'>
-              {toolName} is completed once per outcome, so the project needs at least one outcome
-              before this study can be appraised.
-            </p>
-            {!readOnly && (
-              <Button variant='outline' size='xs' className='mt-2' onClick={onManageOutcomes}>
-                Manage outcomes
-              </Button>
-            )}
-          </div>
-        : <ul className='divide-border divide-y'>
-            {rows.map(row => {
-              const cell = toolCells.find(c => c.outcomeId === row.outcomeId);
-              const id = `appraisal-${study.id}-${row.outcomeId ?? 'single'}`;
-              return (
-                <li key={id} className='flex items-center gap-3 px-4 py-2'>
-                  <Checkbox
-                    id={id}
-                    checked={!!cell}
-                    disabled={readOnly}
-                    onCheckedChange={checked => toggle(row.outcomeId, row.label, checked === true)}
-                    data-testid={`appraisal-toggle-${row.outcomeId ?? 'single'}`}
-                  />
-                  <label htmlFor={id} className='min-w-0 flex-1 truncate text-sm'>
-                    {row.label}
-                  </label>
-                  <span className='text-muted-foreground shrink-0 text-xs'>
-                    {cellStatus(cell, hasReviewers)}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        }
-
-        {!readOnly && (
-          <p className='text-muted-foreground px-4 pt-3 text-xs'>
-            {hasReviewers ?
-              `Each reviewer gets a ${toolName} checklist for every ticked ${outcomeLinked ? 'outcome' : 'row'}.`
-            : 'Reviewers get their checklists for the ticked rows once they are assigned.'}
+      {outcomeLinked && outcomes.length === 0 ?
+        <div className='border-warning-border bg-warning-bg mx-4 my-2 rounded-lg border p-3'>
+          <p className='text-warning-foreground text-sm font-medium'>No outcomes yet</p>
+          <p className='text-warning mt-1 text-xs'>
+            {toolName} is completed once per outcome, so the project needs at least one outcome
+            before this study can be appraised.
           </p>
-        )}
-      </div>
+          {!readOnly && (
+            <Button variant='outline' size='xs' className='mt-2' onClick={onManageOutcomes}>
+              Manage outcomes
+            </Button>
+          )}
+        </div>
+      : <ul className='divide-border divide-y'>
+          {rows.map(row => {
+            const cell = toolCells.find(c => c.outcomeId === row.outcomeId);
+            const id = `appraisal-${study.id}-${row.outcomeId ?? 'single'}`;
+            return (
+              <li key={id} className='flex items-center gap-3 px-4 py-2'>
+                <Checkbox
+                  id={id}
+                  checked={!!cell}
+                  disabled={readOnly}
+                  onCheckedChange={checked => toggle(row.outcomeId, row.label, checked === true)}
+                  data-testid={`appraisal-toggle-${row.outcomeId ?? 'single'}`}
+                />
+                <label htmlFor={id} className='min-w-0 flex-1 truncate text-sm'>
+                  {row.label}
+                </label>
+                <span className='text-muted-foreground shrink-0 text-xs'>
+                  {cellStatus(cell, hasReviewers)}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      }
+
+      {!readOnly && (
+        <p className='text-muted-foreground px-4 pt-3 pb-4 text-xs'>
+          {hasReviewers ?
+            `Each reviewer gets a ${toolName} checklist for every selected ${outcomeLinked ? 'outcome' : 'row'}.`
+          : 'Reviewers get their checklists for the selected rows once they are assigned.'}
+        </p>
+      )}
 
       <AlertDialog open={confirm !== null} onOpenChange={open => !open && setConfirm(null)}>
         <AlertDialogContent data-testid='appraisal-confirm'>
@@ -261,6 +249,6 @@ export function StudyAppraisals({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </div>
   );
 }

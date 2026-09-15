@@ -2,13 +2,12 @@
  * AllStudiesTab - All studies as expandable cards
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { UsersIcon, FilePlusIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { AddStudiesForm, type AddStudiesFormState } from '../add-studies/AddStudiesForm';
 import type { MergedStudy } from '@/hooks/useAddStudies/deduplication';
-import { GoogleDrivePickerModal } from '../google-drive/GoogleDrivePickerModal';
 import { StudyCard } from './study-card/StudyCard';
 import { StudiesExplainer } from './StudiesExplainer';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
@@ -23,10 +22,6 @@ import { saveFormState } from '@/lib/formStatePersistence.js';
 export function AllStudiesTab() {
   const { projectId, getMember, isOwner, openAssignSheet, setAddStudiesSheetOpen } =
     useProjectContext();
-
-  const [showGoogleDriveModal, setShowGoogleDriveModal] = useState(false);
-  const [googleDriveTargetStudyId, setGoogleDriveTargetStudyId] = useState<string | null>(null);
-  const [expandedStudies, setExpandedStudies] = useState<Set<string>>(new Set());
 
   const addStudies = useAddStudies({});
   const studies = useAllStudies(projectId);
@@ -52,29 +47,6 @@ export function AllStudiesTab() {
 
   const handleAddStudies = useCallback(async (studiesToAdd: MergedStudy[]) => {
     await project.study.addBatch(studiesToAdd as unknown as Record<string, unknown>[]);
-  }, []);
-
-  const handleOpenGoogleDrive = useCallback((studyId: string) => {
-    setGoogleDriveTargetStudyId(studyId);
-    setShowGoogleDriveModal(true);
-  }, []);
-
-  const handleGoogleDriveImportSuccess = useCallback(
-    (file: { key: string; fileName: string; size: number }, studyId: string) => {
-      const targetStudyId = studyId || googleDriveTargetStudyId;
-      if (!targetStudyId) return;
-      project.pdf.handleGoogleDriveImport(targetStudyId, file);
-    },
-    [googleDriveTargetStudyId],
-  );
-
-  const toggleStudyExpanded = useCallback((studyId: string) => {
-    setExpandedStudies(prev => {
-      const next = new Set(prev);
-      if (next.has(studyId)) next.delete(studyId);
-      else next.add(studyId);
-      return next;
-    });
   }, []);
 
   return (
@@ -156,28 +128,14 @@ export function AllStudiesTab() {
             <StudyCard
               key={study.id}
               study={study}
-              expanded={expandedStudies.has(study.id)}
-              onToggleExpanded={() => toggleStudyExpanded(study.id)}
               onExportCsv={() => exportStudyCsv(study.id)}
               onExportPdf={() => exportStudyPdf(study.id)}
               getMember={getMember}
               onAssignReviewers={s => openAssignSheet({ studyIds: [s.id], label: 'This study' })}
-              onOpenGoogleDrive={handleOpenGoogleDrive}
             />
           ))}
         </div>
       )}
-
-      <GoogleDrivePickerModal
-        open={showGoogleDriveModal}
-        onClose={() => {
-          setShowGoogleDriveModal(false);
-          setGoogleDriveTargetStudyId(null);
-        }}
-        projectId={projectId}
-        studyId={googleDriveTargetStudyId}
-        onImportSuccess={handleGoogleDriveImportSuccess}
-      />
     </div>
   );
 }

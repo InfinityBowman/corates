@@ -4,7 +4,6 @@
 
 import { useMemo, useCallback, useState } from 'react';
 import {
-  ChevronRightIcon,
   UsersIcon,
   Trash2Icon,
   MoreVerticalIcon,
@@ -39,8 +38,6 @@ import { studyCitation } from '@/components/project/studyCitation';
 
 interface StudyCardHeaderProps {
   study: StudyInfo;
-  expanded: boolean;
-  onToggle: () => void;
   onAssignReviewers?: () => void;
   onExportCsv?: () => void;
   onExportPdf?: () => void;
@@ -49,14 +46,12 @@ interface StudyCardHeaderProps {
 
 export function StudyCardHeader({
   study,
-  expanded,
-  onToggle,
   onAssignReviewers,
   onExportCsv,
   onExportPdf,
   getMember,
 }: StudyCardHeaderProps) {
-  const { isOwner, openAppraisalsSheet } = useProjectContext();
+  const { isOwner, openStudySheet } = useProjectContext();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const hasChecklists = study.checklists.length > 0;
   const appraisalCount = new Set(
@@ -95,9 +90,9 @@ export function StudyCardHeader({
         'button, [role="button"], [role="menuitem"], input, textarea, [data-editable], [data-scope="menu"], [data-scope="editable"], [data-selectable]',
       );
       if (interactive) return;
-      openAppraisalsSheet(study.id);
+      openStudySheet(study.id);
     },
-    [openAppraisalsSheet, study.id],
+    [openStudySheet, study.id],
   );
 
   return (
@@ -106,19 +101,6 @@ export function StudyCardHeader({
         className='flex cursor-pointer items-center gap-3 px-4 py-3 select-none'
         onClick={handleHeaderClick}
       >
-        <button
-          type='button'
-          onClick={onToggle}
-          aria-label={expanded ? 'Hide PDFs' : 'Show PDFs'}
-          aria-expanded={expanded}
-          data-testid='study-card-expand'
-          className='hover:bg-secondary -ml-1 shrink-0 rounded-md p-1 transition-colors'
-        >
-          <ChevronRightIcon
-            className={`text-muted-foreground/70 size-5 transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`}
-          />
-        </button>
-
         <div className='min-w-0 flex-1'>
           <InlineEdit
             key={studyName}

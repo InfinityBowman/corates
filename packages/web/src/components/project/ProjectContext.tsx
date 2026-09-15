@@ -42,10 +42,10 @@ interface ProjectContextValue {
   openAssignSheet: (scope?: AssignSheetScope) => void;
   outcomesSheetOpen: boolean;
   setOutcomesSheetOpen: (open: boolean) => void;
-  /** The study whose appraisals sheet is open, or null when closed. */
-  appraisalsSheetStudyId: string | null;
-  openAppraisalsSheet: (studyId: string) => void;
-  closeAppraisalsSheet: () => void;
+  /** The study whose sheet is open, or null when closed. */
+  studySheetId: string | null;
+  openStudySheet: (studyId: string) => void;
+  closeStudySheet: () => void;
 }
 
 const ProjectCtx = createContext<ProjectContextValue | null>(null);
@@ -75,8 +75,8 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
     setAssignSheetOpen(true);
   }, []);
   const [outcomesSheetOpen, setOutcomesSheetOpen] = useState(false);
-  const [appraisalsSheetStudyId, setAppraisalsSheetStudyId] = useState<string | null>(null);
-  const closeAppraisalsSheet = useCallback(() => setAppraisalsSheetStudyId(null), []);
+  const [studySheetId, setStudySheetId] = useState<string | null>(null);
+  const closeStudySheet = useCallback(() => setStudySheetId(null), []);
 
   // Stable path helpers that only depend on projectId
   const getChecklistPath = useCallback(
@@ -125,9 +125,9 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
       openAssignSheet,
       outcomesSheetOpen,
       setOutcomesSheetOpen,
-      appraisalsSheetStudyId,
-      openAppraisalsSheet: setAppraisalsSheetStudyId,
-      closeAppraisalsSheet,
+      studySheetId,
+      openStudySheet: setStudySheetId,
+      closeStudySheet,
     }),
     [
       projectId,
@@ -143,8 +143,8 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
       assignSheetScope,
       openAssignSheet,
       outcomesSheetOpen,
-      appraisalsSheetStudyId,
-      closeAppraisalsSheet,
+      studySheetId,
+      closeStudySheet,
     ],
   );
 
