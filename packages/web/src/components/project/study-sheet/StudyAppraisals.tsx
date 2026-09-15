@@ -143,7 +143,7 @@ export function StudyAppraisals({
           ))}
           {!hasReviewers && <span className='text-muted-foreground italic'>None yet</span>}
           {!readOnly && (
-            <Button variant='ghost' size='xs' onClick={onAssignReviewers}>
+            <Button variant='outline' size='xs' onClick={onAssignReviewers}>
               {hasReviewers ? 'Change' : 'Assign'}
             </Button>
           )}
