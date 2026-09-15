@@ -46,8 +46,17 @@ export interface AuthUser {
   image?: string | null;
   role?: string | null;
   twoFactorEnabled?: boolean | null;
+  // Raw JSON from the user.preferences column; read it with parseUserPreferences
+  preferences?: string | null;
   [key: string]: unknown;
 }
+
+// Better Auth caches the session in a cookie for a few minutes, so a write
+// made outside its own endpoints is invisible to a plain refetch until then
+export interface SessionRefetchOptions {
+  disableCookieCache?: boolean;
+}
+export type SessionRefetch = (options?: SessionRefetchOptions) => Promise<void>;
 
 interface AuthState {
   isOnline: boolean;
@@ -61,7 +70,7 @@ interface AuthState {
   // The last session check failed for a reason other than 401 (rate limit,
   // 5xx, network), so the server has not actually said "no session"
   sessionUnavailable: boolean;
-  sessionRefetch: (() => Promise<void>) | null;
+  sessionRefetch: SessionRefetch | null;
 }
 
 interface AuthActions {
@@ -72,7 +81,7 @@ interface AuthActions {
   setSessionData: (
     user: AuthUser | null,
     loading: boolean,
-    refetch: (() => Promise<void>) | null,
+    refetch: SessionRefetch | null,
     unavailable?: boolean,
   ) => void;
 
