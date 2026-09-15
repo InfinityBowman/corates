@@ -15,6 +15,7 @@
   "scripts": {
     "kill-ports": "for port in 5173 8787 8788 1355 8080 9229 9230 9231; do lsof -ti:$port | xargs kill -9 2>/dev/null; done || true",
     "dev": "pnpm --filter web dev",
+    "dev:kill": "node packages/web/scripts/kill-stale-dev.mjs",
     "build": "pnpm --recursive run build",
     "build:web": "pnpm --filter web run build",
     "deploy": "pnpm --filter web run deploy",
