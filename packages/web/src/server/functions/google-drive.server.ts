@@ -22,12 +22,10 @@ import { getGoogleTokens, getValidAccessToken } from '@/server/googleTokens';
 import type { Session } from '@/server/middleware/auth';
 
 // drive.file is non-sensitive (no restricted-scope verification) and covers our
-// only use: fetching files the user picked in the Google Picker. Accounts that
-// granted the older restricted scope stay connected without re-consenting.
-const DRIVE_SCOPES = [
-  'https://www.googleapis.com/auth/drive.file',
-  'https://www.googleapis.com/auth/drive.readonly',
-];
+// only use: fetching files the user picked in the Google Picker. The Picker
+// rejects a token carrying only the older restricted drive.readonly scope, so
+// those accounts have to read as disconnected and re-consent.
+const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
 
 export async function getStatus(db: Database, session: Session) {
   const googleAccount = await db
@@ -41,7 +39,7 @@ export async function getStatus(db: Database, session: Session) {
     .get();
 
   const grantedScopes = googleAccount?.scope?.split(/[\s,]+/) ?? [];
-  const hasDriveScope = DRIVE_SCOPES.some(scope => grantedScopes.includes(scope));
+  const hasDriveScope = grantedScopes.includes(DRIVE_SCOPE);
 
   return {
     connected: !!googleAccount?.accessToken && hasDriveScope,
