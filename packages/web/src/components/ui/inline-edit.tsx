@@ -13,6 +13,9 @@
 
 import * as React from 'react';
 import { PencilIcon } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { NAME_TOOLTIP_DELAY_MS } from '@/components/ui/truncated-text';
+import { useIsTruncated } from '@/hooks/useIsTruncated';
 import { cn } from '@/lib/utils';
 
 interface InlineEditProps {
@@ -23,6 +26,8 @@ interface InlineEditProps {
   rows?: number;
   disabled?: boolean;
   showEditIcon?: boolean;
+  /** Clips the preview to one line, with the full value in a tooltip. Single-line only. */
+  truncate?: boolean;
   /** Styles applied to both the preview text and the editing field. */
   className?: string;
   ariaLabel?: string;
@@ -36,12 +41,14 @@ function InlineEdit({
   rows = 1,
   disabled = false,
   showEditIcon = false,
+  truncate = false,
   className,
   ariaLabel,
 }: InlineEditProps) {
   const [editing, setEditing] = React.useState(false);
   const [draft, setDraft] = React.useState(value);
   const fieldRef = React.useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
+  const [previewRef, isTruncated] = useIsTruncated(value);
 
   const startEditing = () => {
     if (disabled) return;
@@ -102,27 +109,39 @@ function InlineEdit({
         />;
   }
 
+  const preview = (
+    <button
+      ref={previewRef}
+      type='button'
+      onClick={startEditing}
+      disabled={disabled}
+      className={cn(
+        'cursor-text text-left',
+        multiline && 'w-full',
+        truncate && 'min-w-0 truncate',
+        !value && 'text-muted-foreground/70',
+        disabled && 'cursor-not-allowed opacity-50',
+        className,
+      )}
+    >
+      {value || placeholder}
+    </button>
+  );
+
   return (
     <span
       className={cn(
         'group gap-1',
         multiline ? 'flex w-full items-start' : 'inline-flex items-center',
+        truncate && 'max-w-full',
       )}
     >
-      <button
-        type='button'
-        onClick={startEditing}
-        disabled={disabled}
-        className={cn(
-          'cursor-text text-left',
-          multiline && 'w-full',
-          !value && 'text-muted-foreground/70',
-          disabled && 'cursor-not-allowed opacity-50',
-          className,
-        )}
-      >
-        {value || placeholder}
-      </button>
+      {truncate && isTruncated ?
+        <Tooltip delayDuration={NAME_TOOLTIP_DELAY_MS}>
+          <TooltipTrigger asChild>{preview}</TooltipTrigger>
+          <TooltipContent className='max-w-sm'>{value}</TooltipContent>
+        </Tooltip>
+      : preview}
       {showEditIcon && !disabled && (
         <button
           type='button'

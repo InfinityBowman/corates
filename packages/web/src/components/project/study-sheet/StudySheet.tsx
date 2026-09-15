@@ -99,7 +99,7 @@ function StudySheetBody({ study, ...appraisalProps }: StudySheetBodyProps) {
       {...dropProps}
     >
       <SheetHeader>
-        <SheetTitle className='truncate'>
+        <SheetTitle className='min-w-0'>
           <InlineEdit
             key={study.name}
             value={study.name || 'Untitled study'}
@@ -109,7 +109,9 @@ function StudySheetBody({ study, ...appraisalProps }: StudySheetBodyProps) {
               }
             }}
             showEditIcon
+            truncate
             ariaLabel='Rename study'
+            className='leading-tight'
           />
         </SheetTitle>
         <SheetDescription>

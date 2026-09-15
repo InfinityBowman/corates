@@ -9,6 +9,7 @@
 import { useState, useEffect, useLayoutEffect, useMemo, useRef, useImperativeHandle } from 'react';
 // @ts-expect-error -- d3 has no type declarations in this project
 import * as d3 from 'd3';
+import { fitToWidth } from '@/lib/fitToWidth';
 import { contrastColor, legendCategories, legendMarginRight } from './chartConfigs';
 import type { ChartCategory, ChartPalette, ChecklistChartConfig } from './chartConfigs';
 
@@ -30,6 +31,24 @@ interface TrafficLightChartProps {
 // Cap cell size so the heatmap stays compact on wide screens; width-driven
 // sizing alone made cells balloon to ~70px when only a few reviews existed.
 const MAX_CELL_SIZE = 32;
+
+// Row labels are study names; uncapped, a long one swallows the heatmap.
+const MAX_LABEL_WIDTH = 240;
+const LABEL_GAP = 20;
+
+/** Shortens each label in a d3 text selection until it fits maxWidth, keeping the full name as a hover title. */
+function fitLabels(selection: d3.Selection, maxWidth: number): void {
+  selection.each(function (this: SVGTextElement) {
+    const full = this.textContent ?? '';
+    const fitted = fitToWidth(full, maxWidth, candidate => {
+      this.textContent = candidate;
+      return this.getComputedTextLength();
+    });
+    if (fitted === full) return;
+    this.textContent = fitted;
+    d3.select(this).append('title').text(full);
+  });
+}
 
 const CAPTION_LINE_HEIGHT = 15;
 
@@ -124,7 +143,9 @@ export function TrafficLightChart({
     });
     tempSvg.remove();
 
-    setDynamicMarginLeft(Math.max(150, Math.ceil(maxLabelWidth + 20)));
+    setDynamicMarginLeft(
+      Math.max(150, Math.ceil(Math.min(maxLabelWidth, MAX_LABEL_WIDTH)) + LABEL_GAP),
+    );
   }, [data]);
 
   // D3 imperative draw
@@ -200,7 +221,8 @@ export function TrafficLightChart({
       .attr('font-weight', '500')
       .attr('fill', '#374151')
       .attr('dominant-baseline', 'middle')
-      .text((d: TrafficLightDataItem) => d.label);
+      .text((d: TrafficLightDataItem) => d.label)
+      .call(fitLabels, m.left - LABEL_GAP);
 
     // Traffic light cells
     const cellGroup = svg.append('g');

@@ -24,6 +24,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { getChecklistMetadata, CHECKLIST_TYPES } from '@/checklist-registry';
+import { TruncatedText } from '@/components/ui/truncated-text';
 import { PdfListItem } from '@/components/pdf/PdfListItem';
 import { ChecklistForm } from './ChecklistForm';
 import { getStatusLabel, getStatusStyle } from '@corates/shared/checklists';
@@ -186,7 +187,7 @@ export function TodoStudyRow({
 
           <div className='min-w-0 flex-1'>
             <div className='flex items-center gap-2'>
-              <span className='text-foreground truncate font-medium'>{study.name}</span>
+              <TruncatedText text={study.name} className='text-foreground min-w-0 font-medium' />
             </div>
             {citationLine && (
               <p

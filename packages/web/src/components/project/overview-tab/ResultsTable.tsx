@@ -2,6 +2,7 @@
  * ResultsTable — styled data table used inside overview table cards.
  */
 
+import { TruncatedText } from '@/components/ui/truncated-text';
 import { JUDGEMENT_PILLS } from './judgementPills';
 
 function JudgementPill({ value }: { value: string }) {
@@ -56,8 +57,9 @@ export function ResultsTable({ columns, rows }: ResultsTableProps) {
         <tbody>
           {rows.map(row => (
             <tr key={row.id} className='border-t border-[#f2f4f7] hover:bg-[#fcfcfd]'>
-              <td className='px-4 py-3 text-[13.5px] font-normal whitespace-nowrap text-[#101828]'>
-                {row.studyName}
+              <td className='px-4 py-3 text-[13.5px] font-normal text-[#101828]'>
+                {/* Capped so a long name cannot push the judgement columns off-screen. */}
+                <TruncatedText text={row.studyName} className='max-w-[22rem]' />
               </td>
               {columns.map(column => (
                 <td key={column.id} className='px-4 py-3'>

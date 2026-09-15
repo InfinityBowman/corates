@@ -5,6 +5,7 @@
 import { useMemo } from 'react';
 import { CHECKLIST_STATUS } from '@corates/shared/checklists';
 import { ScoreTag, ScoreTooltip } from '@/components/checklist/ScoreTag';
+import { TruncatedText } from '@/components/ui/truncated-text';
 import type { StudyInfo } from '@/stores/projectStore';
 import { OutputCard, OutputCardHeader, OutputCardPlate } from './OutputCard';
 
@@ -149,8 +150,8 @@ export function AMSTAR2ResultsTable({ studies, tableNumber }: AMSTAR2ResultsTabl
             <tbody>
               {studyScores.map(item => (
                 <tr key={item.studyId} className='border-t border-[#f2f4f7] hover:bg-[#fcfcfd]'>
-                  <td className='px-4 py-3 text-[13.5px] font-normal whitespace-nowrap text-[#101828]'>
-                    {item.studyName}
+                  <td className='px-4 py-3 text-[13.5px] font-normal text-[#101828]'>
+                    <TruncatedText text={item.studyName} className='max-w-[22rem]' />
                   </td>
                   <td className='px-4 py-3 text-[13.5px] whitespace-nowrap'>
                     <ScoreTag currentScore={item.score} checklistType='AMSTAR2' showRatingOnly />
