@@ -148,6 +148,7 @@ export function AddStudiesForm({
       {/* The commit action rides in the header so it stays put as the list grows. */}
       <StagedStudiesSection
         studies={studies}
+        stickyHeader={bare}
         actions={
           // totalStudyCount waits out PDF extraction; the staged length is what submit sends.
           !collectMode &&
