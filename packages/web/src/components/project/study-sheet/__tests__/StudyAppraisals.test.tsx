@@ -142,6 +142,31 @@ describe('StudyAppraisals', () => {
     expect(screen.queryByTestId('appraisal-toggle-o1')).not.toBeInTheDocument();
   });
 
+  it('keeps the tool once the last tick is removed', () => {
+    const props = {
+      outcomes,
+      defaultTool: 'AMSTAR2',
+      readOnly: false,
+      getMember: () => null,
+      onCreate: vi.fn(),
+      onDelete: vi.fn(),
+      cellHasAnswers: vi.fn(() => false),
+      onAssignReviewers: vi.fn(),
+      onManageOutcomes: vi.fn(),
+    };
+    const { rerender } = render(
+      <StudyAppraisals
+        {...props}
+        study={study({ appraisals: [{ type: 'ROB2', outcomeId: 'o1' }] })}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('appraisal-toggle-o1'));
+    rerender(<StudyAppraisals {...props} study={study()} />);
+    expect(screen.getByRole('combobox', { name: 'Tool' })).toHaveTextContent('RoB 2');
+    expect(screen.getByTestId('appraisal-toggle-o1')).toHaveAttribute('data-state', 'unchecked');
+    expect(screen.queryByTestId('appraisal-toggle-single')).not.toBeInTheDocument();
+  });
+
   it('points at Outcomes when an outcome-linked tool has none to tick', () => {
     const { onManageOutcomes } = renderIt({ outcomes: [] });
     fireEvent.click(screen.getByRole('button', { name: 'Manage outcomes' }));

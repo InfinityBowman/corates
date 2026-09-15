@@ -5,8 +5,7 @@
  */
 
 import { useState } from 'react';
-import { CHECKLIST_STATUS, getAppraisalCells, requiresOutcome } from '@corates/shared/checklists';
-import type { AppraisalCell } from '@corates/shared/checklists';
+import { getAppraisalCells, requiresOutcome } from '@corates/shared/checklists';
 import { getChecklistMetadata, getChecklistTypeOptions } from '@/checklist-registry';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -30,6 +29,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { MemberAvatar, memberDisplayName } from '@/components/project/MemberAvatar';
 import type { ProjectMember } from '@/components/project/ProjectContext';
+import { CELL_STATE_LABEL, cellState } from '@/components/project/appraisalCellState';
 import type { AppraisalCellRef } from '@/project/actions/appraisals';
 import type { OutcomeEntry, StudyInfo } from '@/stores/projectStore';
 
@@ -85,16 +85,6 @@ export function switchToolCopy(opts: {
   return `Its ${what} will be removed, along with ${lost}. You can then choose what to appraise with ${to}.`;
 }
 
-function cellStatus(cell: AppraisalCell | undefined, hasReviewers: boolean): string {
-  if (!cell) return '';
-  if (cell.checklists.length === 0) return hasReviewers ? 'Not started' : 'Waiting for reviewers';
-  const statuses = cell.checklists.map(c => c.status);
-  if (statuses.includes(CHECKLIST_STATUS.FINALIZED)) return 'Complete';
-  if (statuses.includes(CHECKLIST_STATUS.RECONCILING)) return 'Reconciling';
-  if (statuses.every(s => s === CHECKLIST_STATUS.PENDING)) return 'Not started';
-  return 'In progress';
-}
-
 export function StudyAppraisals({
   study,
   outcomes,
@@ -131,7 +121,11 @@ export function StudyAppraisals({
     const cell = toRef(outcomeId);
     if (checked) {
       onCreate([cell]);
-    } else if (cellHasAnswers(cell)) {
+      return;
+    }
+    // Removing the last tick leaves no appraisal to read the tool from.
+    setPickedTool(tool);
+    if (cellHasAnswers(cell)) {
       setConfirm({ kind: 'remove', cell, label });
     } else {
       onDelete([cell], false);
@@ -244,7 +238,7 @@ export function StudyAppraisals({
                   {row.label}
                 </label>
                 <span className='text-muted-foreground shrink-0 text-xs'>
-                  {cellStatus(cell, hasReviewers)}
+                  {cell ? CELL_STATE_LABEL[cellState(cell, hasReviewers)] : ''}
                 </span>
               </li>
             );
