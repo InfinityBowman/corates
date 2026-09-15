@@ -25,6 +25,7 @@ import type { StudyInfo, MemberEntry } from '@/stores/projectStore';
 import { getCitationLine, sortStudyPdfs } from '../study-utils';
 import { MemberAvatar, memberDisplayName } from '../MemberAvatar';
 import type { AssignSheetScope } from '../ProjectContext';
+import { TruncatedText } from '@/components/ui/truncated-text';
 import { ReviewerPicker } from './ReviewerPicker';
 import { AutoFillSettings, evenShares } from './AutoFillSettings';
 import {
@@ -317,7 +318,7 @@ export function ReviewerAssignment({
                 className='hover:bg-muted/40 grid grid-cols-1 items-center gap-x-2 gap-y-2 px-4 py-2 sm:grid-cols-[1fr_9rem_9rem_1.5rem]'
               >
                 <div className='min-w-0'>
-                  <p className='text-foreground truncate text-sm font-medium'>{studyName}</p>
+                  <TruncatedText text={studyName} className='text-foreground text-sm font-medium' />
                   {citation && <p className='text-muted-foreground truncate text-xs'>{citation}</p>}
                 </div>
                 <div className='grid grid-cols-[1fr_1fr_1.5rem] gap-2 sm:contents'>

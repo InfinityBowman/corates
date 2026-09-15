@@ -29,6 +29,7 @@ import {
   getStatusLabel,
   getStatusStyle,
 } from '@corates/shared/checklists';
+import { TruncatedText } from '@/components/ui/truncated-text';
 import { ChangeOutcomeDialog } from '../ChangeOutcomeDialog';
 import { PreviousReviewersView } from './PreviousReviewersView';
 import { CompletedOutcomeRow } from './CompletedOutcomeRow';
@@ -114,7 +115,7 @@ export function CompletedStudyRow({
             )}
 
             <div className='min-w-0 flex-1'>
-              <span className='text-foreground block truncate font-medium'>{study.name}</span>
+              <TruncatedText text={study.name} className='text-foreground font-medium' />
               {citationLine && (
                 <p
                   className='text-muted-foreground w-fit cursor-text truncate text-xs select-text'

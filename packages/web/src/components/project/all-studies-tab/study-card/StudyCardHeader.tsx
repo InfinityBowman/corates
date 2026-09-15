@@ -118,6 +118,7 @@ export function StudyCardHeader({
             value={studyName}
             onCommit={handleNameChange}
             showEditIcon
+            truncate
             ariaLabel='Rename study'
             className='text-foreground font-medium'
           />

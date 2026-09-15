@@ -5,6 +5,7 @@ import { amstar2, rob2, robinsI } from '@corates/shared';
 import { getStatusLabel } from '@corates/shared/checklists';
 import { getAmstar2QuestionNote } from '@/lib/export-notes';
 import { resolveExportOutcome, resolveExportReviewer } from '@/lib/export-context';
+import { fitToWidth } from '@/lib/fitToWidth';
 
 type ROB2Domain = (typeof rob2.ROB2_CHECKLIST)[keyof typeof rob2.ROB2_CHECKLIST];
 type ROB2Question = ROB2Domain['questions'][string];
@@ -50,14 +51,19 @@ function ensureSpace(doc: jsPDF, needed: number, currentY: number): number {
   return currentY;
 }
 
+function fitText(doc: jsPDF, text: string, maxWidth: number): string {
+  return fitToWidth(text, maxWidth, candidate => doc.getTextWidth(candidate));
+}
+
 function drawSectionHeader(doc: jsPDF, text: string, y: number): number {
   y = ensureSpace(doc, 12, y);
   const pageWidth = doc.internal.pageSize.getWidth();
+  const barWidth = pageWidth - MARGIN * 2;
   doc.setFillColor(...COLORS.primary);
-  doc.rect(MARGIN, y, pageWidth - MARGIN * 2, 8, 'F');
+  doc.rect(MARGIN, y, barWidth, 8, 'F');
   doc.setFontSize(10);
   doc.setTextColor(255);
-  doc.text(text, MARGIN + 3, y + 5.5);
+  doc.text(fitText(doc, text, barWidth - 6), MARGIN + 3, y + 5.5);
   doc.setTextColor(0);
   return y + 10;
 }
@@ -65,11 +71,12 @@ function drawSectionHeader(doc: jsPDF, text: string, y: number): number {
 function drawSubsectionHeader(doc: jsPDF, text: string, y: number): number {
   y = ensureSpace(doc, 10, y);
   const pageWidth = doc.internal.pageSize.getWidth();
+  const barWidth = pageWidth - MARGIN * 2;
   doc.setFillColor(...COLORS.sectionBg);
-  doc.rect(MARGIN, y, pageWidth - MARGIN * 2, 7, 'F');
+  doc.rect(MARGIN, y, barWidth, 7, 'F');
   doc.setFontSize(9);
   doc.setTextColor(60);
-  doc.text(text, MARGIN + 3, y + 5);
+  doc.text(fitText(doc, text, barWidth - 6), MARGIN + 3, y + 5);
   doc.setTextColor(0);
   return y + 9;
 }

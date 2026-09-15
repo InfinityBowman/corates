@@ -19,6 +19,7 @@ import type { ChecklistGroup } from '@corates/shared/checklists';
 import { getChecklistMetadata } from '@/checklist-registry';
 import { PdfListItem } from '@/components/pdf/PdfListItem';
 import { project } from '@/project';
+import { TruncatedText } from '@/components/ui/truncated-text';
 import { ChangeOutcomeDialog } from '../ChangeOutcomeDialog';
 import { useCanReconcileChecklists } from './useCanReconcileChecklists';
 import { ReconcileStatusTag } from './ReconcileStatusTag';
@@ -134,7 +135,7 @@ export function ReconcileStudyRow({
           )}
 
           <div className='min-w-0 flex-1'>
-            <span className='text-foreground block truncate font-medium'>{study.name}</span>
+            <TruncatedText text={study.name} className='text-foreground font-medium' />
             {citationLine && (
               <p
                 className='text-muted-foreground w-fit cursor-text truncate text-xs select-text'

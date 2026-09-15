@@ -104,10 +104,6 @@ function slugify(value: string): string {
   );
 }
 
-function truncateLabel(name: string): string {
-  return name.length > 20 ? name.slice(0, 20) + '...' : name;
-}
-
 interface ChartItem {
   id: string;
   label: string;
@@ -165,7 +161,7 @@ export function ChartSection({ studies }: ChartSectionProps) {
         if (checklist.type === 'AMSTAR2') {
           amstarData.push({
             id: `${study.id}-${checklist.id}`,
-            label: truncateLabel(study.name),
+            label: study.name,
             values: AMSTAR2_CHART_CONFIG.columns.map(c => answersObj[c.id] ?? ''),
           });
           continue;
@@ -178,7 +174,7 @@ export function ChartSection({ studies }: ChartSectionProps) {
         const items = byOutcome.get(outcomeKey) ?? [];
         items.push({
           id: `${study.id}-${checklist.id}`,
-          label: truncateLabel(study.name),
+          label: study.name,
           values: tool.config.columns.map(c => answersObj[c.id] ?? ''),
         });
         byOutcome.set(outcomeKey, items);
