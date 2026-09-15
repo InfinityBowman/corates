@@ -3,24 +3,40 @@
  * Shows merged/deduplicated studies ready for submission.
  */
 
+import type { ReactNode } from 'react';
 import { FileTextIcon, Trash2Icon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface StagedStudiesSectionProps {
   studies: any;
+  /** Rendered in the header row, beside the count. */
+  actions?: ReactNode;
+  /** Sheet only - the inline card would pin behind the sticky project header. */
+  stickyHeader?: boolean;
 }
 
-export function StagedStudiesSection({ studies }: StagedStudiesSectionProps) {
+export function StagedStudiesSection({
+  studies,
+  actions,
+  stickyHeader = false,
+}: StagedStudiesSectionProps) {
   const stagedStudies = studies.stagedStudiesPreview;
 
   if (stagedStudies.length === 0) return null;
 
   return (
     <div className='border-border mt-4 border-t pt-4'>
-      <div className='mb-3 flex items-center justify-between'>
+      <div
+        className={cn(
+          'mb-3 flex items-center justify-between gap-3',
+          stickyHeader && 'bg-background sticky top-0 z-10 py-2',
+        )}
+      >
         <h4 className='text-secondary-foreground text-sm font-medium'>
           Ready to add ({stagedStudies.length})
         </h4>
+        {actions}
       </div>
 
       <div className='flex flex-col gap-2'>

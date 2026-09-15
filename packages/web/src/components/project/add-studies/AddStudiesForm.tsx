@@ -146,33 +146,41 @@ export function AddStudiesForm({
         </div>
       </Tabs>
 
-      <StagedStudiesSection studies={studies} />
-
-      {studies.totalStudyCount > 0 && !collectMode && (
-        <div className='border-border mt-4 flex items-center justify-end gap-2 border-t pt-4'>
-          {!alwaysExpanded && (
-            <Button variant='ghost' onClick={handleCancel}>
-              Cancel
-            </Button>
-          )}
-          <Button
-            onClick={handleSubmit}
-            disabled={isSubmitting || studies.totalStudyCount === 0}
-            data-testid='add-studies-upload'
-          >
-            {isSubmitting ?
-              <>
-                <Spinner size='sm' variant='current' />
-                Uploading...
-              </>
-            : <>
-                Upload {studies.totalStudyCount}{' '}
-                {studies.totalStudyCount === 1 ? 'study' : 'studies'}
-              </>
-            }
-          </Button>
-        </div>
-      )}
+      {/* The commit action rides in the header so it stays put as the list grows. */}
+      <StagedStudiesSection
+        studies={studies}
+        stickyHeader={bare}
+        actions={
+          // totalStudyCount waits out PDF extraction; the staged length is what submit sends.
+          !collectMode &&
+          studies.totalStudyCount > 0 && (
+            <div className='flex shrink-0 items-center gap-2'>
+              {!alwaysExpanded && (
+                <Button variant='ghost' size='sm' onClick={handleCancel}>
+                  Cancel
+                </Button>
+              )}
+              <Button
+                size='sm'
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                data-testid='add-studies-upload'
+              >
+                {isSubmitting ?
+                  <>
+                    <Spinner size='sm' variant='current' />
+                    Uploading...
+                  </>
+                : <>
+                    Upload {studies.stagedStudiesPreview.length}{' '}
+                    {studies.stagedStudiesPreview.length === 1 ? 'study' : 'studies'}
+                  </>
+                }
+              </Button>
+            </div>
+          )
+        }
+      />
     </>
   );
 
