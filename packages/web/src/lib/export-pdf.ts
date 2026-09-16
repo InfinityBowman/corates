@@ -15,6 +15,8 @@ type ROBINSQuestion = NonNullable<ROBINSDomain['questions']>[string];
 interface ExportContext {
   members?: MemberEntry[];
   meta?: ProjectMeta;
+  includeSignallingQuestions: boolean;
+  includeNotes: boolean;
 }
 
 interface ExportOptions {
@@ -22,6 +24,12 @@ interface ExportOptions {
   projectName?: string;
   members?: MemberEntry[];
   meta?: ProjectMeta;
+  /** The signalling question tables under each domain; defaults to included. */
+  includeSignallingQuestions?: boolean;
+  /** Free-text notes and support-for-judgement comments; defaults to included. */
+  includeNotes?: boolean;
+  pageSize?: 'a4' | 'letter';
+  orientation?: 'portrait' | 'landscape';
 }
 
 const MARGIN = 14;
@@ -164,7 +172,7 @@ function renderAmstar2(
   cl: ChecklistEntry,
   studyName: string,
   y: number,
-  ctx?: ExportContext,
+  ctx: ExportContext,
 ): number {
   y = drawSectionHeader(doc, `AMSTAR 2 | ${studyName}`, y);
   y = drawChecklistContext(doc, cl, y, ctx);
@@ -261,7 +269,7 @@ function renderAmstar2(
     y = (doc as any).lastAutoTable.finalY + 4;
 
     const note = getAmstar2QuestionNote(raw, dataKey);
-    if (note) {
+    if (note && ctx.includeNotes) {
       y = drawTextField(doc, 'Notes:', note, y);
     }
   }
@@ -317,27 +325,19 @@ function renderRob2Preliminary(doc: jsPDF, answers: ROB2Answers, y: number): num
   return y;
 }
 
-function renderSignallingQuestions(
+function drawQuestionTable(
   doc: jsPDF,
-  questions: Record<string, ROB2Question | ROBINSQuestion>,
-  domainAnswers: Record<string, { answer?: string | null; comment?: string }> | undefined,
-  responseLabels: Record<string, string>,
+  head: string[],
+  rows: string[][],
+  includeNotes: boolean,
   y: number,
 ): number {
-  const rows: string[][] = [];
-  for (const q of Object.values(questions)) {
-    const answer = domainAnswers?.[q.id];
-    const responseLabel = answer?.answer ? responseLabels[answer.answer] || answer.answer : '--';
-    const comment = answer?.comment?.trim() || '';
-    rows.push([q.number || '', q.text, responseLabel, comment]);
-  }
-
   if (rows.length === 0) return y;
 
   autoTable(doc, {
     startY: y,
-    head: [['#', 'Signalling question', 'Response', 'Comment']],
-    body: rows,
+    head: [includeNotes ? head : head.slice(0, 3)],
+    body: includeNotes ? rows : rows.map(row => row.slice(0, 3)),
     styles: { fontSize: 7, cellPadding: 2 },
     headStyles: { fillColor: COLORS.sectionBg, textColor: [60, 60, 60], fontSize: 7 },
     columnStyles: {
@@ -352,12 +352,40 @@ function renderSignallingQuestions(
   return (doc as any).lastAutoTable.finalY + 2;
 }
 
+function renderSignallingQuestions(
+  doc: jsPDF,
+  questions: Record<string, ROB2Question | ROBINSQuestion>,
+  domainAnswers: Record<string, { answer?: string | null; comment?: string }> | undefined,
+  responseLabels: Record<string, string>,
+  y: number,
+  ctx: ExportContext,
+): number {
+  if (!ctx.includeSignallingQuestions) return y;
+
+  const rows: string[][] = [];
+  for (const q of Object.values(questions)) {
+    const answer = domainAnswers?.[q.id];
+    const responseLabel = answer?.answer ? responseLabels[answer.answer] || answer.answer : '--';
+    const comment = answer?.comment?.trim() || '';
+    rows.push([q.number || '', q.text, responseLabel, comment]);
+  }
+
+  return drawQuestionTable(
+    doc,
+    ['#', 'Signalling question', 'Response', 'Comment'],
+    rows,
+    ctx.includeNotes,
+    y,
+  );
+}
+
 function renderRob2Domain(
   doc: jsPDF,
   domain: ROB2Domain,
   answers: ROB2Answers,
   domainKey: string,
   y: number,
+  ctx: ExportContext,
 ): number {
   const title = domain.subtitle ? `${domain.name} | ${domain.subtitle}` : domain.name;
   y = drawSubsectionHeader(doc, title, y);
@@ -376,6 +404,7 @@ function renderRob2Domain(
     domainState?.answers,
     rob2.RESPONSE_LABELS,
     y,
+    ctx,
   );
 
   if (domainState?.judgement) {
@@ -398,7 +427,7 @@ function renderRob2(
   cl: ChecklistEntry,
   studyName: string,
   y: number,
-  ctx?: ExportContext,
+  ctx: ExportContext,
 ): number {
   y = drawSectionHeader(doc, `RoB 2 | ${studyName}`, y);
   y = drawChecklistContext(doc, cl, y, ctx);
@@ -412,7 +441,7 @@ function renderRob2(
   const activeDomains = rob2.getActiveDomainKeys(isAdhering);
   for (const domainKey of activeDomains) {
     const domain = rob2.ROB2_CHECKLIST[domainKey as keyof typeof rob2.ROB2_CHECKLIST];
-    y = renderRob2Domain(doc, domain, answers, domainKey, y);
+    y = renderRob2Domain(doc, domain, answers, domainKey, y, ctx);
   }
 
   const overall = answers.overall as
@@ -437,7 +466,12 @@ function renderRob2(
 
 type ROBINSIAnswers = Record<string, unknown>;
 
-function renderRobinsiSections(doc: jsPDF, answers: ROBINSIAnswers, y: number): number {
+function renderRobinsiSections(
+  doc: jsPDF,
+  answers: ROBINSIAnswers,
+  y: number,
+  ctx: ExportContext,
+): number {
   const planning = answers.planning as { confoundingFactors?: string } | undefined;
   if (planning?.confoundingFactors) {
     y = drawSubsectionHeader(doc, 'Planning: Confounding Factors', y);
@@ -472,21 +506,13 @@ function renderRobinsiSections(doc: jsPDF, answers: ROBINSIAnswers, y: number): 
       bRows.push([key.toUpperCase(), q.text, label, ans?.comment?.trim() || '']);
     }
 
-    autoTable(doc, {
-      startY: y,
-      head: [['#', 'Question', 'Response', 'Comment']],
-      body: bRows,
-      styles: { fontSize: 7, cellPadding: 2 },
-      headStyles: { fillColor: COLORS.sectionBg, textColor: [60, 60, 60], fontSize: 7 },
-      columnStyles: {
-        0: { cellWidth: 12 },
-        1: { cellWidth: 'auto' },
-        2: { cellWidth: 35 },
-        3: { cellWidth: 45 },
-      },
-      margin: { left: MARGIN, right: MARGIN },
-    });
-    y = (doc as any).lastAutoTable.finalY + 2;
+    y = drawQuestionTable(
+      doc,
+      ['#', 'Question', 'Response', 'Comment'],
+      bRows,
+      ctx.includeNotes,
+      y,
+    );
 
     if (sectionB.stopAssessment) {
       y = drawJudgmentBadge(doc, 'Assessment stopped:', 'Critical', y);
@@ -528,6 +554,7 @@ function renderRobinsiDomain(
   answers: ROBINSIAnswers,
   domainKey: string,
   y: number,
+  ctx: ExportContext,
 ): number {
   const title = domain.subtitle ? `${domain.name} | ${domain.subtitle}` : domain.name;
   y = drawSubsectionHeader(doc, title, y);
@@ -555,6 +582,7 @@ function renderRobinsiDomain(
         domainState?.answers,
         robinsI.RESPONSE_LABELS,
         y,
+        ctx,
       );
     }
   } else if (domain.questions) {
@@ -564,6 +592,7 @@ function renderRobinsiDomain(
       domainState?.answers,
       robinsI.RESPONSE_LABELS,
       y,
+      ctx,
     );
   }
 
@@ -587,14 +616,14 @@ function renderRobinsI(
   cl: ChecklistEntry,
   studyName: string,
   y: number,
-  ctx?: ExportContext,
+  ctx: ExportContext,
 ): number {
   y = drawSectionHeader(doc, `ROBINS-I V2 | ${studyName}`, y);
   y = drawChecklistContext(doc, cl, y, ctx);
 
   const answers = (cl.answers || {}) as ROBINSIAnswers;
 
-  y = renderRobinsiSections(doc, answers, y);
+  y = renderRobinsiSections(doc, answers, y, ctx);
 
   const sectionC = answers.sectionC as { isPerProtocol?: boolean } | undefined;
   const isPerProtocol = sectionC?.isPerProtocol ?? false;
@@ -604,7 +633,7 @@ function renderRobinsI(
     const domain = robinsI.ROBINS_I_CHECKLIST[
       domainKey as keyof typeof robinsI.ROBINS_I_CHECKLIST
     ] as ROBINSDomain;
-    y = renderRobinsiDomain(doc, domain, answers, domainKey, y);
+    y = renderRobinsiDomain(doc, domain, answers, domainKey, y, ctx);
   }
 
   y = drawSubsectionHeader(doc, 'Section D: Information sources', y);
@@ -644,8 +673,17 @@ function renderRobinsI(
 
 // --- Main ---
 
-export function buildProjectPdf({ studies, projectName, members, meta }: ExportOptions): jsPDF {
-  const doc = new jsPDF({ orientation: 'portrait' });
+export function buildProjectPdf({
+  studies,
+  projectName,
+  members,
+  meta,
+  includeSignallingQuestions = true,
+  includeNotes = true,
+  pageSize = 'a4',
+  orientation = 'portrait',
+}: ExportOptions): jsPDF {
+  const doc = new jsPDF({ orientation, format: pageSize });
   const pageWidth = doc.internal.pageSize.getWidth();
   const title = projectName || 'CoRATES Appraisal Report';
   const date = new Date().toLocaleDateString('en-US', {
@@ -672,7 +710,7 @@ export function buildProjectPdf({ studies, projectName, members, meta }: ExportO
   }
 
   let y = 35;
-  const ctx: ExportContext | undefined = members || meta ? { members, meta } : undefined;
+  const ctx: ExportContext = { members, meta, includeSignallingQuestions, includeNotes };
 
   for (let i = 0; i < checklistsWithStudies.length; i++) {
     const { study, cl } = checklistsWithStudies[i];

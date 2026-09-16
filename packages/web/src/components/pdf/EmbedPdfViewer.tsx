@@ -22,6 +22,7 @@ export interface EmbedPdfViewerProps {
   pdfData?: ArrayBuffer | null;
   pdfFileName?: string;
   readOnly?: boolean;
+  initialZoom?: number;
   pdfs?: PdfEntry[];
   selectedPdfId?: string | null;
   onPdfSelect?: (_pdfId: string) => void;
@@ -38,6 +39,7 @@ export default function EmbedPdfViewer({
   pdfData,
   pdfFileName,
   readOnly,
+  initialZoom,
   pdfs,
   selectedPdfId,
   onPdfSelect,
@@ -54,6 +56,7 @@ export default function EmbedPdfViewer({
       selectedPdfId={selectedPdfId}
       onPdfSelect={onPdfSelect}
       readOnly={readOnly}
+      initialZoom={initialZoom}
       onAnnotationAdd={onAnnotationAdd}
       onAnnotationUpdate={onAnnotationUpdate}
       onAnnotationDelete={onAnnotationDelete}
