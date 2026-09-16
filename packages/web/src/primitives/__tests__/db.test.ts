@@ -116,6 +116,7 @@ describe('db.js - Unified Dexie Database', () => {
         data: new ArrayBuffer(100),
         size: 100,
         cachedAt: Date.now(),
+        lastAccessedAt: Date.now(),
       };
 
       await db.pdfs.add(pdfEntry);
@@ -137,6 +138,7 @@ describe('db.js - Unified Dexie Database', () => {
           data: new ArrayBuffer(10),
           size: 10,
           cachedAt: 1,
+          lastAccessedAt: 1,
         },
         {
           id: 'proj-1:study-2:b.pdf',
@@ -146,6 +148,7 @@ describe('db.js - Unified Dexie Database', () => {
           data: new ArrayBuffer(20),
           size: 20,
           cachedAt: 2,
+          lastAccessedAt: 2,
         },
         {
           id: 'proj-2:study-1:c.pdf',
@@ -155,6 +158,7 @@ describe('db.js - Unified Dexie Database', () => {
           data: new ArrayBuffer(30),
           size: 30,
           cachedAt: 3,
+          lastAccessedAt: 3,
         },
       ]);
 
@@ -174,6 +178,7 @@ describe('db.js - Unified Dexie Database', () => {
           data: new ArrayBuffer(10),
           size: 10,
           cachedAt: 3000,
+          lastAccessedAt: 3000,
         },
         {
           id: 'p:s:oldest.pdf',
@@ -183,6 +188,7 @@ describe('db.js - Unified Dexie Database', () => {
           data: new ArrayBuffer(10),
           size: 10,
           cachedAt: 1000,
+          lastAccessedAt: 1000,
         },
         {
           id: 'p:s:middle.pdf',
@@ -192,6 +198,7 @@ describe('db.js - Unified Dexie Database', () => {
           data: new ArrayBuffer(10),
           size: 10,
           cachedAt: 2000,
+          lastAccessedAt: 2000,
         },
       ]);
 
@@ -215,6 +222,7 @@ describe('db.js - Unified Dexie Database', () => {
           data: new ArrayBuffer(10),
           size: 10,
           cachedAt: 1,
+          lastAccessedAt: 1,
         },
         {
           id: 'proj-to-delete:s2:b.pdf',
@@ -224,6 +232,7 @@ describe('db.js - Unified Dexie Database', () => {
           data: new ArrayBuffer(10),
           size: 10,
           cachedAt: 2,
+          lastAccessedAt: 2,
         },
         {
           id: 'proj-to-keep:s1:c.pdf',
@@ -233,6 +242,7 @@ describe('db.js - Unified Dexie Database', () => {
           data: new ArrayBuffer(10),
           size: 10,
           cachedAt: 3,
+          lastAccessedAt: 3,
         },
       ]);
 
@@ -259,6 +269,7 @@ describe('db.js - Unified Dexie Database', () => {
         data: new ArrayBuffer(10),
         size: 10,
         cachedAt: 1,
+        lastAccessedAt: 1,
       });
 
       await clearAllData();

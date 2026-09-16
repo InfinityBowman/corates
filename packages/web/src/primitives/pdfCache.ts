@@ -23,6 +23,18 @@ function getCacheKey(projectId: string, studyId: string, fileName: string): stri
 }
 
 /**
+ * Record that a PDF was opened, for eviction ordering.
+ *
+ * Deliberately not awaited by callers: every read is on the path to rendering
+ * a PDF, and a failed bookkeeping write must not turn a cache hit into a miss.
+ */
+function touchLastAccessed(id: string): void {
+  db.pdfs.update(id, { lastAccessedAt: Date.now() }).catch(err => {
+    console.warn('Failed to update PDF cache recency:', err);
+  });
+}
+
+/**
  * Get a PDF from the local cache
  */
 export async function getCachedPdf(
@@ -33,7 +45,12 @@ export async function getCachedPdf(
   try {
     const id = getCacheKey(projectId, studyId, fileName);
     const record = await db.pdfs.get(id);
-    return record?.data ?? null;
+    if (!record) {
+      return null;
+    }
+
+    touchLastAccessed(id);
+    return record.data;
   } catch (err) {
     console.warn('Failed to read from PDF cache:', err);
     return null;
@@ -41,14 +58,14 @@ export async function getCachedPdf(
 }
 
 /**
- * Evict oldest entries until cache size is under the limit.
+ * Evict least recently opened entries until cache size is under the limit.
  * Uses a metadata-only query to avoid loading PDF binary data into memory.
  */
 async function evictIfNeeded(requiredSpace: number): Promise<void> {
   try {
     const metadata: Array<{ id: string; size: number }> = [];
     let totalSize = 0;
-    await db.pdfs.orderBy('cachedAt').each(entry => {
+    await db.pdfs.orderBy('lastAccessedAt').each(entry => {
       metadata.push({ id: entry.id, size: entry.size || 0 });
       totalSize += entry.size || 0;
     });
@@ -92,6 +109,7 @@ export async function cachePdf(
 
     await evictIfNeeded(fileSize);
 
+    const now = Date.now();
     await db.pdfs.put({
       id: getCacheKey(projectId, studyId, fileName),
       projectId,
@@ -99,7 +117,8 @@ export async function cachePdf(
       fileName,
       data,
       size: fileSize,
-      cachedAt: Date.now(),
+      cachedAt: now,
+      lastAccessedAt: now,
     });
 
     return true;
