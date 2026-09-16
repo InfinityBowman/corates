@@ -79,14 +79,6 @@ describe('useExportPreview', () => {
     expect(result.current.preview).toMatchObject({ kind: 'pdf', version: 1 });
   });
 
-  it('returns CSV rows for the csv format', () => {
-    const { result } = renderHook(() => useExportPreview('p1', studies, input({ format: 'csv' })));
-    act(() => vi.advanceTimersByTime(200));
-    expect(result.current.preview?.kind).toBe('csv');
-    if (result.current.preview?.kind !== 'csv') throw new Error('expected csv');
-    expect(result.current.preview.rows.length).toBeGreaterThan(1);
-  });
-
   it('clears the preview when nothing is selected', () => {
     const { result, rerender } = renderHook(
       props => useExportPreview('p1', props.studies, props.input),

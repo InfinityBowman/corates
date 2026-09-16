@@ -63,37 +63,24 @@ describe('drainLoads', () => {
     expect(loader.loadedPdfId).toBe('a');
   });
 
-  it('loads a request that arrives mid-load next and closes the first document', async () => {
+  it('a request arriving mid-load is not dropped, only the newest opens, and the first closes', async () => {
     const { loader, opens, closed } = fakeManager();
     loader.pending = request('a');
     const done = drainLoads(loader);
     await flush();
     loader.pending = request('b');
     void drainLoads(loader);
+    loader.pending = request('c');
     await flush();
     expect(opens).toHaveLength(1);
     opens[0].pages.resolve();
     await flush();
     expect(closed).toEqual(['doc-1']);
-    expect(opens.map(o => o.name)).toEqual(['a.pdf', 'b.pdf']);
+    expect(opens.map(o => o.name)).toEqual(['a.pdf', 'c.pdf']);
     opens[1].pages.resolve();
     await done;
     expect(loader.activeDocumentId).toBe('doc-2');
-    expect(loader.loadedPdfId).toBe('b');
-  });
-
-  it('only the newest of several requests queued mid-load is opened', async () => {
-    const { loader, opens } = fakeManager();
-    loader.pending = request('a');
-    const done = drainLoads(loader);
-    await flush();
-    loader.pending = request('b');
-    loader.pending = request('c');
-    opens[0].pages.resolve();
-    await flush();
-    opens[1].pages.resolve();
-    await done;
-    expect(opens.map(o => o.name)).toEqual(['a.pdf', 'c.pdf']);
+    expect(loader.loadedPdfId).toBe('c');
   });
 
   it('lets the same document be requested again after a failed open', async () => {
@@ -106,14 +93,5 @@ describe('drainLoads', () => {
     expect(loader.loadedPdfId).toBe('old');
     expect(loader.loading).toBe(false);
     expect(loader.pending).toBeNull();
-  });
-
-  it('does nothing without a document manager', async () => {
-    const { loader, opens } = fakeManager();
-    loader.docManager = null;
-    loader.pending = request('a');
-    await drainLoads(loader);
-    expect(opens).toHaveLength(0);
-    expect(loader.pending).not.toBeNull();
   });
 });

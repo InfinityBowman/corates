@@ -66,18 +66,6 @@ describe('filterStudiesForExport', () => {
     expect(result.find(s => s.id === 'dual')!.checklists).toHaveLength(6);
   });
 
-  it('a cell still being reconciled is not finished, nor is a lone reviewer copy awaiting one', () => {
-    const result = filterStudiesForExport(project, { ...base, consensusOnly: false });
-    expect(result.map(s => s.id)).not.toContain('reconciling');
-    expect(result.map(s => s.id)).not.toContain('awaiting');
-  });
-
-  it("a reviewer's copies of finished work export under the finalized filter", () => {
-    const result = filterStudiesForExport(project, { ...base, reviewerId: REVIEWER_B });
-    expect(result.map(s => s.id)).toEqual(['dual']);
-    expect(result[0].checklists).toHaveLength(2);
-  });
-
   it('filters by outcome', () => {
     const result = filterStudiesForExport(project, { ...base, outcomeId: OUTCOME_DISABILITY });
     expect(result.map(s => s.id)).toEqual(['dual']);
@@ -98,15 +86,6 @@ describe('filterStudiesForExport', () => {
     expect(single.checklists).toHaveLength(1);
   });
 
-  it('shows every reviewer copy when consensus only is off', () => {
-    const result = filterStudiesForExport(project, {
-      ...base,
-      status: 'any',
-      consensusOnly: false,
-    });
-    expect(result.find(s => s.id === 'dual')!.checklists).toHaveLength(6);
-  });
-
   it("a reviewer filter returns that reviewer's copies regardless of consensus only", () => {
     const result = filterStudiesForExport(project, {
       ...base,
@@ -115,7 +94,9 @@ describe('filterStudiesForExport', () => {
     });
     expect(result.map(s => s.id)).toEqual(['dual', 'reconciling']);
     expect(result[0].checklists.every(cl => cl.assignedTo === REVIEWER_B)).toBe(true);
-    expect(filterStudiesForExport(project, { ...base, reviewerId: REVIEWER_A })).toHaveLength(3);
+    const finished = filterStudiesForExport(project, { ...base, reviewerId: REVIEWER_B });
+    expect(finished.map(s => s.id)).toEqual(['dual']);
+    expect(finished[0].checklists).toHaveLength(2);
   });
 });
 

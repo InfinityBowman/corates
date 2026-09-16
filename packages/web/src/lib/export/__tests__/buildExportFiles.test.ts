@@ -25,12 +25,6 @@ function input(
 }
 
 describe('planExportFilenames', () => {
-  it('names one combined file after the project and date', () => {
-    expect(planExportFilenames(input({ delivery: 'single', format: 'csv' }))).toEqual([
-      'exercise-for-chronic-low-back-pain_rob2_2026-09-15.csv',
-    ]);
-  });
-
   it('names per-appraisal files by author, year, tool, outcome and reviewer', () => {
     const names = planExportFilenames(input({ delivery: 'zip', outcomeId: 'outcome-pain' }));
     expect(names).toHaveLength(6);

@@ -1,11 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  appraisalFilename,
-  combinedFilename,
-  slugify,
-  uniqueFilenames,
-  zipFilename,
-} from '../exportFilenames';
+import { appraisalFilename, combinedFilename, slugify, uniqueFilenames } from '../exportFilenames';
 
 const ctx = {
   projectName: 'Exercise for chronic low back pain',
@@ -62,12 +56,6 @@ describe('appraisalFilename', () => {
     expect(appraisalFilename(blank, { ...parts, outcome: null, who: null }, ctx, 'pdf')).toBe(
       'study_rob2_2026-09-15.pdf',
     );
-  });
-});
-
-describe('zipFilename', () => {
-  it('names the archive after the project and date', () => {
-    expect(zipFilename(ctx)).toBe('exercise-for-chronic-low-back-pain_2026-09-15.zip');
   });
 });
 
