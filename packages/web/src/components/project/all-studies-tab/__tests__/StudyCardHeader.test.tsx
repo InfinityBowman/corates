@@ -51,9 +51,16 @@ describe('StudyCardHeader', () => {
     expect(openStudySheet).toHaveBeenCalledTimes(2);
   });
 
+  it('opens the study sheet when the name itself is clicked', () => {
+    renderHeader();
+    fireEvent.click(screen.getByText('Petrie 2019'));
+    expect(openStudySheet).toHaveBeenCalledWith('s1');
+  });
+
   it('leaves keys alone while the name is being edited', () => {
     renderHeader();
-    fireEvent.click(screen.getByRole('button', { name: 'Petrie 2019' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Rename study' }));
+    expect(openStudySheet).not.toHaveBeenCalled();
     fireEvent.keyDown(screen.getByDisplayValue('Petrie 2019'), { key: 'Enter' });
     expect(openStudySheet).not.toHaveBeenCalled();
   });

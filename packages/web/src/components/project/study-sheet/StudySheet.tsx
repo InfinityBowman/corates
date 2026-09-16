@@ -99,7 +99,7 @@ function StudySheetBody({ study, ...appraisalProps }: StudySheetBodyProps) {
       {...dropProps}
     >
       <SheetHeader>
-        <SheetTitle className='min-w-0'>
+        <SheetTitle className='min-w-0 pr-8'>
           <InlineEdit
             key={study.name}
             value={study.name || 'Untitled study'}

@@ -211,12 +211,12 @@ export async function createProject(page: Page, name: string): Promise<string> {
 /**
  * Locates a study card by its title in the All Studies list.
  *
- * The card titles a PDF-added study with the filename stem, and renders it as
- * the inline-edit button. Matching on the button role keeps this off the same
- * title text in the staged-import preview, which is plain text.
+ * The card titles a PDF-added study with the filename stem. Matching on the
+ * row's own "Open <name>" label keeps this off the same title text in the
+ * staged-import preview.
  */
 export function studyCardTitle(page: Page, studyName = 'Petrie2019') {
-  return page.getByRole('button', { name: studyName, exact: true });
+  return page.getByRole('button', { name: `Open ${studyName}`, exact: true });
 }
 
 /**
