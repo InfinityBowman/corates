@@ -10,6 +10,7 @@ import { AddStudiesSheet } from './add-studies/AddStudiesSheet';
 import { AssignReviewersSheet } from './assign-reviewers/AssignReviewersSheet';
 import { OutcomesSheet } from './outcomes/OutcomesSheet';
 import { StudySheet } from './study-sheet/StudySheet';
+import { ExportDialog } from '@/components/export/ExportDialog';
 import { useProjectContext } from './ProjectContext';
 
 export function ProjectSheets() {
@@ -53,6 +54,7 @@ export function ProjectSheets() {
       {isOwner && <AssignReviewersSheet open={assignSheetOpen} onOpenChange={setAssignSheetOpen} />}
       <OutcomesSheet open={outcomesSheetOpen} onOpenChange={setOutcomesSheetOpen} />
       <StudySheet studyId={studySheetId} onClose={closeStudySheet} />
+      <ExportDialog />
     </>
   );
 }

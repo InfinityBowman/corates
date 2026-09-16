@@ -21,6 +21,7 @@ import {
   ZoomPluginPackage,
   MarqueeZoom,
   ZoomGestureWrapper,
+  useZoom,
 } from '@embedpdf/plugin-zoom/react';
 import { PanPluginPackage } from '@embedpdf/plugin-pan/react';
 import { SpreadMode, SpreadPluginPackage } from '@embedpdf/plugin-spread/react';
@@ -42,6 +43,7 @@ import {
   useAnnotationCapability,
 } from '@embedpdf/plugin-annotation/react';
 import { ViewerToolbar, ViewMode } from './components/viewer-toolbar';
+import { drainLoads, type DocumentLoader } from './document-loader';
 import { LoadingSpinner } from './components/loading-spinner';
 import { DocumentPasswordPrompt } from './components/document-password-prompt';
 import { SearchSidebar } from './components/search-sidebar';
@@ -287,12 +289,33 @@ type ViewerPageProps = {
   selectedPdfId?: string | null;
   onPdfSelect?: (_pdfId: string) => void;
   readOnly?: boolean;
+  initialZoom?: number;
   // Annotation persistence props
   onAnnotationAdd?: (_annotation: any) => void;
   onAnnotationUpdate?: (_annotation: any) => void;
   onAnnotationDelete?: (_annotationId: string) => void;
   initialAnnotations?: AnnotationData[];
 };
+
+// plugin-zoom 2.15 never releases its render gate for a numeric default level (corates#821),
+// so start on fit-page and request the number after the plugin's first zoom pass
+function InitialZoom({ documentId, level }: { documentId: string; level: number }) {
+  const { provides } = useZoom(documentId);
+  // useZoom returns a new scope each render; without this guard every later zoom change snaps back
+  const appliedTo = useRef<string | null>(null);
+  useEffect(() => {
+    if (!provides || appliedTo.current === documentId) return;
+    const off = provides.onZoomChange(evt => {
+      if (evt.documentId !== documentId) return;
+      appliedTo.current = documentId;
+      off();
+      // Anchor the top-left corner so the document still starts at its top
+      if (evt.level !== level) provides.requestZoom(level, { vx: 0, vy: 0 });
+    });
+    return off;
+  }, [documentId, provides, level]);
+  return null;
+}
 
 export function ViewerPage({
   pdfData,
@@ -301,6 +324,7 @@ export function ViewerPage({
   selectedPdfId,
   onPdfSelect,
   readOnly = false,
+  initialZoom,
   onAnnotationAdd,
   onAnnotationUpdate,
   onAnnotationDelete,
@@ -317,14 +341,13 @@ export function ViewerPage({
   // Track toolbar mode per document
   const [toolbarModes, setToolbarModes] = useState<Record<string, ViewMode>>({});
 
-  // Store reference to document manager for reloading documents
-  const docManagerRef = useRef<ReturnType<DocumentManagerPlugin['provides']> | null>(null);
-  // Track the current active document ID to close it when switching
-  const activeDocumentIdRef = useRef<string | null>(null);
-  // Track the previous selectedPdfId to detect changes
-  const previousSelectedPdfIdRef = useRef<string | null | undefined>(undefined);
-  // Track loading state to prevent race conditions
-  const isLoadingRef = useRef<boolean>(false);
+  const loaderRef = useRef<DocumentLoader>({
+    docManager: null,
+    activeDocumentId: null,
+    loadedPdfId: undefined,
+    pending: null,
+    loading: false,
+  });
 
   const plugins = useMemo(
     () => [
@@ -407,85 +430,23 @@ export function ViewerPage({
     }));
   };
 
-  // Reload document when pdfData or selectedPdfId changes
+  // Reload when the selected document changes; a data-only change keeps the open one
   useEffect(() => {
-    if (!docManagerRef.current || !pdfData) return;
-
-    // Skip if selectedPdfId hasn't actually changed (initial render or same PDF)
-    if (selectedPdfId === previousSelectedPdfIdRef.current) {
-      return;
-    }
-
-    // Prevent multiple simultaneous loads
-    if (isLoadingRef.current) {
-      return;
-    }
-
-    const loadDocument = async () => {
-      isLoadingRef.current = true;
-      const previousPdfId = previousSelectedPdfIdRef.current;
-      previousSelectedPdfIdRef.current = selectedPdfId;
-
-      try {
-        // Close the previous document if it exists and we're switching PDFs
-        if (previousPdfId !== undefined && activeDocumentIdRef.current) {
-          try {
-            await docManagerRef.current!.closeDocument(activeDocumentIdRef.current);
-          } catch (err) {
-            // Ignore errors when closing (document might already be closed)
-            console.warn('Error closing previous document:', err);
-          }
-          activeDocumentIdRef.current = null;
-        }
-
-        const selectedPdf = pdfs?.find(pdf => pdf.id === selectedPdfId) || pdfs?.[0];
-        const pdfName = pdfFileName || selectedPdf?.fileName || 'document.pdf';
-
-        // Open the new document
-        // The document ID will be available via activeDocumentId in the render function
-        await docManagerRef
-          .current!.openDocumentBuffer({
-            buffer: pdfData,
-            name: pdfName,
-            autoActivate: true,
-          })
-          .toPromise();
-      } catch (err) {
-        console.error('Error loading document:', err);
-        captureException(err, {
-          component: 'EmbedPdfViewer',
-          action: 'openDocumentBuffer',
-          pdfFileName,
-          selectedPdfId,
-        });
-        // Reset the ref on error so we can retry
-        previousSelectedPdfIdRef.current = previousPdfId;
-      } finally {
-        isLoadingRef.current = false;
-      }
-    };
-
-    loadDocument();
+    const loader = loaderRef.current;
+    if (!pdfData || selectedPdfId === loader.loadedPdfId) return;
+    loader.pending = { pdfData, selectedPdfId, pdfFileName, pdfs };
+    if (loader.docManager) void drainLoads(loader);
   }, [pdfData, selectedPdfId, pdfFileName, pdfs]);
 
-  // Cleanup: close the active document and release resources on unmount
+  // The engine hook closes every document on unmount; only drop our handles
   useEffect(() => {
+    const loader = loaderRef.current;
     return () => {
-      const closeActiveDocument = async () => {
-        if (docManagerRef.current && activeDocumentIdRef.current) {
-          try {
-            await docManagerRef.current.closeDocument(activeDocumentIdRef.current);
-          } catch (err) {
-            console.warn('Error closing document on unmount:', err);
-          }
-        }
-        // Clear refs to release memory
-        docManagerRef.current = null;
-        activeDocumentIdRef.current = null;
-        previousSelectedPdfIdRef.current = undefined;
-        isLoadingRef.current = false;
-      };
-      closeActiveDocument();
+      loader.docManager = null;
+      loader.activeDocumentId = null;
+      loader.loadedPdfId = undefined;
+      loader.pending = null;
+      loader.loading = false;
     };
   }, []);
 
@@ -515,21 +476,13 @@ export function ViewerPage({
 
             if (!docManager) return;
 
-            // Store reference for reloading documents
-            docManagerRef.current = docManager;
+            const loader = loaderRef.current;
+            loader.docManager = docManager;
 
-            // Load PDF from ArrayBuffer if provided, otherwise use default URL
-            // Document is automatically activated via autoActivate: true
             if (pdfData) {
-              const selectedPdf = pdfs?.find(pdf => pdf.id === selectedPdfId) || pdfs?.[0];
-              const pdfName = pdfFileName || selectedPdf?.fileName || 'document.pdf';
-              await docManager
-                .openDocumentBuffer({
-                  buffer: pdfData,
-                  name: pdfName,
-                  autoActivate: true,
-                })
-                .toPromise();
+              // The reload effect may already have queued a newer request while the engine started
+              loader.pending ??= { pdfData, selectedPdfId, pdfFileName, pdfs };
+              await drainLoads(loader);
             } else {
               // Fallback to default PDF URL
               await docManager
@@ -545,13 +498,16 @@ export function ViewerPage({
             pluginsReady: boolean;
             activeDocumentId: string | null;
           }) => {
-            // Update the ref when activeDocumentId changes
-            if (activeDocumentId !== activeDocumentIdRef.current) {
-              activeDocumentIdRef.current = activeDocumentId;
+            // Keep the loader's handle in step with the registry
+            if (activeDocumentId !== loaderRef.current.activeDocumentId) {
+              loaderRef.current.activeDocumentId = activeDocumentId;
             }
 
             return (
               <>
+                {activeDocumentId && initialZoom !== undefined && (
+                  <InitialZoom documentId={activeDocumentId} level={initialZoom} />
+                )}
                 {/* Annotation sync manager - handles persistence */}
                 {activeDocumentId &&
                   (onAnnotationAdd ||

@@ -10,6 +10,7 @@ import {
   MoreVerticalIcon,
   FileSpreadsheetIcon,
   FileIcon,
+  SlidersHorizontalIcon,
 } from 'lucide-react';
 import { InlineEdit } from '@/components/ui/inline-edit';
 import {
@@ -35,6 +36,7 @@ import { useProjectContext, type ProjectMember } from '@/components/project/Proj
 import { MemberAvatar, memberDisplayName } from '@/components/project/MemberAvatar';
 import type { StudyInfo } from '@/stores/projectStore';
 import { project } from '@/project';
+import { useExportDialogStore } from '@/stores/exportDialogStore';
 import { studyCitation } from '@/components/project/studyCitation';
 import { StudyAppraisalChips } from './StudyAppraisalChips';
 
@@ -53,7 +55,8 @@ export function StudyCardHeader({
   onExportPdf,
   getMember,
 }: StudyCardHeaderProps) {
-  const { isOwner, openStudySheet } = useProjectContext();
+  const { projectId, isOwner, openStudySheet } = useProjectContext();
+  const openExportDialog = useExportDialogStore(s => s.open);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const hasChecklists = study.checklists.length > 0;
 
@@ -192,6 +195,10 @@ export function StudyCardHeader({
                     Export as PDF
                   </DropdownMenuItem>
                 )}
+                <DropdownMenuItem onClick={() => openExportDialog(projectId, [study.id])}>
+                  <SlidersHorizontalIcon className='mr-2 size-4' />
+                  Export with options
+                </DropdownMenuItem>
               </>
             )}
             <DropdownMenuSeparator />

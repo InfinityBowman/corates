@@ -10,6 +10,7 @@ import {
   MoreVerticalIcon,
   FileSpreadsheetIcon,
   FileIcon,
+  SlidersHorizontalIcon,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -34,6 +35,8 @@ import { ChangeOutcomeDialog } from '../ChangeOutcomeDialog';
 import { PreviousReviewersView } from './PreviousReviewersView';
 import { CompletedOutcomeRow } from './CompletedOutcomeRow';
 import { ReopenReconciliationButton } from './ReopenReconciliationButton';
+import { useProjectContext } from '../ProjectContext';
+import { useExportDialogStore } from '@/stores/exportDialogStore';
 import type { StudyInfo, PdfEntry } from '@/stores/projectStore';
 import type { ReconciliationProgressEntry } from '@/project/workspace-data';
 
@@ -65,6 +68,8 @@ export function CompletedStudyRow({
   getAssigneeName,
   getOutcomeName,
 }: CompletedStudyRowProps) {
+  const { projectId } = useProjectContext();
+  const openExportDialog = useExportDialogStore(s => s.open);
   const [expanded, setExpanded] = useState(false);
   const [showPreviousReviewers, setShowPreviousReviewers] = useState(false);
   const [showChangeOutcome, setShowChangeOutcome] = useState(false);
@@ -227,6 +232,15 @@ export function CompletedStudyRow({
                       Export as PDF
                     </DropdownMenuItem>
                   )}
+                  <DropdownMenuItem
+                    onClick={e => {
+                      e.stopPropagation();
+                      openExportDialog(projectId, [study.id]);
+                    }}
+                  >
+                    <SlidersHorizontalIcon className='mr-2 size-4' />
+                    Export with options
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             )}

@@ -39,27 +39,6 @@ export function useProjectExport(projectId: string) {
     [projectId],
   );
 
-  const exportAllCsv = useCallback(() => {
-    const csv = buildProjectCsv({ studies: enrich(studies), members, meta: exportMeta });
-    const date = new Date().toISOString().slice(0, 10);
-    const projectName = safeFilename(projectMeta.name || 'project');
-    downloadCsv(csv, `corates-${projectName}-${date}.csv`);
-    clientLogger.info('client.project.exported', { format: 'csv', scope: 'all' });
-  }, [studies, enrich, members, exportMeta, projectMeta.name]);
-
-  const exportAllPdf = useCallback(() => {
-    const doc = buildProjectPdf({
-      studies: enrich(studies),
-      projectName: projectMeta.name || undefined,
-      members,
-      meta: exportMeta,
-    });
-    const date = new Date().toISOString().slice(0, 10);
-    const projectName = safeFilename(projectMeta.name || 'project');
-    downloadPdf(doc, `corates-${projectName}-${date}.pdf`);
-    clientLogger.info('client.project.exported', { format: 'pdf', scope: 'all' });
-  }, [studies, enrich, projectMeta.name, members, exportMeta]);
-
   const exportStudyCsv = useCallback(
     (studyId: string) => {
       const study = studies.find(s => s.id === studyId);
@@ -89,8 +68,6 @@ export function useProjectExport(projectId: string) {
 
   return {
     hasExportableData,
-    exportAllCsv,
-    exportAllPdf,
     exportStudyCsv,
     exportStudyPdf,
   };

@@ -7,6 +7,8 @@ interface ExportOptions {
   studies: StudyInfo[];
   members?: MemberEntry[];
   meta?: ProjectMeta;
+  /** Free-text notes and comments; defaults to included. */
+  includeNotes?: boolean;
 }
 
 const ROB2_HEADERS = [
@@ -86,7 +88,7 @@ function getAmstar2ColumnMappings(): ColumnMapping[] {
   });
 }
 
-function buildAmstar2Headers(): string[] {
+function buildAmstar2Headers(includeNotes: boolean): string[] {
   const headers: string[] = [];
   const mappings = getAmstar2ColumnMappings();
 
@@ -105,13 +107,13 @@ function buildAmstar2Headers(): string[] {
       }
     }
     headers.push(label);
-    headers.push(`${label} - Notes`);
+    if (includeNotes) headers.push(`${label} - Notes`);
   }
 
   return headers;
 }
 
-function getAmstar2Values(cl: ChecklistEntry): string[] {
+function getAmstar2Values(cl: ChecklistEntry, includeNotes: boolean): string[] {
   const mappings = getAmstar2ColumnMappings();
   const values: string[] = [];
   const raw = cl.answers as Record<string, { answers?: boolean[][] }> | null;
@@ -135,7 +137,7 @@ function getAmstar2Values(cl: ChecklistEntry): string[] {
       values.push(selectedIdx >= 0 ? answerOptions[selectedIdx]?.trim() || '' : '');
     }
 
-    values.push(getAmstar2QuestionNote(raw, dataKey));
+    if (includeNotes) values.push(getAmstar2QuestionNote(raw, dataKey));
   }
 
   return values;
@@ -189,27 +191,39 @@ function getRobinsiValues(answers: Record<string, unknown> | null): string[] {
   ];
 }
 
-function getTypeValues(cl: ChecklistEntry): string[] {
+// The RoB 2 and ROBINS-I Notes column is the last one; without notes it is
+// dropped from both headers and values so the two stay aligned.
+function withoutNotes(values: string[], includeNotes: boolean): string[] {
+  return includeNotes ? values : values.slice(0, -1);
+}
+
+function getTypeValues(cl: ChecklistEntry, includeNotes: boolean): string[] {
   switch (cl.type) {
     case 'AMSTAR2':
-      return getAmstar2Values(cl);
+      return getAmstar2Values(cl, includeNotes);
     case 'ROB2':
-      return getRob2Values(cl.answers);
+      return withoutNotes(getRob2Values(cl.answers), includeNotes);
     case 'ROBINS_I':
-      return getRobinsiValues(cl.answers);
+      return withoutNotes(getRobinsiValues(cl.answers), includeNotes);
     default:
       return [];
   }
 }
 
-function getTypeHeaders(type: string): string[] {
+function getTypeHeaders(type: string, includeNotes: boolean): string[] {
   switch (type) {
     case 'AMSTAR2':
-      return buildAmstar2Headers();
+      return buildAmstar2Headers(includeNotes);
     case 'ROB2':
-      return ROB2_HEADERS.map(h => `RoB2 ${h}`);
+      return withoutNotes(
+        ROB2_HEADERS.map(h => `RoB2 ${h}`),
+        includeNotes,
+      );
     case 'ROBINS_I':
-      return ROBINSI_HEADERS.map(h => `ROBINS-I ${h}`);
+      return withoutNotes(
+        ROBINSI_HEADERS.map(h => `ROBINS-I ${h}`),
+        includeNotes,
+      );
     default:
       return [];
   }
@@ -242,7 +256,13 @@ function hasOutcomes(studies: StudyInfo[]): boolean {
   return false;
 }
 
-export function buildProjectCsv({ studies, members, meta }: ExportOptions): string {
+/** The grid the CSV is serialized from; the preview renders these same rows. */
+export function buildProjectCsvRows({
+  studies,
+  members,
+  meta,
+  includeNotes = true,
+}: ExportOptions): string[][] {
   const typesPresent = getChecklistTypesPresent(studies);
   const showReviewer = hasMultipleReviewers(studies);
   const showOutcome = hasOutcomes(studies);
@@ -254,7 +274,7 @@ export function buildProjectCsv({ studies, members, meta }: ExportOptions): stri
 
   const typeHeadersMap = new Map<string, string[]>();
   for (const type of typesPresent) {
-    const th = getTypeHeaders(type);
+    const th = getTypeHeaders(type, includeNotes);
     typeHeadersMap.set(type, th);
     headers.push(...th);
   }
@@ -280,7 +300,7 @@ export function buildProjectCsv({ studies, members, meta }: ExportOptions): stri
 
       for (const type of typesPresent) {
         if (cl.type === type) {
-          row.push(...getTypeValues(cl));
+          row.push(...getTypeValues(cl, includeNotes));
         } else {
           row.push(...(typeHeadersMap.get(type) || []).map(() => ''));
         }
@@ -290,7 +310,13 @@ export function buildProjectCsv({ studies, members, meta }: ExportOptions): stri
     }
   }
 
-  return rows.map(row => row.map(escapeField).join(',')).join('\n');
+  return rows;
+}
+
+export function buildProjectCsv(options: ExportOptions): string {
+  return buildProjectCsvRows(options)
+    .map(row => row.map(escapeField).join(','))
+    .join('\n');
 }
 
 export function downloadCsv(csv: string, filename: string): void {

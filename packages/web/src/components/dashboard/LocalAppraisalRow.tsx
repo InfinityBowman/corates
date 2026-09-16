@@ -10,6 +10,7 @@ import {
   DownloadIcon,
   FileSpreadsheetIcon,
   FileIcon,
+  SlidersHorizontalIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { InlineEdit } from '@/components/ui/inline-edit';
@@ -20,6 +21,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { getChecklistMetadata } from '@/checklist-registry';
+import { LOCAL_PROJECT_ID } from '@/project/localProject';
+import { useExportDialogStore } from '@/stores/exportDialogStore';
 import { rowClass } from './DashboardSection';
 import { formatRelativeTime } from './utils';
 
@@ -46,6 +49,7 @@ export function LocalAppraisalRow({
   onExportCsv,
   onExportPdf,
 }: LocalAppraisalRowProps) {
+  const openExportDialog = useExportDialogStore(s => s.open);
   const metadata = getChecklistMetadata(checklist.type || '') as { name?: string } | undefined;
   const typeLabel = metadata?.name || checklist.type || 'Checklist';
 
@@ -91,6 +95,10 @@ export function LocalAppraisalRow({
           <DropdownMenuItem onClick={() => onExportPdf(checklist.id)}>
             <FileIcon />
             Export as PDF
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => openExportDialog(LOCAL_PROJECT_ID, [checklist.id])}>
+            <SlidersHorizontalIcon />
+            Export with options
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

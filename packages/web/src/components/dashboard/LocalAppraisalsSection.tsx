@@ -5,22 +5,8 @@
 
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import {
-  PlusIcon,
-  FileCheck2Icon,
-  LogInIcon,
-  TriangleAlertIcon,
-  DownloadIcon,
-  FileSpreadsheetIcon,
-  FileIcon,
-} from 'lucide-react';
+import { PlusIcon, FileCheck2Icon, LogInIcon, TriangleAlertIcon, DownloadIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { clientLogger } from '@/lib/clientLogger';
 import { buildProjectCsv, downloadCsv } from '@/lib/export-csv';
 import { buildProjectPdf, downloadPdf } from '@/lib/export-pdf';
@@ -30,6 +16,8 @@ import type { StudyInfo } from '@/stores/projectStore';
 import { applyLocalMutation } from '@/project/localWrites';
 import { LOCAL_PROJECT_ID } from '@/project/localProject';
 import { db } from '@/primitives/db';
+import { useExportDialogStore } from '@/stores/exportDialogStore';
+import { ExportDialog } from '@/components/export/ExportDialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -53,6 +41,7 @@ export function LocalAppraisalsSection({ showSignInPrompt }: LocalAppraisalsSect
   const navigate = useNavigate();
   const animation = useAnimation();
   const studies = useAllStudies(LOCAL_PROJECT_ID);
+  const openExportDialog = useExportDialogStore(s => s.open);
 
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
@@ -109,21 +98,6 @@ export function LocalAppraisalsSection({ showSignInPrompt }: LocalAppraisalsSect
   const enrichStudies = (toExport: StudyInfo[]) =>
     enrichStudiesForExport(LOCAL_PROJECT_ID, toExport);
 
-  const handleExportAllCsv = () => {
-    const csv = buildProjectCsv({ studies: enrichStudies(studies) });
-    const date = new Date().toISOString().slice(0, 10);
-    downloadCsv(csv, `corates-local-appraisals-${date}.csv`);
-    clientLogger.info('client.local_appraisal.exported', { format: 'csv', scope: 'all' });
-  };
-
-  const handleExportAllPdf = () => {
-    const enriched = enrichStudies(studies);
-    const doc = buildProjectPdf({ studies: enriched });
-    const date = new Date().toISOString().slice(0, 10);
-    downloadPdf(doc, `corates-local-appraisals-${date}.pdf`);
-    clientLogger.info('client.local_appraisal.exported', { format: 'pdf', scope: 'all' });
-  };
-
   const handleExportOneCsv = (studyId: string) => {
     const study = studies.find(s => s.id === studyId);
     if (!study) return;
@@ -176,24 +150,15 @@ export function LocalAppraisalsSection({ showSignInPrompt }: LocalAppraisalsSect
           <>
             <span className='text-muted-foreground text-xs'>On this device</span>
             {hasChecklists && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant='ghost' size='xs' className='text-muted-foreground'>
-                    <DownloadIcon data-icon='inline-start' />
-                    Export all
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align='end'>
-                  <DropdownMenuItem onClick={handleExportAllCsv}>
-                    <FileSpreadsheetIcon />
-                    Export as CSV
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleExportAllPdf}>
-                    <FileIcon />
-                    Export as PDF
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Button
+                variant='ghost'
+                size='xs'
+                className='text-muted-foreground'
+                onClick={() => openExportDialog(LOCAL_PROJECT_ID)}
+              >
+                <DownloadIcon data-icon='inline-start' />
+                Export
+              </Button>
             )}
           </>
         }
@@ -223,6 +188,8 @@ export function LocalAppraisalsSection({ showSignInPrompt }: LocalAppraisalsSect
           />
         }
       </DashboardSection>
+
+      <ExportDialog />
 
       <AlertDialog
         open={pendingDeleteId !== null}
