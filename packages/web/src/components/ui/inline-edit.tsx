@@ -26,6 +26,8 @@ interface InlineEditProps {
   rows?: number;
   disabled?: boolean;
   showEditIcon?: boolean;
+  /** Renders the preview as plain text so clicks fall through to the surrounding row; the edit icon is the only way in. */
+  editIconOnly?: boolean;
   /** Clips the preview to one line, with the full value in a tooltip. Single-line only. */
   truncate?: boolean;
   /** Styles applied to both the preview text and the editing field. */
@@ -41,6 +43,7 @@ function InlineEdit({
   rows = 1,
   disabled = false,
   showEditIcon = false,
+  editIconOnly = false,
   truncate = false,
   className,
   ariaLabel,
@@ -109,24 +112,28 @@ function InlineEdit({
         />;
   }
 
-  const preview = (
-    <button
-      ref={previewRef}
-      type='button'
-      onClick={startEditing}
-      disabled={disabled}
-      className={cn(
-        'cursor-text text-left',
-        multiline && 'w-full',
-        truncate && 'min-w-0 truncate',
-        !value && 'text-muted-foreground/70',
-        disabled && 'cursor-not-allowed opacity-50',
-        className,
-      )}
-    >
-      {value || placeholder}
-    </button>
+  const previewClass = cn(
+    'text-left',
+    multiline && 'w-full',
+    truncate && 'min-w-0 truncate',
+    !value && 'text-muted-foreground/70',
+    className,
   );
+
+  const preview =
+    editIconOnly ?
+      <span ref={previewRef} className={previewClass}>
+        {value || placeholder}
+      </span>
+    : <button
+        ref={previewRef}
+        type='button'
+        onClick={startEditing}
+        disabled={disabled}
+        className={cn('cursor-text', previewClass, disabled && 'cursor-not-allowed opacity-50')}
+      >
+        {value || placeholder}
+      </button>;
 
   return (
     <span
