@@ -31,6 +31,9 @@ interface PdfCacheRow {
   data: ArrayBuffer;
   size: number;
   cachedAt: number;
+  /** Kept distinct from `cachedAt` so eviction can order by last open while
+   *  the download time stays available to show the user. */
+  lastAccessedAt: number;
 }
 
 interface AvatarRow {
@@ -141,6 +144,22 @@ class CoratesDB extends Dexie {
     this.version(4).stores({
       syncCaches: 'id, updatedAt',
     });
+
+    // v5: PDF cache eviction orders by last open. Existing rows must be
+    // backfilled: Dexie's index skips records that lack the key, so an
+    // unmigrated row would be invisible to the eviction scan and never freed.
+    this.version(5)
+      .stores({
+        pdfs: 'id, projectId, studyId, cachedAt, lastAccessedAt',
+      })
+      .upgrade(async tx => {
+        await tx
+          .table<PdfCacheRow>('pdfs')
+          .toCollection()
+          .modify(row => {
+            row.lastAccessedAt = row.cachedAt;
+          });
+      });
   }
 }
 
