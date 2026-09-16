@@ -1019,7 +1019,7 @@ pnpm restore:workspace -- --env staging --project <id> --date 2026-09-16 --pre-r
 
 `--pre-restore` exports the current workspace to `snapshots/<id>/<now>-pre-restore.json.gz` before importing, so a restore is itself undoable for 60 days. Connected clients re-bootstrap on their own after an import.
 
-Rehearsed on staging on 2026-09-16: a project with one PDF study was deleted from the dashboard, restored from its `deleted/` object with `--pre-restore`, and reopened in the app with its study intact.
+Rehearsed on staging on 2026-09-16: a project with one PDF study was deleted from the dashboard, restored from its `deleted/` object with `--pre-restore`, and reopened in the app with its study intact. The 05:00 sweep then wrote its daily snapshot, logged `backup.completed`, and the same script restored the project from that object with `--date`.
 
 **One project with damaged content.** Pick the last good day from `snapshots/<id>/`, dry-run, then restore with `--pre-restore`. D1 rows are untouched (the inserts are `INSERT OR IGNORE`).
 
