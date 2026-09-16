@@ -10,6 +10,7 @@ import { projects, projectMembers } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { teardownWorkspace } from '../../sync/admin';
+import { snapshotBeforeDelete } from '../backups';
 import { cleanupProjectStorage } from '../lib/storage';
 import { notifyUsers } from '../lib/notifications';
 import { createNotification } from '../notifications';
@@ -50,6 +51,10 @@ export async function deleteProject(
     .from(projectMembers)
     .where(eq(projectMembers.projectId, projectId))
     .all();
+
+  // The 30-day undo. Before the PDF cleanup too: the envelope's mediaFiles
+  // rows are how a restore finds the noncurrent PDF versions.
+  await snapshotBeforeDelete(env, db, projectId);
 
   // Clean up all PDFs from R2 storage
   try {

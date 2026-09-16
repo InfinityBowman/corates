@@ -35,6 +35,7 @@
     "user:make-admin:prod": "pnpm --filter web run user:make-admin:prod",
     "user:make-admin:local": "pnpm --filter web run user:make-admin:local",
     "loc": "node ./scripts/loc-report.mjs",
+    "restore:workspace": "node ./scripts/restore-workspace.mjs",
     "docs": "pnpm --filter @corates/docs dev",
     "docs:build": "pnpm --filter @corates/docs build",
     "docs:preview": "pnpm --filter @corates/docs preview"

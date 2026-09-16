@@ -2,6 +2,7 @@ import * as Sentry from '@sentry/cloudflare';
 import { createStartHandler, defaultStreamHandler } from '@tanstack/react-start/server';
 import { handleEmailDeadLetter, handleEmailQueue } from '@corates/workers/queue';
 import { reconcileStripeSubscriptions } from '@corates/workers/commands/billing';
+import { backupWorkspaces } from '@corates/workers/commands/backups';
 import { runWithLogger, warn } from '@corates/workers/logger';
 import { createDb } from '@corates/db/client';
 import { handleSyncFetch } from '@corates/workers/sync';
@@ -30,6 +31,11 @@ interface SentryEnv {
   ENVIRONMENT?: string;
   CF_VERSION_METADATA?: { id?: string };
 }
+
+// Must match `triggers.crons` in wrangler.jsonc; the runtime hands the
+// expression back verbatim, and it is the only way to tell the jobs apart.
+const CRON_BACKUP_WORKSPACES = '0 5 * * *';
+const CRON_STRIPE_RECONCILE = '0 6 * * *';
 
 // This worker is public, so an inbound x-request-id is attacker-controlled: a
 // value reused across requests collapses correlation, and an oversized one is
@@ -93,8 +99,6 @@ const workerHandler = {
     );
   },
 
-  // Cron schedules live in wrangler.jsonc under `triggers`. There is one job,
-  // so the cron expression is not dispatched on yet.
   async scheduled(controller: { cron: string }, env: unknown): Promise<void> {
     return runWithLogger(
       {
@@ -107,11 +111,20 @@ const workerHandler = {
           DB: Parameters<typeof createDb>[0];
           STRIPE_SECRET_KEY?: string;
         };
-        if (!cronEnv.STRIPE_SECRET_KEY) {
-          warn('billing.reconcile_skipped', { reason: 'stripe_not_configured' });
-          return;
+        switch (controller.cron) {
+          case CRON_BACKUP_WORKSPACES:
+            await backupWorkspaces(cronEnv as never, createDb(cronEnv.DB));
+            return;
+          case CRON_STRIPE_RECONCILE:
+            if (!cronEnv.STRIPE_SECRET_KEY) {
+              warn('billing.reconcile_skipped', { reason: 'stripe_not_configured' });
+              return;
+            }
+            await reconcileStripeSubscriptions(cronEnv as never, createDb(cronEnv.DB));
+            return;
+          default:
+            warn('cron.unknown', { cron: controller.cron });
         }
-        await reconcileStripeSubscriptions(cronEnv as never, createDb(cronEnv.DB));
       },
     );
   },

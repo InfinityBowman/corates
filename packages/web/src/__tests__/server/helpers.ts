@@ -341,6 +341,7 @@ export function createTestEnv(overrides: Record<string, unknown> = {}): Record<s
   return {
     DB: env.DB,
     PDF_BUCKET: mockR2,
+    BACKUP_BUCKET: mockR2,
     USER_SESSION: mockDO,
     EMAIL_QUEUE: mockQueue,
     RATE_LIMIT_KV: {

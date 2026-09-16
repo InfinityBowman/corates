@@ -9,6 +9,7 @@ import { workspaceAdmin } from '@cf-sync/server';
 import { eq } from 'drizzle-orm';
 import type { Database } from '@corates/db/client';
 import { projects } from '@corates/db/schema';
+import { purgeProjectSnapshots } from '../lib/backup-storage';
 import { captureError, info } from '../lib/logger';
 import type { Env } from '../types';
 
@@ -89,13 +90,17 @@ export async function refreshOrgWorkspaceSessions(
 
 /**
  * Project deletion: close every session permanently, then wipe the workspace
- * storage. Best-effort — D1 deletion is the authoritative act.
+ * storage and its daily backups. Best-effort — D1 deletion is the
+ * authoritative act. Callers take the final `deleted/` snapshot
+ * (snapshotBeforeDelete) before the D1 delete, because that envelope needs
+ * rows the cascade removes.
  */
 export async function teardownWorkspace(env: Env, projectId: string): Promise<void> {
   try {
     const workspace = projectWorkspace(env, projectId);
     await workspace.disconnect({ reason: 'project-deleted' });
     await workspace.reset();
+    await purgeProjectSnapshots(env, projectId);
   } catch (err) {
     captureError(err, {
       tags: { component: 'workspace-sync', action: 'teardown' },

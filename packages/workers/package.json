@@ -30,6 +30,7 @@
     "./commands/projects": "./src/commands/projects/index.ts",
     "./commands/members": "./src/commands/members/index.ts",
     "./commands/billing": "./src/commands/billing/index.ts",
+    "./commands/backups": "./src/commands/backups/index.ts",
     "./billing-resolver": "./src/lib/billingResolver.ts",
     "./free-project-cap": "./src/lib/freeProjectCap.ts",
     "./constants": "./src/config/constants.ts",

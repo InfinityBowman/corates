@@ -50,6 +50,13 @@
     {
       "binding": "PDF_BUCKET",
       "bucket_name": "corates-pdfs"
+    },
+    // Workspace snapshots. Never the PDF bucket: the admin storage page treats
+    // any object outside mediaFiles as an orphan, and project deletion
+    // bulk-deletes by prefix. Retention is R2 lifecycle rules, not code.
+    {
+      "binding": "BACKUP_BUCKET",
+      "bucket_name": "corates-backups"
     }
   ],
 
@@ -85,10 +92,11 @@
     }
   },
 
-  // Inherited by every environment. Daily Stripe reconcile sweep; see
-  // docs/guides/stripe-setup.md.
+  // Inherited by every environment. Dispatched on the expression in
+  // src/server.ts: 05:00 workspace backups (docs/guides/database.md), 06:00
+  // Stripe reconcile sweep (docs/guides/stripe-setup.md).
   "triggers": {
-    "crons": ["0 6 * * *"]
+    "crons": ["0 5 * * *", "0 6 * * *"]
   },
 
   // VITE_* vars are inlined into the client bundle by Vite at build time
@@ -138,6 +146,10 @@
         {
           "binding": "PDF_BUCKET",
           "bucket_name": "corates-pdfs-prod"
+        },
+        {
+          "binding": "BACKUP_BUCKET",
+          "bucket_name": "corates-backups-prod"
         }
       ],
       "queues": {
@@ -218,6 +230,10 @@
         {
           "binding": "PDF_BUCKET",
           "bucket_name": "corates-pdfs-staging"
+        },
+        {
+          "binding": "BACKUP_BUCKET",
+          "bucket_name": "corates-backups-staging"
         }
       ],
       "queues": {
