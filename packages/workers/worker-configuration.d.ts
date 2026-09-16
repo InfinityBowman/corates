@@ -7,6 +7,7 @@ declare namespace Cloudflare {
   }
   interface ProductionEnv {
     PDF_BUCKET: R2Bucket;
+    BACKUP_BUCKET: R2Bucket;
     DB: D1Database;
     EMAIL_QUEUE: Queue;
     ENVIRONMENT: 'production';
@@ -29,6 +30,7 @@ declare namespace Cloudflare {
   }
   interface Env {
     PDF_BUCKET: R2Bucket;
+    BACKUP_BUCKET: R2Bucket;
     DB: D1Database;
     EMAIL_QUEUE: Queue;
     ENVIRONMENT: 'production' | 'development';

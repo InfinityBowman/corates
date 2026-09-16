@@ -33,7 +33,10 @@
     }
   ],
 
-  "r2_buckets": [{ "binding": "PDF_BUCKET", "bucket_name": "corates-pdfs" }],
+  "r2_buckets": [
+    { "binding": "PDF_BUCKET", "bucket_name": "corates-pdfs" },
+    { "binding": "BACKUP_BUCKET", "bucket_name": "corates-backups" }
+  ],
 
   "vars": {
     "ENVIRONMENT": "test",

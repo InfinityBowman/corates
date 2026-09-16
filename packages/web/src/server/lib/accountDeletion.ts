@@ -22,6 +22,7 @@ import {
 } from '@corates/db/schema';
 import { and, asc, eq, ne } from 'drizzle-orm';
 import { captureError, info } from '@corates/workers/logger';
+import { snapshotBeforeDelete } from '@corates/workers/commands/backups';
 import { cleanupProjectStorage } from '@corates/workers/commands/projects';
 import {
   kickWorkspaceUser,
@@ -74,9 +75,11 @@ export async function deleteUserAccount(
   // reconnect attempts re-run authorize against D1 and fail permanently.
   await Promise.all(memberships.map(({ projectId }) => kickWorkspaceUser(env, projectId, userId)));
 
-  // Same order as deleteProject: PDFs first, then the authoritative D1 delete,
-  // then the workspace wipe so a failed delete leaves the project intact.
+  // Same order as deleteProject: final snapshot, PDFs, then the authoritative
+  // D1 delete, then the workspace wipe so a failed delete leaves the project
+  // intact.
   for (const projectId of soleProjects) {
+    await snapshotBeforeDelete(env, db, projectId);
     try {
       await cleanupProjectStorage(env, projectId);
     } catch (err) {
