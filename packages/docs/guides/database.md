@@ -1010,7 +1010,7 @@ The Grafana rule (any `backup.failed`, or no `backup.completed` in 26 hours) is 
 
 ### Restore
 
-`pnpm restore:workspace` (`scripts/restore-workspace.mjs`) fetches an object from the bucket, re-inserts the project, member and media file rows that are missing from D1, POSTs `workspace` to `/api/sync-admin/<projectId>/import`, and compares the live row count with the snapshot. It reads `APP_URL` and `SYNC_ADMIN_TOKEN` from `packages/web/.env.<env>` and runs wrangler from `packages/web`. Always dry-run first:
+`pnpm restore:workspace` (`scripts/restore-workspace.mjs`) fetches an object from the bucket, re-inserts the project, member and media file rows that are missing from D1, POSTs `workspace` to `/api/sync-admin/<projectId>/import`, and compares the live row count with the snapshot. It reads `SYNC_ADMIN_TOKEN` from `packages/web/.env.<env>` and runs wrangler from `packages/web`. Always dry-run first:
 
 ```bash
 pnpm restore:workspace -- --env staging --project <id> --date 2026-09-16 --dry-run
@@ -1018,6 +1018,8 @@ pnpm restore:workspace -- --env staging --project <id> --date 2026-09-16 --pre-r
 ```
 
 `--pre-restore` exports the current workspace to `snapshots/<id>/<now>-pre-restore.json.gz` before importing, so a restore is itself undoable for 60 days. Connected clients re-bootstrap on their own after an import.
+
+Rehearsed on staging on 2026-09-16: a project with one PDF study was deleted from the dashboard, restored from its `deleted/` object with `--pre-restore`, and reopened in the app with its study intact.
 
 **One project with damaged content.** Pick the last good day from `snapshots/<id>/`, dry-run, then restore with `--pre-restore`. D1 rows are untouched (the inserts are `INSERT OR IGNORE`).
 

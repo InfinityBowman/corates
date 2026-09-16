@@ -7,7 +7,7 @@
 //   pnpm restore:workspace -- --env staging --project <id> --key deleted/<id>/<iso>.json.gz --pre-restore --yes
 //
 // Runs wrangler from packages/web so the account id in wrangler.jsonc applies.
-// APP_URL and SYNC_ADMIN_TOKEN come from packages/web/.env.<env>.
+// SYNC_ADMIN_TOKEN comes from packages/web/.env.<env>.
 
 import { spawnSync } from 'node:child_process';
 import { gunzipSync, gzipSync } from 'node:zlib';
@@ -20,8 +20,16 @@ const ROOT = resolve(import.meta.dirname, '..');
 const WEB_DIR = join(ROOT, 'packages/web');
 
 const ENVS = {
-  staging: { bucket: 'corates-backups-staging', d1: 'corates-db-staging' },
-  production: { bucket: 'corates-backups-prod', d1: 'corates-db-prod' },
+  staging: {
+    bucket: 'corates-backups-staging',
+    d1: 'corates-db-staging',
+    appUrl: 'https://staging.corates.org',
+  },
+  production: {
+    bucket: 'corates-backups-prod',
+    d1: 'corates-db-prod',
+    appUrl: 'https://corates.org',
+  },
 };
 
 // Drizzle serialised these as ISO strings; D1 stores unix seconds.
@@ -137,11 +145,10 @@ async function main() {
     project: args.project,
     bucket: ENVS[args.env].bucket,
     key: args.key ?? (args.date ? `snapshots/${args.project}/${args.date}.json.gz` : null),
-    appUrl: envFile.APP_URL,
+    appUrl: ENVS[args.env].appUrl,
     token: envFile.SYNC_ADMIN_TOKEN,
   };
-  if (!cfg.appUrl || !cfg.token)
-    throw new Error(`APP_URL and SYNC_ADMIN_TOKEN must be set in packages/web/.env.${args.env}`);
+  if (!cfg.token) throw new Error(`SYNC_ADMIN_TOKEN must be set in packages/web/.env.${args.env}`);
 
   console.log(`Source: ${args.file ?? `${cfg.bucket}/${cfg.key}`}`);
   const envelope = fetchEnvelope(cfg, args);
