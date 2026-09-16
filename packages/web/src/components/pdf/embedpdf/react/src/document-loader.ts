@@ -28,7 +28,6 @@ export async function drainLoads(loader: DocumentLoader) {
       const request = loader.pending;
       const docManager = loader.docManager;
       loader.pending = null;
-      const previousPdfId = loader.loadedPdfId;
       loader.loadedPdfId = request.selectedPdfId;
       try {
         if (loader.activeDocumentId) {
@@ -60,8 +59,8 @@ export async function drainLoads(loader: DocumentLoader) {
           pdfFileName: request.pdfFileName,
           selectedPdfId: request.selectedPdfId,
         });
-        // Let the same document be requested again
-        loader.loadedPdfId = previousPdfId;
+        // The previous document is already closed, so nothing is loaded now
+        loader.loadedPdfId = undefined;
       }
     }
   } finally {

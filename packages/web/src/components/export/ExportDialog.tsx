@@ -105,9 +105,9 @@ function ExportDialogBody({ projectId, initialStudyIds, onClose }: BodyProps) {
   const selected = pickStudies(eligible, studyIds);
   const selectedIds = new Set(selected.map(s => s.id));
   const checklistCount = countChecklists(selected);
-  const inProgressCount = countChecklists(
-    filterStudiesForExport(studies, { ...options, status: 'any' }),
-  );
+  const inProgressCount =
+    countChecklists(filterStudiesForExport(studies, { ...options, status: 'any' })) -
+    countChecklists(eligible);
 
   const input: Omit<ExportInput, 'studies'> = { members, meta, projectName, options };
   const filenames = planExportFilenames({ ...input, studies: selected });

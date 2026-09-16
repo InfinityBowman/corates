@@ -92,6 +92,20 @@ describe('useExportPreview', () => {
     expect(result.current.preview).toBeNull();
   });
 
+  it('drops the spinner when the selection empties before a pending build runs', () => {
+    const { result, rerender } = renderHook(
+      props => useExportPreview('p1', props.studies, props.input),
+      {
+        initialProps: { studies, input: input() },
+      },
+    );
+    expect(result.current.updating).toBe(true);
+    rerender({ studies: [], input: input() });
+    expect(result.current.updating).toBe(false);
+    act(() => vi.advanceTimersByTime(200));
+    expect(result.current.preview).toBeNull();
+  });
+
   it('reports a failed build instead of leaving the spinner up', () => {
     pdf.fail = true;
     const { result } = renderHook(() => useExportPreview('p1', studies, input()));

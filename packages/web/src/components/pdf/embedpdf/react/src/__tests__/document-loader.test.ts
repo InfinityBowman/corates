@@ -83,14 +83,17 @@ describe('drainLoads', () => {
     expect(loader.loadedPdfId).toBe('c');
   });
 
-  it('lets the same document be requested again after a failed open', async () => {
-    const { loader, manager } = fakeManager();
+  it('forgets both documents after a failed open so either can be requested again', async () => {
+    const { loader, manager, closed } = fakeManager();
     vi.spyOn(console, 'error').mockImplementation(() => {});
     manager.openDocumentBuffer.mockImplementationOnce(() => task(Promise.reject(new Error('bad'))));
     loader.loadedPdfId = 'old';
+    loader.activeDocumentId = 'doc-old';
     loader.pending = request('a');
     await drainLoads(loader);
-    expect(loader.loadedPdfId).toBe('old');
+    expect(closed).toEqual(['doc-old']);
+    expect(loader.activeDocumentId).toBeNull();
+    expect(loader.loadedPdfId).toBeUndefined();
     expect(loader.loading).toBe(false);
     expect(loader.pending).toBeNull();
   });

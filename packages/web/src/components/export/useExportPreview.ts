@@ -80,6 +80,7 @@ export function useExportPreview(
   useEffect(() => {
     if (isEmpty) {
       setPreview(null);
+      setUpdating(false);
       return;
     }
     setUpdating(true);
