@@ -188,8 +188,6 @@ function ToolContentView({ tool }: { tool: ToolContent }) {
   );
 
   // FAQPage JSON-LD enables Google's FAQ rich snippet in search results.
-  // Only emitted when the tool has FAQ content; pages without FAQ data
-  // (currently AMSTAR 2 and RoB 2) skip this entirely.
   const faqSchema = useMemo(() => {
     if (!tool.faq || tool.faq.length === 0) return null;
     return JSON.stringify({
