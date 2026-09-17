@@ -68,6 +68,8 @@ export interface ToolContent {
   whenToUse?: string;
   whenNotToUse?: string;
   comparisonWithAlternatives?: string;
+  /** Deep-dive comparison pages under /resources */
+  comparisonLinks?: { to: string; label: string }[];
   versionHistory?: string;
   workflowInCoRATES?: string;
   commonPitfalls?: string[];
@@ -145,6 +147,12 @@ const TOOL_CONTENT: Record<string, ToolContent> = {
       'AMSTAR 2 is not designed to appraise primary studies; for individual randomized trials use RoB 2 and for individual non-randomized cohort studies of interventions use ROBINS-I V2. AMSTAR 2 is also not the right tool for evaluating systematic reviews of diagnostic test accuracy studies, prognostic studies, qualitative research, or epidemiological exposures, all of which have their own dedicated appraisal instruments. Finally, the authors of AMSTAR 2 explicitly caution against using the tool to generate a numerical "score" for a review; the intended output is an overall confidence rating derived from the pattern of weaknesses across the critical and non-critical items.',
     comparisonWithAlternatives:
       'AMSTAR 2 is one of several tools for appraising systematic reviews. ROBIS (Whiting et al., 2016) is an alternative risk-of-bias tool for systematic reviews developed contemporaneously; ROBIS focuses more directly on bias domains while AMSTAR 2 takes a broader methodological-quality perspective. For appraising the underlying primary studies referenced by a review, use RoB 2 (for randomized trials) or ROBINS-I V2 (for non-randomized cohort studies of interventions) instead. AMSTAR 2 and ROBIS are sometimes applied side by side in methods research to triangulate quality judgements. For comparing systematic reviews across multiple appraisal frameworks, CoRATES supports running parallel appraisals against the same body of evidence.',
+    comparisonLinks: [
+      {
+        to: '/resources/amstar2-vs-robis',
+        label: 'AMSTAR 2 vs ROBIS: which tool for appraising systematic reviews?',
+      },
+    ],
     scoringDescription:
       'AMSTAR 2 does not produce a numerical score. Instead, the pattern of weaknesses across the seven critical and nine non-critical items determines an overall confidence rating: High, Moderate, Low, or Critically Low. The authors of AMSTAR 2 are explicit on this point: AMSTAR 2 is not intended to generate an overall score, and presenting an AMSTAR 2 result as a percentage or item-count is a misuse of the tool. CoRATES applies the published decision rules to derive the overall rating from the pattern of recorded weaknesses.',
     scoreLevels: [
@@ -277,7 +285,7 @@ const TOOL_CONTENT: Record<string, ToolContent> = {
     developedBy:
       'Members of the Cochrane Bias Methods Group and the Cochrane Non-Randomised Studies Methods Group, led by Jonathan Sterne and Julian Higgins. Development of ROBINS-I V2 was funded in part by Medical Research Council (MRC) grant MR/M025209/1.',
     versionNote:
-      'Version 2 was first released in November 2024, with the most recent revision posted on November 20, 2025. V2 is currently scoped to follow-up (cohort) studies; further extensions for other non-randomized designs are in development.',
+      'Version 2 was first released in November 2024, with the most recent revision posted on November 20, 2025; the developers still describe that document as a draft subject to change, so record the document date you used. V2 is currently scoped to follow-up (cohort) studies; further extensions for other non-randomized designs are in development.',
     description:
       'ROBINS-I V2 (Risk Of Bias In Non-randomized Studies - of Interventions, Version 2) is a tool for assessing risk of bias in a specific result from an individual non-randomized study that examines the effect of an intervention on an outcome. ROBINS-I V2 evaluates six bias domains and produces both domain-level and overall risk-of-bias judgements (Low, Moderate, Serious, Critical, or No information). The tool is designed to be used by reviewers conducting systematic reviews that include non-randomized studies of interventions, and is the preferred risk-of-bias tool for non-randomized studies in Cochrane Reviews.',
     summary:
@@ -328,9 +336,16 @@ const TOOL_CONTENT: Record<string, ToolContent> = {
     whenToUse:
       'Use ROBINS-I V2 when you are assessing risk of bias in an individual non-randomized cohort study of an intervention as part of a systematic review or evidence synthesis. The tool is most appropriate when the studies you are appraising have a follow-up design and when the comparison of interest is between intervention groups that were not randomly assigned. Each ROBINS-I V2 assessment should be performed for a specific result of interest (a particular outcome and effect estimate), not for the study as a whole. Reviewers should pre-specify the target trial that the study is attempting to emulate, and should make their judgements relative to that target trial rather than to an idealised observational study.',
     whenNotToUse:
-      'ROBINS-I V2 is not appropriate for randomized trials, where RoB 2 should be used instead. It is also not the right tool for assessing reviews of exposures (rather than interventions); for those, ROBINS-E is in development. Do not use ROBINS-I V2 to assess case-control studies or case series without careful consideration; the tool is currently scoped to follow-up designs. If you are assessing the methodological quality of a systematic review (rather than the risk of bias of a primary study), use AMSTAR 2 instead.',
+      'ROBINS-I V2 is not appropriate for randomized trials, where RoB 2 should be used instead. It is also not the right tool for assessing reviews of exposures (rather than interventions); for those, use ROBINS-E (Higgins et al., 2024). Do not use ROBINS-I V2 to assess case-control studies or case series without careful consideration; the tool is currently scoped to follow-up designs. If you are assessing the methodological quality of a systematic review (rather than the risk of bias of a primary study), use AMSTAR 2 instead.',
     comparisonWithAlternatives:
-      'ROBINS-I V2 sits alongside two other Cochrane risk-of-bias tools: RoB 2 (for randomized trials) and ROBINS-E (for observational studies of exposures, currently in development). All three tools share a common structure of signalling questions feeding domain-level and overall judgements, but they differ in the specific bias domains they assess and the algorithms used to derive judgements. For systematic reviews that include both randomized and non-randomized studies of the same intervention, it is appropriate to apply RoB 2 to the trials and ROBINS-I V2 to the non-randomized studies, then synthesise the results with appropriate consideration of the differing risk-of-bias assessments.',
+      'ROBINS-I V2 sits alongside two other Cochrane risk-of-bias tools: RoB 2 (for randomized trials) and ROBINS-E (for non-randomized studies of exposures, published in 2024). All three tools share a common structure of signalling questions feeding domain-level and overall judgements, but they differ in the specific bias domains they assess and the algorithms used to derive judgements. For systematic reviews that include both randomized and non-randomized studies of the same intervention, it is appropriate to apply RoB 2 to the trials and ROBINS-I V2 to the non-randomized studies, then synthesise the results with appropriate consideration of the differing risk-of-bias assessments.',
+    comparisonLinks: [
+      {
+        to: '/resources/rob2-vs-robins-i',
+        label: 'RoB 2 vs ROBINS-I: which risk-of-bias tool for your study?',
+      },
+      { to: '/resources/robins-i-v1-vs-v2', label: "What's new in ROBINS-I V2" },
+    ],
     scoringDescription:
       'In ROBINS-I V2, reviewers answer signalling questions for each of the six bias domains. Responses to the signalling questions are mapped, via the algorithms introduced in V2, to a judgement of risk of bias at the domain level. The domain-level judgements are then combined into an overall risk-of-bias judgement for the result being assessed. CoRATES supports this workflow by structuring the signalling questions, recording responses, surfacing the algorithm-suggested judgements, and capturing reviewer rationale at each step. CoRATES does not modify or replace the official scoring algorithms.',
     scoreLevels: [
@@ -394,7 +409,7 @@ const TOOL_CONTENT: Record<string, ToolContent> = {
       {
         question: 'Is ROBINS-I V2 the same as ROBINS-E?',
         answer:
-          'No. ROBINS-I V2 assesses risk of bias in non-randomized studies of interventions. ROBINS-E (for Exposures) is a separate tool, currently in development, for non-randomized studies of exposures rather than interventions. The two tools have different scopes and should not be substituted for each other.',
+          'No. ROBINS-I V2 assesses risk of bias in non-randomized studies of interventions. ROBINS-E (for Exposures) is a separate tool, published in 2024, for non-randomized studies of exposures rather than interventions. The two tools have different scopes and should not be substituted for each other.',
       },
       {
         question: 'Can ROBINS-I V2 be applied to case-control studies?',
@@ -431,7 +446,7 @@ const TOOL_CONTENT: Record<string, ToolContent> = {
         text: 'Sterne et al. (2016): Original ROBINS-I publication, BMJ',
       },
       {
-        href: 'https://training.cochrane.org/handbook/current/chapter-25',
+        href: 'https://www.cochrane.org/authors/handbooks-and-manuals/handbook/current/chapter-25',
         text: 'Cochrane Handbook Chapter 25: Assessing risk of bias in non-randomized studies',
       },
     ],
@@ -473,8 +488,8 @@ const TOOL_CONTENT: Record<string, ToolContent> = {
       'Assessing risk of bias in the results of individual randomized controlled trials (RCTs) included in a systematic review or evidence synthesis. RoB 2 is the recommended risk-of-bias tool for randomized trials in Cochrane Reviews.',
     studyTypes: [
       'Parallel-group randomized controlled trials (the primary version of RoB 2)',
-      'Cluster-randomized trials (handled by the dedicated RoB 2 cluster-randomized extension)',
-      'Crossover trials (handled by the dedicated RoB 2 crossover extension)',
+      'Cluster-randomized trials (using the dedicated RoB 2 cluster-randomized extension, not currently available in CoRATES)',
+      'Crossover trials (using the dedicated RoB 2 crossover extension, not currently available in CoRATES)',
     ],
     domainsIntro:
       'RoB 2 organises the assessment around five bias domains for parallel-group randomized trials. For each domain, reviewers answer signalling questions whose responses are mapped, via published algorithms, to a domain-level judgement of Low risk of bias, Some concerns, or High risk of bias. The five parallel-group domains are listed below. Cluster-randomized and crossover extensions add additional domains specific to those designs; consult the official documentation linked under Reference Documents for the extension-specific signalling questions and guidance.',
@@ -512,7 +527,17 @@ const TOOL_CONTENT: Record<string, ToolContent> = {
     whenNotToUse:
       'RoB 2 is not designed for non-randomized studies of interventions; for those, use ROBINS-I V2. It is also not the right tool for assessing the methodological quality of a systematic review (use AMSTAR 2 for that), for diagnostic test accuracy studies, or for prognostic factor studies. The parallel-group version of RoB 2 should not be applied to cluster-randomized or crossover trials without using the corresponding extensions, because those designs introduce additional bias domains that the parallel-group version does not assess.',
     comparisonWithAlternatives:
-      'RoB 2 sits alongside two other Cochrane risk-of-bias tools: ROBINS-I V2 (for non-randomized studies of interventions) and ROBINS-E (for non-randomized studies of exposures, currently in development). All three tools share a common structure of signalling questions feeding domain-level and overall judgements, but they differ in the specific bias domains they assess and the algorithms used to derive judgements. For systematic reviews that include both randomized and non-randomized studies of the same intervention, it is appropriate to apply RoB 2 to the trials and ROBINS-I V2 to the non-randomized studies, then synthesise the results with appropriate consideration of the differing risk-of-bias structures. RoB 2 replaces the original 2008 Cochrane RoB tool, which is now considered outdated; new Cochrane Reviews are expected to use RoB 2 unless there is a strong reason to use the older tool.',
+      'RoB 2 sits alongside two other Cochrane risk-of-bias tools: ROBINS-I V2 (for non-randomized studies of interventions) and ROBINS-E (for non-randomized studies of exposures, published in 2024). All three tools share a common structure of signalling questions feeding domain-level and overall judgements, but they differ in the specific bias domains they assess and the algorithms used to derive judgements. For systematic reviews that include both randomized and non-randomized studies of the same intervention, it is appropriate to apply RoB 2 to the trials and ROBINS-I V2 to the non-randomized studies, then synthesise the results with appropriate consideration of the differing risk-of-bias structures. RoB 2 replaces the original 2008 Cochrane RoB tool, which is now considered outdated; new Cochrane Reviews are expected to use RoB 2 unless there is a strong reason to use the older tool.',
+    comparisonLinks: [
+      {
+        to: '/resources/rob2-vs-robins-i',
+        label: 'RoB 2 vs ROBINS-I: which risk-of-bias tool for your study?',
+      },
+      {
+        to: '/resources/rob1-vs-rob2',
+        label: 'RoB 1 vs RoB 2: what changed in the Cochrane risk-of-bias tool',
+      },
+    ],
     scoringDescription:
       'In RoB 2, reviewers answer signalling questions for each of the five bias domains. Responses to the signalling questions are mapped, via the algorithms published with the tool, to a judgement of Low risk of bias, Some concerns, or High risk of bias at the domain level. The domain-level judgements are then combined into an overall risk-of-bias judgement for the result being assessed. CoRATES supports this workflow by structuring the signalling questions, recording responses, surfacing the algorithm-suggested judgements in real time, and capturing reviewer rationale at each step. CoRATES does not modify or replace the official algorithms.',
     scoreLevels: [
@@ -581,7 +606,7 @@ const TOOL_CONTENT: Record<string, ToolContent> = {
       {
         question: 'Are there extensions of RoB 2 for other trial designs?',
         answer:
-          'Yes. There are dedicated RoB 2 extensions for cluster-randomized trials and crossover trials, both of which add design-specific bias domains beyond the five domains of the parallel-group version. The extensions are hosted alongside the main tool at riskofbias.info.',
+          'Yes. There are dedicated RoB 2 extensions for cluster-randomized trials and crossover trials, both of which add design-specific bias domains beyond the five domains of the parallel-group version. The extensions are hosted alongside the main tool at riskofbias.info. CoRATES currently implements the parallel-group version only.',
       },
       {
         question: 'Does CoRATES automatically score RoB 2 assessments?',
@@ -608,7 +633,7 @@ const TOOL_CONTENT: Record<string, ToolContent> = {
         text: 'Sterne et al. (2019): RoB 2 publication, BMJ',
       },
       {
-        href: 'https://training.cochrane.org/handbook/current/chapter-08',
+        href: 'https://www.cochrane.org/authors/handbooks-and-manuals/handbook/current/chapter-08',
         text: 'Cochrane Handbook Chapter 8: Assessing risk of bias in included studies',
       },
     ],

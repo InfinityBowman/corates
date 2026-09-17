@@ -33,8 +33,12 @@ import { Route as ApiClientLogsRouteImport } from './routes/api/client-logs'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as ResourcesIndexRouteImport } from './routes/resources/index'
 import { Route as ResourcesAmstar2RouteImport } from './routes/resources/amstar2'
+import { Route as ResourcesAmstar2VsRobisRouteImport } from './routes/resources/amstar2-vs-robis'
+import { Route as ResourcesRob1VsRob2RouteImport } from './routes/resources/rob1-vs-rob2'
 import { Route as ResourcesRob2RouteImport } from './routes/resources/rob2'
+import { Route as ResourcesRob2VsRobinsIRouteImport } from './routes/resources/rob2-vs-robins-i'
 import { Route as ResourcesRobinsIRouteImport } from './routes/resources/robins-i'
+import { Route as ResourcesRobinsIV1VsV2RouteImport } from './routes/resources/robins-i-v1-vs-v2'
 import { Route as SecurityDisclosureRouteImport } from './routes/security_.disclosure'
 import { Route as AppProtectedAdminRouteImport } from './routes/_app/_protected/admin'
 import { Route as AppProtectedSettingsRouteImport } from './routes/_app/_protected/settings'
@@ -200,14 +204,34 @@ const ResourcesAmstar2Route = ResourcesAmstar2RouteImport.update({
   path: '/resources/amstar2',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResourcesAmstar2VsRobisRoute = ResourcesAmstar2VsRobisRouteImport.update({
+  id: '/resources/amstar2-vs-robis',
+  path: '/resources/amstar2-vs-robis',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResourcesRob1VsRob2Route = ResourcesRob1VsRob2RouteImport.update({
+  id: '/resources/rob1-vs-rob2',
+  path: '/resources/rob1-vs-rob2',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResourcesRob2Route = ResourcesRob2RouteImport.update({
   id: '/resources/rob2',
   path: '/resources/rob2',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResourcesRob2VsRobinsIRoute = ResourcesRob2VsRobinsIRouteImport.update({
+  id: '/resources/rob2-vs-robins-i',
+  path: '/resources/rob2-vs-robins-i',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResourcesRobinsIRoute = ResourcesRobinsIRouteImport.update({
   id: '/resources/robins-i',
   path: '/resources/robins-i',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResourcesRobinsIV1VsV2Route = ResourcesRobinsIV1VsV2RouteImport.update({
+  id: '/resources/robins-i-v1-vs-v2',
+  path: '/resources/robins-i-v1-vs-v2',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SecurityDisclosureRoute = SecurityDisclosureRouteImport.update({
@@ -496,8 +520,12 @@ export interface FileRoutesByFullPath {
   '/api/client-logs': typeof ApiClientLogsRoute
   '/invite/$token': typeof InviteTokenRoute
   '/resources/amstar2': typeof ResourcesAmstar2Route
+  '/resources/amstar2-vs-robis': typeof ResourcesAmstar2VsRobisRoute
+  '/resources/rob1-vs-rob2': typeof ResourcesRob1VsRob2Route
   '/resources/rob2': typeof ResourcesRob2Route
+  '/resources/rob2-vs-robins-i': typeof ResourcesRob2VsRobinsIRoute
   '/resources/robins-i': typeof ResourcesRobinsIRoute
+  '/resources/robins-i-v1-vs-v2': typeof ResourcesRobinsIV1VsV2Route
   '/security/disclosure': typeof SecurityDisclosureRoute
   '/resources/': typeof ResourcesIndexRoute
   '/admin': typeof AppProtectedAdminRouteWithChildren
@@ -567,8 +595,12 @@ export interface FileRoutesByTo {
   '/api/client-logs': typeof ApiClientLogsRoute
   '/invite/$token': typeof InviteTokenRoute
   '/resources/amstar2': typeof ResourcesAmstar2Route
+  '/resources/amstar2-vs-robis': typeof ResourcesAmstar2VsRobisRoute
+  '/resources/rob1-vs-rob2': typeof ResourcesRob1VsRob2Route
   '/resources/rob2': typeof ResourcesRob2Route
+  '/resources/rob2-vs-robins-i': typeof ResourcesRob2VsRobinsIRoute
   '/resources/robins-i': typeof ResourcesRobinsIRoute
+  '/resources/robins-i-v1-vs-v2': typeof ResourcesRobinsIV1VsV2Route
   '/security/disclosure': typeof SecurityDisclosureRoute
   '/resources': typeof ResourcesIndexRoute
   '/checklist/$checklistId': typeof AppChecklistChecklistIdRoute
@@ -641,8 +673,12 @@ export interface FileRoutesById {
   '/api/client-logs': typeof ApiClientLogsRoute
   '/invite/$token': typeof InviteTokenRoute
   '/resources/amstar2': typeof ResourcesAmstar2Route
+  '/resources/amstar2-vs-robis': typeof ResourcesAmstar2VsRobisRoute
+  '/resources/rob1-vs-rob2': typeof ResourcesRob1VsRob2Route
   '/resources/rob2': typeof ResourcesRob2Route
+  '/resources/rob2-vs-robins-i': typeof ResourcesRob2VsRobinsIRoute
   '/resources/robins-i': typeof ResourcesRobinsIRoute
+  '/resources/robins-i-v1-vs-v2': typeof ResourcesRobinsIV1VsV2Route
   '/security_/disclosure': typeof SecurityDisclosureRoute
   '/resources/': typeof ResourcesIndexRoute
   '/_app/_protected/admin': typeof AppProtectedAdminRouteWithChildren
@@ -715,8 +751,12 @@ export interface FileRouteTypes {
     | '/api/client-logs'
     | '/invite/$token'
     | '/resources/amstar2'
+    | '/resources/amstar2-vs-robis'
+    | '/resources/rob1-vs-rob2'
     | '/resources/rob2'
+    | '/resources/rob2-vs-robins-i'
     | '/resources/robins-i'
+    | '/resources/robins-i-v1-vs-v2'
     | '/security/disclosure'
     | '/resources/'
     | '/admin'
@@ -786,8 +826,12 @@ export interface FileRouteTypes {
     | '/api/client-logs'
     | '/invite/$token'
     | '/resources/amstar2'
+    | '/resources/amstar2-vs-robis'
+    | '/resources/rob1-vs-rob2'
     | '/resources/rob2'
+    | '/resources/rob2-vs-robins-i'
     | '/resources/robins-i'
+    | '/resources/robins-i-v1-vs-v2'
     | '/security/disclosure'
     | '/resources'
     | '/checklist/$checklistId'
@@ -859,8 +903,12 @@ export interface FileRouteTypes {
     | '/api/client-logs'
     | '/invite/$token'
     | '/resources/amstar2'
+    | '/resources/amstar2-vs-robis'
+    | '/resources/rob1-vs-rob2'
     | '/resources/rob2'
+    | '/resources/rob2-vs-robins-i'
     | '/resources/robins-i'
+    | '/resources/robins-i-v1-vs-v2'
     | '/security_/disclosure'
     | '/resources/'
     | '/_app/_protected/admin'
@@ -927,8 +975,12 @@ export interface RootRouteChildren {
   ApiClientLogsRoute: typeof ApiClientLogsRoute
   InviteTokenRoute: typeof InviteTokenRoute
   ResourcesAmstar2Route: typeof ResourcesAmstar2Route
+  ResourcesAmstar2VsRobisRoute: typeof ResourcesAmstar2VsRobisRoute
+  ResourcesRob1VsRob2Route: typeof ResourcesRob1VsRob2Route
   ResourcesRob2Route: typeof ResourcesRob2Route
+  ResourcesRob2VsRobinsIRoute: typeof ResourcesRob2VsRobinsIRoute
   ResourcesRobinsIRoute: typeof ResourcesRobinsIRoute
+  ResourcesRobinsIV1VsV2Route: typeof ResourcesRobinsIV1VsV2Route
   SecurityDisclosureRoute: typeof SecurityDisclosureRoute
   ResourcesIndexRoute: typeof ResourcesIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
@@ -1120,6 +1172,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResourcesAmstar2RouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/resources/amstar2-vs-robis': {
+      id: '/resources/amstar2-vs-robis'
+      path: '/resources/amstar2-vs-robis'
+      fullPath: '/resources/amstar2-vs-robis'
+      preLoaderRoute: typeof ResourcesAmstar2VsRobisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/resources/rob1-vs-rob2': {
+      id: '/resources/rob1-vs-rob2'
+      path: '/resources/rob1-vs-rob2'
+      fullPath: '/resources/rob1-vs-rob2'
+      preLoaderRoute: typeof ResourcesRob1VsRob2RouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/resources/rob2': {
       id: '/resources/rob2'
       path: '/resources/rob2'
@@ -1127,11 +1193,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResourcesRob2RouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/resources/rob2-vs-robins-i': {
+      id: '/resources/rob2-vs-robins-i'
+      path: '/resources/rob2-vs-robins-i'
+      fullPath: '/resources/rob2-vs-robins-i'
+      preLoaderRoute: typeof ResourcesRob2VsRobinsIRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/resources/robins-i': {
       id: '/resources/robins-i'
       path: '/resources/robins-i'
       fullPath: '/resources/robins-i'
       preLoaderRoute: typeof ResourcesRobinsIRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/resources/robins-i-v1-vs-v2': {
+      id: '/resources/robins-i-v1-vs-v2'
+      path: '/resources/robins-i-v1-vs-v2'
+      fullPath: '/resources/robins-i-v1-vs-v2'
+      preLoaderRoute: typeof ResourcesRobinsIV1VsV2RouteImport
       parentRoute: typeof rootRouteImport
     }
     '/security_/disclosure': {
@@ -1651,8 +1731,12 @@ const rootRouteChildren: RootRouteChildren = {
   ApiClientLogsRoute: ApiClientLogsRoute,
   InviteTokenRoute: InviteTokenRoute,
   ResourcesAmstar2Route: ResourcesAmstar2Route,
+  ResourcesAmstar2VsRobisRoute: ResourcesAmstar2VsRobisRoute,
+  ResourcesRob1VsRob2Route: ResourcesRob1VsRob2Route,
   ResourcesRob2Route: ResourcesRob2Route,
+  ResourcesRob2VsRobinsIRoute: ResourcesRob2VsRobinsIRoute,
   ResourcesRobinsIRoute: ResourcesRobinsIRoute,
+  ResourcesRobinsIV1VsV2Route: ResourcesRobinsIV1VsV2Route,
   SecurityDisclosureRoute: SecurityDisclosureRoute,
   ResourcesIndexRoute: ResourcesIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,

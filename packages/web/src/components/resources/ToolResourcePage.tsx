@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Link } from '@tanstack/react-router';
 import {
+  ArrowRightIcon,
   FileTextIcon,
   CheckCircleIcon,
   ExternalLinkIcon,
@@ -16,6 +17,7 @@ import {
 } from 'lucide-react';
 import { config } from '@/lib/config';
 import { ResourceCta } from '@/components/resources/ResourceCta';
+import { SectionCard } from '@/components/resources/SectionCard';
 import type { ToolContent, ScoreLevel, DomainSummary, FaqEntry } from '@/lib/tool-content';
 
 const COLOR_CONFIG = {
@@ -94,30 +96,6 @@ function NotFoundPage() {
         </Link>
       </div>
     </main>
-  );
-}
-
-function SectionCard({
-  icon: Icon,
-  title,
-  children,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className='rounded-lg bg-gray-50 p-6'>
-      {/* Body spans the full card width on mobile (below the icon row) and
-          stays aligned with the title on larger screens */}
-      <div className='grid grid-cols-[auto_1fr] items-center gap-x-4'>
-        <div className='flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-100'>
-          <Icon className='size-5 text-blue-600' />
-        </div>
-        <h2 className='text-lg font-semibold text-gray-900'>{title}</h2>
-        <div className='col-span-2 mt-2 min-w-0 sm:col-span-1 sm:col-start-2'>{children}</div>
-      </div>
-    </div>
   );
 }
 
@@ -258,6 +236,21 @@ function ToolContentView({ tool }: { tool: ToolContent }) {
             {tool.comparisonWithAlternatives && (
               <SectionCard icon={GitBranchIcon} title='How it compares to related tools'>
                 <p className='text-gray-600'>{tool.comparisonWithAlternatives}</p>
+                {tool.comparisonLinks && tool.comparisonLinks.length > 0 && (
+                  <ul className='mt-4 flex flex-col gap-2'>
+                    {tool.comparisonLinks.map(link => (
+                      <li key={link.to}>
+                        <Link
+                          to={link.to}
+                          className='inline-flex items-center gap-2 font-medium text-blue-600 hover:text-blue-700'
+                        >
+                          {link.label}
+                          <ArrowRightIcon className='size-4' />
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </SectionCard>
             )}
 
