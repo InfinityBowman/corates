@@ -1,15 +1,17 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { ArrowRightIcon, FileTextIcon } from 'lucide-react';
+import { ArrowRightIcon, FileTextIcon, GitCompareIcon } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import { config } from '../../lib/config';
 import { getAllTools } from '../../lib/tool-content';
 import type { ToolContent } from '../../lib/tool-content';
+import { getAllComparisons } from '../../lib/comparison-content';
+import type { ComparisonContent } from '../../lib/comparison-content';
 
 const pageUrl = `${config.appUrl}/resources`;
 const title = 'Risk of Bias and Quality Appraisal Tools | CoRATES';
 const description =
-  'Guides to the appraisal instruments CoRATES supports: RoB 2 for randomized trials, ROBINS-I for non-randomized studies, and AMSTAR 2 for systematic reviews.';
+  'Guides to the appraisal tools CoRATES supports: RoB 2 for randomized trials, ROBINS-I for non-randomized studies, and AMSTAR 2 for systematic reviews, plus comparisons to help you choose between them.';
 
 export const Route = createFileRoute('/resources/')({
   headers: () => ({
@@ -49,8 +51,28 @@ function ToolCard({ tool }: { tool: ToolContent }) {
   );
 }
 
+function ComparisonCard({ comparison }: { comparison: ComparisonContent }) {
+  return (
+    <Link
+      to={`/resources/${comparison.slug}` as string}
+      className='group flex flex-col rounded-xl border border-gray-200 bg-white p-6 transition-all hover:border-blue-300 hover:shadow-lg'
+    >
+      <div className='mb-4 flex size-12 items-center justify-center rounded-lg bg-blue-100'>
+        <GitCompareIcon className='size-6 text-blue-600' />
+      </div>
+      <h3 className='mb-2 text-lg font-semibold text-gray-900'>{comparison.title}</h3>
+      <p className='mb-4 flex-1 text-sm text-gray-600'>{comparison.metaDescription}</p>
+      <div className='flex items-center gap-2 text-sm font-medium text-blue-600 group-hover:text-blue-700'>
+        Read the comparison
+        <ArrowRightIcon className='size-4 transition-transform group-hover:translate-x-1' />
+      </div>
+    </Link>
+  );
+}
+
 function ResourcesPage() {
   const tools = getAllTools();
+  const comparisons = getAllComparisons();
 
   return (
     <div className='flex min-h-screen flex-col'>
@@ -68,6 +90,17 @@ function ResourcesPage() {
           <div className='grid gap-6 sm:grid-cols-2 lg:grid-cols-3'>
             {tools.map(tool => (
               <ToolCard key={tool.id} tool={tool} />
+            ))}
+          </div>
+
+          <h2 className='mt-14 mb-2 text-2xl font-bold text-gray-900'>Choosing between tools</h2>
+          <p className='mb-6 text-gray-500'>
+            Which tool fits a given study design, what separates the alternatives, and what changed
+            between versions
+          </p>
+          <div className='grid gap-6 sm:grid-cols-2'>
+            {comparisons.map(comparison => (
+              <ComparisonCard key={comparison.slug} comparison={comparison} />
             ))}
           </div>
 
