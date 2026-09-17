@@ -99,6 +99,13 @@
       "when": 1789609643020,
       "tag": "0013_better_auth_1_7_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1789611283501,
+      "tag": "0014_subscription_billing_interval",
+      "breakpoints": true
     }
   ]
 }
