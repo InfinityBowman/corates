@@ -34,6 +34,8 @@ export function AssignReviewersSheet({ open, onOpenChange }: AssignReviewersShee
         side='right'
         className='w-full gap-0 sm:max-w-xl'
         data-testid='assign-reviewers-sheet'
+        // Focus lands on the panel, not Clear all, whose tooltip would otherwise open on focus.
+        onOpenAutoFocus={event => event.preventDefault()}
       >
         <SheetHeader>
           <SheetTitle>Assign reviewers</SheetTitle>

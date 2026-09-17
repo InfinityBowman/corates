@@ -2,8 +2,8 @@
  * AutoFillSettings - Per-member share of the studies Auto-fill hands out.
  */
 
-import { useId } from 'react';
-import { SlidersHorizontalIcon } from 'lucide-react';
+import { useId, useState } from 'react';
+import { SlidersHorizontalIcon, WandSparklesIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -16,6 +16,9 @@ interface AutoFillSettingsProps {
   currentUserId: string | null;
   shares: Record<string, number>;
   onChange: (shares: Record<string, number>) => void;
+  onAutoFill: () => void;
+  /** Mirrors the header button, which reads Reshuffle once every slot is filled. */
+  autoFillLabel: string;
   disabled?: boolean;
 }
 
@@ -33,16 +36,19 @@ export function AutoFillSettings({
   currentUserId,
   shares,
   onChange,
+  onAutoFill,
+  autoFillLabel,
   disabled,
 }: AutoFillSettingsProps) {
   const id = useId();
+  const [open, setOpen] = useState(false);
   const total = members.reduce((sum, m) => sum + (shares[m.userId] ?? 0), 0);
   const isEven = members.every(
     m => shares[m.userId] === evenShares(members.map(x => x.userId))[m.userId],
   );
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <Tooltip>
         <TooltipTrigger asChild>
           <PopoverTrigger asChild>
@@ -127,6 +133,17 @@ export function AutoFillSettings({
             onClick={() => onChange(evenShares(members.map(m => m.userId)))}
           >
             Reset to even
+          </Button>
+          <Button
+            size='xs'
+            disabled={total === 0}
+            onClick={() => {
+              setOpen(false);
+              onAutoFill();
+            }}
+          >
+            <WandSparklesIcon />
+            {autoFillLabel}
           </Button>
         </div>
       </PopoverContent>

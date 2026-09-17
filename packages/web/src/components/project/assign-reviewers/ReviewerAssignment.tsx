@@ -98,7 +98,9 @@ export function ReviewerAssignment({
   );
   const load = countLoad(draft, baseLoad);
 
-  const changedRows = rows.filter(row => !sameSlots(draft[row.id] ?? slotsOf(row), slotsOf(row)));
+  const changedRowsOf = (next: SlotRows) =>
+    rows.filter(row => !sameSlots(next[row.id] ?? slotsOf(row), slotsOf(row)));
+  const changedRows = changedRowsOf(draft);
   const completeCount = rows.filter(row => {
     const slots = draft[row.id];
     return slots?.reviewer1 && slots.reviewer2;
@@ -107,6 +109,10 @@ export function ReviewerAssignment({
   const hasFilledSlot = rows.some(row => draft[row.id]?.reviewer1 || draft[row.id]?.reviewer2);
   const canAutoFill = hasEmptySlot || autoFilled.size > 0;
   const isReshuffle = autoFilled.size > 0 && !hasEmptySlot;
+  const autoFillLabel = isReshuffle ? 'Reshuffle' : 'Auto-fill';
+  const hasEligibleMember = members.some(m => effectiveShares[m.userId] > 0);
+  // Nothing edited yet but slots still open: the primary action fills and saves in one go.
+  const offerAutoFillSave = changedRows.length === 0 && hasEmptySlot;
 
   const setSlot = (studyId: string, slot: keyof ReviewerSlots, userId: string | null) => {
     setDraft(prev => ({ ...prev, [studyId]: { ...prev[studyId], [slot]: userId } }));
@@ -132,7 +138,7 @@ export function ReviewerAssignment({
     setAutoFilled(new Set());
   };
 
-  const handleAutoFill = () => {
+  const handleAutoFill = (): SlotRows => {
     const cleared: SlotRows = {};
     for (const [studyId, slots] of Object.entries(draft)) {
       cleared[studyId] = {
@@ -153,6 +159,7 @@ export function ReviewerAssignment({
     }
     setDraft(filled);
     setAutoFilled(chosen);
+    return filled;
   };
 
   // Rows whose outgoing reviewer has in-progress work; saving asks first.
@@ -161,29 +168,35 @@ export function ReviewerAssignment({
     canHandOver: boolean;
   } | null>(null);
 
-  const handleSave = () => {
-    const blockedRows = changedRows.filter(
-      row => getInProgressChecklistsOfLeavingReviewers(row, draft[row.id]).length > 0,
+  const handleSave = (next: SlotRows) => {
+    const blockedRows = changedRowsOf(next).filter(
+      row => getInProgressChecklistsOfLeavingReviewers(row, next[row.id]).length > 0,
     );
     if (blockedRows.length > 0) {
       setInProgressPrompt({
         count: blockedRows.reduce(
-          (n, row) => n + getInProgressChecklistsOfLeavingReviewers(row, draft[row.id]).length,
+          (n, row) => n + getInProgressChecklistsOfLeavingReviewers(row, next[row.id]).length,
           0,
         ),
-        canHandOver: blockedRows.every(row => canHandOver(row, draft[row.id])),
+        canHandOver: blockedRows.every(row => canHandOver(row, next[row.id])),
       });
       return;
     }
-    void commitSave(undefined);
+    void commitSave(next, undefined);
   };
 
-  const commitSave = async (onInProgress: InProgressPolicy | undefined) => {
+  const handleAutoFillAndSave = () => {
+    const filled = handleAutoFill();
+    // Stay open if the shares left every slot as it was, so the user can adjust them.
+    if (changedRowsOf(filled).length > 0) handleSave(filled);
+  };
+
+  const commitSave = async (next: SlotRows, onInProgress: InProgressPolicy | undefined) => {
     setInProgressPrompt(null);
     let saved = 0;
-    for (const row of changedRows) {
+    for (const row of changedRowsOf(next)) {
       try {
-        onSave(row.id, draft[row.id], onInProgress);
+        onSave(row.id, next[row.id], onInProgress);
         saved++;
       } catch (err) {
         const { handleError } = await import('@/lib/error-utils');
@@ -275,7 +288,7 @@ export function ReviewerAssignment({
                     className='rounded-r-none'
                   >
                     <WandSparklesIcon />
-                    {isReshuffle ? 'Reshuffle' : 'Auto-fill'}
+                    {autoFillLabel}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent className='max-w-64'>
@@ -290,6 +303,8 @@ export function ReviewerAssignment({
                 currentUserId={currentUserId}
                 shares={effectiveShares}
                 onChange={setShares}
+                onAutoFill={handleAutoFill}
+                autoFillLabel={autoFillLabel}
                 disabled={!canAutoFill}
               />
             </div>
@@ -373,9 +388,15 @@ export function ReviewerAssignment({
         <Button variant='outline' onClick={onClose}>
           Cancel
         </Button>
-        <Button onClick={handleSave} disabled={changedRows.length === 0}>
-          Save reviewers
-        </Button>
+        {offerAutoFillSave ?
+          <Button onClick={handleAutoFillAndSave} disabled={!hasEligibleMember}>
+            <WandSparklesIcon />
+            Auto-fill and save
+          </Button>
+        : <Button onClick={() => handleSave(draft)} disabled={changedRows.length === 0}>
+            Save reviewers
+          </Button>
+        }
       </SheetFooter>
 
       <AlertDialog
@@ -402,11 +423,14 @@ export function ReviewerAssignment({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction variant='destructive' onClick={() => void commitSave('discard')}>
+            <AlertDialogAction
+              variant='destructive'
+              onClick={() => void commitSave(draft, 'discard')}
+            >
               Discard
             </AlertDialogAction>
             {inProgressPrompt?.canHandOver && (
-              <AlertDialogAction onClick={() => void commitSave('handOver')}>
+              <AlertDialogAction onClick={() => void commitSave(draft, 'handOver')}>
                 Hand over
               </AlertDialogAction>
             )}
