@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Link } from '@tanstack/react-router';
 import {
   ArrowRightIcon,
@@ -15,7 +14,6 @@ import {
   QuoteIcon,
   GitBranchIcon,
 } from 'lucide-react';
-import { config } from '@/lib/config';
 import { ResourceCta } from '@/components/resources/ResourceCta';
 import { SectionCard } from '@/components/resources/SectionCard';
 import type { ToolContent, ScoreLevel, DomainSummary, FaqEntry } from '@/lib/tool-content';
@@ -134,235 +132,180 @@ function FaqSection({ faq }: { faq: FaqEntry[] }) {
 }
 
 function ToolContentView({ tool }: { tool: ToolContent }) {
-  const pageUrl = `${config.appUrl}/resources/${tool.slug}`;
-
-  const breadcrumbSchema = useMemo(
-    () =>
-      JSON.stringify({
-        '@context': 'https://schema.org',
-        '@type': 'BreadcrumbList',
-        itemListElement: [
-          {
-            '@type': 'ListItem',
-            position: 1,
-            name: 'Home',
-            item: config.appUrl,
-          },
-          {
-            '@type': 'ListItem',
-            position: 2,
-            name: 'Resources',
-            item: `${config.appUrl}/resources`,
-          },
-          {
-            '@type': 'ListItem',
-            position: 3,
-            name: tool.name,
-            item: pageUrl,
-          },
-        ],
-      }),
-    [tool.name, pageUrl],
-  );
-
-  // FAQPage JSON-LD enables Google's FAQ rich snippet in search results.
-  const faqSchema = useMemo(() => {
-    if (!tool.faq || tool.faq.length === 0) return null;
-    return JSON.stringify({
-      '@context': 'https://schema.org',
-      '@type': 'FAQPage',
-      mainEntity: tool.faq.map(entry => ({
-        '@type': 'Question',
-        name: entry.question,
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: entry.answer,
-        },
-      })),
-    });
-  }, [tool.faq]);
-
   return (
-    <>
-      <script type='application/ld+json' dangerouslySetInnerHTML={{ __html: breadcrumbSchema }} />
-      {faqSchema && (
-        <script type='application/ld+json' dangerouslySetInnerHTML={{ __html: faqSchema }} />
-      )}
+    <main className='flex-1 py-12'>
+      <div className='mx-auto max-w-4xl px-6'>
+        <h1 className='mb-2 text-4xl font-bold text-gray-900'>{tool.name}</h1>
+        <p className='mb-8 text-gray-500'>Appraisal tool guidance</p>
 
-      <main className='flex-1 py-12'>
-        <div className='mx-auto max-w-4xl px-6'>
-          <h1 className='mb-2 text-4xl font-bold text-gray-900'>{tool.name}</h1>
-          <p className='mb-8 text-gray-500'>Appraisal tool guidance</p>
+        <div className='flex flex-col gap-8 leading-relaxed text-gray-700'>
+          <div>
+            <h2 className='mb-4 text-2xl font-semibold text-gray-900'>{tool.name}</h2>
+            {tool.fullName && <p className='mb-3 text-sm text-gray-500'>{tool.fullName}</p>}
+            <p className='mb-6 text-gray-600'>{tool.description}</p>
+            {tool.versionNote && (
+              <p className='rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900'>
+                {tool.versionNote}
+              </p>
+            )}
+          </div>
 
-          <div className='flex flex-col gap-8 leading-relaxed text-gray-700'>
-            <div>
-              <h2 className='mb-4 text-2xl font-semibold text-gray-900'>{tool.name}</h2>
-              {tool.fullName && <p className='mb-3 text-sm text-gray-500'>{tool.fullName}</p>}
-              <p className='mb-6 text-gray-600'>{tool.description}</p>
-              {tool.versionNote && (
-                <p className='rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900'>
-                  {tool.versionNote}
-                </p>
+          <SectionCard icon={FileTextIcon} title='Best used for'>
+            <p className='text-gray-600'>{tool.bestUsedFor}</p>
+            {tool.studyTypes && tool.studyTypes.length > 0 && (
+              <ul className='mt-4 list-inside list-disc space-y-1 text-gray-600'>
+                {tool.studyTypes.map(type => (
+                  <li key={type}>{type}</li>
+                ))}
+              </ul>
+            )}
+          </SectionCard>
+
+          {tool.domains && tool.domains.length > 0 && (
+            <DomainsSection domains={tool.domains} intro={tool.domainsIntro} />
+          )}
+
+          {(tool.whenToUse || tool.whenNotToUse) && (
+            <SectionCard icon={CheckCircleIcon} title='When to use this tool'>
+              {tool.whenToUse && <p className='mb-4 text-gray-600'>{tool.whenToUse}</p>}
+              {tool.whenNotToUse && (
+                <>
+                  <h3 className='mb-2 font-semibold text-gray-900'>When not to use it</h3>
+                  <p className='text-gray-600'>{tool.whenNotToUse}</p>
+                </>
               )}
-            </div>
+            </SectionCard>
+          )}
 
-            <SectionCard icon={FileTextIcon} title='Best used for'>
-              <p className='text-gray-600'>{tool.bestUsedFor}</p>
-              {tool.studyTypes && tool.studyTypes.length > 0 && (
-                <ul className='mt-4 list-inside list-disc space-y-1 text-gray-600'>
-                  {tool.studyTypes.map(type => (
-                    <li key={type}>{type}</li>
+          {tool.comparisonWithAlternatives && (
+            <SectionCard icon={GitBranchIcon} title='How it compares to related tools'>
+              <p className='text-gray-600'>{tool.comparisonWithAlternatives}</p>
+              {tool.comparisonLinks && tool.comparisonLinks.length > 0 && (
+                <ul className='mt-4 flex flex-col gap-2'>
+                  {tool.comparisonLinks.map(link => (
+                    <li key={link.to}>
+                      <Link
+                        to={link.to}
+                        className='inline-flex items-center gap-2 font-medium text-blue-600 hover:text-blue-700'
+                      >
+                        {link.label}
+                        <ArrowRightIcon className='size-4' />
+                      </Link>
+                    </li>
                   ))}
                 </ul>
               )}
             </SectionCard>
+          )}
 
-            {tool.domains && tool.domains.length > 0 && (
-              <DomainsSection domains={tool.domains} intro={tool.domainsIntro} />
-            )}
+          <div className='border-t border-gray-200 pt-8'>
+            <h2 className='mb-4 text-xl font-semibold text-gray-900'>Scoring</h2>
+            <p className='mb-6 text-gray-600'>{tool.scoringDescription}</p>
 
-            {(tool.whenToUse || tool.whenNotToUse) && (
-              <SectionCard icon={CheckCircleIcon} title='When to use this tool'>
-                {tool.whenToUse && <p className='mb-4 text-gray-600'>{tool.whenToUse}</p>}
-                {tool.whenNotToUse && (
-                  <>
-                    <h3 className='mb-2 font-semibold text-gray-900'>When not to use it</h3>
-                    <p className='text-gray-600'>{tool.whenNotToUse}</p>
-                  </>
-                )}
-              </SectionCard>
-            )}
-
-            {tool.comparisonWithAlternatives && (
-              <SectionCard icon={GitBranchIcon} title='How it compares to related tools'>
-                <p className='text-gray-600'>{tool.comparisonWithAlternatives}</p>
-                {tool.comparisonLinks && tool.comparisonLinks.length > 0 && (
-                  <ul className='mt-4 flex flex-col gap-2'>
-                    {tool.comparisonLinks.map(link => (
-                      <li key={link.to}>
-                        <Link
-                          to={link.to}
-                          className='inline-flex items-center gap-2 font-medium text-blue-600 hover:text-blue-700'
-                        >
-                          {link.label}
-                          <ArrowRightIcon className='size-4' />
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </SectionCard>
-            )}
-
-            <div className='border-t border-gray-200 pt-8'>
-              <h2 className='mb-4 text-xl font-semibold text-gray-900'>Scoring</h2>
-              <p className='mb-6 text-gray-600'>{tool.scoringDescription}</p>
-
-              <div className='grid gap-4'>
-                {tool.scoreLevels.map(level => (
-                  <ScoreLevelCard key={level.name} level={level} />
-                ))}
-              </div>
+            <div className='grid gap-4'>
+              {tool.scoreLevels.map(level => (
+                <ScoreLevelCard key={level.name} level={level} />
+              ))}
             </div>
+          </div>
 
-            {tool.workflowInCoRATES && (
-              <SectionCard icon={ZapIcon} title='How CoRATES supports this tool'>
-                <p className='text-gray-600'>{tool.workflowInCoRATES}</p>
-              </SectionCard>
-            )}
+          {tool.workflowInCoRATES && (
+            <SectionCard icon={ZapIcon} title='How CoRATES supports this tool'>
+              <p className='text-gray-600'>{tool.workflowInCoRATES}</p>
+            </SectionCard>
+          )}
 
-            <ResourceCta tool={tool} placement='workflow' />
+          <ResourceCta tool={tool} placement='workflow' />
 
-            <SectionCard icon={ExternalLinkIcon} title='Reference Documents'>
+          <SectionCard icon={ExternalLinkIcon} title='Reference Documents'>
+            <ul className='flex flex-col gap-3 text-gray-600'>
+              {tool.referenceLinks.map(link => (
+                <li key={link.href}>
+                  <a
+                    href={link.href}
+                    target='_blank'
+                    rel='external noopener noreferrer'
+                    className='inline-flex items-center gap-2 font-medium text-blue-600 hover:text-blue-700'
+                  >
+                    {link.text}
+                    <ExternalLinkIcon className='size-4' />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </SectionCard>
+
+          {tool.versionHistory && (
+            <SectionCard icon={HistoryIcon} title='Version history'>
+              <p className='text-gray-600'>{tool.versionHistory}</p>
+            </SectionCard>
+          )}
+
+          {tool.commonPitfalls && tool.commonPitfalls.length > 0 && (
+            <SectionCard icon={AlertTriangleIcon} title='Common pitfalls'>
               <ul className='flex flex-col gap-3 text-gray-600'>
-                {tool.referenceLinks.map(link => (
-                  <li key={link.href}>
-                    <a
-                      href={link.href}
-                      target='_blank'
-                      rel='external noopener noreferrer'
-                      className='inline-flex items-center gap-2 font-medium text-blue-600 hover:text-blue-700'
-                    >
-                      {link.text}
-                      <ExternalLinkIcon className='size-4' />
-                    </a>
+                {tool.commonPitfalls.map(pitfall => (
+                  <li key={pitfall} className='flex gap-3'>
+                    {/* mt-1 optically centers the 20px icon on the 26px first
+                          text line (leading-relaxed) instead of top-aligning */}
+                    <AlertCircleIcon className='mt-1 size-5 shrink-0 text-orange-500' />
+                    <span>{pitfall}</span>
                   </li>
                 ))}
               </ul>
             </SectionCard>
+          )}
 
-            {tool.versionHistory && (
-              <SectionCard icon={HistoryIcon} title='Version history'>
-                <p className='text-gray-600'>{tool.versionHistory}</p>
-              </SectionCard>
-            )}
+          {tool.faq && tool.faq.length > 0 && <FaqSection faq={tool.faq} />}
 
-            {tool.commonPitfalls && tool.commonPitfalls.length > 0 && (
-              <SectionCard icon={AlertTriangleIcon} title='Common pitfalls'>
-                <ul className='flex flex-col gap-3 text-gray-600'>
-                  {tool.commonPitfalls.map(pitfall => (
-                    <li key={pitfall} className='flex gap-3'>
-                      {/* mt-1 optically centers the 20px icon on the 26px first
-                          text line (leading-relaxed) instead of top-aligning */}
-                      <AlertCircleIcon className='mt-1 size-5 shrink-0 text-orange-500' />
-                      <span>{pitfall}</span>
-                    </li>
-                  ))}
-                </ul>
-              </SectionCard>
-            )}
+          {tool.developedBy && (
+            <SectionCard icon={BookOpenIcon} title='About the tool'>
+              <p className='text-gray-600'>{tool.developedBy}</p>
+            </SectionCard>
+          )}
 
-            {tool.faq && tool.faq.length > 0 && <FaqSection faq={tool.faq} />}
+          {tool.citations && tool.citations.length > 0 && (
+            <SectionCard icon={QuoteIcon} title='Further reading'>
+              <ul className='flex flex-col gap-3 text-sm text-gray-600'>
+                {tool.citations.map(citation => (
+                  <li key={citation.title}>
+                    {citation.authors} ({citation.year}). {citation.title}.{' '}
+                    <em>{citation.source}</em>
+                    {citation.url && (
+                      <>
+                        .{' '}
+                        <a
+                          href={citation.url}
+                          target='_blank'
+                          rel='external noopener noreferrer'
+                          className='font-medium text-blue-600 hover:text-blue-700'
+                        >
+                          View
+                        </a>
+                      </>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </SectionCard>
+          )}
 
-            {tool.developedBy && (
-              <SectionCard icon={BookOpenIcon} title='About the tool'>
-                <p className='text-gray-600'>{tool.developedBy}</p>
-              </SectionCard>
-            )}
+          <ResourceCta tool={tool} placement='page-end' />
 
-            {tool.citations && tool.citations.length > 0 && (
-              <SectionCard icon={QuoteIcon} title='Further reading'>
-                <ul className='flex flex-col gap-3 text-sm text-gray-600'>
-                  {tool.citations.map(citation => (
-                    <li key={citation.title}>
-                      {citation.authors} ({citation.year}). {citation.title}.{' '}
-                      <em>{citation.source}</em>
-                      {citation.url && (
-                        <>
-                          .{' '}
-                          <a
-                            href={citation.url}
-                            target='_blank'
-                            rel='external noopener noreferrer'
-                            className='font-medium text-blue-600 hover:text-blue-700'
-                          >
-                            View
-                          </a>
-                        </>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </SectionCard>
-            )}
-
-            <ResourceCta tool={tool} placement='page-end' />
-
-            <div className='rounded-lg border border-gray-200 bg-gray-50 p-6'>
-              <p className='text-sm leading-relaxed text-gray-600'>
-                CoRATES supports the structured use of this appraisal framework by providing
-                workflow, documentation, and collaboration features. CoRATES does not reproduce,
-                modify, or replace the instrument.
-              </p>
-              <p className='mt-2 text-sm leading-relaxed text-gray-600'>
-                This framework is the intellectual property of its original authors. Users should
-                consult the official publications and guidance linked above when applying the tool.
-              </p>
-            </div>
+          <div className='rounded-lg border border-gray-200 bg-gray-50 p-6'>
+            <p className='text-sm leading-relaxed text-gray-600'>
+              CoRATES supports the structured use of this appraisal framework by providing workflow,
+              documentation, and collaboration features. CoRATES does not reproduce, modify, or
+              replace the instrument.
+            </p>
+            <p className='mt-2 text-sm leading-relaxed text-gray-600'>
+              This framework is the intellectual property of its original authors. Users should
+              consult the official publications and guidance linked above when applying the tool.
+            </p>
           </div>
         </div>
-      </main>
-    </>
+      </div>
+    </main>
   );
 }
 

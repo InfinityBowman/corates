@@ -3,27 +3,13 @@ import ComparisonPage from '../../components/resources/ComparisonPage';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import { getComparisonBySlug } from '../../lib/comparison-content';
-import { config } from '../../lib/config';
+import { RESOURCE_CACHE_HEADERS, comparisonPageHead } from '../../lib/resource-head';
 
 const comparison = getComparisonBySlug('rob1-vs-rob2')!;
-const pageUrl = `${config.appUrl}/resources/rob1-vs-rob2`;
 
 export const Route = createFileRoute('/resources/rob1-vs-rob2')({
-  headers: () => ({
-    'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
-  }),
-  head: () => ({
-    meta: [
-      { title: comparison.metaTitle },
-      { name: 'description', content: comparison.metaDescription },
-      { property: 'og:title', content: comparison.metaTitle },
-      { property: 'og:description', content: comparison.metaDescription },
-      { property: 'og:url', content: pageUrl },
-      { name: 'twitter:title', content: comparison.metaTitle },
-      { name: 'twitter:description', content: comparison.metaDescription },
-    ],
-    links: [{ rel: 'canonical', href: pageUrl }],
-  }),
+  headers: () => RESOURCE_CACHE_HEADERS,
+  head: () => comparisonPageHead(comparison),
   component: Rob1VsRob2Page,
 });
 
