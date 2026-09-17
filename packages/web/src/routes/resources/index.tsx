@@ -2,33 +2,19 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowRightIcon, FileTextIcon, GitCompareIcon } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
-import { config } from '../../lib/config';
+import { RESOURCE_CACHE_HEADERS, resourcesIndexHead } from '../../lib/resource-head';
 import { getAllTools } from '../../lib/tool-content';
 import type { ToolContent } from '../../lib/tool-content';
 import { getAllComparisons } from '../../lib/comparison-content';
 import type { ComparisonContent } from '../../lib/comparison-content';
 
-const pageUrl = `${config.appUrl}/resources`;
 const title = 'Risk of Bias and Quality Appraisal Tools | CoRATES';
 const description =
   'Guides to the appraisal tools CoRATES supports: RoB 2 for randomized trials, ROBINS-I for non-randomized studies, and AMSTAR 2 for systematic reviews, plus comparisons to help you choose between them.';
 
 export const Route = createFileRoute('/resources/')({
-  headers: () => ({
-    'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
-  }),
-  head: () => ({
-    meta: [
-      { title },
-      { name: 'description', content: description },
-      { property: 'og:title', content: title },
-      { property: 'og:description', content: description },
-      { property: 'og:url', content: pageUrl },
-      { name: 'twitter:title', content: title },
-      { name: 'twitter:description', content: description },
-    ],
-    links: [{ rel: 'canonical', href: pageUrl }],
-  }),
+  headers: () => RESOURCE_CACHE_HEADERS,
+  head: () => resourcesIndexHead(title, description),
   component: ResourcesPage,
 });
 

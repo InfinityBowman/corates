@@ -74,6 +74,9 @@ export interface ComparisonContent {
   title: string;
   metaTitle: string;
   metaDescription: string;
+  /** Calendar days (YYYY-MM-DD); bump dateModified when the copy or meta changes */
+  datePublished: string;
+  dateModified: string;
   intro: string[];
   quickAnswers: QuickAnswer[];
   sections: ComparisonSection[];
@@ -96,6 +99,8 @@ const COMPARISON_CONTENT: Record<string, ComparisonContent> = {
     metaTitle: 'RoB 2 vs ROBINS-I: Which Risk of Bias Tool to Use | CoRATES',
     metaDescription:
       'RoB 2 assesses randomized trials and ROBINS-I V2 assesses non-randomized studies of interventions. A design-by-design guide to choosing, the differences that matter, and how to handle a review with both.',
+    datePublished: '2026-09-16',
+    dateModified: '2026-09-16',
     intro: [
       'RoB 2 and ROBINS-I are companion tools from the Cochrane Bias Methods Group, and the line between them is drawn by study design rather than by topic, by quality, or by what the study calls itself. If participants were allocated to interventions by a genuinely random process, use RoB 2. If they were not, use ROBINS-I. Most of the questions people bring to this choice are about designs near that line, or about what to do when a review includes both.',
       'This page gives the short answer first, then a design-by-design guide, a side-by-side comparison, and the differences that matter once you start reporting and synthesising results. It describes the tools; it does not reproduce their signalling questions, which belong to the tool developers and are linked at the end.',
@@ -523,6 +528,8 @@ const COMPARISON_CONTENT: Record<string, ComparisonContent> = {
     metaTitle: 'AMSTAR 2 vs ROBIS: Appraising Systematic Reviews | CoRATES',
     metaDescription:
       'AMSTAR 2 rates the methodological quality of intervention reviews. ROBIS assesses risk of bias in reviews of any question type. When each fits, how they differ, and how to use them in an umbrella review.',
+    datePublished: '2026-09-16',
+    dateModified: '2026-09-16',
     intro: [
       "AMSTAR 2 and ROBIS are the two tools most often used to appraise systematic reviews, whether in an umbrella review, in guideline development, or in a health technology assessment that leans on an existing review. They cover much of the same ground and their verdicts usually agree, but they ask different questions. AMSTAR 2 asks how well the review was conducted; ROBIS asks whether the review's conclusions are likely to be biased. The Cochrane Handbook's chapter on overviews does not recommend one over the other, citing a lack of empirical evidence, so the choice needs to be made and justified in your protocol.",
       'This page sets out when each tool fits, the structural differences, what the empirical comparisons found, and the mistakes that show up most often in practice.',
@@ -765,6 +772,8 @@ const COMPARISON_CONTENT: Record<string, ComparisonContent> = {
     metaTitle: 'RoB 1 vs RoB 2: What Changed and Which to Use | CoRATES',
     metaDescription:
       'How the original Cochrane risk-of-bias tool differs from RoB 2: the domain mapping, the end of Unclear, per-result assessment, and what to do with a review that used the older tool.',
+    datePublished: '2026-09-16',
+    dateModified: '2026-09-16',
     intro: [
       'The original Cochrane risk-of-bias tool was introduced in 2008 and revised in 2011. Most people now call it RoB 1, although that name was never official. RoB 2 was published in 2019 and is the recommended tool for randomized trials in Cochrane Reviews. The two cover the same ground, but RoB 2 is a replacement rather than a new edition: it restructured the domains, replaced free judgements with signalling questions and algorithms, dropped the Unclear category, and moved the unit of assessment from the trial to the result.',
       'This page maps the old domains onto the new ones, explains where the two tools genuinely disagree about the same trial, and covers the practical question that generates most searches: what to do with a review, or an update, that used RoB 1.',
@@ -1093,6 +1102,8 @@ const COMPARISON_CONTENT: Record<string, ComparisonContent> = {
     metaTitle: 'ROBINS-I V2: What Changed From Version 1 | CoRATES',
     metaDescription:
       'ROBINS-I V2 drops a domain, adds algorithms, a triage step, graded responses and immortal-time questions, and narrows its scope to cohort studies. What changed, and what it means for a review in progress.',
+    datePublished: '2026-09-16',
+    dateModified: '2026-09-16',
     intro: [
       'ROBINS-I was published in 2016 and became the recommended risk-of-bias tool for non-randomized studies of interventions in Cochrane Reviews. Version 2 was first released in November 2024, and the current document, posted on 20 November 2025, is still described by the developers as a draft subject to change. It keeps the ideas that defined the original: assessment of one result at a time against a target trial, confounding as the central concern, and a four-level scale anchored to a well-performed randomized trial. But it changes enough of the structure that V1 and V2 assessments are not interchangeable.',
       'This page lists what changed, explains the reasoning behind the larger changes, and sets out what a review team should do if it started under V1.',

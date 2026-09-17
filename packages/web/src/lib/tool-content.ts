@@ -48,6 +48,15 @@ export interface ToolContent {
   id: string;
   name: string;
   slug: string;
+  metaTitle: string;
+  metaDescription: string;
+  /**
+   * Calendar days (YYYY-MM-DD). datePublished is the day the page first went
+   * into the repo; bump dateModified whenever the page's copy or meta changes.
+   * They feed the page's JSON-LD and the sitemap lastmod.
+   */
+  datePublished: string;
+  dateModified: string;
   /** Preselected on /checklist when a visitor follows this page's CTA */
   checklistType: ChecklistTypeValue;
   description: string;
@@ -82,6 +91,11 @@ const TOOL_CONTENT: Record<string, ToolContent> = {
     id: 'amstar2',
     name: 'AMSTAR 2',
     slug: 'amstar2',
+    metaTitle: 'AMSTAR 2: Appraising Systematic Review Quality | CoRATES',
+    metaDescription:
+      'How AMSTAR 2 rates confidence in a systematic review: 16 items, seven critical domains, High to Critically Low ratings, and links to the official guidance.',
+    datePublished: '2026-03-07',
+    dateModified: '2026-09-16',
     checklistType: CHECKLIST_TYPES.AMSTAR2,
     fullName: 'A MeaSurement Tool to Assess systematic Reviews, version 2',
     developedBy:
@@ -280,6 +294,11 @@ const TOOL_CONTENT: Record<string, ToolContent> = {
     id: 'robinsI',
     name: 'ROBINS-I V2',
     slug: 'robins-i',
+    metaTitle: 'ROBINS-I: Non-Randomized Studies Risk of Bias | CoRATES',
+    metaDescription:
+      'How ROBINS-I assesses risk of bias in non-randomized studies of interventions: the bias domains, risk-of-bias judgements, and links to official guidance.',
+    datePublished: '2026-03-07',
+    dateModified: '2026-09-16',
     checklistType: CHECKLIST_TYPES.ROBINS_I,
     fullName: 'Risk Of Bias In Non-randomized Studies - of Interventions, Version 2',
     developedBy:
@@ -474,6 +493,11 @@ const TOOL_CONTENT: Record<string, ToolContent> = {
     id: 'rob2',
     name: 'RoB 2',
     slug: 'rob2',
+    metaTitle: 'RoB 2: Cochrane Risk of Bias Tool Guide | CoRATES',
+    metaDescription:
+      'How the Cochrane RoB 2 tool assesses risk of bias in randomized trials: the five bias domains, the overall risk-of-bias judgements, and official guidance.',
+    datePublished: '2026-03-07',
+    dateModified: '2026-09-16',
     checklistType: CHECKLIST_TYPES.ROB2,
     fullName: 'Cochrane Risk of Bias tool for randomized trials, version 2',
     developedBy:

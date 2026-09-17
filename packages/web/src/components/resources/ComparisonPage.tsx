@@ -6,7 +6,6 @@ import {
   QuoteIcon,
   LinkIcon,
 } from 'lucide-react';
-import { config } from '@/lib/config';
 import { clientLogger } from '@/lib/clientLogger';
 import { SectionCard } from '@/components/resources/SectionCard';
 import { DecisionTree } from '@/components/resources/DecisionTree';
@@ -119,152 +118,124 @@ function ComparisonCta({ comparison }: { comparison: ComparisonContent }) {
 }
 
 export default function ComparisonPage({ comparison }: { comparison: ComparisonContent }) {
-  const pageUrl = `${config.appUrl}/resources/${comparison.slug}`;
-
-  const breadcrumbSchema = JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: config.appUrl },
-      { '@type': 'ListItem', position: 2, name: 'Resources', item: `${config.appUrl}/resources` },
-      { '@type': 'ListItem', position: 3, name: comparison.title, item: pageUrl },
-    ],
-  });
-
-  const faqSchema = JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: comparison.faq.map(entry => ({
-      '@type': 'Question',
-      name: entry.question,
-      acceptedAnswer: { '@type': 'Answer', text: entry.answer },
-    })),
-  });
-
   return (
-    <>
-      <script type='application/ld+json' dangerouslySetInnerHTML={{ __html: breadcrumbSchema }} />
-      <script type='application/ld+json' dangerouslySetInnerHTML={{ __html: faqSchema }} />
+    <main className='flex-1 py-12'>
+      <div className='mx-auto max-w-4xl px-6'>
+        <h1 className='mb-2 text-4xl font-bold text-gray-900'>{comparison.title}</h1>
+        <p className='mb-8 text-gray-500'>Choosing an appraisal tool</p>
 
-      <main className='flex-1 py-12'>
-        <div className='mx-auto max-w-4xl px-6'>
-          <h1 className='mb-2 text-4xl font-bold text-gray-900'>{comparison.title}</h1>
-          <p className='mb-8 text-gray-500'>Choosing an appraisal tool</p>
+        <div className='flex flex-col gap-8 leading-relaxed text-gray-700'>
+          <div className='flex flex-col gap-4'>
+            {comparison.intro.map(paragraph => (
+              <p key={paragraph} className='text-gray-600'>
+                {paragraph}
+              </p>
+            ))}
+          </div>
 
-          <div className='flex flex-col gap-8 leading-relaxed text-gray-700'>
-            <div className='flex flex-col gap-4'>
-              {comparison.intro.map(paragraph => (
-                <p key={paragraph} className='text-gray-600'>
+          <section>
+            <h2 className='mb-4 text-2xl font-semibold text-gray-900'>The short answer</h2>
+            <div className='grid gap-4 sm:grid-cols-3'>
+              {comparison.quickAnswers.map(item => (
+                <QuickAnswerCard key={item.situation} item={item} />
+              ))}
+            </div>
+          </section>
+
+          {comparison.sections.map(section => (
+            <section key={section.heading}>
+              <h2 className='mb-3 text-2xl font-semibold text-gray-900'>{section.heading}</h2>
+              {section.paragraphs.map(paragraph => (
+                <p key={paragraph} className='mb-4 text-gray-600'>
                   {paragraph}
                 </p>
               ))}
-            </div>
-
-            <section>
-              <h2 className='mb-4 text-2xl font-semibold text-gray-900'>The short answer</h2>
-              <div className='grid gap-4 sm:grid-cols-3'>
-                {comparison.quickAnswers.map(item => (
-                  <QuickAnswerCard key={item.situation} item={item} />
-                ))}
-              </div>
+              {section.decisionTree && <DecisionTree root={section.decisionTree} />}
+              {section.domainMapping && <DomainMappingFigure mapping={section.domainMapping} />}
+              {section.table && <ComparisonTableView table={section.table} />}
             </section>
+          ))}
 
-            {comparison.sections.map(section => (
-              <section key={section.heading}>
-                <h2 className='mb-3 text-2xl font-semibold text-gray-900'>{section.heading}</h2>
-                {section.paragraphs.map(paragraph => (
-                  <p key={paragraph} className='mb-4 text-gray-600'>
-                    {paragraph}
-                  </p>
-                ))}
-                {section.decisionTree && <DecisionTree root={section.decisionTree} />}
-                {section.domainMapping && <DomainMappingFigure mapping={section.domainMapping} />}
-                {section.table && <ComparisonTableView table={section.table} />}
-              </section>
-            ))}
+          <ComparisonCta comparison={comparison} />
 
-            <ComparisonCta comparison={comparison} />
+          <SectionCard icon={HelpCircleIcon} title='Frequently asked questions'>
+            <dl className='flex flex-col gap-5'>
+              {comparison.faq.map(entry => (
+                <div key={entry.question}>
+                  <dt className='mb-1 font-semibold text-gray-900'>{entry.question}</dt>
+                  <dd className='text-gray-600'>{entry.answer}</dd>
+                </div>
+              ))}
+            </dl>
+          </SectionCard>
 
-            <SectionCard icon={HelpCircleIcon} title='Frequently asked questions'>
-              <dl className='flex flex-col gap-5'>
-                {comparison.faq.map(entry => (
-                  <div key={entry.question}>
-                    <dt className='mb-1 font-semibold text-gray-900'>{entry.question}</dt>
-                    <dd className='text-gray-600'>{entry.answer}</dd>
-                  </div>
-                ))}
-              </dl>
-            </SectionCard>
+          <SectionCard icon={ExternalLinkIcon} title='Reference Documents'>
+            <ul className='flex flex-col gap-3 text-gray-600'>
+              {comparison.referenceLinks.map(link => (
+                <li key={link.href}>
+                  <a
+                    href={link.href}
+                    target='_blank'
+                    rel='external noopener noreferrer'
+                    className='inline-flex items-center gap-2 font-medium text-blue-600 hover:text-blue-700'
+                  >
+                    {link.text}
+                    <ExternalLinkIcon className='size-4' />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </SectionCard>
 
-            <SectionCard icon={ExternalLinkIcon} title='Reference Documents'>
-              <ul className='flex flex-col gap-3 text-gray-600'>
-                {comparison.referenceLinks.map(link => (
-                  <li key={link.href}>
-                    <a
-                      href={link.href}
-                      target='_blank'
-                      rel='external noopener noreferrer'
-                      className='inline-flex items-center gap-2 font-medium text-blue-600 hover:text-blue-700'
-                    >
-                      {link.text}
-                      <ExternalLinkIcon className='size-4' />
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </SectionCard>
+          <SectionCard icon={QuoteIcon} title='Further reading'>
+            <ul className='flex flex-col gap-3 text-sm text-gray-600'>
+              {comparison.citations.map(citation => (
+                <li key={citation.title}>
+                  {citation.authors} ({citation.year}). {citation.title}. <em>{citation.source}</em>
+                  {citation.url && (
+                    <>
+                      .{' '}
+                      <a
+                        href={citation.url}
+                        target='_blank'
+                        rel='external noopener noreferrer'
+                        className='font-medium text-blue-600 hover:text-blue-700'
+                      >
+                        View
+                      </a>
+                    </>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </SectionCard>
 
-            <SectionCard icon={QuoteIcon} title='Further reading'>
-              <ul className='flex flex-col gap-3 text-sm text-gray-600'>
-                {comparison.citations.map(citation => (
-                  <li key={citation.title}>
-                    {citation.authors} ({citation.year}). {citation.title}.{' '}
-                    <em>{citation.source}</em>
-                    {citation.url && (
-                      <>
-                        .{' '}
-                        <a
-                          href={citation.url}
-                          target='_blank'
-                          rel='external noopener noreferrer'
-                          className='font-medium text-blue-600 hover:text-blue-700'
-                        >
-                          View
-                        </a>
-                      </>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </SectionCard>
+          <SectionCard icon={LinkIcon} title='Related guides'>
+            <ul className='flex flex-col gap-2'>
+              {comparison.related.map(link => (
+                <li key={link.to}>
+                  <Link
+                    to={link.to}
+                    className='inline-flex items-center gap-2 font-medium text-blue-600 hover:text-blue-700'
+                  >
+                    {link.label}
+                    <ArrowRightIcon className='size-4' />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </SectionCard>
 
-            <SectionCard icon={LinkIcon} title='Related guides'>
-              <ul className='flex flex-col gap-2'>
-                {comparison.related.map(link => (
-                  <li key={link.to}>
-                    <Link
-                      to={link.to}
-                      className='inline-flex items-center gap-2 font-medium text-blue-600 hover:text-blue-700'
-                    >
-                      {link.label}
-                      <ArrowRightIcon className='size-4' />
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </SectionCard>
-
-            <div className='rounded-lg border border-gray-200 bg-gray-50 p-6'>
-              <p className='text-sm leading-relaxed text-gray-600'>
-                This page describes the tools and cites their official sources. It does not
-                reproduce signalling questions, items or scoring tables, which are the intellectual
-                property of their original authors. Consult the official publications and guidance
-                linked above when applying any tool.
-              </p>
-            </div>
+          <div className='rounded-lg border border-gray-200 bg-gray-50 p-6'>
+            <p className='text-sm leading-relaxed text-gray-600'>
+              This page describes the tools and cites their official sources. It does not reproduce
+              signalling questions, items or scoring tables, which are the intellectual property of
+              their original authors. Consult the official publications and guidance linked above
+              when applying any tool.
+            </p>
           </div>
         </div>
-      </main>
-    </>
+      </div>
+    </main>
   );
 }

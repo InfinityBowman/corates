@@ -12,6 +12,7 @@ import appCss from '../styles.css?url';
 import type { ErrorComponentProps } from '@tanstack/react-router';
 import { captureException } from '@/config/sentry';
 import { isStaleChunkError } from '@/lib/staleChunk';
+import { SITE_URL, ORGANIZATION_ID, WEBSITE_ID, WEBAPP_ID } from '@/lib/structured-data';
 import { TriangleAlertIcon, RefreshCwIcon } from 'lucide-react';
 
 const LazyDevPanel =
@@ -36,11 +37,7 @@ function ClientOnly({ children }: { children: React.ReactNode }) {
   return isClient ? children : null;
 }
 
-const SITE_URL = 'https://corates.org';
 const IMAGE_URL = `${SITE_URL}/landing_preview.png`;
-
-const ORGANIZATION_ID = `${SITE_URL}/#organization`;
-const WEBSITE_ID = `${SITE_URL}/#website`;
 
 // Only assert what is verifiable: there are no public social profiles to list
 // under sameAs, and no ratings/reviews exist, so no aggregateRating is claimed.
@@ -73,7 +70,7 @@ const structuredData = JSON.stringify({
       // WebApplication is a subtype of SoftwareApplication, so a separate
       // SoftwareApplication node would only duplicate this entity.
       '@type': 'WebApplication',
-      '@id': `${SITE_URL}/#webapp`,
+      '@id': WEBAPP_ID,
       name: 'CoRATES',
       url: SITE_URL,
       isPartOf: { '@id': WEBSITE_ID },
