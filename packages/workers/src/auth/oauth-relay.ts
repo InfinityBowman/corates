@@ -51,7 +51,6 @@ interface RelayPayload {
   };
   account: {
     providerId: string;
-    issuer: string;
     accountId: string;
     accessToken?: string;
     refreshToken?: string;
@@ -149,7 +148,7 @@ async function linkRelayedAccount(
   };
 
   const existing = await ctx.context.internalAdapter.findAccountByKey({
-    issuer: account.issuer,
+    providerId: account.providerId,
     accountId: account.accountId,
   });
   if (existing) {
@@ -169,7 +168,6 @@ async function linkRelayedAccount(
   await ctx.context.internalAdapter.createAccount({
     userId: link.userId,
     providerId: account.providerId,
-    issuer: account.issuer,
     accountId: account.accountId,
     ...tokens,
     scope: account.scope,
@@ -411,15 +409,11 @@ export const oAuthRelay = (opts: OAuthRelayOptions) => {
               throw ctx.redirect(`${relayPackage.relayOrigin}/api/auth/error?error=no_user_info`);
             }
 
-            // Mirrors better-auth's resolveOAuthAccountKey, which is not exported:
-            // the provider subject comes from the raw profile, and providers
-            // without an issuer fall back to the synthetic local namespace.
-            const keyContext = { tokens, profile: providerResult.data };
-            const accountId = String(await provider.accountSubject(keyContext));
-            const issuer =
-              typeof provider.accountIssuer === 'function' ?
-                await provider.accountIssuer(keyContext)
-              : (provider.accountIssuer ?? `local:oauth:${encodeURIComponent(provider.id)}`);
+            // The provider subject comes from the raw profile, matching how
+            // better-auth's own callback keys the account on (providerId, accountId).
+            const accountId = String(
+              await provider.accountSubject({ tokens, profile: providerResult.data }),
+            );
 
             // Build relay payload
             const payload: RelayPayload = {
@@ -432,7 +426,6 @@ export const oAuthRelay = (opts: OAuthRelayOptions) => {
               },
               account: {
                 providerId: provider.id,
-                issuer,
                 accountId,
                 accessToken: tokens.accessToken,
                 refreshToken: tokens.refreshToken,

@@ -158,11 +158,6 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
             scopes: ['openid'],
             // Same sign-in gate as Google; see socialProviders.google above
             disableImplicitSignUp: true,
-            // Account rows are keyed on (issuer, accountId). createAuth runs per
-            // request, so pin ORCID's OIDC issuer rather than paying for a
-            // discovery fetch on every cold path. Must match the backfill in
-            // the account.issuer migration.
-            accountIssuer: 'https://orcid.org',
             // Map ORCID profile to user fields
             getUserInfo: async (tokens: { accessToken?: string }) => {
               if (!tokens.accessToken) return null;

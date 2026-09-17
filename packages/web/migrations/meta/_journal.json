@@ -92,6 +92,13 @@
       "when": 1789240765851,
       "tag": "0012_invitation_email_status",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1789609643020,
+      "tag": "0013_better_auth_1_7_schema",
+      "breakpoints": true
     }
   ]
 }
