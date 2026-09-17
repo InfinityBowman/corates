@@ -60,7 +60,7 @@
     "drizzle-orm": "^0.45.2",
     "postmark": "^5.1.0",
     "yjs": "^13.6.32",
-    "zod": "^4.5.4"
+    "zod": "^4.6.4"
   },
   "devDependencies": {
     "@cf-sync/protocol": "^0.2.0",
