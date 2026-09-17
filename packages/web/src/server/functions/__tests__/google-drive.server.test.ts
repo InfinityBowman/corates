@@ -40,8 +40,8 @@ async function seedGoogleAccount(
   const expiresAt = new Date(Date.now() + 3600 * 1000);
 
   await env.DB.prepare(
-    `INSERT INTO account (id, userId, accountId, providerId, issuer, accessToken, refreshToken, accessTokenExpiresAt, scope, createdAt, updatedAt)
-     VALUES (?1, ?2, ?3, ?4, 'https://accounts.google.com', ?5, ?6, ?7, ?8, ?9, ?10)`,
+    `INSERT INTO account (id, userId, accountId, providerId, accessToken, refreshToken, accessTokenExpiresAt, scope, createdAt, updatedAt)
+     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)`,
   )
     .bind(
       `acc-${userId}`,
@@ -173,8 +173,8 @@ describe('getPickerToken', () => {
 
     const expiredAt = new Date(Date.now() - 1000);
     await env.DB.prepare(
-      `INSERT INTO account (id, userId, accountId, providerId, issuer, accessToken, refreshToken, accessTokenExpiresAt, createdAt, updatedAt)
-       VALUES (?1, ?2, ?3, ?4, 'https://accounts.google.com', ?5, ?6, ?7, ?8, ?9)`,
+      `INSERT INTO account (id, userId, accountId, providerId, accessToken, refreshToken, accessTokenExpiresAt, createdAt, updatedAt)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)`,
     )
       .bind(
         `acc-${user.id}`,
@@ -205,8 +205,8 @@ describe('getPickerToken', () => {
   async function seedExpiredGoogleAccount(userId: string, refreshToken: string | null) {
     const nowSec = Math.floor(Date.now() / 1000);
     await env.DB.prepare(
-      `INSERT INTO account (id, userId, accountId, providerId, issuer, accessToken, refreshToken, accessTokenExpiresAt, createdAt, updatedAt)
-       VALUES (?1, ?2, ?3, ?4, 'https://accounts.google.com', ?5, ?6, ?7, ?8, ?9)`,
+      `INSERT INTO account (id, userId, accountId, providerId, accessToken, refreshToken, accessTokenExpiresAt, createdAt, updatedAt)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)`,
     )
       .bind(
         `acc-${userId}`,

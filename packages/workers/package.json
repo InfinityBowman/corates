@@ -50,13 +50,13 @@
     "localflare": "localflare"
   },
   "dependencies": {
-    "@better-auth/stripe": "^1.7.2",
+    "@better-auth/stripe": "^1.7.4",
     "@cf-sync/server": "^0.3.0",
     "@cf-sync/yjs": "^0.2.1",
     "@corates/db": "workspace:*",
     "@corates/shared": "workspace:*",
     "@sentry/cloudflare": "^10.74.0",
-    "better-auth": "^1.7.2",
+    "better-auth": "^1.7.4",
     "drizzle-orm": "^0.45.2",
     "postmark": "^5.1.0",
     "yjs": "^13.6.32",

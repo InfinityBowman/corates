@@ -352,4 +352,10 @@ CREATE UNIQUE INDEX \`rateLimit_key_unique\` ON \`rateLimit\` (\`key\`);
 --> statement-breakpoint
 ALTER TABLE \`project_invitations\` ADD \`emailSentAt\` integer;--> statement-breakpoint
 ALTER TABLE \`project_invitations\` ADD \`emailStatus\` text;--> statement-breakpoint
-CREATE UNIQUE INDEX \`project_invitations_projectId_email_uidx\` ON \`project_invitations\` (\`projectId\`,\`email\`);`;
+CREATE UNIQUE INDEX \`project_invitations_projectId_email_uidx\` ON \`project_invitations\` (\`projectId\`,\`email\`);
+--> statement-breakpoint
+DROP INDEX \`account_issuer_accountId_uidx\`;--> statement-breakpoint
+ALTER TABLE \`account\` DROP COLUMN \`issuer\`;--> statement-breakpoint
+ALTER TABLE \`twoFactor\` ADD \`verified\` integer DEFAULT true;--> statement-breakpoint
+ALTER TABLE \`twoFactor\` ADD \`failedVerificationCount\` integer DEFAULT 0;--> statement-breakpoint
+ALTER TABLE \`twoFactor\` ADD \`lockedUntil\` integer;`;

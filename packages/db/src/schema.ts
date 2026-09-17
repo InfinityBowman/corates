@@ -138,7 +138,6 @@ export const account = sqliteTable(
     id: text('id').primaryKey(),
     accountId: text('accountId').notNull(),
     providerId: text('providerId').notNull(),
-    issuer: text('issuer').notNull(),
     userId: text('userId')
       .notNull()
       .$type<UserId>()
@@ -153,10 +152,7 @@ export const account = sqliteTable(
     createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
     updatedAt: integer('updatedAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
   },
-  t => [
-    index('account_userId_idx').on(t.userId),
-    uniqueIndex('account_issuer_accountId_uidx').on(t.issuer, t.accountId),
-  ],
+  t => [index('account_userId_idx').on(t.userId)],
 );
 
 // Verification table
@@ -312,6 +308,10 @@ export const twoFactor = sqliteTable('twoFactor', {
     .references(() => user.id, { onDelete: 'cascade' }),
   secret: text('secret').notNull(),
   backupCodes: text('backupCodes').notNull(), // JSON array of backup codes
+  // Better Auth 1.7 verifies enrolment and locks out repeated failed codes
+  verified: integer('verified', { mode: 'boolean' }).default(true),
+  failedVerificationCount: integer('failedVerificationCount').default(0),
+  lockedUntil: integer('lockedUntil', { mode: 'timestamp' }),
   createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
 });
