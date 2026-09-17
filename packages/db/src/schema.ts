@@ -261,6 +261,10 @@ export const subscription = sqliteTable(
     seats: integer('seats'),
     trialStart: integer('trialStart', { mode: 'timestamp' }),
     trialEnd: integer('trialEnd', { mode: 'timestamp' }),
+    // Better Auth's Stripe plugin records the interval and the schedule it
+    // creates for a deferred plan change
+    billingInterval: text('billingInterval'),
+    stripeScheduleId: text('stripeScheduleId'),
     createdAt: integer('createdAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
     updatedAt: integer('updatedAt', { mode: 'timestamp' }).default(sql`(unixepoch())`),
   },
