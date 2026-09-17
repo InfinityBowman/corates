@@ -219,7 +219,11 @@ function RootError({ error }: ErrorComponentProps) {
   }, [error]);
 
   const message =
-    import.meta.env.DEV ? error.message : 'An unexpected error occurred. Please try refreshing.';
+    import.meta.env.DEV ?
+      error instanceof Error ?
+        error.message
+      : String(error)
+    : 'An unexpected error occurred. Please try refreshing.';
 
   return (
     <div className='flex min-h-[50vh] items-center justify-center p-8'>

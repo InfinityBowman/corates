@@ -16,7 +16,9 @@ export function RouteError({ error }: ErrorComponentProps) {
 
   const message =
     import.meta.env.DEV ?
-      error.message
+      error instanceof Error ?
+        error.message
+      : String(error)
     : 'This page hit an unexpected error. Try again, or reload the page if it keeps happening.';
 
   return (
