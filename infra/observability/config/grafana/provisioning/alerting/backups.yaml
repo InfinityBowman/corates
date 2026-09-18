@@ -1,0 +1,87 @@
+apiVersion: 1
+
+# Daily workspace backup sweep, prod only (staging is off the Loki export).
+# The sweep's only trace is one log line, so a cron that silently stops producing
+# nothing is indistinguishable from a healthy quiet day without these rules.
+#
+# The 26h window gives the 05:00 UTC cron a 2h grace period, which also absorbs
+# Cloudflare re-delivering OTLP batches hours late. Note `or vector(0)` inverts
+# meaning here: on the absence rule below it makes an empty result fire rather
+# than keeping a Normal series alive, which is the safe direction for a backup.
+groups:
+  - orgId: 1
+    name: backups
+    folder: CoRATES
+    interval: 15m
+    rules:
+      - uid: corates-backup-sweep-missing
+        title: Daily workspace backup did not run
+        condition: threshold
+        for: 15m
+        data:
+          - refId: query
+            relativeTimeRange: { from: 93600, to: 0 }
+            datasourceUid: P8E80F9AEF21F6940
+            model:
+              refId: query
+              queryType: instant
+              expr: >-
+                sum(count_over_time({service_name="corates-workers-prod"}
+                | json | message="backup.completed" [26h])) or vector(0)
+          - refId: threshold
+            relativeTimeRange: { from: 93600, to: 0 }
+            datasourceUid: __expr__
+            model:
+              refId: threshold
+              type: threshold
+              expression: query
+              conditions:
+                - evaluator: { type: lt, params: [1] }
+        noDataState: Alerting
+        execErrState: Error
+        labels:
+          severity: critical
+        annotations:
+          summary: No backup sweep has completed in 26 hours
+          description: >-
+            The 05:00 UTC cron either did not fire or threw before logging. Every
+            workspace is now more than a day stale in corates-backups-prod, and
+            R2 lifecycle still expires snapshots/ at 60 days. Sentry has the
+            exception if the sweep threw.
+            Logs: {service_name="corates-workers-prod"} | json | message="backup.completed"
+
+      - uid: corates-backup-project-failed
+        title: A project was skipped by the backup sweep
+        condition: threshold
+        for: 15m
+        data:
+          - refId: query
+            relativeTimeRange: { from: 93600, to: 0 }
+            datasourceUid: P8E80F9AEF21F6940
+            model:
+              refId: query
+              queryType: instant
+              expr: >-
+                sum by (stage, projectId) (count_over_time({service_name="corates-workers-prod"}
+                | json | message="backup.failed" [26h])) or vector(0)
+          - refId: threshold
+            relativeTimeRange: { from: 93600, to: 0 }
+            datasourceUid: __expr__
+            model:
+              refId: threshold
+              type: threshold
+              expression: query
+              conditions:
+                - evaluator: { type: gt, params: [0] }
+        noDataState: NoData
+        execErrState: Error
+        labels:
+          severity: critical
+        annotations:
+          summary: 'Backup failed for project {{ $labels.projectId }} (stage {{ $labels.stage }})'
+          description: >-
+            The sweep logs and skips a broken workspace so one project cannot hide
+            the rest. stage=sweep means that project has no snapshot for the day;
+            stage=pre-delete means a project was torn down without its final
+            deleted/ copy, which nothing retries.
+            Logs: {service_name="corates-workers-prod"} | json | message="backup.failed"
