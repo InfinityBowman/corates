@@ -58,3 +58,6 @@ export {
   scoreRob2Domain,
   scoreAllDomains as scoreAllROB2Domains,
 } from './rob2/index.js';
+
+// Inter-rater reliability
+export * as reliability from './reliability/index.js';

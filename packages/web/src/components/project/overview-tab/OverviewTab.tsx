@@ -13,10 +13,7 @@ import { project } from '@/project';
 import { useProjectContext, type ProjectMember } from '../ProjectContext';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { CHECKLIST_STATUS } from '@corates/shared/checklists';
-import {
-  calculateInterRaterReliability,
-  type InterRaterMetrics,
-} from '@/lib/inter-rater-reliability.js';
+import { calculateProjectReliability } from '@corates/shared/checklists/reliability';
 import { ChartSection } from './ChartSection';
 import { ResultsTables } from './ResultsTables';
 import { ProgressSection } from './ProgressSection';
@@ -93,7 +90,7 @@ export function OverviewTab() {
     return map;
   }, [studies]);
 
-  const interRaterMetrics: InterRaterMetrics = useMemo(() => {
+  const reliability = useMemo(() => {
     // getData throws while the pool has no active connection (a cold refresh
     // renders this tab from cached rows before the gate's effects run) --
     // treat that window as "no data" rather than crashing into the section
@@ -105,7 +102,7 @@ export function OverviewTab() {
         return null;
       }
     };
-    return calculateInterRaterReliability(studies, getChecklistData);
+    return calculateProjectReliability(studies, getChecklistData);
   }, [studies]);
 
   return (
@@ -118,7 +115,7 @@ export function OverviewTab() {
 
             <ProgressSection counts={stageCounts} total={studies.length} />
 
-            {interRaterMetrics.studyCount > 0 && <ReliabilitySection metrics={interRaterMetrics} />}
+            {reliability.length > 0 && <ReliabilitySection tools={reliability} />}
 
             {!empty && (
               <section aria-labelledby='overview-results-heading'>
