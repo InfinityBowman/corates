@@ -20,6 +20,7 @@ import { ReliabilityAboutDialog } from './ReliabilityAboutDialog';
 
 interface ReliabilitySectionProps {
   tools: ToolReliability[];
+  dualReviewedStudies: number;
 }
 
 // Landis and Koch band boundaries, which getKappaInterpretation also uses
@@ -188,22 +189,31 @@ function ToolCard({ tool }: { tool: ToolReliability }) {
   );
 }
 
-export function ReliabilitySection({ tools }: ReliabilitySectionProps) {
+export function ReliabilitySection({ tools, dualReviewedStudies }: ReliabilitySectionProps) {
   return (
     <section aria-labelledby='overview-reliability-heading'>
       <div className='mb-2.5 flex items-baseline justify-between gap-4'>
         <h2 id='overview-reliability-heading' className='text-sm font-semibold'>
           Inter-rater reliability
         </h2>
-        <span className='text-muted-foreground text-xs'>
-          Before reconciliation, pooled across reviewer pairs
-        </span>
+        {tools.length > 0 && (
+          <span className='text-muted-foreground text-xs'>
+            Before reconciliation, pooled across reviewer pairs
+          </span>
+        )}
       </div>
-      <div className='flex flex-col gap-3'>
-        {tools.map(tool => (
-          <ToolCard key={tool.definition.type} tool={tool} />
-        ))}
-      </div>
+      {tools.length === 0 ?
+        <p className='text-muted-foreground text-sm'>
+          Agreement appears once both reviewers of a study have completed their appraisals.{' '}
+          {dualReviewedStudies} {dualReviewedStudies === 1 ? 'study has' : 'studies have'} two
+          reviewers.
+        </p>
+      : <div className='flex flex-col gap-3'>
+          {tools.map(tool => (
+            <ToolCard key={tool.definition.type} tool={tool} />
+          ))}
+        </div>
+      }
     </section>
   );
 }
