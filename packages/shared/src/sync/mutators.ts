@@ -152,6 +152,20 @@ function touchStudy(tx: Tx, studyId: string, now: number): void {
   if (study) tx.put('studies', studyId, { ...study, updatedAt: now });
 }
 
+/**
+ * A copied answer's provenance describes the value that was copied; once the
+ * reviewer writes the key themselves the mark no longer holds.
+ */
+function withoutProvenance(
+  checklist: ChecklistRow,
+  keys: string[],
+): Pick<ChecklistRow, 'copiedFrom'> {
+  if (!checklist.copiedFrom) return {};
+  const copiedFrom = { ...checklist.copiedFrom };
+  for (const key of keys) delete copiedFrom[key];
+  return { copiedFrom };
+}
+
 function answerMap(tx: Tx, checklistId: string): Record<string, unknown> {
   const map: Record<string, unknown> = {};
   for (const row of tx.list('answers', { where: { checklistId } })) {
@@ -735,7 +749,8 @@ export const syncMutators = defineMutators(
           );
         }
 
-        for (const write of expandAnswerUpdate(input)) {
+        const writes = expandAnswerUpdate(input);
+        for (const write of writes) {
           tx.put('answers', answerRowId(checklistId, write.key), {
             id: answerRowId(checklistId, write.key),
             studyId: checklist.studyId,
@@ -747,6 +762,10 @@ export const syncMutators = defineMutators(
 
         tx.put('checklists', checklistId, {
           ...checklist,
+          ...withoutProvenance(
+            checklist,
+            writes.map(write => write.key),
+          ),
           status:
             checklist.status === CHECKLIST_STATUS.PENDING ?
               CHECKLIST_STATUS.IN_PROGRESS
@@ -780,23 +799,37 @@ export const syncMutators = defineMutators(
         });
         // Deliberately no checklist.updatedAt bump: the Y.Doc plane's text
         // writes never bumped it either.
+        if (checklist.copiedFrom?.[key]) {
+          tx.put('checklists', checklistId, {
+            ...checklist,
+            ...withoutProvenance(checklist, [key]),
+          });
+        }
       },
     },
 
     /**
-     * Copy the study-level sections of one of the reviewer's own appraisals
-     * into another of theirs on a different outcome. Only blank sections are
-     * filled, so nothing is ever overwritten; `planAnswerCopy` decides what
-     * lands, and the menu shows the reviewer the same plan before they click.
+     * Copy answers from one of the reviewer's own appraisals into another of
+     * theirs on a different outcome. `sections` are the study-level groups
+     * the bulk menu offers: only blank ones are filled, so nothing is
+     * overwritten, and `planAnswerCopy` decides what lands so the menu shows
+     * the same plan before the click. `keys` are single answers the reviewer
+     * pulls one at a time from the question's popover; that is an explicit
+     * act on one field, so it may replace what is there.
      */
     'checklist.copyAnswers': {
-      args: z.object({
-        fromChecklistId: z.string(),
-        toChecklistId: z.string(),
-        sections: z.array(z.string().min(1)).min(1),
-        now: timestamp,
-      }),
-      apply: (tx, { fromChecklistId, toChecklistId, sections, now }, ctx) => {
+      args: z
+        .object({
+          fromChecklistId: z.string(),
+          toChecklistId: z.string(),
+          sections: z.array(z.string().min(1)).default([]),
+          keys: z.array(z.string().min(1)).default([]),
+          now: timestamp,
+        })
+        .refine(args => args.sections.length > 0 || args.keys.length > 0, {
+          message: 'sections or keys is required',
+        }),
+      apply: (tx, { fromChecklistId, toChecklistId, sections, keys, now }, ctx) => {
         assertWritable(ctx);
         const from = tx.get('checklists', fromChecklistId);
         const to = tx.get('checklists', toChecklistId);
@@ -832,27 +865,30 @@ export const syncMutators = defineMutators(
         for (const id of sections) {
           if (!known.has(id)) throw new AppError('InvalidArgs', `Unknown section ${id}`);
         }
+        const defaults = defaultAnswerRows(to.type);
+        for (const key of keys) {
+          if (!(key in defaults)) throw new AppError('InvalidArgs', `Unknown answer key ${key}`);
+        }
 
         const source = answerMap(tx, from.id);
         const target = answerMap(tx, to.id);
-        const plan = planAnswerCopy(to.type, source, target, sections).filter(
-          entry => !entry.blocker,
-        );
-        if (plan.length === 0) throw new AppError('NothingToCopy', 'Nothing left to copy');
+        const plan =
+          sections.length > 0 ?
+            planAnswerCopy(to.type, source, target, sections).filter(entry => !entry.blocker)
+          : [];
+        const toCopy = [...plan.flatMap(entry => entry.keys), ...keys].filter(key => key in source);
+        if (toCopy.length === 0) throw new AppError('NothingToCopy', 'Nothing left to copy');
 
         const copiedFrom = { ...to.copiedFrom };
-        for (const entry of plan) {
-          for (const key of entry.keys) {
-            if (!(key in source)) continue;
-            tx.put('answers', answerRowId(to.id, key), {
-              id: answerRowId(to.id, key),
-              studyId: to.studyId,
-              checklistId: to.id,
-              key,
-              value: source[key] as JsonValue,
-            });
-            copiedFrom[key] = from.id;
-          }
+        for (const key of toCopy) {
+          tx.put('answers', answerRowId(to.id, key), {
+            id: answerRowId(to.id, key),
+            studyId: to.studyId,
+            checklistId: to.id,
+            key,
+            value: source[key] as JsonValue,
+          });
+          copiedFrom[key] = from.id;
         }
 
         tx.put('checklists', to.id, {

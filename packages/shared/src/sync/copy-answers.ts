@@ -21,6 +21,17 @@ function sectionKeys(section: CarryOverSection, defaults: Record<string, unknown
   );
 }
 
+/**
+ * Whether an answer key belongs to a study-level section. A per-outcome
+ * key can still be pulled one at a time, but the popover says so.
+ */
+export function isCarryOverKey(type: ChecklistType, key: string): boolean {
+  return carryOverSections(type).some(
+    section =>
+      section.keys?.includes(key) || section.prefixes?.some(prefix => key.startsWith(prefix)),
+  );
+}
+
 function same(a: unknown, b: unknown): boolean {
   return JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 }

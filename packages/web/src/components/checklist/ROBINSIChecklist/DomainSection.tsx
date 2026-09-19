@@ -3,6 +3,10 @@ import { ROBINS_I_CHECKLIST, getDomainQuestions } from '@corates/shared/checklis
 import { SignallingQuestion } from './SignallingQuestion';
 import { DomainJudgement, JudgementBadge } from './DomainJudgement';
 import {
+  copiedFromLabel,
+  useSiblingAppraisals,
+} from '@/components/checklist/copy-answers/useCopySources';
+import {
   useWorkspaceProjectId,
   useAnswerValue,
   useAnswerWriters,
@@ -46,6 +50,8 @@ export function DomainSection({
   const direction = useAnswerValue<string>(projectId, checklistId, `${domainKey}.direction`);
   const flat = useChecklistAnswerMap(projectId, checklistId);
   const writers = useAnswerWriters(projectId, studyId, checklistId);
+  const siblingSet = useSiblingAppraisals(projectId, studyId, checklistId);
+  const copiedFrom = copiedFromLabel(siblingSet.target, siblingSet.siblings, questionKeys);
 
   const domainAnswers: DomainAnswers = {};
   for (const qKey of questionKeys) {
@@ -93,6 +99,11 @@ export function DomainSection({
           <h3 className='text-foreground text-left font-semibold'>{domain?.name}</h3>
           {domain?.subtitle && (
             <span className='text-muted-foreground mt-0.5 text-xs'>{domain.subtitle}</span>
+          )}
+          {copiedFrom && (
+            <span className='text-muted-foreground/70 mt-0.5 text-xs'>
+              Copied from {copiedFrom}
+            </span>
           )}
         </div>
 

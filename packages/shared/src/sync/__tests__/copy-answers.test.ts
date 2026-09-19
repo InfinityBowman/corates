@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createTestEngine } from '@cf-sync/server/testing';
 import { syncApp } from '../app.js';
 import { defaultAnswerRows, type ChecklistAnswerInput } from '../answer-rows.js';
-import { planAnswerCopy } from '../copy-answers.js';
+import { isCarryOverKey, planAnswerCopy } from '../copy-answers.js';
 import { answerRowId } from '../ids.js';
 
 const NOW = 1_753_500_000_000;
@@ -184,6 +184,64 @@ describe('checklist.copyAnswers', () => {
     expect(answersFor(engine, 'chk-2').get('d2a_1')).toBe('N');
   });
 
+  it('pulls a single answer with its comment, replacing what is there', () => {
+    const engine = newEngine();
+    seedPair(engine, 'ROB2');
+    fillRob2Source(engine);
+    answer(engine, 'chk-2', {
+      type: 'ROB2',
+      key: 'domain1',
+      data: { answers: { d1_1: { answer: 'N' } } },
+    });
+
+    const result = copy(engine, [], { keys: ['d1_1', 'd1_1.comment'] });
+    expect(result.error).toBeUndefined();
+
+    const target = answersFor(engine, 'chk-2');
+    expect(target.get('d1_1')).toBe('Y');
+    expect(target.get('d1_1.comment')).toBe('Computer generated');
+    expect(target.get('d1_2')).toBeNull();
+    const checklist = engine.get('checklists', 'chk-2');
+    expect(checklist?.copiedFrom).toEqual({ d1_1: 'chk-1', 'd1_1.comment': 'chk-1' });
+    expect(checklist?.status).toBe('in-progress');
+  });
+
+  it('drops the provenance mark once the reviewer writes that answer themselves', () => {
+    const engine = newEngine();
+    seedPair(engine, 'ROB2');
+    fillRob2Source(engine);
+    expect(copy(engine, ['domain1']).error).toBeUndefined();
+
+    answer(engine, 'chk-2', {
+      type: 'ROB2',
+      key: 'domain1',
+      data: { answers: { d1_1: { answer: 'N' } } },
+    });
+    setText(engine, 'chk-2', 'd1_1.comment', 'Re-read the methods');
+
+    const copiedFrom = engine.get('checklists', 'chk-2')?.copiedFrom ?? {};
+    expect(copiedFrom['d1_1']).toBeUndefined();
+    expect(copiedFrom['d1_1.comment']).toBeUndefined();
+    expect(copiedFrom['d1_2']).toBe('chk-1');
+    expect(copiedFrom['domain1.direction']).toBe('chk-1');
+  });
+
+  it('pulls a per-outcome answer one at a time even though it never bulk-copies', () => {
+    const engine = newEngine();
+    seedPair(engine, 'ROB2');
+    fillRob2Source(engine);
+    expect(copy(engine, [], { keys: ['d3_1'] }).error).toBeUndefined();
+    expect(answersFor(engine, 'chk-2').get('d3_1')).toBe('Y');
+  });
+
+  it('rejects an unknown answer key and an empty request', () => {
+    const engine = newEngine();
+    seedPair(engine, 'ROB2');
+    fillRob2Source(engine);
+    expect(copy(engine, [], { keys: ['nope'] }).error?.code).toBe('InvalidArgs');
+    expect(copy(engine, []).error?.code).toBe('InvalidArgs');
+  });
+
   it('rejects when nothing is left to copy', () => {
     const engine = newEngine();
     seedPair(engine, 'ROB2');
@@ -360,6 +418,17 @@ describe('planAnswerCopy', () => {
     const plan = planAnswerCopy('ROB2', { d1_1: 'Y' }, {});
     expect(plan.find(entry => entry.section.id === 'domain1')?.blocker).toBeNull();
     expect(planAnswerCopy('AMSTAR2', {}, {})).toEqual([]);
+  });
+
+  it('tells study-level keys from per-outcome ones', () => {
+    expect(isCarryOverKey('ROB2', 'd1_1')).toBe(true);
+    expect(isCarryOverKey('ROB2', 'd2b_3.comment')).toBe(true);
+    expect(isCarryOverKey('ROB2', 'preliminary.aim')).toBe(true);
+    expect(isCarryOverKey('ROB2', 'preliminary.numericalResult')).toBe(false);
+    expect(isCarryOverKey('ROB2', 'd4_1')).toBe(false);
+    expect(isCarryOverKey('ROBINS_I', 'd1a_2')).toBe(true);
+    expect(isCarryOverKey('ROBINS_I', 'sectionB.b3')).toBe(false);
+    expect(isCarryOverKey('AMSTAR2', 'q1.answers')).toBe(false);
   });
 
   it('never includes a per-outcome key', () => {

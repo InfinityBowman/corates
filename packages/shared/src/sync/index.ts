@@ -53,6 +53,7 @@ export {
 export { answerRowId, appraisalRowId, reconciliationRowId } from './ids.js';
 export {
   carryOverSections,
+  isCarryOverKey,
   planAnswerCopy,
   type CopyBlocker,
   type CopyPlanEntry,
