@@ -232,6 +232,30 @@ describe('checklist.create', () => {
     expect(engine.get('checklists', 'chk-consensus-2')).toBeNull();
     expect(engine.get('checklists', 'chk-consensus-1')).not.toBeNull();
   });
+
+  it('creates a consensus checklist already reconciling, with no follow-up update', () => {
+    const engine = newEngine();
+    seedStudy(engine);
+    engine.mutate('outcome.create', {
+      id: 'out-1',
+      name: 'Mortality',
+      createdBy: 'user-1',
+      now: NOW,
+    });
+    engine.mutate('checklist.create', {
+      id: 'chk-consensus',
+      studyId: 'study-1',
+      type: 'ROB2',
+      kind: 'consensus',
+      assignedTo: null,
+      outcomeId: 'out-1',
+      now: NOW,
+    });
+    expect(engine.get('checklists', 'chk-consensus')).toMatchObject({
+      status: 'reconciling',
+      title: 'Reconciled Checklist',
+    });
+  });
 });
 
 describe('checklist.updateAnswer', () => {

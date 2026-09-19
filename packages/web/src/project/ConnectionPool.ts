@@ -60,9 +60,23 @@ function createProjectWorkspace(
         mutation: mutation.name,
         code: error.code,
       });
+      if (isLostConsensusRace(error.code, mutation)) return;
       showToast.error('Change rejected', rejectionMessage(error.code, mutation.name));
     },
   });
+}
+
+/**
+ * Two reviewers opening the same reconciliation at once both create the
+ * consensus checklist; the server keeps the first. The reconcile page adopts
+ * the winner on its own, so the loser has nothing to act on.
+ */
+function isLostConsensusRace(code: string, mutation: { name: string; args: unknown }): boolean {
+  return (
+    code === 'DuplicateChecklist' &&
+    mutation.name === 'checklist.create' &&
+    (mutation.args as { kind?: string }).kind === 'consensus'
+  );
 }
 
 function rejectionMessage(code: string, mutationName: string): string {
