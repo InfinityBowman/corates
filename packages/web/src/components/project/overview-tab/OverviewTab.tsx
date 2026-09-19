@@ -90,6 +90,12 @@ export function OverviewTab() {
     return map;
   }, [studies]);
 
+  // Reliability only applies to studies two different people appraise, so the
+  // section stays hidden entirely on a single-reviewer project.
+  const dualReviewedStudies = studies.filter(
+    s => s.reviewer1 && s.reviewer2 && s.reviewer1 !== s.reviewer2,
+  ).length;
+
   const reliability = useMemo(() => {
     // getData throws while the pool has no active connection (a cold refresh
     // renders this tab from cached rows before the gate's effects run) --
@@ -115,7 +121,9 @@ export function OverviewTab() {
 
             <ProgressSection counts={stageCounts} total={studies.length} />
 
-            {reliability.length > 0 && <ReliabilitySection tools={reliability} />}
+            {(reliability.length > 0 || dualReviewedStudies > 0) && (
+              <ReliabilitySection tools={reliability} dualReviewedStudies={dualReviewedStudies} />
+            )}
 
             {!empty && (
               <section aria-labelledby='overview-results-heading'>

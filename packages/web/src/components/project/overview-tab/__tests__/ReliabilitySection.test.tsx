@@ -48,7 +48,7 @@ function rob2Tool(): ToolReliability {
 
 describe('ReliabilitySection', () => {
   it('renders one card per tool with agreement, kappa, overall and breakdown', () => {
-    render(<ReliabilitySection tools={[rob2Tool()]} />);
+    render(<ReliabilitySection tools={[rob2Tool()]} dualReviewedStudies={6} />);
 
     expect(screen.getByRole('heading', { name: 'RoB 2' })).toBeInTheDocument();
     expect(screen.getByText('8 outcomes across 6 studies')).toBeInTheDocument();
@@ -79,14 +79,14 @@ describe('ReliabilitySection', () => {
       tool.definition.judgementScale,
       tool.definition.items,
     );
-    render(<ReliabilitySection tools={[tool]} />);
+    render(<ReliabilitySection tools={[tool]} dualReviewedStudies={6} />);
     expect(
       screen.getByText(`Needs ${MIN_PAIRS_FOR_KAPPA - 1} more comparisons`),
     ).toBeInTheDocument();
   });
 
   it('opens a dialog with the tool notes and the confusion matrix', () => {
-    render(<ReliabilitySection tools={[rob2Tool()]} />);
+    render(<ReliabilitySection tools={[rob2Tool()]} dualReviewedStudies={6} />);
     fireEvent.click(screen.getByRole('button', { name: 'How this is calculated' }));
 
     const dialog = screen.getByRole('dialog', {
@@ -98,5 +98,13 @@ describe('ReliabilitySection', () => {
     const rows = matrix.querySelectorAll('tbody tr');
     expect(rows[0]).toHaveTextContent('Low2004');
     expect(rows[2]).toHaveTextContent('High004');
+  });
+
+  it('explains what is missing when no reviewer pair has finished yet', () => {
+    render(<ReliabilitySection tools={[]} dualReviewedStudies={1} />);
+
+    expect(screen.getByRole('heading', { name: 'Inter-rater reliability' })).toBeInTheDocument();
+    expect(screen.getByText(/1 study has two reviewers/)).toBeInTheDocument();
+    expect(screen.queryByText(/pooled across reviewer pairs/)).not.toBeInTheDocument();
   });
 });
