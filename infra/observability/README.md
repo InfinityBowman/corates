@@ -207,6 +207,16 @@ Two constraints shape every rule, both explained in the file header: a 6h lookba
 re-delivers failed OTLP batches hours late) and a trailing `or vector(0)` (without it, "nothing
 is failing" and "Loki is down" both read as No Data).
 
+`backups.yaml` watches the daily workspace sweep:
+
+| Rule                                      | Fires on                                                                                  |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Daily workspace backup did not run        | no `backup.completed` in 26h - a 2h grace period on the 05:00 UTC cron                    |
+| A project was skipped by the backup sweep | `backup.failed`, grouped by `stage` and `projectId` so the notification names the project |
+
+The absence rule inverts the `or vector(0)` convention: an empty result means no sweep, so it
+fires rather than staying Normal, and `noDataState` is `Alerting` for the same reason.
+
 The DLQ shares the worker's `queue()` handler - `batch.queue.endsWith('-dlq')` routes to
 `handleEmailDeadLetter`, which logs and acks.
 
