@@ -66,7 +66,11 @@ export function calculateProjectReliability(
         c => !isReconciledChecklist(c) && c.status === CHECKLIST_STATUS.REVIEWER_COMPLETED,
       );
       if (reviewers.length !== 2) continue;
-      if (reviewers[0].assignedTo && reviewers[0].assignedTo === reviewers[1].assignedTo) continue;
+      // A pair only counts when it can be attributed to two different people.
+      const [first, second] = reviewers;
+      if (!first.assignedTo || !second.assignedTo || first.assignedTo === second.assignedTo) {
+        continue;
+      }
 
       // Stable orientation for the matrix: rows are the lower user id.
       reviewers.sort((x, y) => (x.assignedTo ?? '').localeCompare(y.assignedTo ?? ''));

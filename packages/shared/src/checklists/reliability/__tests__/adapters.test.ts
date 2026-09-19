@@ -191,11 +191,11 @@ describe('calculateProjectReliability', () => {
     return answers ? { answers } : null;
   };
 
-  function reviewer(id: string, type: string, assignedTo: string, outcomeId: string | null) {
+  function reviewer(id: string, type: string, assignedTo: string | null, outcomeId: string | null) {
     return { id, type, assignedTo, outcomeId, status: CHECKLIST_STATUS.REVIEWER_COMPLETED };
   }
 
-  it('pools cells per tool and skips consensus, single-reviewer and same-reviewer cells', () => {
+  it('pools cells per tool and skips consensus, single-reviewer, same-reviewer and unassigned cells', () => {
     data.set('r1', rob2({ domain1: { d1_1: 'Y', d1_2: 'Y', d1_3: 'N' } }));
     data.set('r2', rob2({ domain1: { d1_1: 'Y', d1_2: 'N', d1_3: 'N' } }));
     data.set('r3', rob2({ domain1: { d1_1: 'Y', d1_2: 'Y', d1_3: 'N' } }));
@@ -225,6 +225,10 @@ describe('calculateProjectReliability', () => {
       {
         id: 's3',
         checklists: [reviewer('r6', 'ROB2', 'u1', 'o4'), reviewer('r7', 'ROB2', 'u1', 'o4')],
+      },
+      {
+        id: 's4',
+        checklists: [reviewer('r8', 'ROB2', null, 'o5'), reviewer('r9', 'ROB2', null, 'o5')],
       },
     ];
 
