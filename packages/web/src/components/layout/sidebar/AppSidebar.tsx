@@ -6,6 +6,8 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from '@tanstack/react-router';
 import {
+  BookOpenIcon,
+  ExternalLinkIcon,
   HomeIcon,
   MessageCircleIcon,
   PlusIcon,
@@ -20,6 +22,7 @@ import { LOCAL_PROJECT_ID } from '@/project/localProject';
 import { db } from '@/primitives/db';
 import { useMyProjectsList } from '@/hooks/useMyProjectsList';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { APP_NAME } from '@/config/app';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
@@ -193,14 +196,26 @@ export function AppSidebar({ onClose, closeLabel, closeIcon }: AppSidebarProps) 
         </div>
       </div>
 
-      {isLoggedIn && (
-        <div className='border-border shrink-0 border-t p-2'>
+      <div className='border-border shrink-0 border-t p-2'>
+        {/* Plain anchor to a new tab: /resources sits outside the app shell, so a
+            same-tab nav would drop the sidebar and the appraisal behind it. */}
+        <a
+          href='/resources'
+          target='_blank'
+          rel='noopener noreferrer'
+          className={navRowClass(false)}
+        >
+          <BookOpenIcon className='size-4 shrink-0' />
+          <span className='truncate'>Resources</span>
+          <ExternalLinkIcon className='text-muted-foreground/70 ml-auto size-3.5 shrink-0' />
+        </a>
+        {isLoggedIn && (
           <button type='button' onClick={openFeedback} className={navRowClass(false)}>
             <MessageCircleIcon className='size-4 shrink-0' />
             <span className='truncate'>Give feedback</span>
           </button>
-        </div>
-      )}
+        )}
+      </div>
 
       {(!isOnline || !isLoggedIn) && (
         <div className='border-border flex shrink-0 items-center gap-2 border-t px-3 py-2.5'>
@@ -222,6 +237,14 @@ export function AppSidebar({ onClose, closeLabel, closeIcon }: AppSidebarProps) 
           )}
         </div>
       )}
+
+      <Link
+        to='/'
+        className='text-muted-foreground hover:text-foreground flex shrink-0 items-center justify-center gap-1.5 pt-1.5 pb-3 text-sm font-semibold transition-colors'
+      >
+        <img src='/logo.svg' alt='' aria-hidden='true' className='size-[18px] rounded-sm' />
+        {APP_NAME}
+      </Link>
 
       <CreateProjectModal open={createModalOpen} onOpenChange={setCreateModalOpen} />
 
