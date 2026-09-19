@@ -549,7 +549,7 @@ export default function FeatureShowcase() {
       illustration: <CollaborationIllustration />,
       bullets: [
         'Independent ratings with blinded mode',
-        'Automatic inter-rater agreement for AMSTAR 2 appraisals',
+        'Automatic inter-rater agreement for every appraisal tool',
         'Live, real-time collaboration with instant updates',
       ],
     },

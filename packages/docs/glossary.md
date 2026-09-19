@@ -66,8 +66,9 @@ The process of resolving disagreements between multiple reviewers' checklist ass
 
 - Compares two completed checklists item-by-item
 - Shows agreements, disagreements, and missing responses
-- Calculates inter-rater reliability (Cohen's kappa, percent agreement)
 - Creates a final reconciled checklist
+
+Inter-rater reliability (percent agreement and weighted kappa per tool) is shown on the project overview and is computed from the reviewer checklists before reconciliation.
 
 **Related:** `packages/web/src/components/project/reconcile-tab/ReconciliationWrapper.tsx`
 
@@ -180,9 +181,9 @@ Full-stack React framework with file-based server routing, used for the main app
 
 ### Cohen's Kappa
 
-Inter-rater reliability statistic measuring agreement between two reviewers beyond chance. Range: -1 to 1 (>0.8 = excellent agreement).
+Inter-rater reliability statistic measuring agreement between two reviewers beyond chance. Range: -1 to 1, read on the Landis and Koch bands (0.8 and above = almost perfect). CoRATES reports a linear weighted kappa per tool over domain judgements (RoB 2, ROBINS-I) or item answers (AMSTAR 2), with percent agreement alongside it and a 95% confidence interval from the Fleiss, Cohen and Everitt standard error.
 
-**Related:** `packages/web/src/lib/inter-rater-reliability.ts`
+**Related:** `packages/shared/src/checklists/reliability/`
 
 ### Systematic Review
 

@@ -36,6 +36,10 @@
       "types": "./dist/checklists/rob2/index.d.ts",
       "import": "./dist/checklists/rob2/index.js"
     },
+    "./checklists/reliability": {
+      "types": "./dist/checklists/reliability/index.d.ts",
+      "import": "./dist/checklists/reliability/index.js"
+    },
     "./sync": {
       "types": "./dist/sync/index.d.ts",
       "import": "./dist/sync/index.js"
