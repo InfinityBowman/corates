@@ -12,7 +12,12 @@
 
 import { z } from 'zod';
 import { AppError, crudMutators, defineMutators } from '@cf-sync/protocol';
-import { CHECKLIST_STATUS, getOutcomeKey, requiresOutcome } from '../checklists/index.js';
+import {
+  CHECKLIST_STATUS,
+  getOutcomeKey,
+  isEditable,
+  requiresOutcome,
+} from '../checklists/index.js';
 import {
   AMSTAR2_KEY_SCHEMAS,
   ROB2_KEY_SCHEMAS,
@@ -21,7 +26,9 @@ import {
   expandAnswerUpdate,
   hasRecordedAnswers,
   type ChecklistAnswerInput,
+  type JsonValue,
 } from './answer-rows.js';
+import { carryOverSections, planAnswerCopy } from './copy-answers.js';
 import { answerRowId, appraisalRowId, reconciliationRowId } from './ids.js';
 import {
   pdfCitationMetadataSchema,
@@ -143,6 +150,14 @@ function createStudyRow(
 function touchStudy(tx: Tx, studyId: string, now: number): void {
   const study = tx.get('studies', studyId);
   if (study) tx.put('studies', studyId, { ...study, updatedAt: now });
+}
+
+function answerMap(tx: Tx, checklistId: string): Record<string, unknown> {
+  const map: Record<string, unknown> = {};
+  for (const row of tx.list('answers', { where: { checklistId } })) {
+    map[row.data.key] = row.data.value;
+  }
+  return map;
 }
 
 function deleteAnswerRows(tx: Tx, checklistId: string): void {
@@ -765,6 +780,95 @@ export const syncMutators = defineMutators(
         });
         // Deliberately no checklist.updatedAt bump: the Y.Doc plane's text
         // writes never bumped it either.
+      },
+    },
+
+    /**
+     * Copy answers from one of the reviewer's own appraisals into another of
+     * theirs on a different outcome. `sections` are the study-level groups
+     * the bulk menu offers: only blank ones are filled, so nothing is
+     * overwritten, and `planAnswerCopy` decides what lands so the menu shows
+     * the same plan before the click. `keys` are single answers the reviewer
+     * pulls one at a time from the question's popover; that is an explicit
+     * act on one field, so it may replace what is there.
+     */
+    'checklist.copyAnswers': {
+      args: z
+        .object({
+          fromChecklistId: z.string(),
+          toChecklistId: z.string(),
+          sections: z.array(z.string().min(1)).default([]),
+          keys: z.array(z.string().min(1)).default([]),
+          now: timestamp,
+        })
+        .refine(args => args.sections.length > 0 || args.keys.length > 0, {
+          message: 'sections or keys is required',
+        }),
+      apply: (tx, { fromChecklistId, toChecklistId, sections, keys, now }, ctx) => {
+        assertWritable(ctx);
+        const from = tx.get('checklists', fromChecklistId);
+        const to = tx.get('checklists', toChecklistId);
+        if (!from) throw new AppError('NotFound', `Checklist ${fromChecklistId} does not exist`);
+        if (!to) throw new AppError('NotFound', `Checklist ${toChecklistId} does not exist`);
+        if (
+          from.id === to.id ||
+          from.studyId !== to.studyId ||
+          from.type !== to.type ||
+          !requiresOutcome(to.type) ||
+          from.outcomeId === to.outcomeId
+        ) {
+          throw new AppError(
+            'InvalidSource',
+            'Answers can only be copied between appraisals of the same study and instrument on different outcomes',
+          );
+        }
+        if (
+          from.kind !== 'reviewer' ||
+          to.kind !== 'reviewer' ||
+          !to.assignedTo ||
+          from.assignedTo !== to.assignedTo
+        ) {
+          throw new AppError(
+            'InvalidSource',
+            'Answers can only be copied between your own appraisals',
+          );
+        }
+        if (!isEditable(to.status)) {
+          throw new AppError('NotEditable', 'This appraisal can no longer be edited');
+        }
+        const known = new Set(carryOverSections(to.type).map(section => section.id));
+        for (const id of sections) {
+          if (!known.has(id)) throw new AppError('InvalidArgs', `Unknown section ${id}`);
+        }
+        const defaults = defaultAnswerRows(to.type);
+        for (const key of keys) {
+          if (!(key in defaults)) throw new AppError('InvalidArgs', `Unknown answer key ${key}`);
+        }
+
+        const source = answerMap(tx, from.id);
+        const target = answerMap(tx, to.id);
+        const plan =
+          sections.length > 0 ?
+            planAnswerCopy(to.type, source, target, sections).filter(entry => !entry.blocker)
+          : [];
+        const toCopy = [...plan.flatMap(entry => entry.keys), ...keys].filter(key => key in source);
+        if (toCopy.length === 0) throw new AppError('NothingToCopy', 'Nothing left to copy');
+
+        for (const key of toCopy) {
+          tx.put('answers', answerRowId(to.id, key), {
+            id: answerRowId(to.id, key),
+            studyId: to.studyId,
+            checklistId: to.id,
+            key,
+            value: source[key] as JsonValue,
+          });
+        }
+
+        tx.put('checklists', to.id, {
+          ...to,
+          status: to.status === CHECKLIST_STATUS.PENDING ? CHECKLIST_STATUS.IN_PROGRESS : to.status,
+          updatedAt: now,
+        });
       },
     },
 

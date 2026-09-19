@@ -99,6 +99,12 @@ function rejectionMessage(code: string, mutationName: string): string {
       return 'An appraisal in that selection already has answers. Confirm to delete it anyway.';
     case 'DuplicateReviewer':
       return 'The same person cannot fill both reviewer slots.';
+    case 'NothingToCopy':
+      return 'Nothing was left to copy: those sections already have answers here.';
+    case 'InvalidSource':
+      return 'Answers can only be copied between your own appraisals of the same study on different outcomes.';
+    case 'NotEditable':
+      return 'This appraisal can no longer be edited.';
     default:
       return `Your change (${mutationName}) was rejected and has been rolled back.`;
   }

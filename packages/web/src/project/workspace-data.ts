@@ -13,14 +13,16 @@
  */
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { useLiveQuery, eq } from '@tanstack/react-db';
+import { useLiveQuery, and, eq, inArray } from '@tanstack/react-db';
 import { useQuery } from '@tanstack/react-query';
 import {
   answerRowId,
   deriveFinalized,
   reconciliationRowId,
   scoreChecklistRows,
+  type AnswerRow,
   type ChecklistAnswerInput,
+  type ChecklistRow,
   type ChecklistType,
   type ReconciliationRow,
 } from '@corates/shared/sync';
@@ -138,6 +140,56 @@ export function useChecklistAnswerMap(
     for (const row of data ?? []) map[row.key] = row.value;
     return map;
   }, [data]);
+}
+
+/** The checklist rows on one study, reactively. */
+export function useStudyChecklists(projectId: string, studyId: string): ChecklistRow[] {
+  const collections = useCollections(projectId);
+  const { data } = useLiveQuery({
+    queryKey: ['studyChecklists', collectionsKey(collections), studyId],
+    query: q =>
+      q
+        .from({ checklist: collections.checklists })
+        .where(({ checklist }) => eq(checklist.studyId, studyId)),
+  });
+  return data ?? [];
+}
+
+/** Every checklist's flat answer map on a study, keyed by checklist id, reactively. */
+export function useStudyAnswerMaps(
+  projectId: string,
+  studyId: string,
+): Record<string, Record<string, unknown>> {
+  const collections = useCollections(projectId);
+  const { data } = useLiveQuery({
+    queryKey: ['studyAnswers', collectionsKey(collections), studyId],
+    query: q =>
+      q.from({ answer: collections.answers }).where(({ answer }) => eq(answer.studyId, studyId)),
+  });
+  return useMemo(() => {
+    const maps: Record<string, Record<string, unknown>> = {};
+    for (const row of data ?? []) {
+      (maps[row.checklistId] ??= {})[row.key] = row.value;
+    }
+    return maps;
+  }, [data]);
+}
+
+/** The answer rows for a few flat keys across every checklist on a study, reactively. */
+export function useStudyAnswersForKeys(
+  projectId: string,
+  studyId: string,
+  keys: string[],
+): AnswerRow[] {
+  const collections = useCollections(projectId);
+  const { data } = useLiveQuery({
+    queryKey: ['studyAnswersForKeys', collectionsKey(collections), studyId, ...keys],
+    query: q =>
+      q
+        .from({ answer: collections.answers })
+        .where(({ answer }) => and(eq(answer.studyId, studyId), inArray(answer.key, keys))),
+  });
+  return data ?? [];
 }
 
 /** Imperative answer read for write-time composition (e.g. critical toggles). */
