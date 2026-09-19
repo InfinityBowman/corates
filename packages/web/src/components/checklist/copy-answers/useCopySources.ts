@@ -95,17 +95,17 @@ export function useCopySources(
   });
 }
 
-/** Each sibling's answer and comment for one question, plus the target row. */
+/** Each sibling's answer and comment for one question. */
 export function useQuestionSources(
   projectId: string,
   studyId: string,
   checklistId: string,
   questionKey: string,
-): { target: ChecklistRow | null; siblings: Sibling[]; sources: QuestionSource[] } {
-  const { target, siblings } = useSiblingAppraisals(projectId, studyId, checklistId);
+): QuestionSource[] {
+  const { siblings } = useSiblingAppraisals(projectId, studyId, checklistId);
   const commentKey = `${questionKey}.comment`;
   const rows = useStudyAnswersForKeys(projectId, studyId, [questionKey, commentKey]);
-  const sources = siblings.map(sibling => {
+  return siblings.map(sibling => {
     const own = rows.filter(row => row.checklistId === sibling.checklist.id);
     return {
       ...sibling,
@@ -113,30 +113,6 @@ export function useQuestionSources(
       comment: (own.find(row => row.key === commentKey)?.value as string | undefined) ?? '',
     };
   });
-  return { target, siblings, sources };
-}
-
-/**
- * The outcome names any of `keys` were copied from, for the "from Mortality"
- * marker. Null when none were, so the marker can render nothing.
- */
-export function copiedFromLabel(
-  target: ChecklistRow | null,
-  siblings: Sibling[],
-  keys: string[],
-): string | null {
-  const copiedFrom = target?.copiedFrom;
-  if (!copiedFrom) return null;
-  const sourceIds = new Set<string>();
-  for (const key of keys) {
-    const id = copiedFrom[key];
-    if (id) sourceIds.add(id);
-  }
-  if (sourceIds.size === 0) return null;
-  const names = [...sourceIds].map(
-    id => siblings.find(s => s.checklist.id === id)?.outcomeName ?? 'another outcome',
-  );
-  return joinNames(names);
 }
 
 export function copyAnswersFrom(

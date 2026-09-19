@@ -41,7 +41,7 @@ export function QuestionSourcesPopover({
   disabled,
 }: QuestionSourcesPopoverProps) {
   const projectId = useWorkspaceProjectId();
-  const { sources } = useQuestionSources(projectId, studyId, checklistId, questionKey);
+  const sources = useQuestionSources(projectId, studyId, checklistId, questionKey);
   const [open, setOpen] = useState(false);
   if (disabled || sources.length === 0) return null;
 

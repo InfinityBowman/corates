@@ -55,6 +55,4 @@ const toVersion2: SchemaMigrationFn = tx => {
 
 export const syncMigrations: { readonly [toVersion: number]: SchemaMigrationFn | null } = {
   2: toVersion2,
-  // Version 3 added the optional `checklists.copiedFrom`; nothing to rewrite.
-  3: null,
 };

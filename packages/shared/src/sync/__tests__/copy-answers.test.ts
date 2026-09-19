@@ -122,11 +122,6 @@ describe('checklist.copyAnswers', () => {
 
     const checklist = engine.get('checklists', 'chk-2');
     expect(checklist).toMatchObject({ status: 'in-progress', updatedAt: LATER });
-    expect(checklist?.copiedFrom?.['d1_1']).toBe('chk-1');
-    expect(checklist?.copiedFrom?.['preliminary.aim']).toBe('chk-1');
-    expect(checklist?.copiedFrom?.['d3_1']).toBeUndefined();
-    // The source is untouched.
-    expect(engine.get('checklists', 'chk-1')?.copiedFrom).toBeUndefined();
   });
 
   it('copies only the requested sections', () => {
@@ -158,7 +153,6 @@ describe('checklist.copyAnswers', () => {
     expect(target.get('d1_1')).toBe('N');
     expect(target.get('d1_2')).toBeNull();
     expect(target.get('preliminary.aim')).toBe('ASSIGNMENT');
-    expect(engine.get('checklists', 'chk-2')?.copiedFrom?.['d1_1']).toBeUndefined();
   });
 
   it('skips domain 2 when the target is being assessed under a different aim', () => {
@@ -201,29 +195,7 @@ describe('checklist.copyAnswers', () => {
     expect(target.get('d1_1')).toBe('Y');
     expect(target.get('d1_1.comment')).toBe('Computer generated');
     expect(target.get('d1_2')).toBeNull();
-    const checklist = engine.get('checklists', 'chk-2');
-    expect(checklist?.copiedFrom).toEqual({ d1_1: 'chk-1', 'd1_1.comment': 'chk-1' });
-    expect(checklist?.status).toBe('in-progress');
-  });
-
-  it('drops the provenance mark once the reviewer writes that answer themselves', () => {
-    const engine = newEngine();
-    seedPair(engine, 'ROB2');
-    fillRob2Source(engine);
-    expect(copy(engine, ['domain1']).error).toBeUndefined();
-
-    answer(engine, 'chk-2', {
-      type: 'ROB2',
-      key: 'domain1',
-      data: { answers: { d1_1: { answer: 'N' } } },
-    });
-    setText(engine, 'chk-2', 'd1_1.comment', 'Re-read the methods');
-
-    const copiedFrom = engine.get('checklists', 'chk-2')?.copiedFrom ?? {};
-    expect(copiedFrom['d1_1']).toBeUndefined();
-    expect(copiedFrom['d1_1.comment']).toBeUndefined();
-    expect(copiedFrom['d1_2']).toBe('chk-1');
-    expect(copiedFrom['domain1.direction']).toBe('chk-1');
+    expect(engine.get('checklists', 'chk-2')?.status).toBe('in-progress');
   });
 
   it('pulls a per-outcome answer one at a time even though it never bulk-copies', () => {

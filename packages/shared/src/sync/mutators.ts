@@ -152,20 +152,6 @@ function touchStudy(tx: Tx, studyId: string, now: number): void {
   if (study) tx.put('studies', studyId, { ...study, updatedAt: now });
 }
 
-/**
- * A copied answer's provenance describes the value that was copied; once the
- * reviewer writes the key themselves the mark no longer holds.
- */
-function withoutProvenance(
-  checklist: ChecklistRow,
-  keys: string[],
-): Pick<ChecklistRow, 'copiedFrom'> {
-  if (!checklist.copiedFrom) return {};
-  const copiedFrom = { ...checklist.copiedFrom };
-  for (const key of keys) delete copiedFrom[key];
-  return { copiedFrom };
-}
-
 function answerMap(tx: Tx, checklistId: string): Record<string, unknown> {
   const map: Record<string, unknown> = {};
   for (const row of tx.list('answers', { where: { checklistId } })) {
@@ -749,8 +735,7 @@ export const syncMutators = defineMutators(
           );
         }
 
-        const writes = expandAnswerUpdate(input);
-        for (const write of writes) {
+        for (const write of expandAnswerUpdate(input)) {
           tx.put('answers', answerRowId(checklistId, write.key), {
             id: answerRowId(checklistId, write.key),
             studyId: checklist.studyId,
@@ -762,10 +747,6 @@ export const syncMutators = defineMutators(
 
         tx.put('checklists', checklistId, {
           ...checklist,
-          ...withoutProvenance(
-            checklist,
-            writes.map(write => write.key),
-          ),
           status:
             checklist.status === CHECKLIST_STATUS.PENDING ?
               CHECKLIST_STATUS.IN_PROGRESS
@@ -799,12 +780,6 @@ export const syncMutators = defineMutators(
         });
         // Deliberately no checklist.updatedAt bump: the Y.Doc plane's text
         // writes never bumped it either.
-        if (checklist.copiedFrom?.[key]) {
-          tx.put('checklists', checklistId, {
-            ...checklist,
-            ...withoutProvenance(checklist, [key]),
-          });
-        }
       },
     },
 
@@ -879,7 +854,6 @@ export const syncMutators = defineMutators(
         const toCopy = [...plan.flatMap(entry => entry.keys), ...keys].filter(key => key in source);
         if (toCopy.length === 0) throw new AppError('NothingToCopy', 'Nothing left to copy');
 
-        const copiedFrom = { ...to.copiedFrom };
         for (const key of toCopy) {
           tx.put('answers', answerRowId(to.id, key), {
             id: answerRowId(to.id, key),
@@ -888,12 +862,10 @@ export const syncMutators = defineMutators(
             key,
             value: source[key] as JsonValue,
           });
-          copiedFrom[key] = from.id;
         }
 
         tx.put('checklists', to.id, {
           ...to,
-          copiedFrom,
           status: to.status === CHECKLIST_STATUS.PENDING ? CHECKLIST_STATUS.IN_PROGRESS : to.status,
           updatedAt: now,
         });
