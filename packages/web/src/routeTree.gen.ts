@@ -61,6 +61,7 @@ import { Route as ApiTestUpdateSubscriptionRouteImport } from './routes/api/test
 import { Route as ApiTestVerifyEmailRouteImport } from './routes/api/test/verify-email'
 import { Route as ApiUsersAvatarRouteImport } from './routes/api/users/avatar'
 import { Route as AppProtectedAdminIndexRouteImport } from './routes/_app/_protected/admin/index'
+import { Route as AppProtectedAdminAnnouncementsRouteImport } from './routes/_app/_protected/admin/announcements'
 import { Route as AppProtectedAdminDatabaseRouteImport } from './routes/_app/_protected/admin/database'
 import { Route as AppProtectedAdminStorageRouteImport } from './routes/_app/_protected/admin/storage'
 import { Route as AppProtectedOrgsNewRouteImport } from './routes/_app/_protected/orgs.new'
@@ -347,6 +348,12 @@ const AppProtectedAdminIndexRoute = AppProtectedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppProtectedAdminRoute,
 } as any)
+const AppProtectedAdminAnnouncementsRoute =
+  AppProtectedAdminAnnouncementsRouteImport.update({
+    id: '/announcements',
+    path: '/announcements',
+    getParentRoute: () => AppProtectedAdminRoute,
+  } as any)
 const AppProtectedAdminDatabaseRoute =
   AppProtectedAdminDatabaseRouteImport.update({
     id: '/database',
@@ -554,6 +561,7 @@ export interface FileRoutesByFullPath {
   '/api/test/verify-email': typeof ApiTestVerifyEmailRoute
   '/api/users/avatar': typeof ApiUsersAvatarRouteWithChildren
   '/checklist/': typeof AppChecklistIndexRoute
+  '/admin/announcements': typeof AppProtectedAdminAnnouncementsRoute
   '/admin/database': typeof AppProtectedAdminDatabaseRoute
   '/admin/storage': typeof AppProtectedAdminStorageRoute
   '/orgs/new': typeof AppProtectedOrgsNewRoute
@@ -628,6 +636,7 @@ export interface FileRoutesByTo {
   '/api/test/verify-email': typeof ApiTestVerifyEmailRoute
   '/api/users/avatar': typeof ApiUsersAvatarRouteWithChildren
   '/checklist': typeof AppChecklistIndexRoute
+  '/admin/announcements': typeof AppProtectedAdminAnnouncementsRoute
   '/admin/database': typeof AppProtectedAdminDatabaseRoute
   '/admin/storage': typeof AppProtectedAdminStorageRoute
   '/orgs/new': typeof AppProtectedOrgsNewRoute
@@ -709,6 +718,7 @@ export interface FileRoutesById {
   '/api/test/verify-email': typeof ApiTestVerifyEmailRoute
   '/api/users/avatar': typeof ApiUsersAvatarRouteWithChildren
   '/_app/checklist/': typeof AppChecklistIndexRoute
+  '/_app/_protected/admin/announcements': typeof AppProtectedAdminAnnouncementsRoute
   '/_app/_protected/admin/database': typeof AppProtectedAdminDatabaseRoute
   '/_app/_protected/admin/storage': typeof AppProtectedAdminStorageRoute
   '/_app/_protected/orgs/new': typeof AppProtectedOrgsNewRoute
@@ -788,6 +798,7 @@ export interface FileRouteTypes {
     | '/api/test/verify-email'
     | '/api/users/avatar'
     | '/checklist/'
+    | '/admin/announcements'
     | '/admin/database'
     | '/admin/storage'
     | '/orgs/new'
@@ -862,6 +873,7 @@ export interface FileRouteTypes {
     | '/api/test/verify-email'
     | '/api/users/avatar'
     | '/checklist'
+    | '/admin/announcements'
     | '/admin/database'
     | '/admin/storage'
     | '/orgs/new'
@@ -942,6 +954,7 @@ export interface FileRouteTypes {
     | '/api/test/verify-email'
     | '/api/users/avatar'
     | '/_app/checklist/'
+    | '/_app/_protected/admin/announcements'
     | '/_app/_protected/admin/database'
     | '/_app/_protected/admin/storage'
     | '/_app/_protected/orgs/new'
@@ -1381,6 +1394,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProtectedAdminIndexRouteImport
       parentRoute: typeof AppProtectedAdminRoute
     }
+    '/_app/_protected/admin/announcements': {
+      id: '/_app/_protected/admin/announcements'
+      path: '/announcements'
+      fullPath: '/admin/announcements'
+      preLoaderRoute: typeof AppProtectedAdminAnnouncementsRouteImport
+      parentRoute: typeof AppProtectedAdminRoute
+    }
     '/_app/_protected/admin/database': {
       id: '/_app/_protected/admin/database'
       path: '/database'
@@ -1567,6 +1587,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppProtectedAdminRouteChildren {
+  AppProtectedAdminAnnouncementsRoute: typeof AppProtectedAdminAnnouncementsRoute
   AppProtectedAdminDatabaseRoute: typeof AppProtectedAdminDatabaseRoute
   AppProtectedAdminStorageRoute: typeof AppProtectedAdminStorageRoute
   AppProtectedAdminIndexRoute: typeof AppProtectedAdminIndexRoute
@@ -1582,6 +1603,7 @@ interface AppProtectedAdminRouteChildren {
 }
 
 const AppProtectedAdminRouteChildren: AppProtectedAdminRouteChildren = {
+  AppProtectedAdminAnnouncementsRoute: AppProtectedAdminAnnouncementsRoute,
   AppProtectedAdminDatabaseRoute: AppProtectedAdminDatabaseRoute,
   AppProtectedAdminStorageRoute: AppProtectedAdminStorageRoute,
   AppProtectedAdminIndexRoute: AppProtectedAdminIndexRoute,

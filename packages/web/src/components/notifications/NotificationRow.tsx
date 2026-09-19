@@ -26,7 +26,14 @@ export function NotificationRow({
   onMarkRead,
   onDismiss,
 }: NotificationRowProps) {
-  const { title, actor, action, icon: Icon, destructive } = renderNotification(notification);
+  const {
+    title,
+    actor,
+    action,
+    icon: Icon,
+    destructive,
+    multiline,
+  } = renderNotification(notification);
   const unread = !notification.readAt;
 
   return (
@@ -44,17 +51,24 @@ export function NotificationRow({
           )}
         />
         <span className='relative size-7'>
-          <span className='bg-primary/10 text-primary flex size-7 items-center justify-center rounded-full text-[10.5px] font-semibold'>
-            {getInitials(actor ?? undefined)}
-          </span>
-          <span
-            className={cn(
-              'bg-popover group-hover:bg-accent text-muted-foreground absolute -right-1 -bottom-1 flex size-[15px] items-center justify-center rounded-full',
-              destructive && 'text-destructive',
-            )}
-          >
-            <Icon className='size-2.5' strokeWidth={2.4} aria-hidden='true' />
-          </span>
+          {actor ?
+            <>
+              <span className='bg-primary/10 text-primary flex size-7 items-center justify-center rounded-full text-[10.5px] font-semibold'>
+                {getInitials(actor)}
+              </span>
+              <span
+                className={cn(
+                  'bg-popover group-hover:bg-accent text-muted-foreground absolute -right-1 -bottom-1 flex size-[15px] items-center justify-center rounded-full',
+                  destructive && 'text-destructive',
+                )}
+              >
+                <Icon className='size-2.5' strokeWidth={2.4} aria-hidden='true' />
+              </span>
+            </>
+          : <span className='bg-primary/10 text-primary flex size-7 items-center justify-center rounded-full'>
+              <Icon className='size-3.5' aria-hidden='true' />
+            </span>
+          }
         </span>
         <span className='min-w-0'>
           <span
@@ -67,7 +81,8 @@ export function NotificationRow({
           </span>
           <span
             className={cn(
-              'block truncate text-xs leading-snug',
+              'block text-xs leading-snug',
+              multiline ? 'line-clamp-3' : 'truncate',
               unread ? 'text-muted-foreground' : 'text-muted-foreground/70',
             )}
           >

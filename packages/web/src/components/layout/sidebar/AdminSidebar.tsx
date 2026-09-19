@@ -6,6 +6,7 @@
 import { Link, useLocation } from '@tanstack/react-router';
 import {
   LayoutDashboardIcon,
+  MegaphoneIcon,
   UsersIcon,
   BuildingIcon,
   FolderIcon,
@@ -30,7 +31,10 @@ interface NavItem {
 const NAV_GROUPS: Array<{ label: string; items: NavItem[] }> = [
   {
     label: 'Overview',
-    items: [{ label: 'Dashboard', icon: LayoutDashboardIcon, path: '/admin' }],
+    items: [
+      { label: 'Dashboard', icon: LayoutDashboardIcon, path: '/admin' },
+      { label: 'Announcements', icon: MegaphoneIcon, path: '/admin/announcements' },
+    ],
   },
   {
     label: 'Directory',

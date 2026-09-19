@@ -140,7 +140,7 @@ Implemented. Both project payloads carry `actorName`, looked up from the `user` 
 
 Assignment changes flow through the sync engine, not commands, and the engine has no post-commit seam today. #628 adds an `onMutationCommitted` hook to `@cf-sync/server` that receives the principal and each written row with its previous value; the workspace DO uses it to emit `checklist.assigned` through `createNotification` unchanged.
 
-Also a candidate for this phase: admin announcements. There is no broadcast today; an `announcement` type with an admin-only server function that fans out one row per user would reuse `createNotification` and the renderer map as they are.
+- [x] Admin announcements (#840). An `announcement` type carrying operator-written title, body and optional in-app link; `sendAnnouncement` fans it out as one row per user through `createNotification`, authored from `/admin/announcements`.
 
 ## Technical Details
 
