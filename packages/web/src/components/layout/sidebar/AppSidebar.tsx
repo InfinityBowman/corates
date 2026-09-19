@@ -197,8 +197,6 @@ export function AppSidebar({ onClose, closeLabel, closeIcon }: AppSidebarProps) 
       </div>
 
       <div className='border-border shrink-0 border-t p-2'>
-        {/* Plain anchor to a new tab: /resources sits outside the app shell, so a
-            same-tab nav would drop the sidebar and the appraisal behind it. */}
         <a
           href='/resources'
           target='_blank'
