@@ -27,6 +27,9 @@ export interface NotificationPayloads {
   };
   'project.removed': { projectId: string; projectName: string; actorName: string };
   'project.deleted': { projectId: string; projectName: string; actorName: string };
+  // Operator-authored copy is stored as written, so it is the one type whose
+  // wording lives in the row rather than in the client renderer.
+  announcement: { title: string; body: string; href: string | null };
 }
 
 export type NotificationType = keyof NotificationPayloads;

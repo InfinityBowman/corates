@@ -8,6 +8,7 @@
 
 import {
   BellIcon,
+  MegaphoneIcon,
   Trash2Icon,
   UserCheckIcon,
   UserMinusIcon,
@@ -24,6 +25,8 @@ export interface RenderedNotification {
   icon: LucideIcon;
   destructive: boolean;
   href: string | null;
+  /** Show the second line in full; operator-written copy is longer than "X did Y" */
+  multiline?: boolean;
 }
 
 function roleLabel(role: string): string {
@@ -74,6 +77,18 @@ export function renderNotification(notification: NotificationRecord): RenderedNo
         icon: Trash2Icon,
         destructive: true,
         href: null,
+      };
+    }
+    case 'announcement': {
+      const { title, body, href } = notification.data;
+      return {
+        title,
+        actor: null,
+        action: body,
+        icon: MegaphoneIcon,
+        destructive: false,
+        href,
+        multiline: true,
       };
     }
     default:
