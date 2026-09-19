@@ -195,7 +195,7 @@ async function extractPdfDoiInternal(pdfData: ArrayBuffer): Promise<string | nul
     const pageText = await engine.extractText(doc, [0]).toPromise();
 
     if (pageText) {
-      const textMatch = (pageText as string).match(DOI_REGEX);
+      const textMatch = rejoinWrappedDoi(pageText as string).match(DOI_REGEX);
       if (textMatch) {
         return cleanDoi(textMatch[0]);
       }
@@ -212,6 +212,18 @@ async function extractPdfDoiInternal(pdfData: ArrayBuffer): Promise<string | nul
       }
     }
   }
+}
+
+/**
+ * Journals break a long DOI across two lines ("...104B6.\nBJJ-2021-1109.R2") and the half
+ * before the break resolves to nothing. Rejoin only when the next token continues the suffix:
+ * a run of DOI characters carrying a digit, which ordinary prose does not.
+ */
+function rejoinWrappedDoi(pageText: string): string {
+  return pageText.replace(
+    /(\b10\.\d{4,}\/\S*[./-])\r?\n([A-Za-z0-9][\w.\-()/]*\d[\w.\-()/]*)/g,
+    '$1$2',
+  );
 }
 
 /**

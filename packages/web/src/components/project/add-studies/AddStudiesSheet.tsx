@@ -18,7 +18,7 @@ import {
 import { AddStudiesForm, type AddStudiesFormState } from './AddStudiesForm';
 import { useAddStudies } from '@/hooks/useAddStudies';
 import type { MergedStudy } from '@/hooks/useAddStudies/deduplication';
-import { useSortedStudyIds } from '@/project/workspace-data';
+import { useSortedStudyIds, useExistingStudies } from '@/project/workspace-data';
 import { project } from '@/project';
 import { useProjectContext } from '../ProjectContext';
 import { useFileDragStore } from '@/stores/fileDragStore';
@@ -43,7 +43,8 @@ export function AddStudiesSheet({ open, onOpenChange, onAdded }: AddStudiesSheet
   const isDraggingOver = useFileDragStore(s => s.isDraggingFiles);
   const studyDropTargetsMounted = useFileDragStore(s => s.studyDropTargetsMounted);
 
-  const studies = useAddStudies({});
+  const existingStudies = useExistingStudies(projectId);
+  const studies = useAddStudies({ existingStudies });
   const studyIds = useSortedStudyIds(projectId);
 
   const handleOpenChange = useCallback(

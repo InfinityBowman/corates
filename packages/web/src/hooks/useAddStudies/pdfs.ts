@@ -13,6 +13,7 @@ import { fetchFromDOI } from '@/lib/referenceLookup.js';
 import { cloneArrayBuffer } from './serialization';
 import { validatePdfFile } from '@/lib/pdfValidation.js';
 import { showToast } from '@/lib/toast';
+import { preferPublishedTitle } from './matching';
 import type { UploadedPdf, StudyMetadata } from './deduplication';
 
 const DOI_FETCH_TIMEOUT = 10000;
@@ -56,6 +57,91 @@ export function usePdfOperations(): PdfOperations {
     setUploadedPdfs(prev => prev.map(p => (p.id === id ? { ...p, ...updates } : p)));
   }, []);
 
+  /**
+   * Fill the staged entry `id` from its file. A retry runs through here too, so it re-reads
+   * the file rather than re-staging it (which the already-staged filter would then drop).
+   */
+  const extractInto = useCallback(
+    async (id: string, file: File) => {
+      let arrayBuffer: ArrayBuffer;
+      try {
+        arrayBuffer = await readFileAsArrayBuffer(file);
+      } catch (error) {
+        console.error('Error reading PDF file:', file.name, error);
+        updatePdf(id, {
+          title: file.name.replace(/\.pdf$/i, ''),
+          extracting: false,
+          data: null,
+          error: 'Failed to read file',
+        });
+        return;
+      }
+
+      let title: string | null = null;
+      let doi: string | null = null;
+      let extractionError: string | null = null;
+
+      try {
+        [title, doi] = await Promise.all([
+          extractPdfTitle(arrayBuffer.slice(0)).catch((err: Error) => {
+            console.warn('Title extraction failed:', file.name, err.message);
+            return null;
+          }),
+          extractPdfDoi(arrayBuffer.slice(0)).catch((err: Error) => {
+            console.warn('DOI extraction failed:', file.name, err.message);
+            return null;
+          }),
+        ]);
+      } catch (error) {
+        console.error('Error extracting PDF metadata:', file.name, error);
+        extractionError =
+          (error as Error).message?.includes('timed out') ?
+            'Extraction timed out'
+          : 'Failed to extract metadata';
+      }
+
+      const extractedTitle = title || file.name.replace(/\.pdf$/i, '');
+      updatePdf(id, {
+        title: extractedTitle,
+        extracting: false,
+        data: arrayBuffer,
+        doi: doi || null,
+        error: extractionError,
+        metadataLoading: !!doi,
+      });
+
+      if (!doi) return;
+
+      try {
+        const refData = await withTimeout(
+          fetchFromDOI(doi),
+          DOI_FETCH_TIMEOUT,
+          'DOI metadata fetch',
+        );
+        if (!refData) {
+          updatePdf(id, { metadataLoading: false });
+          return;
+        }
+        updatePdf(id, {
+          title: preferPublishedTitle(extractedTitle, refData.title),
+          metadata: {
+            firstAuthor: refData.firstAuthor || null,
+            publicationYear: refData.publicationYear || null,
+            // The lookup formats authors into one string, under a string[] type.
+            authors: (refData.authors as unknown as string[]) || null,
+            journal: refData.journal || null,
+            abstract: refData.abstract || null,
+          },
+          metadataLoading: false,
+        });
+      } catch (err) {
+        console.warn('Could not fetch metadata for DOI:', doi, (err as Error).message);
+        updatePdf(id, { metadataLoading: false });
+      }
+    },
+    [updatePdf],
+  );
+
   const handlePdfSelect = useCallback(
     async (files: File[]) => {
       const validFiles: File[] = [];
@@ -90,6 +176,16 @@ export function usePdfOperations(): PdfOperations {
         file => !existingFiles.has(`${file.name}:${file.size || 0}`),
       );
 
+      const alreadyStaged = validFiles.filter(file => !newFiles.includes(file));
+      if (alreadyStaged.length > 0) {
+        showToast.info(
+          'Already staged',
+          alreadyStaged.length === 1 ?
+            `"${alreadyStaged[0].name}" is already in the list below.`
+          : `${alreadyStaged.length} of these files are already in the list below.`,
+        );
+      }
+
       if (newFiles.length === 0) return;
 
       const newPdfs: UploadedPdf[] = newFiles.map(file => ({
@@ -106,84 +202,15 @@ export function usePdfOperations(): PdfOperations {
       setUploadedPdfs(prev => [...prev, ...newPdfs]);
 
       for (const pdf of newPdfs) {
-        let arrayBuffer: ArrayBuffer | null = null;
-        let title: string | null = null;
-        let doi: string | null = null;
-        let extractionError: string | null = null;
-
-        try {
-          arrayBuffer = await readFileAsArrayBuffer(pdf.file as File);
-        } catch (error) {
-          console.error('Error reading PDF file:', pdf.file!.name, error);
-          updatePdf(pdf.id, {
-            title: pdf.file!.name.replace(/\.pdf$/i, ''),
-            extracting: false,
-            data: null,
-            error: 'Failed to read file',
-          });
-          continue;
-        }
-
-        try {
-          [title, doi] = await Promise.all([
-            extractPdfTitle(arrayBuffer.slice(0)).catch((err: Error) => {
-              console.warn('Title extraction failed:', pdf.file!.name, err.message);
-              return null;
-            }),
-            extractPdfDoi(arrayBuffer.slice(0)).catch((err: Error) => {
-              console.warn('DOI extraction failed:', pdf.file!.name, err.message);
-              return null;
-            }),
-          ]);
-        } catch (error) {
-          console.error('Error extracting PDF metadata:', pdf.file!.name, error);
-          extractionError =
-            (error as Error).message?.includes('timed out') ?
-              'Extraction timed out'
-            : 'Failed to extract metadata';
-        }
-
-        updatePdf(pdf.id, {
-          title: title || pdf.file!.name.replace(/\.pdf$/i, ''),
-          extracting: false,
-          data: arrayBuffer,
-          doi: doi || null,
-          error: extractionError,
-          metadataLoading: !!doi,
-        });
-
-        if (doi) {
-          withTimeout(fetchFromDOI(doi), DOI_FETCH_TIMEOUT, 'DOI metadata fetch')
-            .then((result: unknown) => {
-              const refData = result as Record<string, unknown> | null;
-              if (refData) {
-                updatePdf(pdf.id, {
-                  metadata: {
-                    firstAuthor: (refData.firstAuthor as string) || null,
-                    publicationYear: (refData.publicationYear as number) || null,
-                    authors: (refData.authors as string[]) || null,
-                    journal: (refData.journal as string) || null,
-                    abstract: (refData.abstract as string) || null,
-                  },
-                  metadataLoading: false,
-                });
-              } else {
-                updatePdf(pdf.id, { metadataLoading: false });
-              }
-            })
-            .catch((err: Error) => {
-              console.warn('Could not fetch metadata for DOI:', doi, err.message);
-              updatePdf(pdf.id, { metadataLoading: false });
-            });
-        }
+        await extractInto(pdf.id, pdf.file as File);
       }
     },
-    [updatePdf],
+    [extractInto],
   );
 
   const retryPdfExtraction = useCallback(
     async (id: string) => {
-      const pdf = uploadedPdfs.find(p => p.id === id);
+      const pdf = uploadedPdfsRef.current.find(p => p.id === id);
       if (!pdf || !pdf.file || !(pdf.file instanceof File)) return;
 
       updatePdf(id, {
@@ -195,19 +222,9 @@ export function usePdfOperations(): PdfOperations {
         metadataLoading: false,
       });
 
-      // Re-process the file
-      await handlePdfSelect([pdf.file]);
-      // Remove the original entry (handlePdfSelect created a new one)
-      setUploadedPdfs(prev => {
-        const dupeIdx = prev.findIndex(p => p.id !== id && p.file === pdf.file);
-        if (dupeIdx === -1) return prev;
-        const dupe = prev[dupeIdx];
-        return prev
-          .map(p => (p.id === id ? { ...p, ...dupe, id } : p))
-          .filter(p => p.id !== dupe.id);
-      });
+      await extractInto(id, pdf.file);
     },
-    [uploadedPdfs, updatePdf, handlePdfSelect],
+    [updatePdf, extractInto],
   );
 
   const removePdf = useCallback((id: string) => {

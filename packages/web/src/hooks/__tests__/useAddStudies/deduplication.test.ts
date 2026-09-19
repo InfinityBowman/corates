@@ -189,8 +189,14 @@ describe('deduplication', () => {
     describe('title-based deduplication', () => {
       it('merges entries whose normalized titles match', () => {
         const titlePairs = [
-          ['Test Study Title', 'Test Study Title'],
-          ['TEST STUDY', 'test study'],
+          [
+            'Treatment With Platelet-Rich Plasma Is More Effective Than Placebo',
+            'Treatment With Platelet-Rich Plasma Is More Effective Than Placebo',
+          ],
+          [
+            'TREATMENT WITH PLATELET-RICH PLASMA IS MORE EFFECTIVE THAN PLACEBO',
+            'treatment with platelet-rich plasma is more effective than placebo',
+          ],
         ] as const;
         for (const [pdfTitle, refTitle] of titlePairs) {
           const result = buildDeduplicatedStudies({
@@ -209,8 +215,11 @@ describe('deduplication', () => {
         const result = buildDeduplicatedStudies({
           uploadedPdfs: [],
           selectedRefs: [
-            { title: 'Study Alpha', doi: null },
-            { title: 'Study Beta', doi: null },
+            {
+              title: 'Platelet-rich plasma for knee osteoarthritis: a randomized trial',
+              doi: null,
+            },
+            { title: 'Corticosteroid injection for shoulder pain: a randomized trial', doi: null },
           ],
           selectedLookups: [],
           driveFiles: [],
@@ -319,9 +328,20 @@ describe('deduplication', () => {
       it('preserves Google Drive file ID through merge', () => {
         const result = buildDeduplicatedStudies({
           uploadedPdfs: [],
-          selectedRefs: [{ title: 'My Study', doi: null, firstAuthor: 'Smith' }],
+          selectedRefs: [
+            {
+              title: 'Platelet-rich plasma for knee osteoarthritis: a randomized trial',
+              doi: null,
+              firstAuthor: 'Smith',
+            },
+          ],
           selectedLookups: [],
-          driveFiles: [{ id: 'drive-123', name: 'My Study.pdf' }],
+          driveFiles: [
+            {
+              id: 'drive-123',
+              name: 'Platelet-rich plasma for knee osteoarthritis: a randomized trial.pdf',
+            },
+          ],
         });
         expect(result).toHaveLength(1);
         expect(result[0].googleDriveFileId).toBe('drive-123');

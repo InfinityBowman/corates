@@ -79,15 +79,24 @@ export function AddStudiesForm({
   const handleSubmit = useCallback(async () => {
     const studiesToAdd = studies.getStudiesToSubmit();
     if (studiesToAdd.length === 0) {
-      showToast.warning('Nothing to add yet', 'Choose at least one study above, then add it.');
+      if (studies.flaggedCount > 0) {
+        showToast.warning(
+          'Nothing left to add',
+          'Every staged study is already in this project. Use Add anyway to add one regardless.',
+        );
+      } else {
+        showToast.warning('Nothing to add yet', 'Choose at least one study above, then add it.');
+      }
       return;
     }
 
     setIsSubmitting(true);
+    studies.freezeDuplicateCheck();
     try {
       await onAddStudies?.(studiesToAdd);
       studies.clearAll();
     } finally {
+      studies.resumeDuplicateCheck();
       setIsSubmitting(false);
     }
   }, [studies, onAddStudies]);
@@ -172,8 +181,8 @@ export function AddStudiesForm({
                     Uploading...
                   </>
                 : <>
-                    Upload {studies.stagedStudiesPreview.length}{' '}
-                    {studies.stagedStudiesPreview.length === 1 ? 'study' : 'studies'}
+                    Upload {studies.submittableCount}{' '}
+                    {studies.submittableCount === 1 ? 'study' : 'studies'}
                   </>
                 }
               </Button>

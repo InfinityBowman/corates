@@ -11,6 +11,7 @@ import { importFromDrive } from '@/server/functions/google-drive.functions';
 import { extractPdfDoi, extractPdfTitle } from '@/lib/pdfUtils.js';
 import { fetchFromDOI } from '@/lib/referenceLookup.js';
 import type { StudyMetadata } from '@corates/shared/sync';
+import type { ExtraPdf } from '@/hooks/useAddStudies/deduplication';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { connectionPool } from '../ConnectionPool';
 
@@ -414,6 +415,19 @@ export const studyActions = {
               projectId,
               userId,
             );
+
+            // Merged sources can each carry a file; attach them all rather than drop them.
+            for (const extra of (study.extraPdfs as ExtraPdf[] | undefined) ?? []) {
+              await uploadAndAttachPdf(
+                client,
+                extra.data,
+                extra.fileName ?? 'attachment.pdf',
+                studyId,
+                orgId,
+                projectId,
+                userId,
+              );
+            }
           } else if (study.googleDriveFileId) {
             pdfAttached = await handleGoogleDrivePdf(
               client,

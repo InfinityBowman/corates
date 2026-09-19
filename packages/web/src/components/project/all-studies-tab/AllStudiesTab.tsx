@@ -12,7 +12,7 @@ import { StudyCard } from './study-card/StudyCard';
 import { StudiesExplainer } from './StudiesExplainer';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import { useFileDragStore } from '@/stores/fileDragStore';
-import { useAllStudies } from '@/project/workspace-data';
+import { useAllStudies, useExistingStudies } from '@/project/workspace-data';
 import { useAddStudies } from '@/hooks/useAddStudies';
 import { useProjectExport } from '@/hooks/useProjectExport';
 import { project } from '@/project';
@@ -23,7 +23,8 @@ export function AllStudiesTab() {
   const { projectId, getMember, isOwner, openAssignSheet, setAddStudiesSheetOpen } =
     useProjectContext();
 
-  const addStudies = useAddStudies({});
+  const existingStudies = useExistingStudies(projectId);
+  const addStudies = useAddStudies({ existingStudies });
   const studies = useAllStudies(projectId);
   const { exportStudyCsv, exportStudyPdf } = useProjectExport(projectId);
   const connectionState = useProjectStore(s => selectConnectionPhase(s, projectId));
