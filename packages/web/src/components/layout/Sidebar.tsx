@@ -9,6 +9,7 @@ import { useState, useEffect, useCallback, useEffectEvent } from 'react';
 import { useLocation } from '@tanstack/react-router';
 import { createPortal } from 'react-dom';
 import { PanelLeftCloseIcon, XIcon } from 'lucide-react';
+import { SIDEBAR_SLIDE, SIDEBAR_SLIDE_MS } from './sidebarMotion';
 import { AdminSidebar } from './sidebar/AdminSidebar';
 import { AppSidebar } from './sidebar/AppSidebar';
 import { SettingsSidebar } from './sidebar/SettingsSidebar';
@@ -34,6 +35,18 @@ export function Sidebar({
   const [isResizing, setIsResizing] = useState(false);
   const isSettings = pathname.startsWith('/settings');
   const isAdmin = pathname.startsWith('/admin');
+
+  // The desktop panel stays in the DOM so its width can animate, but the body
+  // unmounts once the slide finishes to drop its queries while hidden.
+  const [desktopBodyMounted, setDesktopBodyMounted] = useState(desktopVisible);
+  useEffect(() => {
+    if (desktopVisible) {
+      setDesktopBodyMounted(true);
+      return;
+    }
+    const timer = setTimeout(() => setDesktopBodyMounted(false), SIDEBAR_SLIDE_MS);
+    return () => clearTimeout(timer);
+  }, [desktopVisible]);
 
   // Close mobile on escape
   useEffect(() => {
@@ -95,15 +108,26 @@ export function Sidebar({
 
   return (
     <>
-      {/* Desktop sidebar */}
-      {desktopVisible && (
+      {/* Desktop sidebar -- outer clips while the panel slides out from under it */}
+      <div
+        className={`hidden h-full shrink-0 overflow-hidden md:block ${
+          isResizing ? '' : `transition-[width] ${SIDEBAR_SLIDE}`
+        }`}
+        style={{ width: desktopVisible ? `${width}px` : 0, maxWidth: '100vw' }}
+        aria-hidden={!desktopVisible}
+        inert={!desktopVisible ? true : undefined}
+      >
         <div
-          className={`border-border bg-sidebar relative hidden h-full shrink-0 border-r md:block ${
-            isResizing ? 'select-none' : ''
+          className={`border-border bg-sidebar relative h-full border-r ${
+            isResizing ? 'select-none' : `transition-transform ${SIDEBAR_SLIDE}`
           }`}
-          style={{ width: `${width}px`, maxWidth: '100vw' }}
+          style={{
+            width: `${width}px`,
+            transform: desktopVisible ? undefined : `translateX(-${width}px)`,
+          }}
         >
-          {renderBody(onHideDesktop, 'Hide sidebar', <PanelLeftCloseIcon className='size-4' />)}
+          {desktopBodyMounted &&
+            renderBody(onHideDesktop, 'Hide sidebar', <PanelLeftCloseIcon className='size-4' />)}
           <div
             className='hover:bg-primary absolute top-0 right-0 hidden h-full w-1 cursor-col-resize bg-transparent transition-colors md:block'
             onMouseDown={handleResizeStart}
@@ -112,22 +136,21 @@ export function Sidebar({
             aria-label='Resize sidebar'
           />
         </div>
-      )}
+      </div>
 
       {/* Mobile overlay -- panel always mounted for the CSS slide transition */}
       {createPortal(
         <div className='md:hidden' aria-hidden={!mobileOpen} inert={!mobileOpen ? true : undefined}>
           <div
-            className={`fixed inset-0 z-40 bg-black/30 transition-opacity duration-200 ${
+            className={`fixed inset-0 z-40 bg-black/30 transition-opacity ${SIDEBAR_SLIDE} ${
               mobileOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
             }`}
             onClick={onCloseMobile}
           />
           <div
-            className={`bg-sidebar fixed inset-y-0 left-0 z-50 w-64 shadow-xl transition-transform duration-200 ${
+            className={`bg-sidebar fixed inset-y-0 left-0 z-50 w-64 shadow-xl transition-transform ${SIDEBAR_SLIDE} ${
               mobileOpen ? 'translate-x-0' : '-translate-x-full'
             }`}
-            style={{ transitionTimingFunction: 'cubic-bezier(0.32, 0.72, 0, 1)' }}
           >
             {/* Body mounts only while open so the app renders one sidebar at a time */}
             {mobileOpen && renderBody(onCloseMobile, 'Close sidebar', <XIcon className='size-4' />)}
