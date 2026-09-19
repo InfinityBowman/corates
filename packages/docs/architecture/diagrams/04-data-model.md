@@ -99,6 +99,7 @@ erDiagram
         string assignedTo "null on consensus"
         string status
         string type "AMSTAR2, ROB2, ROBINS_I"
+        json copiedFrom "answer key to source checklist, optional"
     }
 
     ANSWER {

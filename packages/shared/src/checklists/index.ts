@@ -19,6 +19,9 @@ export * from './status.js';
 // Domain logic (filtering, queries)
 export * from './domain.js';
 
+// Study-level sections that may be copied between a reviewer's outcomes
+export * from './carry-over.js';
+
 // AMSTAR2
 export * as amstar2 from './amstar2/index.js';
 

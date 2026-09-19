@@ -140,6 +140,26 @@ export function useChecklistAnswerMap(
   }, [data]);
 }
 
+/** Every checklist's flat answer map on a study, keyed by checklist id, reactively. */
+export function useStudyAnswerMaps(
+  projectId: string,
+  studyId: string,
+): Record<string, Record<string, unknown>> {
+  const collections = useCollections(projectId);
+  const { data } = useLiveQuery({
+    queryKey: ['studyAnswers', collectionsKey(collections), studyId],
+    query: q =>
+      q.from({ answer: collections.answers }).where(({ answer }) => eq(answer.studyId, studyId)),
+  });
+  return useMemo(() => {
+    const maps: Record<string, Record<string, unknown>> = {};
+    for (const row of data ?? []) {
+      (maps[row.checklistId] ??= {})[row.key] = row.value;
+    }
+    return maps;
+  }, [data]);
+}
+
 /** Imperative answer read for write-time composition (e.g. critical toggles). */
 export function getAnswerValue(projectId: string, checklistId: string, flatKey: string): unknown {
   const collections = connectionPool.getCollections(projectId);

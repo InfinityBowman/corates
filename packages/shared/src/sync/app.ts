@@ -12,7 +12,7 @@ import { presenceSchema } from './presence.js';
 import { syncSchema } from './schema.js';
 
 export const syncApp = defineApp({
-  version: 2,
+  version: 3,
   schema: syncSchema,
   mutators: syncMutators,
   migrations: syncMigrations,

@@ -105,6 +105,8 @@ export const syncSchema = defineSchema({
     outcomeId: z.string().nullable().default(null),
     createdAt: z.number(),
     updatedAt: z.number(),
+    /** Flat answer key to the checklist it was copied from by `checklist.copyAnswers`. */
+    copiedFrom: z.record(z.string(), z.string()).optional(),
   }),
 
   /**

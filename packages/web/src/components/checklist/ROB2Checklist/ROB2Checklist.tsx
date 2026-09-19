@@ -5,6 +5,7 @@ import { DomainSection } from './DomainSection';
 import { OverallSection } from './OverallSection';
 import { ResponseLegend } from './SignallingQuestion';
 import { ScoringSummary } from './ScoringSummary';
+import { CopyAnswersMenu } from '@/components/checklist/copy-answers/CopyAnswersMenu';
 import { useWorkspaceProjectId, useAnswerValue, useStudy } from '@/project/workspace-data';
 
 interface ROB2ChecklistProps {
@@ -63,8 +64,16 @@ export function ROB2Checklist({
   return (
     <div className='bg-blue-50'>
       <div className='container mx-auto flex max-w-5xl flex-col gap-4 px-4 py-6'>
-        <div className='text-foreground mb-6 text-left text-lg font-semibold sm:text-center'>
-          {checklistName || 'RoB 2 Checklist'}
+        <div className='mb-6 flex flex-wrap items-center justify-between gap-2 sm:grid sm:grid-cols-[1fr_auto_1fr]'>
+          <div className='hidden sm:block' />
+          <div className='text-foreground text-lg font-semibold'>
+            {checklistName || 'RoB 2 Checklist'}
+          </div>
+          <div className='flex justify-end'>
+            {!isReadOnly && (
+              <CopyAnswersMenu studyId={studyId} checklistId={checklistId} instrumentName='RoB 2' />
+            )}
+          </div>
         </div>
 
         {/* Scoring Summary Strip */}
