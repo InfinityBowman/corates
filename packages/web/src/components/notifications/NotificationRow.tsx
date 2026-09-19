@@ -82,7 +82,7 @@ export function NotificationRow({
           <span
             className={cn(
               'block text-xs leading-snug',
-              multiline ? 'line-clamp-3' : 'truncate',
+              !multiline && 'truncate',
               unread ? 'text-muted-foreground' : 'text-muted-foreground/70',
             )}
           >

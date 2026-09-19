@@ -25,7 +25,7 @@ export interface RenderedNotification {
   icon: LucideIcon;
   destructive: boolean;
   href: string | null;
-  /** Let the second line wrap; operator-written copy is longer than "X did Y" */
+  /** Show the second line in full; operator-written copy is longer than "X did Y" */
   multiline?: boolean;
 }
 
