@@ -44,6 +44,7 @@ import type {
   PdfEntry,
   StudyInfo,
 } from '@/stores/projectStore';
+import type { ExistingStudy } from '@/hooks/useAddStudies/existing';
 import { queryKeys } from '@/lib/queryKeys';
 import { getMyProjects } from '@/server/functions/users.functions';
 import type { UserProject } from '@/server/functions/users.server';
@@ -422,6 +423,38 @@ export function useStudy(projectId: string, studyId: string): StudyInfo | undefi
 export function useSortedStudyIds(projectId: string): string[] {
   const studies = useAllStudies(projectId);
   return useMemo(() => studies.map(s => s.id), [studies]);
+}
+
+/**
+ * Just enough of each study to recognise a paper the project already holds. Deliberately not
+ * `useAllStudies`, which copies every checklist and answer row along with it.
+ */
+export function useExistingStudies(projectId: string): ExistingStudy[] {
+  const collections = useCollections(projectId);
+  const key = collectionsKey(collections);
+  const { data: studies } = useLiveQuery({
+    queryKey: ['study-identities', key],
+    query: q => q.from({ study: collections.studies }),
+  });
+  const { data: pdfs } = useLiveQuery({
+    queryKey: ['pdf-sizes', key],
+    query: q => q.from({ pdf: collections.pdfs }),
+  });
+
+  return useMemo(() => {
+    const sizesByStudy = new Map<string, number[]>();
+    for (const pdf of pdfs ?? []) {
+      const sizes = sizesByStudy.get(pdf.studyId);
+      if (sizes) sizes.push(pdf.size);
+      else sizesByStudy.set(pdf.studyId, [pdf.size]);
+    }
+    return (studies ?? []).map(study => ({
+      id: study.id,
+      title: study.originalTitle || study.name || null,
+      doi: study.doi ?? null,
+      fileSizes: sizesByStudy.get(study.id) ?? [],
+    }));
+  }, [studies, pdfs]);
 }
 
 // ---------------------------------------------------------------------------

@@ -229,6 +229,34 @@ export async function fetchFromDOI(doi: string): Promise<ReferenceMetadata> {
   return normalizeCrossRefWork(work);
 }
 
+const HTML_ENTITIES: Record<string, string> = {
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+  nbsp: ' ',
+};
+
+/**
+ * Some publishers register titles as escaped JATS markup ("&lt;p&gt;Title&lt;/p&gt;"), which
+ * otherwise reaches the reviewer as the study's name. Entities decode first so the tags they
+ * hide can be stripped.
+ */
+function cleanCrossrefTitle(title: string): string {
+  const decoded = title.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (match, entity: string) => {
+    if (entity.startsWith('#x') || entity.startsWith('#X')) {
+      return String.fromCodePoint(parseInt(entity.slice(2), 16));
+    }
+    if (entity.startsWith('#')) return String.fromCodePoint(parseInt(entity.slice(1), 10));
+    return HTML_ENTITIES[entity.toLowerCase()] ?? match;
+  });
+  return decoded
+    .replace(/<[^>]*>/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 /**
  * Normalize CrossRef API response to our reference format
  */
@@ -255,7 +283,8 @@ function normalizeCrossRefWork(work: CrossRefWork): ReferenceMetadata {
   }
 
   // Extract title (CrossRef returns array)
-  const title = Array.isArray(work.title) ? work.title[0] : work.title || 'Untitled';
+  const rawTitle = Array.isArray(work.title) ? work.title[0] : work.title || 'Untitled';
+  const title = cleanCrossrefTitle(rawTitle);
 
   // Extract journal name
   const journal = work['container-title']?.[0] || work['short-container-title']?.[0] || null;

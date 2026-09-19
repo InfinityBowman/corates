@@ -52,21 +52,21 @@ describe('matching', () => {
       it('matches titles case-insensitively when neither has a DOI', () => {
         expect(
           entriesMatch(
-            { title: 'Test Study Title', doi: null },
-            { title: 'Test Study Title', doi: null },
+            { title: 'Platelet-rich plasma for knee osteoarthritis: a trial', doi: null },
+            { title: 'Platelet-rich plasma for knee osteoarthritis: a trial', doi: null },
           ),
         ).toBe(true);
         expect(
           entriesMatch(
-            { title: 'TEST STUDY TITLE', doi: null },
-            { title: 'test study title', doi: null },
+            { title: 'PLATELET-RICH PLASMA FOR KNEE OSTEOARTHRITIS: A TRIAL', doi: null },
+            { title: 'platelet-rich plasma for knee osteoarthritis: a trial', doi: null },
           ),
         ).toBe(true);
       });
 
       it('returns false for different titles when no DOI', () => {
-        const entry1 = { title: 'Title A', doi: null };
-        const entry2 = { title: 'Title B', doi: null };
+        const entry1 = { title: 'Platelet-rich plasma for knee osteoarthritis', doi: null };
+        const entry2 = { title: 'Corticosteroid injection for shoulder pain', doi: null };
         expect(entriesMatch(entry1, entry2)).toBe(false);
       });
     });
@@ -82,10 +82,10 @@ describe('matching', () => {
 
   describe('findMatchingRef', () => {
     const references = [
-      { id: 'ref-1', doi: '10.1234/test1', title: 'Title One' },
-      { id: 'ref-2', doi: '10.1234/test2', title: 'Title Two' },
-      { id: 'ref-3', doi: null, title: 'Title Three' },
-      { id: 'ref-4', doi: '10.1234/test4', title: 'Title Four' },
+      { id: 'ref-1', doi: '10.1234/test1', title: 'Platelet-rich plasma for knee osteoarthritis' },
+      { id: 'ref-2', doi: '10.1234/test2', title: 'Corticosteroid injection for shoulder pain' },
+      { id: 'ref-3', doi: null, title: 'Exercise therapy for chronic low back pain' },
+      { id: 'ref-4', doi: '10.1234/test4', title: 'Hyaluronic acid injection for hip arthritis' },
     ];
 
     describe('DOI-based matching', () => {
@@ -105,12 +105,17 @@ describe('matching', () => {
 
     describe('title-based matching', () => {
       it('finds reference with matching title when no DOI, case-insensitively', () => {
-        expect(findMatchingRef({ title: 'Title Three' }, references)!.id).toBe('ref-3');
-        expect(findMatchingRef({ title: 'TITLE ONE' }, references)!.id).toBe('ref-1');
+        expect(
+          findMatchingRef({ title: 'Exercise therapy for chronic low back pain' }, references)!.id,
+        ).toBe('ref-3');
+        expect(
+          findMatchingRef({ title: 'PLATELET-RICH PLASMA FOR KNEE OSTEOARTHRITIS' }, references)!
+            .id,
+        ).toBe('ref-1');
       });
 
       it('returns null when no title matches', () => {
-        const entry = { title: 'Nonexistent Title' };
+        const entry = { title: 'Acupuncture for migraine prevention in adults' };
         const result = findMatchingRef(entry, references);
         expect(result).toBeNull();
       });
@@ -125,8 +130,8 @@ describe('matching', () => {
 
       it('returns first match when multiple could match', () => {
         const duplicateRefs = [
-          { id: 'ref-a', doi: '10.1234/same', title: 'Same Title' },
-          { id: 'ref-b', doi: '10.1234/same', title: 'Same Title' },
+          { id: 'ref-a', doi: '10.1234/same', title: 'Exercise therapy for chronic low back pain' },
+          { id: 'ref-b', doi: '10.1234/same', title: 'Exercise therapy for chronic low back pain' },
         ];
         const entry = { doi: '10.1234/same' };
         const result = findMatchingRef(entry, duplicateRefs);

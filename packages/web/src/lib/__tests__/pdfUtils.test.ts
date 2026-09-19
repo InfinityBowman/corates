@@ -271,6 +271,53 @@ describe('extractPdfDoi', () => {
     expect(doi).toBe('10.1234/page.doi');
   });
 
+  it('should rejoin a DOI broken across two lines', async () => {
+    const pdfData = new ArrayBuffer(100);
+
+    mockEngine.openDocumentBuffer.mockReturnValue({
+      toPromise: () => Promise.resolve(mockDoc),
+    });
+    mockEngine.getMetadata.mockReturnValue({
+      toPromise: () => Promise.resolve({}),
+    });
+    mockEngine.extractText.mockReturnValue({
+      // The Bone & Joint Journal wraps its DOI mid-suffix, and the half before
+      // the break resolves to nothing while still looking like a real DOI.
+      toPromise: () =>
+        Promise.resolve(
+          '© 2022 The British Editorial\r\nSociety of Bone & Joint Surgery\r\ndoi:10.1302/0301-620X.104B6.\r\nBJJ-2021-1109.R2 $2.00\r\nBone Joint J\r\n',
+        ),
+    });
+    mockEngine.closeDocument.mockReturnValue({
+      toPromise: () => Promise.resolve(),
+    });
+
+    const doi = await extractPdfDoi(pdfData);
+
+    expect(doi).toBe('10.1302/0301-620x.104b6.bjj-2021-1109.r2');
+  });
+
+  it('should not absorb the next line when it is prose', async () => {
+    const pdfData = new ArrayBuffer(100);
+
+    mockEngine.openDocumentBuffer.mockReturnValue({
+      toPromise: () => Promise.resolve(mockDoc),
+    });
+    mockEngine.getMetadata.mockReturnValue({
+      toPromise: () => Promise.resolve({}),
+    });
+    mockEngine.extractText.mockReturnValue({
+      toPromise: () => Promise.resolve('doi:10.1234/page.doi.\r\nMethods were preregistered.'),
+    });
+    mockEngine.closeDocument.mockReturnValue({
+      toPromise: () => Promise.resolve(),
+    });
+
+    const doi = await extractPdfDoi(pdfData);
+
+    expect(doi).toBe('10.1234/page.doi');
+  });
+
   it('should return null when no DOI is found', async () => {
     const pdfData = new ArrayBuffer(100);
 

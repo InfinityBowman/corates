@@ -5,7 +5,7 @@
  * Handles matching PDFs to references and deduplication on submit.
  */
 
-import { useMemo, useEffect, useCallback, useRef } from 'react';
+import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import { showToast } from '@/lib/toast';
 
 import { usePdfOperations } from './pdfs';
@@ -15,6 +15,7 @@ import { useDriveOperations } from './drive';
 import { buildDeduplicatedStudies } from './deduplication';
 import type { MergedStudy } from './deduplication';
 import { findMatchingRef } from './matching';
+import { findExistingMatch, type ExistingMatch, type ExistingStudy } from './existing';
 
 interface CollectedPdf {
   title: string;
@@ -76,13 +77,32 @@ interface CollectedStudies {
 interface UseAddStudiesOptions {
   collectMode?: boolean;
   onStudiesChange?: (data: CollectedStudies) => void;
+  /** Studies the project already holds, to flag staged duplicates against. */
+  existingStudies?: ExistingStudy[];
 }
+
+/** A staged study, plus the study it duplicates when the project already has one. */
+export interface StagedStudy extends MergedStudy {
+  existingMatch: ExistingMatch | null;
+}
+
+const NO_EXISTING_STUDIES: ExistingStudy[] = [];
 
 export function useAddStudies(options: UseAddStudiesOptions = {}) {
   const pdfOps = usePdfOperations();
   const refOps = useReferenceOperations();
   const lookupOps = useLookupOperations();
   const driveOps = useDriveOperations();
+  const liveExistingStudies = options.existingStudies ?? NO_EXISTING_STUDIES;
+
+  // A submit creates its studies one at a time, so a staged row left on screen would match the
+  // study it just created. Comparing against a snapshot taken before the submit keeps the rows
+  // still until clearAll removes them.
+  const [existingSnapshot, setExistingSnapshot] = useState<ExistingStudy[] | null>(null);
+  const existingStudies = existingSnapshot ?? liveExistingStudies;
+
+  // Flagged studies the reviewer chose to add anyway, by MergedStudy.key.
+  const [confirmedDuplicates, setConfirmedDuplicates] = useState<Set<string>>(new Set());
 
   // Stable ref for callback to avoid infinite effect loops
   const onStudiesChangeRef = useRef(options.onStudiesChange);
@@ -93,18 +113,23 @@ export function useAddStudies(options: UseAddStudiesOptions = {}) {
   const totalStudyCount =
     pdfOps.pdfCount + refOps.refCount + lookupOps.lookupCount + driveOps.driveCount;
 
-  const stagedStudiesPreview = useMemo(() => {
+  const stagedStudiesPreview: StagedStudy[] = useMemo(() => {
     const selectedRefs = refOps.importedRefs.filter(r => refOps.selectedRefIds.has(r._id));
     const selectedLookups = lookupOps.lookupRefs.filter(
       r => lookupOps.selectedLookupIds.has(r._id) && r.pdfAvailable,
     );
 
-    return buildDeduplicatedStudies({
+    const merged = buildDeduplicatedStudies({
       uploadedPdfs: pdfOps.uploadedPdfs,
       selectedRefs,
       selectedLookups,
       driveFiles: driveOps.selectedDriveFiles,
     });
+
+    return merged.map(study => ({
+      ...study,
+      existingMatch: findExistingMatch(study, existingStudies),
+    }));
   }, [
     pdfOps.uploadedPdfs,
     refOps.importedRefs,
@@ -112,7 +137,28 @@ export function useAddStudies(options: UseAddStudiesOptions = {}) {
     lookupOps.lookupRefs,
     lookupOps.selectedLookupIds,
     driveOps.selectedDriveFiles,
+    existingStudies,
   ]);
+
+  /** A flagged study is left out until the reviewer says to add it anyway. */
+  const isSubmittable = useCallback(
+    (study: StagedStudy) => !study.existingMatch || confirmedDuplicates.has(study.key),
+    [confirmedDuplicates],
+  );
+
+  const freezeDuplicateCheck = useCallback(() => {
+    setExistingSnapshot(liveExistingStudies);
+  }, [liveExistingStudies]);
+
+  const resumeDuplicateCheck = useCallback(() => setExistingSnapshot(null), []);
+
+  const toggleDuplicateConfirmed = useCallback((key: string) => {
+    setConfirmedDuplicates(prev => {
+      const next = new Set(prev);
+      if (!next.delete(key)) next.add(key);
+      return next;
+    });
+  }, []);
 
   const hasAnyStudies = useCallback(
     () =>
@@ -202,26 +248,13 @@ export function useAddStudies(options: UseAddStudiesOptions = {}) {
     }
   }, [refOps.refPdfFiles, refOps.importedRefs]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const getStudiesToSubmit = useCallback((): MergedStudy[] => {
-    const selectedRefs = refOps.importedRefs.filter(r => refOps.selectedRefIds.has(r._id));
-    const selectedLookups = lookupOps.lookupRefs.filter(
-      r => lookupOps.selectedLookupIds.has(r._id) && r.pdfAvailable,
-    );
+  const getStudiesToSubmit = useCallback(
+    (): MergedStudy[] => stagedStudiesPreview.filter(isSubmittable),
+    [stagedStudiesPreview, isSubmittable],
+  );
 
-    return buildDeduplicatedStudies({
-      uploadedPdfs: pdfOps.uploadedPdfs,
-      selectedRefs,
-      selectedLookups,
-      driveFiles: driveOps.selectedDriveFiles,
-    });
-  }, [
-    pdfOps.uploadedPdfs,
-    refOps.importedRefs,
-    refOps.selectedRefIds,
-    lookupOps.lookupRefs,
-    lookupOps.selectedLookupIds,
-    driveOps.selectedDriveFiles,
-  ]);
+  const submittableCount = stagedStudiesPreview.filter(isSubmittable).length;
+  const flaggedCount = stagedStudiesPreview.length - submittableCount;
 
   // Collect mode effect
   useEffect(() => {
@@ -294,6 +327,7 @@ export function useAddStudies(options: UseAddStudiesOptions = {}) {
     refOps.clearImportedRefs();
     lookupOps.clearLookupRefs();
     driveOps.clearDriveFiles();
+    setConfirmedDuplicates(new Set());
   }, [pdfOps, refOps, lookupOps, driveOps]);
 
   const removeStagedStudy = useCallback(
@@ -387,6 +421,12 @@ export function useAddStudies(options: UseAddStudiesOptions = {}) {
     totalStudyCount,
     hasAnyStudies,
     stagedStudiesPreview,
+    submittableCount,
+    flaggedCount,
+    isSubmittable,
+    toggleDuplicateConfirmed,
+    freezeDuplicateCheck,
+    resumeDuplicateCheck,
 
     // Submit helpers
     getStudiesToSubmit,

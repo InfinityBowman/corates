@@ -280,6 +280,45 @@ describe('fetchFromDOI', () => {
     );
   });
 
+  it('should strip escaped JATS markup from the title', async () => {
+    // Real Crossref record for 10.2147/jpr.s204788.
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          message: {
+            title: [
+              '&lt;p&gt;MRI Changes After Platelet Rich Plasma Injection in Knee Osteoarthritis (Randomized Clinical Trial)&lt;/p&gt;',
+            ],
+            author: [],
+            DOI: '10.2147/jpr.s204788',
+          },
+        }),
+    });
+
+    const result = await fetchFromDOI('10.2147/jpr.s204788');
+    expect(result.title).toBe(
+      'MRI Changes After Platelet Rich Plasma Injection in Knee Osteoarthritis (Randomized Clinical Trial)',
+    );
+  });
+
+  it('should leave an ordinary title untouched', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          message: {
+            title: ['Exercise therapy for chronic low back pain: a randomized trial'],
+            author: [],
+            DOI: '10.1234/test',
+          },
+        }),
+    });
+
+    const result = await fetchFromDOI('10.1234/test');
+    expect(result.title).toBe('Exercise therapy for chronic low back pain: a randomized trial');
+  });
+
   it('should throw for 404 (not found)', async () => {
     mockFetch.mockResolvedValue({
       ok: false,
