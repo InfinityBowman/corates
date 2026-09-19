@@ -202,14 +202,17 @@ interface NewChecklist extends CellRef {
 
 function createChecklistRow(tx: Tx, checklist: NewChecklist, now: number): void {
   const { id, studyId, type, kind, assignedTo, outcomeId } = checklist;
+  // A consensus checklist only ever exists to be reconciled, so it is born in
+  // that state: a follow-up update would fail if the create loses a race.
+  const consensus = kind === 'consensus';
   tx.put('checklists', id, {
     id,
     studyId,
     type,
     kind,
-    title: `${type} Checklist`,
+    title: consensus ? 'Reconciled Checklist' : `${type} Checklist`,
     assignedTo,
-    status: CHECKLIST_STATUS.PENDING,
+    status: consensus ? CHECKLIST_STATUS.RECONCILING : CHECKLIST_STATUS.PENDING,
     outcomeId,
     createdAt: now,
     updatedAt: now,

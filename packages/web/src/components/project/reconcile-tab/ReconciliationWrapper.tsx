@@ -359,11 +359,6 @@ export function ReconciliationWrapper({
     if (client) void client.mutate.checklist.create(createArgs);
     else applyLocalMutation(projectId, 'checklist.create', createArgs);
 
-    updateChecklist(newChecklistId, {
-      status: CHECKLIST_STATUS.RECONCILING,
-      title: 'Reconciled Checklist',
-    });
-
     saveReconciliationProgress({
       checklist1Id,
       checklist2Id,
@@ -387,7 +382,6 @@ export function ReconciliationWrapper({
     client,
     progress,
     saveReconciliationProgress,
-    updateChecklist,
   ]);
 
   // Watch for race condition: if another client created a reconciled checklist,
