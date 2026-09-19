@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { PaymentIssueBanner } from '@/components/billing/PaymentIssueBanner';
 import { MAIN_SCROLL_ID } from '@/config/scroll';
+import { SIDEBAR_SLIDE } from './sidebarMotion';
 import { Sidebar } from './Sidebar';
 import { MobileBar } from './MobileBar';
 
@@ -121,9 +122,15 @@ export function AppLayout() {
           onWidthChange={handleWidthChange}
         />
 
-        {/* Own column rather than an overlay: pages with sticky headers would cover it */}
-        {!desktopSidebarVisible && (
-          <div className='border-border bg-sidebar hidden w-10 shrink-0 flex-col items-center border-r pt-2 md:flex'>
+        {/* Own column rather than an overlay: pages with sticky headers would cover it.
+            Its width animates in step with the sidebar so the content edge moves once. */}
+        <div
+          className={`hidden shrink-0 overflow-hidden transition-[width] md:block ${SIDEBAR_SLIDE}`}
+          style={{ width: desktopSidebarVisible ? 0 : '2.5rem' }}
+          aria-hidden={desktopSidebarVisible}
+          inert={desktopSidebarVisible ? true : undefined}
+        >
+          <div className='border-border bg-sidebar flex h-full w-10 flex-col items-center border-r pt-2'>
             <Tooltip delayDuration={500}>
               <TooltipTrigger asChild>
                 <Button
@@ -139,7 +146,7 @@ export function AppLayout() {
               <TooltipContent side='right'>Show sidebar</TooltipContent>
             </Tooltip>
           </div>
-        )}
+        </div>
 
         <main
           data-scroll-restoration-id={MAIN_SCROLL_ID}
