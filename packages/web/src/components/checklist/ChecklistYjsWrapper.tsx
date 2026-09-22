@@ -11,6 +11,7 @@ import type { ChecklistAnswerInput } from '@corates/shared/sync';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { useStudyAnnotations } from '@/primitives/useProject/useStudyAnnotations';
+import { annotationTypeName } from '@/lib/annotationType';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';
 import {
   CHECKLIST_STATUS,
@@ -46,7 +47,8 @@ interface ChecklistYjsWrapperProps {
 /** The EmbedPDF payload shape the viewer hands back for annotation writes. */
 interface AnnotationData {
   id?: string;
-  type?: string;
+  /** EmbedPDF's numeric subtype; the synced row stores its name. */
+  type?: number | string;
   pageIndex?: number;
   pdfId?: string;
   embedPdfData?: string;
@@ -281,7 +283,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
         studyId,
         checklistId,
         pdfId: selectedPdfId,
-        type: annotation.type ?? '',
+        type: annotationTypeName(annotation.type),
         pageIndex: annotation.pageIndex ?? 0,
         // The serialized EmbedPDF payload must carry the row's id.
         embedPdfData: JSON.stringify({ ...annotation, id }),
@@ -298,7 +300,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
       void client?.mutate.annotation.update({
         id: annotation.id,
         updates: {
-          type: annotation.type,
+          type: annotationTypeName(annotation.type),
           pageIndex: annotation.pageIndex,
           embedPdfData: JSON.stringify(annotation),
         },
