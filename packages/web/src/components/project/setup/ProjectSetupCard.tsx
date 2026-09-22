@@ -150,18 +150,18 @@ function OutcomesBody({ setup }: { setup: Setup }) {
           'Reviewers pick from this list when they start a RoB 2 or ROBINS-I checklist.'
         : 'Only needed for RoB 2 or ROBINS-I. Safe to skip for now.'}
       </p>
-      <div className='flex flex-wrap items-center gap-1'>
+      <div className='flex flex-wrap items-start gap-1'>
         {setup.outcomes.map(outcome => (
           <span
             key={outcome.id}
-            className='border-border bg-muted/50 inline-flex h-6 items-center gap-1 rounded-md border pr-1 pl-2 text-xs font-medium'
+            className='border-border bg-muted/50 inline-flex max-w-full items-start gap-1 rounded-md border py-1 pr-1 pl-2 text-xs font-medium'
           >
-            {outcome.name}
+            <span className='min-w-0 break-words'>{outcome.name}</span>
             <button
               type='button'
               aria-label={`Remove ${outcome.name}`}
               onClick={() => remove(outcome.id)}
-              className='text-muted-foreground hover:bg-border hover:text-foreground flex size-4 items-center justify-center rounded-sm'
+              className='text-muted-foreground hover:bg-border hover:text-foreground flex size-4 shrink-0 items-center justify-center rounded-sm'
             >
               <XIcon className='size-2.5' strokeWidth={2.5} />
             </button>
