@@ -12,12 +12,19 @@
  * directly to its local-only collections (`applyLocalMutation`).
  */
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import { useLiveQuery, and, eq, inArray } from '@tanstack/react-db';
 import { useQuery } from '@tanstack/react-query';
 import {
   answerRowId,
-  deriveFinalized,
   reconciliationRowId,
   scoreChecklistRows,
   type AnswerRow,
@@ -36,16 +43,9 @@ import {
   scoreRobinsDomain,
   type DomainAnswers as RobinsIDomainAnswers,
 } from '@corates/shared/checklists/robins-i';
-import { CHECKLIST_STATUS, getOutcomeKey } from '@corates/shared/checklists';
+import { getOutcomeKey } from '@corates/shared/checklists';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
-import type {
-  AppraisalEntry,
-  ChecklistEntry,
-  MemberEntry,
-  OutcomeEntry,
-  PdfEntry,
-  StudyInfo,
-} from '@/stores/projectStore';
+import type { MemberEntry, OutcomeEntry, StudyInfo } from '@/stores/projectStore';
 import type { ExistingStudy } from '@/hooks/useAddStudies/existing';
 import { queryKeys } from '@/lib/queryKeys';
 import { getMyProjects } from '@/server/functions/users.functions';
@@ -57,6 +57,7 @@ import { showToast } from '@/lib/toast';
 import { connectionPool, type ProjectCollections } from './ConnectionPool';
 import { emptyCollections } from './localCollections';
 import { applyLocalMutation } from './localWrites';
+import { studyModelStore } from './studyModel';
 
 /**
  * The project id for the workspace subtree — provided by ProjectGate (online)
@@ -316,155 +317,13 @@ export function useRobinsIDomainScore(
 // ---------------------------------------------------------------------------
 // Studies
 
-function toPdfEntry(row: {
-  id: string;
-  key: string;
-  fileName: string;
-  size: number;
-  uploadedBy: string;
-  uploadedAt: number;
-  tag: string;
-  title?: string;
-  firstAuthor?: string;
-  publicationYear?: string;
-  journal?: string;
-  doi?: string;
-}): PdfEntry {
-  return {
-    id: row.id,
-    fileName: row.fileName,
-    key: row.key,
-    size: row.size,
-    uploadedBy: row.uploadedBy,
-    uploadedAt: row.uploadedAt,
-    tag: row.tag,
-    title: row.title ?? null,
-    firstAuthor: row.firstAuthor ?? null,
-    publicationYear: row.publicationYear ?? null,
-    journal: row.journal ?? null,
-    doi: row.doi ?? null,
-  };
-}
-
 /**
  * All studies with nested checklists and pdfs — the `StudyInfo` shape the
- * project tabs consume, assembled from live rows. Finalized checklists carry
- * their score + chart-facing consolidated answers, derived from answer rows.
+ * project tabs consume. Every caller shares one model per project.
  */
 export function useAllStudies(projectId: string): StudyInfo[] {
-  const collections = useCollections(projectId);
-  const key = collectionsKey(collections);
-  const { data: studies } = useLiveQuery({
-    queryKey: ['studies', key],
-    query: q => q.from({ study: collections.studies }),
-  });
-  const { data: checklists } = useLiveQuery({
-    queryKey: ['checklists', key],
-    query: q => q.from({ checklist: collections.checklists }),
-  });
-  const { data: pdfs } = useLiveQuery({
-    queryKey: ['pdfs', key],
-    query: q => q.from({ pdf: collections.pdfs }),
-  });
-  const { data: answers } = useLiveQuery({
-    queryKey: ['answers', key],
-    query: q => q.from({ answer: collections.answers }),
-  });
-  const { data: appraisals } = useLiveQuery({
-    queryKey: ['appraisals', key],
-    query: q => q.from({ appraisal: collections.appraisals }),
-  });
-
-  return useMemo(() => {
-    const answersByChecklist = new Map<string, Record<string, unknown>>();
-    for (const row of answers ?? []) {
-      let map = answersByChecklist.get(row.checklistId);
-      if (!map) {
-        map = {};
-        answersByChecklist.set(row.checklistId, map);
-      }
-      map[row.key] = row.value;
-    }
-
-    const checklistsByStudy = new Map<string, ChecklistEntry[]>();
-    for (const row of checklists ?? []) {
-      let entry: ChecklistEntry = {
-        id: row.id,
-        type: row.type,
-        kind: row.kind,
-        title: row.title ?? null,
-        assignedTo: row.assignedTo,
-        outcomeId: row.outcomeId,
-        status: row.status,
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
-        score: null,
-        answers: null,
-        consolidatedAnswers: null,
-      };
-      if (row.status === CHECKLIST_STATUS.FINALIZED) {
-        const flat = answersByChecklist.get(row.id) ?? {};
-        const derived = deriveFinalized(row.type, flat);
-        entry = {
-          ...entry,
-          score: derived.score,
-          consolidatedAnswers: derived.consolidatedAnswers,
-        };
-      }
-      const list = checklistsByStudy.get(row.studyId) ?? [];
-      list.push(entry);
-      checklistsByStudy.set(row.studyId, list);
-    }
-    for (const list of checklistsByStudy.values()) {
-      list.sort((a, b) => a.createdAt - b.createdAt);
-    }
-
-    const appraisalsByStudy = new Map<string, AppraisalEntry[]>();
-    for (const row of appraisals ?? []) {
-      const list = appraisalsByStudy.get(row.studyId) ?? [];
-      list.push({ type: row.type, outcomeId: row.outcomeId });
-      appraisalsByStudy.set(row.studyId, list);
-    }
-
-    const pdfsByStudy = new Map<string, PdfEntry[]>();
-    for (const row of pdfs ?? []) {
-      const list = pdfsByStudy.get(row.studyId) ?? [];
-      list.push(toPdfEntry(row));
-      pdfsByStudy.set(row.studyId, list);
-    }
-
-    const result: StudyInfo[] = (studies ?? []).map(study => ({
-      id: study.id,
-      name: study.name ?? '',
-      description: study.description ?? '',
-      originalTitle: study.originalTitle ?? null,
-      firstAuthor: study.firstAuthor ?? null,
-      publicationYear: study.publicationYear ?? null,
-      authors: study.authors ?? null,
-      journal: study.journal ?? null,
-      doi: study.doi ?? null,
-      abstract: study.abstract ?? null,
-      importSource: study.importSource ?? null,
-      pdfUrl: study.pdfUrl ?? null,
-      pdfSource: study.pdfSource ?? null,
-      pdfAccessible: Boolean(study.pdfAccessible),
-      pmid: study.pmid ?? null,
-      url: study.url ?? null,
-      volume: study.volume ?? null,
-      issue: study.issue ?? null,
-      pages: study.pages ?? null,
-      type: study.type ?? null,
-      reviewer1: study.reviewer1 ?? null,
-      reviewer2: study.reviewer2 ?? null,
-      createdAt: study.createdAt,
-      updatedAt: study.updatedAt,
-      checklists: checklistsByStudy.get(study.id) ?? [],
-      appraisals: appraisalsByStudy.get(study.id) ?? [],
-      pdfs: pdfsByStudy.get(study.id) ?? [],
-    }));
-    result.sort((a, b) => a.createdAt - b.createdAt);
-    return result;
-  }, [studies, checklists, appraisals, pdfs, answers]);
+  const store = studyModelStore(useCollections(projectId));
+  return useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
 }
 
 export function useStudy(projectId: string, studyId: string): StudyInfo | undefined {
@@ -479,7 +338,7 @@ export function useSortedStudyIds(projectId: string): string[] {
 
 /**
  * Just enough of each study to recognise a paper the project already holds. Deliberately not
- * `useAllStudies`, which copies every checklist and answer row along with it.
+ * `useAllStudies`, which rebuilds every checklist whenever an answer changes.
  */
 export function useExistingStudies(projectId: string): ExistingStudy[] {
   const collections = useCollections(projectId);
