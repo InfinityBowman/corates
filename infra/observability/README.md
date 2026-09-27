@@ -110,6 +110,14 @@ Grafana talks to Loki internally over the docker network without auth.
   ceiling, not retention, is what caps how far back a dashboard can look, so raise it
   before pointing a panel at a longer window. `max_query_lookback` is unset (`0s`, no
   limit), so nothing else truncates old queries.
+- R2 bills list calls as Class A operations (1M/month free), and Loki's background loops
+  list every daily index table on a timer, so their cost grows with history, not traffic.
+  `compactor.compaction_interval`, `compactor.apply_retention_interval` and
+  `storage_config.tsdb_shipper.resync_interval` are raised from their 10m/15m/5m defaults,
+  and the ruler stores rules locally instead of polling `rules/` in R2 every minute. With
+  the defaults, ~150 tables cost ~35-80k lists a day and pushed the account past the free
+  tier in September 2026. Check with the `r2OperationsAdaptiveGroups` GraphQL dataset
+  (bucket `corates-loki`, action `ListObjects`) before shortening any of these.
 - Cloudflare re-delivers failed export batches hours later (up to ~6h seen). Loki only
   accepts entries within `max_chunk_age / 2` of the newest entry in the stream, so
   `ingester.max_chunk_age` is 24h (12h window); `querier.query_ingesters_within: 0` keeps

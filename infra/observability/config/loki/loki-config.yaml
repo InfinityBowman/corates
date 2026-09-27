@@ -22,6 +22,20 @@ common:
       region: auto
       s3forcepathstyle: true
 
+storage_config:
+  tsdb_shipper:
+    # Default 5m re-lists every queried table in R2. Safe on a single node: this process
+    # keeps its own uploads queryable for 5m + 3x this interval.
+    resync_interval: 1h
+
+# The ruler inherits S3 storage from common and lists rules/ every minute; there are no
+# Loki rules (alerts live in Grafana), so keep it off R2.
+ruler:
+  storage:
+    type: local
+    local:
+      directory: /loki/rules
+
 schema_config:
   configs:
     # Starts before the May 2026 Plausible history that scripts/backfill-plausible-events.mjs
@@ -50,6 +64,10 @@ compactor:
   working_directory: /loki/compactor
   retention_enabled: true
   delete_request_store: s3
+  # Each run lists every daily index table in R2 (Class A ops). Defaults of 10m/15m cost
+  # ~35k lists a day at ~150 tables, past R2's 1M/month free tier.
+  compaction_interval: 1h
+  apply_retention_interval: 24h
 
 limits_config:
   # 0s keeps logs forever. retention_enabled stays true above so the compactor still
