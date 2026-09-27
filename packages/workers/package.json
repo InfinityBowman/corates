@@ -52,7 +52,7 @@
   },
   "dependencies": {
     "@better-auth/stripe": "^1.7.4",
-    "@cf-sync/server": "^0.3.0",
+    "@cf-sync/server": "^0.3.1",
     "@cf-sync/yjs": "^0.2.1",
     "@corates/db": "workspace:*",
     "@corates/shared": "workspace:*",
@@ -64,7 +64,7 @@
     "zod": "^4.6.4"
   },
   "devDependencies": {
-    "@cf-sync/protocol": "^0.2.0",
+    "@cf-sync/protocol": "^0.2.1",
     "@cloudflare/vitest-plugin": "^1.1.8",
     "@vitest/runner": "^4.1.11",
     "@vitest/snapshot": "^4.1.11",
