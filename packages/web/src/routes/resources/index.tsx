@@ -3,9 +3,8 @@ import { ArrowRightIcon, FileTextIcon, GitCompareIcon } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import { RESOURCE_CACHE_HEADERS, resourcesIndexHead } from '../../lib/resource-head';
-import { getAllTools } from '../../lib/tool-content';
+import { loadResourcesIndex } from '../../lib/resource-loaders';
 import type { ToolContent } from '../../lib/tool-content';
-import { getAllComparisons } from '../../lib/comparison-content';
 import type { ComparisonContent } from '../../lib/comparison-content';
 
 const title = 'Risk of Bias and Quality Appraisal Tools | CoRATES';
@@ -14,11 +13,15 @@ const description =
 
 export const Route = createFileRoute('/resources/')({
   headers: () => RESOURCE_CACHE_HEADERS,
-  head: () => resourcesIndexHead(title, description),
+  loader: loadResourcesIndex,
+  head: ({ loaderData }) =>
+    loaderData ?
+      resourcesIndexHead(title, description, loaderData.pages, loaderData.dateModified)
+    : {},
   component: ResourcesPage,
 });
 
-function ToolCard({ tool }: { tool: ToolContent }) {
+function ToolCard({ tool }: { tool: Pick<ToolContent, 'slug' | 'name' | 'summary'> }) {
   return (
     <Link
       to={`/resources/${tool.slug}` as string}
@@ -37,7 +40,11 @@ function ToolCard({ tool }: { tool: ToolContent }) {
   );
 }
 
-function ComparisonCard({ comparison }: { comparison: ComparisonContent }) {
+function ComparisonCard({
+  comparison,
+}: {
+  comparison: Pick<ComparisonContent, 'slug' | 'title' | 'metaDescription'>;
+}) {
   return (
     <Link
       to={`/resources/${comparison.slug}` as string}
@@ -57,8 +64,7 @@ function ComparisonCard({ comparison }: { comparison: ComparisonContent }) {
 }
 
 function ResourcesPage() {
-  const tools = getAllTools();
-  const comparisons = getAllComparisons();
+  const { tools, comparisons } = Route.useLoaderData();
 
   return (
     <div className='flex min-h-screen flex-col'>

@@ -4,26 +4,26 @@
  * here so a new page is registered once.
  */
 
-import { config } from '@/lib/config';
 import { getAllTools } from '@/lib/tool-content';
 import { getAllComparisons } from '@/lib/comparison-content';
 import type { PageDates } from '@/lib/structured-data';
+import {
+  RESOURCES_INDEX_PATH,
+  RESOURCES_INDEX_PUBLISHED,
+  resourcePageUrl,
+} from '@/lib/resource-urls';
+
+export {
+  RESOURCES_INDEX_PATH,
+  RESOURCES_INDEX_PUBLISHED,
+  RESOURCES_INDEX_URL,
+  resourcePageUrl,
+} from '@/lib/resource-urls';
 
 export interface ResourcePage extends PageDates {
   path: string;
   url: string;
   name: string;
-}
-
-export const RESOURCES_INDEX_PATH = '/resources';
-export const RESOURCES_INDEX_URL = `${config.appUrl}${RESOURCES_INDEX_PATH}`;
-
-// The index has no content module of its own: it went live with the first
-// tool pages and changes whenever any page it lists does.
-export const RESOURCES_INDEX_PUBLISHED = '2026-03-07';
-
-export function resourcePageUrl(slug: string): string {
-  return `${RESOURCES_INDEX_URL}/${slug}`;
 }
 
 export function listResourcePages(): ResourcePage[] {

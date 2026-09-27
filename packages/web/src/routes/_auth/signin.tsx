@@ -1,6 +1,5 @@
 import { useState, useRef, useCallback, useEffect, useLayoutEffect } from 'react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { z } from 'zod';
 import { useAuthStore } from '@/stores/authStore';
 import { handleError } from '@/lib/error-utils';
 import { getPendingInvitationToken, setPendingInvitationToken } from '@/lib/pendingInvitation';
@@ -24,8 +23,8 @@ import { EmailCodeForm } from '@/components/auth/EmailCodeForm';
 import { TwoFactorVerify } from '@/components/auth/TwoFactorVerify';
 import { LastLoginHint } from '@/components/auth/LastLoginHint';
 
-const signinSearch = z.object({
-  error: z.string().optional().catch(undefined),
+const signinSearch = (search: Record<string, unknown>): { error?: string } => ({
+  error: typeof search.error === 'string' ? search.error : undefined,
 });
 
 // Social providers run with disableImplicitSignUp, so an unknown identity on

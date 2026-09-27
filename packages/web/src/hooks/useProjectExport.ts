@@ -1,7 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { clientLogger } from '@/lib/clientLogger';
 import { buildProjectCsv, downloadCsv } from '@/lib/export-csv';
-import { buildProjectPdf, downloadPdf } from '@/lib/export-pdf';
 import { enrichStudiesForExport } from '@/lib/enrich-studies-for-export';
 import {
   useAllStudies,
@@ -51,9 +50,11 @@ export function useProjectExport(projectId: string) {
   );
 
   const exportStudyPdf = useCallback(
-    (studyId: string) => {
+    async (studyId: string) => {
       const study = studies.find(s => s.id === studyId);
       if (!study) return;
+      // jsPDF is ~150 KB gzip; load it when someone actually exports a PDF.
+      const { buildProjectPdf, downloadPdf } = await import('@/lib/export-pdf');
       const doc = buildProjectPdf({
         studies: enrich([study]),
         projectName: study.name || undefined,

@@ -43,10 +43,6 @@ export function initSentry(): void {
         maskAllText: true,
         blockAllMedia: true,
       }),
-      Sentry.feedbackIntegration({
-        colorScheme: 'system',
-        autoInject: false,
-      }),
     ],
   });
 }

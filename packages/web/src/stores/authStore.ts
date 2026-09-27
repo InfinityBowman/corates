@@ -22,8 +22,6 @@ import { deleteMyAccount } from '@/server/functions/users.functions';
 import { queryClient } from '@/lib/queryClient';
 import { BASEPATH } from '@/config/api';
 import { saveLastLoginMethod, LOGIN_METHODS } from '@/lib/lastLoginMethod';
-import { getCachedAvatar, pruneExpiredAvatars } from '@/primitives/avatarCache.js';
-import { clearAllData } from '@/primitives/db.js';
 
 // LocalStorage keys for offline caching
 const AUTH_CACHE_KEY = 'corates-auth-cache';
@@ -175,6 +173,7 @@ async function performSignoutCleanup() {
   // still sees "logged in", and dependent queries refetch into 401s.
   state.setSessionData(null, false, state.sessionRefetch);
 
+  const { clearAllData } = await import('@/primitives/db.js');
   await clearAllData();
   queryClient.clear();
 
@@ -544,12 +543,16 @@ export const useAuthStore = create<AuthState & AuthActions>()((set, get) => ({
 // Initialize: load cached avatar and prune expired entries
 if (typeof window !== 'undefined') {
   const cachedAuth = loadCachedAuth();
+  // The avatar cache brings Dexie and yjs with it; only returning users need
+  // it, so anonymous page loads never fetch them or open IndexedDB.
   if (cachedAuth?.id) {
-    getCachedAvatar(cachedAuth.id).then((dataUrl: string | null) => {
-      if (dataUrl) useAuthStore.getState().setCachedAvatarUrl(dataUrl);
+    void import('@/primitives/avatarCache.js').then(({ getCachedAvatar, pruneExpiredAvatars }) => {
+      void getCachedAvatar(cachedAuth.id).then((dataUrl: string | null) => {
+        if (dataUrl) useAuthStore.getState().setCachedAvatarUrl(dataUrl);
+      });
+      pruneExpiredAvatars();
     });
   }
-  pruneExpiredAvatars();
 
   // Listen for online/offline
   window.addEventListener('online', () => useAuthStore.getState().setOnline(true));

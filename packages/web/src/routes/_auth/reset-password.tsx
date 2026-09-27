@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { z } from 'zod';
 import { useAuthStore } from '@/stores/authStore';
 import { handleError } from '@/lib/error-utils';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
@@ -14,9 +13,11 @@ import { CodeInput, ResendCode } from '@/components/auth/CodeInput';
 const REDIRECT_DELAY_MS = 3000;
 
 // Settings lands here with the code already sent when a user sets a first password
-const resetPasswordSearch = z.object({
-  email: z.string().catch(''),
-  sent: z.string().optional().catch(undefined),
+const resetPasswordSearch = (
+  search: Record<string, unknown>,
+): { email: string; sent?: string } => ({
+  email: typeof search.email === 'string' ? search.email : '',
+  sent: typeof search.sent === 'string' ? search.sent : undefined,
 });
 
 export const Route = createFileRoute('/_auth/reset-password')({
