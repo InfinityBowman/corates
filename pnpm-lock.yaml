@@ -162,8 +162,8 @@ importers:
   packages/shared:
     dependencies:
       '@cf-sync/protocol':
-        specifier: ^0.2.0
-        version: 0.2.0(zod@4.6.4)
+        specifier: ^0.2.1
+        version: 0.2.1(zod@4.6.4)
       stripe:
         specifier: ^22.6.2
         version: 22.6.2(@types/node@26.4.1)
@@ -172,8 +172,8 @@ importers:
         version: 4.6.4
     devDependencies:
       '@cf-sync/server':
-        specifier: ^0.3.0
-        version: 0.3.0(zod@4.6.4)
+        specifier: ^0.3.1
+        version: 0.3.1(zod@4.6.4)
       typescript:
         specifier: ^7.0.2
         version: 7.0.2
@@ -189,11 +189,11 @@ importers:
         specifier: ^5.39.1
         version: 5.39.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@cf-sync/client':
-        specifier: ^0.3.1
-        version: 0.3.1(@tanstack/db@0.9.0(typescript@7.0.2))(@tanstack/react-db@0.3.8(react@19.3.0)(typescript@7.0.2))(react@19.3.0)(zod@4.6.4)
+        specifier: ^0.3.2
+        version: 0.3.2(@tanstack/db@0.9.0(typescript@7.0.2))(@tanstack/react-db@0.3.8(react@19.3.0)(typescript@7.0.2))(react@19.3.0)(zod@4.6.4)
       '@cf-sync/yjs':
         specifier: ^0.2.1
-        version: 0.2.1(@cf-sync/server@0.3.0(zod@4.6.4))(react@19.3.0)(yjs@13.6.32)(zod@4.6.4)
+        version: 0.2.1(@cf-sync/server@0.3.1(zod@4.6.4))(react@19.3.0)(yjs@13.6.32)(zod@4.6.4)
       '@corates/db':
         specifier: workspace:*
         version: link:../db
@@ -397,8 +397,8 @@ importers:
         version: 5.0.15(@types/react@19.3.0)(immer@11.1.18)(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0))
     devDependencies:
       '@cf-sync/server':
-        specifier: ^0.3.0
-        version: 0.3.0(zod@4.6.4)
+        specifier: ^0.3.1
+        version: 0.3.1(zod@4.6.4)
       '@cloudflare/vite-plugin':
         specifier: ^1.54.8
         version: 1.54.8(@types/node@26.4.1)(vite@8.3.0(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.46.0)(tsx@4.23.13)(yaml@2.8.2))(wrangler@4.131.1(@cloudflare/workers-types@5.20260911.1)(@types/node@26.4.1))
@@ -478,11 +478,11 @@ importers:
         specifier: ^1.7.4
         version: 1.7.4(@better-auth/core@1.7.4(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@5.20260911.1)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.6.4))(jose@6.2.8)(kysely@0.29.4)(nanostores@1.4.2))(better-auth@1.7.4(720946a76bd640b36ff8c25009159958))(better-call@1.4.0(zod@4.6.4))(stripe@22.6.2(@types/node@26.4.1))
       '@cf-sync/server':
-        specifier: ^0.3.0
-        version: 0.3.0(zod@4.6.4)
+        specifier: ^0.3.1
+        version: 0.3.1(zod@4.6.4)
       '@cf-sync/yjs':
         specifier: ^0.2.1
-        version: 0.2.1(@cf-sync/server@0.3.0(zod@4.6.4))(react@19.3.0)(yjs@13.6.32)(zod@4.6.4)
+        version: 0.2.1(@cf-sync/server@0.3.1(zod@4.6.4))(react@19.3.0)(yjs@13.6.32)(zod@4.6.4)
       '@corates/db':
         specifier: workspace:*
         version: link:../db
@@ -509,8 +509,8 @@ importers:
         version: 4.6.4
     devDependencies:
       '@cf-sync/protocol':
-        specifier: ^0.2.0
-        version: 0.2.0(zod@4.6.4)
+        specifier: ^0.2.1
+        version: 0.2.1(zod@4.6.4)
       '@cloudflare/vitest-plugin':
         specifier: ^1.1.8
         version: 1.1.8(@cloudflare/workers-types@5.20260911.1)(@types/node@26.4.1)(@vitest/runner@4.1.11)(@vitest/snapshot@4.1.11)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@26.4.1)(jsdom@30.0.1(@noble/hashes@2.3.0))(msw@2.12.10(@types/node@26.4.1)(typescript@7.0.2))(vite@8.3.0(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.46.0)(tsx@4.23.13)(yaml@2.8.2)))
@@ -882,8 +882,8 @@ packages:
     resolution: {integrity: sha512-ctxtJ/eA+t+6q2++vj5j7FYX3nRu311q1wfYH3xjlLOsczhlhxAg2FWNUXhpGvAw3BWo1xBcvOV6/YLc2r5FJw==}
     hasBin: true
 
-  '@cf-sync/client@0.3.1':
-    resolution: {integrity: sha512-QUoBElAObqvNRbM9QYm1zpWMSLG8BWQ3MtVjdGWwRAapEIlhnJzsHx0XrIpWYqcb19sXnBtiDFWnNBI0v4dTFQ==}
+  '@cf-sync/client@0.3.2':
+    resolution: {integrity: sha512-qIf/d7pMhkwCNy0rKJmIVTYsq8YfVo1SG8rPO5qK2mX6eq95DEU/zOA3sVoKExWm64aoOmhrFuxfU+pbaO4u4Q==}
     peerDependencies:
       '@tanstack/db': ^0.8.0 || ^0.9.0
       '@tanstack/react-db': ^0.3.0 || ^0.4.0
@@ -894,13 +894,13 @@ packages:
       react:
         optional: true
 
-  '@cf-sync/protocol@0.2.0':
-    resolution: {integrity: sha512-2kdgGtXbfyyEL562Tu3RVOysioh/mbAlKaarOUEpcnkDeXyNRRkKgtAPR1/xp8FAGydL5/JGnG4k1KU7ylykiA==}
+  '@cf-sync/protocol@0.2.1':
+    resolution: {integrity: sha512-HtTzsa1sPqDq7ozUe3nnXOueHQcJ0Aq1keRBlJ/zzKhhadJRxUTd7pIH6JIKMRpX8HBzBxDK3pj/H2S9Bnga+Q==}
     peerDependencies:
       zod: ^4.0.0
 
-  '@cf-sync/server@0.3.0':
-    resolution: {integrity: sha512-qgtKjN3eWD2zHAQ450hdPMRT1wE3bUE8fs1XdEgyvXDfFGjyqvajhIQLK2sQuufwIC3MV4pmEMxj06/AwXHkCA==}
+  '@cf-sync/server@0.3.1':
+    resolution: {integrity: sha512-chMncT0xkDv3IPOvZnfjcvrpDE4adAmwdKar0ijABJNl1LN4RLiGqS6mrg8KxUMHDElLQAD7evftMDNLE0+1MQ==}
     peerDependencies:
       zod: ^4.0.0
 
@@ -9082,9 +9082,9 @@ snapshots:
     dependencies:
       css-tree: 3.2.1
 
-  '@cf-sync/client@0.3.1(@tanstack/db@0.9.0(typescript@7.0.2))(@tanstack/react-db@0.3.8(react@19.3.0)(typescript@7.0.2))(react@19.3.0)(zod@4.6.4)':
+  '@cf-sync/client@0.3.2(@tanstack/db@0.9.0(typescript@7.0.2))(@tanstack/react-db@0.3.8(react@19.3.0)(typescript@7.0.2))(react@19.3.0)(zod@4.6.4)':
     dependencies:
-      '@cf-sync/protocol': 0.2.0(zod@4.6.4)
+      '@cf-sync/protocol': 0.2.1(zod@4.6.4)
       '@tanstack/db': 0.9.0(typescript@7.0.2)
     optionalDependencies:
       '@tanstack/react-db': 0.3.8(react@19.3.0)(typescript@7.0.2)
@@ -9092,21 +9092,21 @@ snapshots:
     transitivePeerDependencies:
       - zod
 
-  '@cf-sync/protocol@0.2.0(zod@4.6.4)':
+  '@cf-sync/protocol@0.2.1(zod@4.6.4)':
     dependencies:
       zod: 4.6.4
 
-  '@cf-sync/server@0.3.0(zod@4.6.4)':
+  '@cf-sync/server@0.3.1(zod@4.6.4)':
     dependencies:
-      '@cf-sync/protocol': 0.2.0(zod@4.6.4)
+      '@cf-sync/protocol': 0.2.1(zod@4.6.4)
       zod: 4.6.4
 
-  '@cf-sync/yjs@0.2.1(@cf-sync/server@0.3.0(zod@4.6.4))(react@19.3.0)(yjs@13.6.32)(zod@4.6.4)':
+  '@cf-sync/yjs@0.2.1(@cf-sync/server@0.3.1(zod@4.6.4))(react@19.3.0)(yjs@13.6.32)(zod@4.6.4)':
     dependencies:
-      '@cf-sync/protocol': 0.2.0(zod@4.6.4)
+      '@cf-sync/protocol': 0.2.1(zod@4.6.4)
       yjs: 13.6.32
     optionalDependencies:
-      '@cf-sync/server': 0.3.0(zod@4.6.4)
+      '@cf-sync/server': 0.3.1(zod@4.6.4)
       react: 19.3.0
     transitivePeerDependencies:
       - zod
