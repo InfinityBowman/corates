@@ -113,16 +113,32 @@ export const project = {
       void client.mutate.checklist.delete({ checklistId, now: Date.now() });
     },
 
-    getData(_studyId: string, checklistId: string): Record<string, unknown> | null {
+    /**
+     * A checklist-data getter that buckets the answers table on first use.
+     * Reliability reads hundreds of checklists at once; scanning every answer
+     * row per checklist froze the overview for seconds on large projects.
+     */
+    dataReader(): (_studyId: string, checklistId: string) => Record<string, unknown> | null {
       const collections = activeCollections();
       if (!collections) throw new Error('No active project connection');
-      const checklist = collections.checklists.get(checklistId);
-      if (!checklist) return null;
-      const flat: Record<string, unknown> = {};
-      for (const row of collections.answers.toArray) {
-        if (row.checklistId === checklistId) flat[row.key] = row.value;
-      }
-      return { ...checklist, answers: serializeAnswerRows(checklist.type, flat) };
+      let answersByChecklist: Map<string, Record<string, unknown>> | null = null;
+      return (_studyId, checklistId) => {
+        const checklist = collections.checklists.get(checklistId);
+        if (!checklist) return null;
+        if (!answersByChecklist) {
+          answersByChecklist = new Map();
+          for (const row of collections.answers.values()) {
+            let flat = answersByChecklist.get(row.checklistId);
+            if (!flat) {
+              flat = {};
+              answersByChecklist.set(row.checklistId, flat);
+            }
+            flat[row.key] = row.value;
+          }
+        }
+        const flat = answersByChecklist.get(checklistId) ?? {};
+        return { ...checklist, answers: serializeAnswerRows(checklist.type, flat) };
+      };
     },
   },
 
