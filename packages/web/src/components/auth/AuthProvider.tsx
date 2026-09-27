@@ -13,7 +13,6 @@
 import { useEffect, useRef } from 'react';
 import { useSession } from '@/api/auth-client';
 import { useAuthStore, saveCachedAuth } from '@/stores/authStore';
-import { fetchAndCacheAvatar } from '@/primitives/avatarCache.js';
 import { queryClient } from '@/lib/queryClient';
 import { queryKeys } from '@/lib/queryKeys';
 import { setSentryUser } from '@/config/sentry';
@@ -88,9 +87,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Cache avatar for offline use (only when user changes)
       if (cacheUser.image && cacheUser.id && cacheUser.id !== prevUserIdRef.current) {
         prevUserIdRef.current = cacheUser.id;
-        fetchAndCacheAvatar(cacheUser.id, cacheUser.image).then((dataUrl: string | null) => {
-          if (dataUrl) setCachedAvatarUrl(dataUrl);
-        });
+        const { id, image } = cacheUser;
+        void import('@/primitives/avatarCache.js')
+          .then(({ fetchAndCacheAvatar }) => fetchAndCacheAvatar(id, image))
+          .then((dataUrl: string | null) => {
+            if (dataUrl) setCachedAvatarUrl(dataUrl);
+          })
+          .catch(err => {
+            // Let the next session update retry this user.
+            if (prevUserIdRef.current === id) prevUserIdRef.current = null;
+            console.warn('[auth] Failed to cache avatar:', err);
+          });
       }
     } else if (!loading && !transientError) {
       saveCachedAuth(null);
@@ -104,17 +111,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setCachedUser,
     setCachedAvatarUrl,
   ]);
-
-  // Force session refresh on initial mount when online
-  useEffect(() => {
-    if (navigator.onLine && session.refetch) {
-      const timer = setTimeout(() => {
-        session.refetch();
-        console.info('[auth] Refreshing session on page load');
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Visibility change: refresh session when tab becomes visible
   useEffect(() => {

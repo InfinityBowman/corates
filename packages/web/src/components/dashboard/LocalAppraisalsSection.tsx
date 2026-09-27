@@ -8,8 +8,8 @@ import { useNavigate } from '@tanstack/react-router';
 import { PlusIcon, FileCheck2Icon, LogInIcon, TriangleAlertIcon, DownloadIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { clientLogger } from '@/lib/clientLogger';
+import { showToast } from '@/lib/toast';
 import { buildProjectCsv, downloadCsv } from '@/lib/export-csv';
-import { buildProjectPdf, downloadPdf } from '@/lib/export-pdf';
 import { enrichStudiesForExport } from '@/lib/enrich-studies-for-export';
 import { useAllStudies } from '@/project/workspace-data';
 import type { StudyInfo } from '@/stores/projectStore';
@@ -17,7 +17,7 @@ import { applyLocalMutation } from '@/project/localWrites';
 import { LOCAL_PROJECT_ID } from '@/project/localProject';
 import { db } from '@/primitives/db';
 import { useExportDialogStore } from '@/stores/exportDialogStore';
-import { ExportDialog } from '@/components/export/ExportDialog';
+import { LazyExportDialog } from '@/components/export/LazyExportDialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -107,15 +107,20 @@ export function LocalAppraisalsSection({ showSignInPrompt }: LocalAppraisalsSect
     clientLogger.info('client.local_appraisal.exported', { format: 'csv', scope: 'single' });
   };
 
-  const handleExportOnePdf = (studyId: string) => {
+  const handleExportOnePdf = async (studyId: string) => {
     const study = studies.find(s => s.id === studyId);
     if (!study) return;
-    const enriched = enrichStudies([study]);
-    const name = study.name || 'appraisal';
-    const doc = buildProjectPdf({ studies: enriched, projectName: name });
-    const safeName = name.replace(/[^a-zA-Z0-9-_ ]/g, '').trim();
-    downloadPdf(doc, `${safeName}.pdf`);
-    clientLogger.info('client.local_appraisal.exported', { format: 'pdf', scope: 'single' });
+    try {
+      const { buildProjectPdf, downloadPdf } = await import('@/lib/export-pdf');
+      const enriched = enrichStudies([study]);
+      const name = study.name || 'appraisal';
+      const doc = buildProjectPdf({ studies: enriched, projectName: name });
+      const safeName = name.replace(/[^a-zA-Z0-9-_ ]/g, '').trim();
+      downloadPdf(doc, `${safeName}.pdf`);
+      clientLogger.info('client.local_appraisal.exported', { format: 'pdf', scope: 'single' });
+    } catch (err) {
+      showToast.error('Export Failed', err instanceof Error ? err.message : String(err));
+    }
   };
 
   const hasChecklists = appraisals.length > 0;
@@ -189,7 +194,7 @@ export function LocalAppraisalsSection({ showSignInPrompt }: LocalAppraisalsSect
         }
       </DashboardSection>
 
-      <ExportDialog />
+      <LazyExportDialog />
 
       <AlertDialog
         open={pendingDeleteId !== null}

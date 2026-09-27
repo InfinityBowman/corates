@@ -5,15 +5,15 @@
 
 import { useState } from 'react';
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
-import { z } from 'zod';
 import { useAuthStore } from '@/stores/authStore';
 import { handleError } from '@/lib/error-utils';
 import { ErrorMessage } from '@/components/auth/ErrorMessage';
 import { PrimaryButton, AuthLink } from '@/components/auth/AuthButtons';
 import { CodeInput, ResendCode } from '@/components/auth/CodeInput';
 
-const verifyEmailSearch = z.object({
-  email: z.string().catch(''),
+// Plain validators rather than zod: route options ship in the entry chunk.
+const verifyEmailSearch = (search: Record<string, unknown>): { email: string } => ({
+  email: typeof search.email === 'string' ? search.email : '',
 });
 
 export const Route = createFileRoute('/_auth/verify-email')({

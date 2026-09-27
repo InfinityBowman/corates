@@ -6,12 +6,11 @@
 import { config } from '@/lib/config';
 import { articlePageGraph, collectionPageGraph, type Breadcrumb } from '@/lib/structured-data';
 import {
-  listResourcePages,
   resourcePageUrl,
-  resourcesIndexDateModified,
   RESOURCES_INDEX_PUBLISHED,
   RESOURCES_INDEX_URL,
-} from '@/lib/resource-pages';
+} from '@/lib/resource-urls';
+import type { ResourcePage } from '@/lib/resource-pages';
 import type { FaqEntry, ToolContent } from '@/lib/tool-content';
 import type { ComparisonContent } from '@/lib/comparison-content';
 
@@ -80,16 +79,21 @@ export function comparisonPageHead(comparison: ComparisonContent) {
   return articleHead({ ...comparison, name: comparison.title });
 }
 
-export function resourcesIndexHead(title: string, description: string) {
+export function resourcesIndexHead(
+  title: string,
+  description: string,
+  pages: ResourcePage[],
+  dateModified: string,
+) {
   const url = RESOURCES_INDEX_URL;
   const jsonLd = collectionPageGraph({
     url,
     name: title,
     description,
     breadcrumbs: resourceBreadcrumbs('Resources', url).slice(0, 2),
-    items: listResourcePages().map(page => ({ name: page.name, url: page.url })),
+    items: pages.map(page => ({ name: page.name, url: page.url })),
     datePublished: RESOURCES_INDEX_PUBLISHED,
-    dateModified: resourcesIndexDateModified(),
+    dateModified,
   });
   return pageHead(url, title, description, jsonLd);
 }

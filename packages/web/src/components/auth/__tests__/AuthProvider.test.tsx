@@ -68,23 +68,24 @@ describe('AuthProvider session outcomes', () => {
     expect(state.sessionUnavailable).toBe(true);
     expect(store.selectIsLoggedIn(state)).toBe(true);
 
-    // The mount refetch fires at 100ms; the backoff retry follows at 2s
-    await vi.advanceTimersByTimeAsync(2_100);
-    expect(sessionState.value.refetch).toHaveBeenCalledTimes(2);
+    // Better Auth's own mount fetch already failed; the backoff retry follows at 2s
+    await vi.advanceTimersByTimeAsync(1_900);
+    expect(sessionState.value.refetch).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(200);
+    expect(sessionState.value.refetch).toHaveBeenCalledTimes(1);
   });
 
   it('holds the retry while offline and schedules it again on reconnect', async () => {
     const store = await renderWithCachedUser({ status: 503 });
-    await vi.advanceTimersByTimeAsync(100);
-    expect(sessionState.value.refetch).toHaveBeenCalledTimes(1);
-
     act(() => store.useAuthStore.getState().setOnline(false));
     await vi.advanceTimersByTimeAsync(30_000);
-    expect(sessionState.value.refetch).toHaveBeenCalledTimes(1);
+    expect(sessionState.value.refetch).not.toHaveBeenCalled();
 
     // The mount-time schedule already consumed the 2s slot, so this is the 4s retry
     act(() => store.useAuthStore.getState().setOnline(true));
-    await vi.advanceTimersByTimeAsync(4_000);
-    expect(sessionState.value.refetch).toHaveBeenCalledTimes(2);
+    await vi.advanceTimersByTimeAsync(3_900);
+    expect(sessionState.value.refetch).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(100);
+    expect(sessionState.value.refetch).toHaveBeenCalledTimes(1);
   });
 });
