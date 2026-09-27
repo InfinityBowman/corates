@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { clientLogger } from '@/lib/clientLogger';
+import { showToast } from '@/lib/toast';
 import { buildProjectCsv, downloadCsv } from '@/lib/export-csv';
 import { enrichStudiesForExport } from '@/lib/enrich-studies-for-export';
 import {
@@ -53,16 +54,20 @@ export function useProjectExport(projectId: string) {
     async (studyId: string) => {
       const study = studies.find(s => s.id === studyId);
       if (!study) return;
-      // jsPDF is ~150 KB gzip; load it when someone actually exports a PDF.
-      const { buildProjectPdf, downloadPdf } = await import('@/lib/export-pdf');
-      const doc = buildProjectPdf({
-        studies: enrich([study]),
-        projectName: study.name || undefined,
-        members,
-        meta: exportMeta,
-      });
-      downloadPdf(doc, `${safeFilename(study.name || 'study')}.pdf`);
-      clientLogger.info('client.project.exported', { format: 'pdf', scope: 'single' });
+      try {
+        // jsPDF is ~150 KB gzip; load it when someone actually exports a PDF.
+        const { buildProjectPdf, downloadPdf } = await import('@/lib/export-pdf');
+        const doc = buildProjectPdf({
+          studies: enrich([study]),
+          projectName: study.name || undefined,
+          members,
+          meta: exportMeta,
+        });
+        downloadPdf(doc, `${safeFilename(study.name || 'study')}.pdf`);
+        clientLogger.info('client.project.exported', { format: 'pdf', scope: 'single' });
+      } catch (err) {
+        showToast.error('Export Failed', err instanceof Error ? err.message : String(err));
+      }
     },
     [studies, enrich, members, exportMeta],
   );

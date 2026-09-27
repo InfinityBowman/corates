@@ -173,8 +173,14 @@ async function performSignoutCleanup() {
   // still sees "logged in", and dependent queries refetch into 401s.
   state.setSessionData(null, false, state.sessionRefetch);
 
-  const { clearAllData } = await import('@/primitives/db.js');
-  await clearAllData();
+  // A chunk that fails to load (e.g. replaced by a deploy) must not stop the
+  // rest of sign-out from clearing the session.
+  try {
+    const { clearAllData } = await import('@/primitives/db.js');
+    await clearAllData();
+  } catch (err) {
+    console.warn('Failed to clear local data on sign-out:', err);
+  }
   queryClient.clear();
 
   // Refetch session to clear it

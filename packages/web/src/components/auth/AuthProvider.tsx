@@ -92,6 +92,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
           .then(({ fetchAndCacheAvatar }) => fetchAndCacheAvatar(id, image))
           .then((dataUrl: string | null) => {
             if (dataUrl) setCachedAvatarUrl(dataUrl);
+          })
+          .catch(err => {
+            // Let the next session update retry this user.
+            if (prevUserIdRef.current === id) prevUserIdRef.current = null;
+            console.warn('[auth] Failed to cache avatar:', err);
           });
       }
     } else if (!loading && !transientError) {
