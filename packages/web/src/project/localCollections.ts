@@ -142,7 +142,10 @@ export interface LocalTx {
  * confirms writes asynchronously, and two delete-plus-insert cycles on one
  * key in a single mutation settle as a net delete.
  */
-export function localTx(collections: ProjectCollections): LocalTx {
+export function localTx(
+  collections: ProjectCollections,
+  onWrite?: (tbl: string, id: string) => void,
+): LocalTx {
   const cols = collections as unknown as Record<
     string,
     {
@@ -166,6 +169,7 @@ export function localTx(collections: ProjectCollections): LocalTx {
       const validated = validateLocalRow(tbl, data) as Record<string, unknown>;
       const col = cols[tbl];
       if (!col) return;
+      onWrite?.(tbl, id);
       if (!col.has(id)) {
         col.insert(validated);
         return;
@@ -180,7 +184,9 @@ export function localTx(collections: ProjectCollections): LocalTx {
     },
     del: (tbl, id) => {
       const col = cols[tbl];
-      if (col?.has(id)) col.delete(id);
+      if (!col?.has(id)) return;
+      col.delete(id);
+      onWrite?.(tbl, id);
     },
   };
 }
@@ -302,16 +308,4 @@ export function seedLocalCollections(
   for (const row of rows.reconciliations) {
     collections.reconciliations.insert(row as ReconciliationRow);
   }
-}
-
-/** The current rows, for persistence. */
-export function snapshotLocalCollections(collections: ProjectCollections): MigratedLocalRows {
-  return {
-    studies: [...collections.studies.toArray],
-    checklists: [...collections.checklists.toArray],
-    appraisals: [...collections.appraisals.toArray],
-    answers: [...collections.answers.toArray],
-    outcomes: [...collections.outcomes.toArray],
-    reconciliations: [...collections.reconciliations.toArray],
-  };
 }
