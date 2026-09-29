@@ -6,6 +6,9 @@ export const APP_NAME = 'CoRATES';
 export const APP_FULL_NAME = 'Collaborative Research Appraisal Tool for Evidence Synthesis';
 export const APP_VERSION = '1.0.0';
 export const APP_PUBLISHER = 'Syntch LLC';
+// Zenodo concept DOI, which always resolves to the latest archived release.
+// TODO(agent): set once the first GitHub release is archived on Zenodo (#861).
+export const APP_DOI: string | null = null;
 
 // Every route inherits the root's `index,follow`. robots.txt stops crawling but is
 // not noindex, so a blocked URL linked from anywhere can still be listed bare.
