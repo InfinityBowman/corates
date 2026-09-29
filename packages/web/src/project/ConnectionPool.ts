@@ -26,8 +26,10 @@ import { loadLegacyLocalRows } from './localProject';
 import { migrateLocalRows } from './localMigrations';
 import {
   createLocalCollections,
+  LOCAL_TABLES,
   seedLocalCollections,
-  snapshotLocalCollections,
+  type LocalTable,
+  type MigratedLocalRows,
   type ProjectCollections,
 } from './localCollections';
 
@@ -123,9 +125,10 @@ interface ConnectionEntry {
   yfields: YjsFields | null;
   /** Local practice only: local-only collections persisted to Dexie. */
   localCollections: ProjectCollections | null;
-  /** A snapshot put is running; coalesce further writes into one follow-up. */
-  localPersistInFlight: boolean;
-  localPersistQueued: boolean;
+  /** Rows this tab changed that are not yet in Dexie, by table. */
+  localDirty: Map<LocalTable, Set<string>>;
+  /** The running write chain, if any; later writes fold into it. */
+  localPersist: Promise<void> | null;
   refCount: number;
   initialized: boolean;
   _cleanupHandlers: (() => void)[];
@@ -187,8 +190,8 @@ class ConnectionPool {
       workspace: null,
       yfields: null,
       localCollections: null,
-      localPersistInFlight: false,
-      localPersistQueued: false,
+      localDirty: new Map(),
+      localPersist: null,
       refCount: 1,
       initialized: false,
       _cleanupHandlers: [],
@@ -314,45 +317,80 @@ class ConnectionPool {
   }
 
   /**
-   * Persist a local project's rows after a mutation — immediately, not on a
-   * timer. Deferred writes lose the tail of a burst on reload (async work in
+   * Persist the rows a local mutation wrote — immediately, not on a timer.
+   * Deferred writes lose the tail of a burst on reload (async work in
    * pagehide does not reliably commit), and the old y-dexie plane persisted
    * every update, so durability-per-write is the contract to keep. Bursts
-   * (typing) coalesce: while one put runs, further calls fold into a single
-   * follow-up that captures the newest snapshot.
+   * (typing) coalesce: while one write runs, further rows fold into a single
+   * follow-up.
    */
-  scheduleLocalPersist(projectId: string): void {
+  scheduleLocalPersist(projectId: string, written: Iterable<[string, string]> = []): void {
     const entry = this.registry.get(projectId);
     if (!entry?.localCollections) return;
-    if (entry.localPersistInFlight) {
-      entry.localPersistQueued = true;
-      return;
+    for (const [table, id] of written) {
+      if (!(LOCAL_TABLES as readonly string[]).includes(table)) continue;
+      const ids = entry.localDirty.get(table as LocalTable) ?? new Set<string>();
+      ids.add(id);
+      entry.localDirty.set(table as LocalTable, ids);
     }
-    void this.persistLocalNow(projectId, entry);
+    if (entry.localPersist || entry.localDirty.size === 0) return;
+    entry.localPersist = this.persistLocalDirty(projectId, entry).finally(() => {
+      entry.localPersist = null;
+    });
   }
 
-  /** One snapshot put, chaining a follow-up if writes landed meanwhile. */
-  private persistLocalNow(projectId: string, entry: ConnectionEntry): Promise<void> {
+  /**
+   * Merge this tab's changed rows into the stored copy inside one Dexie
+   * transaction. Every open tab loads the local rows once and holds its own
+   * copy, so writing a whole snapshot would let a tab opened days ago erase
+   * everything other tabs saved since, the moment it wrote or closed.
+   */
+  private async persistLocalDirty(projectId: string, entry: ConnectionEntry): Promise<void> {
     const collections = entry.localCollections;
-    if (!collections) return Promise.resolve();
-    entry.localPersistInFlight = true;
-    entry.localPersistQueued = false;
-    return db.localProjects
-      .put(this.localProjectRow(projectId, collections))
-      .catch(err => console.error('Local practice persist failed:', err))
-      .then(() => {
-        entry.localPersistInFlight = false;
-        if (entry.localPersistQueued) return this.persistLocalNow(projectId, entry);
-      });
-  }
-
-  private localProjectRow(projectId: string, collections: ProjectCollections) {
-    return {
-      id: projectId,
-      updatedAt: Date.now(),
-      schemaVersion: syncApp.version,
-      rows: snapshotLocalCollections(collections),
-    };
+    while (collections && entry.localDirty.size > 0) {
+      const dirty = entry.localDirty;
+      entry.localDirty = new Map();
+      try {
+        await db.transaction('rw', db.localProjects, async () => {
+          const stored = await db.localProjects.get(projectId);
+          if ((stored?.schemaVersion ?? 0) > syncApp.version) {
+            throw new Error('Local practice was saved by a newer version of CoRATES; reload');
+          }
+          const base =
+            !stored ? null
+            : stored.schemaVersion === syncApp.version ? stored.rows
+            : migrateLocalRows(stored).rows;
+          const rows = {} as MigratedLocalRows;
+          for (const table of LOCAL_TABLES) {
+            const byId = new Map(
+              ((base?.[table] ?? []) as Array<{ id: string }>).map(row => [row.id, row]),
+            );
+            const collection = collections[table] as { get(id: string): unknown };
+            for (const id of dirty.get(table) ?? []) {
+              const row = collection.get(id) as { id: string } | undefined;
+              if (row) byId.set(id, row);
+              else byId.delete(id);
+            }
+            rows[table] = [...byId.values()];
+          }
+          await db.localProjects.put({
+            id: projectId,
+            updatedAt: Date.now(),
+            schemaVersion: syncApp.version,
+            rows,
+          });
+        });
+      } catch (err) {
+        // Keep the rows marked so the next mutation retries them.
+        for (const [table, ids] of dirty) {
+          const pending = entry.localDirty.get(table) ?? new Set<string>();
+          for (const id of ids) pending.add(id);
+          entry.localDirty.set(table, pending);
+        }
+        console.error('Local practice persist failed:', err);
+        return;
+      }
+    }
   }
 
   /**
@@ -363,7 +401,7 @@ class ConnectionPool {
   discardLocalEntry(projectId: string): void {
     const entry = this.registry.get(projectId);
     if (!entry?.localCollections) return;
-    entry.localPersistQueued = false;
+    entry.localDirty.clear();
     entry.localCollections = null;
     this.registry.delete(projectId);
     useProjectStore.getState().clearProject(projectId);
@@ -373,7 +411,9 @@ class ConnectionPool {
   flushLocalPersist(): Promise<void> {
     const flushes: Promise<void>[] = [];
     for (const [projectId, entry] of this.registry) {
-      if (entry.localCollections) flushes.push(this.persistLocalNow(projectId, entry));
+      if (!entry.localCollections) continue;
+      this.scheduleLocalPersist(projectId);
+      if (entry.localPersist) flushes.push(entry.localPersist);
     }
     return Promise.all(flushes).then(() => undefined);
   }
@@ -503,9 +543,9 @@ class ConnectionPool {
     }
     entry._cleanupHandlers = [];
 
-    if (entry.localCollections && entry.localPersistQueued) {
-      // A follow-up snapshot was pending; capture it before the entry dies.
-      db.localProjects.put(this.localProjectRow(projectId, entry.localCollections)).catch(() => {});
+    if (entry.localCollections && entry.localDirty.size > 0 && !entry.localPersist) {
+      // Rows were still waiting on a failed write; try once more before the entry dies.
+      void this.persistLocalDirty(projectId, entry);
     }
 
     if (entry.workspace) void entry.workspace.destroy();

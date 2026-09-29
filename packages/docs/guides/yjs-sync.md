@@ -69,7 +69,10 @@ channel, throttled and never stored.
 Local projects (ids prefixed `local-`) have no engine session. Their rows
 live in local-only collections, persisted to the Dexie `localProjects`
 store by the pool on every mutation, and mutated by the same shared mutator
-functions via `applyLocalMutation`. The persisted row carries the sync
+functions via `applyLocalMutation`. Every open tab holds its own copy of the
+rows, loaded once, so the pool writes only the rows a mutation touched,
+merged into the stored copy in one transaction; writing the whole copy would
+let a long-open tab erase what other tabs saved. The persisted row carries the sync
 schema version it was written under; on load the pool replays the shared
 schema migrations from that version and validates the rows against the
 current schema (`migrateLocalRows`), exactly as the workspace Durable Object

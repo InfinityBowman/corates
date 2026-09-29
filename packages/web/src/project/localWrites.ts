@@ -5,8 +5,8 @@
  * locally, so local practice and online projects share one write vocabulary
  * and one validation story.
  *
- * Persistence is Dexie (`localProjects`): the pool subscribes to the
- * collections and saves rows debounced; this module only mutates.
+ * Persistence is Dexie (`localProjects`): this module reports the rows each
+ * mutation wrote, and the pool merges just those into the stored copy.
  */
 
 import { syncApp } from '@corates/shared/sync';
@@ -37,13 +37,23 @@ export function applyLocalMutation(projectId: string, name: string, args: unknow
   // Non-authoritative ctx: the write gate only enforces on authoritative
   // runs, and local practice has no principal. A local mutation runs once,
   // so minted ids need only be unique, not reproducible from the seed.
-  def.apply(localTx(collections), parsedArgs, {
-    clientId: 'local',
-    principal: undefined,
-    auth: undefined,
-    authoritative: false,
-    seed: crypto.randomUUID(),
-    nextId: () => crypto.randomUUID(),
-  });
-  connectionPool.scheduleLocalPersist(projectId);
+  const written: Array<[string, string]> = [];
+  try {
+    def.apply(
+      localTx(collections, (tbl, id) => written.push([tbl, id])),
+      parsedArgs,
+      {
+        clientId: 'local',
+        principal: undefined,
+        auth: undefined,
+        authoritative: false,
+        seed: crypto.randomUUID(),
+        nextId: () => crypto.randomUUID(),
+      },
+    );
+  } finally {
+    // Local writes are not rolled back when a mutator throws partway, so
+    // whatever it did write must still reach Dexie.
+    connectionPool.scheduleLocalPersist(projectId, written);
+  }
 }
