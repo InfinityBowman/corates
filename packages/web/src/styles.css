@@ -415,3 +415,89 @@
     @apply font-sans;
   }
 }
+
+/* Project syncing screen. The grid builds in on the diagonal, then a crest runs
+   down that same diagonal on a loop. Both animations sit on every cell: the wave
+   only fills forwards, so during its delay the build's own forwards fill is what
+   paints the cell, and the wave takes over cleanly when it starts. */
+@keyframes sync-cell-build {
+  0% {
+    transform: scale(0.45);
+    opacity: 0.45;
+    background-color: var(--muted);
+  }
+  60% {
+    transform: scale(1.09);
+    opacity: 1;
+    background-color: var(--sync-tint);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+    background-color: var(--sync-tint);
+  }
+}
+
+/* 3200ms hold: a 500ms lift, then the cell waits for the crest to come round. */
+@keyframes sync-cell-wave {
+  0% {
+    transform: scale(1);
+    background-color: var(--sync-tint);
+  }
+  2.5% {
+    transform: scale(1);
+    background-color: var(--sync-tint);
+    animation-timing-function: cubic-bezier(0.3, 0.8, 0.3, 1);
+  }
+  7.1875% {
+    transform: scale(1.14);
+    background-color: var(--chart-1);
+  }
+  15.625% {
+    transform: scale(1);
+    background-color: var(--sync-tint);
+  }
+  100% {
+    transform: scale(1);
+    background-color: var(--sync-tint);
+  }
+}
+
+@keyframes sync-dot {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.sync-cell {
+  animation-name: sync-cell-build, sync-cell-wave;
+  animation-duration: 400ms, 3200ms;
+  animation-delay: var(--sync-build-delay), var(--sync-wave-delay);
+  animation-timing-function: cubic-bezier(0.34, 1.4, 0.64, 1), linear;
+  animation-iteration-count: 1, infinite;
+  animation-fill-mode: both, forwards;
+}
+
+/* Same 1600ms cycle as the crest's sweep, so the caption and the grid stay
+   locked together instead of drifting apart. */
+.sync-dot {
+  animation: sync-dot 1600ms ease-in-out var(--sync-dot-delay) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sync-cell {
+    animation: none;
+    background-color: var(--sync-tint);
+  }
+
+  .sync-dot {
+    animation: none;
+    opacity: 0.6;
+  }
+}
