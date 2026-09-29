@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: If you use CoRATES in your research, please cite it using these metadata.
+type: software
+title: CoRATES (Collaborative Research Appraisal Tool for Evidence Synthesis)
+abstract: >-
+  CoRATES is a web application for collaborative critical appraisal in
+  evidence synthesis. Reviewers appraise studies with AMSTAR 2, RoB 2 and
+  ROBINS-I, reconcile independent appraisals, and produce risk-of-bias
+  figures and tables.
+authors:
+  - family-names: Maynard
+    given-names: Jacob A.
+  - family-names: Maynard
+    given-names: Brandy R.
+    affiliation: Saint Louis University
+url: https://corates.org
+repository-code: https://github.com/InfinityBowman/corates
+license: PolyForm-Noncommercial-1.0.0
+keywords:
+  - evidence synthesis
+  - systematic review
+  - risk of bias
+  - critical appraisal
+  - AMSTAR 2
+  - RoB 2
+  - ROBINS-I
