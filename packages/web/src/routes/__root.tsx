@@ -175,14 +175,6 @@ export const Route = createRootRoute({
         type: 'application/ld+json',
         children: structuredData,
       },
-      // The legacy script takes an explicit data-api; the newer pa-*.js bakes in the
-      // instance BASE_URL, which is the personal domain the analytics host fronts.
-      {
-        src: 'https://analytics.corates.org/js/script.js',
-        defer: true,
-        'data-domain': 'corates.org',
-        'data-api': 'https://analytics.corates.org/api/event',
-      },
       {
         children:
           'window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)}',
@@ -201,6 +193,14 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     <html lang='en'>
       <head>
         <HeadContent />
+        {/* Kept out of head(): the router re-appends src scripts on navigation, and every re-run adds a pageview listener.
+            Legacy script.js because pa-*.js bakes in the personal-domain BASE_URL. */}
+        <script
+          src='https://analytics.corates.org/js/script.js'
+          defer
+          data-domain='corates.org'
+          data-api='https://analytics.corates.org/api/event'
+        />
       </head>
       <body className='min-h-screen bg-white text-gray-900 antialiased'>
         {children}
