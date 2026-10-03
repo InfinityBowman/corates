@@ -31,7 +31,7 @@ import { requireProjectAccess } from '@/server/guards/requireProjectAccess';
 import { requireOrgWriteAccess } from '@/server/guards/requireOrgWriteAccess';
 import { requireEntitlement } from '@/server/guards/requireEntitlement';
 import { requireQuota } from '@/server/guards/requireQuota';
-import { countCollaboratorSeats } from './workspaces.server';
+import { countCollaboratorSeats, hasPendingInvitation } from './workspaces.server';
 import type { Session } from '@/server/middleware/auth';
 
 // -- Projects --
@@ -310,7 +310,8 @@ export async function addProjectMember(
 
     // Accepting is what consumes a collaborator seat, but the invite modal is
     // the only entry point, so the plan cap is applied here too. Someone
-    // already in the workspace takes no new seat.
+    // already in the workspace, or already invited to it (a resend, or a
+    // second project), takes no new seat.
     const orgMember =
       userToAdd &&
       (await db
@@ -318,7 +319,9 @@ export async function addProjectMember(
         .from(member)
         .where(and(eq(member.organizationId, orgId), eq(member.userId, userToAdd.id)))
         .get());
-    if (!orgMember) {
+    const holdsSeat =
+      !!orgMember || (await hasPendingInvitation(db, orgId, normalizeEmail(inviteEmail)));
+    if (!holdsSeat) {
       const quota = await requireQuota(db, orgId, 'collaborators.org.max', () =>
         countCollaboratorSeats(db, orgId),
       );

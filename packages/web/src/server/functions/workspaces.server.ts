@@ -199,6 +199,16 @@ export async function countCollaboratorSeats(db: Database, orgId: OrgId): Promis
   return (members?.count ?? 0) + (pending?.count ?? 0);
 }
 
+/** Whether this address already holds a seat through a live invitation here. */
+export async function hasPendingInvitation(db: Database, orgId: OrgId, email: string) {
+  const row = await db
+    .select({ id: projectInvitations.id })
+    .from(projectInvitations)
+    .where(and(pendingInvitationsWhere(db, orgId), eq(projectInvitations.email, email)))
+    .get();
+  return !!row;
+}
+
 export async function getWorkspaceMembers(session: Session, db: Database, orgId: OrgId) {
   const membership = await requireOrgMembership(session, db, orgId);
   if (!membership.ok) throw membership.error;
