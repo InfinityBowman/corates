@@ -756,6 +756,7 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
               ) {
                 throw err;
               }
+              warn('workspace.slug_retry', { userId, slug });
               await insertOrg(`${slug.slice(0, 31)}-${orgId.slice(0, 8)}`);
             }
 

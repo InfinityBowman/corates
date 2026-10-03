@@ -20,7 +20,7 @@ import type { LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useCurrentWorkspace } from '@/hooks/useWorkspaces';
-import { workspaceHomePath, workspaceSettingsPath } from '@/lib/workspacePaths';
+import { workspaceSettingsPath } from '@/lib/workspacePaths';
 import { NAV_GROUP_LABEL, navRowClass } from '../navStyles';
 
 interface NavItem {
@@ -69,7 +69,7 @@ export function SettingsSidebar({ onClose, closeLabel, closeIcon }: SettingsSide
     <nav aria-label='Settings' className='flex h-full flex-col'>
       <div className='flex shrink-0 items-center gap-1 px-2 pt-2 pb-1'>
         <Link
-          to={(workspace ? workspaceHomePath(workspace.slug) : '/dashboard') as string}
+          to='/dashboard'
           className='text-muted-foreground hover:bg-muted hover:text-foreground flex h-8 min-w-0 flex-1 items-center gap-2 rounded-md px-1.5 text-sm font-medium transition-colors'
         >
           <ArrowLeftIcon className='size-4 shrink-0' />

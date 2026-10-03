@@ -12,7 +12,6 @@ import { SettingsField } from '@/components/settings/primitives';
 import { useWorkspaceDraft } from '@/hooks/useWorkspaceDraft';
 import { queryKeys } from '@/lib/queryKeys';
 import { showToast } from '@/lib/toast';
-import { workspaceHomePath } from '@/lib/workspacePaths';
 import { createWorkspace } from '@/server/functions/workspaces.functions';
 import { WorkspaceUrlField } from './WorkspaceUrlField';
 
@@ -34,7 +33,7 @@ export function CreateWorkspacePage() {
       });
       await queryClient.invalidateQueries({ queryKey: queryKeys.workspaces.list });
       showToast.success('Workspace created', `${created.name} is ready for its first project.`);
-      navigate({ to: workspaceHomePath(created.slug) as string, replace: true });
+      navigate({ to: '/dashboard', replace: true });
     } catch (err: unknown) {
       const { handleError } = await import('@/lib/error-utils');
       await handleError(err, { setError, showToast: false });

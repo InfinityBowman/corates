@@ -8,7 +8,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FolderIcon, TriangleAlertIcon } from 'lucide-react';
 import { useMyProjectsList } from '@/hooks/useMyProjectsList';
-import { useCurrentWorkspace } from '@/hooks/useWorkspaces';
+import { useWorkspaces } from '@/hooks/useWorkspaces';
 import { projectPath } from '@/lib/workspacePaths';
 import { showToast } from '@/lib/toast';
 import { CreateProjectModal } from '@/components/project/CreateProjectModal';
@@ -46,8 +46,10 @@ export function ProjectsSection({ createModalOpen, setCreateModalOpen }: Project
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   const { projects: allProjects } = useMyProjectsList();
-  const { workspace } = useCurrentWorkspace();
-  const projects = workspace ? allProjects.filter(p => p.orgId === workspace.id) : [];
+  // Home lists every project the user is on, whichever workspace holds it.
+  const { workspaces } = useWorkspaces();
+  const slugById = new Map<string, string>(workspaces.map(w => [w.id, w.slug]));
+  const projects = allProjects.filter(p => slugById.has(p.orgId));
   const { data: invitations } = useQuery({
     queryKey: queryKeys.invitations.pendingForMe,
     queryFn: () => listMyPendingInvitations(),
@@ -113,19 +115,17 @@ export function ProjectsSection({ createModalOpen, setCreateModalOpen }: Project
             <ProjectRow
               key={project.id}
               project={project}
-              href={projectPath(workspace!.slug, project.id)}
-              onOpen={id => navigate({ to: projectPath(workspace!.slug, id) as string })}
+              href={projectPath(slugById.get(project.orgId)!, project.id)}
+              onOpen={id =>
+                navigate({ to: projectPath(slugById.get(project.orgId)!, id) as string })
+              }
               onDelete={setPendingDeleteId}
             />
           ))
         : <EmptyState
             icon={FolderIcon}
             title='No projects yet'
-            description={
-              workspace && workspace.role !== 'owner' ?
-                `Projects you are invited to in ${workspace.name} appear here.`
-              : 'A project is where you and your team appraise the same studies independently, then reconcile where you disagree.'
-            }
+            description='A project is where you and your team appraise the same studies independently, then reconcile where you disagree.'
             action={<NewProjectButton onClick={() => setCreateModalOpen(true)} />}
           />
         }

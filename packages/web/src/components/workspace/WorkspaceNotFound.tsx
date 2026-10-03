@@ -10,7 +10,7 @@ import { CompassIcon } from 'lucide-react';
 import { PageLoader } from '@/components/ui/spinner';
 import { pickDefaultWorkspace, useWorkspaces } from '@/hooks/useWorkspaces';
 import { useRedirectIfCurrent } from '@/hooks/useRedirectIfCurrent';
-import { workspaceHomePath } from '@/lib/workspacePaths';
+import { clientLogger } from '@/lib/clientLogger';
 
 const PROJECT_PATH = /^\/[^/]+(\/projects\/.+)$/;
 
@@ -22,7 +22,13 @@ export function WorkspaceNotFound() {
   const projectRest = pathname.match(PROJECT_PATH)?.[1];
 
   useEffect(() => {
-    if (projectRest && fallback) redirect(`/${fallback.slug}${projectRest}${searchStr}`);
+    if (projectRest && fallback) {
+      // An old slug on a project link, usually from before a workspace URL changed
+      clientLogger.info('client.workspace.project_link_rescued');
+      redirect(`/${fallback.slug}${projectRest}${searchStr}`);
+    } else if (!projectRest) {
+      clientLogger.info('client.workspace.not_found');
+    }
   }, [projectRest, fallback, searchStr]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (projectRest && fallback) return <PageLoader label='Opening project...' />;
@@ -36,14 +42,12 @@ export function WorkspaceNotFound() {
       <p className='text-muted-foreground max-w-sm text-sm'>
         This workspace does not exist, its URL has changed, or you are not a member of it.
       </p>
-      {fallback && (
-        <Link
-          to={workspaceHomePath(fallback.slug) as string}
-          className='text-primary text-sm font-medium underline-offset-4 hover:underline'
-        >
-          Go to {fallback.name}
-        </Link>
-      )}
+      <Link
+        to='/dashboard'
+        className='text-primary text-sm font-medium underline-offset-4 hover:underline'
+      >
+        Go to your dashboard
+      </Link>
     </div>
   );
 }

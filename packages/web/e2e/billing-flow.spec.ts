@@ -15,7 +15,6 @@
 import { test, expect, type Page } from './test';
 import { submitEmailCodeSignIn } from './helpers';
 import { BASE_URL } from './constants';
-import { WORKSPACE_HOME_URL } from './shared-steps';
 
 const TEST_PREFIX = `e2e-billing-${Date.now()}`;
 const TEST_EMAIL = `${TEST_PREFIX}@test.corates.org`;
@@ -47,12 +46,9 @@ async function signUpViaUI(page: Page) {
     // Step 3: Role selection
     await expect(page.getByText('What best describes you?')).toBeVisible({ timeout: 5_000 });
     await page.getByText('Researcher').click();
-    await page.getByRole('button', { name: 'Next' }).click();
+    await page.getByRole('button', { name: 'Finish Setup' }).click();
 
-    // Step 4: keep the generated workspace name
-    await page.getByRole('button', { name: /Skip for now/i }).click();
-
-    await page.waitForURL(WORKSPACE_HOME_URL, { timeout: 15_000 });
+    await page.waitForURL(/\/dashboard/, { timeout: 15_000 });
   }
 }
 

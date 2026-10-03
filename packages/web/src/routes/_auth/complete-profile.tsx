@@ -42,20 +42,15 @@ import { ErrorMessage } from '@/components/auth/ErrorMessage';
 import { PrimaryButton } from '@/components/auth/AuthButtons';
 import { CodeInput, ResendCode } from '@/components/auth/CodeInput';
 import { RoleSelector, TITLE_OPTIONS } from '@/components/auth/RoleSelector';
-import { WorkspaceStep, type WorkspaceChanges } from '@/components/auth/WorkspaceStep';
-import { updateWorkspace } from '@/server/functions/workspaces.functions';
 
 // Radix Select rejects an empty-string item value, so "None" needs a sentinel
 const NONE = '__none';
 
-const PROFILE_STEPS = [
+const STEPS_CONFIG = [
   { title: 'Your Name', description: 'Basic information' },
   { title: 'Institution', description: 'Academic details' },
   { title: 'Role', description: 'Your background' },
 ];
-// Invited users are joining someone else's workspace, so they skip naming
-// their own (as in Linear); it keeps its generated name until they change it.
-const WORKSPACE_STEP = { title: 'Workspace', description: 'Where your projects live' };
 
 // Ark UI keeps every panel mounted and toggles `hidden`, so an unscoped
 // animate-in would run once on mount and never replay. Scoping it to the open
@@ -138,10 +133,6 @@ function CompleteProfilePage() {
   const [loading, setLoading] = useState(false);
   const [hasEditedName, setHasEditedName] = useState(false);
   const [hasAutofilledName, setHasAutofilledName] = useState(false);
-  const [joiningByInvitation] = useState(
-    () => !!resolveInvitationToken(Object.fromEntries(new URLSearchParams(window.location.search))),
-  );
-  const steps = joiningByInvitation ? PROFILE_STEPS : [...PROFILE_STEPS, WORKSPACE_STEP];
 
   const navigate = useNavigate();
   const user = useAuthStore(selectUser);
@@ -257,23 +248,13 @@ function CompleteProfilePage() {
     [currentStep],
   );
 
-  async function handleSubmit(
-    selectedPersona = persona,
-    workspaceChanges: WorkspaceChanges | null = null,
-  ) {
+  async function handleSubmit(selectedPersona = persona) {
     setLoading(true);
     setError('');
 
     const urlParams = new URLSearchParams(window.location.search);
 
     try {
-      // Before the profile, which completes onboarding: a taken URL must keep the
-      // user on this step rather than send them on with the generated one.
-      if (workspaceChanges && (workspaceChanges.name || workspaceChanges.slug)) {
-        await updateWorkspace({ data: workspaceChanges });
-        await queryClient.invalidateQueries({ queryKey: queryKeys.workspaces.list });
-      }
-
       const givenName = firstName.trim();
       const familyName = lastName.trim();
       const fullName = [givenName, familyName].filter(Boolean).join(' ');
@@ -370,10 +351,10 @@ function CompleteProfilePage() {
         <img src='/logo.svg' alt='CoRATES' className='h-6 w-auto sm:h-7' />
       </a>
 
-      <Steps count={steps.length} step={currentStep} onStepChange={handleStepChange} linear>
+      <Steps count={STEPS_CONFIG.length} step={currentStep} onStepChange={handleStepChange} linear>
         {/* Step Indicator */}
         <StepsList className='mb-6 flex items-center justify-center pt-4'>
-          {steps.map((stepInfo, index) => (
+          {STEPS_CONFIG.map((stepInfo, index) => (
             <StepsItem key={stepInfo.title} index={index} className='flex items-center'>
               <StepsTrigger
                 className='group flex flex-col items-center focus:outline-none'
@@ -388,7 +369,7 @@ function CompleteProfilePage() {
                   {stepInfo.title}
                 </span>
               </StepsTrigger>
-              {index < steps.length - 1 && (
+              {index < STEPS_CONFIG.length - 1 && (
                 <StepsSeparator className='data-complete:bg-primary data-current:bg-secondary data-incomplete:bg-secondary mx-2 mt-3.75 h-0.5 w-8 self-start transition-colors sm:w-12' />
               )}
             </StepsItem>
@@ -577,8 +558,7 @@ function CompleteProfilePage() {
             <form
               onSubmit={e => {
                 e.preventDefault();
-                if (joiningByInvitation) handleSubmit(persona);
-                else setCurrentStep(3);
+                handleSubmit(persona);
               }}
               className='flex flex-col gap-4'
             >
@@ -602,43 +582,21 @@ function CompleteProfilePage() {
                   disabled={!persona}
                   className='flex-3'
                 >
-                  {joiningByInvitation ? 'Finish Setup' : 'Next'}
+                  Finish Setup
                 </PrimaryButton>
               </div>
 
               <Button
                 type='button'
                 variant='link'
-                onClick={() => {
-                  if (joiningByInvitation) {
-                    handleSubmit('other');
-                  } else {
-                    setPersona('other');
-                    setCurrentStep(3);
-                  }
-                }}
+                onClick={() => handleSubmit('other')}
                 disabled={loading}
                 className='text-muted-foreground hover:text-secondary-foreground mx-auto -mt-2'
               >
-                {joiningByInvitation ? 'Skip and finish' : 'Skip for now'}
+                Skip and finish
               </Button>
             </form>
           </StepsContent>
-
-          {!joiningByInvitation && (
-            <StepsContent index={3} className={STEP_PANEL}>
-              {/* Every panel stays mounted, so this one mounts on arrival to suggest
-                  a name from the first name as it was finally entered. */}
-              {currentStep === 3 && (
-                <WorkspaceStep
-                  firstName={firstName}
-                  loading={loading}
-                  error={error}
-                  onFinish={changes => handleSubmit(persona || 'other', changes)}
-                />
-              )}
-            </StepsContent>
-          )}
 
           <StepsCompletedContent className={STEP_PANEL}>
             <div className='flex flex-col items-center justify-center py-8'>

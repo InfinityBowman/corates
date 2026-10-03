@@ -2,10 +2,6 @@
 
 export type WorkspaceSettingsPage = 'general' | 'members' | 'billing' | 'plans';
 
-export function workspaceHomePath(slug: string) {
-  return `/${slug}`;
-}
-
 export function projectPath(slug: string, projectId: string) {
   return `/${slug}/projects/${projectId}`;
 }
