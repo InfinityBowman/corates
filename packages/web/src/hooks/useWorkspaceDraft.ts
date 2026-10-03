@@ -7,10 +7,19 @@ import { useState } from 'react';
 import { slugifyWorkspaceName } from '@corates/shared';
 import { useSlugAvailability } from '@/hooks/useSlugAvailability';
 
-export function useWorkspaceDraft(initial: { name?: string; slug?: string; orgId?: string } = {}) {
+export function useWorkspaceDraft(
+  initial: {
+    name?: string;
+    /** The saved slug, when editing an existing workspace. */
+    slug?: string;
+    orgId?: string;
+    /** Start the URL from the name instead of the saved slug. */
+    slugFromName?: boolean;
+  } = {},
+) {
   const [name, setNameState] = useState(initial.name ?? '');
   const [slugInput, setSlugInput] = useState(
-    initial.slug ?? slugifyWorkspaceName(initial.name ?? ''),
+    initial.slug && !initial.slugFromName ? initial.slug : slugifyWorkspaceName(initial.name ?? ''),
   );
   const [slugEdited, setSlugEdited] = useState(false);
   const { slug, status } = useSlugAvailability(slugInput, {

@@ -59,70 +59,67 @@ const multiError = createMultiFieldValidationError([
 
 ### Creating Domain Errors
 
+Server functions (the default; see the [API Development Guide](/guides/api-development)) throw. The serialization adapter in `src/start.ts` delivers the error to the browser with its `code`, `statusCode` and `details`.
+
 ```ts
-// packages/web/src/routes/api/orgs/$orgId/projects/$projectId.ts
-import { env } from 'cloudflare:workers';
-import { createDb } from '@corates/db/client';
-import { projects } from '@corates/db/schema';
-import { eq } from 'drizzle-orm';
-import { createDomainError, PROJECT_ERRORS } from '@corates/shared';
+// packages/web/src/server/functions/workspaces.server.ts
+import { throwDomainError, PROJECT_ERRORS } from '@corates/shared';
 
-export const handleGet = async ({ params }: { params: { projectId: string } }) => {
-  const db = createDb(env.DB);
-  const project = await db.select().from(projects).where(eq(projects.id, params.projectId)).get();
+if (!target) {
+  throwDomainError(PROJECT_ERRORS.NOT_FOUND, { orgId, userId: targetUserId }, 'Member not found');
+}
+```
 
-  if (!project) {
-    return Response.json(createDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId: params.projectId }), { status: 404 });
-  }
+Guards return the error instead of throwing it, so the caller decides: server functions `throw result.error`, HTTP routes `return result.error.toResponse()`.
 
-  return Response.json(project);
-};
+HTTP routes (`routes/api/`, raw HTTP only) return the error as JSON:
+
+```ts
+// packages/web/src/routes/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs/$fileName.ts
+if (!object) {
+  return Response.json(createDomainError(FILE_ERRORS.NOT_FOUND, { fileName }), { status: 404 });
+}
 ```
 
 ### Validation errors
 
-Validation is done ad-hoc against typed body interfaces; richer routes use Zod. In both cases, return a `createValidationError(...)` response rather than throwing. See the [API Development Guide](/guides/api-development#validation) for examples.
+Server functions validate input with Zod in `.validator(...)`. HTTP routes parse their own bodies and return a `createValidationError(...)` response. See the [API Development Guide](/guides/api-development#validation) for examples.
 
 ## Frontend Usage
 
-### Handling API Errors (Preferred: apiFetch)
+### Calling server functions
 
-**Use `apiFetch` for all API calls** - it handles JSON parsing, errors, and toast notifications automatically:
+Server function calls throw the domain error. Catch it and hand it to `handleError`, or read it with `getDomainError` / `isErrorCode` to branch on a specific code:
 
-```javascript
-import { apiFetch } from '@lib/apiFetch.js';
+```ts
+import { getDomainError, handleError } from '@/lib/error-utils';
+import { acceptInvitation } from '@/server/functions/invitations.functions';
 
-// GET request - returns parsed JSON directly
-const projects = await apiFetch.get('/api/projects');
-
-// POST request with body
-const newProject = await apiFetch.post('/api/projects', { name: 'My Project' });
-
-// With options
-const data = await apiFetch.get('/api/projects', {
-  toastMessage: false, // Disable error toast
-  retries: 2, // Retry on failure (default: 1 for GET, 0 for mutations)
-});
-```
-
-Available methods: `apiFetch.get()`, `apiFetch.post()`, `apiFetch.put()`, `apiFetch.patch()`, `apiFetch.delete()`
-
-### Legacy: handleFetchError
-
-For existing code, `handleFetchError` wraps raw fetch calls:
-
-```javascript
-import { handleFetchError } from '@/lib/error-utils.js';
-
-// Wrap fetch calls
 try {
-  const response = await handleFetchError(fetch('/api/projects'), { showToast: true });
-  const data = await response.json();
-} catch (error) {
-  // Error already handled (toast shown, etc.)
-  // error is a DomainError or TransportError
+  await acceptInvitation({ data: { token } });
+} catch (err) {
+  const domainError = getDomainError(err);
+  if (domainError?.code === 'PROJECT_MEMBER_ALREADY_EXISTS') {
+    // already in, treat as success
+  } else {
+    await handleError(err, { toastTitle: 'Could not accept invitation' });
+  }
 }
 ```
+
+Inside TanStack Query, let the query or mutation reject and render `error`, or handle it in `onError`.
+
+### Calling HTTP routes: apiFetch
+
+The few HTTP routes (PDF list, upload, download, delete) go through `apiFetch`, which parses JSON, turns error bodies into domain errors, and shows toasts:
+
+```ts
+import { apiFetch } from '@/lib/apiFetch';
+
+const pdfs = await apiFetch.get(`/api/orgs/${orgId}/projects/${projectId}/studies/${studyId}/pdfs`);
+```
+
+Available methods: `apiFetch.get()`, `apiFetch.post()`, `apiFetch.put()`, `apiFetch.patch()`, `apiFetch.delete()`. For a raw `fetch`, `handleFetchError(fetch(url), { showToast: true })` does the same error handling.
 
 ### Form Error Handling
 
@@ -145,8 +142,7 @@ function MyForm() {
     setError('');
     setLoading(true);
     try {
-      const res = await fetch('/api/projects', { method: 'POST', body });
-      if (!res.ok) throw await res.json();
+      await createProject({ data: { orgId, name } });
       navigate({ to: '/dashboard' });
     } catch (err) {
       await handleError(err, { setError, showToast: false, navigate });
@@ -183,8 +179,7 @@ function MyForm() {
     fieldState.clearAll();
     setGlobalError('');
     try {
-      const res = await fetch('/api/contact', { method: 'POST', body });
-      if (!res.ok) throw await res.json();
+      await submitContactForm({ data: { name, email, subject, message } });
     } catch (err) {
       handleFormError(
         err as Parameters<typeof handleFormError>[0],

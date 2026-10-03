@@ -47,7 +47,10 @@ async function signUpViaUI(page: Page) {
     // Step 3: Role selection
     await expect(page.getByText('What best describes you?')).toBeVisible({ timeout: 5_000 });
     await page.getByText('Researcher').click();
-    await page.getByRole('button', { name: 'Finish Setup' }).click();
+    await page.getByRole('button', { name: 'Next' }).click();
+
+    // Step 4: keep the generated workspace name
+    await page.getByRole('button', { name: /Skip for now/i }).click();
 
     await page.waitForURL(WORKSPACE_HOME_URL, { timeout: 15_000 });
   }

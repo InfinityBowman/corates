@@ -36,7 +36,7 @@ Schema lives in `packages/db/src/schema.ts` -- the canonical reference. Relevant
 
 `grantOrgMembership` on an invitation is written but not read: `acceptInvitation` always adds a missing workspace membership at the invitation's `orgRole`, which `createInvitation` always sets to `member`.
 
-`organization.slug` is the workspace URL. Rules live in `@corates/shared` (`workspaceSlugSchema`, `RESERVED_WORKSPACE_SLUGS`): lowercase letters, digits and single hyphens, 2 to 40 characters, never a top-level route name. `pickAvailableWorkspaceSlug` (`@corates/workers/workspace-slug`) picks a free one from a name, numbering on collision. Personal workspaces are created on the first session with `metadata = {"type":"personal"}`.
+`organization.slug` is the workspace URL. Rules live in `@corates/shared` (`workspaceSlugSchema`, `RESERVED_WORKSPACE_SLUGS`): lowercase letters, digits and single hyphens, 2 to 40 characters, never a top-level route name. `pickAvailableWorkspaceSlug` (`@corates/workers/workspace-slug`) picks a free one from a name, numbering on collision. Personal workspaces are created on the first session with `metadata = {"type":"personal"}`, named `<first name>'s Workspace`. The last onboarding step (`WorkspaceStep` in `/complete-profile`) then lets the user rename it and pick its URL; skipping keeps the generated one. Users arriving through an invitation skip that step, since they are joining someone else's workspace.
 
 ## Role Hierarchies
 

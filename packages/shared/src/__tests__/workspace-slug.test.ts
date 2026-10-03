@@ -12,6 +12,11 @@ describe('slugifyWorkspaceName', () => {
     expect(slugifyWorkspaceName('  Mary   Jo  ')).toBe('mary-jo');
   });
 
+  it('drops apostrophes instead of splitting the word', () => {
+    expect(slugifyWorkspaceName("Jacob's Workspace")).toBe('jacobs-workspace');
+    expect(slugifyWorkspaceName('Ana\u2019s Lab')).toBe('anas-lab');
+  });
+
   it('strips accents rather than dropping the letter', () => {
     expect(slugifyWorkspaceName('Jos\u00e9 M\u00fcller')).toBe('jose-muller');
   });

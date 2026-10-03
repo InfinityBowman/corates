@@ -123,10 +123,8 @@ For hooks that fetch, provide a `QueryClientProvider` wrapper.
 ```ts
 import { vi } from 'vitest';
 
-vi.mock('@/api/auth-client', () => ({
-  authClient: { organization: { list: vi.fn() } },
-  authFetch: vi.fn(),
-}));
+const { getInvoices } = vi.hoisted(() => ({ getInvoices: vi.fn() }));
+vi.mock('@/server/functions/billing.functions', () => ({ getInvoices }));
 ```
 
 Prefer pre-seeding stores and query caches over mocking the modules that consume them -- mocks drift; state snapshots don't.
@@ -141,112 +139,67 @@ Object.defineProperty(navigator, 'onLine', { value: true, writable: true });
 
 ## Server tests
 
-Server tests live next to the route file under `__tests__/` with the `*.server.test.ts` suffix. They run in the Cloudflare Workers pool, so `env.DB`, R2, Durable Object bindings, and `cloudflare:workers` imports all resolve against a test D1 database prepared by `pnpm db:generate:test`.
+Server tests live in a `__tests__/` folder next to the code with the `*.server.test.ts` suffix, and run under `vitest.server.config.ts`. They run in the Cloudflare Workers pool, so `env.DB`, R2, Durable Object bindings, and `cloudflare:workers` imports all resolve against a test D1 database prepared by `pnpm db:generate:test`.
 
-There are **two patterns**, picked per test based on what's being exercised:
+Most server code is server functions, so most server tests call the logic in `X.server.ts` directly. HTTP routes are tested by calling their named handlers.
 
-| Pattern                   | When to use                                                              | Cost                                                 |
-| ------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------- |
-| Handler-direct            | Business logic, happy paths, routes without middleware                   | Fast (~ms per test)                                  |
-| `SELF.fetch` (end-to-end) | Anything that depends on route-level middleware (auth, CSRF, validation) | Worker boots once per file (~10s), then ~ms per test |
+### Server function logic
 
-### Pattern 1 — Handler-direct
-
-Import the route's named handler and call it with a synthesized `Request`. This bypasses TanStack Start's routing and middleware, so use it only when the handler doesn't depend on middleware-supplied context.
+`X.server.ts` functions take `session` and `db` as parameters, so a test seeds data with the factories in `@/__tests__/server/factories`, builds a session, and calls the function. Guards run for real, so authorization cases are tested the same way.
 
 ```ts
-import { describe, expect, it } from 'vitest';
-import { handleGet } from '../health';
-
-describe('GET /health', () => {
-  it('returns 200 + healthy when all dependencies respond', async () => {
-    const res = await handleGet();
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.status).toBe('healthy');
-  });
-});
-```
-
-For handlers that take `{ request }`:
-
-```ts
-const res = await handlePost({
-  request: new Request('https://x/api/billing/checkout', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', cookie: 'session=...' },
-    body: JSON.stringify({ tier: 'pro', interval: 'monthly' }),
-  }),
-});
-```
-
-For handlers whose route uses middleware (e.g. `adminMiddleware`), pass synthetic `context` matching what the middleware would attach. **But** auth-failure cases (no session, wrong role, CSRF) cannot be tested this way — the middleware never runs. Use Pattern 2 for those.
-
-### Pattern 2 — End-to-end via `SELF.fetch`
-
-For routes that depend on route-level middleware, exercise the full chain by calling the worker via HTTP. The test-worker mounts `createStartHandler(defaultStreamHandler)`, so `SELF.fetch(request)` runs the real `route → middleware → handler` pipeline.
-
-```ts
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { SELF } from 'cloudflare:test';
+import { env } from 'cloudflare:workers';
+import { createDb } from '@corates/db/client';
 import { resetTestDatabase } from '@/__tests__/server/helpers';
-import { buildAdminUser, buildProject, resetCounter } from '@/__tests__/server/factories';
+import { buildOrg, buildOrgMember, resetCounter } from '@/__tests__/server/factories';
+import { updateWorkspaceSettings } from '@/server/functions/workspaces.server';
 
-let sessionResult: { user: { id: string; email: string; role?: string }; session: { id: string } } | null = null;
-
-vi.mock('@corates/workers/auth', () => ({
-  getSession: async () => sessionResult,
-}));
+function sessionFor(user: { id: string; email: string }): Session {
+  return { user: { ...user, name: 'Test' }, session: { id: 's', userId: user.id } } as Session;
+}
 
 beforeEach(async () => {
   await resetTestDatabase();
   resetCounter();
-  sessionResult = null;
 });
 
-describe('SELF.fetch /api/admin/projects/$projectId', () => {
-  it('returns 401 with no session', async () => {
-    const res = await SELF.fetch('http://example.com/api/admin/projects/x');
-    expect(res.status).toBe(401);
-  });
-
-  it('returns 403 when user is not admin', async () => {
-    const u = await buildAdminUser();
-    sessionResult = {
-      user: { id: u.id, email: u.email, role: 'user' },
-      session: { id: 's' },
-    };
-    const res = await SELF.fetch('http://example.com/api/admin/projects/x');
-    expect(res.status).toBe(403);
-  });
-
-  it('rejects DELETE without trusted origin (CSRF)', async () => {
-    // ...set admin session...
-    const res = await SELF.fetch('http://example.com/api/admin/projects/x', {
-      method: 'DELETE',
-      // intentionally no Origin header
-    });
-    expect(res.status).toBe(403);
-  });
+it('refuses settings changes from a member', async () => {
+  const { org } = await buildOrg();
+  const { user } = await buildOrgMember({ orgId: org.id, role: 'member' });
+  await expect(
+    updateWorkspaceSettings(sessionFor(user), createDb(env.DB), org.id, { name: 'Mine now' }),
+  ).rejects.toThrow();
 });
 ```
 
-Naming convention: SELF tests live in `*-self.server.test.ts` next to the handler-direct file. Co-locating both patterns keeps the test surface for a route discoverable.
+Mock `@corates/workers/billing-resolver` when a test needs a particular plan without seeding a subscription.
 
-**Why this works:** the test-worker (`packages/web/src/__tests__/server/test-worker.ts`) mounts `createStartHandler` instead of returning a 404 stub. The vitest server config aliases the three `#tanstack-*` virtual modules (normally provided by the `tanstackStart` vite plugin, which doesn't run in the test pool) to stand-in files in `src/__tests__/server/`. See `packages/docs/audits/tanstack-usage-gaps-2026-04.md` § G2 for the discovery story.
+### HTTP route handlers
 
-**When to use SELF over handler-direct:**
+Import the route's named handler and call it with a synthesized `Request`. This bypasses TanStack Start's routing and any route middleware, so pass the context the middleware would attach (`{ db, session }`) when the route uses `authMiddleware`.
 
-- Route declares `server.middleware: [...]` — middleware behavior must be tested via SELF.
-- Auth-failure paths (401, 403) — handler-direct silently false-passes since middleware doesn't run.
-- CSRF / origin-validation paths — same reason.
-- Any "did you forget to apply the middleware?" regression you want to catch — only SELF exercises the route definition itself.
+```ts
+import { handleGet } from '../health';
 
-**When handler-direct is fine:**
+it('returns 200 + healthy when all dependencies respond', async () => {
+  const res = await handleGet();
+  expect(res.status).toBe(200);
+});
+```
 
-- Happy paths where you want to focus on business logic and pre-supply the middleware context.
-- Routes with no middleware at all (`/api/health`, public read endpoints).
-- Tests that care about a specific code path inside the handler, not the route boundary.
+```ts
+import { handlePost } from '../client-logs';
+
+const res = await handlePost({
+  request: new Request('http://localhost/api/client-logs', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ entries: [{ level: 'info', message: 'client.example', route: '/' }] }),
+  }),
+});
+```
+
+The test worker (`src/__tests__/server/test-worker.ts`) also mounts the full Start handler, so `SELF.fetch` from `cloudflare:test` can drive a request through routing and middleware end to end when a test needs that.
 
 ### Database isolation
 
@@ -255,8 +208,6 @@ Server tests share the test D1. Each test file that mutates data should reset th
 ### Mocking external services
 
 Postmark and Stripe are mocked globally in the server setup file to avoid hitting real services or triggering startup failures in the test Worker. Individual tests can override these mocks per-test with `vi.mocked(...).mockReturnValueOnce(...)`.
-
-For SELF tests, mock at the same module boundary — `vi.mock('@corates/workers/auth', ...)` works the same way because vitest mocks apply across the test isolate, including the test-worker's module graph.
 
 ## Browser tests
 

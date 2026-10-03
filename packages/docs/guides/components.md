@@ -163,20 +163,20 @@ shadcn components accept `className` and merge it correctly via `cn()` (from `@/
 
 ## Error handling
 
-For API calls, use the shared error helpers from `@/lib/error-utils` and `@/lib/form-errors`. They understand the `@corates/shared` domain error schema.
+For server function calls, use the shared error helpers from `@/lib/error-utils` and `@/lib/form-errors`. They understand the `@corates/shared` domain error schema.
 
 ```tsx
-import { handleError, isErrorCode, getDomainError } from '@/lib/error-utils';
+import { handleError, isErrorCode } from '@/lib/error-utils';
+import { createProject } from '@/server/functions/org-projects.functions';
 import { AUTH_ERRORS } from '@corates/shared';
 
 async function handleSubmit() {
   setIsSubmitting(true);
   try {
-    const res = await fetch('/api/projects', { method: 'POST', body: JSON.stringify(data) });
-    if (!res.ok) throw await getDomainError(res);
+    await createProject({ data: { orgId, name } });
     // ...
   } catch (err) {
-    if (isErrorCode(err, AUTH_ERRORS.UNAUTHORIZED)) {
+    if (isErrorCode(err, AUTH_ERRORS.REQUIRED.code)) {
       navigate({ to: '/signin' });
       return;
     }
