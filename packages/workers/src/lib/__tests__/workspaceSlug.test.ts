@@ -32,6 +32,8 @@ describe('pickAvailableWorkspaceSlug', () => {
   });
 
   it('falls back to a generic slug when nothing usable is left', async () => {
-    expect(await pickAvailableWorkspaceSlug(createDb(env.DB), '\u96c5\u8339', null)).toBe('my-workspace');
+    expect(await pickAvailableWorkspaceSlug(createDb(env.DB), '\u96c5\u8339', null)).toBe(
+      'my-workspace',
+    );
   });
 });
