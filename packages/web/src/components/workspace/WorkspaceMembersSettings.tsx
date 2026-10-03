@@ -70,7 +70,7 @@ export function WorkspaceMembersSettings() {
 function MembersPage({ workspace }: { workspace: Workspace }) {
   const user = useAuthStore(selectUser);
   const queryClient = useQueryClient();
-  const { members, pendingInvitations, seats } = useWorkspaceMembers(workspace.id);
+  const { members, pendingInvitations, seats, error, refetch } = useWorkspaceMembers(workspace.id);
   const [pendingRemove, setPendingRemove] = useState<Member | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
 
@@ -122,6 +122,24 @@ function MembersPage({ workspace }: { workspace: Workspace }) {
 
   const unlimited = seats ? isUnlimitedQuota(seats.max) : false;
   const full = !!seats && !unlimited && seats.used >= seats.max;
+
+  // An empty list here would read as "nobody is in this workspace".
+  if (error && !seats) {
+    return (
+      <SettingsPage title='Members'>
+        <SettingsSection>
+          <SettingsRow
+            label='Could not load the members of this workspace'
+            description='Check your connection and try again.'
+          >
+            <Button variant='outline' size='sm' onClick={() => refetch()}>
+              Try again
+            </Button>
+          </SettingsRow>
+        </SettingsSection>
+      </SettingsPage>
+    );
+  }
 
   return (
     <SettingsPage

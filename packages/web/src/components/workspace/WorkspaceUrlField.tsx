@@ -24,7 +24,9 @@ export function WorkspaceUrlField({
   disabled,
 }: WorkspaceUrlFieldProps) {
   // An empty field is unfinished, not wrong; the submit button stays disabled.
-  const problem = value !== '' && (status.state === 'invalid' || status.state === 'taken');
+  const problem =
+    value !== '' &&
+    (status.state === 'invalid' || status.state === 'taken' || status.state === 'error');
   return (
     <div className='flex flex-col gap-1.5'>
       <div

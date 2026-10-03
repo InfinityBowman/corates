@@ -10,7 +10,7 @@ import { checkSlug } from '@/server/functions/workspaces.functions';
 
 export type SlugStatus =
   | { state: 'unchanged' | 'checking' | 'available' }
-  | { state: 'invalid' | 'taken'; message: string };
+  | { state: 'invalid' | 'taken' | 'error'; message: string };
 
 export function useSlugAvailability(slug: string, opts: { orgId?: string; current?: string } = {}) {
   const debounced = useDebouncedValue(slug, 300);
@@ -29,6 +29,8 @@ export function useSlugAvailability(slug: string, opts: { orgId?: string; curren
     status = { state: 'invalid', message: parsed.error.issues[0]?.message ?? 'Invalid URL.' };
   } else if (unchanged) {
     status = { state: 'unchanged' };
+  } else if (query.isError && !query.isFetching && debounced === slug) {
+    status = { state: 'error', message: 'Could not check this URL. Edit it to try again.' };
   } else if (debounced !== slug || query.isFetching || !query.data) {
     status = { state: 'checking' };
   } else if (!query.data.available) {
