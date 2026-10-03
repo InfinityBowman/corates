@@ -68,7 +68,7 @@ describe('fetchInvoices', () => {
       name: owner.name,
       activeOrganizationId: org.id,
     });
-    const result = await fetchInvoices(createDb(env.DB), session);
+    const result = await fetchInvoices(createDb(env.DB), session, org.id);
     expect(result.invoices).toEqual([]);
     expect(invoicesListMock).not.toHaveBeenCalled();
   });
@@ -99,7 +99,7 @@ describe('fetchInvoices', () => {
       ],
     });
 
-    const result = await fetchInvoices(createDb(env.DB), session);
+    const result = await fetchInvoices(createDb(env.DB), session, org.id);
     expect(result.invoices).toHaveLength(1);
     expect(result.invoices[0].id).toBe('in_1');
     expect(result.invoices[0].amount).toBe(29);
@@ -123,7 +123,7 @@ describe('fetchInvoices', () => {
       name: owner.name,
       activeOrganizationId: org.id,
     });
-    await fetchInvoices(createDb(env.DB), session);
+    await fetchInvoices(createDb(env.DB), session, org.id);
 
     expect(invoicesListMock).toHaveBeenCalledWith({ customer: 'cus_past_due', limit: 10 });
   });
@@ -139,6 +139,6 @@ describe('fetchInvoices', () => {
     });
     invoicesListMock.mockRejectedValueOnce(new Error('stripe down'));
 
-    await expect(fetchInvoices(createDb(env.DB), session)).rejects.toThrow('stripe down');
+    await expect(fetchInvoices(createDb(env.DB), session, org.id)).rejects.toThrow('stripe down');
   });
 });

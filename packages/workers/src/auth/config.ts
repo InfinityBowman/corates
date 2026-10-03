@@ -28,6 +28,7 @@ import { refreshOrgSyncSessions } from '../sync/admin';
 import { notifyOrgMembers, EventTypes } from '../lib/notify';
 import { copyAvatarToR2, isExternalAvatarUrl, isInternalAvatarUrl } from '../lib/avatar-copy';
 import { buildAppUrl } from '../lib/app-url';
+import { pickAvailableWorkspaceSlug } from '../lib/workspaceSlug';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import type { Env } from '../types';
 
@@ -734,16 +735,29 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
             const orgId = crypto.randomUUID();
             const memberId = crypto.randomUUID();
             const now = new Date();
-            const slug = `${userName.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${orgId.slice(0, 8)}`;
+            const slug = await pickAvailableWorkspaceSlug(db, userName, newSession.user.email);
+            const insertOrg = (orgSlug: string) =>
+              db.insert(schema.organization).values({
+                id: orgId,
+                name: `${userName}'s Workspace`,
+                slug: orgSlug,
+                metadata: JSON.stringify({ type: 'personal' }),
+                createdAt: now,
+              });
 
-            // Insert org and membership
-            await db.insert(schema.organization).values({
-              id: orgId,
-              name: `${userName}'s Workspace`,
-              slug,
-              metadata: JSON.stringify({ type: 'personal' }),
-              createdAt: now,
-            });
+            try {
+              await insertOrg(slug);
+            } catch (err) {
+              // Two same-named signups can pick the same free slug at once; the
+              // loser takes a suffixed one rather than ending up with no workspace.
+              if (
+                !(err instanceof Error) ||
+                !/UNIQUE constraint failed: organization\.slug/.test(err.message)
+              ) {
+                throw err;
+              }
+              await insertOrg(`${slug.slice(0, 31)}-${orgId.slice(0, 8)}`);
+            }
 
             await db.insert(schema.member).values({
               id: memberId,
@@ -752,12 +766,6 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
               role: 'owner',
               createdAt: now,
             });
-
-            // Update the session to set activeOrganizationId
-            await db
-              .update(schema.session)
-              .set({ activeOrganizationId: orgId })
-              .where(eq(schema.session.id, newSession.session.id));
 
             info('Created personal org %s for user %s', [orgId, userId]);
           } catch (err) {

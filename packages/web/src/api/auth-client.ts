@@ -1,10 +1,5 @@
 import { createAuthClient } from 'better-auth/react';
-import {
-  emailOTPClient,
-  twoFactorClient,
-  adminClient,
-  organizationClient,
-} from 'better-auth/client/plugins';
+import { emailOTPClient, twoFactorClient, adminClient } from 'better-auth/client/plugins';
 import {
   AUTH_ERRORS,
   USER_ERRORS,
@@ -39,7 +34,7 @@ const BETTER_AUTH_ERROR_MAP: Record<string, ErrorDefinition> = {
 export const authClient = createAuthClient({
   baseURL: API_BASE,
 
-  plugins: [emailOTPClient(), twoFactorClient(), adminClient(), organizationClient()],
+  plugins: [emailOTPClient(), twoFactorClient(), adminClient()],
 
   fetchOptions: {
     credentials: 'include' as globalThis.RequestCredentials,

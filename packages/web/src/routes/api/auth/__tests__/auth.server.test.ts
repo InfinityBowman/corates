@@ -197,3 +197,18 @@ describe('catch-all /api/auth/$', () => {
     expect(body.details).toBe('something went bad');
   });
 });
+
+describe('/api/auth/organization/*', () => {
+  it.each(['update', 'delete', 'remove-member', 'create', 'list'])(
+    'is closed so workspace changes go through the app (%s)',
+    async endpoint => {
+      const res = await catchAllHandler({
+        request: new Request(`http://localhost/api/auth/organization/${endpoint}`, {
+          method: 'POST',
+        }),
+      });
+      expect(res.status).toBe(404);
+      expect(mockAuthHandler).not.toHaveBeenCalled();
+    },
+  );
+});

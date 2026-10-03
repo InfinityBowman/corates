@@ -12,7 +12,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { FolderIcon } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { useOrgs } from '@/hooks/useOrgs';
+import { useCurrentWorkspace } from '@/hooks/useWorkspaces';
 import { handleError } from '@/lib/error-utils';
 
 interface CreateProjectModalProps {
@@ -23,7 +23,7 @@ interface CreateProjectModalProps {
 export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalProps) {
   const navigate = useNavigate();
   const [projectName, setProjectName] = useState('');
-  const { orgs } = useOrgs();
+  const { workspace } = useCurrentWorkspace();
   // ...
 }
 ```
@@ -86,10 +86,10 @@ const signin = useAuthStore(s => s.signin);
 const authError = useAuthStore(s => s.authError);
 ```
 
-Read server state via TanStack Query hooks, usually wrapped in a feature hook (`useOrgs`, `useProjectList`, etc.) under `@/hooks/` or inside the feature folder.
+Read server state via TanStack Query hooks, usually wrapped in a feature hook (`useWorkspaces`, `useProjectList`, etc.) under `@/hooks/` or inside the feature folder.
 
 ```tsx
-const { data: orgs, isLoading } = useOrgs();
+const { workspaces, isLoading } = useWorkspaces();
 ```
 
 Do not prop-drill shared state. Import the store or hook where you need it.

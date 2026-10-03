@@ -21,32 +21,20 @@ import {
   type GrantType,
   type PlanId,
 } from '@corates/shared/plans';
-import { throwDomainError, AUTH_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
-import { resolveOrgId, resolveOrgIdWithRole } from '@/server/billing-context';
+import { throwDomainError, VALIDATION_ERRORS } from '@corates/shared';
+import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 
 import type { Session } from '@/server/middleware/auth';
 
-export async function fetchUsage(db: Database, session: Session) {
-  const orgId = await resolveOrgId({
-    db,
-    session: session.session,
-    userId: session.user.id,
-  });
-
-  requireOrg(orgId, 'usage', session.user.id);
+export async function fetchUsage(db: Database, session: Session, orgId: OrgId) {
+  await requireBillingOrg(db, session, orgId, 'usage');
 
   const usage = await getOrgResourceUsage(db, orgId);
   return { projects: usage.projects, collaborators: usage.collaborators };
 }
 
-export async function fetchSubscription(db: Database, session: Session) {
-  const orgId = await resolveOrgId({
-    db,
-    session: session.session,
-    userId: session.user.id,
-  });
-
-  requireOrg(orgId, 'subscription', session.user.id);
+export async function fetchSubscription(db: Database, session: Session, orgId: OrgId) {
+  await requireBillingOrg(db, session, orgId, 'subscription');
 
   const orgBilling = await resolveOrgAccess(db, orgId);
 
@@ -94,48 +82,13 @@ export async function fetchSubscription(db: Database, session: Session) {
   };
 }
 
-interface OrgMember {
-  id: string;
-  userId: string;
-  organizationId: string;
-  role: string;
-}
-
-interface ListMembersApi {
-  listMembers: (req: {
-    headers: Headers;
-    query: { organizationId: string };
-  }) => Promise<{ members?: OrgMember[] }>;
-}
-
-export async function fetchMembers(db: Database, session: Session, headers: Headers) {
-  const orgId = await resolveOrgId({
-    db,
-    session: session.session,
-    userId: session.user.id,
-  });
-
-  requireOrg(orgId, 'members', session.user.id);
-
-  const auth = createAuth(env);
-  const api = auth.api as unknown as ListMembersApi;
-  const result = await api.listMembers({
-    headers,
-    query: { organizationId: orgId },
-  });
-
-  const members = result.members || [];
-  return { members, count: members.length };
-}
-
-export async function fetchPlanValidation(db: Database, session: Session, targetPlan: string) {
-  const orgId = await resolveOrgId({
-    db,
-    session: session.session,
-    userId: session.user.id,
-  });
-
-  requireOrg(orgId, 'plan_validation', session.user.id);
+export async function fetchPlanValidation(
+  db: Database,
+  session: Session,
+  orgId: OrgId,
+  targetPlan: string,
+) {
+  await requireBillingOrg(db, session, orgId, 'plan_validation');
 
   return validatePlanChange(db, orgId, targetPlan);
 }
@@ -147,26 +100,22 @@ function toUnixSeconds(value: Date | number | null | undefined): number | null {
   return value instanceof Date ? Math.floor(value.getTime() / 1000) : value;
 }
 
-function requireOrg(orgId: OrgId | null, action: string, userId: string): asserts orgId is OrgId {
-  if (!orgId) {
-    warn('billing.denied', { action, userId, reason: 'no_org_found' });
-    throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'no_org_found' });
-  }
-}
-
-function requireOwnerOrg(
-  orgId: OrgId | null,
-  role: string | null,
+async function requireBillingOrg(
+  db: Database,
+  session: Session,
+  orgId: OrgId,
   action: string,
-  userId: string,
-): asserts orgId is OrgId {
-  if (!orgId) {
-    warn('billing.denied', { action, userId, reason: 'no_org_found' });
-    throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'no_org_found' });
-  }
-  if (role !== 'owner') {
-    warn('billing.denied', { action, userId, orgId, role, reason: 'org_owner_required' });
-    throwDomainError(AUTH_ERRORS.FORBIDDEN, { reason: 'org_owner_required' });
+  minRole?: 'owner',
+) {
+  const membership = await requireOrgMembership(session, db, orgId, minRole);
+  if (!membership.ok) {
+    warn('billing.denied', {
+      action,
+      userId: session.user.id,
+      orgId,
+      reason: minRole ? 'org_owner_required' : 'not_org_member',
+    });
+    throw membership.error;
   }
 }
 
@@ -183,15 +132,11 @@ export async function createCheckout(
   db: Database,
   session: Session,
   request: Request,
+  orgId: OrgId,
   tier: string,
   interval: 'monthly' | 'yearly',
 ) {
-  const { orgId, role } = await resolveOrgIdWithRole({
-    db,
-    session: session.session,
-    userId: session.user.id,
-  });
-  requireOwnerOrg(orgId, role, 'checkout', session.user.id);
+  await requireBillingOrg(db, session, orgId, 'checkout', 'owner');
 
   if (!(CHECKOUT_ELIGIBLE_TIERS as readonly string[]).includes(tier)) {
     warn('billing.checkout_rejected', {
@@ -360,14 +305,12 @@ export type Invoice = {
 
 export type InvoicesResponse = { invoices: Invoice[] };
 
-export async function fetchInvoices(db: Database, session: Session): Promise<InvoicesResponse> {
-  const orgId = await resolveOrgId({
-    db,
-    session: session.session,
-    userId: session.user.id,
-  });
-
-  requireOrg(orgId, 'invoices', session.user.id);
+export async function fetchInvoices(
+  db: Database,
+  session: Session,
+  orgId: OrgId,
+): Promise<InvoicesResponse> {
+  await requireBillingOrg(db, session, orgId, 'invoices');
 
   const [orgSubscription] = await db
     .select({
@@ -433,13 +376,13 @@ interface PortalApi {
   }) => Promise<{ url: string }>;
 }
 
-export async function createPortalSession(db: Database, session: Session, request: Request) {
-  const { orgId, role } = await resolveOrgIdWithRole({
-    db,
-    session: session.session,
-    userId: session.user.id,
-  });
-  requireOwnerOrg(orgId, role, 'portal', session.user.id);
+export async function createPortalSession(
+  db: Database,
+  session: Session,
+  request: Request,
+  orgId: OrgId,
+) {
+  await requireBillingOrg(db, session, orgId, 'portal', 'owner');
 
   const auth = createAuth(env);
   const billingApi = auth.api as unknown as PortalApi;

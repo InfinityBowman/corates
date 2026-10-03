@@ -13,6 +13,13 @@ vi.mock('@/server/functions/org-projects.functions', () => ({ addMemberToProject
 vi.mock('@/lib/queryClient', () => ({ queryClient: { invalidateQueries: vi.fn() } }));
 vi.mock('@/lib/toast', () => ({ showToast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock('@/lib/clientLogger', () => ({ clientLogger: { info: vi.fn() } }));
+// The full-workspace notice links to plans; no router is mounted here.
+vi.mock('@tanstack/react-router', async importOriginal => ({
+  ...(await importOriginal<typeof import('@tanstack/react-router')>()),
+  Link: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <a className={className}>{children}</a>
+  ),
+}));
 
 const alice = {
   id: 'u-alice',
@@ -111,6 +118,35 @@ describe('AddMemberModal', () => {
       email: 'new@example.org',
       role: 'member',
     });
+  });
+
+  it('stays usable when the workspace is full, and explains a refused new seat', async () => {
+    addMemberToProject.mockRejectedValue({
+      code: 'AUTH_FORBIDDEN',
+      statusCode: 403,
+      message: 'Quota exceeded: collaborators.org.max',
+      details: { reason: 'quota_exceeded' },
+    });
+    render(
+      <AddMemberModal
+        isOpen
+        onClose={() => {}}
+        projectId='p1'
+        orgId='o1'
+        quotaInfo={{ used: 3, max: 3 }}
+      />,
+    );
+
+    // A resend or someone already in the workspace needs no new seat, so the
+    // server decides rather than the form.
+    expect(screen.getByText('Your workspace is full')).toBeInTheDocument();
+    expect(searchBox()).toBeEnabled();
+
+    fireEvent.change(searchBox(), { target: { value: 'new@example.org' } });
+    await screen.findByTestId('invite-email-option');
+    fireEvent.click(sendButton());
+
+    expect(await screen.findByText(/this person would need a new seat/)).toBeInTheDocument();
   });
 
   it('sends a pasted address without the invisible characters around it', async () => {

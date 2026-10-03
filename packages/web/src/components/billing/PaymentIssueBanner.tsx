@@ -7,9 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { useSubscription } from '@/hooks/useSubscription';
 import { redirectToPortal } from '@/api/billing';
+import { useCurrentWorkspace } from '@/hooks/useWorkspaces';
 
 export function PaymentIssueBanner() {
   const { status } = useSubscription();
+  const { workspace } = useCurrentWorkspace();
   const [loading, setLoading] = useState(false);
 
   const isPastDue = status === 'past_due';
@@ -17,12 +19,12 @@ export function PaymentIssueBanner() {
   const isUnpaid = status === 'unpaid';
   const hasIssue = isPastDue || isIncomplete || isUnpaid;
 
-  if (!hasIssue) return null;
+  if (!hasIssue || !workspace) return null;
 
   async function handleUpdatePayment() {
     setLoading(true);
     try {
-      await redirectToPortal();
+      await redirectToPortal(workspace.id);
     } catch (error) {
       const { handleError } = await import('@/lib/error-utils');
       await handleError(error, { toastTitle: 'Portal Error' });

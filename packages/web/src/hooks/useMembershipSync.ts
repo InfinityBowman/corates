@@ -40,14 +40,16 @@ export function useMembershipSync() {
       case 'project-membership-removed':
       case 'project-membership-updated':
         invalidateProjectLists(userId, event.orgId);
+        // Accepting an invite adds a workspace; removal from one takes it away.
+        queryClient.invalidateQueries({ queryKey: queryKeys.workspaces.list });
         break;
       case 'project-deleted':
         invalidateProjectLists(userId);
         break;
       case 'subscription:updated':
       case 'subscription:canceled':
-        queryClient.invalidateQueries({ queryKey: queryKeys.subscription.current });
-        queryClient.invalidateQueries({ queryKey: queryKeys.billing.invoices });
+        queryClient.invalidateQueries({ queryKey: queryKeys.subscription.all });
+        queryClient.invalidateQueries({ queryKey: queryKeys.billing.invoices() });
         break;
       case 'notification:new':
         prependNotification(event.notification);

@@ -5,15 +5,14 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { authClient, authFetch } from '@/api/auth-client';
+import { slugifyWorkspaceName, workspaceSlugSchema } from '@corates/shared';
+import { createWorkspace } from '@/server/functions/workspaces.functions';
 import { queryKeys } from '@/lib/queryKeys';
 import { showToast } from '@/lib/toast';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-
-const LAST_ORG_KEY = 'corates-last-org-slug';
 
 export function CreateOrgPage() {
   const navigate = useNavigate();
@@ -27,13 +26,7 @@ export function CreateOrgPage() {
   const handleNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const newName = e.target.value;
     setName(newName);
-    const generatedSlug = newName
-      .toLowerCase()
-      .replace(/\s+/g, '-')
-      .replace(/[^a-z0-9-]/g, '')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '');
-    setSlug(generatedSlug);
+    setSlug(slugifyWorkspaceName(newName));
   }, []);
 
   const handleSubmit = useCallback(
@@ -42,34 +35,21 @@ export function CreateOrgPage() {
       setError(null);
 
       const orgName = name.trim();
-      const orgSlug = slug.trim();
 
       if (!orgName) {
         setError('Enter a name for your organization.');
         return;
       }
-      if (!orgSlug) {
-        setError('Enter a URL slug for your organization.');
-        return;
-      }
-      if (!/^[a-z0-9-]+$/.test(orgSlug)) {
-        setError(
-          'The URL slug can only contain lowercase letters, numbers, and hyphens. Remove any other characters.',
-        );
+      const parsedSlug = workspaceSlugSchema.safeParse(slug);
+      if (!parsedSlug.success) {
+        setError(parsedSlug.error.issues[0]?.message ?? 'Enter a valid URL.');
         return;
       }
 
       setIsSubmitting(true);
       try {
-        await authFetch(
-          authClient.organization.create({
-            name: orgName,
-            slug: orgSlug,
-          }),
-        );
-
-        await queryClient.invalidateQueries({ queryKey: queryKeys.orgs.list });
-        localStorage.setItem(LAST_ORG_KEY, orgSlug);
+        await createWorkspace({ data: { name: orgName, slug: parsedSlug.data } });
+        await queryClient.invalidateQueries({ queryKey: queryKeys.workspaces.list });
         showToast.success(
           'Organization created',
           `${orgName} is ready. Create a project to start appraising with your team.`,

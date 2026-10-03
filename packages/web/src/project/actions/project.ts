@@ -39,7 +39,7 @@ export const projectActions = {
 
     queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
     queryClient.invalidateQueries({ queryKey: queryKeys.projects.byOrg(orgId) });
-    queryClient.invalidateQueries({ queryKey: queryKeys.subscription.current });
+    queryClient.invalidateQueries({ queryKey: queryKeys.subscription.all });
   },
 
   async delete(): Promise<void> {

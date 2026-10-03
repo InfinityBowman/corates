@@ -2,7 +2,7 @@ import { captureError, info } from '@corates/workers/logger';
 import { env } from 'cloudflare:workers';
 import type { Database } from '@corates/db/client';
 import { projects, projectMembers, projectInvitations, user, member } from '@corates/db/schema';
-import { eq, and, count, desc, gt, isNull, notExists, sql } from 'drizzle-orm';
+import { eq, and, count, desc, isNull, sql } from 'drizzle-orm';
 import {
   DomainErrorException,
   isDomainError,
@@ -31,6 +31,7 @@ import { requireProjectAccess } from '@/server/guards/requireProjectAccess';
 import { requireOrgWriteAccess } from '@/server/guards/requireOrgWriteAccess';
 import { requireEntitlement } from '@/server/guards/requireEntitlement';
 import { requireQuota } from '@/server/guards/requireQuota';
+import { countCollaboratorSeats, hasPendingInvitation } from './workspaces.server';
 import type { Session } from '@/server/middleware/auth';
 
 // -- Projects --
@@ -309,7 +310,8 @@ export async function addProjectMember(
 
     // Accepting is what consumes a collaborator seat, but the invite modal is
     // the only entry point, so the plan cap is applied here too. Someone
-    // already in the workspace takes no new seat.
+    // already in the workspace, or already invited to it (a resend, or a
+    // second project), takes no new seat.
     const orgMember =
       userToAdd &&
       (await db
@@ -317,7 +319,9 @@ export async function addProjectMember(
         .from(member)
         .where(and(eq(member.organizationId, orgId), eq(member.userId, userToAdd.id)))
         .get());
-    if (!orgMember) {
+    const holdsSeat =
+      !!orgMember || (await hasPendingInvitation(db, orgId, normalizeEmail(inviteEmail)));
+    if (!holdsSeat) {
       const quota = await requireQuota(db, orgId, 'collaborators.org.max', () =>
         countCollaboratorSeats(db, orgId),
       );
@@ -348,40 +352,6 @@ export async function addProjectMember(
       originalError: error.message,
     });
   }
-}
-
-// Seats in use: every workspace member, owner included, plus live invitations to
-// people not yet in the workspace. Must match the count acceptInvitation enforces.
-async function countCollaboratorSeats(db: Database, orgId: OrgId): Promise<number> {
-  const [members] = await db
-    .select({ count: count() })
-    .from(member)
-    .where(eq(member.organizationId, orgId));
-
-  const [pending] = await db
-    .select({ count: count() })
-    .from(projectInvitations)
-    .where(
-      and(
-        eq(projectInvitations.orgId, orgId),
-        isNull(projectInvitations.acceptedAt),
-        gt(projectInvitations.expiresAt, new Date()),
-        notExists(
-          db
-            .select({ id: member.id })
-            .from(member)
-            .innerJoin(user, eq(user.id, member.userId))
-            .where(
-              and(
-                eq(member.organizationId, orgId),
-                eq(sql`lower(${user.email})`, projectInvitations.email),
-              ),
-            ),
-        ),
-      ),
-    );
-
-  return (members?.count ?? 0) + (pending?.count ?? 0);
 }
 
 export async function removeProjectMember(

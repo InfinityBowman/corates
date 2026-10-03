@@ -6,6 +6,7 @@ import { buildOrg, buildOrgMember, resetCounter } from '@/__tests__/server/facto
 import { createPortalSession } from '@/server/functions/billing.server';
 import type { Session } from '@/server/middleware/auth';
 import { DomainErrorException } from '@corates/shared';
+import type { OrgId } from '@corates/shared/ids';
 
 function mockSession(overrides: {
   userId: string;
@@ -47,14 +48,14 @@ describe('createPortalSession', () => {
       name: 'Orphan',
     });
     try {
-      await createPortalSession(createDb(env.DB), session, dummyRequest);
+      await createPortalSession(createDb(env.DB), session, dummyRequest, 'org-none' as OrgId);
       expect.unreachable('should have thrown');
     } catch (err) {
       const res = err as DomainErrorException;
       expect(res.statusCode).toBe(403);
       const body = res.toDomainError() as { code: string; details?: { reason?: string } };
       expect(body.code).toBe('AUTH_FORBIDDEN');
-      expect(body.details?.reason).toBe('no_org_found');
+      expect(body.details?.reason).toBe('not_org_member');
     }
     expect(createBillingPortalMock).not.toHaveBeenCalled();
   });
@@ -69,14 +70,14 @@ describe('createPortalSession', () => {
       activeOrganizationId: org.id,
     });
     try {
-      await createPortalSession(createDb(env.DB), session, dummyRequest);
+      await createPortalSession(createDb(env.DB), session, dummyRequest, org.id);
       expect.unreachable('should have thrown');
     } catch (err) {
       const res = err as DomainErrorException;
       expect(res.statusCode).toBe(403);
       const body = res.toDomainError() as { code: string; details?: { reason?: string } };
       expect(body.code).toBe('AUTH_FORBIDDEN');
-      expect(body.details?.reason).toBe('org_owner_required');
+      expect(body.details?.reason).toBe('insufficient_org_role');
     }
     expect(createBillingPortalMock).not.toHaveBeenCalled();
   });
@@ -91,7 +92,7 @@ describe('createPortalSession', () => {
     });
     createBillingPortalMock.mockResolvedValueOnce({ url: 'https://stripe.example/portal/abc' });
 
-    const result = await createPortalSession(createDb(env.DB), session, dummyRequest);
+    const result = await createPortalSession(createDb(env.DB), session, dummyRequest, org.id);
     expect((result as { url: string }).url).toBe('https://stripe.example/portal/abc');
 
     expect(createBillingPortalMock).toHaveBeenCalledTimes(1);
@@ -100,21 +101,6 @@ describe('createPortalSession', () => {
     };
     expect(callArg.body.referenceId).toBe(org.id);
     expect(callArg.body.returnUrl).toContain('/settings/billing');
-  });
-
-  it('falls back to first org membership when session has no activeOrganizationId', async () => {
-    const { org, owner } = await buildOrg();
-    const session = mockSession({
-      userId: owner.id,
-      email: owner.email,
-      name: owner.name,
-      activeOrganizationId: null,
-    });
-    createBillingPortalMock.mockResolvedValueOnce({ url: 'https://stripe.example/portal/xyz' });
-
-    await createPortalSession(createDb(env.DB), session, dummyRequest);
-    const callArg = createBillingPortalMock.mock.calls[0][0] as { body: { referenceId: string } };
-    expect(callArg.body.referenceId).toBe(org.id);
   });
 
   it('propagates error when createBillingPortal throws', async () => {
@@ -127,8 +113,8 @@ describe('createPortalSession', () => {
     });
     createBillingPortalMock.mockRejectedValueOnce(new Error('stripe down'));
 
-    await expect(createPortalSession(createDb(env.DB), session, dummyRequest)).rejects.toThrow(
-      'stripe down',
-    );
+    await expect(
+      createPortalSession(createDb(env.DB), session, dummyRequest, org.id),
+    ).rejects.toThrow('stripe down');
   });
 });

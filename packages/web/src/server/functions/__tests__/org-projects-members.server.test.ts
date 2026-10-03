@@ -321,7 +321,11 @@ describe('addProjectMember', () => {
       entitlements: { 'project.create': true },
     } as never);
 
-    await buildProjectInvitation({ orgId: org.id, projectId: project.id, invitedBy: owner.id });
+    const pending = await buildProjectInvitation({
+      orgId: org.id,
+      projectId: project.id,
+      invitedBy: owner.id,
+    });
 
     // The owner takes a seat too, as acceptInvitation counts it: owner, one
     // member and one pending invitation fill a quota of three
@@ -336,6 +340,12 @@ describe('addProjectMember', () => {
       userId: existing.id,
     })) as { invitation: boolean };
     expect(result.invitation).toBe(true);
+
+    // Nor does a resend to someone whose invitation already holds a seat
+    const resent = (await addProjectMember(mockSession(), createDb(env.DB), org.id, project.id, {
+      email: pending.email,
+    })) as { invitation: boolean };
+    expect(resent.invitation).toBe(true);
   });
 
   it('defaults invitation role to member', async () => {

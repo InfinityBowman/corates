@@ -69,7 +69,7 @@ export function ProjectsSection({ createModalOpen, setCreateModalOpen }: Project
       await deleteProject({ data: { orgId: project.orgId, projectId: pendingDeleteId } });
 
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.subscription.current });
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscription.all });
       showToast.success('Project deleted', 'The project and everything in it has been removed.');
       setPendingDeleteId(null);
     } catch (err) {

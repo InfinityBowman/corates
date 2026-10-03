@@ -56,7 +56,7 @@ describe('fetchUsage', () => {
       name: owner.name,
       activeOrganizationId: org.id,
     });
-    const result = await fetchUsage(createDb(env.DB), session);
+    const result = await fetchUsage(createDb(env.DB), session, org.id);
     expect(result.projects).toBe(3);
     // Owner, member and admin all take a seat
     expect(result.collaborators).toBe(3);

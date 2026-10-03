@@ -6,10 +6,12 @@
  */
 
 export const queryKeys = {
-  // Organization queries
-  orgs: {
-    /** All orgs for current user */
-    list: ['orgs'] as const,
+  // Workspace (org) queries
+  workspaces: {
+    /** Workspaces the current user belongs to */
+    list: ['workspaces'] as const,
+    /** Members, pending invitations, and seat usage of one workspace */
+    members: (orgId: string | null | undefined) => ['workspaces', 'members', orgId] as const,
   },
 
   // Project queries
@@ -28,16 +30,21 @@ export const queryKeys = {
 
   // Subscription queries
   subscription: {
-    /** Current user's subscription */
-    current: ['subscription'] as const,
+    /** Every workspace's subscription, for invalidation */
+    all: ['subscription'] as const,
+    /** One workspace's subscription */
+    byOrg: (orgId: string | null | undefined) => ['subscription', orgId] as const,
   },
 
   // Billing queries
   billing: {
-    /** Current org/user invoices */
-    invoices: ['billing', 'invoices'] as const,
-    /** Current org usage (projects, collaborators) */
-    usage: ['billing', 'usage'] as const,
+    /** A workspace's invoices; the bare key invalidates all of them */
+    invoices: (orgId?: string | null) =>
+      orgId === undefined ?
+        (['billing', 'invoices'] as const)
+      : (['billing', 'invoices', orgId] as const),
+    /** A workspace's usage (projects, collaborators) */
+    usage: (orgId: string | null | undefined) => ['billing', 'usage', orgId] as const,
   },
 
   // Notification center queries
@@ -53,12 +60,6 @@ export const queryKeys = {
   invitations: {
     /** Pending, unexpired invitations addressed to the current user's email */
     pendingForMe: ['invitations', 'pendingForMe'] as const,
-  },
-
-  // Members queries
-  members: {
-    /** Current org's members */
-    current: ['members'] as const,
   },
 
   // Account queries
