@@ -64,12 +64,12 @@ Mutation hooks follow the same pattern with `useMutation` and `queryClient.inval
 ```ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
-import { createWorkspace } from '@/server/functions/workspaces.functions';
+import { updateWorkspace } from '@/server/functions/workspaces.functions';
 
-export function useCreateWorkspace() {
+export function useRenameWorkspace() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: { name: string; slug: string }) => createWorkspace({ data: input }),
+    mutationFn: (input: { orgId: string; name: string }) => updateWorkspace({ data: input }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.workspaces.list });
     },

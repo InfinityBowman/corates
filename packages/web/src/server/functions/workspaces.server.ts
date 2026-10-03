@@ -17,7 +17,6 @@ import {
   throwDomainError,
   VALIDATION_ERRORS,
   type DomainError,
-  workspaceSlugSchema,
 } from '@corates/shared';
 import type { OrgId, UserId } from '@corates/shared/ids';
 import { resolveOrgAccess } from '@corates/workers/billing-resolver';
@@ -28,7 +27,6 @@ import type { Session } from '@/server/middleware/auth';
 export interface WorkspaceSummary {
   id: OrgId;
   name: string;
-  slug: string;
   role: string;
 }
 
@@ -36,11 +34,10 @@ export async function listMyWorkspaces(
   session: Session,
   db: Database,
 ): Promise<WorkspaceSummary[]> {
-  const rows = await db
+  return db
     .select({
       id: organization.id,
       name: organization.name,
-      slug: organization.slug,
       role: member.role,
     })
     .from(member)
@@ -48,116 +45,22 @@ export async function listMyWorkspaces(
     .where(eq(member.userId, session.user.id as UserId))
     .orderBy(sql`${member.role} != 'owner'`, sql`lower(${organization.name})`)
     .all();
-  // Every workspace gets a slug at creation; a null one would be unroutable.
-  return rows.filter((row): row is WorkspaceSummary => row.slug !== null);
-}
-
-export async function checkWorkspaceSlug(db: Database, slug: string, orgId?: OrgId) {
-  const parsed = workspaceSlugSchema.safeParse(slug);
-  if (!parsed.success) {
-    return { available: false, slug, message: parsed.error.issues[0]?.message ?? 'Invalid URL.' };
-  }
-  const taken = await isSlugTaken(db, parsed.data, orgId);
-  return {
-    available: !taken,
-    slug: parsed.data,
-    message: taken ? 'That URL is already taken.' : null,
-  };
-}
-
-async function isSlugTaken(db: Database, slug: string, exceptOrgId?: OrgId) {
-  const row = await db
-    .select({ id: organization.id })
-    .from(organization)
-    .where(
-      exceptOrgId ?
-        and(eq(organization.slug, slug), ne(organization.id, exceptOrgId))
-      : eq(organization.slug, slug),
-    )
-    .get();
-  return !!row;
-}
-
-function throwSlugTaken(slug: string): never {
-  throwDomainError(
-    VALIDATION_ERRORS.INVALID_INPUT,
-    { field: 'slug', reason: 'slug_taken', value: slug },
-    'That URL is already taken.',
-  );
-}
-
-function isUniqueViolation(err: unknown) {
-  return err instanceof Error && /UNIQUE constraint failed: organization\.slug/.test(err.message);
-}
-
-export async function createWorkspaceForUser(
-  session: Session,
-  db: Database,
-  data: { name: string; slug: string },
-): Promise<WorkspaceSummary> {
-  if (await isSlugTaken(db, data.slug)) throwSlugTaken(data.slug);
-
-  const id = crypto.randomUUID() as OrgId;
-  const now = new Date();
-  try {
-    await db.batch([
-      db.insert(organization).values({ id, name: data.name, slug: data.slug, createdAt: now }),
-      db.insert(member).values({
-        id: crypto.randomUUID(),
-        userId: session.user.id as UserId,
-        organizationId: id,
-        role: 'owner',
-        createdAt: now,
-      }),
-    ]);
-  } catch (err) {
-    if (isUniqueViolation(err)) throwSlugTaken(data.slug);
-    throw err;
-  }
-
-  info('workspace.created', { orgId: id, userId: session.user.id, slug: data.slug });
-  return { id, name: data.name, slug: data.slug, role: 'owner' };
 }
 
 export async function updateWorkspaceSettings(
   session: Session,
   db: Database,
   orgId: OrgId,
-  data: { name?: string; slug?: string },
+  data: { name: string },
 ) {
   const membership = await requireOrgMembership(session, db, orgId, 'owner');
   if (!membership.ok) throw membership.error;
 
-  if (data.slug !== undefined && (await isSlugTaken(db, data.slug, orgId))) {
-    throwSlugTaken(data.slug);
-  }
+  await db.update(organization).set({ name: data.name }).where(eq(organization.id, orgId));
 
-  try {
-    await db
-      .update(organization)
-      .set({
-        ...(data.name !== undefined && { name: data.name }),
-        ...(data.slug !== undefined && { slug: data.slug }),
-      })
-      .where(eq(organization.id, orgId));
-  } catch (err) {
-    if (isUniqueViolation(err) && data.slug) throwSlugTaken(data.slug);
-    throw err;
-  }
+  info('workspace.updated', { orgId, userId: session.user.id });
 
-  info('workspace.updated', {
-    orgId,
-    userId: session.user.id,
-    renamed: data.name !== undefined,
-    slugChanged: data.slug !== undefined && data.slug !== membership.context.orgSlug,
-  });
-
-  const updated = await db
-    .select({ id: organization.id, name: organization.name, slug: organization.slug })
-    .from(organization)
-    .where(eq(organization.id, orgId))
-    .get();
-  return { ...updated!, role: membership.context.orgRole };
+  return { id: orgId, name: data.name, role: membership.context.orgRole };
 }
 
 // Live invitations to people not yet in the workspace. Each person holds one

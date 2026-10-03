@@ -47,7 +47,7 @@ flowchart LR
 
 | File                                            | Functions                                                                                                                                                                    |
 | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `workspaces.functions.ts`                       | `getMyWorkspaces`, `checkSlug`, `createWorkspace`, `updateWorkspace`, `getWorkspaceMembers`, `removeWorkspaceMember`                                                         |
+| `workspaces.functions.ts`                       | `getMyWorkspaces`, `updateWorkspace`, `getWorkspaceMembers`, `removeWorkspaceMember`                                                                                         |
 | `org-projects.functions.ts`                     | `createProject`, `updateProject`, `updateProjectSetupStep`, `deleteProject`, `getProjectMembers`, `addMemberToProject`, `removeMember`, `getInvitations`, `cancelInvitation` |
 | `invitations.functions.ts`                      | `getInvitation`, `acceptInvitation`, `listMyPendingInvitations`, `declineInvitation`                                                                                         |
 | `billing.functions.ts`                          | `getSubscription`, `getUsage`, `getInvoices`, `checkPlanChange`, `checkoutSubscription`, `openBillingPortal`, `syncAfterSuccess`                                             |

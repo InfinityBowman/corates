@@ -15,8 +15,8 @@ type HandlerArgs = {
   context?: { cloudflareCtx?: ExecutionContext };
 };
 
-// Workspace changes go through our own server functions, which apply slug
-// rules, seat counts, and sync-session cleanup the plugin endpoints skip.
+// Workspace changes go through our own server functions, which apply seat
+// counts and sync-session cleanup the plugin endpoints skip.
 const BLOCKED_PREFIX = '/api/auth/organization/';
 
 export const handle = async ({ request, context }: HandlerArgs) => {
