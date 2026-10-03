@@ -13,6 +13,8 @@ import {
   CreditCardIcon,
   SparklesIcon,
   ArrowLeftIcon,
+  SettingsIcon,
+  UsersIcon,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -42,6 +44,8 @@ function workspaceGroup(slug: string): { label: string; items: NavItem[] } {
   return {
     label: 'Workspace',
     items: [
+      { label: 'General', icon: SettingsIcon, path: workspaceSettingsPath(slug, 'general') },
+      { label: 'Members', icon: UsersIcon, path: workspaceSettingsPath(slug, 'members') },
       { label: 'Billing', icon: CreditCardIcon, path: workspaceSettingsPath(slug, 'billing') },
       { label: 'Plans', icon: SparklesIcon, path: workspaceSettingsPath(slug, 'plans') },
     ],

@@ -60,17 +60,20 @@ export function PaymentIssueBanner() {
               </AlertDescription>
             )}
           </div>
-          <Button
-            variant='destructive'
-            className='shrink-0'
-            onClick={handleUpdatePayment}
-            disabled={loading}
-          >
-            {loading ?
-              <Spinner size='sm' variant='white' data-icon='inline-start' />
-            : <CreditCardIcon data-icon='inline-start' />}
-            {loading ? 'Opening...' : 'Update payment method'}
-          </Button>
+          {/* Only the owner can open the billing portal; members just see the warning. */}
+          {workspace.role === 'owner' ?
+            <Button
+              variant='destructive'
+              className='shrink-0'
+              onClick={handleUpdatePayment}
+              disabled={loading}
+            >
+              {loading ?
+                <Spinner size='sm' variant='white' data-icon='inline-start' />
+              : <CreditCardIcon data-icon='inline-start' />}
+              {loading ? 'Opening...' : 'Update payment method'}
+            </Button>
+          : <p className='shrink-0 text-xs'>Ask the workspace owner to update payment.</p>}
         </div>
       </Alert>
     </div>

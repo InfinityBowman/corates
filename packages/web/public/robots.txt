@@ -12,6 +12,7 @@ Disallow: /admin
 Disallow: /dashboard
 Disallow: /settings
 Disallow: /orgs/
+Disallow: /create-workspace
 Disallow: /projects/
 # Workspace pages live under the workspace slug: /<slug>/projects/..., /<slug>/settings/...
 Disallow: /*/projects/
