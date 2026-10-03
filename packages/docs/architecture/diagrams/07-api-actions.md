@@ -2,7 +2,7 @@
 
 Comprehensive diagrams showing all actions that can be performed on projects, studies, and checklists, including all failure points and error conditions.
 
-> **Route path note.** The diagrams below use abbreviated paths like `POST /api/projects` and `DELETE /api/projects/:id/members/:userId` for readability. In the current codebase these are all org-scoped -- real paths are `POST /api/orgs/:orgId/projects`, `DELETE /api/orgs/:orgId/projects/:projectId/members/:userId`, etc. The **control flow** shown (guard order, error codes, Y.js side-effects) is accurate; the URLs are elided for diagram clarity.
+> **Naming note.** Project and member actions are server functions, named by function (`createProject`, `removeMember`). PDF actions are the only HTTP routes here; their paths are abbreviated, and the real ones are `/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs[/:fileName]`. See [Server API Overview](06-api-routes.md).
 >
 > Role note: the current project role hierarchy is `owner > member`. Older diagrams may reference "collaborator" -- read that as `member`.
 
@@ -10,9 +10,9 @@ Comprehensive diagrams showing all actions that can be performed on projects, st
 
 This document visualizes the complete API surface for the three main entities in CoRATES:
 
-- **Projects**: Backend API routes + Y.js sync operations
-- **Studies**: Y.js operations + PDF management via backend API
-- **Checklists**: Y.js operations only
+- **Projects**: Server functions (D1) plus sync-session side effects
+- **Studies**: Sync-engine mutations plus PDF management over HTTP routes
+- **Checklists**: Sync-engine mutations only
 
 Each diagram shows:
 
@@ -26,165 +26,142 @@ Each diagram shows:
 
 ## Project Actions
 
-Projects are managed through both HTTP API endpoints and Y.js synchronization. The backend API handles CRUD operations and member management, while Y.js syncs metadata and member changes to Durable Objects.
+Projects are managed through server functions in `org-projects.functions.ts` (plus `getMyProjects` in `users.functions.ts` and the workspace functions for workspace-level membership). Project metadata and membership are D1 facts; the sync DO reads membership at authorize time and is told to kick or refresh sessions when it changes.
 
 ```mermaid
 flowchart TB
-    Start([User Action]) --> Auth{Authenticated?}
+    Start([User Action]) --> Auth{Session?<br/>authMiddleware}
     Auth -->|No| AuthError[AUTH_REQUIRED<br/>401]
-    Auth -->|Yes| Action{Action Type}
+    Auth -->|Yes| Action{Action}
 
-    Action -->|Create| CreateFlow
-    Action -->|Read| ReadFlow
-    Action -->|Update| UpdateFlow
-    Action -->|Delete| DeleteFlow
-    Action -->|Member| MemberFlow
+    Action -->|createProject| CreateFlow
+    Action -->|getMyProjects| ReadFlow
+    Action -->|updateProject| UpdateFlow
+    Action -->|deleteProject| DeleteFlow
+    Action -->|Members| MemberFlow
 
     subgraph CreateFlow["Create Project"]
-        CreateStart[POST /api/projects] --> Entitlement{Has project.create<br/>entitlement?}
+        CreateStart[createProject] --> CreateOwner{Workspace<br/>owner?}
+        CreateOwner -->|No| CreateRoleError[AUTH_FORBIDDEN<br/>403<br/>insufficient_org_role]
+        CreateOwner -->|Yes| CreateWrite{Plan allows<br/>writes?}
+        CreateWrite -->|No| ReadOnlyError[AUTH_FORBIDDEN<br/>403<br/>read-only access]
+        CreateWrite -->|Yes| Entitlement{project.create<br/>entitlement?}
         Entitlement -->|No| EntitlementError[AUTH_FORBIDDEN<br/>403<br/>missing_entitlement]
-        Entitlement -->|Yes| QuotaCheck{Under projects.max<br/>quota?}
+        Entitlement -->|Yes| QuotaCheck{Under projects.max?}
         QuotaCheck -->|No| QuotaError[AUTH_FORBIDDEN<br/>403<br/>quota_exceeded]
-        QuotaCheck -->|Yes| ValidateInput{Valid name &<br/>description?}
-        ValidateInput -->|No| ValidationError[VALIDATION_ERRORS<br/>400]
-        ValidateInput -->|Yes| CreateDB[Insert into D1<br/>projects + projectMembers]
-        CreateDB -->|DB Error| DBError[SYSTEM_DB_TRANSACTION_FAILED<br/>500]
-        CreateDB -->|Success| SyncDO[Sync to Durable Object<br/>meta + members]
-        SyncDO -->|Sync Failed| SyncError[Log error<br/>Continue]
-        SyncDO -->|Success| CreateSuccess[201 Created<br/>Return project]
+        QuotaCheck -->|Yes| FreeCap{Under the Free cap<br/>across owned workspaces?}
+        FreeCap -->|No| FreeCapError[AUTH_FORBIDDEN<br/>403<br/>free_project_cap]
+        FreeCap -->|Yes| CreateDB[Insert into D1<br/>projects + projectMembers owner]
+        CreateDB -->|DB Error| DBError[SYSTEM_DB_ERROR<br/>500]
+        CreateDB -->|Success| CreateSuccess[Return project<br/>client opens /slug/projects/id]
     end
 
-    subgraph ReadFlow["Read Project"]
-        ReadStart[GET /api/projects/:id] --> CheckMembership{User is<br/>member?}
-        CheckMembership -->|No| NotFoundError[PROJECT_NOT_FOUND<br/>404]
-        CheckMembership -->|Yes| QueryDB[Query D1<br/>projects + projectMembers]
+    subgraph ReadFlow["List Projects"]
+        ReadStart[getMyProjects] --> QueryDB[Query D1<br/>projects joined to the user's projectMembers]
         QueryDB -->|DB Error| ReadDBError[SYSTEM_DB_ERROR<br/>500]
-        QueryDB -->|Success| ReadSuccess[200 OK<br/>Return project]
+        QueryDB -->|Success| ReadSuccess[Projects across all workspaces<br/>client filters to the current one]
     end
 
     subgraph UpdateFlow["Update Project"]
-        UpdateStart[PUT /api/projects/:id] --> ValidateUpdate{Valid name &<br/>description?}
-        ValidateUpdate -->|No| UpdateValidationError[VALIDATION_ERRORS<br/>400]
-        ValidateUpdate -->|Yes| CheckEditRole{User has edit<br/>role? owner/collaborator}
-        CheckEditRole -->|No| UpdateForbidden[AUTH_FORBIDDEN<br/>403<br/>Only owners and collaborators]
-        CheckEditRole -->|Yes| UpdateDB[Update D1 projects]
+        UpdateStart[updateProject] --> UpdateMember{Workspace member,<br/>write access,<br/>project member?}
+        UpdateMember -->|No| UpdateForbidden[AUTH_FORBIDDEN<br/>403]
+        UpdateMember -->|Yes| UpdateDB[Update D1 projects]
         UpdateDB -->|DB Error| UpdateDBError[SYSTEM_DB_ERROR<br/>500]
-        UpdateDB -->|Success| UpdateSuccess[200 OK<br/>Success response]
+        UpdateDB -->|Success| UpdateSuccess[Return project]
     end
 
     subgraph DeleteFlow["Delete Project"]
-        DeleteStart[DELETE /api/projects/:id] --> CheckOwner{User is<br/>owner?}
-        CheckOwner -->|No| DeleteForbidden[AUTH_FORBIDDEN<br/>403<br/>Only owners can delete]
-        CheckOwner -->|Yes| GetMembers[Get all members<br/>for notifications]
-        GetMembers -->|DB Error| DeleteDBError1[SYSTEM_DB_ERROR<br/>500]
-        GetMembers -->|Success| CleanupR2[Delete all PDFs<br/>from R2 storage]
+        DeleteStart[deleteProject] --> CheckOwner{Project<br/>owner?}
+        CheckOwner -->|No| DeleteForbidden[AUTH_FORBIDDEN<br/>403]
+        CheckOwner -->|Yes| Snapshot[Write final backup<br/>deleted/ in R2]
+        Snapshot --> CleanupR2[Delete project PDFs<br/>from R2]
         CleanupR2 -->|Failed| R2Error[Log error<br/>Continue]
-        CleanupR2 -->|Success| DeleteDB[Delete from D1<br/>projects cascade]
-        DeleteDB -->|DB Error| DeleteDBError2[SYSTEM_DB_ERROR<br/>500]
+        CleanupR2 --> DeleteDB[Delete from D1<br/>projects cascade]
+        DeleteDB -->|DB Error| DeleteDBError[SYSTEM_DB_ERROR<br/>500]
         DeleteDB -->|Success| TeardownDO[Teardown sync DO<br/>close sessions + wipe storage]
         TeardownDO -->|Failed| TeardownError[Log error<br/>Continue]
-        TeardownDO -->|Success| NotifyMembers[Send notifications<br/>to all members]
+        TeardownDO --> NotifyMembers[Notify members<br/>via UserSession DO]
         NotifyMembers -->|Some Failed| NotifyError[Log errors<br/>Continue]
-        NotifyMembers -->|Success| DeleteSuccess[200 OK<br/>Success response]
+        NotifyMembers --> DeleteSuccess[Success]
     end
 
-    subgraph MemberFlow["Member Management"]
+    subgraph MemberFlow["Members"]
         MemberAction{Member Action}
-        MemberAction -->|List| ListMembers[GET /api/projects/:id/members]
-        MemberAction -->|Add| AddMemberFlow
-        MemberAction -->|Update Role| UpdateRoleFlow
-        MemberAction -->|Remove| RemoveMemberFlow
+        MemberAction -->|getProjectMembers| ListMembers[Query D1<br/>projectMembers + user]
+        MemberAction -->|addMemberToProject| InviteFlow
+        MemberAction -->|acceptInvitation| AcceptFlow
+        MemberAction -->|removeMember| RemoveMemberFlow
+        MemberAction -->|removeWorkspaceMember| WorkspaceRemoveFlow
 
-        ListMembers --> ListDB[Query D1<br/>projectMembers + user]
-        ListDB -->|DB Error| ListDBError[SYSTEM_DB_ERROR<br/>500]
-        ListDB -->|Success| ListSuccess[200 OK<br/>Return members]
-
-        subgraph AddMemberFlow["Add Member"]
-            AddStart[POST /api/projects/:id/members] --> CheckOwnerAdd{User is<br/>owner?}
-            CheckOwnerAdd -->|No| AddForbidden[AUTH_FORBIDDEN<br/>403<br/>Only owners can add]
-            CheckOwnerAdd -->|Yes| ValidateMember{Valid userId<br/>or email?}
-            ValidateMember -->|No| MemberValidationError[VALIDATION_ERRORS<br/>400]
-            ValidateMember -->|Yes| FindUser[Find user by<br/>userId or email]
-            FindUser -->|Not Found| UserNotFound[USER_NOT_FOUND<br/>404]
-            FindUser -->|Found| CheckExisting{Already<br/>member?}
-            CheckExisting -->|Yes| MemberExists[PROJECT_MEMBER_ALREADY_EXISTS<br/>409]
-            CheckExisting -->|No| InsertMember[Insert into D1<br/>projectMembers]
-            InsertMember -->|DB Error| AddDBError[SYSTEM_DB_ERROR<br/>500]
-            InsertMember -->|Success| NotifyUser[Send notification<br/>via UserSession DO]
-            NotifyUser -->|Failed| NotifyUserError[Log error<br/>Continue]
-            NotifyUser -->|Success| SyncMemberDO[Refresh sync sessions<br/>clients refetch members]
-            SyncMemberDO -->|Failed| SyncMemberError[Log error<br/>Continue]
-            SyncMemberDO -->|Success| AddSuccess[201 Created<br/>Return member]
+        subgraph InviteFlow["Invite (every add is an invitation)"]
+            InviteStart[addMemberToProject] --> InviteOwner{Project owner,<br/>write access?}
+            InviteOwner -->|No| InviteForbidden[AUTH_FORBIDDEN<br/>403]
+            InviteOwner -->|Yes| AlreadyMember{Already a<br/>project member?}
+            AlreadyMember -->|Yes| MemberExists[PROJECT_MEMBER_ALREADY_EXISTS<br/>409]
+            AlreadyMember -->|No| SeatCheck{In the workspace already,<br/>or a seat free?}
+            SeatCheck -->|No| SeatError[AUTH_FORBIDDEN<br/>403<br/>quota_exceeded]
+            SeatCheck -->|Yes| SendCaps{Under invitation<br/>limits?}
+            SendCaps -->|No| CapError[PROJECT_INVITATION_LIMIT_REACHED<br/>or _RATE_LIMITED]
+            SendCaps -->|Yes| CreateInvite[Upsert projectInvitations<br/>queue email]
+            CreateInvite --> InviteSuccess[Return delivery<br/>queued / recently_sent / not_sent]
         end
 
-        subgraph UpdateRoleFlow["Update Member Role"]
-            UpdateRoleStart[PUT /api/projects/:id/members/:userId] --> CheckOwnerRole{User is<br/>owner?}
-            CheckOwnerRole -->|No| UpdateRoleForbidden[AUTH_FORBIDDEN<br/>403<br/>Only owners can update]
-            CheckOwnerRole -->|Yes| ValidateRole{Valid role?}
-            ValidateRole -->|No| RoleValidationError[VALIDATION_ERRORS<br/>400]
-            ValidateRole -->|Yes| CheckLastOwner{Removing last<br/>owner?}
-            CheckLastOwner -->|Yes| LastOwnerError[PROJECT_LAST_OWNER<br/>400<br/>Assign another owner first]
-            CheckLastOwner -->|No| UpdateRoleDB[Update D1<br/>projectMembers.role]
-            UpdateRoleDB -->|DB Error| UpdateRoleDBError[SYSTEM_DB_ERROR<br/>500]
-            UpdateRoleDB -->|Success| SyncRoleDO[Refresh sync sessions<br/>reconnects re-stamp role]
-            SyncRoleDO -->|Failed| SyncRoleError[Log error<br/>Continue]
-            SyncRoleDO -->|Success| UpdateRoleSuccess[200 OK<br/>Success response]
+        subgraph AcceptFlow["Accept"]
+            AcceptStart[acceptInvitation] --> TokenValid{Token valid,<br/>unexpired, unaccepted?}
+            TokenValid -->|No| TokenError[VALIDATION or<br/>PROJECT_INVITATION_ALREADY_ACCEPTED]
+            TokenValid -->|Yes| SeatInsert{Workspace member,<br/>or seat free?}
+            SeatInsert -->|No| AcceptSeatError[AUTH_FORBIDDEN<br/>403<br/>quota_exceeded]
+            SeatInsert -->|Yes| AddMembership[Insert member if missing<br/>+ projectMembers]
+            AddMembership --> RefreshAccept[Refresh sync sessions<br/>notify inviter]
+            RefreshAccept --> AcceptSuccess[Return project + orgSlug]
         end
 
-        subgraph RemoveMemberFlow["Remove Member"]
-            RemoveStart[DELETE /api/projects/:id/members/:userId] --> CheckRemoveAuth{User is owner<br/>or self-removal?}
-            CheckRemoveAuth -->|No| RemoveForbidden[AUTH_FORBIDDEN<br/>403<br/>Only owners can remove]
-            CheckRemoveAuth -->|Yes| CheckTargetExists{Target member<br/>exists?}
-            CheckTargetExists -->|No| RemoveNotFound[PROJECT_NOT_FOUND<br/>404<br/>Member not found]
-            CheckTargetExists -->|Yes| CheckRemoveLastOwner{Removing last<br/>owner?}
-            CheckRemoveLastOwner -->|Yes| RemoveLastOwnerError[PROJECT_LAST_OWNER<br/>400<br/>Assign another owner first]
-            CheckRemoveLastOwner -->|No| RemoveDB[Delete from D1<br/>projectMembers]
-            RemoveDB -->|DB Error| RemoveDBError[SYSTEM_DB_ERROR<br/>500]
-            RemoveDB -->|Success| SyncRemoveDO[Kick removed user's sessions<br/>refresh the rest]
-            SyncRemoveDO -->|Failed| SyncRemoveError[Log error<br/>Continue]
-            SyncRemoveDO -->|Success| NotifyRemoved{Self-removal?}
-            NotifyRemoved -->|Yes| RemoveSuccess[200 OK<br/>Success response]
-            NotifyRemoved -->|No| NotifyRemovedUser[Send notification<br/>via UserSession DO]
-            NotifyRemovedUser -->|Failed| NotifyRemovedError[Log error<br/>Continue]
-            NotifyRemovedUser -->|Success| RemoveSuccess
+        subgraph RemoveMemberFlow["Remove from Project"]
+            RemoveStart[removeMember] --> CheckRemoveAuth{Project owner<br/>or self-removal?}
+            CheckRemoveAuth -->|No| RemoveForbidden[AUTH_FORBIDDEN<br/>403]
+            CheckRemoveAuth -->|Yes| CheckRemoveLastOwner{Last<br/>owner?}
+            CheckRemoveLastOwner -->|Yes| RemoveLastOwnerError[PROJECT_LAST_OWNER<br/>400]
+            CheckRemoveLastOwner -->|No| RemoveDB[Delete projectMembers row<br/>workspace seat kept]
+            RemoveDB --> SyncRemoveDO[Kick removed user's sessions<br/>refresh the rest, notify]
+            SyncRemoveDO --> RemoveSuccess[Success]
+        end
+
+        subgraph WorkspaceRemoveFlow["Remove from Workspace"]
+            WsRemoveStart[removeWorkspaceMember] --> WsOwner{Workspace owner,<br/>target not owner or self?}
+            WsOwner -->|No| WsForbidden[AUTH_FORBIDDEN or<br/>VALIDATION_INVALID_INPUT]
+            WsOwner -->|Yes| WsSoleOwner{Only owner of<br/>any project?}
+            WsSoleOwner -->|Yes| WsLastOwner[PROJECT_LAST_OWNER<br/>400]
+            WsSoleOwner -->|No| WsEachProject[removeMember for each<br/>of their projects]
+            WsEachProject --> WsCleanup[Cancel their pending invites<br/>delete member row: seat freed]
+            WsCleanup --> WsSuccess[Success]
         end
     end
 
     style AuthError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
+    style CreateRoleError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
+    style ReadOnlyError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
     style EntitlementError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
     style QuotaError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
-    style ValidationError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
+    style FreeCapError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
     style DBError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
-    style SyncError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
-    style NotFoundError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
     style ReadDBError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
-    style UpdateValidationError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
     style UpdateForbidden fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
     style UpdateDBError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
     style DeleteForbidden fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
-    style DeleteDBError1 fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
-    style DeleteDBError2 fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
-    style TeardownError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
+    style DeleteDBError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
     style R2Error fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
+    style TeardownError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
     style NotifyError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
-    style AddForbidden fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
-    style MemberValidationError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
-    style UserNotFound fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
+    style InviteForbidden fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
     style MemberExists fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
-    style AddDBError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
-    style NotifyUserError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
-    style SyncMemberError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
-    style UpdateRoleForbidden fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
-    style RoleValidationError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
-    style LastOwnerError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
-    style UpdateRoleDBError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
-    style SyncRoleError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
+    style SeatError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
+    style CapError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
+    style TokenError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
+    style AcceptSeatError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
     style RemoveForbidden fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
-    style RemoveNotFound fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
     style RemoveLastOwnerError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
-    style RemoveDBError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
-    style SyncRemoveError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
-    style NotifyRemovedError fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
+    style WsForbidden fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
+    style WsLastOwner fill:#dc3545,stroke:#991f2e,stroke-width:2px,color:#ffffff
 ```
 
 ---

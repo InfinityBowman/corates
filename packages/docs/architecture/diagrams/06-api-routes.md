@@ -1,150 +1,136 @@
-# API Routes Overview
+# Server API Overview
 
-Backend API structure. All `/api/*` routes are TanStack Start file-based server routes under `packages/web/src/routes/api/`.
+The browser reaches the server through two front doors, both served by the one Cloudflare Worker:
+
+- **Server functions** (`packages/web/src/server/functions/*.functions.ts`) are the default. The client calls them as async functions, and TanStack Start handles the transport.
+- **HTTP routes** (`packages/web/src/routes/api/`) are used only where raw HTTP is needed: the Better Auth handler, the Stripe webhook, binary file streams, browser log intake, and e2e test seams.
+
+The worker entry (`src/server.ts`) handles the Durable Object routes before either of them, because WebSocket upgrades cannot pass through TanStack Start.
+
+See the [API Development Guide](/guides/api-development) for how to write each.
 
 ```mermaid
 flowchart LR
-    subgraph API["TanStack Start API (packages/web/src/routes/api/)"]
+    Client
+
+    subgraph Worker["Worker entry (src/server.ts)"]
         direction TB
-        auth["/auth/*<br/>Better Auth"]
-        orgs["/orgs/*"]
-        orgprojects["/orgs/:orgId/projects/*"]
-        orgmembers["/orgs/:orgId/members/*"]
-        projectmembers["/orgs/:orgId/projects/:id/members"]
-        invitations["/orgs/:orgId/projects/:id/invitations"]
-        pdfs["/orgs/:orgId/projects/:id/studies/:id/pdfs"]
-        users["/users/*"]
-        billing["/billing/*"]
-        admin["/admin/*"]
-        inviteaccept["/invitations/accept"]
+        doroutes["/api/sync/*, /api/sync-admin/*<br/>/api/sessions/*"]
+        subgraph Start["TanStack Start"]
+            fns["Server functions<br/>server/functions/*.functions.ts"]
+            routes["HTTP routes<br/>routes/api/*"]
+        end
     end
 
-    subgraph GuardsPolicies["Per-route guards & policies"]
-        getSession
-        requireOrgOwner
-        requireProjectEdit
-        getProjectMembership
-        rateLimit
+    subgraph Guards["Guards (server/guards) + policies (@corates/workers)"]
+        requireOrgMembership
+        requireProjectAccess
+        requireOrgWriteAccess
+        requireEntitlement
+        requireQuota
     end
 
-    Client -->|"Request"| API
-    API --> GuardsPolicies
-
-    orgprojects -->|"admin seams:<br/>teardown/kick/refresh"| ProjectSyncDO
-    pdfs --> R2[(R2 Storage)]
-    auth --> D1[(D1 Database)]
-    orgs --> D1
-    purchasewebhook --> D1
+    Client --> doroutes
+    Client --> fns
+    Client --> routes
+    fns --> Guards
+    routes --> Guards
+    doroutes --> ProjectSyncDO
+    doroutes --> UserSession
+    fns -->|"commands: kick/refresh/teardown"| ProjectSyncDO
+    fns --> D1[(D1)]
+    routes --> R2[(R2)]
+    routes --> D1
 ```
+
+## Server functions
+
+| File                                            | Functions                                                                                                                                                                    |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `workspaces.functions.ts`                       | `getMyWorkspaces`, `checkSlug`, `createWorkspace`, `updateWorkspace`, `getWorkspaceMembers`, `removeWorkspaceMember`                                                         |
+| `org-projects.functions.ts`                     | `createProject`, `updateProject`, `updateProjectSetupStep`, `deleteProject`, `getProjectMembers`, `addMemberToProject`, `removeMember`, `getInvitations`, `cancelInvitation` |
+| `invitations.functions.ts`                      | `getInvitation`, `acceptInvitation`, `listMyPendingInvitations`, `declineInvitation`                                                                                         |
+| `billing.functions.ts`                          | `getSubscription`, `getUsage`, `getInvoices`, `checkPlanChange`, `checkoutSubscription`, `openBillingPortal`, `syncAfterSuccess`                                             |
+| `users.functions.ts`                            | `getMyProjects`, `searchUsers`, `dismissHint`, `deleteMyAccount`                                                                                                             |
+| `notifications.functions.ts`                    | `listNotifications`, `getUnreadNotificationCount`, `markNotificationsRead`, `markAllNotificationsRead`, `dismissNotification`                                                |
+| `account-merge.functions.ts`                    | `initiateAccountMerge`, `verifyAccountMergeCode`, `completeAccountMerge`, `cancelAccountMerge`                                                                               |
+| `google-drive.functions.ts`                     | `getDriveStatus`, `disconnectDrive`, `getDrivePickerToken`, `importFromDrive`                                                                                                |
+| `pdf-proxy.functions.ts`                        | `proxyPdfFetch`, which fetches an external PDF URL server-side to avoid CORS                                                                                                 |
+| `contact.functions.ts`, `feedback.functions.ts` | `submitContactForm`, `submitFeedback`                                                                                                                                        |
+| `dev-tools.functions.ts`                        | `exportState`, `importState`, `resetState` (dev panel only)                                                                                                                  |
+| `admin-*.functions.ts`                          | Admin-only actions: users (including impersonation), workspaces and grants, projects, billing, Stripe tools, storage, database, stats, announcements                         |
+
+**Authorization:**
+
+- Every function runs behind `authMiddleware` except two public ones: `submitContactForm` and `getInvitation`. `getInvitation` uses `optionalAuthMiddleware` to tell the invite page who is viewing.
+- Workspace-scoped functions take `orgId` as input and check it with `requireOrgMembership`. Nothing reads the session's active organization.
+
+## HTTP routes
+
+| Route                                                                  | Methods     | Purpose                                                                                           |
+| ---------------------------------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------- |
+| `/api/auth/*`                                                          | all         | Better Auth (sign-in, OAuth, sessions, 2FA, admin plugin). `/api/auth/organization/*` returns 404 |
+| `/api/auth/session`                                                    | GET         | Session read for the client                                                                       |
+| `/api/auth/verify-email`                                               | GET         | Email verification link                                                                           |
+| `/api/auth/stripe/webhook`                                             | POST        | Stripe webhook                                                                                    |
+| `/api/client-logs`                                                     | POST        | Browser log intake                                                                                |
+| `/api/users/avatar`                                                    | POST        | Avatar upload                                                                                     |
+| `/api/users/avatar/:userId`                                            | GET         | Avatar stream                                                                                     |
+| `/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs`           | GET, POST   | List PDFs, upload to R2                                                                           |
+| `/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/:fileName` | GET, DELETE | Stream, delete a PDF                                                                              |
+| `/api/test/*`                                                          | various     | e2e seams (seed, session, cleanup, auth-code, reset, and others)                                  |
+| `/api/*` (anything else)                                               | all         | JSON `SYSTEM_ROUTE_NOT_FOUND`                                                                     |
+
+## Durable Object routes
+
+These are handled in the worker entry, ahead of TanStack Start:
+
+- `/api/sync/:projectId`: the project sync WebSocket (ProjectSyncDO), authorized against D1 on connect.
+- `/api/sync-admin/:projectId/:op`: the sync admin surface (export, import, stats, reset), gated by a bearer token.
+- `/api/sessions/:userId`: the UserSession WebSocket for notifications.
 
 ## Authz building blocks
 
-Each handler composes checks explicitly -- there is no single middleware pipeline. Common ingredients:
+| Helper                                                                  | From                                | Purpose                                                    |
+| ----------------------------------------------------------------------- | ----------------------------------- | ---------------------------------------------------------- |
+| `authMiddleware`                                                        | `@/server/middleware/auth`          | Requires a session; puts `session` and `db` on the context |
+| `requireOrgMembership(session, db, orgId, minRole?)`                    | `@/server/guards`                   | Workspace member, optionally owner                         |
+| `requireProjectAccess(session, db, orgId, projectId, minRole?)`         | `@/server/guards`                   | Project member, optionally owner                           |
+| `requireOrgWriteAccess`                                                 | `@/server/guards`                   | Billing-aware write gate (read-only plans)                 |
+| `requireEntitlement`, `requireQuota`                                    | `@/server/guards`                   | Plan entitlement and quota checks                          |
+| `requireProjectEdit`, `getProjectMembership`                            | `@corates/workers/policies`         | Project role lookups                                       |
+| `requireMemberRemoval` / `requireSafeRemoval` / `requireSafeRoleChange` | `@corates/workers/policies`         | Member management safety                                   |
+| `resolveOrgAccess`                                                      | `@corates/workers/billing-resolver` | Effective plan, quotas and access mode                     |
 
-| Helper                                           | From                                | Purpose                          |
-| ------------------------------------------------ | ----------------------------------- | -------------------------------- |
-| `getSession`                                     | `@corates/workers/auth`             | Resolves the Better Auth session |
-| `requireOrgOwner`                                | `@corates/workers/policies`         | Enforces org owner role          |
-| `requireProjectEdit`                             | `@corates/workers/policies`         | Enforces project edit permission |
-| `getProjectMembership`                           | `@corates/workers/policies`         | Looks up project role            |
-| `requireMemberRemoval` / `requireSafeRoleChange` | `@corates/workers/policies`         | Member management safety         |
-| `resolveOrgAccess`                               | `@corates/workers/billing-resolver` | Plan-aware org access check      |
+Guards return `{ ok: true; context } | { ok: false; error }`. Server functions `throw result.error`; HTTP routes `return result.error.toResponse()`.
 
-## API Endpoints
+## Typical ordering
 
-### Authentication (`/auth/*`)
+Checks run from the outside in:
 
-Handled by BetterAuth. Includes signin, signup and session management. The organization plugin's `/api/auth/organization/*` endpoints are closed (404).
-
-### Workspaces (organizations)
-
-There are no workspace REST routes. Listing, creating and editing workspaces, the member list and member removal go through server functions in `packages/web/src/server/functions/workspaces.functions.ts`; see the [Organizations Guide](/guides/organizations#server-functions).
-
-### Projects (`/api/orgs/:orgId/projects/*`)
-
-Project management (requires org membership):
-
-- `GET /api/orgs/:orgId/projects` - List projects in org
-- `POST /api/orgs/:orgId/projects` - Create new project
-- `GET /api/orgs/:orgId/projects/:projectId` - Get project (requires project access)
-- `PUT /api/orgs/:orgId/projects/:projectId` - Update project (requires member)
-- `DELETE /api/orgs/:orgId/projects/:projectId` - Delete project (requires owner)
-
-### Project Members (`/api/orgs/:orgId/projects/:projectId/members`)
-
-- `GET /api/orgs/:orgId/projects/:projectId/members` - List project members
-- `POST /api/orgs/:orgId/projects/:projectId/members` - Add member (requires owner)
-- `PATCH /api/orgs/:orgId/projects/:projectId/members/:userId` - Update role
-- `DELETE /api/orgs/:orgId/projects/:projectId/members/:userId` - Remove member
-
-### Project Invitations (`/api/orgs/:orgId/projects/:projectId/invitations`)
-
-- `GET /api/orgs/:orgId/projects/:projectId/invitations` - List invitations
-- `POST /api/orgs/:orgId/projects/:projectId/invitations` - Create invitation (requires owner)
-- `DELETE /api/orgs/:orgId/projects/:projectId/invitations/:id` - Cancel invitation
-
-### Invitation Acceptance (`/api/invitations/accept`)
-
-- `POST /api/invitations/accept` - Accept invitation by token (ensures org + project membership)
-
-### PDFs (`/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs`)
-
-- `GET /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs` - List PDFs
-- `POST /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs` - Upload PDF to R2
-- `GET /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/:fileName` - Download PDF
-- `DELETE /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/:fileName` - Remove PDF
-
-### PDF Proxy (`/api/pdf-proxy`)
-
-- `POST /api/pdf-proxy` - Proxy external PDF URLs to avoid CORS issues
-
-### Users (`/api/users/*`)
-
-- `GET /api/users/search` - Search users
-- `GET /api/users/avatar` - Get user avatar
-- `POST /api/users/avatar` - Upload user avatar
-
-### Account Merge (`/api/accounts/merge`)
-
-- `POST /api/accounts/merge` - Merge two user accounts
-
-### Billing (`/api/billing/*`)
-
-Stripe integration for subscriptions and payments (main app Worker):
-
-- `GET /api/billing/subscription` - Get org subscription
-- `POST /api/billing/checkout` - Create Stripe checkout session
-- `POST /api/billing/portal` - Create Stripe customer portal session
-
-### Admin (`/api/admin/*`)
-
-Admin-only endpoints for user management and system stats.
-
-### Google Drive
-
-There are no `/api/google-drive` REST routes. Drive status, disconnect, picker token, and import are TanStack Start server functions in `packages/web/src/server/functions/google-drive.functions.ts`; the OAuth link itself goes through Better Auth's `/api/auth/link-social`.
-
-### Durable Object Routes
-
-These routes connect to Durable Objects directly (handled ahead of the TanStack Start router in the worker entry, not as file-based routes):
-
-- `/api/sync/:projectId` - Sync-engine WebSocket connection (ProjectSyncDO)
-- `/api/sync-admin/:projectId/:op` - Bearer-token-gated sync admin surface (export/import/stats/reset)
-- `/api/sessions/:sessionId` - UserSession WebSocket connection
-
-## Typical handler ordering
-
-For an org-scoped route in a TanStack Start handler:
+1. session
+2. workspace
+3. write access
+4. project
+5. entitlement
+6. quota
+7. the work itself
 
 ```ts
-const limit = checkRateLimit(request, env, LIMIT);
-if (limit.blocked) return limit.blocked;
+export async function addProjectMember(session: Session, db: Database, orgId: OrgId, projectId: ProjectId /* ... */) {
+  const orgMembership = await requireOrgMembership(session, db, orgId);
+  if (!orgMembership.ok) throw orgMembership.error;
 
-const session = await getSession(request, env);
-if (!session) return Response.json(createDomainError(AUTH_ERRORS.REQUIRED), { status: 401 });
+  const writeAccess = await requireOrgWriteAccess('POST', db, orgId);
+  if (!writeAccess.ok) throw writeAccess.error;
 
-await requireProjectEdit(db, session.user.id, projectId);
-// ... handler work ...
+  const access = await requireProjectAccess(session, db, orgId, projectId, 'owner');
+  if (!access.ok) throw access.error;
+
+  const quota = await requireQuota(db, orgId, 'collaborators.org.max', () => countCollaboratorSeats(db, orgId));
+  if (!quota.ok) throw quota.error;
+  // ... handler work ...
+}
 ```
 
-See the [Organizations Guide](/guides/organizations) for patterns.
+See the [Organizations Guide](/guides/organizations) for the workspace and project functions.

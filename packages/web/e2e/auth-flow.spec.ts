@@ -70,10 +70,22 @@ test.describe('Auth flows', () => {
         timeout: 5_000,
       });
       await page.getByText('Researcher').click();
+      await page.getByRole('button', { name: 'Next' }).click();
+
+      // Step 4: name the workspace created at signup; the URL follows the name
+      await expect(page.getByRole('heading', { name: 'Name your workspace' })).toBeVisible({
+        timeout: 5_000,
+      });
+      const workspaceName = `E2E Lab ${Date.now()}`;
+      await page.getByLabel('Workspace name').fill(workspaceName);
+      await expect(page.getByText('Available')).toBeVisible({ timeout: 10_000 });
       await page.getByRole('button', { name: /Finish Setup/i }).click();
 
-      // Should arrive at the workspace home
-      await expect(page).toHaveURL(WORKSPACE_HOME_URL, { timeout: 15_000 });
+      // Should arrive at the renamed workspace's home
+      await expect(page).toHaveURL(new RegExp(`/e2e-lab-${workspaceName.split(' ')[2]}$`), {
+        timeout: 15_000,
+      });
+      await expect(page.getByTestId('account-menu')).toContainText(workspaceName);
     });
 
     test('fresh session can deep-link to a project with WebSocket auth', async ({ browser }) => {
@@ -119,7 +131,8 @@ test.describe('Auth flows', () => {
           timeout: 5_000,
         });
         await p.getByText('Researcher').click();
-        await p.getByRole('button', { name: /Finish Setup/i }).click();
+        await p.getByRole('button', { name: 'Next' }).click();
+        await p.getByRole('button', { name: /Skip for now/i }).click();
 
         await expect(p).toHaveURL(WORKSPACE_HOME_URL, { timeout: 15_000 });
 

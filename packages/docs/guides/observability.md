@@ -38,7 +38,7 @@ object so Loki can parse it with `| json` and turn each key into a queryable fie
   "requestId": "3f2b...",
   "cfRay": "8e1c...",
   "message": "Created personal org org_123 for user usr_456",
-  "route": "/api/projects",
+  "route": "/api/auth/sign-in/email-otp",
   "method": "POST",
   "userId": "usr_456"
 }

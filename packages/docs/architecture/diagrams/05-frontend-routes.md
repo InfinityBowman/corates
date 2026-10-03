@@ -52,13 +52,13 @@ TanStack file-based conventions: an underscore prefix (`_app`, `_auth`) denotes 
 
 ## Public routes (`_auth`)
 
-| Route               | File                                | Purpose                   |
-| ------------------- | ----------------------------------- | ------------------------- |
-| `/signin`           | `routes/_auth/signin.tsx`           | Password, code, OAuth     |
-| `/signup`           | `routes/_auth/signup.tsx`           | New account               |
-| `/verify-email`     | `routes/_auth/verify-email.tsx`     | Email verification code   |
-| `/complete-profile` | `routes/_auth/complete-profile.tsx` | Post-signup + invitations |
-| `/reset-password`   | `routes/_auth/reset-password.tsx`   | Password recovery         |
+| Route               | File                                | Purpose                                                                  |
+| ------------------- | ----------------------------------- | ------------------------------------------------------------------------ |
+| `/signin`           | `routes/_auth/signin.tsx`           | Password, code, OAuth                                                    |
+| `/signup`           | `routes/_auth/signup.tsx`           | New account                                                              |
+| `/verify-email`     | `routes/_auth/verify-email.tsx`     | Email verification code                                                  |
+| `/complete-profile` | `routes/_auth/complete-profile.tsx` | Post-signup profile, then naming the workspace (skipped for invitations) |
+| `/reset-password`   | `routes/_auth/reset-password.tsx`   | Password recovery                                                        |
 
 ## Authenticated routes (`_app/_protected`)
 

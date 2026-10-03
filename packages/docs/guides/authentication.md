@@ -67,29 +67,22 @@ CoRATES supports multiple authentication methods:
 - `POST /api/auth/two-factor/verify` - Verify 2FA code during login
 - `POST /api/auth/two-factor/disable` - Disable 2FA
 
-### Admin Endpoints
+### Admin Actions
 
-- `POST /api/admin/stop-impersonation` - Stop admin impersonation session
-- Additional admin endpoints for user management (requires admin role)
+Admin actions, including impersonation (`impersonateUserAction`, `stopImpersonationAction`), are server functions in `packages/web/src/server/functions/admin-*.functions.ts`. Each runs behind `authMiddleware` and checks `isAdminUser` (`@corates/workers/auth-admin`) before doing anything.
 
 ### Protected Resources
 
-The following endpoints require authentication:
+Almost everything the app does goes through TanStack Start server functions (`packages/web/src/server/functions/*.functions.ts`) behind `authMiddleware`, which rejects a request without a session with `AUTH_REQUIRED`. Each function then applies its own guards: workspace membership or ownership (`requireOrgMembership`), project access (`requireProjectAccess`), or admin role. That covers workspaces, projects, members, invitations, billing, users, notifications, Google Drive and admin.
 
-- `/api/orgs/*` - Organization management (requires auth + org membership)
-- `/api/orgs/:orgId/projects/*` - Project management (requires auth + org membership)
-- `/api/orgs/:orgId/projects/:projectId/members/*` - Project member management (requires project access)
-- `/api/orgs/:orgId/projects/:projectId/invitations/*` - Project invitations (requires project access)
-- `/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/*` - PDF management (requires project access)
-- `/api/users/*` - User management (requires auth)
-- `/api/sessions/:sessionId/*` - User session Durable Object (requires auth)
+The remaining authenticated HTTP endpoints:
+
+- `/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/*` - PDF list, upload, stream, delete (requires workspace membership + project access)
+- `/api/users/avatar` - Avatar upload (requires auth); `/api/users/avatar/:userId` serves avatars
+- `/api/sessions/:userId` - UserSession Durable Object WebSocket for notifications (requires auth)
 - `/api/sync/:projectId` - Project sync WebSocket (requires auth + project membership, checked against D1 on connect)
-- `/api/admin/*` - Admin endpoints (requires admin role)
-- `/api/billing/*` - Billing endpoints (requires auth)
-- Google Drive integration is exposed as TanStack Start server functions in `packages/web/src/server/functions/google-drive.functions.ts` (requires auth), not as REST routes
-- `/api/invitations/accept` - Accept project invitations (requires auth)
 
-See the [Organizations Guide](/guides/organizations) for detailed org/project route patterns.
+See the [API Development Guide](/guides/api-development) for when to use which, and the [Organizations Guide](/guides/organizations) for the workspace and project functions.
 
 ## Frontend Usage
 
@@ -373,7 +366,7 @@ Project invitations allow project owners to invite users who don't have accounts
 
 Project invitations use a **combined flow** that ensures org membership before granting project access:
 
-1. **Invitation Creation**: When a project owner creates an invitation via `POST /api/orgs/:orgId/projects/:projectId/invitations`:
+1. **Invitation Creation**: When a project owner invites someone with the `addMemberToProject` server function:
    - Invitation includes `orgId`, `projectId`, `role` (project), `orgRole` (org)
    - Unique invitation token (UUID)
    - 7-day expiration
@@ -396,16 +389,16 @@ Project invitations use a **combined flow** that ensures org membership before g
 
 The invited address is where the link is delivered, not an identity check. Membership binds to whichever signed-in account accepts the token, so someone invited at an institutional alias can accept from an account keyed to a different address. A mismatch is logged (`invitation.accepted_with_different_email`) for support.
 
-### Invitation Endpoints
+### Invitation Functions
 
-- `POST /api/orgs/:orgId/projects/:projectId/invitations` - Create invitation (project owner)
-- `GET /api/orgs/:orgId/projects/:projectId/invitations` - List invitations (project member)
-- `DELETE /api/orgs/:orgId/projects/:projectId/invitations/:id` - Cancel invitation (project owner)
-- `POST /api/invitations/accept` - Accept a project invitation by token
-  - Requires authentication
-  - Validates email match
-  - Ensures org membership before project membership
-  - Returns project details on success
+Server functions, not REST routes:
+
+- `addMemberToProject` (`org-projects.functions.ts`) - Create or resend an invitation (project owner; checks the workspace seat quota)
+- `getInvitations` (`org-projects.functions.ts`) - List a project's pending invitations (project member)
+- `cancelInvitation` (`org-projects.functions.ts`) - Cancel an invitation (project owner)
+- `getInvitation` (`invitations.functions.ts`) - Read an invitation by token, for the `/invite/{token}` page
+- `acceptInvitation` (`invitations.functions.ts`) - Accept by token (requires auth). Adds workspace membership if missing, then project membership, and returns the project plus its workspace `orgSlug`
+- `listMyPendingInvitations`, `declineInvitation` (`invitations.functions.ts`) - Invitations addressed to the signed-in user
 
 ### Resending Invitations
 

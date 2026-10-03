@@ -1,77 +1,177 @@
 # API Development Guide
 
-API routes in the main CoRATES app are TanStack Start file-based server routes, served from the same Cloudflare Worker as the SPA. Shared backend logic (auth, billing resolvers, policies, rate limiting) lives in the `@corates/workers` library package.
+Server code in the main CoRATES app runs in the same Cloudflare Worker as the SPA, through two front doors. Shared backend logic (auth, billing resolvers, policies, commands) lives in the `@corates/workers` library package.
 
-## File layout
+- **Server functions are the default.** The client calls them like async functions; TanStack Start handles transport, and thrown domain errors arrive in the browser intact.
+- **API routes (`routes/api/`) are for raw HTTP only**: the Better Auth catch-all, the Stripe webhook, binary responses (PDF and avatar streams), browser log intake, and the e2e test seams.
 
-Route files live under `packages/web/src/routes/api/` and mirror the URL path. Dynamic segments use a `$` prefix (TanStack Router convention).
+To choose, ask whether the caller needs a real URL, a non-JSON body, or an external POST. If not, write a server function.
+
+## Server functions
+
+### File layout
+
+Each area pairs two files in `packages/web/src/server/functions/`:
+
+- `X.functions.ts` -- thin `createServerFn` wrappers: HTTP method, middleware, Zod input.
+- `X.server.ts` -- the logic, taking `session` and `db` as parameters so tests call it without a request.
+
+```
+server/functions/
+  workspaces.functions.ts   <- getMyWorkspaces, updateWorkspace, removeWorkspaceMember, ...
+  workspaces.server.ts      <- listMyWorkspaces, updateWorkspaceSettings, ...
+  org-projects.functions.ts <- createProject, addMemberToProject, cancelInvitation, ...
+  billing.functions.ts      <- getSubscription, checkoutSubscription, openBillingPortal, ...
+  admin-*.functions.ts      <- admin-only actions
+```
+
+### Anatomy
+
+```ts
+// workspaces.functions.ts
+import { createServerFn } from '@tanstack/react-start';
+import { z } from 'zod';
+import { workspaceNameSchema, workspaceSlugSchema } from '@corates/shared';
+import type { OrgId } from '@corates/shared/ids';
+import { authMiddleware } from '@/server/middleware/auth';
+import { updateWorkspaceSettings } from './workspaces.server';
+
+export const updateWorkspace = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
+  .validator(
+    z.object({
+      orgId: z.string(),
+      name: workspaceNameSchema.optional(),
+      slug: workspaceSlugSchema.optional(),
+    }),
+  )
+  .handler(async ({ data, context: { session, db } }) => {
+    const { orgId, ...changes } = data;
+    return updateWorkspaceSettings(session, db, orgId as OrgId, changes);
+  });
+```
+
+```ts
+// workspaces.server.ts
+export async function updateWorkspaceSettings(
+  session: Session,
+  db: Database,
+  orgId: OrgId,
+  data: { name?: string; slug?: string },
+) {
+  const membership = await requireOrgMembership(session, db, orgId, 'owner');
+  if (!membership.ok) throw membership.error;
+  // ... Drizzle writes ...
+}
+```
+
+The client imports the wrapper and calls it with `{ data }`, usually inside a TanStack Query hook:
+
+```ts
+await updateWorkspace({ data: { orgId, name } });
+```
+
+Take the workspace (`orgId`) as input rather than deriving it from the session.
+
+### Middleware
+
+From `@/server/middleware/`:
+
+- `authMiddleware` -- requires a session (throws `AUTH_REQUIRED` otherwise) and puts `session`, `db` and `request` on the context.
+- `optionalAuthMiddleware` -- `session` or `null`, for public pages that render differently when signed in. Never authorize with it.
+- `dbMiddleware` -- `db` only.
+
+### Errors
+
+Throw, don't return. Use `throwDomainError(...)` or throw a guard's `result.error` (a `DomainErrorException`). A returned Response would reach the caller as resolved data. `src/start.ts` registers a serialization adapter so the thrown error arrives in the browser with its `code`, `statusCode` and `details`; without it, TanStack Start serializes only the message.
+
+```ts
+throwDomainError(
+  VALIDATION_ERRORS.INVALID_INPUT,
+  { field: 'slug', reason: 'slug_taken' },
+  'That URL is already taken.',
+);
+```
+
+## API routes
+
+### File layout
+
+Route files live under `packages/web/src/routes/api/` and mirror the URL path. Dynamic segments use a `$` prefix (TanStack Router convention). These are all of them:
 
 ```
 routes/api/
-  $.ts                                   <- catch-all 404 for /api/*
-  orgs.ts                                <- /api/orgs
-  orgs/$orgId.ts                         <- /api/orgs/:orgId
-  orgs/$orgId/members.ts                 <- /api/orgs/:orgId/members
-  billing/
-    checkout.ts
-    subscription.ts
-    portal.ts
-  admin/
-    users/$userId/impersonate.ts
+  $.ts                          <- catch-all JSON 404 for /api/*
+  auth/$.ts                     <- Better Auth handler (organization/* closed)
+  auth/session.ts               <- session read for the client
+  auth/verify-email.ts          <- email verification link
+  auth/stripe/webhook.ts        <- Stripe webhook
+  client-logs.ts                <- browser log intake
+  users/avatar.ts               <- avatar upload
+  users/avatar/$userId.ts       <- avatar stream
+  orgs/$orgId/projects/$projectId/studies/$studyId/pdfs.ts            <- PDF list, upload
+  orgs/$orgId/projects/$projectId/studies/$studyId/pdfs/$fileName.ts  <- PDF stream, delete
+  test/*                        <- e2e seams (seed, session, cleanup, auth-code, ...)
 ```
 
-## Anatomy of a route file
+Three more paths are handled in the worker entry (`src/server.ts`) before TanStack Start sees the request: `/api/sync/<projectId>` and `/api/sync-admin/<projectId>/<op>` (the project sync DO), and `/api/sessions/<userId>` (the UserSession DO for notifications).
 
-Each file exports one handler per HTTP method it serves, then wires them into a `Route` export at the bottom.
+### Anatomy
+
+Each file exports one handler per HTTP method, then wires them into a `Route` export. Handlers are named exports so tests can import them directly.
 
 ```ts
 import { createFileRoute } from '@tanstack/react-router';
-import { env } from 'cloudflare:workers';
-import { getSession } from '@corates/workers/auth';
-import { createDb } from '@corates/db/client';
-import {
-  createDomainError,
-  createValidationError,
-  AUTH_ERRORS,
-  SYSTEM_ERRORS,
-  VALIDATION_ERRORS,
-} from '@corates/shared';
+import type { Database } from '@corates/db/client';
+import type { OrgId, ProjectId } from '@corates/shared/ids';
+import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
+import { requireProjectAccess } from '@/server/guards/requireProjectAccess';
+import { authMiddleware, type Session } from '@/server/middleware/auth';
 
-export const handleGet = async ({ request }: { request: Request }) => {
-  const session = await getSession(request, env);
-  if (!session) {
-    return Response.json(createDomainError(AUTH_ERRORS.REQUIRED), { status: 401 });
-  }
-
-  const url = new URL(request.url);
-  const targetPlan = url.searchParams.get('targetPlan');
-  if (!targetPlan) {
-    return Response.json(createValidationError('targetPlan', VALIDATION_ERRORS.FIELD_REQUIRED.code, null, 'required'), {
-      status: 400,
-    });
-  }
-
-  const db = createDb(env.DB);
-  try {
-    const result = await doTheWork(db, targetPlan);
-    return Response.json(result, { status: 200 });
-  } catch (err) {
-    return Response.json(
-      createDomainError(SYSTEM_ERRORS.DB_ERROR, {
-        operation: 'do_the_work',
-        originalError: (err as Error).message,
-      }),
-      { status: 500 },
-    );
-  }
+type HandlerArgs = {
+  request: Request;
+  params: { orgId: OrgId; projectId: ProjectId };
+  context: { db: Database; session: Session };
 };
 
-export const Route = createFileRoute('/api/example')({
-  server: { handlers: { GET: handleGet } },
+export const handleGet = async ({ params, context: { db, session } }: HandlerArgs) => {
+  const orgMembership = await requireOrgMembership(session, db, params.orgId);
+  if (!orgMembership.ok) return orgMembership.error.toResponse();
+
+  const access = await requireProjectAccess(session, db, params.orgId, params.projectId);
+  if (!access.ok) return access.error.toResponse();
+
+  // ... stream the file ...
+};
+
+export const Route = createFileRoute('/api/orgs/$orgId/projects/$projectId/example')({
+  server: {
+    middleware: [authMiddleware],
+    handlers: { GET: handleGet },
+  },
 });
 ```
 
-The `Route` export is what TanStack Start registers; handlers are named exports so tests can import them directly without routing through the framework.
+### Errors
+
+Return, don't throw. Guards hand back a `DomainErrorException`; return `result.error.toResponse()`. For anything else, return `Response.json(createDomainError(...), { status })`. The shared error schema (`@corates/shared`) defines every code and its `statusCode`.
+
+```ts
+try {
+  // ...
+} catch (err) {
+  if (isDomainError(err)) {
+    return Response.json(err, { status: err.statusCode });
+  }
+  return Response.json(
+    createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
+      operation: 'upload_pdf',
+      originalError: (err as Error).message,
+    }),
+    { status: 500 },
+  );
+}
+```
 
 ## Environment bindings
 
@@ -88,23 +188,9 @@ Do not read bindings off `process.env`. Types for `env` come from `packages/web/
 
 ## Authentication
 
-Use `getSession(request, env)` from `@corates/workers/auth`. It returns `null` when there is no valid session; otherwise it returns `{ session, user }`.
+Server functions and API routes that use `authMiddleware` get the session on the context. An API route without it reads the session itself with `getSession(request, env)` from `@corates/workers/auth`, which returns `null` when there is no valid session and `{ session, user }` otherwise.
 
-```ts
-const session = await getSession(request, env);
-if (!session) {
-  return Response.json(createDomainError(AUTH_ERRORS.REQUIRED), { status: 401 });
-}
-```
-
-For endpoints that need Better Auth functionality (organizations, sessions, subscriptions), go through `createAuth(env).api`:
-
-```ts
-import { createAuth } from '@corates/workers/auth-config';
-
-const orgApi = createAuth(env).api;
-const result = await orgApi.listOrganizations({ headers: request.headers });
-```
+For Better Auth functionality (sessions, subscriptions), go through `createAuth(env).api` in-process. Workspaces are the exception: read and write the `organization` and `member` tables with Drizzle through the workspace server functions, never the organization plugin's API.
 
 ## Authorization
 
@@ -158,33 +244,15 @@ The Better Auth endpoints under `/api/auth/*` use Better Auth's own per-IP limit
 
 ## Validation
 
-Light validation is done ad-hoc against typed body interfaces. Return a `createValidationError` response rather than throwing.
+Server functions declare their input with Zod in `.validator(...)`. Input that fails it is rejected before the handler runs, so the handler can trust `data`. Reuse shared schemas where they exist (`workspaceSlugSchema`, `workspaceNameSchema`, plan and step enums) so the client and server agree.
 
 ```ts
-interface CheckoutBody {
-  tier?: unknown;
-  interval?: unknown;
-}
-
-const body = (await request.json()) as CheckoutBody;
-
-if (typeof body.tier !== 'string') {
-  return Response.json(createValidationError('tier', VALIDATION_ERRORS.FIELD_REQUIRED.code, null, 'required'), {
-    status: 400,
-  });
-}
+.validator(z.object({ orgId: z.string(), targetPlan: z.string() }))
 ```
 
-For routes with richer schemas (admin grant/subscription endpoints are the current examples), use Zod:
+API routes parse their own bodies. Use Zod for anything broad or user-submitted, and return a `createValidationError` response rather than throwing:
 
 ```ts
-import { z } from 'zod';
-
-const BodySchema = z.object({
-  note: z.string().min(1).max(500),
-  expiresAt: z.coerce.date().optional(),
-});
-
 const parsed = BodySchema.safeParse(await request.json());
 if (!parsed.success) {
   const issue = parsed.error.issues[0];
@@ -194,8 +262,6 @@ if (!parsed.success) {
   );
 }
 ```
-
-Reserve Zod for routes where the schema is worth the weight -- admin mutations, public-facing contact forms, anywhere the body shape is broad or user-submitted.
 
 ## Database access
 
@@ -212,28 +278,7 @@ const row = await db.select().from(projects).where(eq(projects.id, projectId)).g
 
 ## Error responses
 
-Return, don't throw. The shared error schema (`@corates/shared`) defines every code and its `statusCode`.
-
-```ts
-import { createDomainError, isDomainError, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
-
-try {
-  // ...
-} catch (err) {
-  if (isDomainError(err)) {
-    return Response.json(err, { status: err.statusCode });
-  }
-  const sysErr = createDomainError(SYSTEM_ERRORS.INTERNAL_ERROR, {
-    operation: 'create_checkout_session',
-    originalError: (err as Error).message,
-  });
-  return Response.json(sysErr, { status: 500 });
-}
-```
-
-The frontend error helpers (`@/lib/error-utils`) understand this schema and surface user-friendly messages automatically.
-
-Server functions (`server/functions/*.functions.ts`) are the exception: throw a `DomainErrorException` (or call `throwDomainError`) instead of returning a Response, because a returned Response reaches the caller as resolved data. `src/start.ts` registers a serialization adapter so the thrown error arrives in the browser with its `code`, `statusCode` and `details`. Without it, TanStack Start serializes only the message, and the client cannot tell a provider-not-connected error from a crash.
+Server functions throw and API routes return; see the Errors subsections above. Either way the body is the shared domain error schema, which the frontend helpers (`@/lib/error-utils`) turn into user-friendly messages.
 
 ## Catch-all 404
 
@@ -241,27 +286,41 @@ Server functions (`server/functions/*.functions.ts`) are the exception: throw a 
 
 ## Testing
 
-Route handlers are named exports, so tests import them directly and synthesize a `Request`:
+Server tests follow the `*.server.test.ts` suffix and run under `vitest.server.config.ts` in workerd, with a real D1 (`pnpm --filter web test`).
+
+Server functions are tested through their `X.server.ts` logic, with a hand-built session and factory-seeded data:
 
 ```ts
-import { handlePost } from '../checkout';
+import { fetchUsage } from '@/server/functions/billing.server';
 
-const response = await handlePost({
-  request: new Request('https://x/api/billing/checkout', {
+const { org, owner } = await buildOrg();
+const session = {
+  user: { id: owner.id, email: owner.email, name: owner.name },
+  session: { id: 's', userId: owner.id },
+} as Session;
+const usage = await fetchUsage(createDb(env.DB), session, org.id);
+```
+
+API route handlers are named exports, so tests import them and synthesize a `Request`:
+
+```ts
+import { handlePost } from '../client-logs';
+
+const res = await handlePost({
+  request: new Request('http://localhost/api/client-logs', {
     method: 'POST',
-    body: JSON.stringify({ tier: 'pro', interval: 'monthly' }),
-    headers: { 'content-type': 'application/json', cookie: 'session=...' },
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ entries: [{ level: 'info', message: 'client.example', route: '/' }] }),
   }),
 });
 ```
 
-Server-side tests live under `__tests__/` adjacent to the route and follow the `*.server.test.ts` suffix (picked up by `pnpm --filter web test`).
-
 ## Don'ts
 
 - Don't read bindings from `process.env` -- use `import { env } from 'cloudflare:workers'`.
-- Don't throw errors across the route boundary -- catch and return a JSON response with the correct status.
+- Don't add an API route for something a server function can do.
+- Don't return a Response from a server function, or throw across an API route boundary.
 - Don't bypass Drizzle by issuing raw SQL against `env.DB`.
 - Don't import from `drizzle-orm/d1` directly in routes; use `@corates/db/client`.
-- Don't put shared authz or resolver logic in a route file -- move it to `@corates/workers`.
+- Don't put shared authz or resolver logic in a route or `.functions.ts` file -- move it to `@corates/workers` or the `.server.ts` file.
 - Don't add Hono to `packages/web`. The main app is TanStack Start end-to-end.

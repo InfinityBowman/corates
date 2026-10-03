@@ -82,14 +82,18 @@ export const workspaceNameSchema = z
  * fallback.
  */
 export function slugifyWorkspaceName(input: string): string {
-  return input
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, WORKSPACE_SLUG_MAX)
-    .replace(/-+$/, '');
+  return (
+    input
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      // "Jacob's Lab" reads as jacobs-lab, not jacob-s-lab.
+      .replace(/['\u2019]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, WORKSPACE_SLUG_MAX)
+      .replace(/-+$/, '')
+  );
 }
 
 /**

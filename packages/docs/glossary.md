@@ -300,9 +300,9 @@ Stripe subscription providing ongoing access:
 - Org-scoped (one per organization)
 - Has a `planId` (team, lab, enterprise)
 - Synced via Stripe webhooks
-- Stored in `orgSubscriptions` table
+- Stored in the `subscription` table, `referenceId` = the workspace (org) id
 
-**Related:** `packages/web/src/routes/api/billing/`
+**Related:** `packages/web/src/server/functions/billing.functions.ts`, `packages/web/src/routes/api/auth/stripe/webhook.ts`
 
 ### Entitlement
 
@@ -314,7 +314,7 @@ if (!plan.entitlements['project.create']) {
 }
 ```
 
-**Related:** requireEntitlement middleware
+**Related:** `requireEntitlement` guard (`packages/web/src/server/guards/`)
 
 ### Quota
 
@@ -327,7 +327,7 @@ if (!isUnlimitedQuota(maxProjects) && currentCount >= maxProjects) {
 }
 ```
 
-**Related:** requireQuota middleware, isUnlimitedQuota helper
+**Related:** `requireQuota` guard, `isUnlimitedQuota` helper
 
 ### Webhook Ledger
 
@@ -337,7 +337,7 @@ Idempotency tracking for Stripe webhooks:
 - Prevents duplicate processing
 - Two-phase verification pattern (verify signature, then check ledger)
 
-**Related:** `packages/web/src/routes/api/billing/*`
+**Related:** `stripe_event_ledger` table, `packages/web/src/routes/api/auth/stripe/webhook.ts`
 
 ### Billing Resolver
 

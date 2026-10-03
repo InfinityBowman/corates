@@ -102,7 +102,7 @@ The Stripe Customer Portal allows users to manage their subscriptions, update pa
 
 6. **Save Configuration**
 
-The portal URL is generated dynamically via the `/api/billing/portal` endpoint.
+The portal URL is generated per visit by the `openBillingPortal` server function (`billing.functions.ts`), owner only, and returns the user to that workspace's billing page.
 
 ## 6. Reconcile sweep
 
