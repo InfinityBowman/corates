@@ -115,11 +115,21 @@ describe('createCheckout', () => {
     expect((result as { url: string }).url).toBe('https://checkout.stripe/test');
 
     const callArg = upgradeSubscriptionMock.mock.calls[0][0] as {
-      body: { plan: string; annual: boolean; referenceId: string };
+      body: {
+        plan: string;
+        annual: boolean;
+        referenceId: string;
+        successUrl: string;
+        cancelUrl: string;
+        returnUrl: string;
+      };
     };
     expect(callArg.body.plan).toBe('team');
     expect(callArg.body.annual).toBe(false);
     expect(callArg.body.referenceId).toBe(org.id);
+    expect(callArg.body.successUrl).toMatch(/\/settings\/billing\?success=true$/);
+    expect(callArg.body.cancelUrl).toMatch(/\/settings\/billing\?canceled=true$/);
+    expect(callArg.body.returnUrl).toMatch(/\/settings\/billing\?success=true$/);
   });
 
   it('propagates error when upgradeSubscription throws', async () => {
