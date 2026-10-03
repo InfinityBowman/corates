@@ -125,8 +125,8 @@ function GeneralForm({ workspace }: { workspace: Workspace }) {
             <Alert variant='warning'>
               <TriangleAlertIcon />
               <AlertDescription>
-                Links to this workspace&apos;s home and settings will stop working. Links to
-                projects keep working and open at the new URL.
+                Links to this workspace&apos;s settings pages will stop working. Links to projects
+                keep working and open at the new URL.
               </AlertDescription>
             </Alert>
           </div>

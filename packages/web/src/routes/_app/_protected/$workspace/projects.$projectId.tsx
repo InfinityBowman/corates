@@ -13,6 +13,7 @@ import { PageLoader } from '@/components/ui/spinner';
 import { useProjectOrgId } from '@/hooks/useProjectOrgId';
 import { useWorkspaces } from '@/hooks/useWorkspaces';
 import { useRedirectIfCurrent } from '@/hooks/useRedirectIfCurrent';
+import { clientLogger } from '@/lib/clientLogger';
 
 export const Route = createFileRoute('/_app/_protected/$workspace/projects/$projectId')({
   component: ProjectLayout,
@@ -33,6 +34,7 @@ function ProjectLayout() {
 
   useEffect(() => {
     if (!wrongSlug) return;
+    clientLogger.info('client.workspace.slug_corrected');
     redirect(`${pathname.replace(/^\/[^/]+/, `/${owningSlug}`)}${searchStr}`);
   }, [wrongSlug, owningSlug, pathname, searchStr]); // eslint-disable-line react-hooks/exhaustive-deps
 

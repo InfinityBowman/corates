@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
-import { useCurrentWorkspace } from '@/hooks/useWorkspaces';
+import { useOwnedWorkspace } from '@/hooks/useWorkspaces';
 import { getRestrictionCopy } from './ContactPrompt';
 
 interface NewProjectButtonProps {
@@ -17,7 +17,11 @@ interface NewProjectButtonProps {
 }
 
 export function useProjectCreateRestriction() {
-  const { hasEntitlement, hasQuota, quotas, subscription, isLoading } = useSubscription();
+  // The plan that counts is the one on the workspace the project would go in.
+  const { workspace } = useOwnedWorkspace();
+  const { hasEntitlement, hasQuota, quotas, subscription, isLoading } = useSubscription(
+    workspace?.id ?? null,
+  );
   // Server-computed count the project cap is enforced against: on Free that is the
   // projects the user created, not projects shared with them from other workspaces.
   const projectCount = subscription.projectCount;
@@ -35,10 +39,10 @@ export function useProjectCreateRestriction() {
 export function NewProjectButton({ onClick, variant = 'default' }: NewProjectButtonProps) {
   const isOnline = useOnlineStatus();
   const { restrictionType, projectCount, quotaLimit } = useProjectCreateRestriction();
-  const { workspace } = useCurrentWorkspace();
+  const { workspace, isLoading } = useOwnedWorkspace();
 
-  // Only the workspace owner creates projects in it.
-  if (workspace && workspace.role !== 'owner') return null;
+  // New projects go in the workspace the user owns; without one there is nowhere to put them.
+  if (!isLoading && !workspace) return null;
 
   const button = (
     <Button

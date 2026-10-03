@@ -3,7 +3,7 @@
 import { Link } from '@tanstack/react-router';
 import { Badge } from '@/components/ui/badge';
 import { useSubscription } from '@/hooks/useSubscription';
-import { useCurrentWorkspace } from '@/hooks/useWorkspaces';
+import { useOwnedWorkspace } from '@/hooks/useWorkspaces';
 import { workspaceSettingsPathOrLegacy } from '@/lib/workspacePaths';
 
 const PAYMENT_ISSUE_STATUSES = ['past_due', 'incomplete', 'unpaid'];
@@ -15,9 +15,10 @@ function getDaysRemaining(endTimestamp: number | null) {
 }
 
 export function PlanBadge() {
+  // The user's own plan, whichever workspace's project is open.
+  const { workspace } = useOwnedWorkspace();
   const { subscription, tier, tierInfo, status, isLoading, subscriptionFetchFailed } =
-    useSubscription();
-  const { workspace } = useCurrentWorkspace();
+    useSubscription(workspace?.id ?? null);
 
   if (isLoading || subscriptionFetchFailed) return null;
 

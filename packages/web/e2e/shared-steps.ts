@@ -6,13 +6,6 @@ import path from 'node:path';
 import { expect, type Page, type BrowserContext } from '@playwright/test';
 import { loginAs, addProjectMember, type DualReviewerScenario } from './helpers';
 
-/**
- * A signed-in user's home: /<workspace-slug>. /dashboard redirects there, so
- * assert on the destination rather than the hop.
- */
-export const WORKSPACE_HOME_URL =
-  /^https?:\/\/[^/]+\/(?!(?:dashboard|signin|signup|complete-profile|verify-email|admin)(?:[/?]|$))[a-z0-9-]+\/?(\?.*)?$/;
-
 /** Click every radio on the AMSTAR2 checklist editor matching the given answer (e.g. "Yes", "No"). */
 export async function answerAllAMSTAR2(page: Page, answer: 'Yes' | 'No' | 'Partial Yes') {
   const radios = page.getByRole('radio', { name: answer });

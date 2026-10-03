@@ -12,5 +12,7 @@ export const Route = createFileRoute('/_app/_protected/projects/$')({
 
 function LegacyProjectRedirect() {
   const { _splat } = Route.useParams();
-  return <WorkspaceRedirect toPath={slug => `/${slug}/projects/${_splat}`} />;
+  return (
+    <WorkspaceRedirect toPath={slug => `/${slug}/projects/${_splat}`} from='old_project_link' />
+  );
 }

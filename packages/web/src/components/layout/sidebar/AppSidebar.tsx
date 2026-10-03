@@ -21,8 +21,7 @@ import { applyLocalMutation } from '@/project/localWrites';
 import { LOCAL_PROJECT_ID } from '@/project/localProject';
 import { db } from '@/primitives/db';
 import { useMyProjectsList } from '@/hooks/useMyProjectsList';
-import { useCurrentWorkspace } from '@/hooks/useWorkspaces';
-import { workspaceHomePath } from '@/lib/workspacePaths';
+import { useOwnedWorkspace, useWorkspaces } from '@/hooks/useWorkspaces';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { APP_NAME } from '@/config/app';
 import { Badge } from '@/components/ui/badge';
@@ -93,9 +92,12 @@ export function AppSidebar({ onClose, closeLabel, closeIcon }: AppSidebarProps) 
   const { projects: allProjects, isLoading: isProjectsLoading } = useMyProjectsList({
     enabled: isLoggedIn,
   });
-  const { workspace } = useCurrentWorkspace();
-  const projects = workspace ? allProjects.filter(p => p.orgId === workspace.id) : [];
-  const homePath = workspace ? workspaceHomePath(workspace.slug) : '/dashboard';
+  // Every project the user is on, whichever workspace holds it; each links
+  // under its own workspace's slug.
+  const { workspaces } = useWorkspaces();
+  const { workspace: owned } = useOwnedWorkspace();
+  const slugById = new Map<string, string>(workspaces.map(w => [w.id, w.slug]));
+  const projects = allProjects.filter(p => slugById.has(p.orgId));
 
   const localStudies = useAllStudies(LOCAL_PROJECT_ID);
   const checklists = localStudies
@@ -115,7 +117,7 @@ export function AppSidebar({ onClose, closeLabel, closeIcon }: AppSidebarProps) 
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
-  const isHome = pathname === '/' || pathname === '/dashboard' || pathname === homePath;
+  const isHome = pathname === '/' || pathname === '/dashboard';
 
   async function confirmDeleteChecklist() {
     if (!pendingDeleteId) return;
@@ -153,7 +155,7 @@ export function AppSidebar({ onClose, closeLabel, closeIcon }: AppSidebarProps) 
 
       <div className='flex-1 overflow-x-hidden overflow-y-auto px-2 pb-4'>
         <div className='mb-4 flex flex-col gap-0.5'>
-          <Link to={homePath as string} className={navRowClass(isHome)}>
+          <Link to='/dashboard' className={navRowClass(isHome)}>
             <HomeIcon className='size-4 shrink-0' />
             <span className='truncate'>Home</span>
           </Link>
@@ -165,8 +167,8 @@ export function AppSidebar({ onClose, closeLabel, closeIcon }: AppSidebarProps) 
             <GroupHeader
               label='Projects'
               addLabel='New project'
-              // Only the workspace owner creates projects in it.
-              onAdd={workspace?.role === 'owner' ? () => setCreateModalOpen(true) : undefined}
+              // New projects go in the user's own workspace.
+              onAdd={owned ? () => setCreateModalOpen(true) : undefined}
             />
             <div className='flex flex-col gap-0.5'>
               {projects.length > 0 ?
@@ -174,7 +176,7 @@ export function AppSidebar({ onClose, closeLabel, closeIcon }: AppSidebarProps) 
                   <ProjectRow
                     key={project.id}
                     project={project}
-                    workspaceSlug={workspace!.slug}
+                    workspaceSlug={slugById.get(project.orgId)!}
                     currentPath={pathname}
                   />
                 ))

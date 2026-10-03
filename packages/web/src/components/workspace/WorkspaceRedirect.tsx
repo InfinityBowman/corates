@@ -9,12 +9,16 @@ import { useLocation } from '@tanstack/react-router';
 import { PageLoader } from '@/components/ui/spinner';
 import { pickDefaultWorkspace, useWorkspaces } from '@/hooks/useWorkspaces';
 import { useRedirectIfCurrent } from '@/hooks/useRedirectIfCurrent';
+import { clientLogger } from '@/lib/clientLogger';
 
 export function WorkspaceRedirect({
   toPath,
+  from,
   fallback = null,
 }: {
   toPath: (slug: string) => string;
+  /** Which kind of old link brought the user here, so we can tell when they stop arriving. */
+  from: 'old_project_link' | 'old_settings_link';
   /** Rendered when the user has no workspace at all, which signup normally prevents. */
   fallback?: React.ReactNode;
 }) {
@@ -25,7 +29,9 @@ export function WorkspaceRedirect({
   const destination = target ? `${toPath(target.slug)}${searchStr}` : null;
 
   useEffect(() => {
-    if (destination) redirect(destination);
+    if (!destination) return;
+    clientLogger.info('client.workspace.old_link', { kind: from });
+    redirect(destination);
   }, [destination]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!isLoading && !target) return fallback;
