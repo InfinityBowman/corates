@@ -19,7 +19,7 @@ flowchart TD
         subgraph Protected["_app/_protected (auth required)"]
             account["/settings/account/*"]
             admin["/admin/*"]
-            createorg["/orgs/new"]
+            createorg["/create-workspace"]
             subgraph Workspace["/:workspace layout"]
                 home["/:workspace"]
                 projectview["/:workspace/projects/:projectId"]
@@ -62,16 +62,16 @@ TanStack file-based conventions: an underscore prefix (`_app`, `_auth`) denotes 
 
 ## Authenticated routes (`_app/_protected`)
 
-| Route                                                                      | Purpose                                        |
-| -------------------------------------------------------------------------- | ---------------------------------------------- |
-| `/:workspace`                                                              | Workspace home: its projects, your invitations |
-| `/:workspace/projects/:projectId`                                          | Project overview (studies, members)            |
-| `/:workspace/projects/:projectId/studies/:studyId/checklists/:checklistId` | Checklist assessment                           |
-| `/:workspace/projects/:projectId/studies/:studyId/reconcile/:c1Id/:c2Id`   | Reconcile two reviewers' checklists            |
-| `/:workspace/settings/billing`, `/:workspace/settings/plans`               | Workspace billing (owner only in the sidebar)  |
-| `/settings/account/profile`, `security`, `preferences`, `integrations`     | Account settings, per person, outside any slug |
-| `/orgs/new`                                                                | Create a new workspace                         |
-| `/admin/*`                                                                 | Admin-only dashboards and tools                |
+| Route                                                                      | Purpose                                                 |
+| -------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `/:workspace`                                                              | Workspace home: its projects, your invitations          |
+| `/:workspace/projects/:projectId`                                          | Project overview (studies, members)                     |
+| `/:workspace/projects/:projectId/studies/:studyId/checklists/:checklistId` | Checklist assessment                                    |
+| `/:workspace/projects/:projectId/studies/:studyId/reconcile/:c1Id/:c2Id`   | Reconcile two reviewers' checklists                     |
+| `/:workspace/settings/general`, `members`, `billing`, `plans`              | Workspace settings; non-owners get an owner-only notice |
+| `/settings/account/profile`, `security`, `preferences`, `integrations`     | Account settings, per person, outside any slug          |
+| `/create-workspace`                                                        | Create a new workspace (from the switcher)              |
+| `/admin/*`                                                                 | Admin-only dashboards and tools                         |
 
 ## Local-only routes
 

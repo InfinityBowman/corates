@@ -120,16 +120,18 @@ For mutations that affect billing, add `requireOrgWriteAccess` and / or `require
 
 Everything inside a workspace lives under its slug, the first path segment (the Linear model). Account settings, which belong to the person, stay outside it. See [Frontend Route Structure](/architecture/diagrams/05-frontend-routes) for the full table, the redirects that keep old URLs working, and why a wrong slug on a project link is corrected rather than rejected.
 
-| Route pattern                                                              | Purpose                   |
-| -------------------------------------------------------------------------- | ------------------------- |
-| `/:workspace`                                                              | Workspace home            |
-| `/:workspace/projects/:projectId`                                          | Project overview          |
-| `/:workspace/projects/:projectId/studies/:studyId/checklists/:checklistId` | Checklist editor          |
-| `/:workspace/projects/:projectId/studies/:studyId/reconcile/:c1Id/:c2Id`   | Checklist reconciliation  |
-| `/:workspace/settings/*`                                                   | Workspace settings, owner |
-| `/settings/account/*`                                                      | Account settings          |
-| `/orgs/new`                                                                | Create a workspace        |
-| `/admin/*`                                                                 | Admin-only                |
+| Route pattern                                                              | Purpose                                |
+| -------------------------------------------------------------------------- | -------------------------------------- |
+| `/:workspace`                                                              | Workspace home                         |
+| `/:workspace/projects/:projectId`                                          | Project overview                       |
+| `/:workspace/projects/:projectId/studies/:studyId/checklists/:checklistId` | Checklist editor                       |
+| `/:workspace/projects/:projectId/studies/:studyId/reconcile/:c1Id/:c2Id`   | Checklist reconciliation               |
+| `/:workspace/settings/general`, `members`, `billing`, `plans`              | Workspace settings, owner only         |
+| `/settings/account/*`                                                      | Account settings                       |
+| `/create-workspace`                                                        | Create a workspace (from the switcher) |
+| `/admin/*`                                                                 | Admin-only                             |
+
+The top-left sidebar menu (`AccountMenu`) is the workspace switcher: it shows the current workspace's name and lists the user's workspaces, Create workspace, and, for the owner, Workspace settings and Members. General edits the name and URL (`updateWorkspace`); Members shows seat usage, the people in the workspace with their projects, pending invitations with Cancel, and Remove (`removeWorkspaceMember`). The name and URL inputs share `useWorkspaceDraft` and `WorkspaceUrlField`, which checks availability as the user types.
 
 Build in-workspace links with `@/lib/workspacePaths` (`workspaceHomePath`, `projectPath`, `workspaceSettingsPath`); inside a project, use `projectPath` and the path builders on `useProjectContext()`.
 

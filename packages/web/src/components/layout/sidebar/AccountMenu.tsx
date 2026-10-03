@@ -1,20 +1,23 @@
 /**
- * AccountMenu - top-left sidebar trigger: logo plus the user's name, opening
- * the account and app-level actions. Becomes the workspace switcher once
- * workspaces exist. Signed out it is a plain link to Home.
+ * AccountMenu - top-left sidebar trigger and workspace switcher, as in Linear:
+ * the current workspace's name, opening the user's workspaces, workspace and
+ * account settings, and sign out. Signed out it is a plain link to Home.
  */
 
 import { useState } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
-import { ChevronDownIcon } from 'lucide-react';
+import { CheckIcon, ChevronDownIcon, PlusIcon } from 'lucide-react';
 import { useAuthStore, selectUser, selectIsAuthLoading } from '@/stores/authStore';
 import { useFeedbackStore } from '@/stores/feedbackStore';
 import { useAdminStore } from '@/stores/adminStore';
 import { APP_NAME } from '@/config/app';
 import { PlanBadge } from '@/components/billing/PlanBadge';
+import { useCurrentWorkspace, useWorkspaces } from '@/hooks/useWorkspaces';
+import { workspaceHomePath, workspaceSettingsPath } from '@/lib/workspacePaths';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -37,11 +40,13 @@ export function AccountMenu() {
   const openFeedback = useFeedbackStore(s => s.open);
   const isAdmin = useAdminStore(s => s.isAdmin);
   const navigate = useNavigate();
+  const { workspaces } = useWorkspaces();
+  const { workspace: current } = useCurrentWorkspace();
 
   // Anti-flash: AppLayout caches the name so it shows while the session loads
   const [storedName] = useState(() => localStorage.getItem('userName'));
   const showUser = user || (isAuthLoading && !!storedName);
-  const displayName = user?.name || storedName || 'Loading...';
+  const displayName = current?.name || user?.name || storedName || 'Loading...';
 
   async function handleSignOut() {
     try {
@@ -82,11 +87,42 @@ export function AccountMenu() {
           <PlanBadge />
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className='text-muted-foreground text-xs font-normal'>
+            Workspaces
+          </DropdownMenuLabel>
+          {workspaces.map(workspace => (
+            <DropdownMenuItem key={workspace.id} asChild>
+              <Link to={workspaceHomePath(workspace.slug) as string}>
+                <span className='min-w-0 flex-1 truncate'>{workspace.name}</span>
+                {workspace.id === current?.id && (
+                  <CheckIcon className='text-muted-foreground size-4' aria-label='Current' />
+                )}
+              </Link>
+            </DropdownMenuItem>
+          ))}
+          <DropdownMenuItem asChild>
+            <Link to='/create-workspace'>
+              <PlusIcon className='text-muted-foreground size-4' />
+              Create workspace
+            </Link>
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        {current?.role === 'owner' && (
+          <>
+            <DropdownMenuItem asChild>
+              <Link to={workspaceSettingsPath(current.slug, 'general') as string}>
+                Workspace settings
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to={workspaceSettingsPath(current.slug, 'members') as string}>Members</Link>
+            </DropdownMenuItem>
+          </>
+        )}
         <DropdownMenuItem asChild>
-          <Link to='/settings/account/profile'>Profile</Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link to='/settings'>Settings</Link>
+          <Link to='/settings/account/profile'>Account settings</Link>
         </DropdownMenuItem>
         {isAdmin && (
           <DropdownMenuItem asChild>

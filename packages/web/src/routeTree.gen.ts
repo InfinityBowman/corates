@@ -43,6 +43,7 @@ import { Route as ResourcesRobinsIV1VsV2RouteImport } from './routes/resources/r
 import { Route as SecurityDisclosureRouteImport } from './routes/security_.disclosure'
 import { Route as AppProtectedWorkspaceRouteImport } from './routes/_app/_protected/$workspace'
 import { Route as AppProtectedAdminRouteImport } from './routes/_app/_protected/admin'
+import { Route as AppProtectedCreateWorkspaceRouteImport } from './routes/_app/_protected/create-workspace'
 import { Route as AppProtectedSettingsRouteImport } from './routes/_app/_protected/settings'
 import { Route as AppChecklistIndexRouteImport } from './routes/_app/checklist.index'
 import { Route as AppChecklistChecklistIdRouteImport } from './routes/_app/checklist.$checklistId'
@@ -67,7 +68,6 @@ import { Route as AppProtectedAdminIndexRouteImport } from './routes/_app/_prote
 import { Route as AppProtectedAdminAnnouncementsRouteImport } from './routes/_app/_protected/admin/announcements'
 import { Route as AppProtectedAdminDatabaseRouteImport } from './routes/_app/_protected/admin/database'
 import { Route as AppProtectedAdminStorageRouteImport } from './routes/_app/_protected/admin/storage'
-import { Route as AppProtectedOrgsNewRouteImport } from './routes/_app/_protected/orgs.new'
 import { Route as AppProtectedProjectsSplatRouteImport } from './routes/_app/_protected/projects.$'
 import { Route as AppProtectedSettingsIndexRouteImport } from './routes/_app/_protected/settings/index'
 import { Route as AppProtectedSettingsSplatRouteImport } from './routes/_app/_protected/settings/$'
@@ -76,6 +76,8 @@ import { Route as ApiUsersAvatarUserIdRouteImport } from './routes/api/users/ava
 import { Route as AppProtectedWorkspaceProjectsProjectIdRouteImport } from './routes/_app/_protected/$workspace/projects.$projectId'
 import { Route as AppProtectedWorkspaceSettingsIndexRouteImport } from './routes/_app/_protected/$workspace/settings/index'
 import { Route as AppProtectedWorkspaceSettingsBillingRouteImport } from './routes/_app/_protected/$workspace/settings/billing'
+import { Route as AppProtectedWorkspaceSettingsGeneralRouteImport } from './routes/_app/_protected/$workspace/settings/general'
+import { Route as AppProtectedWorkspaceSettingsMembersRouteImport } from './routes/_app/_protected/$workspace/settings/members'
 import { Route as AppProtectedWorkspaceSettingsPlansRouteImport } from './routes/_app/_protected/$workspace/settings/plans'
 import { Route as AppProtectedAdminBillingLedgerRouteImport } from './routes/_app/_protected/admin/billing.ledger'
 import { Route as AppProtectedAdminBillingStripeToolsRouteImport } from './routes/_app/_protected/admin/billing.stripe-tools'
@@ -262,6 +264,12 @@ const AppProtectedAdminRoute = AppProtectedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AppProtectedRoute,
 } as any)
+const AppProtectedCreateWorkspaceRoute =
+  AppProtectedCreateWorkspaceRouteImport.update({
+    id: '/create-workspace',
+    path: '/create-workspace',
+    getParentRoute: () => AppProtectedRoute,
+  } as any)
 const AppProtectedSettingsRoute = AppProtectedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -389,11 +397,6 @@ const AppProtectedAdminStorageRoute =
     path: '/storage',
     getParentRoute: () => AppProtectedAdminRoute,
   } as any)
-const AppProtectedOrgsNewRoute = AppProtectedOrgsNewRouteImport.update({
-  id: '/orgs/new',
-  path: '/orgs/new',
-  getParentRoute: () => AppProtectedRoute,
-} as any)
 const AppProtectedProjectsSplatRoute =
   AppProtectedProjectsSplatRouteImport.update({
     id: '/projects/$',
@@ -438,6 +441,18 @@ const AppProtectedWorkspaceSettingsBillingRoute =
   AppProtectedWorkspaceSettingsBillingRouteImport.update({
     id: '/billing',
     path: '/billing',
+    getParentRoute: () => AppProtectedWorkspaceSettingsRoute,
+  } as any)
+const AppProtectedWorkspaceSettingsGeneralRoute =
+  AppProtectedWorkspaceSettingsGeneralRouteImport.update({
+    id: '/general',
+    path: '/general',
+    getParentRoute: () => AppProtectedWorkspaceSettingsRoute,
+  } as any)
+const AppProtectedWorkspaceSettingsMembersRoute =
+  AppProtectedWorkspaceSettingsMembersRouteImport.update({
+    id: '/members',
+    path: '/members',
     getParentRoute: () => AppProtectedWorkspaceSettingsRoute,
   } as any)
 const AppProtectedWorkspaceSettingsPlansRoute =
@@ -585,6 +600,7 @@ export interface FileRoutesByFullPath {
   '/resources/': typeof ResourcesIndexRoute
   '/$workspace': typeof AppProtectedWorkspaceRouteWithChildren
   '/admin': typeof AppProtectedAdminRouteWithChildren
+  '/create-workspace': typeof AppProtectedCreateWorkspaceRoute
   '/settings': typeof AppProtectedSettingsRouteWithChildren
   '/checklist/$checklistId': typeof AppChecklistChecklistIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -607,7 +623,6 @@ export interface FileRoutesByFullPath {
   '/admin/announcements': typeof AppProtectedAdminAnnouncementsRoute
   '/admin/database': typeof AppProtectedAdminDatabaseRoute
   '/admin/storage': typeof AppProtectedAdminStorageRoute
-  '/orgs/new': typeof AppProtectedOrgsNewRoute
   '/projects/$': typeof AppProtectedProjectsSplatRoute
   '/settings/$': typeof AppProtectedSettingsSplatRoute
   '/api/auth/stripe/webhook': typeof ApiAuthStripeWebhookRoute
@@ -617,6 +632,8 @@ export interface FileRoutesByFullPath {
   '/settings/': typeof AppProtectedSettingsIndexRoute
   '/$workspace/projects/$projectId': typeof AppProtectedWorkspaceProjectsProjectIdRouteWithChildren
   '/$workspace/settings/billing': typeof AppProtectedWorkspaceSettingsBillingRoute
+  '/$workspace/settings/general': typeof AppProtectedWorkspaceSettingsGeneralRoute
+  '/$workspace/settings/members': typeof AppProtectedWorkspaceSettingsMembersRoute
   '/$workspace/settings/plans': typeof AppProtectedWorkspaceSettingsPlansRoute
   '/admin/billing/ledger': typeof AppProtectedAdminBillingLedgerRoute
   '/admin/billing/stripe-tools': typeof AppProtectedAdminBillingStripeToolsRoute
@@ -666,6 +683,7 @@ export interface FileRoutesByTo {
   '/resources/robins-i-v1-vs-v2': typeof ResourcesRobinsIV1VsV2Route
   '/security/disclosure': typeof SecurityDisclosureRoute
   '/resources': typeof ResourcesIndexRoute
+  '/create-workspace': typeof AppProtectedCreateWorkspaceRoute
   '/checklist/$checklistId': typeof AppChecklistChecklistIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
@@ -686,7 +704,6 @@ export interface FileRoutesByTo {
   '/admin/announcements': typeof AppProtectedAdminAnnouncementsRoute
   '/admin/database': typeof AppProtectedAdminDatabaseRoute
   '/admin/storage': typeof AppProtectedAdminStorageRoute
-  '/orgs/new': typeof AppProtectedOrgsNewRoute
   '/projects/$': typeof AppProtectedProjectsSplatRoute
   '/settings/$': typeof AppProtectedSettingsSplatRoute
   '/api/auth/stripe/webhook': typeof ApiAuthStripeWebhookRoute
@@ -696,6 +713,8 @@ export interface FileRoutesByTo {
   '/settings': typeof AppProtectedSettingsIndexRoute
   '/$workspace/projects/$projectId': typeof AppProtectedWorkspaceProjectsProjectIdRouteWithChildren
   '/$workspace/settings/billing': typeof AppProtectedWorkspaceSettingsBillingRoute
+  '/$workspace/settings/general': typeof AppProtectedWorkspaceSettingsGeneralRoute
+  '/$workspace/settings/members': typeof AppProtectedWorkspaceSettingsMembersRoute
   '/$workspace/settings/plans': typeof AppProtectedWorkspaceSettingsPlansRoute
   '/admin/billing/ledger': typeof AppProtectedAdminBillingLedgerRoute
   '/admin/billing/stripe-tools': typeof AppProtectedAdminBillingStripeToolsRoute
@@ -752,6 +771,7 @@ export interface FileRoutesById {
   '/resources/': typeof ResourcesIndexRoute
   '/_app/_protected/$workspace': typeof AppProtectedWorkspaceRouteWithChildren
   '/_app/_protected/admin': typeof AppProtectedAdminRouteWithChildren
+  '/_app/_protected/create-workspace': typeof AppProtectedCreateWorkspaceRoute
   '/_app/_protected/settings': typeof AppProtectedSettingsRouteWithChildren
   '/_app/checklist/$checklistId': typeof AppChecklistChecklistIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -774,7 +794,6 @@ export interface FileRoutesById {
   '/_app/_protected/admin/announcements': typeof AppProtectedAdminAnnouncementsRoute
   '/_app/_protected/admin/database': typeof AppProtectedAdminDatabaseRoute
   '/_app/_protected/admin/storage': typeof AppProtectedAdminStorageRoute
-  '/_app/_protected/orgs/new': typeof AppProtectedOrgsNewRoute
   '/_app/_protected/projects/$': typeof AppProtectedProjectsSplatRoute
   '/_app/_protected/settings/$': typeof AppProtectedSettingsSplatRoute
   '/api/auth/stripe/webhook': typeof ApiAuthStripeWebhookRoute
@@ -784,6 +803,8 @@ export interface FileRoutesById {
   '/_app/_protected/settings/': typeof AppProtectedSettingsIndexRoute
   '/_app/_protected/$workspace/projects/$projectId': typeof AppProtectedWorkspaceProjectsProjectIdRouteWithChildren
   '/_app/_protected/$workspace/settings/billing': typeof AppProtectedWorkspaceSettingsBillingRoute
+  '/_app/_protected/$workspace/settings/general': typeof AppProtectedWorkspaceSettingsGeneralRoute
+  '/_app/_protected/$workspace/settings/members': typeof AppProtectedWorkspaceSettingsMembersRoute
   '/_app/_protected/$workspace/settings/plans': typeof AppProtectedWorkspaceSettingsPlansRoute
   '/_app/_protected/admin/billing/ledger': typeof AppProtectedAdminBillingLedgerRoute
   '/_app/_protected/admin/billing/stripe-tools': typeof AppProtectedAdminBillingStripeToolsRoute
@@ -838,6 +859,7 @@ export interface FileRouteTypes {
     | '/resources/'
     | '/$workspace'
     | '/admin'
+    | '/create-workspace'
     | '/settings'
     | '/checklist/$checklistId'
     | '/api/auth/$'
@@ -860,7 +882,6 @@ export interface FileRouteTypes {
     | '/admin/announcements'
     | '/admin/database'
     | '/admin/storage'
-    | '/orgs/new'
     | '/projects/$'
     | '/settings/$'
     | '/api/auth/stripe/webhook'
@@ -870,6 +891,8 @@ export interface FileRouteTypes {
     | '/settings/'
     | '/$workspace/projects/$projectId'
     | '/$workspace/settings/billing'
+    | '/$workspace/settings/general'
+    | '/$workspace/settings/members'
     | '/$workspace/settings/plans'
     | '/admin/billing/ledger'
     | '/admin/billing/stripe-tools'
@@ -919,6 +942,7 @@ export interface FileRouteTypes {
     | '/resources/robins-i-v1-vs-v2'
     | '/security/disclosure'
     | '/resources'
+    | '/create-workspace'
     | '/checklist/$checklistId'
     | '/api/auth/$'
     | '/api/auth/session'
@@ -939,7 +963,6 @@ export interface FileRouteTypes {
     | '/admin/announcements'
     | '/admin/database'
     | '/admin/storage'
-    | '/orgs/new'
     | '/projects/$'
     | '/settings/$'
     | '/api/auth/stripe/webhook'
@@ -949,6 +972,8 @@ export interface FileRouteTypes {
     | '/settings'
     | '/$workspace/projects/$projectId'
     | '/$workspace/settings/billing'
+    | '/$workspace/settings/general'
+    | '/$workspace/settings/members'
     | '/$workspace/settings/plans'
     | '/admin/billing/ledger'
     | '/admin/billing/stripe-tools'
@@ -1004,6 +1029,7 @@ export interface FileRouteTypes {
     | '/resources/'
     | '/_app/_protected/$workspace'
     | '/_app/_protected/admin'
+    | '/_app/_protected/create-workspace'
     | '/_app/_protected/settings'
     | '/_app/checklist/$checklistId'
     | '/api/auth/$'
@@ -1026,7 +1052,6 @@ export interface FileRouteTypes {
     | '/_app/_protected/admin/announcements'
     | '/_app/_protected/admin/database'
     | '/_app/_protected/admin/storage'
-    | '/_app/_protected/orgs/new'
     | '/_app/_protected/projects/$'
     | '/_app/_protected/settings/$'
     | '/api/auth/stripe/webhook'
@@ -1036,6 +1061,8 @@ export interface FileRouteTypes {
     | '/_app/_protected/settings/'
     | '/_app/_protected/$workspace/projects/$projectId'
     | '/_app/_protected/$workspace/settings/billing'
+    | '/_app/_protected/$workspace/settings/general'
+    | '/_app/_protected/$workspace/settings/members'
     | '/_app/_protected/$workspace/settings/plans'
     | '/_app/_protected/admin/billing/ledger'
     | '/_app/_protected/admin/billing/stripe-tools'
@@ -1341,6 +1368,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProtectedAdminRouteImport
       parentRoute: typeof AppProtectedRoute
     }
+    '/_app/_protected/create-workspace': {
+      id: '/_app/_protected/create-workspace'
+      path: '/create-workspace'
+      fullPath: '/create-workspace'
+      preLoaderRoute: typeof AppProtectedCreateWorkspaceRouteImport
+      parentRoute: typeof AppProtectedRoute
+    }
     '/_app/_protected/settings': {
       id: '/_app/_protected/settings'
       path: '/settings'
@@ -1509,13 +1543,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProtectedAdminStorageRouteImport
       parentRoute: typeof AppProtectedAdminRoute
     }
-    '/_app/_protected/orgs/new': {
-      id: '/_app/_protected/orgs/new'
-      path: '/orgs/new'
-      fullPath: '/orgs/new'
-      preLoaderRoute: typeof AppProtectedOrgsNewRouteImport
-      parentRoute: typeof AppProtectedRoute
-    }
     '/_app/_protected/projects/$': {
       id: '/_app/_protected/projects/$'
       path: '/projects/$'
@@ -1570,6 +1597,20 @@ declare module '@tanstack/react-router' {
       path: '/billing'
       fullPath: '/$workspace/settings/billing'
       preLoaderRoute: typeof AppProtectedWorkspaceSettingsBillingRouteImport
+      parentRoute: typeof AppProtectedWorkspaceSettingsRoute
+    }
+    '/_app/_protected/$workspace/settings/general': {
+      id: '/_app/_protected/$workspace/settings/general'
+      path: '/general'
+      fullPath: '/$workspace/settings/general'
+      preLoaderRoute: typeof AppProtectedWorkspaceSettingsGeneralRouteImport
+      parentRoute: typeof AppProtectedWorkspaceSettingsRoute
+    }
+    '/_app/_protected/$workspace/settings/members': {
+      id: '/_app/_protected/$workspace/settings/members'
+      path: '/members'
+      fullPath: '/$workspace/settings/members'
+      preLoaderRoute: typeof AppProtectedWorkspaceSettingsMembersRouteImport
       parentRoute: typeof AppProtectedWorkspaceSettingsRoute
     }
     '/_app/_protected/$workspace/settings/plans': {
@@ -1703,6 +1744,8 @@ declare module '@tanstack/react-router' {
 
 interface AppProtectedWorkspaceSettingsRouteChildren {
   AppProtectedWorkspaceSettingsBillingRoute: typeof AppProtectedWorkspaceSettingsBillingRoute
+  AppProtectedWorkspaceSettingsGeneralRoute: typeof AppProtectedWorkspaceSettingsGeneralRoute
+  AppProtectedWorkspaceSettingsMembersRoute: typeof AppProtectedWorkspaceSettingsMembersRoute
   AppProtectedWorkspaceSettingsPlansRoute: typeof AppProtectedWorkspaceSettingsPlansRoute
   AppProtectedWorkspaceSettingsIndexRoute: typeof AppProtectedWorkspaceSettingsIndexRoute
 }
@@ -1711,6 +1754,10 @@ const AppProtectedWorkspaceSettingsRouteChildren: AppProtectedWorkspaceSettingsR
   {
     AppProtectedWorkspaceSettingsBillingRoute:
       AppProtectedWorkspaceSettingsBillingRoute,
+    AppProtectedWorkspaceSettingsGeneralRoute:
+      AppProtectedWorkspaceSettingsGeneralRoute,
+    AppProtectedWorkspaceSettingsMembersRoute:
+      AppProtectedWorkspaceSettingsMembersRoute,
     AppProtectedWorkspaceSettingsPlansRoute:
       AppProtectedWorkspaceSettingsPlansRoute,
     AppProtectedWorkspaceSettingsIndexRoute:
@@ -1825,16 +1872,16 @@ const AppProtectedSettingsRouteWithChildren =
 interface AppProtectedRouteChildren {
   AppProtectedWorkspaceRoute: typeof AppProtectedWorkspaceRouteWithChildren
   AppProtectedAdminRoute: typeof AppProtectedAdminRouteWithChildren
+  AppProtectedCreateWorkspaceRoute: typeof AppProtectedCreateWorkspaceRoute
   AppProtectedSettingsRoute: typeof AppProtectedSettingsRouteWithChildren
-  AppProtectedOrgsNewRoute: typeof AppProtectedOrgsNewRoute
   AppProtectedProjectsSplatRoute: typeof AppProtectedProjectsSplatRoute
 }
 
 const AppProtectedRouteChildren: AppProtectedRouteChildren = {
   AppProtectedWorkspaceRoute: AppProtectedWorkspaceRouteWithChildren,
   AppProtectedAdminRoute: AppProtectedAdminRouteWithChildren,
+  AppProtectedCreateWorkspaceRoute: AppProtectedCreateWorkspaceRoute,
   AppProtectedSettingsRoute: AppProtectedSettingsRouteWithChildren,
-  AppProtectedOrgsNewRoute: AppProtectedOrgsNewRoute,
   AppProtectedProjectsSplatRoute: AppProtectedProjectsSplatRoute,
 }
 

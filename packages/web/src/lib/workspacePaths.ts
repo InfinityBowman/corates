@@ -1,5 +1,7 @@
 /** URL builders for in-workspace routes; the slug is always the first segment. */
 
+export type WorkspaceSettingsPage = 'general' | 'members' | 'billing' | 'plans';
+
 export function workspaceHomePath(slug: string) {
   return `/${slug}`;
 }
@@ -8,7 +10,7 @@ export function projectPath(slug: string, projectId: string) {
   return `/${slug}/projects/${projectId}`;
 }
 
-export function workspaceSettingsPath(slug: string, page: 'billing' | 'plans') {
+export function workspaceSettingsPath(slug: string, page: WorkspaceSettingsPage) {
   return `/${slug}/settings/${page}`;
 }
 
