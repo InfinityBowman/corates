@@ -2,7 +2,7 @@ import { captureError, info } from '@corates/workers/logger';
 import { env } from 'cloudflare:workers';
 import type { Database } from '@corates/db/client';
 import { projects, projectMembers, projectInvitations, user, member } from '@corates/db/schema';
-import { eq, and, count, desc, gt, isNull, ne, notExists, sql } from 'drizzle-orm';
+import { eq, and, count, desc, gt, isNull, notExists, sql } from 'drizzle-orm';
 import {
   DomainErrorException,
   isDomainError,
@@ -350,12 +350,13 @@ export async function addProjectMember(
   }
 }
 
-// Seats in use: non-owner members plus live invitations to people not yet in the workspace
+// Seats in use: every workspace member, owner included, plus live invitations to
+// people not yet in the workspace. Must match the count acceptInvitation enforces.
 async function countCollaboratorSeats(db: Database, orgId: OrgId): Promise<number> {
   const [members] = await db
     .select({ count: count() })
     .from(member)
-    .where(and(eq(member.organizationId, orgId), ne(member.role, 'owner')));
+    .where(eq(member.organizationId, orgId));
 
   const [pending] = await db
     .select({ count: count() })

@@ -1,7 +1,8 @@
+import { z } from 'zod';
 import { warn } from './logger';
-import { eq, and, desc, isNull, ne, count } from 'drizzle-orm';
+import { eq, and, desc, isNull, count } from 'drizzle-orm';
 import type { OrgId } from '@corates/shared/ids';
-import { subscription, orgAccessGrants, projects, member } from '@corates/db/schema';
+import { subscription, orgAccessGrants, projects, member, organization } from '@corates/db/schema';
 import { getActiveGrantsByOrgId } from '@corates/db/org-access-grants';
 import { getPlan, DEFAULT_PLAN, getGrantPlan, isUnlimitedQuota } from '@corates/shared/plans';
 import { isSubscriptionActive } from './subscriptionStatus';
@@ -93,6 +94,48 @@ export async function resolveOrgAccess(
   db: Database,
   orgId: OrgId,
   now: Date | number = new Date(),
+): Promise<OrgBilling> {
+  const billing = await resolvePlanAccess(db, orgId, now);
+  const overrides = await getQuotaOverrides(db, orgId);
+  return overrides ? { ...billing, quotas: { ...billing.quotas, ...overrides } } : billing;
+}
+
+const quotaOverridesSchema = z.record(z.string(), z.number().int().min(-1));
+
+// Support can change one workspace's quotas without a plan or grant by setting
+// organization.metadata to {"quotaOverrides": {"collaborators.org.max": 4}}.
+async function getQuotaOverrides(
+  db: Database,
+  orgId: OrgId,
+): Promise<Record<string, number> | null> {
+  const org = await db
+    .select({ metadata: organization.metadata })
+    .from(organization)
+    .where(eq(organization.id, orgId))
+    .get();
+  if (!org?.metadata) return null;
+
+  let raw: unknown;
+  try {
+    raw = (JSON.parse(org.metadata) as { quotaOverrides?: unknown } | null)?.quotaOverrides;
+  } catch {
+    warn('Unparseable metadata on org %s', [orgId]);
+    return null;
+  }
+  if (raw === undefined) return null;
+
+  const parsed = quotaOverridesSchema.safeParse(raw);
+  if (!parsed.success) {
+    warn('Ignoring invalid quotaOverrides on org %s', [orgId]);
+    return null;
+  }
+  return parsed.data;
+}
+
+async function resolvePlanAccess(
+  db: Database,
+  orgId: OrgId,
+  now: Date | number,
 ): Promise<OrgBilling> {
   const nowDate = now instanceof Date ? now : new Date(now * 1000);
   const nowTimestamp = Math.floor(nowDate.getTime() / 1000);
@@ -245,7 +288,7 @@ export async function getOrgResourceUsage(db: Database, orgId: string): Promise<
   const [memberResult] = await db
     .select({ count: count() })
     .from(member)
-    .where(and(eq(member.organizationId, orgId), ne(member.role, 'owner')));
+    .where(eq(member.organizationId, orgId));
 
   return {
     projects: projectResult?.count || 0,

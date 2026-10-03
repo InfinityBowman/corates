@@ -48,6 +48,8 @@ export function getEffectiveEntitlements(subscription: Subscription | null): Ent
 }
 
 export function getEffectiveQuotas(subscription: Subscription | null): Quotas {
+  // The server's resolved quotas include per-workspace overrides the plan tables cannot know
+  if (subscription?.quotas) return subscription.quotas;
   const planId = subscription?.tier || DEFAULT_PLAN;
   const plan = resolvePlan(planId);
   if (!isSubscriptionActive(subscription)) {

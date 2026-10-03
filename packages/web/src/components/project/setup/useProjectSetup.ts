@@ -55,7 +55,7 @@ export function useProjectSetup() {
   const [isDismissing, setIsDismissing] = useState(false);
 
   const collaboratorQuotaInfo = {
-    used: orgMembers.filter(m => m.role !== 'owner').length,
+    used: orgMembers.length,
     max: quotas['collaborators.org.max'] ?? 0,
   };
 

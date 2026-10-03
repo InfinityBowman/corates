@@ -252,6 +252,12 @@ export function AddMemberModal({
         <form onSubmit={handleSubmit}>
           <div className='px-4 pt-3.5'>
             <DialogTitle className='text-sm font-medium'>Invite a member</DialogTitle>
+            {quotaInfo && !isUnlimitedQuota(quotaInfo.max) && !isAtQuotaLimit && (
+              <p className='text-muted-foreground mt-1 text-xs'>
+                Your plan allows {quotaInfo.max} people in this workspace, including you.{' '}
+                {quotaInfo.used} in use.
+              </p>
+            )}
           </div>
 
           {isAtQuotaLimit && (
@@ -261,7 +267,7 @@ export function AddMemberModal({
                 <div>
                   <AlertTitle>Collaborator limit reached</AlertTitle>
                   <AlertDescription>
-                    Your team has {quotaInfo?.used} of {quotaInfo?.max} collaborators.{' '}
+                    Your workspace has {quotaInfo?.used} of {quotaInfo?.max} people, including you.{' '}
                     <Link to='/settings/plans' className='font-medium underline'>
                       Upgrade your plan
                     </Link>{' '}

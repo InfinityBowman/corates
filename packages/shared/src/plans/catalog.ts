@@ -59,7 +59,7 @@ export function getBillingPlanCatalog(): BillingCatalogResponse {
         cta: 'free',
         features: [
           `${quotaLabel(free.quotas['projects.max'])} project`,
-          `Up to ${quotaLabel(free.quotas['collaborators.org.max'])} collaborators`,
+          `Up to ${quotaLabel(free.quotas['collaborators.org.max'])} people, including you`,
           'Unlimited studies per project',
           'Unlimited solo appraisals in your browser',
           'Completed appraisals stay readable and exportable',

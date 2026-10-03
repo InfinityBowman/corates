@@ -75,9 +75,9 @@ export function MembersPanel({ members, progressFor }: MembersPanelProps) {
     isSelf: boolean;
   } | null>(null);
 
-  const nonOwnerOrgMemberCount = orgMembers.filter(m => m.role !== 'owner').length;
+  const workspaceMemberCount = orgMembers.length;
   const canAddMember =
-    isOwner && hasQuota('collaborators.org.max', { used: nonOwnerOrgMemberCount, requested: 1 });
+    isOwner && hasQuota('collaborators.org.max', { used: workspaceMemberCount, requested: 1 });
   const ownerCount = members.filter(m => m.role === 'owner').length;
 
   async function confirmRemove() {
@@ -204,7 +204,7 @@ export function MembersPanel({ members, progressFor }: MembersPanelProps) {
         onClose={() => setShowAddMemberModal(false)}
         projectId={projectId}
         orgId={orgId}
-        quotaInfo={{ used: nonOwnerOrgMemberCount, max: quotas?.['collaborators.org.max'] ?? 0 }}
+        quotaInfo={{ used: workspaceMemberCount, max: quotas?.['collaborators.org.max'] ?? 0 }}
       />
 
       <AlertDialog
