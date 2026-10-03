@@ -20,3 +20,4 @@ Plans are intentionally opinionated and are expected to change as the codebase e
 
 - [Ideal error model architecture](/plans/ideal-error-model)
 - [Frontend Testing](/plans/frontend-testing-plan)
+- [Jev classifier integration](/plans/jev-integration)
