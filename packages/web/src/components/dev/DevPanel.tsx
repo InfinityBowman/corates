@@ -16,7 +16,7 @@ import {
   useProjectMembers,
   useProjectMeta,
   useProjectOutcomes,
-} from '@/project/workspace-data';
+} from '@/project/project-data';
 import { useProjectOrgId } from '@/hooks/useProjectOrgId';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

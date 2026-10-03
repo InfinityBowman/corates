@@ -28,7 +28,7 @@ import {
 import { eq, and } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS, AUTH_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import { insertWithQuotaCheck, type InsertRollbackMeta } from '../../lib/quotaTransaction';
-import { refreshWorkspaceSessions } from '../../sync/admin';
+import { refreshSyncSessions } from '../../sync/admin';
 import { createNotification } from '../notifications';
 import type { Env } from '../../types';
 
@@ -213,7 +213,7 @@ export async function acceptInvitation(
   }
 
   // Poke live sessions so other clients refetch the members list.
-  await refreshWorkspaceSessions(env, invitation.projectId);
+  await refreshSyncSessions(env, invitation.projectId);
 
   // Get project name and org slug for response
   const project = await db

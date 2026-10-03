@@ -1,7 +1,7 @@
 import { useMemo, useId } from 'react';
 import { SECTION_C } from '@corates/shared/checklists/robins-i';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
-import { useWorkspaceProjectId, useAnswerValue, useAnswerWriters } from '@/project/workspace-data';
+import { useSyncedProjectId, useAnswerValue, useAnswerWriters } from '@/project/project-data';
 
 interface SectionCProps {
   studyId: string;
@@ -11,7 +11,7 @@ interface SectionCProps {
 
 export function SectionC({ studyId, checklistId, disabled }: SectionCProps) {
   const uniqueId = useId();
-  const projectId = useWorkspaceProjectId();
+  const projectId = useSyncedProjectId();
   const writers = useAnswerWriters(projectId, studyId, checklistId);
   const isPerProtocol = useAnswerValue<boolean>(projectId, checklistId, 'sectionC.isPerProtocol');
 
@@ -101,7 +101,7 @@ function SectionCTextField({
   field: { label: string; text: string; placeholder: string; stateKey: string };
   disabled?: boolean;
 }) {
-  const projectId = useWorkspaceProjectId();
+  const projectId = useSyncedProjectId();
   const flatKey = `sectionC.${field.stateKey}`;
   const value = useAnswerValue<string>(projectId, checklistId, flatKey) ?? '';
   const writers = useAnswerWriters(projectId, studyId, checklistId);

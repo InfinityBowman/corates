@@ -30,7 +30,7 @@ flowchart LR
     Client -->|"Request"| API
     API --> GuardsPolicies
 
-    orgprojects -->|"admin seams:<br/>teardown/kick/refresh"| WorkspaceDO
+    orgprojects -->|"admin seams:<br/>teardown/kick/refresh"| ProjectSyncDO
     pdfs --> R2[(R2 Storage)]
     auth --> D1[(D1 Database)]
     orgs --> D1
@@ -142,8 +142,8 @@ There are no `/api/google-drive` REST routes. Drive status, disconnect, picker t
 
 These routes connect to Durable Objects directly (handled ahead of the TanStack Start router in the worker entry, not as file-based routes):
 
-- `/api/sync/:projectId` - Sync-engine WebSocket connection (WorkspaceDO)
-- `/api/sync-admin/:projectId/:op` - Bearer-token-gated workspace admin surface (export/import/stats/reset)
+- `/api/sync/:projectId` - Sync-engine WebSocket connection (ProjectSyncDO)
+- `/api/sync-admin/:projectId/:op` - Bearer-token-gated sync admin surface (export/import/stats/reset)
 - `/api/sessions/:sessionId` - UserSession WebSocket connection
 
 ## Typical handler ordering

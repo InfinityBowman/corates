@@ -3,12 +3,12 @@ import { ROB2_CHECKLIST, getDomainQuestions } from '@corates/shared/checklists/r
 import { SignallingQuestion } from './SignallingQuestion';
 import { DomainJudgement, JudgementBadge } from './DomainJudgement';
 import {
-  useWorkspaceProjectId,
+  useSyncedProjectId,
   useAnswerValue,
   useAnswerWriters,
   useChecklistAnswerMap,
   useRob2DomainScore,
-} from '@/project/workspace-data';
+} from '@/project/project-data';
 import type { ChecklistAnswerInput } from '@corates/shared/sync';
 import { getSkippedDomainQuestions, type DomainAnswers } from '@corates/shared/checklists/rob2';
 
@@ -35,7 +35,7 @@ export function DomainSection({
   const questions = useMemo(() => getDomainQuestions(domainKey), [domainKey]);
   const questionKeys = useMemo(() => Object.keys(questions), [questions]);
 
-  const projectId = useWorkspaceProjectId();
+  const projectId = useSyncedProjectId();
   const { judgement: autoJudgement, isComplete: autoComplete } = useRob2DomainScore(
     projectId,
     checklistId,

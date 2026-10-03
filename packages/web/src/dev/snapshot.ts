@@ -1,5 +1,5 @@
 /**
- * Helpers over the engine's workspace snapshot ({formatVersion, schemaVersion,
+ * Helpers over the engine's project snapshot ({formatVersion, schemaVersion,
  * rows: [{tbl, id, data}]}) for the dev "From JSON" import: surface the user
  * ids a snapshot references and rewrite them to real project members. The
  * snapshot is otherwise treated as opaque — only known user-id fields of known

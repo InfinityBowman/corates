@@ -3,7 +3,7 @@
 declare namespace Cloudflare {
   interface GlobalProps {
     mainModule: typeof import('./src/test-worker');
-    durableNamespaces: 'UserSession' | 'WorkspaceDO';
+    durableNamespaces: 'UserSession' | 'ProjectSyncDO';
   }
   interface ProductionEnv {
     PDF_BUCKET: R2Bucket;
@@ -26,7 +26,7 @@ declare namespace Cloudflare {
     STRIPE_SECRET_KEY: string;
     STRIPE_WEBHOOK_SECRET_AUTH: string;
     USER_SESSION: DurableObjectNamespace<import('./src/test-worker').UserSession>;
-    WORKSPACE: DurableObjectNamespace<import('./src/test-worker').WorkspaceDO>;
+    PROJECT_SYNC: DurableObjectNamespace<import('./src/test-worker').ProjectSyncDO>;
   }
   interface Env {
     PDF_BUCKET: R2Bucket;
@@ -49,7 +49,7 @@ declare namespace Cloudflare {
     STRIPE_SECRET_KEY: string;
     STRIPE_WEBHOOK_SECRET_AUTH: string;
     USER_SESSION: DurableObjectNamespace<import('./src/test-worker').UserSession>;
-    WORKSPACE: DurableObjectNamespace<import('./src/test-worker').WorkspaceDO>;
+    PROJECT_SYNC: DurableObjectNamespace<import('./src/test-worker').ProjectSyncDO>;
     CF_VERSION_METADATA?: WorkerVersionMetadata;
     DEV_MODE?: true;
     SENTRY_DSN?: 'https://3ddf61abb06680bffc1ebc7f540f05de@o4510738063818752.ingest.us.sentry.io/4510738126274560';

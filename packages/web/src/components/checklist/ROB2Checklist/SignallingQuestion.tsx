@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { RESPONSE_LABELS, getResponseOptions } from '@corates/shared/checklists/rob2';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
 import { QuestionSourcesPopover } from '@/components/checklist/copy-answers/QuestionSourcesPopover';
-import { useWorkspaceProjectId, useAnswerValue, useAnswerWriters } from '@/project/workspace-data';
+import { useSyncedProjectId, useAnswerValue, useAnswerWriters } from '@/project/project-data';
 import type { ChecklistAnswerInput } from '@corates/shared/sync';
 
 interface SignallingQuestionProps {
@@ -27,7 +27,7 @@ export function SignallingQuestion({
   isSkippable,
 }: SignallingQuestionProps) {
   const options = useMemo(() => getResponseOptions(question.responseType), [question.responseType]);
-  const projectId = useWorkspaceProjectId();
+  const projectId = useSyncedProjectId();
   const answer = useAnswerValue<string>(projectId, checklistId, questionKey);
   const commentValue = useAnswerValue<string>(projectId, checklistId, `${questionKey}.comment`);
   const writers = useAnswerWriters(projectId, studyId, checklistId);

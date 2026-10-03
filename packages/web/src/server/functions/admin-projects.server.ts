@@ -12,7 +12,7 @@ import { and, count, desc, eq, sql } from 'drizzle-orm';
 import { containsInsensitive } from '@/server/lib/sqlSearch';
 import { throwDomainError, AUTH_ERRORS, PROJECT_ERRORS } from '@corates/shared';
 import { isAdminUser } from '@corates/workers/auth-admin';
-import { projectWorkspace } from '@corates/workers/sync';
+import { projectSync } from '@corates/workers/sync';
 import type { Session } from '@/server/middleware/auth';
 
 function assertAdmin(session: Session) {
@@ -221,7 +221,7 @@ export async function getAdminProjectDetails(session: Session, db: Database, pro
 }
 
 /** The sync-engine workspace's admin stats (`workspaceAdmin(...).stats()`). */
-export interface WorkspaceStats {
+export interface SyncStats {
   workspaceId: string;
   backendId: string;
   schemaVersion: number;
@@ -249,7 +249,7 @@ export type AdminProjectMember = AdminProjectDetails['members'][number];
 export type AdminProjectFile = AdminProjectDetails['files'][number];
 export type AdminProjectInvitation = AdminProjectDetails['invitations'][number];
 
-export async function getAdminWorkspaceStats(session: Session, db: Database, projectId: string) {
+export async function getAdminSyncStats(session: Session, db: Database, projectId: string) {
   assertAdmin(session);
 
   const [project] = await db
@@ -262,8 +262,8 @@ export async function getAdminWorkspaceStats(session: Session, db: Database, pro
     throwDomainError(PROJECT_ERRORS.NOT_FOUND, { projectId });
   }
 
-  const stats = await projectWorkspace(env, projectId).stats();
-  return stats as WorkspaceStats;
+  const stats = await projectSync(env, projectId).stats();
+  return stats as SyncStats;
 }
 
 export async function removeAdminProjectMember(

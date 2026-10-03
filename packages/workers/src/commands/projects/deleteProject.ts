@@ -9,7 +9,7 @@ import { createDb } from '@corates/db/client';
 import { projects, projectMembers } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
-import { teardownWorkspace } from '../../sync/admin';
+import { teardownProjectSync } from '../../sync/admin';
 import { snapshotBeforeDelete } from '../backups';
 import { cleanupProjectStorage } from '../lib/storage';
 import { notifyUsers } from '../lib/notifications';
@@ -76,12 +76,12 @@ export async function deleteProject(
     );
   }
 
-  // Tear down the sync-engine workspace: close every session, wipe storage.
-  // Workspace storage is the only home for project content, so the
+  // Tear down the project's sync DO: close every session, wipe storage.
+  // Sync DO storage is the only home for project content, so the
   // destructive reset must come AFTER the authoritative D1 delete — if the
   // delete fails above, the project stays listed and must stay intact.
-  // Best-effort from here: teardownWorkspace logs its own failures.
-  await teardownWorkspace(env, projectId);
+  // Best-effort from here: teardownProjectSync logs its own failures.
+  await teardownProjectSync(env, projectId);
 
   // Send notifications to all members (except the one who deleted)
   const projectName = project?.name || 'Unknown Project';

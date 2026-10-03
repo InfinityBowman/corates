@@ -3,7 +3,7 @@
  *
  * This test reproduces the user-reported "I refresh and my studies disappear"
  * scenario end-to-end against the dev server. It covers the entire stack:
- * client edits -> WebSocket -> workspace DO -> SQLite persistence -> reload ->
+ * client edits -> WebSocket -> sync DO -> SQLite persistence -> reload ->
  * cold load -> render (plus the offline path: the engine's IndexedDB
  * snapshot rendering through the cached phase when the socket is dead).
  *

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { env } from 'cloudflare:workers';
 import { createDb } from '@corates/db/client';
-import { projectWorkspace } from '@corates/workers/sync';
+import { projectSync } from '@corates/workers/sync';
 import { resetTestDatabase } from '@/__tests__/server/helpers';
 import {
   buildUser,
@@ -28,9 +28,9 @@ async function clearR2(prefix: string) {
   }
 }
 
-async function seedWorkspaceStudy(projectId: string) {
+async function seedSyncedStudy(projectId: string) {
   const now = Date.now();
-  await projectWorkspace(env, projectId).import({
+  await projectSync(env, projectId).import({
     formatVersion: 1,
     schemaVersion: syncApp.version,
     rows: [
@@ -43,8 +43,8 @@ async function seedWorkspaceStudy(projectId: string) {
   });
 }
 
-async function workspaceRowCount(projectId: string) {
-  const snapshot = (await projectWorkspace(env, projectId).export()) as { rows: unknown[] };
+async function syncRowCount(projectId: string) {
+  const snapshot = (await projectSync(env, projectId).export()) as { rows: unknown[] };
   return snapshot.rows.length;
 }
 
@@ -88,19 +88,19 @@ describe('DELETE /api/users/me', () => {
     expect(members.results).toHaveLength(0);
   });
 
-  it('wipes workspace content and R2 PDFs of projects the user alone belongs to', async () => {
+  it('wipes synced content and R2 PDFs of projects the user alone belongs to', async () => {
     const { project, owner } = await buildProject();
     const pdfKey = `projects/${project.id}/studies/study-1/file.pdf`;
     await env.PDF_BUCKET.put(pdfKey, '%PDF-1.4');
-    await seedWorkspaceStudy(project.id);
-    expect(await workspaceRowCount(project.id)).toBe(1);
+    await seedSyncedStudy(project.id);
+    expect(await syncRowCount(project.id)).toBe(1);
 
     currentUser = { id: owner.id, email: owner.email };
     await deleteAccount(createDb(env.DB), mockSession());
 
     expect(await projectRow(project.id)).toBeNull();
     expect(await env.PDF_BUCKET.get(pdfKey)).toBeNull();
-    expect(await workspaceRowCount(project.id)).toBe(0);
+    expect(await syncRowCount(project.id)).toBe(0);
   });
 
   it('hands a shared project to its other owner and keeps its content', async () => {
@@ -112,7 +112,7 @@ describe('DELETE /api/users/me', () => {
     });
     const pdfKey = `projects/${project.id}/studies/study-1/file.pdf`;
     await env.PDF_BUCKET.put(pdfKey, '%PDF-1.4');
-    await seedWorkspaceStudy(project.id);
+    await seedSyncedStudy(project.id);
 
     currentUser = { id: owner.id, email: owner.email };
     await deleteAccount(createDb(env.DB), mockSession());
@@ -121,7 +121,7 @@ describe('DELETE /api/users/me', () => {
     expect(await memberRole(project.id, coOwner.id)).toBe('owner');
     expect(await memberRole(project.id, owner.id)).toBeNull();
     expect(await env.PDF_BUCKET.get(pdfKey)).not.toBeNull();
-    expect(await workspaceRowCount(project.id)).toBe(1);
+    expect(await syncRowCount(project.id)).toBe(1);
   });
 
   it('promotes the longest-standing member when a shared project has no other owner', async () => {

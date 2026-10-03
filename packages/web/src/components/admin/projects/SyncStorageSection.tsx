@@ -2,26 +2,26 @@ import { RefreshCwIcon } from 'lucide-react';
 import { AdminPanel, AdminField, AdminFieldGrid, AdminStat } from '@/components/admin/ui';
 import { Button } from '@/components/ui/button';
 import { formatFileSize } from '@corates/shared';
-import type { WorkspaceStats } from '@/server/functions/admin-projects.server';
+import type { SyncStats } from '@/server/functions/admin-projects.server';
 
-interface WorkspaceStorageSectionProps {
-  stats?: WorkspaceStats;
+interface SyncStorageSectionProps {
+  stats?: SyncStats;
   isLoading: boolean;
   isError: boolean;
   isFetching: boolean;
   onRefresh: () => void;
 }
 
-export function WorkspaceStorageSection({
+export function SyncStorageSection({
   stats,
   isLoading,
   isError,
   isFetching,
   onRefresh,
-}: WorkspaceStorageSectionProps) {
+}: SyncStorageSectionProps) {
   return (
     <AdminPanel
-      title='Workspace Storage'
+      title='Sync Storage'
       padded
       action={
         <Button
@@ -29,7 +29,7 @@ export function WorkspaceStorageSection({
           size='sm'
           onClick={onRefresh}
           disabled={isFetching}
-          title='Refresh stats (wakes the workspace if hibernating)'
+          title='Refresh stats (wakes the sync DO if hibernating)'
         >
           <RefreshCwIcon className={isFetching ? 'animate-spin' : ''} data-icon='inline-start' />
           Refresh
@@ -38,14 +38,14 @@ export function WorkspaceStorageSection({
     >
       {isError ?
         <p className='text-destructive text-[13px]'>
-          Failed to load workspace stats. The workspace may be unreachable.
+          Failed to load sync stats. The sync DO may be unreachable.
         </p>
       : <div className='flex flex-col gap-6'>
           <div className='grid grid-cols-1 gap-3 md:grid-cols-3'>
             <AdminStat
               label='Database size'
               value={formatFileSize(stats?.databaseSizeBytes ?? 0)}
-              hint='Workspace DO SQLite'
+              hint='Sync DO SQLite'
               loading={isLoading}
             />
             <AdminStat

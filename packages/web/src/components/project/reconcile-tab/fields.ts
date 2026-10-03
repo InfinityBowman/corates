@@ -1,6 +1,6 @@
 /**
  * Reconciled-checklist collaborative text: the seam between the reconcile UI
- * and the workspace's Yjs fields.
+ * and the project's Yjs fields.
  *
  * During a reconciliation session the reconciled checklist's prose fields
  * (final notes/comments, preliminary text) are co-edited live as Yjs fields —
@@ -17,7 +17,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import type { YjsFieldHandle, YjsFields } from '@cf-sync/yjs/client';
 import { answerRowId, textAnswerKeys, type ChecklistType } from '@corates/shared/sync';
 import { applyYTextDiff } from '@/lib/yTextDiff';
-import { useAnswerValue, useAnswerWriters } from '@/project/workspace-data';
+import { useAnswerValue, useAnswerWriters } from '@/project/project-data';
 
 /**
  * Session-lifetime store of field handles for one reconciled checklist.

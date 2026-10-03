@@ -1,13 +1,13 @@
 /**
- * The sync-engine workspace: DO class, worker routes, and the admin helpers
+ * Project sync: the DO class, worker routes, and the admin helpers
  * commands use for forced disconnects.
  *
- * Workspace = project; the workspace id IS the projectId (its own namespace
+ * One sync DO per project; the engine's workspace id IS the projectId (its own namespace
  * binding, so no name-prefix dance like ProjectDoc's `project:` ids). The
  * socket route is `/api/sync/<projectId>`; the admin surface
  * (`/api/sync-admin/<projectId>/<op>`) is bearer-token-gated for the
  * migration tooling (export/import/stats/reset) and external operators —
- * same-worker code goes through `projectWorkspace()` instead.
+ * same-worker code goes through `projectSync()` instead.
  */
 
 import {
@@ -26,10 +26,10 @@ import { buildSyncVerdict } from './authorize';
 import { createMutationLogger } from './mutation-log';
 
 // Module-level so the coalescing windows survive across the instances one
-// isolate serves; the key carries the workspace id, so nothing crosses over.
+// isolate serves; the key carries the project id, so nothing crosses over.
 const logMutation = createMutationLogger(line => info('sync.mutation', line));
 
-export class WorkspaceDO extends createWorkspaceDO({
+export class ProjectSyncDO extends createWorkspaceDO({
   app: syncApp,
   // Reconciliation consolidated notes live here as Yjs fields, field id =
   // the `answers` row id of the reconciled checklist's text key. Same write
@@ -41,7 +41,7 @@ export class WorkspaceDO extends createWorkspaceDO({
   // Without this the engine's diagnostics go straight to console as plain
   // interpolated strings, which reach Loki unparseable by field. These are
   // the sync engine's init failures, schema-drift warnings and internal
-  // errors, so they are the ones worth querying. The workspace id IS the
+  // errors, so they are the ones worth querying. The engine's workspace id IS the
   // projectId, so logging it under that name joins these against the rest of
   // the project's logs — the engine's own logs carry no requestId, because
   // they fire at DO construction and on live sockets, never inside a request.
@@ -68,7 +68,7 @@ export const SYNC_PATH_PREFIX = '/api/sync';
 export const SYNC_ADMIN_PATH_PREFIX = '/api/sync-admin';
 
 const syncRoute = createSyncRoute<Env>({
-  namespace: env => env.WORKSPACE,
+  namespace: env => env.PROJECT_SYNC,
   pathPrefix: SYNC_PATH_PREFIX,
   authorize: async (request, { workspaceId, env }) => {
     const { user } = await verifyAuth(request, env);
@@ -95,7 +95,7 @@ const syncRoute = createSyncRoute<Env>({
 });
 
 const adminRoute = createAdminRoute<Env>({
-  namespace: env => env.WORKSPACE,
+  namespace: env => env.PROJECT_SYNC,
   pathPrefix: SYNC_ADMIN_PATH_PREFIX,
   authorize: bearerTokenAuth(env => env.SYNC_ADMIN_TOKEN),
 });

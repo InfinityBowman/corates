@@ -7,7 +7,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { ListTodoIcon } from 'lucide-react';
 import { TodoStudyRow } from './TodoStudyRow';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
-import { useAllStudies, useProjectMembers } from '@/project/workspace-data';
+import { useAllStudies, useProjectMembers } from '@/project/project-data';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { useProjectContext } from '../ProjectContext';
 import { getStudiesForTab } from '@corates/shared/checklists';

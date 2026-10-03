@@ -23,7 +23,7 @@ vi.mock('@/components/project/ProjectContext', () => ({
     setOutcomesSheetOpen: vi.fn(),
   }),
 }));
-vi.mock('@/project/workspace-data', () => ({
+vi.mock('@/project/project-data', () => ({
   useAllStudies: () => [
     {
       id: 's1',

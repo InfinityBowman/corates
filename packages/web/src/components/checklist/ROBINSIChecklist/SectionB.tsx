@@ -3,11 +3,11 @@ import { InfoIcon } from 'lucide-react';
 import { SECTION_B, RESPONSE_LABELS } from '@corates/shared/checklists/robins-i';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
 import {
-  useWorkspaceProjectId,
+  useSyncedProjectId,
   useAnswerValue,
   useAnswerWriters,
   getAnswerValue,
-} from '@/project/workspace-data';
+} from '@/project/project-data';
 import type { ChecklistAnswerInput } from '@corates/shared/sync';
 
 interface SectionBProps {
@@ -18,7 +18,7 @@ interface SectionBProps {
 
 export function SectionB({ studyId, checklistId, disabled }: SectionBProps) {
   const uniqueId = useId();
-  const projectId = useWorkspaceProjectId();
+  const projectId = useSyncedProjectId();
   const writers = useAnswerWriters(projectId, studyId, checklistId);
 
   const b2Answer = useAnswerValue<string>(projectId, checklistId, 'sectionB.b2');
@@ -102,7 +102,7 @@ function SectionBQuestion({
   responseOptions: string[];
   onAnswerChange: (key: string, value: string) => void;
 }) {
-  const projectId = useWorkspaceProjectId();
+  const projectId = useSyncedProjectId();
   const answer = useAnswerValue<string>(projectId, checklistId, `sectionB.${questionKey}`);
   const commentValue =
     useAnswerValue<string>(projectId, checklistId, `sectionB.${questionKey}.comment`) ?? '';

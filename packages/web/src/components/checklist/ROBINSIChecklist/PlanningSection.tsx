@@ -1,6 +1,6 @@
 import { PLANNING_SECTION } from '@corates/shared/checklists/robins-i';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
-import { useWorkspaceProjectId, useAnswerValue, useAnswerWriters } from '@/project/workspace-data';
+import { useSyncedProjectId, useAnswerValue, useAnswerWriters } from '@/project/project-data';
 
 interface PlanningSectionProps {
   studyId: string;
@@ -10,7 +10,7 @@ interface PlanningSectionProps {
 
 export function PlanningSection({ studyId, checklistId, disabled }: PlanningSectionProps) {
   const p1Field = PLANNING_SECTION.p1;
-  const projectId = useWorkspaceProjectId();
+  const projectId = useSyncedProjectId();
   const value = useAnswerValue<string>(projectId, checklistId, 'planning.confoundingFactors') ?? '';
   const writers = useAnswerWriters(projectId, studyId, checklistId);
 

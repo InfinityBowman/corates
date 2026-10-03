@@ -7,7 +7,7 @@
 
 import { useState, useMemo } from 'react';
 import { ChevronDownIcon } from 'lucide-react';
-import { useAllStudies, useProjectMembers, useProjectMeta } from '@/project/workspace-data';
+import { useAllStudies, useProjectMembers, useProjectMeta } from '@/project/project-data';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import { project } from '@/project';
 import { useProjectContext, type ProjectMember } from '../ProjectContext';

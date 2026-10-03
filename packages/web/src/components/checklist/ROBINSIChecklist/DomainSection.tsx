@@ -3,12 +3,12 @@ import { ROBINS_I_CHECKLIST, getDomainQuestions } from '@corates/shared/checklis
 import { SignallingQuestion } from './SignallingQuestion';
 import { DomainJudgement, JudgementBadge } from './DomainJudgement';
 import {
-  useWorkspaceProjectId,
+  useSyncedProjectId,
   useAnswerValue,
   useAnswerWriters,
   useChecklistAnswerMap,
   useRobinsIDomainScore,
-} from '@/project/workspace-data';
+} from '@/project/project-data';
 import type { ChecklistAnswerInput } from '@corates/shared/sync';
 import { getSkippedDomainQuestions, type DomainAnswers } from '@corates/shared/checklists/robins-i';
 
@@ -36,7 +36,7 @@ export function DomainSection({
   const questionKeys = useMemo(() => Object.keys(questions), [questions]);
   const hasSubsections = !!domain?.subsections;
 
-  const projectId = useWorkspaceProjectId();
+  const projectId = useSyncedProjectId();
   const { judgement: autoJudgement, isComplete: autoComplete } = useRobinsIDomainScore(
     projectId,
     checklistId,

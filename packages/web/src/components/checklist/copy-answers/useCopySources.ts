@@ -10,7 +10,7 @@ import {
   useStudyAnswerMaps,
   useStudyAnswersForKeys,
   useStudyChecklists,
-} from '@/project/workspace-data';
+} from '@/project/project-data';
 
 export interface Sibling {
   checklist: ChecklistRow;

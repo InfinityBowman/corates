@@ -7,7 +7,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { ArrowRightLeftIcon } from 'lucide-react';
 import { ReconcileStudyRow } from './ReconcileStudyRow';
 import { useProjectContext } from '../ProjectContext';
-import { useAllStudies, useProjectOutcomes } from '@/project/workspace-data';
+import { useAllStudies, useProjectOutcomes } from '@/project/project-data';
 import { getStudiesForTab } from '@corates/shared/checklists';
 import { project } from '@/project';
 

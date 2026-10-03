@@ -18,7 +18,7 @@ import {
 import { AddStudiesForm, type AddStudiesFormState } from './AddStudiesForm';
 import { useAddStudies } from '@/hooks/useAddStudies';
 import type { MergedStudy } from '@/hooks/useAddStudies/deduplication';
-import { useSortedStudyIds, useExistingStudies } from '@/project/workspace-data';
+import { useSortedStudyIds, useExistingStudies } from '@/project/project-data';
 import { project } from '@/project';
 import { useProjectContext } from '../ProjectContext';
 import { useFileDragStore } from '@/stores/fileDragStore';

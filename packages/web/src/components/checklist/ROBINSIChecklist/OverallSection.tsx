@@ -5,11 +5,11 @@ import {
   mapOverallJudgementToDisplay,
 } from '@corates/shared/checklists/robins-i';
 import {
-  useWorkspaceProjectId,
+  useSyncedProjectId,
   useAnswerValue,
   useAnswerWriters,
   useChecklistAnswerMap,
-} from '@/project/workspace-data';
+} from '@/project/project-data';
 import { scoreChecklistRows } from '@corates/shared/sync';
 
 interface OverallSectionProps {
@@ -19,7 +19,7 @@ interface OverallSectionProps {
 }
 
 export function OverallSection({ studyId, checklistId, disabled }: OverallSectionProps) {
-  const projectId = useWorkspaceProjectId();
+  const projectId = useSyncedProjectId();
   const flat = useChecklistAnswerMap(projectId, checklistId);
   const calculatedScore = useMemo(() => scoreChecklistRows('ROBINS_I', flat), [flat]);
   const isIncomplete = calculatedScore === 'Incomplete';

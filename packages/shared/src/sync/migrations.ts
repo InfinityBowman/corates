@@ -1,7 +1,7 @@
 /**
- * Schema-version history for the project workspace. Each entry turns rows
+ * Schema-version history for project sync. Each entry turns rows
  * stored under the previous version into rows valid under its own; the engine
- * replays the chain on a workspace's first wake after a deploy.
+ * replays the chain on a sync DO's first wake after a deploy.
  */
 
 import type { SchemaMigrationFn } from '@cf-sync/protocol';

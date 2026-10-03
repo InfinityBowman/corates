@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { project } from '@/project';
 import { useProjectContext } from '../ProjectContext';
-import { useProjectOutcomes } from '@/project/workspace-data';
+import { useProjectOutcomes } from '@/project/project-data';
 import { showToast } from '@/lib/toast';
 
 interface OutcomeManagerProps {

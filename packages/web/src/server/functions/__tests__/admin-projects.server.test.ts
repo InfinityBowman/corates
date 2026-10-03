@@ -17,7 +17,7 @@ import type { Session } from '@/server/middleware/auth';
 import {
   listAdminProjects,
   getAdminProjectDetails,
-  getAdminWorkspaceStats,
+  getAdminSyncStats,
   removeAdminProjectMember,
   deleteAdminProject,
 } from '@/server/functions/admin-projects.server';
@@ -152,10 +152,10 @@ describe('getAdminProjectDetails', () => {
   });
 });
 
-describe('getAdminWorkspaceStats', () => {
-  it('throws 404 without waking the workspace when project missing in D1', async () => {
+describe('getAdminSyncStats', () => {
+  it('throws 404 without waking the sync DO when project missing in D1', async () => {
     try {
-      await getAdminWorkspaceStats(mockAdminSession(), createDb(env.DB), 'no-such');
+      await getAdminSyncStats(mockAdminSession(), createDb(env.DB), 'no-such');
       expect.unreachable('should have thrown');
     } catch (err) {
       expect((err as DomainErrorException).statusCode).toBe(404);
@@ -171,11 +171,7 @@ describe('getAdminWorkspaceStats', () => {
       project: { id: 'admin-ws-stats-project', name: 'Stats' },
     });
 
-    const result = (await getAdminWorkspaceStats(
-      mockAdminSession(),
-      createDb(env.DB),
-      project.id,
-    )) as {
+    const result = (await getAdminSyncStats(mockAdminSession(), createDb(env.DB), project.id)) as {
       workspaceId: string;
       schemaVersion: number;
       rows: { live: number; tombstones: number };
@@ -184,7 +180,7 @@ describe('getAdminWorkspaceStats', () => {
     expect(result.workspaceId).toBe(project.id);
     expect(result.schemaVersion).toBe(syncApp.version);
     expect(result.rows).toEqual({ live: 0, tombstones: 0 });
-    // The Yjs fields add-on is mounted on the workspace DO.
+    // The Yjs fields add-on is mounted on the sync DO.
     expect(result.extension?.fields).toBe(0);
   });
 });

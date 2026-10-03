@@ -1,7 +1,7 @@
 /**
- * Sync-engine table schemas for the project workspace.
+ * Sync-engine table schemas for a project.
  *
- * One workspace per project. These tables hold the collaborative content that
+ * One sync DO per project. These tables hold the collaborative content that
  * lived in the per-project Y.Doc — and only the content: identity, membership,
  * and billing stay in D1 (one authority per fact; reads happen at authorize
  * time, never via write-mirroring). The old Y.Doc `meta`/`members` maps are

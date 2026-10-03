@@ -26,7 +26,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { getChecklistMetadata } from '@/checklist-registry';
 import { CHECKLIST_STATUS, isReconciledChecklist } from '@corates/shared/checklists';
-import { useProjectOutcomes } from '@/project/workspace-data';
+import { useProjectOutcomes } from '@/project/project-data';
 import { useProjectContext } from './ProjectContext';
 import { project } from '@/project';
 import type { StudyInfo } from '@/stores/projectStore';

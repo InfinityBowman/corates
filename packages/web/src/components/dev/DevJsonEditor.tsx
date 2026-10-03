@@ -1,8 +1,8 @@
 /**
- * DevJsonEditor - Export, edit, and re-import the raw workspace snapshot
+ * DevJsonEditor - Export, edit, and re-import the raw sync snapshot
  *
  * The snapshot is the engine's opaque JSON: exported as-is, edited as text,
- * imported back verbatim. Import replaces the workspace state and
+ * imported back verbatim. Import replaces the project's sync state and
  * refresh-disconnects live sessions so open clients resync. Before the first
  * export the viewer shows the local (client-side) view of the project,
  * which is not importable.
@@ -106,7 +106,7 @@ export function DevJsonEditor({ projectId, orgId, data }: DevJsonEditorProps) {
           size='xs'
           onClick={handleExport}
           disabled={isBusy}
-          title='Fetch current workspace snapshot from server'
+          title='Fetch current sync snapshot from server'
         >
           {isExporting ?
             <Spinner size='sm' variant='gray' />
@@ -119,7 +119,7 @@ export function DevJsonEditor({ projectId, orgId, data }: DevJsonEditorProps) {
           size='xs'
           onClick={handleImport}
           disabled={!hasExported || isBusy}
-          title='Replace workspace state with the JSON below'
+          title='Replace sync state with the JSON below'
         >
           {isImporting ?
             <Spinner size='sm' variant='gray' />

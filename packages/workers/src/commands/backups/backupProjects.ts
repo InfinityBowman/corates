@@ -1,9 +1,9 @@
 /**
- * Daily sweep that writes every project's workspace to the backup bucket.
+ * Daily sweep that writes every project's sync snapshot to the backup bucket.
  *
  * Every project every day, changed or not: no "latest" pointer, no skip
  * logic, no bookkeeping to get wrong. A project that fails is logged and
- * skipped so one broken workspace cannot hide the rest of the fleet. The
+ * skipped so one broken project cannot hide the rest of the fleet. The
  * D1 rows are read fleet-wide up front so the per-project cost is one DO
  * call and one R2 put, which keeps a single invocation under the subrequest
  * cap until the fleet nears a few hundred projects.
@@ -33,7 +33,7 @@ function groupBy<T extends { projectId: string }>(rows: T[]): Map<string, T[]> {
   return grouped;
 }
 
-export async function backupWorkspaces(
+export async function backupProjects(
   env: Env,
   db: Database,
   now: Date = new Date(),

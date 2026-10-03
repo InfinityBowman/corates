@@ -1,9 +1,9 @@
 /**
  * Dev-only project state tools over the sync engine's admin surface:
- * export/import/reset a workspace snapshot from the dev panel. Seeding
+ * export/import/reset a project's sync snapshot from the dev panel. Seeding
  * (generated studies, templates) is client-side — see `@/dev/seed` — so the
  * only server-side dev surface left is the snapshot lifecycle, which needs
- * the same-worker `projectWorkspace` admin binding.
+ * the same-worker `projectSync` admin binding.
  *
  * Import and reset refresh-disconnect live sessions afterwards so every open
  * client reconnects and resyncs against the replaced state instead of
@@ -15,7 +15,7 @@ import { throwDomainError, AUTH_ERRORS } from '@corates/shared';
 import type { JsonValue } from '@corates/shared/sync';
 import type { Database } from '@corates/db/client';
 import type { OrgId, ProjectId } from '@corates/shared/ids';
-import { projectWorkspace } from '@corates/workers/sync';
+import { projectSync } from '@corates/workers/sync';
 import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 import { requireProjectAccess } from '@/server/guards/requireProjectAccess';
 import type { Session } from '@/server/middleware/auth';
@@ -42,7 +42,7 @@ async function assertProjectDevAccess(
 }
 
 /** JSON-shaped view of the engine snapshot, for the server-fn serializer. */
-type WorkspaceSnapshot = Record<string, JsonValue>;
+type SyncSnapshot = Record<string, JsonValue>;
 
 export async function devExportState(
   session: Session,
@@ -51,8 +51,8 @@ export async function devExportState(
   projectId: ProjectId,
 ) {
   await assertProjectDevAccess(session, db, orgId, projectId);
-  const snapshot = await projectWorkspace(env, projectId).export();
-  return snapshot as WorkspaceSnapshot;
+  const snapshot = await projectSync(env, projectId).export();
+  return snapshot as SyncSnapshot;
 }
 
 export async function devImportState(
@@ -63,9 +63,9 @@ export async function devImportState(
   snapshot: Record<string, unknown>,
 ) {
   await assertProjectDevAccess(session, db, orgId, projectId);
-  const workspace = projectWorkspace(env, projectId);
-  const result = await workspace.import(snapshot);
-  await workspace.disconnect({ mode: 'refresh' });
+  const sync = projectSync(env, projectId);
+  const result = await sync.import(snapshot);
+  await sync.disconnect({ mode: 'refresh' });
   return result;
 }
 
@@ -76,8 +76,8 @@ export async function devResetState(
   projectId: ProjectId,
 ) {
   await assertProjectDevAccess(session, db, orgId, projectId);
-  const workspace = projectWorkspace(env, projectId);
-  const result = await workspace.reset();
-  await workspace.disconnect({ mode: 'refresh' });
+  const sync = projectSync(env, projectId);
+  const result = await sync.reset();
+  await sync.disconnect({ mode: 'refresh' });
   return result;
 }

@@ -2,7 +2,7 @@
  * Project-level actions -- rename, delete
  *
  * Project name is D1-authoritative (the server fn + React Query);
- * there is no workspace-side meta write anymore.
+ * there is no sync-side meta write anymore.
  */
 
 import { showToast } from '@/lib/toast';

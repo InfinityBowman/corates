@@ -16,7 +16,7 @@ describe('GET /health', () => {
         durableObjects?: {
           status: string;
           type: string;
-          bindings?: { USER_SESSION?: boolean; WORKSPACE?: boolean };
+          bindings?: { USER_SESSION?: boolean; PROJECT_SYNC?: boolean };
         };
       };
     };
@@ -29,6 +29,6 @@ describe('GET /health', () => {
     expect(body.services.storage?.type).toBe('R2');
     expect(body.services.durableObjects?.status).toBe('healthy');
     expect(body.services.durableObjects?.bindings?.USER_SESSION).toBe(true);
-    expect(body.services.durableObjects?.bindings?.WORKSPACE).toBe(true);
+    expect(body.services.durableObjects?.bindings?.PROJECT_SYNC).toBe(true);
   });
 });

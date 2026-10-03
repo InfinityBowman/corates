@@ -11,7 +11,7 @@ import {
   useAllStudies,
   useProjectOutcomes,
   type ReconciliationProgressEntry,
-} from '@/project/workspace-data';
+} from '@/project/project-data';
 import {
   getStudiesForTab,
   isDualReviewerStudy,

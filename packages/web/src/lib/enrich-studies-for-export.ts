@@ -4,7 +4,7 @@ import { serializeAnswerRows, scoreChecklistRows, type ChecklistType } from '@co
 import { amstar2 } from '@corates/shared';
 import type { AMSTAR2Checklist } from '@corates/shared/checklists';
 
-/** Hydrate checklist answer rows from the workspace for CSV/PDF export. */
+/** Hydrate checklist answer rows from the sync collections for CSV/PDF export. */
 export function enrichStudiesForExport(projectId: string, toExport: StudyInfo[]): StudyInfo[] {
   const collections = connectionPool.getCollections(projectId);
   if (!collections) return toExport;

@@ -12,7 +12,7 @@ import { StudyCard } from './study-card/StudyCard';
 import { StudiesExplainer } from './StudiesExplainer';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import { useFileDragStore } from '@/stores/fileDragStore';
-import { useAllStudies, useExistingStudies } from '@/project/workspace-data';
+import { useAllStudies, useExistingStudies } from '@/project/project-data';
 import { useAddStudies } from '@/hooks/useAddStudies';
 import { useProjectExport } from '@/hooks/useProjectExport';
 import { project } from '@/project';

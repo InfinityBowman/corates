@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
 import { ROBINS_I_CHECKLIST, getActiveDomainKeys } from '@corates/shared/checklists/robins-i';
 import {
-  useWorkspaceProjectId,
+  useSyncedProjectId,
   useAnswerValue,
   useChecklistAnswerMap,
   useRobinsIDomainScore,
-} from '@/project/workspace-data';
+} from '@/project/project-data';
 import { scoreChecklistRows } from '@corates/shared/sync';
 
 interface ScoringSummaryProps {
@@ -15,7 +15,7 @@ interface ScoringSummaryProps {
 }
 
 export function ScoringSummary({ checklistId, onDomainClick }: ScoringSummaryProps) {
-  const projectId = useWorkspaceProjectId();
+  const projectId = useSyncedProjectId();
   const flat = useChecklistAnswerMap(projectId, checklistId);
   const overallScore = useMemo(() => scoreChecklistRows('ROBINS_I', flat), [flat]);
   const isPerProtocol =
@@ -91,7 +91,7 @@ function DomainChip({
   shortName: string;
   onClick: () => void;
 }) {
-  const projectId = useWorkspaceProjectId();
+  const projectId = useSyncedProjectId();
   const { judgement: effective } = useRobinsIDomainScore(projectId, checklistId, domainKey);
 
   const chipColor = (() => {

@@ -24,7 +24,7 @@ import { getAuthCodeEmail, AUTH_CODE_EXPIRY_MINUTES } from './emailTemplates';
 import { queueEmail, isSyntheticEmail, makeSyntheticEmail } from '@corates/shared/email';
 import { onboardingEmail } from './onboarding-email';
 import { fetchOrcidPublicEmail } from './orcid-public-email';
-import { refreshOrgWorkspaceSessions } from '../sync/admin';
+import { refreshOrgSyncSessions } from '../sync/admin';
 import { notifyOrgMembers, EventTypes } from '../lib/notify';
 import { copyAvatarToR2, isExternalAvatarUrl, isInternalAvatarUrl } from '../lib/avatar-copy';
 import { buildAppUrl } from '../lib/app-url';
@@ -338,7 +338,7 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
                   // live sync sessions so reconnects re-run authorize and pick
                   // up a fresh writeAllowed stamp.
                   try {
-                    await refreshOrgWorkspaceSessions(env, db, subscription.referenceId);
+                    await refreshOrgSyncSessions(env, db, subscription.referenceId);
                   } catch (err) {
                     captureError(err, {
                       tags: { component: 'auth', action: 'subscription-complete-refresh-sync' },
@@ -381,7 +381,7 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
                   // live sync sessions so reconnects re-run authorize and pick
                   // up a fresh writeAllowed stamp.
                   try {
-                    await refreshOrgWorkspaceSessions(env, db, subscription.referenceId);
+                    await refreshOrgSyncSessions(env, db, subscription.referenceId);
                   } catch (err) {
                     captureError(err, {
                       tags: { component: 'auth', action: 'subscription-update-refresh-sync' },
@@ -423,7 +423,7 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
                   // live sync sessions so reconnects re-run authorize and pick
                   // up a fresh writeAllowed stamp.
                   try {
-                    await refreshOrgWorkspaceSessions(env, db, subscription.referenceId);
+                    await refreshOrgSyncSessions(env, db, subscription.referenceId);
                   } catch (err) {
                     captureError(err, {
                       tags: { component: 'auth', action: 'subscription-cancel-refresh-sync' },

@@ -14,13 +14,14 @@
     { "tag": "v1", "new_sqlite_classes": ["UserSession"] },
     { "tag": "v2", "new_sqlite_classes": ["EmailQueue"] },
     { "tag": "v3", "deleted_classes": ["EmailQueue"] },
-    { "tag": "v4", "new_sqlite_classes": ["WorkspaceDO"] }
+    { "tag": "v4", "new_sqlite_classes": ["WorkspaceDO"] },
+    { "tag": "v5", "renamed_classes": [{ "from": "WorkspaceDO", "to": "ProjectSyncDO" }] }
   ],
 
   "durable_objects": {
     "bindings": [
       { "name": "USER_SESSION", "class_name": "UserSession" },
-      { "name": "WORKSPACE", "class_name": "WorkspaceDO" }
+      { "name": "PROJECT_SYNC", "class_name": "ProjectSyncDO" }
     ]
   },
 

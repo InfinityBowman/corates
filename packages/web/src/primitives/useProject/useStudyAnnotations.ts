@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useLiveQuery, eq } from '@tanstack/react-db';
-import { collectionsKey, useProjectCollections } from '@/project/workspace-data';
+import { collectionsKey, useProjectCollections } from '@/project/project-data';
 import { emptyCollections } from '@/project/localCollections';
 import type { AnnotationEntry } from '@/stores/projectStore';
 

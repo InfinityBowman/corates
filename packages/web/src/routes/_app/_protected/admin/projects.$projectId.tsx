@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { Trash2Icon } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useAdminProjectDetails, useAdminWorkspaceStats } from '@/hooks/useAdminQueries';
+import { useAdminProjectDetails, useAdminSyncStats } from '@/hooks/useAdminQueries';
 import { removeProjectMember, deleteProject } from '@/stores/adminStore';
 import { showToast } from '@/lib/toast';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,7 @@ import { queryKeys } from '@/lib/queryKeys';
 import { AdminError, AdminPage, AdminPanel } from '@/components/admin/ui';
 import type { AdminProjectMember } from '@/server/functions/admin-projects.server';
 import { ProjectInfoSection } from '@/components/admin/projects/ProjectInfoSection';
-import { WorkspaceStorageSection } from '@/components/admin/projects/WorkspaceStorageSection';
+import { SyncStorageSection } from '@/components/admin/projects/SyncStorageSection';
 import { ProjectMembersSection } from '@/components/admin/projects/ProjectMembersSection';
 import { ProjectFilesSection } from '@/components/admin/projects/ProjectFilesSection';
 import { ProjectInvitationsSection } from '@/components/admin/projects/ProjectInvitationsSection';
@@ -38,8 +38,8 @@ function ProjectDetailPage() {
   // DO storage stats are fetched separately because they route through the
   // ProjectDoc DO and are slower than the D1 details query. Loading them as
   // a sibling query lets the rest of the page render immediately.
-  const statsQuery = useAdminWorkspaceStats(projectId);
-  const workspaceStats = statsQuery.data;
+  const statsQuery = useAdminSyncStats(projectId);
+  const syncStats = statsQuery.data;
 
   const [confirmDialog, setConfirmDialog] = useState<{
     type: 'delete-project' | 'remove-member';
@@ -131,8 +131,8 @@ function ProjectDetailPage() {
       }
     >
       <ProjectInfoSection project={project} stats={projectData.stats} />
-      <WorkspaceStorageSection
-        stats={workspaceStats}
+      <SyncStorageSection
+        stats={syncStats}
         isLoading={statsQuery.isLoading}
         isError={statsQuery.isError}
         isFetching={statsQuery.isFetching}

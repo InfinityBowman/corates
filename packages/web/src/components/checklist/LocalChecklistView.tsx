@@ -3,7 +3,7 @@
  *
  * Answers live in the local-practice row collections (persisted to the Dexie
  * `localProjects` store by the connection pool, mutated via the shared
- * mutators through applyLocalMutation) and are read via the workspace-data
+ * mutators through applyLocalMutation) and are read via the project-data
  * hooks. PDFs stay in the `localChecklistPdfs` Dexie table -- they are
  * binary blobs with no collaborative structure to preserve.
  */
@@ -18,7 +18,7 @@ import { CreateLocalChecklist } from '@/components/checklist/CreateLocalChecklis
 import { LOCAL_PROJECT_ID } from '@/project/localProject';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import { useChecklistViewModel } from '@/primitives/useProject/useChecklistViewModel';
-import { useChecklistScore, WorkspaceProjectContext } from '@/project/workspace-data';
+import { useChecklistScore, SyncedProjectContext } from '@/project/project-data';
 import { useLocalAppraisalCompletion } from '@/hooks/useLocalAppraisalCompletion';
 import { db } from '@/primitives/db';
 import { ScoreTag } from '@/components/checklist/ScoreTag';
@@ -46,9 +46,9 @@ export function LocalChecklistView({ checklistId, searchType }: LocalChecklistVi
   }
 
   return (
-    <WorkspaceProjectContext.Provider value={LOCAL_PROJECT_ID}>
+    <SyncedProjectContext.Provider value={LOCAL_PROJECT_ID}>
       <LocalChecklistEditor checklistId={checklistId} />
-    </WorkspaceProjectContext.Provider>
+    </SyncedProjectContext.Provider>
   );
 }
 

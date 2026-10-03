@@ -1,5 +1,5 @@
 /**
- * Named intent mutations for the project workspace — the six Y.Doc ops modules
+ * Named intent mutations for project sync — the six Y.Doc ops modules
  * re-expressed as deterministic mutators. Each runs twice (optimistic on the
  * client, authoritative on the server), so ids and timestamps always arrive as
  * args and every guard that used to be a console.error-and-return is a

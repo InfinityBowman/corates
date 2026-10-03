@@ -1,5 +1,5 @@
 /**
- * Key layout of the workspace backup bucket. Retention is enforced by R2
+ * Key layout of the project backup bucket. Retention is enforced by R2
  * lifecycle rules on these prefixes (see docs/guides/database.md), so the
  * prefixes are the contract: an object under `snapshots/` lives 60 days, one
  * under `deleted/` lives 30 days.

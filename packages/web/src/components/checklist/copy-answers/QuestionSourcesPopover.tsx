@@ -10,7 +10,7 @@ import {
   PopoverTitle,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { useWorkspaceProjectId } from '@/project/workspace-data';
+import { useSyncedProjectId } from '@/project/project-data';
 import { copyAnswersFrom, joinNames, useQuestionSources } from './useCopySources';
 
 interface QuestionSourcesPopoverProps {
@@ -40,7 +40,7 @@ export function QuestionSourcesPopover({
   responseLabels,
   disabled,
 }: QuestionSourcesPopoverProps) {
-  const projectId = useWorkspaceProjectId();
+  const projectId = useSyncedProjectId();
   const sources = useQuestionSources(projectId, studyId, checklistId, questionKey);
   const [open, setOpen] = useState(false);
   if (disabled || sources.length === 0) return null;

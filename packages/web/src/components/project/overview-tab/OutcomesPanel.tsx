@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { PlusIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useProjectOutcomes } from '@/project/workspace-data';
+import { useProjectOutcomes } from '@/project/project-data';
 import type { StudyInfo } from '@/stores/projectStore';
 import { useProjectContext } from '../ProjectContext';
 import { OutcomeManager } from '../outcomes/OutcomeManager';

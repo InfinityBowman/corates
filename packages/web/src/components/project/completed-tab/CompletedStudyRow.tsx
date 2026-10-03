@@ -38,7 +38,7 @@ import { ReopenReconciliationButton } from './ReopenReconciliationButton';
 import { useProjectContext } from '../ProjectContext';
 import { useExportDialogStore } from '@/stores/exportDialogStore';
 import type { StudyInfo, PdfEntry } from '@/stores/projectStore';
-import type { ReconciliationProgressEntry } from '@/project/workspace-data';
+import type { ReconciliationProgressEntry } from '@/project/project-data';
 
 interface CompletedStudyRowProps {
   study: StudyInfo;

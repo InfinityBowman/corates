@@ -24,7 +24,7 @@ import {
   useReconciliationProgress,
   useStudy,
   useProjectMembers,
-} from '@/project/workspace-data';
+} from '@/project/project-data';
 import { serializeAnswerRows, textFieldKey, type ChecklistAnswerInput } from '@corates/shared/sync';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { ACCESS_DENIED_ERRORS } from '@/constants/errors.js';

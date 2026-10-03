@@ -11,7 +11,7 @@ import { clientLogger } from '@/lib/clientLogger';
 import { showToast } from '@/lib/toast';
 import { buildProjectCsv, downloadCsv } from '@/lib/export-csv';
 import { enrichStudiesForExport } from '@/lib/enrich-studies-for-export';
-import { useAllStudies } from '@/project/workspace-data';
+import { useAllStudies } from '@/project/project-data';
 import type { StudyInfo } from '@/stores/projectStore';
 import { applyLocalMutation } from '@/project/localWrites';
 import { LOCAL_PROJECT_ID } from '@/project/localProject';

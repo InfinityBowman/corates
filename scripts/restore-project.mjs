@@ -1,10 +1,10 @@
-// Restore one project from a workspace backup object (docs/guides/database.md,
-// "Workspace backups"). Fetches the envelope from the backups bucket, re-inserts
-// the D1 rows that are missing, imports the workspace through the sync-admin
+// Restore one project from a backup object (docs/guides/database.md,
+// "Project backups"). Fetches the envelope from the backups bucket, re-inserts
+// the D1 rows that are missing, imports the sync snapshot through the sync-admin
 // route, and checks the live row count against the snapshot.
 //
-//   pnpm restore:workspace -- --env staging --project <id> --date 2026-09-16 --dry-run
-//   pnpm restore:workspace -- --env staging --project <id> --key deleted/<id>/<iso>.json.gz --pre-restore --yes
+//   pnpm restore:project -- --env staging --project <id> --date 2026-09-16 --dry-run
+//   pnpm restore:project -- --env staging --project <id> --key deleted/<id>/<iso>.json.gz --pre-restore --yes
 //
 // Runs wrangler from packages/web so the account id in wrangler.jsonc applies.
 // SYNC_ADMIN_TOKEN comes from packages/web/.env.<env>.
@@ -52,12 +52,12 @@ function parseArgs(argv) {
 
 function usage() {
   console.log(`Usage:
-  pnpm restore:workspace -- --env <staging|production> --project <id> (--date YYYY-MM-DD | --key <object key> | --file <local .json.gz>) [--pre-restore] [--dry-run] [--yes]
+  pnpm restore:project -- --env <staging|production> --project <id> (--date YYYY-MM-DD | --key <object key> | --file <local .json.gz>) [--pre-restore] [--dry-run] [--yes]
 
   --date         Daily snapshot: snapshots/<project>/<date>.json.gz
   --key          Any object key in the backups bucket (deleted/... for a deleted project)
   --file         A local envelope instead of fetching one
-  --pre-restore  Export the current workspace to <prefix>/<now>-pre-restore.json.gz first
+  --pre-restore  Export the current sync state to <prefix>/<now>-pre-restore.json.gz first
   --dry-run      Fetch and inspect, write nothing
   --yes          Required for a real restore`);
 }
@@ -157,11 +157,13 @@ async function main() {
   }
   const snapshotRows = envelope.workspace.rows.length;
   console.log(
-    `Envelope: "${envelope.project.name}", ${envelope.members.length} members, ${envelope.mediaFiles.length} media files, ${snapshotRows} workspace rows, exported ${envelope.workspace.exportedAt}`,
+    `Envelope: "${envelope.project.name}", ${envelope.members.length} members, ${envelope.mediaFiles.length} media files, ${snapshotRows} sync rows, exported ${envelope.workspace.exportedAt}`,
   );
 
   const before = await admin(cfg, 'stats');
-  console.log(`Current workspace: ${before.rows.live} live rows, version ${before.currentVersion}`);
+  console.log(
+    `Current sync state: ${before.rows.live} live rows, version ${before.currentVersion}`,
+  );
 
   const projectExists =
     d1Rows(cfg.env, `SELECT id FROM projects WHERE id = '${cfg.project.replaceAll("'", "''")}';`)

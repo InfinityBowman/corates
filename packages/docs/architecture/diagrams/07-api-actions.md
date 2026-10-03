@@ -81,7 +81,7 @@ flowchart TB
         CleanupR2 -->|Failed| R2Error[Log error<br/>Continue]
         CleanupR2 -->|Success| DeleteDB[Delete from D1<br/>projects cascade]
         DeleteDB -->|DB Error| DeleteDBError2[SYSTEM_DB_ERROR<br/>500]
-        DeleteDB -->|Success| TeardownDO[Teardown workspace DO<br/>close sessions + wipe storage]
+        DeleteDB -->|Success| TeardownDO[Teardown sync DO<br/>close sessions + wipe storage]
         TeardownDO -->|Failed| TeardownError[Log error<br/>Continue]
         TeardownDO -->|Success| NotifyMembers[Send notifications<br/>to all members]
         NotifyMembers -->|Some Failed| NotifyError[Log errors<br/>Continue]
@@ -112,7 +112,7 @@ flowchart TB
             InsertMember -->|DB Error| AddDBError[SYSTEM_DB_ERROR<br/>500]
             InsertMember -->|Success| NotifyUser[Send notification<br/>via UserSession DO]
             NotifyUser -->|Failed| NotifyUserError[Log error<br/>Continue]
-            NotifyUser -->|Success| SyncMemberDO[Refresh workspace sessions<br/>clients refetch members]
+            NotifyUser -->|Success| SyncMemberDO[Refresh sync sessions<br/>clients refetch members]
             SyncMemberDO -->|Failed| SyncMemberError[Log error<br/>Continue]
             SyncMemberDO -->|Success| AddSuccess[201 Created<br/>Return member]
         end
@@ -126,7 +126,7 @@ flowchart TB
             CheckLastOwner -->|Yes| LastOwnerError[PROJECT_LAST_OWNER<br/>400<br/>Assign another owner first]
             CheckLastOwner -->|No| UpdateRoleDB[Update D1<br/>projectMembers.role]
             UpdateRoleDB -->|DB Error| UpdateRoleDBError[SYSTEM_DB_ERROR<br/>500]
-            UpdateRoleDB -->|Success| SyncRoleDO[Refresh workspace sessions<br/>reconnects re-stamp role]
+            UpdateRoleDB -->|Success| SyncRoleDO[Refresh sync sessions<br/>reconnects re-stamp role]
             SyncRoleDO -->|Failed| SyncRoleError[Log error<br/>Continue]
             SyncRoleDO -->|Success| UpdateRoleSuccess[200 OK<br/>Success response]
         end
@@ -722,5 +722,5 @@ External API calls can fail:
 
 - **D1 Database**: Cloudflare D1 SQL database for persistent storage
 - **R2 Storage**: Cloudflare R2 object storage for PDFs
-- **Durable Objects**: WorkspaceDO (sync engine) and UserSession (notifications) for real-time features
+- **Durable Objects**: ProjectSyncDO (sync engine) and UserSession (notifications) for real-time features
 - **External APIs**: DOI lookup, Google Drive API

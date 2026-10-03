@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore, selectIsLoggedIn } from '@/stores/authStore';
 import { useFeedbackStore } from '@/stores/feedbackStore';
-import { useAllStudies } from '@/project/workspace-data';
+import { useAllStudies } from '@/project/project-data';
 import { applyLocalMutation } from '@/project/localWrites';
 import { LOCAL_PROJECT_ID } from '@/project/localProject';
 import { db } from '@/primitives/db';

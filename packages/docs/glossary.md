@@ -33,10 +33,10 @@ A systematic review project containing studies, checklists, and PDFs. Projects:
 - Belong to a single organization
 - Have their own member list (project-level access)
 - Collaborate in real time over the cf-sync engine (row collections, named mutators)
-- Store collaborative data in a workspace Durable Object (WorkspaceDO), one per project
+- Store collaborative data in a project sync Durable Object (ProjectSyncDO), one per project
 - Have a unique `projectId` (UUID)
 
-**Related:** `packages/workers/src/sync/workspace.ts`, [Sync Engine Guide](guides/yjs-sync.md)
+**Related:** `packages/workers/src/sync/project-sync.ts`, [Sync Engine Guide](guides/yjs-sync.md)
 
 ### Study
 
@@ -47,7 +47,7 @@ A publication or research study being evaluated in a systematic review. Studies:
 - Can have associated PDF files stored in R2
 - Track metadata like title, authors, year, journal
 
-**Related:** Studies are rows in the project's workspace collections (sync engine)
+**Related:** Studies are rows in the project's sync collections (sync engine)
 
 ### Checklist
 
@@ -93,7 +93,7 @@ Cloudflare's distributed computing primitive providing:
 - Single-threaded, stateful compute (like an actor)
 - In-memory state with optional persistent storage
 - WebSocket support for real-time connections
-- Used for WorkspaceDO (sync engine, one workspace per project) and UserSession (per-user notifications)
+- Used for ProjectSyncDO (sync engine, one per project) and UserSession (per-user notifications)
 
 **Related:** [durable-objects.mdc](../../.cursor/rules/durable-objects.mdc)
 

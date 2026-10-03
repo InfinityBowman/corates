@@ -83,7 +83,7 @@ The following endpoints require authentication:
 - `/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/*` - PDF management (requires project access)
 - `/api/users/*` - User management (requires auth)
 - `/api/sessions/:sessionId/*` - User session Durable Object (requires auth)
-- `/api/sync/:projectId` - Sync-engine workspace WebSocket (requires auth + project membership, checked against D1 on connect)
+- `/api/sync/:projectId` - Project sync WebSocket (requires auth + project membership, checked against D1 on connect)
 - `/api/admin/*` - Admin endpoints (requires admin role)
 - `/api/billing/*` - Billing endpoints (requires auth)
 - Google Drive integration is exposed as TanStack Start server functions in `packages/web/src/server/functions/google-drive.functions.ts` (requires auth), not as REST routes

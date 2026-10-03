@@ -7,7 +7,7 @@
 import { createContext, useContext, useMemo, useCallback, useState } from 'react';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { useProjectOrgId } from '@/hooks/useProjectOrgId';
-import { useProjectMembers } from '@/project/workspace-data';
+import { useProjectMembers } from '@/project/project-data';
 
 export interface ProjectMember {
   userId: string;

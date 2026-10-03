@@ -1241,7 +1241,7 @@
         "textMode": "auto",
         "justifyMode": "auto"
       },
-      "description": "Distinct users who committed at least one workspace mutation."
+      "description": "Distinct users who committed at least one project sync mutation."
     },
     {
       "id": 47,
@@ -1289,7 +1289,7 @@
         "textMode": "auto",
         "justifyMode": "auto"
       },
-      "description": "Committed workspace mutations, summing count so coalesced edits are counted in full."
+      "description": "Committed project sync mutations, summing count so coalesced edits are counted in full."
     },
     {
       "id": 21,
@@ -1341,7 +1341,7 @@
           "sort": "desc"
         }
       },
-      "description": "Browser events only; the server-side record of the same work is sync.mutation under Workspace activity below."
+      "description": "Browser events only; the server-side record of the same work is sync.mutation under Project sync activity below."
     },
     {
       "id": 22,
@@ -2497,7 +2497,7 @@
     {
       "id": 48,
       "type": "row",
-      "title": "Workspace activity",
+      "title": "Project sync activity",
       "collapsed": false,
       "panels": [],
       "gridPos": {
@@ -2557,7 +2557,7 @@
           "sort": "desc"
         }
       },
-      "description": "sync.mutation lines from the workspace DO. Field-edit mutators coalesce into one line per user, checklist and 60s window; count carries the real number and this panel sums it."
+      "description": "sync.mutation lines from the sync DO. Field-edit mutators coalesce into one line per user, checklist and 60s window; count carries the real number and this panel sums it."
     },
     {
       "id": 50,

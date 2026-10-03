@@ -11,7 +11,7 @@ import {
   useProjectMembers,
   useProjectMeta,
   useProjectOutcomes,
-} from '@/project/workspace-data';
+} from '@/project/project-data';
 import { useMembers } from '@/hooks/useMembers';
 import { useSubscription } from '@/hooks/useSubscription';
 import { queryKeys } from '@/lib/queryKeys';

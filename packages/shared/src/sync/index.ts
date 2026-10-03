@@ -1,5 +1,5 @@
 /**
- * @corates/shared/sync — the project workspace's sync-engine definition.
+ * @corates/shared/sync — the project sync-engine definition.
  *
  * Importable from both the worker and the browser (no runtime deps beyond
  * zod and @cf-sync/protocol). The worker also consumes `authContextSchema`'s
@@ -59,7 +59,7 @@ export {
   type CopyPlanEntry,
 } from './copy-answers.js';
 // The engine's migration runner, for the local practice plane that has no
-// workspace to run it: replay from a stored version, as the DO does on wake.
+// sync DO to run it: replay from a stored version, as the DO does on wake.
 export { migrationPath } from '@cf-sync/protocol/internal';
 export type { MigrationTx } from '@cf-sync/protocol';
 export {

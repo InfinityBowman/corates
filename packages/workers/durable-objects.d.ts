@@ -12,6 +12,6 @@ export declare class UserSession {
 // The sync-engine workspace DO (@cf-sync/server createWorkspaceDO over the
 // @corates/shared/sync app). Opaque on purpose: traffic reaches it through
 // the routers in @corates/workers/sync, never instance methods.
-export declare class WorkspaceDO {
+export declare class ProjectSyncDO {
   fetch(request: Request): Promise<Response>;
 }

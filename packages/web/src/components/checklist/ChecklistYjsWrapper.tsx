@@ -5,7 +5,7 @@ import { ChecklistWithPdf } from '@/components/checklist/ChecklistWithPdf';
 import { useProjectContext } from '@/components/project/ProjectContext';
 import { connectionPool } from '@/project/ConnectionPool';
 import { useChecklistViewModel } from '@/primitives/useProject/useChecklistViewModel';
-import { useChecklistScore, useAnswerWriters, getAnswerValue } from '@/project/workspace-data';
+import { useChecklistScore, useAnswerWriters, getAnswerValue } from '@/project/project-data';
 import { getCompletionNaStamps } from '@/components/checklist/completion-na';
 import type { ChecklistAnswerInput } from '@corates/shared/sync';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';

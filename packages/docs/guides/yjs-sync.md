@@ -15,13 +15,13 @@ documented in `packages/docs/plans/sync-engine-cutover.md`.
   row shapes), named mutators, presence schema, and derivation helpers. Both
   sides consume the same `syncApp` - `createWorkspaceDO(syncApp)` in the
   worker, `createWorkspace({ app: syncApp })` in the browser.
-- **Server** (`packages/workers/src/sync`): one WorkspaceDO per project holds
+- **Server** (`packages/workers/src/sync`): one ProjectSyncDO per project holds
   the authoritative rows in DO storage. `authorize` checks D1 membership on
   connect and stamps `role` / `writeAllowed` onto the session. Admin seams
-  (`kickWorkspaceUser`, `refreshWorkspaceSessions`, `teardownWorkspace`)
+  (`kickSyncUser`, `refreshSyncSessions`, `teardownProjectSync`)
   let commands close or refresh live sessions.
 - **Client** (`packages/web/src/project`): `ConnectionPool` owns ref-counted
-  sessions. Reads go through the workspace-data hooks (live queries over the
+  sessions. Reads go through the project-data hooks (live queries over the
   engine's collections); writes go through `client.mutate.*` - optimistic
   apply, a durable outbox, and rollback plus a toast on rejection.
 - **Persistence**: DO storage on the server; one `cf-sync:<projectId>`
@@ -32,9 +32,9 @@ documented in `packages/docs/plans/sync-engine-cutover.md`.
 ## One authority per fact
 
 Collaborative content (studies, checklists, answers, outcomes, pdfs,
-annotations, reconciliations) lives in workspace rows: live, local,
+annotations, reconciliations) lives in synced rows: live, local,
 offline-capable. Identity and membership are D1-authoritative, read through
-React Query, and never mirrored into the workspace. Membership changes
+React Query, and never mirrored into the sync DO. Membership changes
 refresh-disconnect the project's sessions; clients treat a re-sync as the
 poke to refetch the members query.
 
@@ -75,7 +75,7 @@ merged into the stored copy in one transaction; writing the whole copy would
 let a long-open tab erase what other tabs saved. The persisted row carries the sync
 schema version it was written under; on load the pool replays the shared
 schema migrations from that version and validates the rows against the
-current schema (`migrateLocalRows`), exactly as the workspace Durable Object
+current schema (`migrateLocalRows`), exactly as the project sync Durable Object
 does on wake, so a migration is written once. Every practice study is a
 single-reviewer study whose reviewer is `LOCAL_REVIEWER_ID`, so local rows
 have the same shape as online rows. Legacy local Y.Docs are converted to
