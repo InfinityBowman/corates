@@ -8,7 +8,7 @@ import {
   useProjectMembers,
   useProjectMeta,
   useProjectOutcomes,
-} from '@/project/workspace-data';
+} from '@/project/project-data';
 import type { ProjectMeta, StudyInfo } from '@/stores/projectStore';
 
 function safeFilename(name: string): string {

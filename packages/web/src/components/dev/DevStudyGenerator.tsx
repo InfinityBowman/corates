@@ -1,14 +1,14 @@
 /**
  * DevStudyGenerator - Add studies with auto-filled checklists and optional reconciliation
  *
- * Reads project members and outcomes from workspace data to populate dropdowns.
+ * Reads project members and outcomes from project data to populate dropdowns.
  * Seeds through the sync engine via `@/dev/seed`, which must stay lazy-imported
  * so fixture data stays out of the main bundle.
  */
 
 import { useId, useState } from 'react';
 import { PlusIcon, CheckIcon, AlertCircleIcon } from 'lucide-react';
-import { useAllStudies, useProjectMembers, useProjectOutcomes } from '@/project/workspace-data';
+import { useAllStudies, useProjectMembers, useProjectOutcomes } from '@/project/project-data';
 import {
   Select,
   SelectContent,

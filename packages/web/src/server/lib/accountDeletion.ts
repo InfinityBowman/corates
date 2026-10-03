@@ -1,6 +1,6 @@
 /**
  * Delete a user and every project only they belong to, including the
- * project's workspace content and R2 PDFs. Shared by self-service and admin
+ * project's synced content and R2 PDFs. Shared by self-service and admin
  * account deletion.
  *
  * Projects the user created but shares with others survive: they pass to
@@ -24,11 +24,7 @@ import { and, asc, eq, ne } from 'drizzle-orm';
 import { captureError, info } from '@corates/workers/logger';
 import { snapshotBeforeDelete } from '@corates/workers/commands/backups';
 import { cleanupProjectStorage } from '@corates/workers/commands/projects';
-import {
-  kickWorkspaceUser,
-  refreshWorkspaceSessions,
-  teardownWorkspace,
-} from '@corates/workers/sync';
+import { kickSyncUser, refreshSyncSessions, teardownProjectSync } from '@corates/workers/sync';
 
 interface Handoff {
   projectId: string;
@@ -73,10 +69,10 @@ export async function deleteUserAccount(
 
   // Kick the user's live sync sessions before their memberships disappear;
   // reconnect attempts re-run authorize against D1 and fail permanently.
-  await Promise.all(memberships.map(({ projectId }) => kickWorkspaceUser(env, projectId, userId)));
+  await Promise.all(memberships.map(({ projectId }) => kickSyncUser(env, projectId, userId)));
 
   // Same order as deleteProject: final snapshot, PDFs, then the authoritative
-  // D1 delete, then the workspace wipe so a failed delete leaves the project
+  // D1 delete, then the sync DO wipe so a failed delete leaves the project
   // intact.
   for (const projectId of soleProjects) {
     await snapshotBeforeDelete(env, db, projectId);
@@ -118,11 +114,11 @@ export async function deleteUserAccount(
   ]);
 
   for (const projectId of soleProjects) {
-    await teardownWorkspace(env, projectId);
+    await teardownProjectSync(env, projectId);
   }
   // Reconnects pick up the successor's owner stamp and refetch the member list.
   for (const { projectId } of handoffs) {
-    await refreshWorkspaceSessions(env, projectId);
+    await refreshSyncSessions(env, projectId);
   }
 
   info('account.deleted', {

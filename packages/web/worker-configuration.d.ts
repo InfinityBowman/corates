@@ -36,12 +36,12 @@ interface __BaseEnv_Env {
   STRIPE_AI_AGENT_KEY: string;
   USER_SESSION: DurableObjectNamespace<import('./src/server').UserSession>;
   PROJECT_DOC: DurableObjectNamespace<import('./src/server').ProjectDoc>;
-  WORKSPACE: DurableObjectNamespace<import('./src/server').WorkspaceDO>;
+  PROJECT_SYNC: DurableObjectNamespace<import('./src/server').ProjectSyncDO>;
 }
 declare namespace Cloudflare {
   interface GlobalProps {
     mainModule: typeof import('./src/server');
-    durableNamespaces: 'UserSession' | 'ProjectDoc' | 'WorkspaceDO';
+    durableNamespaces: 'UserSession' | 'ProjectDoc' | 'ProjectSyncDO';
   }
   interface ProductionEnv {
     PDF_BUCKET: R2Bucket;
@@ -78,7 +78,7 @@ declare namespace Cloudflare {
     STRIPE_AI_AGENT_KEY: string;
     USER_SESSION: DurableObjectNamespace<import('./src/server').UserSession>;
     PROJECT_DOC: DurableObjectNamespace<import('./src/server').ProjectDoc>;
-    WORKSPACE: DurableObjectNamespace<import('./src/server').WorkspaceDO>;
+    PROJECT_SYNC: DurableObjectNamespace<import('./src/server').ProjectSyncDO>;
   }
   interface StagingEnv {
     PDF_BUCKET: R2Bucket;
@@ -114,7 +114,7 @@ declare namespace Cloudflare {
     STRIPE_AI_AGENT_KEY: string;
     USER_SESSION: DurableObjectNamespace<import('./src/server').UserSession>;
     PROJECT_DOC: DurableObjectNamespace<import('./src/server').ProjectDoc>;
-    WORKSPACE: DurableObjectNamespace<import('./src/server').WorkspaceDO>;
+    PROJECT_SYNC: DurableObjectNamespace<import('./src/server').ProjectSyncDO>;
   }
   interface Env extends __BaseEnv_Env {}
 }

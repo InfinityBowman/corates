@@ -1,14 +1,14 @@
 export { buildSyncVerdict, type SyncVerdict } from './authorize';
 export {
-  WorkspaceDO,
+  ProjectSyncDO,
   SYNC_PATH_PREFIX,
   SYNC_ADMIN_PATH_PREFIX,
   handleSyncFetch,
-} from './workspace';
+} from './project-sync';
 export {
-  projectWorkspace,
-  kickWorkspaceUser,
-  refreshOrgWorkspaceSessions,
-  refreshWorkspaceSessions,
-  teardownWorkspace,
+  projectSync,
+  kickSyncUser,
+  refreshOrgSyncSessions,
+  refreshSyncSessions,
+  teardownProjectSync,
 } from './admin';

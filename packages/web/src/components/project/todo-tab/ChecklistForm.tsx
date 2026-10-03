@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useProjectOutcomes } from '@/project/workspace-data';
+import { useProjectOutcomes } from '@/project/project-data';
 import { useProjectContext } from '../ProjectContext';
 
 interface ChecklistFormProps {

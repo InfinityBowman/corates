@@ -2,11 +2,11 @@ import { useMemo } from 'react';
 import { BIAS_DIRECTIONS } from '@corates/shared/checklists/rob2';
 import { mapOverallJudgementToDisplay } from './checklist.js';
 import {
-  useWorkspaceProjectId,
+  useSyncedProjectId,
   useAnswerValue,
   useAnswerWriters,
   useChecklistAnswerMap,
-} from '@/project/workspace-data';
+} from '@/project/project-data';
 import { scoreChecklistRows } from '@corates/shared/sync';
 
 interface OverallSectionProps {
@@ -16,7 +16,7 @@ interface OverallSectionProps {
 }
 
 export function OverallSection({ studyId, checklistId, disabled }: OverallSectionProps) {
-  const projectId = useWorkspaceProjectId();
+  const projectId = useSyncedProjectId();
   const flat = useChecklistAnswerMap(projectId, checklistId);
   const calculatedScore = useMemo(() => scoreChecklistRows('ROB2', flat), [flat]);
   const isIncomplete = calculatedScore === 'Incomplete';

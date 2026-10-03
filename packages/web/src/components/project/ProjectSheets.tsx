@@ -5,7 +5,7 @@
  */
 
 import { toast } from 'sonner';
-import { useProjectMembers } from '@/project/workspace-data';
+import { useProjectMembers } from '@/project/project-data';
 import { AddStudiesSheet } from './add-studies/AddStudiesSheet';
 import { AssignReviewersSheet } from './assign-reviewers/AssignReviewersSheet';
 import { OutcomesSheet } from './outcomes/OutcomesSheet';

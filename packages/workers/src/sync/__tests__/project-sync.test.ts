@@ -1,5 +1,5 @@
 /**
- * The sync-engine workspace wired into corates' workerd: the DO boots with
+ * Project sync wired into corates' workerd: the DO boots with
  * SQLite storage, the admin route enforces its bearer token, and the sync
  * route runs the real authorize chain (Better Auth mocked; D1 real) before
  * completing or rejecting the upgrade.
@@ -22,8 +22,8 @@ import {
 import { createDb } from '@corates/db/client';
 import { orgAccessGrants } from '@corates/db/schema';
 import * as Y from 'yjs';
-import { handleSyncFetch } from '../workspace';
-import { projectWorkspace } from '../admin';
+import { handleSyncFetch } from '../project-sync';
+import { projectSync } from '../admin';
 import {
   resetTestDatabase,
   seedUser,
@@ -83,7 +83,7 @@ function upgradeRequest(projectId: string) {
   });
 }
 
-describe('sync workspace routes', () => {
+describe('project sync routes', () => {
   beforeEach(async () => {
     await resetTestDatabase();
     vi.clearAllMocks();
@@ -156,8 +156,8 @@ describe('sync workspace routes', () => {
     expect(reason).toBe('not-a-member');
   });
 
-  it('same-worker admin surface exports an empty workspace', async () => {
-    const snapshot = (await projectWorkspace(env, PROJECT).export()) as Record<string, unknown>;
+  it('same-worker admin surface exports an empty project', async () => {
+    const snapshot = (await projectSync(env, PROJECT).export()) as Record<string, unknown>;
     expect(snapshot).toBeTruthy();
     expect(typeof snapshot).toBe('object');
   });
@@ -248,7 +248,7 @@ async function fieldClient(projectId: string, clientId: string) {
   };
 }
 
-describe('yjs fields through the workspace DO', () => {
+describe('yjs fields through the sync DO', () => {
   beforeEach(async () => {
     await resetTestDatabase();
     vi.clearAllMocks();

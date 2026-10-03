@@ -1,6 +1,6 @@
 apiVersion: 1
 
-# Daily workspace backup sweep, prod only (staging is off the Loki export).
+# Daily project backup sweep, prod only (staging is off the Loki export).
 # The sweep's only trace is one log line, so a cron that silently stops producing
 # nothing is indistinguishable from a healthy quiet day without these rules.
 #
@@ -15,7 +15,7 @@ groups:
     interval: 15m
     rules:
       - uid: corates-backup-sweep-missing
-        title: Daily workspace backup did not run
+        title: Daily project backup did not run
         condition: threshold
         for: 15m
         data:
@@ -45,7 +45,7 @@ groups:
           summary: No backup sweep has completed in 26 hours
           description: >-
             The 05:00 UTC cron either did not fire or threw before logging. Every
-            workspace is now more than a day stale in corates-backups-prod, and
+            project is now more than a day stale in corates-backups-prod, and
             R2 lifecycle still expires snapshots/ at 60 days. Sentry has the
             exception if the sweep threw.
             Logs: {service_name="corates-workers-prod"} | json | message="backup.completed"
@@ -80,7 +80,7 @@ groups:
         annotations:
           summary: 'Backup failed for project {{ $labels.projectId }} (stage {{ $labels.stage }})'
           description: >-
-            The sweep logs and skips a broken workspace so one project cannot hide
+            The sweep logs and skips a broken project so one project cannot hide
             the rest. stage=sweep means that project has no snapshot for the day;
             stage=pre-delete means a project was torn down without its final
             deleted/ copy, which nothing retries.

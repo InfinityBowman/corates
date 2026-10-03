@@ -6,7 +6,7 @@ import { OverallSection } from './OverallSection';
 import { ResponseLegend } from './SignallingQuestion';
 import { ScoringSummary } from './ScoringSummary';
 import { CopyAnswersMenu } from '@/components/checklist/copy-answers/CopyAnswersMenu';
-import { useWorkspaceProjectId, useAnswerValue, useStudy } from '@/project/workspace-data';
+import { useSyncedProjectId, useAnswerValue, useStudy } from '@/project/project-data';
 
 interface ROB2ChecklistProps {
   studyId: string;
@@ -35,7 +35,7 @@ export function ROB2Checklist({
     };
   }, []);
 
-  const projectId = useWorkspaceProjectId();
+  const projectId = useSyncedProjectId();
   const aim = useAnswerValue<string>(projectId, checklistId, 'preliminary.aim');
   const study = useStudy(projectId, studyId);
   const checklistName = study?.checklists.find(c => c.id === checklistId)?.title ?? null;

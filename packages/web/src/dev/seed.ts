@@ -68,14 +68,14 @@ function defaultSeedContext(): SeedContext {
 // ---------------------------------------------------------------------------
 // Session plumbing
 
-function createSeedWorkspace(projectId: string) {
+function createSeedSync(projectId: string) {
   return createWorkspace({
     url: getWsBaseUrl(),
     pathPrefix: '/api/sync',
     workspaceId: projectId,
     app: syncApp,
     persist: false,
-    // The default clientId is per-tab-per-workspace (sessionStorage), which
+    // The default clientId is per-tab-per-project (sessionStorage), which
     // would make concurrent seed sessions — and the pool's UI session for an
     // open project — supersede each other (4409). Each seed session is its
     // own short-lived client.
@@ -83,20 +83,20 @@ function createSeedWorkspace(projectId: string) {
   });
 }
 
-type SeedWorkspace = ReturnType<typeof createSeedWorkspace>;
-type SeedClient = SeedWorkspace['client'];
+type SeedSync = ReturnType<typeof createSeedSync>;
+type SeedClient = SeedSync['client'];
 
 /** Open a short-lived seeding session and wait until it is live. */
 async function withSeedSession<T>(
   projectId: string,
-  fn: (workspace: SeedWorkspace) => Promise<T>,
+  fn: (sync: SeedSync) => Promise<T>,
 ): Promise<T> {
-  const workspace = createSeedWorkspace(projectId);
+  const sync = createSeedSync(projectId);
   try {
-    await waitForSynced(workspace.client);
-    return await fn(workspace);
+    await waitForSynced(sync.client);
+    return await fn(sync);
   } finally {
-    await workspace.destroy();
+    await sync.destroy();
   }
 }
 
@@ -105,7 +105,7 @@ function waitForSynced(client: SeedClient, timeoutMs = 15_000): Promise<void> {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
       unsubscribe();
-      reject(new Error('dev seed: timed out connecting to the workspace'));
+      reject(new Error('dev seed: timed out connecting to the project'));
     }, timeoutMs);
     const unsubscribe = client.subscribeStatus(status => {
       if (status === 'synced') {

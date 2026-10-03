@@ -4,7 +4,7 @@
  * Two creation modes:
  * 1. From Template - pick a mock template, map template users to real users,
  *    create the project, then seed it through the sync engine.
- * 2. From JSON - create a project and import an exported workspace snapshot
+ * 2. From JSON - create a project and import an exported sync snapshot
  *    (the engine's opaque JSON, as produced by the JSON tab's Export).
  *
  * Templates and seeding live in `@/dev/mock-templates` and `@/dev/seed`,
@@ -500,7 +500,7 @@ export function DevImportProject() {
             </label>
             <textarea
               className='border-border bg-muted h-[calc(100%-1.25rem)] w-full resize-none rounded border p-2 font-mono text-xs focus:border-purple-500 focus:ring-1 focus:ring-purple-500 focus:outline-none'
-              placeholder='Paste an exported workspace snapshot here...'
+              placeholder='Paste an exported sync snapshot here...'
               value={jsonText}
               onChange={e => setJsonText(e.target.value)}
             />

@@ -15,7 +15,7 @@ export declare const SYNC_ADMIN_PATH_PREFIX: string;
  * reconnects re-run authorize against D1). Best-effort: failures are logged,
  * never thrown.
  */
-export declare function kickWorkspaceUser(
+export declare function kickSyncUser(
   env: unknown,
   projectId: string,
   userId: string,
@@ -27,19 +27,19 @@ export declare function kickWorkspaceUser(
  * authorize (fresh role stamps) and clients refetch the member list.
  * Best-effort: failures are logged, never thrown.
  */
-export declare function refreshWorkspaceSessions(env: unknown, projectId: string): Promise<void>;
+export declare function refreshSyncSessions(env: unknown, projectId: string): Promise<void>;
 
 /**
- * Project deletion: close every session permanently, then wipe the workspace
+ * Project deletion: close every session permanently, then wipe the sync DO
  * storage. Best-effort: failures are logged, never thrown.
  */
-export declare function teardownWorkspace(env: unknown, projectId: string): Promise<void>;
+export declare function teardownProjectSync(env: unknown, projectId: string): Promise<void>;
 
 /**
- * Typed admin surface over one project's workspace for same-worker callers
+ * Typed admin surface over one project's sync DO for same-worker callers
  * (stats/export/import/reset/disconnect). Only what web consumes is declared.
  */
-export declare function projectWorkspace(
+export declare function projectSync(
   env: unknown,
   projectId: string,
 ): {

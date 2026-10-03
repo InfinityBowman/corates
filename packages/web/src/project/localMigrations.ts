@@ -1,5 +1,5 @@
 /**
- * Local practice has no engine workspace, so nothing runs the app's schema
+ * Local practice has no sync DO, so nothing runs the app's schema
  * migrations over its rows on wake. This module does what the Durable Object
  * does: replay `migrationPath` from the stored schema version, validate the
  * net rows against the current schema, and restamp. Every migration written

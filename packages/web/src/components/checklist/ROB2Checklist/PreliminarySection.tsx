@@ -6,7 +6,7 @@ import {
   INFORMATION_SOURCES,
 } from '@corates/shared/checklists/rob2';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
-import { useWorkspaceProjectId, useAnswerValue, useAnswerWriters } from '@/project/workspace-data';
+import { useSyncedProjectId, useAnswerValue, useAnswerWriters } from '@/project/project-data';
 
 interface PreliminarySectionProps {
   studyId: string;
@@ -15,7 +15,7 @@ interface PreliminarySectionProps {
 }
 
 export function PreliminarySection({ studyId, checklistId, disabled }: PreliminarySectionProps) {
-  const projectId = useWorkspaceProjectId();
+  const projectId = useSyncedProjectId();
   const aim = useAnswerValue<string>(projectId, checklistId, 'preliminary.aim');
   const studyDesign = useAnswerValue<string>(projectId, checklistId, 'preliminary.studyDesign');
   const deviationsToAddress = useAnswerValue<string[]>(

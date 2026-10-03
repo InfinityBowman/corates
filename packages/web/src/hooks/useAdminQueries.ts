@@ -18,7 +18,7 @@ import {
 import {
   getAdminProjectsAction,
   getAdminProjectDetailsAction,
-  getAdminWorkspaceStatsAction,
+  getAdminSyncStatsAction,
 } from '@/server/functions/admin-projects.functions';
 import { getAdminStatsAction } from '@/server/functions/admin-stats.functions';
 import {
@@ -104,10 +104,10 @@ export function useAdminProjectDetails(projectId: string | null | undefined) {
   });
 }
 
-export function useAdminWorkspaceStats(projectId: string | null | undefined) {
+export function useAdminSyncStats(projectId: string | null | undefined) {
   return useQuery({
-    queryKey: queryKeys.admin.workspaceStats(projectId),
-    queryFn: () => getAdminWorkspaceStatsAction({ data: { projectId: projectId! } }),
+    queryKey: queryKeys.admin.syncStats(projectId),
+    queryFn: () => getAdminSyncStatsAction({ data: { projectId: projectId! } }),
     enabled: !!projectId,
     ...ADMIN_QUERY_CONFIG,
   });

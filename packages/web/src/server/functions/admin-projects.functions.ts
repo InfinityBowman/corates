@@ -4,7 +4,7 @@ import { authMiddleware } from '@/server/middleware/auth';
 import {
   listAdminProjects,
   getAdminProjectDetails,
-  getAdminWorkspaceStats,
+  getAdminSyncStats,
   removeAdminProjectMember,
   deleteAdminProject,
 } from './admin-projects.server';
@@ -28,11 +28,11 @@ export const getAdminProjectDetailsAction = createServerFn({ method: 'GET' })
     getAdminProjectDetails(session, db, data.projectId),
   );
 
-export const getAdminWorkspaceStatsAction = createServerFn({ method: 'GET' })
+export const getAdminSyncStatsAction = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
   .validator(z.object({ projectId: z.string() }))
   .handler(async ({ data, context: { session, db } }) =>
-    getAdminWorkspaceStats(session, db, data.projectId),
+    getAdminSyncStats(session, db, data.projectId),
   );
 
 export const removeAdminProjectMemberAction = createServerFn({ method: 'POST' })

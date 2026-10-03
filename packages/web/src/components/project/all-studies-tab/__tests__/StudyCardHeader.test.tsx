@@ -10,7 +10,7 @@ const { openStudySheet } = vi.hoisted(() => ({ openStudySheet: vi.fn() }));
 vi.mock('@/components/project/ProjectContext', () => ({
   useProjectContext: () => ({ projectId: 'p1', isOwner: true, openStudySheet }),
 }));
-vi.mock('@/project/workspace-data', () => ({ useProjectOutcomes: () => [] }));
+vi.mock('@/project/project-data', () => ({ useProjectOutcomes: () => [] }));
 vi.mock('@/project', () => ({ project: {} }));
 
 const study = {

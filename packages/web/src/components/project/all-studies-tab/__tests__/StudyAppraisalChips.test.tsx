@@ -8,7 +8,7 @@ import type { StudyInfo, ChecklistEntry } from '@/stores/projectStore';
 vi.mock('@/components/project/ProjectContext', () => ({
   useProjectContext: () => ({ projectId: 'p1' }),
 }));
-vi.mock('@/project/workspace-data', () => ({
+vi.mock('@/project/project-data', () => ({
   useProjectOutcomes: () => [
     { id: 'o1', name: 'Mortality', createdAt: 1 },
     { id: 'o2', name: 'Pain', createdAt: 2 },

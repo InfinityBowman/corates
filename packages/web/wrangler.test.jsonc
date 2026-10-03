@@ -11,13 +11,13 @@
 
   "exports": {
     "UserSession": { "type": "durable-object", "storage": "sqlite" },
-    "WorkspaceDO": { "type": "durable-object", "storage": "sqlite" }
+    "ProjectSyncDO": { "type": "durable-object", "storage": "sqlite" }
   },
 
   "durable_objects": {
     "bindings": [
       { "name": "USER_SESSION", "class_name": "UserSession" },
-      { "name": "WORKSPACE", "class_name": "WorkspaceDO" }
+      { "name": "PROJECT_SYNC", "class_name": "ProjectSyncDO" }
     ]
   },
 

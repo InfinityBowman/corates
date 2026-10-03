@@ -13,7 +13,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { showToast } from '@/lib/toast';
-import { useWorkspaceProjectId } from '@/project/workspace-data';
+import { useSyncedProjectId } from '@/project/project-data';
 import { copyAnswersFrom, joinNames, useCopySources, type CopySource } from './useCopySources';
 
 interface CopyAnswersMenuProps {
@@ -98,7 +98,7 @@ function SourceSections({
  * on AMSTAR 2.
  */
 export function CopyAnswersMenu({ studyId, checklistId, instrumentName }: CopyAnswersMenuProps) {
-  const projectId = useWorkspaceProjectId();
+  const projectId = useSyncedProjectId();
   const sources = useCopySources(projectId, studyId, checklistId);
   const [open, setOpen] = useState(false);
   if (sources.length === 0) return null;

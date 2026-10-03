@@ -9,7 +9,7 @@ import { CHECKLIST_STATUS } from '@corates/shared/checklists';
 import { ROB2_CHART_CONFIG, ROBINS_I_CHART_CONFIG } from '@/components/charts/chartConfigs';
 import type { ChecklistChartConfig } from '@/components/charts/chartConfigs';
 import { useProjectContext } from '../ProjectContext';
-import { useProjectOutcomes } from '@/project/workspace-data';
+import { useProjectOutcomes } from '@/project/project-data';
 import { AMSTAR2ResultsTable } from './AMSTAR2ResultsTable';
 import { OutputCard, OutputCardHeader, OutputCardPlate } from './OutputCard';
 import { ResultsTable } from './ResultsTable';

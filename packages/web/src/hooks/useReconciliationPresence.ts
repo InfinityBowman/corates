@@ -14,9 +14,9 @@
 
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react';
 import { getUserColor } from '@/lib/userColors.js';
-import type { ProjectWorkspace } from '@/project/ConnectionPool';
+import type { ProjectSync } from '@/project/ConnectionPool';
 
-type SyncClient = ProjectWorkspace['client'];
+type SyncClient = ProjectSync['client'];
 
 interface PresenceUser {
   id: string;

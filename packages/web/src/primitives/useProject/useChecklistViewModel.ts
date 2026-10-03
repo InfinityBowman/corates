@@ -7,7 +7,7 @@
 
 import { useMemo } from 'react';
 import type { StudyInfo, ChecklistEntry } from '@/stores/projectStore';
-import { useStudy } from '@/project/workspace-data';
+import { useStudy } from '@/project/project-data';
 
 export interface ChecklistViewModel {
   currentStudy: StudyInfo | null;

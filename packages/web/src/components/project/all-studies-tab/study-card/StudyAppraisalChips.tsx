@@ -14,7 +14,7 @@ import {
   cellState,
   type CellState,
 } from '@/components/project/appraisalCellState';
-import { useProjectOutcomes } from '@/project/workspace-data';
+import { useProjectOutcomes } from '@/project/project-data';
 import type { StudyInfo } from '@/stores/projectStore';
 import { cn } from '@/lib/utils';
 

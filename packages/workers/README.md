@@ -6,7 +6,7 @@
 
 This package provides:
 
-- **Durable Objects** (`UserSession`, `WorkspaceDO`) that the main app Worker registers and routes to.
+- **Durable Objects** (`UserSession`, `ProjectSyncDO`) that the main app Worker registers and routes to.
 - **Authentication** configuration and session helpers for Better Auth (multi-provider, admin, organization, Stripe plugins).
 - **Authorization policies** (`requireOrgOwner`, project/billing policies) used by API route handlers.
 - **Billing resolvers** and plan-change validation used by billing routes and webhook handlers.
@@ -27,7 +27,7 @@ The package exposes subpath exports (see `package.json`):
 | `@corates/workers/auth-admin`           | Admin plugin helpers                               |
 | `@corates/workers/auth-events`          | Better Auth lifecycle hooks                        |
 | `@corates/workers/durable-objects`      | `UserSession` class (registered by `packages/web`) |
-| `@corates/workers/sync`                 | `WorkspaceDO` and the sync-plane admin seams       |
+| `@corates/workers/sync`                 | `ProjectSyncDO` and the sync-plane admin seams     |
 | `@corates/workers/policies`             | Authorization policies                             |
 | `@corates/workers/policies/projects`    | Project-scoped policies                            |
 | `@corates/workers/billing-resolver`     | `resolveOrgAccess`, `validatePlanChange`           |
@@ -78,7 +78,7 @@ Bindings used across the codebase:
 
 - D1: `corates-db` (local), `corates-db-prod` (production)
 - R2: `corates-storage` (PDFs and media)
-- Durable Objects: `WORKSPACE`, `USER_SESSION`
+- Durable Objects: `PROJECT_SYNC`, `USER_SESSION`
 
 ## Testing
 
@@ -101,7 +101,7 @@ Organization
       ├─ Studies
       │   ├─ Checklists (AMSTAR2, ROBINS-I, etc.)
       │   └─ PDFs (stored in R2)
-      └─ Workspace (real-time sync via the WorkspaceDO Durable Object)
+      └─ Project sync (real-time sync via the ProjectSyncDO Durable Object)
 ```
 
 ## Billing model
@@ -161,7 +161,7 @@ await requireOrgOwner(db, session.user.id, orgId);
 
 Extra caution required when modifying:
 
-- `src/sync/workspace.ts` -- all real-time collaboration flows through here.
+- `src/sync/project-sync.ts` -- all real-time collaboration flows through here.
 - `src/lib/billingResolver.ts` -- determines access for every org request.
 - `src/auth/config.ts` -- authentication configuration for the whole app.
 - `src/policies/` -- authorization decisions.

@@ -12,7 +12,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { ReviewerAssignment } from './ReviewerAssignment';
-import { useAllStudies, useProjectMembers } from '@/project/workspace-data';
+import { useAllStudies, useProjectMembers } from '@/project/project-data';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { project } from '@/project';
 import { useProjectContext } from '../ProjectContext';

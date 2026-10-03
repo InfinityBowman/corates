@@ -11,7 +11,7 @@ import {
   useProjectMembers,
   useProjectMeta,
   type ProjectMetaInfo,
-} from '@/project/workspace-data';
+} from '@/project/project-data';
 
 const EMPTY_STUDIES: never[] = [];
 const EMPTY_MEMBERS: never[] = [];

@@ -18,7 +18,7 @@ import { getOriginalReviewerChecklists } from '@corates/shared/checklists';
 import { getChecklistMetadata } from '@/checklist-registry';
 import { GenericChecklist } from '@/components/checklist/GenericChecklist';
 import type { StudyInfo } from '@/stores/projectStore';
-import type { ReconciliationProgressEntry } from '@/project/workspace-data';
+import type { ReconciliationProgressEntry } from '@/project/project-data';
 
 interface PreviousReviewersViewProps {
   study: StudyInfo;

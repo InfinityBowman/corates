@@ -4,11 +4,11 @@ import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip
 import { Button } from '@/components/ui/button';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
 import {
-  useWorkspaceProjectId,
+  useSyncedProjectId,
   useAnswerValue,
   useAnswerWriters,
   useStudy,
-} from '@/project/workspace-data';
+} from '@/project/project-data';
 import type { ChecklistAnswerInput } from '@corates/shared/sync';
 import type { AMSTAR2QuestionSchema, AMSTAR2Column } from '@corates/shared/checklists/amstar2';
 
@@ -42,7 +42,7 @@ function CriticalButton({
   checklistId: string;
   qKey: string;
 }) {
-  const projectId = useWorkspaceProjectId();
+  const projectId = useSyncedProjectId();
   const critical = useAnswerValue<boolean>(projectId, checklistId, `${qKey}.critical`) ?? false;
   const writers = useAnswerWriters(projectId, studyId, checklistId);
 
@@ -233,7 +233,7 @@ function StandardQuestion({
   readOnly?: boolean;
 }) {
   const { qKey, schema, derive, width } = config;
-  const projectId = useWorkspaceProjectId();
+  const projectId = useSyncedProjectId();
   const answers = useAnswerValue<boolean[][]>(projectId, checklistId, `${qKey}.answers`);
   const noteValue = useAnswerValue<string>(projectId, checklistId, `${qKey}.note`) ?? '';
   const writers = useAnswerWriters(projectId, studyId, checklistId);
@@ -285,7 +285,7 @@ function Question1({
   readOnly?: boolean;
 }) {
   const question = AMSTAR_CHECKLIST.q1;
-  const projectId = useWorkspaceProjectId();
+  const projectId = useSyncedProjectId();
   const answers = useAnswerValue<boolean[][]>(projectId, checklistId, 'q1.answers');
   const noteValue = useAnswerValue<string>(projectId, checklistId, 'q1.note') ?? '';
   const writers = useAnswerWriters(projectId, studyId, checklistId);
@@ -346,7 +346,7 @@ function Question9({
   readOnly?: boolean;
 }) {
   const question = AMSTAR_CHECKLIST.q9;
-  const projectId = useWorkspaceProjectId();
+  const projectId = useSyncedProjectId();
   const answersA = useAnswerValue<boolean[][]>(projectId, checklistId, 'q9a.answers');
   const answersB = useAnswerValue<boolean[][]>(projectId, checklistId, 'q9b.answers');
   const noteValue = useAnswerValue<string>(projectId, checklistId, 'q9.note') ?? '';
@@ -477,7 +477,7 @@ function Question11({
   readOnly?: boolean;
 }) {
   const question = AMSTAR_CHECKLIST.q11;
-  const projectId = useWorkspaceProjectId();
+  const projectId = useSyncedProjectId();
   const answersA = useAnswerValue<boolean[][]>(projectId, checklistId, 'q11a.answers');
   const answersB = useAnswerValue<boolean[][]>(projectId, checklistId, 'q11b.answers');
   const noteValue = useAnswerValue<string>(projectId, checklistId, 'q11.note') ?? '';
@@ -631,7 +631,7 @@ interface AMSTAR2ChecklistProps {
 }
 
 export function AMSTAR2Checklist({ studyId, checklistId, readOnly }: AMSTAR2ChecklistProps) {
-  const projectId = useWorkspaceProjectId();
+  const projectId = useSyncedProjectId();
   const study = useStudy(projectId, studyId);
   const checklistName = study?.checklists.find(c => c.id === checklistId)?.title ?? null;
 

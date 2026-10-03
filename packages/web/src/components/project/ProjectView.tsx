@@ -7,7 +7,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation, Outlet } from '@tanstack/react-router';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
-import { useAllStudies, useProjectMeta } from '@/project/workspace-data';
+import { useAllStudies, useProjectMeta } from '@/project/project-data';
 import { useProjectOrgId } from '@/hooks/useProjectOrgId';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { ProjectGate } from '@/project';

@@ -16,7 +16,7 @@ import { useProjectOrgId } from '@/hooks/useProjectOrgId';
 import { ACCESS_DENIED_ERRORS, RECOVERABLE_FATAL_ERRORS } from '@/constants/errors';
 import { showToast } from '@/lib/toast';
 import { connectionPool } from './ConnectionPool';
-import { WorkspaceProjectContext } from './workspace-data';
+import { SyncedProjectContext } from './project-data';
 
 import { ProjectProvider } from '@/components/project/ProjectContext';
 
@@ -98,8 +98,8 @@ export function ProjectGate({ projectId, fallback, children }: ProjectGateProps)
   }
 
   return (
-    <WorkspaceProjectContext.Provider value={projectId}>
+    <SyncedProjectContext.Provider value={projectId}>
       <ProjectProvider projectId={projectId}>{children}</ProjectProvider>
-    </WorkspaceProjectContext.Provider>
+    </SyncedProjectContext.Provider>
   );
 }

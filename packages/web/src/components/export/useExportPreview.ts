@@ -34,7 +34,7 @@ export function useExportPreview(
   const build = useEffectEvent(() => {
     const { options, members, meta, projectName } = input;
     try {
-      // Workspace studies carry no answers until hydrated, same as the download path
+      // Synced studies carry no answers until hydrated, same as the download path
       const studies = enrichStudiesForExport(projectId, subject);
       if (options.format === 'csv') {
         const rows = buildProjectCsvRows({

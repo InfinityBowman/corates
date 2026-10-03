@@ -28,7 +28,7 @@ import { TruncatedText } from '@/components/ui/truncated-text';
 import { PdfListItem } from '@/components/pdf/PdfListItem';
 import { ChecklistForm } from './ChecklistForm';
 import { getStatusLabel, getStatusStyle } from '@corates/shared/checklists';
-import { useProjectOutcomes } from '@/project/workspace-data';
+import { useProjectOutcomes } from '@/project/project-data';
 import type { StudyInfo, PdfEntry, MemberEntry } from '@/stores/projectStore';
 import { useProjectContext } from '../ProjectContext';
 

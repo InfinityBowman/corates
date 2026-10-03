@@ -1,3 +1,3 @@
-export { backupWorkspaces } from './backupWorkspaces';
+export { backupProjects } from './backupProjects';
 export { snapshotBeforeDelete } from './snapshotBeforeDelete';
 export { decodeEnvelope, type BackupEnvelope } from './envelope';

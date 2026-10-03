@@ -1,13 +1,13 @@
 /**
  * One backup object restores one project on its own: the D1 rows that make
  * the project exist (project, members, media file records) travel with the
- * workspace snapshot so a restore never depends on D1 Time Travel.
+ * sync snapshot so a restore never depends on D1 Time Travel.
  */
 
 import { eq } from 'drizzle-orm';
 import type { Database } from '@corates/db/client';
 import { mediaFiles, projectMembers, projects } from '@corates/db/schema';
-import { projectWorkspace } from '../../sync/admin';
+import { projectSync } from '../../sync/admin';
 import type { Env } from '../../types';
 
 export interface ProjectRows {
@@ -17,7 +17,7 @@ export interface ProjectRows {
 }
 
 export interface BackupEnvelope extends ProjectRows {
-  /** The sync-engine export, accepted back by the admin `import` op as-is. */
+  /** The sync-engine export, accepted back by the admin `import` op as-is. Stored backups fix this name. */
   workspace: Record<string, unknown>;
 }
 
@@ -35,8 +35,8 @@ export async function loadProjectRows(
 }
 
 export async function buildEnvelope(env: Env, rows: ProjectRows): Promise<BackupEnvelope> {
-  const workspace = await projectWorkspace(env, rows.project.id).export();
-  return { ...rows, workspace };
+  const snapshot = await projectSync(env, rows.project.id).export();
+  return { ...rows, workspace: snapshot };
 }
 
 export async function encodeEnvelope(envelope: BackupEnvelope): Promise<ArrayBuffer> {

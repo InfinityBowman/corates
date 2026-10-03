@@ -949,7 +949,7 @@ This creates a named restore point you can easily reference later.
 ### Limitations
 
 - **R2 files are not covered by Time Travel:** the media bucket has object versioning enabled in the Cloudflare dashboard, so a deleted or overwritten PDF is restored from its prior version there, not from D1.
-- **Durable Objects are not covered:** Sync-engine row state in WorkspaceDO Durable Objects has no Time Travel. Project content is covered by the daily [workspace backups](#workspace-backups) instead.
+- **Durable Objects are not covered:** Sync-engine row state in ProjectSyncDO Durable Objects has no Time Travel. Project content is covered by the daily [project backups](#project-backups) instead.
 - **Restore is database-wide:** You cannot restore individual tables or rows; the entire database is restored.
 - **Workers must be compatible:** After restoring to an older schema, ensure your deployed workers are compatible.
 
@@ -960,14 +960,14 @@ For D1 issues beyond Time Travel capabilities:
 - Cloudflare Support (if on paid plan)
 - Cloudflare Discord community
 
-## Workspace Backups
+## Project Backups
 
-Project content (studies, checklists, answers, annotations, outcomes, reconciliations and their Yjs notes) lives in one `WorkspaceDO` per project, outside D1 Time Travel. A daily sweep exports every workspace to a dedicated R2 bucket, and every project deletion writes a final copy first. Retention is enforced by R2 lifecycle rules, not code.
+Project content (studies, checklists, answers, annotations, outcomes, reconciliations and their Yjs notes) lives in one `ProjectSyncDO` per project, outside D1 Time Travel. A daily sweep exports every project's sync state to a dedicated R2 bucket, and every project deletion writes a final copy first. Retention is enforced by R2 lifecycle rules, not code.
 
 ### What runs
 
-- **Cron `0 5 * * *`** (every environment, dispatched on the expression in `packages/web/src/server.ts`) runs `backupWorkspaces` from `packages/workers/src/commands/backups/`. It reads the project, member and media file rows fleet-wide from D1, then for each project calls the workspace `export()` and puts one gzipped object. Every project every day, changed or not: no latest pointer, no skip logic. A failing project is logged and skipped so it cannot hide the rest of the fleet.
-- **`snapshotBeforeDelete`** runs at the top of `deleteProject` and for each sole-owned project in account deletion, before the PDF cleanup and the D1 delete. `teardownWorkspace` then wipes the workspace and purges that project's daily snapshots. Every deletion is therefore a 30-day undo.
+- **Cron `0 5 * * *`** (every environment, dispatched on the expression in `packages/web/src/server.ts`) runs `backupProjects` from `packages/workers/src/commands/backups/`. It reads the project, member and media file rows fleet-wide from D1, then for each project calls the sync DO `export()` and puts one gzipped object. Every project every day, changed or not: no latest pointer, no skip logic. A failing project is logged and skipped so it cannot hide the rest of the fleet.
+- **`snapshotBeforeDelete`** runs at the top of `deleteProject` and for each sole-owned project in account deletion, before the PDF cleanup and the D1 delete. `teardownProjectSync` then wipes the sync DO and purges that project's daily snapshots. Every deletion is therefore a 30-day undo.
 - **Bucket binding** `BACKUP_BUCKET`: `corates-backups` (dev and tests), `corates-backups-staging`, `corates-backups-prod`. Snapshots never share the PDF bucket: the admin storage page treats any object outside `mediaFiles` as an orphan, and project deletion bulk-deletes by prefix.
 
 ### Layout and retention
@@ -987,7 +987,7 @@ npx wrangler r2 bucket lifecycle add <bucket> deleted-30d deleted/ --expire-days
 
 ### Envelope
 
-One object restores one project without D1 Time Travel. The D1 rows are the Drizzle rows as JSON (timestamps as ISO strings); `workspace` is the sync-engine export, accepted back by the admin `import` op as-is.
+One object restores one project without D1 Time Travel. The D1 rows are the Drizzle rows as JSON (timestamps as ISO strings); `workspace` is the sync-engine export (the field name predates the sync DO rename and is kept for stored backups), accepted back by the admin `import` op as-is.
 
 ```json
 {
@@ -1010,20 +1010,20 @@ The Grafana rule (any `backup.failed`, or no `backup.completed` in 26 hours) is 
 
 ### Restore
 
-`pnpm restore:workspace` (`scripts/restore-workspace.mjs`) fetches an object from the bucket, re-inserts the project, member and media file rows that are missing from D1, POSTs `workspace` to `/api/sync-admin/<projectId>/import`, and compares the live row count with the snapshot. It reads `SYNC_ADMIN_TOKEN` from `packages/web/.env.<env>` and runs wrangler from `packages/web`. Always dry-run first:
+`pnpm restore:project` (`scripts/restore-project.mjs`) fetches an object from the bucket, re-inserts the project, member and media file rows that are missing from D1, POSTs `workspace` to `/api/sync-admin/<projectId>/import`, and compares the live row count with the snapshot. It reads `SYNC_ADMIN_TOKEN` from `packages/web/.env.<env>` and runs wrangler from `packages/web`. Always dry-run first:
 
 ```bash
-pnpm restore:workspace -- --env staging --project <id> --date 2026-09-16 --dry-run
-pnpm restore:workspace -- --env staging --project <id> --date 2026-09-16 --pre-restore --yes
+pnpm restore:project -- --env staging --project <id> --date 2026-09-16 --dry-run
+pnpm restore:project -- --env staging --project <id> --date 2026-09-16 --pre-restore --yes
 ```
 
-`--pre-restore` exports the current workspace to `snapshots/<id>/<now>-pre-restore.json.gz` before importing, so a restore is itself undoable for 60 days. Connected clients re-bootstrap on their own after an import.
+`--pre-restore` exports the current sync state to `snapshots/<id>/<now>-pre-restore.json.gz` before importing, so a restore is itself undoable for 60 days. Connected clients re-bootstrap on their own after an import.
 
 Rehearsed on staging on 2026-09-16: a project with one PDF study was deleted from the dashboard, restored from its `deleted/` object with `--pre-restore`, and reopened in the app with its study intact. The 05:00 sweep then wrote its daily snapshot, logged `backup.completed`, and the same script restored the project from that object with `--date`.
 
 **One project with damaged content.** Pick the last good day from `snapshots/<id>/`, dry-run, then restore with `--pre-restore`. D1 rows are untouched (the inserts are `INSERT OR IGNORE`).
 
-**A project deleted by mistake, within 30 days.** Use `--key deleted/<id>/<datetime>.json.gz`. The script re-inserts the project, its members and its media file rows, then imports the workspace. The organization and the creating user must still exist; for an account deletion, restore the user first or edit `createdBy` in a local copy of the envelope and pass it with `--file`. PDFs were deleted from the media bucket, which has object versioning on: restore each `bucketKey` in the envelope's `mediaFiles` from its noncurrent version in the Cloudflare dashboard.
+**A project deleted by mistake, within 30 days.** Use `--key deleted/<id>/<datetime>.json.gz`. The script re-inserts the project, its members and its media file rows, then imports the sync snapshot. The organization and the creating user must still exist; for an account deletion, restore the user first or edit `createdBy` in a local copy of the envelope and pass it with `--file`. PDFs were deleted from the media bucket, which has object versioning on: restore each `bucketKey` in the envelope's `mediaFiles` from its noncurrent version in the Cloudflare dashboard.
 
 **Fleet restore after a bad migration.** For each project, `reset` then import from the last good day. Loop the script over the project ids from D1 with `--key snapshots/<id>/<date>.json.gz`. Take D1 back with Time Travel first if the migration touched D1 too.
 

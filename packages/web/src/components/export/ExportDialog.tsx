@@ -39,7 +39,7 @@ import {
   useProjectMembers,
   useProjectMeta,
   useProjectOutcomes,
-} from '@/project/workspace-data';
+} from '@/project/project-data';
 import { useExportDialogStore } from '@/stores/exportDialogStore';
 import type { ProjectMeta } from '@/stores/projectStore';
 import { ExportConfigure } from './ExportConfigure';

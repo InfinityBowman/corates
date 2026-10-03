@@ -1,6 +1,6 @@
 /**
  * The backup sweep and the pre-delete snapshot against the real bindings in
- * the test pool: D1 rows, the WorkspaceDO export, and an R2 bucket.
+ * the test pool: D1 rows, the ProjectSyncDO export, and an R2 bucket.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -15,10 +15,10 @@ import {
   seedProjectMember,
   seedUser,
 } from '../../../__tests__/helpers';
-import { projectWorkspace, teardownWorkspace } from '../../../sync/admin';
+import { projectSync, teardownProjectSync } from '../../../sync/admin';
 import { deletedKey, snapshotKey } from '../../../lib/backup-storage';
 import { deleteProject } from '../../projects/deleteProject';
-import { backupWorkspaces } from '../backupWorkspaces';
+import { backupProjects } from '../backupProjects';
 import { decodeEnvelope } from '../envelope';
 import { snapshotBeforeDelete } from '../snapshotBeforeDelete';
 
@@ -80,7 +80,7 @@ async function seedFleet() {
     projectId: FULL,
     createdAt: now,
   });
-  await projectWorkspace(env, FULL).import({
+  await projectSync(env, FULL).import({
     formatVersion: 1,
     schemaVersion: syncApp.version,
     rows: [
@@ -96,10 +96,10 @@ async function seedFleet() {
       },
     ],
   });
-  await projectWorkspace(env, EMPTY).reset();
+  await projectSync(env, EMPTY).reset();
 }
 
-describe('backupWorkspaces', () => {
+describe('backupProjects', () => {
   beforeEach(async () => {
     await resetTestDatabase();
     await clearBucket();
@@ -107,7 +107,7 @@ describe('backupWorkspaces', () => {
   });
 
   it('writes one gzipped envelope per project per day', async () => {
-    const result = await backupWorkspaces(env, createDb(env.DB), NOW);
+    const result = await backupProjects(env, createDb(env.DB), NOW);
 
     expect(result).toMatchObject({ projects: 2, completed: 2, failed: 0 });
     expect(result.bytes).toBeGreaterThan(0);
@@ -125,11 +125,11 @@ describe('backupWorkspaces', () => {
   });
 
   it('round-trips through the admin import', async () => {
-    await backupWorkspaces(env, createDb(env.DB), NOW);
+    await backupProjects(env, createDb(env.DB), NOW);
     const envelope = await readEnvelope(snapshotKey(FULL, NOW));
 
-    await projectWorkspace(env, FULL).reset();
-    const imported = await projectWorkspace(env, FULL).import(envelope.workspace);
+    await projectSync(env, FULL).reset();
+    const imported = await projectSync(env, FULL).import(envelope.workspace);
     expect(imported.imported).toBe(2);
   });
 
@@ -142,7 +142,7 @@ describe('backupWorkspaces', () => {
         return (bucket.put as (...args: unknown[]) => unknown)(key, ...rest);
       },
     };
-    const result = await backupWorkspaces(
+    const result = await backupProjects(
       { ...env, BACKUP_BUCKET: failing } as never,
       createDb(env.DB),
       NOW,
@@ -154,7 +154,7 @@ describe('backupWorkspaces', () => {
   });
 });
 
-describe('snapshotBeforeDelete and teardownWorkspace', () => {
+describe('snapshotBeforeDelete and teardownProjectSync', () => {
   beforeEach(async () => {
     await resetTestDatabase();
     await clearBucket();
@@ -163,18 +163,18 @@ describe('snapshotBeforeDelete and teardownWorkspace', () => {
 
   it('keeps a final copy and purges the daily snapshots', async () => {
     const db = createDb(env.DB);
-    await backupWorkspaces(env, db, NOW);
+    await backupProjects(env, db, NOW);
     expect(await keysUnder(`snapshots/${FULL}/`)).toHaveLength(1);
 
     const key = await snapshotBeforeDelete(env, db, FULL, NOW);
     expect(key).toBe(deletedKey(FULL, NOW));
-    await teardownWorkspace(env, FULL);
+    await teardownProjectSync(env, FULL);
 
     expect(await keysUnder(`snapshots/${FULL}/`)).toEqual([]);
     expect(await keysUnder(`snapshots/${EMPTY}/`)).toHaveLength(1);
     const envelope = await readEnvelope(key!);
     expect((envelope.workspace.rows as unknown[]).length).toBe(2);
-    expect(((await projectWorkspace(env, FULL).stats()).rows as { live: number }).live).toBe(0);
+    expect(((await projectSync(env, FULL).stats()).rows as { live: number }).live).toBe(0);
   });
 
   it('returns null for an unknown project without writing', async () => {

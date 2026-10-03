@@ -2,7 +2,7 @@
  * ConnectionPool - Ref-counted project session management over the sync engine.
  * Single owner of the session registry and active project tracking. The engine
  * client owns reconnection, keepalive, offline persistence, and the mutation
- * outbox; reads go through workspace-data hooks over collections, writes
+ * outbox; reads go through project-data hooks over collections, writes
  * through client.mutate (online) or applyLocalMutation (local practice).
  *
  * Local practice mode (`local-practice`) has no engine session: its rows live
@@ -35,7 +35,7 @@ import {
 
 export type { ProjectCollections } from './localCollections';
 
-function createProjectWorkspace(
+function createProjectSync(
   projectId: string,
   handlers: {
     onFatal: (code: number | string, reason: string | undefined) => void;
@@ -112,11 +112,11 @@ function rejectionMessage(code: string, mutationName: string): string {
   }
 }
 
-export type ProjectWorkspace = ReturnType<typeof createProjectWorkspace>;
+export type ProjectSync = ReturnType<typeof createProjectSync>;
 
 interface ConnectionEntry {
   /** The engine session ({ client, collections }); null for local practice. */
-  workspace: ProjectWorkspace | null;
+  sync: ProjectSync | null;
   /**
    * Yjs fields attached to the session's binary lane — reconciliation
    * consolidated notes live here. Null for local practice (no socket; note
@@ -187,7 +187,7 @@ class ConnectionPool {
     }
 
     const entry: ConnectionEntry = {
-      workspace: null,
+      sync: null,
       yfields: null,
       localCollections: null,
       localDirty: new Map(),
@@ -226,11 +226,11 @@ class ConnectionPool {
       return;
     }
 
-    const workspace = createProjectWorkspace(projectId, {
+    const sync = createProjectSync(projectId, {
       onFatal: (code, reason) => this.handleFatal(projectId, code, reason),
     });
-    entry.workspace = workspace;
-    entry.yfields = createYjsFields(workspace.client);
+    entry.sync = sync;
+    entry.yfields = createYjsFields(sync.client);
     // The engine now persists this project to its own `cf-sync:<id>` database;
     // record it so logout / membership revocation can wipe that cache.
     trackSyncCache(projectId).catch(err =>
@@ -249,7 +249,7 @@ class ConnectionPool {
       if (status === 'synced') phase = 'synced';
       else if (status === 'fatal')
         return; // handled by onFatal with the reason
-      else phase = workspace.client.hydrated ? 'cached' : 'connecting';
+      else phase = sync.client.hydrated ? 'cached' : 'connecting';
       useProjectStore.getState().setConnectionState(projectId, phase);
       if (phase === 'synced') {
         void queryClient.invalidateQueries({ queryKey: queryKeys.projects.members(projectId) });
@@ -259,20 +259,20 @@ class ConnectionPool {
       }
     };
 
-    entry._cleanupHandlers.push(workspace.client.subscribeStatus(applyStatus));
+    entry._cleanupHandlers.push(sync.client.subscribeStatus(applyStatus));
     entry._cleanupHandlers.push(
-      workspace.client.subscribeHydrated(() => applyStatus(workspace.client.status)),
+      sync.client.subscribeHydrated(() => applyStatus(sync.client.status)),
     );
-    applyStatus(workspace.client.status);
+    applyStatus(sync.client.status);
 
     entry._cleanupHandlers.push(
-      workspace.client.subscribePending(pending => {
+      sync.client.subscribePending(pending => {
         if (cancelled()) return;
         useProjectStore.getState().setPending(projectId, pending);
         this.updateUnloadGuard();
       }),
     );
-    useProjectStore.getState().setPending(projectId, workspace.client.pending);
+    useProjectStore.getState().setPending(projectId, sync.client.pending);
     this.updateUnloadGuard();
   }
 
@@ -433,8 +433,8 @@ class ConnectionPool {
   }
 
   /** The engine client for a project, once its session is initialized. */
-  getClient(projectId: string): ProjectWorkspace['client'] | null {
-    return this.registry.get(projectId)?.workspace?.client ?? null;
+  getClient(projectId: string): ProjectSync['client'] | null {
+    return this.registry.get(projectId)?.sync?.client ?? null;
   }
 
   /** The Yjs fields attached to a project's session; null for local practice. */
@@ -443,7 +443,7 @@ class ConnectionPool {
   }
 
   /** The engine client for the active project (used by the project.* actions). */
-  getActiveClient(): ProjectWorkspace['client'] | null {
+  getActiveClient(): ProjectSync['client'] | null {
     return this._activeProjectId ? this.getClient(this._activeProjectId) : null;
   }
 
@@ -455,7 +455,7 @@ class ConnectionPool {
   getCollections(projectId: string): ProjectCollections | null {
     const entry = this.registry.get(projectId);
     if (!entry) return null;
-    if (entry.workspace) return entry.workspace.collections as unknown as ProjectCollections;
+    if (entry.sync) return entry.sync.collections as unknown as ProjectCollections;
     return entry.localCollections;
   }
 
@@ -548,7 +548,7 @@ class ConnectionPool {
       void this.persistLocalDirty(projectId, entry);
     }
 
-    if (entry.workspace) void entry.workspace.destroy();
+    if (entry.sync) void entry.sync.destroy();
 
     this.registry.delete(projectId);
     this.updateUnloadGuard();
@@ -567,7 +567,7 @@ class ConnectionPool {
   private updateUnloadGuard(): void {
     let total = 0;
     for (const entry of this.registry.values()) {
-      total += entry.workspace?.client.pending ?? 0;
+      total += entry.sync?.client.pending ?? 0;
     }
     setUnloadGuard(total > 0);
   }

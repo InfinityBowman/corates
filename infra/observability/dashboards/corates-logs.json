@@ -424,7 +424,7 @@
       "id": 10,
       "type": "timeseries",
       "title": "Durable Object activity by entrypoint",
-      "description": "UserSession and WorkspaceDO invocations. Useful when the sync layer misbehaves - a flatline or a spike here is the first signal.",
+      "description": "UserSession and ProjectSyncDO invocations. Useful when the sync layer misbehaves - a flatline or a spike here is the first signal.",
       "datasource": { "type": "loki", "uid": "${datasource}" },
       "gridPos": { "h": 9, "w": 12, "x": 12, "y": 21 },
       "targets": [

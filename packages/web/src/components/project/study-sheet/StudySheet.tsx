@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/sheet';
 import { DEFAULT_CHECKLIST_TYPE } from '@/checklist-registry';
 import { InlineEdit } from '@/components/ui/inline-edit';
-import { useAllStudies, useProjectOutcomes } from '@/project/workspace-data';
+import { useAllStudies, useProjectOutcomes } from '@/project/project-data';
 import { project } from '@/project';
 import type { StudyInfo } from '@/stores/projectStore';
 import { usePdfPreviewStore } from '@/stores/pdfPreviewStore';

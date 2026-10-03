@@ -5,7 +5,7 @@ import { isRob2Key } from '@corates/shared/checklists/rob2';
 import type { ChecklistAnswerInput } from '@corates/shared/sync';
 import type { getUserColor } from '@/lib/userColors.js';
 import type { PdfEntry } from '@/stores/projectStore';
-import type { ProjectWorkspace } from '@/project/ConnectionPool';
+import type { ProjectSync } from '@/project/ConnectionPool';
 import type { ChecklistResources } from '@/components/checklist/ResourcesPopover';
 
 // ---------------------------------------------------------------------------
@@ -354,6 +354,6 @@ export interface ReconciliationEngineProps {
 
   // Presence + collaborative text: the project's engine client, null in
   // local practice (empty presence, note editors fall back to row writes).
-  client: ProjectWorkspace['client'] | null;
+  client: ProjectSync['client'] | null;
   currentUser: PresenceUser | null;
 }

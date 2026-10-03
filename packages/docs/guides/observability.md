@@ -49,13 +49,13 @@ from the request scope; anything else is per-call data or scope context.
 
 ## Which logger to use
 
-| Package                     | Import                          | Notes                                                                                 |
-| --------------------------- | ------------------------------- | ------------------------------------------------------------------------------------- |
-| `workers`                   | `@corates/workers/logger`       | `info` / `warn` / `captureError`. The default for all server code.                    |
-| sync engine                 | `createWorkspaceDO({ logger })` | Engine diagnostics; the hook in `sync/workspace.ts` forwards them to the same logger. |
-| `web` (server)              | `@corates/workers/logger`       | Same as workers - server functions, route handlers, middleware.                       |
-| `web` (browser)             | `@/lib/clientLogger`            | Named events batched to `POST /api/client-logs`, relayed into Loki. Production only.  |
-| `web` (browser, exceptions) | `@/config/sentry`               | Uncaught errors and existing `captureException` call sites only.                      |
+| Package                     | Import                          | Notes                                                                                    |
+| --------------------------- | ------------------------------- | ---------------------------------------------------------------------------------------- |
+| `workers`                   | `@corates/workers/logger`       | `info` / `warn` / `captureError`. The default for all server code.                       |
+| sync engine                 | `createWorkspaceDO({ logger })` | Engine diagnostics; the hook in `sync/project-sync.ts` forwards them to the same logger. |
+| `web` (server)              | `@corates/workers/logger`       | Same as workers - server functions, route handlers, middleware.                          |
+| `web` (browser)             | `@/lib/clientLogger`            | Named events batched to `POST /api/client-logs`, relayed into Loki. Production only.     |
+| `web` (browser, exceptions) | `@/config/sentry`               | Uncaught errors and existing `captureException` call sites only.                         |
 
 Only reach for `createLogger` directly when you need a distinct `service` name, as the web
 Stripe webhook route does.
@@ -116,11 +116,11 @@ otherwise indistinguishable.
 
 Two things still log unscoped:
 
-- **`WorkspaceDO`** (the sync engine). `createWorkspaceDO` takes a `logger`, which
-  `sync/workspace.ts` supplies, so the engine's init failures, schema-drift warnings and
+- **`ProjectSyncDO`** (the sync engine). `createWorkspaceDO` takes a `logger`, which
+  `sync/project-sync.ts` supplies, so the engine's init failures, schema-drift warnings and
   internal errors go through the shared logger and reach Loki as structured JSON. These join
-  on `projectId`, not `requestId` - the engine stamps every diagnostic with the workspace it
-  came from (`@cf-sync/server` 0.2.0), and a workspace id _is_ a projectId here. A requestId
+  on `projectId`, not `requestId` - the engine stamps every diagnostic with the engine workspace id it
+  came from (`@cf-sync/server` 0.2.0), and that id _is_ a projectId here. A requestId
   would be meaningless on them: init failures fire at DO construction and internal errors on
   a live socket, both outside any request. The same file passes `onMutationCommitted`
   (`@cf-sync/server` 0.2.1), which is where `sync.mutation` comes from - see below.
@@ -129,7 +129,7 @@ Two things still log unscoped:
 Hibernated WebSocket callbacks (`webSocketMessage`, `webSocketError`) also fall outside: they
 fire long after the originating request, so there is no scope left to inherit.
 
-### Workspace mutations
+### Project sync mutations
 
 Every committed mutation in a project emits one `sync.mutation` line from
 `sync/mutation-log.ts` with `projectId`, `name` (the mutator), `userId`, `tables`,

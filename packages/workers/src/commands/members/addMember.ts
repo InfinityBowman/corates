@@ -14,7 +14,7 @@ import { isSyntheticEmail } from '@corates/shared/email';
 import type { OrgId, ProjectId, UserId } from '@corates/shared/ids';
 import { notifyUser } from '../lib/notifications';
 import { insertWithQuotaCheck, type InsertRollbackMeta } from '../../lib/quotaTransaction';
-import { refreshWorkspaceSessions } from '../../sync/admin';
+import { refreshSyncSessions } from '../../sync/admin';
 import type { Env } from '../../types';
 import type { ProjectRole } from '../../policies/lib/roles';
 
@@ -129,7 +129,7 @@ export async function addMember(
   }
 
   // Poke live sessions so other clients refetch the members list.
-  await refreshWorkspaceSessions(env, projectId);
+  await refreshSyncSessions(env, projectId);
 
   // Get project name for notification
   const project = await db

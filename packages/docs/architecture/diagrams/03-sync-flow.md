@@ -6,7 +6,7 @@ How local-first sync works on the cf-sync engine.
 sequenceDiagram
     participant Client1 as Client A
     participant Cache as IndexedDB (cf-sync cache + outbox)
-    participant DO as WorkspaceDO (Durable Object)
+    participant DO as ProjectSyncDO (Durable Object)
     participant Client2 as Client B
 
     Note over Client1,Client2: Local-First Architecture
@@ -43,6 +43,6 @@ sequenceDiagram
 
 ### Durable Objects
 
-- One `WorkspaceDO` per project holds the authoritative row collections
+- One `ProjectSyncDO` per project holds the authoritative row collections
 - WebSocket connections (`/api/sync/:projectId`) enable real-time collaboration
 - State persists across worker restarts

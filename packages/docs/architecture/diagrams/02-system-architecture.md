@@ -17,7 +17,7 @@ flowchart TB
         Auth[Better Auth]
 
         subgraph DurableObjects["Durable Objects"]
-            WorkspaceDO[WorkspaceDO<br/>One per project<br/>Row sync & content]
+            ProjectSyncDO[ProjectSyncDO<br/>One per project<br/>Row sync & content]
             UserSession[UserSession<br/>One per user<br/>Notifications]
         end
         EmailQueue[Cloudflare Queue<br/>Email delivery]
@@ -31,7 +31,7 @@ flowchart TB
     UI --> Stores
     UI --> Query
     Stores --> SyncClient
-    SyncClient <-->|"WebSocket<br/>/api/sync/:projectId"| WorkspaceDO
+    SyncClient <-->|"WebSocket<br/>/api/sync/:projectId"| ProjectSyncDO
     SyncClient <--> IDB
     UI <-->|"WebSocket<br/>Notifications"| UserSession
     Query -->|"REST"| Routes
@@ -39,7 +39,7 @@ flowchart TB
     Routes --> D1
     Routes --> R2
     Routes -->|"send notification"| UserSession
-    WorkspaceDO -->|"authorize on connect<br/>reads D1 membership"| D1
+    ProjectSyncDO -->|"authorize on connect<br/>reads D1 membership"| D1
 ```
 
 ## Key Components
@@ -63,7 +63,7 @@ It uses:
 
 - **Better Auth**: Authentication and session management
 - **Durable Objects**:
-  - **WorkspaceDO**: One per project, holds the authoritative sync-engine rows for real-time collaboration and content storage
+  - **ProjectSyncDO**: One per project, holds the authoritative sync-engine rows for real-time collaboration and content storage
   - **UserSession**: One per user, manages WebSocket connections for real-time notifications (e.g., project invites)
 - **Cloudflare Queue**: Async email delivery with retries and dead letter queue, consumed by Postmark
 
@@ -71,7 +71,7 @@ It uses:
 
 - **D1**: SQLite database for users, project metadata (id, name), and access control (project_members table). Source of truth for authorization.
 - **Durable Objects**:
-  - **WorkspaceDO**: Persistent DO storage for the row collections containing all project content (studies, checklists, answers). One workspace per project; membership and project metadata stay in D1.
+  - **ProjectSyncDO**: Persistent DO storage for the row collections containing all project content (studies, checklists, answers). One sync DO per project; membership and project metadata stay in D1.
   - **UserSession**: Stores pending notifications when users are offline, manages WebSocket connections for real-time delivery. One UserSession per user.
 - **R2**: Object storage for PDF documents
 

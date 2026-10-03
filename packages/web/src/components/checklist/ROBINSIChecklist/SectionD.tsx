@@ -1,6 +1,6 @@
 import { INFORMATION_SOURCES, SECTION_D } from '@corates/shared/checklists/robins-i';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
-import { useWorkspaceProjectId, useAnswerValue, useAnswerWriters } from '@/project/workspace-data';
+import { useSyncedProjectId, useAnswerValue, useAnswerWriters } from '@/project/project-data';
 
 interface SectionDProps {
   studyId: string;
@@ -9,7 +9,7 @@ interface SectionDProps {
 }
 
 export function SectionD({ studyId, checklistId, disabled }: SectionDProps) {
-  const projectId = useWorkspaceProjectId();
+  const projectId = useSyncedProjectId();
   const writers = useAnswerWriters(projectId, studyId, checklistId);
   const sources = useAnswerValue<Record<string, boolean>>(
     projectId,

@@ -1,2 +1,2 @@
 export { UserSession } from './UserSession';
-export { WorkspaceDO } from '../sync/workspace';
+export { ProjectSyncDO } from '../sync/project-sync';

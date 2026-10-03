@@ -3,7 +3,7 @@
  *
  * Prepopulates a project with 50 ROB2 studies (100 filled checklists) via
  * the in-page dev seeding seam, then measures what a user would actually feel:
- *   - Project page load time (workspace sync + render)
+ *   - Project page load time (project sync + render)
  *   - Reconciliation page load time
  *   - Presence sync latency
  *   - Text editing sync latency between two users

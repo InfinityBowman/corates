@@ -27,7 +27,7 @@ import {
 import type { ChartPalette, ChecklistChartConfig } from '@/components/charts/chartConfigs';
 import { CHECKLIST_STATUS } from '@corates/shared/checklists';
 import { useProjectContext } from '../ProjectContext';
-import { useProjectOutcomes } from '@/project/workspace-data';
+import { useProjectOutcomes } from '@/project/project-data';
 import type { StudyInfo } from '@/stores/projectStore';
 import { OutputCard, OutputCardHeader, OutputCardPlate, type InstrumentKind } from './OutputCard';
 

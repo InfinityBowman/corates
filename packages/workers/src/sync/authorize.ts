@@ -1,14 +1,14 @@
 /**
- * Connection-time authorization for the sync workspace (one workspace per
+ * Connection-time authorization for project sync (one sync DO per
  * project). Runs in the worker before the DO is reached, and is the only
  * place the sync plane touches D1: the verdict's stamps travel with the
  * socket, and mutators read them synchronously (`@corates/shared/sync`
  * enforces `writeAllowed` in every mutator).
  *
  * One authority per fact: D1 owns identity, membership, and billing. The
- * workspace never mirrors them — staleness is bounded by connection lifetime
+ * sync DO never mirrors them — staleness is bounded by connection lifetime
  * and closed by forced disconnect (member removal kicks, subscription changes
- * refresh; see ./workspace.ts).
+ * refresh; see ./project-sync.ts).
  */
 
 import { and, eq } from 'drizzle-orm';

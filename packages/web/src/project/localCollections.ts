@@ -2,7 +2,7 @@
  * Local-only TanStack DB collections for local practice, plus the one-time
  * conversion of the legacy Dexie Y.Doc into rows.
  *
- * Local practice has no engine workspace: its rows live in these collections
+ * Local practice has no sync DO: its rows live in these collections
  * (seeded from the Dexie `localProjects` store, persisted back by the pool)
  * and are mutated by the shared mutator functions applied directly.
  *

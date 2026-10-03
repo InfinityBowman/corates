@@ -3,9 +3,9 @@
  * plus the D1-authoritative facts (project meta, members) via React Query.
  *
  * One authority per fact: collaborative content (studies, checklists, answers,
- * pdfs, annotations, outcomes, reconciliations) reads from workspace
+ * pdfs, annotations, outcomes, reconciliations) reads from synced
  * collections — live, local, offline-capable. Identity and membership read
- * from D1 through React Query and are never mirrored into the workspace.
+ * from D1 through React Query and are never mirrored into the sync collections.
  *
  * Writers here bridge the two write paths: online projects mutate through the
  * engine (`client.mutate.*`), local practice applies the same shared mutators
@@ -60,17 +60,17 @@ import { applyLocalMutation } from './localWrites';
 import { studyModelStore } from './studyModel';
 
 /**
- * The project id for the workspace subtree — provided by ProjectGate (online)
+ * The project id for the synced-project subtree — provided by ProjectGate (online)
  * and LocalChecklistView (local practice), replacing the reactor context as
  * the way instrument components learn which project they render.
  */
-export const WorkspaceProjectContext = createContext<string | null>(null);
+export const SyncedProjectContext = createContext<string | null>(null);
 
-/** The ambient project id; throws outside a workspace subtree. */
-export function useWorkspaceProjectId(): string {
-  const projectId = useContext(WorkspaceProjectContext);
+/** The ambient project id; throws outside a synced-project subtree. */
+export function useSyncedProjectId(): string {
+  const projectId = useContext(SyncedProjectContext);
   if (!projectId) {
-    throw new Error('useWorkspaceProjectId must be used inside a WorkspaceProjectContext provider');
+    throw new Error('useSyncedProjectId must be used inside a SyncedProjectContext provider');
   }
   return projectId;
 }
@@ -92,7 +92,7 @@ function useCollections(projectId: string): ProjectCollections {
 }
 
 // Live-query identity derives from collection ids, which the pool reuses when
-// it rebuilds a workspace; keying by the collection set's instance keeps a
+// it rebuilds a project's sync client; keying by the collection set's instance keeps a
 // still-mounted hook from staying subscribed to the torn-down one.
 const collectionsTokens = new WeakMap<ProjectCollections, number>();
 let nextCollectionsToken = 0;
@@ -369,7 +369,7 @@ export function useExistingStudies(projectId: string): ExistingStudy[] {
 }
 
 // ---------------------------------------------------------------------------
-// Reconciliation progress (workspace-authoritative)
+// Reconciliation progress (sync-authoritative)
 
 /**
  * The entry shape the completed/reconcile UIs consume — the reconciliations
@@ -436,7 +436,7 @@ export function useAllReconciliationProgress(projectId: string): ReconciliationP
 }
 
 // ---------------------------------------------------------------------------
-// Outcomes (workspace-authoritative)
+// Outcomes (sync-authoritative)
 
 export function useProjectOutcomes(projectId: string): OutcomeEntry[] {
   const collections = useCollections(projectId);
@@ -457,7 +457,7 @@ export function useProjectOutcomes(projectId: string): OutcomeEntry[] {
 }
 
 // ---------------------------------------------------------------------------
-// D1-authoritative facts (React Query — never mirrored into the workspace)
+// D1-authoritative facts (React Query — never mirrored into the sync collections)
 
 export interface ProjectMetaInfo {
   name: string | null;
@@ -499,7 +499,7 @@ export function useProjectMeta(projectId: string): ProjectMetaInfo {
  * orgId for a project: the D1 projects query is the authority, with the
  * Dexie-stamped value (written on every successful resolution — orgId is
  * immutable per project) covering the cold-hard-refresh window where the
- * workspace hydrates from cache before the network query returns.
+ * sync client hydrates from cache before the network query returns.
  */
 export function useProjectOrgId(projectId: string | null | undefined): string | null {
   const { orgId } = useProjectMeta(projectId || '');

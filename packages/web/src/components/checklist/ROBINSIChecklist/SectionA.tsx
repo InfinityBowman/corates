@@ -1,6 +1,6 @@
 import { SECTION_A } from '@corates/shared/checklists/robins-i';
 import { NoteEditor } from '@/components/checklist/common/NoteEditor';
-import { useWorkspaceProjectId, useAnswerValue, useAnswerWriters } from '@/project/workspace-data';
+import { useSyncedProjectId, useAnswerValue, useAnswerWriters } from '@/project/project-data';
 
 interface SectionAProps {
   studyId: string;
@@ -46,7 +46,7 @@ function SectionAField({
   field: any;
   disabled?: boolean;
 }) {
-  const projectId = useWorkspaceProjectId();
+  const projectId = useSyncedProjectId();
   const flatKey = `sectionA.${field.stateKey}`;
   const value = useAnswerValue<string>(projectId, checklistId, flatKey) ?? '';
   const writers = useAnswerWriters(projectId, studyId, checklistId);

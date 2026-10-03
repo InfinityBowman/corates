@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
 import { ROB2_CHECKLIST, getActiveDomainKeys } from '@corates/shared/checklists/rob2';
 import {
-  useWorkspaceProjectId,
+  useSyncedProjectId,
   useAnswerValue,
   useChecklistAnswerMap,
   useRob2DomainScore,
-} from '@/project/workspace-data';
+} from '@/project/project-data';
 import { scoreChecklistRows } from '@corates/shared/sync';
 
 interface ScoringSummaryProps {
@@ -15,7 +15,7 @@ interface ScoringSummaryProps {
 }
 
 export function ScoringSummary({ checklistId, onDomainClick }: ScoringSummaryProps) {
-  const projectId = useWorkspaceProjectId();
+  const projectId = useSyncedProjectId();
   const flat = useChecklistAnswerMap(projectId, checklistId);
   const overallScore = useMemo(() => scoreChecklistRows('ROB2', flat), [flat]);
   const aim = useAnswerValue<string>(projectId, checklistId, 'preliminary.aim');
@@ -89,7 +89,7 @@ function DomainChip({
   shortName: string;
   onClick: () => void;
 }) {
-  const projectId = useWorkspaceProjectId();
+  const projectId = useSyncedProjectId();
   const { judgement } = useRob2DomainScore(projectId, checklistId, domainKey);
 
   const chipColor = (() => {
