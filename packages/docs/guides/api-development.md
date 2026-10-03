@@ -31,34 +31,22 @@ server/functions/
 // workspaces.functions.ts
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
-import { workspaceNameSchema, workspaceSlugSchema } from '@corates/shared';
+import { workspaceNameSchema } from '@corates/shared';
 import type { OrgId } from '@corates/shared/ids';
 import { authMiddleware } from '@/server/middleware/auth';
 import { updateWorkspaceSettings } from './workspaces.server';
 
 export const updateWorkspace = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .validator(
-    z.object({
-      orgId: z.string(),
-      name: workspaceNameSchema.optional(),
-      slug: workspaceSlugSchema.optional(),
-    }),
-  )
-  .handler(async ({ data, context: { session, db } }) => {
-    const { orgId, ...changes } = data;
-    return updateWorkspaceSettings(session, db, orgId as OrgId, changes);
-  });
+  .validator(z.object({ orgId: z.string(), name: workspaceNameSchema }))
+  .handler(async ({ data, context: { session, db } }) =>
+    updateWorkspaceSettings(session, db, data.orgId as OrgId, { name: data.name }),
+  );
 ```
 
 ```ts
 // workspaces.server.ts
-export async function updateWorkspaceSettings(
-  session: Session,
-  db: Database,
-  orgId: OrgId,
-  data: { name?: string; slug?: string },
-) {
+export async function updateWorkspaceSettings(session: Session, db: Database, orgId: OrgId, data: { name: string }) {
   const membership = await requireOrgMembership(session, db, orgId, 'owner');
   if (!membership.ok) throw membership.error;
   // ... Drizzle writes ...
@@ -88,8 +76,8 @@ Throw, don't return. Use `throwDomainError(...)` or throw a guard's `result.erro
 ```ts
 throwDomainError(
   VALIDATION_ERRORS.INVALID_INPUT,
-  { field: 'slug', reason: 'slug_taken' },
-  'That URL is already taken.',
+  { reason: 'cannot_remove_self' },
+  'You cannot remove yourself from your own workspace.',
 );
 ```
 
@@ -244,7 +232,7 @@ The Better Auth endpoints under `/api/auth/*` use Better Auth's own per-IP limit
 
 ## Validation
 
-Server functions declare their input with Zod in `.validator(...)`. Input that fails it is rejected before the handler runs, so the handler can trust `data`. Reuse shared schemas where they exist (`workspaceSlugSchema`, `workspaceNameSchema`, plan and step enums) so the client and server agree.
+Server functions declare their input with Zod in `.validator(...)`. Input that fails it is rejected before the handler runs, so the handler can trust `data`. Reuse shared schemas where they exist (`workspaceNameSchema`, plan and step enums) so the client and server agree.
 
 ```ts
 .validator(z.object({ orgId: z.string(), targetPlan: z.string() }))

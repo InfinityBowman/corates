@@ -19,9 +19,7 @@ import type { Session } from '@/server/middleware/auth';
 import { DomainErrorException } from '@corates/shared';
 import {
   listMyWorkspaces,
-  createWorkspaceForUser,
   updateWorkspaceSettings,
-  checkWorkspaceSlug,
   getWorkspaceMembers,
   removeWorkspaceMember,
   countCollaboratorSeats,
@@ -76,47 +74,20 @@ describe('listMyWorkspaces', () => {
   });
 });
 
-describe('createWorkspaceForUser and updateWorkspaceSettings', () => {
-  it('creates a workspace owned by the caller', async () => {
-    const user = await buildUser();
-    const db = createDb(env.DB);
-    const created = await createWorkspaceForUser(sessionFor(user), db, {
-      name: 'Evidence Lab',
-      slug: 'evidence-lab',
-    });
-    expect(created).toMatchObject({ slug: 'evidence-lab', role: 'owner' });
-    const row = await db
-      .select({ role: member.role })
-      .from(member)
-      .where(and(eq(member.organizationId, created.id), eq(member.userId, user.id)))
-      .get();
-    expect(row?.role).toBe('owner');
-  });
-
-  it('rejects a slug another workspace already uses', async () => {
-    const user = await buildUser();
-    await buildOrg({ org: { slug: 'taken' } });
-    await expectDomainError(
-      createWorkspaceForUser(sessionFor(user), createDb(env.DB), { name: 'X', slug: 'taken' }),
-      'slug_taken',
-    );
-  });
-
-  it('lets the owner rename and change the slug', async () => {
+describe('updateWorkspaceSettings', () => {
+  it('lets the owner rename the workspace', async () => {
     const { org, owner } = await buildOrg();
     const db = createDb(env.DB);
     const updated = await updateWorkspaceSettings(sessionFor(owner), db, org.id, {
       name: 'Renamed',
-      slug: 'renamed',
     });
-    expect(updated).toMatchObject({ name: 'Renamed', slug: 'renamed' });
-  });
-
-  it('keeps the current slug available to its own workspace', async () => {
-    const { org, owner } = await buildOrg({ org: { slug: 'mine' } });
-    const result = await checkWorkspaceSlug(createDb(env.DB), 'mine', org.id);
-    expect(result.available).toBe(true);
-    await updateWorkspaceSettings(sessionFor(owner), createDb(env.DB), org.id, { slug: 'mine' });
+    expect(updated).toMatchObject({ name: 'Renamed', role: 'owner' });
+    const row = await db
+      .select({ name: organization.name })
+      .from(organization)
+      .where(eq(organization.id, org.id))
+      .get();
+    expect(row?.name).toBe('Renamed');
   });
 
   it('refuses settings changes from a member', async () => {
@@ -132,18 +103,6 @@ describe('createWorkspaceForUser and updateWorkspaceSettings', () => {
       .where(eq(organization.id, org.id))
       .get();
     expect(row?.name).toBe(org.name);
-  });
-});
-
-describe('checkWorkspaceSlug', () => {
-  it('reports reserved and malformed slugs with a message', async () => {
-    const db = createDb(env.DB);
-    expect(await checkWorkspaceSlug(db, 'dashboard')).toMatchObject({ available: false });
-    expect(await checkWorkspaceSlug(db, 'no spaces')).toMatchObject({ available: false });
-    expect(await checkWorkspaceSlug(db, 'Fine-Slug')).toMatchObject({
-      available: true,
-      slug: 'fine-slug',
-    });
   });
 });
 

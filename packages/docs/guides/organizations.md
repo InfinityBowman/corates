@@ -68,9 +68,7 @@ The app talks to the server through TanStack Start server functions (`packages/w
 | Function                                                        | File                        | Auth                                  |
 | --------------------------------------------------------------- | --------------------------- | ------------------------------------- |
 | `getMyWorkspaces`                                               | `workspaces.functions.ts`   | Authenticated                         |
-| `checkSlug`                                                     | `workspaces.functions.ts`   | Authenticated                         |
-| `createWorkspace`                                               | `workspaces.functions.ts`   | Authenticated                         |
-| `updateWorkspace` (name, slug)                                  | `workspaces.functions.ts`   | Workspace owner                       |
+| `updateWorkspace` (name)                                        | `workspaces.functions.ts`   | Workspace owner                       |
 | `getWorkspaceMembers` (members, invites, seats)                 | `workspaces.functions.ts`   | Workspace member                      |
 | `removeWorkspaceMember`                                         | `workspaces.functions.ts`   | Workspace owner                       |
 | `createProject`                                                 | `org-projects.functions.ts` | Workspace owner + entitlement + quota |
