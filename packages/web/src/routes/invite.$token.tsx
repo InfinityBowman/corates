@@ -17,7 +17,6 @@ import { getDomainError, getUserFriendlyMessage, handleError } from '@/lib/error
 import { showToast } from '@/lib/toast';
 import { queryClient } from '@/lib/queryClient';
 import { queryKeys } from '@/lib/queryKeys';
-import { projectPath } from '@/lib/workspacePaths';
 import { Avatar, AvatarFallback, getInitials } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { PrimaryButton } from '@/components/auth/AuthButtons';
@@ -88,15 +87,8 @@ function InvitePage() {
     try {
       const result = await acceptInvitation({ data: { token } });
       queryClient.invalidateQueries({ queryKey: queryKeys.invitations.pendingForMe });
-      // Accepting may add a workspace, which the project URL needs to resolve.
-      await queryClient.invalidateQueries({ queryKey: queryKeys.workspaces.list });
       showToast.success('Invitation accepted', `You now have access to "${result.projectName}"`);
-      navigate({
-        to: (result.orgSlug ?
-          projectPath(result.orgSlug, result.projectId)
-        : '/dashboard') as string,
-        replace: true,
-      });
+      navigate({ to: `/projects/${result.projectId}` as string, replace: true });
     } catch (err) {
       const domainError = getDomainError(err);
       if (domainError?.code === 'PROJECT_MEMBER_ALREADY_EXISTS') {

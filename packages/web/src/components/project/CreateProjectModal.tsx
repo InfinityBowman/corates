@@ -109,10 +109,7 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
       queryClient.invalidateQueries({ queryKey: queryKeys.subscription.all });
       onOpenChange(false);
 
-      navigate({
-        to: '/$workspace/projects/$projectId',
-        params: { workspace: resolvedOrg.slug, projectId: newProject.id },
-      });
+      navigate({ to: '/projects/$projectId', params: { projectId: newProject.id } });
     } catch (error: unknown) {
       const domainError = getDomainError(error);
       const details = domainError?.details as Record<string, unknown> | undefined;

@@ -21,7 +21,7 @@ import { applyLocalMutation } from '@/project/localWrites';
 import { LOCAL_PROJECT_ID } from '@/project/localProject';
 import { db } from '@/primitives/db';
 import { useMyProjectsList } from '@/hooks/useMyProjectsList';
-import { useOwnedWorkspace, useWorkspaces } from '@/hooks/useWorkspaces';
+import { useOwnedWorkspace } from '@/hooks/useWorkspaces';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { APP_NAME } from '@/config/app';
 import { Badge } from '@/components/ui/badge';
@@ -89,15 +89,8 @@ export function AppSidebar({ onClose, closeLabel, closeIcon }: AppSidebarProps) 
   const isLoggedIn = useAuthStore(selectIsLoggedIn);
   const openFeedback = useFeedbackStore(s => s.open);
   const isOnline = useOnlineStatus();
-  const { projects: allProjects, isLoading: isProjectsLoading } = useMyProjectsList({
-    enabled: isLoggedIn,
-  });
-  // Every project the user is on, whichever workspace holds it; each links
-  // under its own workspace's slug.
-  const { workspaces } = useWorkspaces();
+  const { projects, isLoading: isProjectsLoading } = useMyProjectsList({ enabled: isLoggedIn });
   const { workspace: owned } = useOwnedWorkspace();
-  const slugById = new Map<string, string>(workspaces.map(w => [w.id, w.slug]));
-  const projects = allProjects.filter(p => slugById.has(p.orgId));
 
   const localStudies = useAllStudies(LOCAL_PROJECT_ID);
   const checklists = localStudies
@@ -173,12 +166,7 @@ export function AppSidebar({ onClose, closeLabel, closeIcon }: AppSidebarProps) 
             <div className='flex flex-col gap-0.5'>
               {projects.length > 0 ?
                 projects.map(project => (
-                  <ProjectRow
-                    key={project.id}
-                    project={project}
-                    workspaceSlug={slugById.get(project.orgId)!}
-                    currentPath={pathname}
-                  />
+                  <ProjectRow key={project.id} project={project} currentPath={pathname} />
                 ))
               : !isProjectsLoading ?
                 <span className='text-muted-foreground/70 px-2.5 py-1.5 text-sm'>None yet</span>

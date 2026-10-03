@@ -119,8 +119,8 @@ test.describe('Invitation flows', () => {
 
       // Invitation is auto-accepted during onboarding
       await expect(p.getByText('Invitation accepted')).toBeVisible({ timeout: 15_000 });
-      // Accepting opens the project inside its workspace
-      await expect(p).toHaveURL(/\/[a-z0-9-]+\/projects\//, { timeout: 15_000 });
+      // Accepting opens the project
+      await expect(p).toHaveURL(new RegExp(`/projects/${projectId}$`), { timeout: 15_000 });
 
       // Membership is real: the project page syncs over WebSocket
       await p.goto(`/projects/${projectId}`);
@@ -265,8 +265,8 @@ test.describe('Invitation flows', () => {
 
       // Membership binds to the signed-in account despite the email mismatch
       await expect(p.getByText('Invitation accepted')).toBeVisible({ timeout: 15_000 });
-      // Accepting opens the project inside its workspace
-      await expect(p).toHaveURL(/\/[a-z0-9-]+\/projects\//, { timeout: 15_000 });
+      // Accepting opens the project
+      await expect(p).toHaveURL(new RegExp(`/projects/${projectId}$`), { timeout: 15_000 });
 
       await p.goto(`/projects/${projectId}`);
       await expect(p.getByRole('tab', { name: /All Studies/i })).toBeVisible({ timeout: 15_000 });

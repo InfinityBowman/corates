@@ -3,8 +3,6 @@
 import { Link } from '@tanstack/react-router';
 import { Badge } from '@/components/ui/badge';
 import { useSubscription } from '@/hooks/useSubscription';
-import { useOwnedWorkspace } from '@/hooks/useWorkspaces';
-import { workspaceSettingsPathOrLegacy } from '@/lib/workspacePaths';
 
 const PAYMENT_ISSUE_STATUSES = ['past_due', 'incomplete', 'unpaid'];
 
@@ -15,10 +13,8 @@ function getDaysRemaining(endTimestamp: number | null) {
 }
 
 export function PlanBadge() {
-  // The user's own plan, whichever workspace's project is open.
-  const { workspace } = useOwnedWorkspace();
   const { subscription, tier, tierInfo, status, isLoading, subscriptionFetchFailed } =
-    useSubscription(workspace?.id ?? null);
+    useSubscription();
 
   if (isLoading || subscriptionFetchFailed) return null;
 
@@ -32,10 +28,7 @@ export function PlanBadge() {
 
   return (
     <div className='mt-1.5 flex items-center justify-between gap-2 font-normal'>
-      <Link
-        to={workspaceSettingsPathOrLegacy(workspace, 'billing') as string}
-        className='flex items-center gap-1.5'
-      >
+      <Link to='/settings/billing' className='flex items-center gap-1.5'>
         <Badge variant={variant}>{tierInfo.name}</Badge>
         {daysLeft !== null && (
           <span className='text-muted-foreground text-xs'>
@@ -44,10 +37,7 @@ export function PlanBadge() {
         )}
       </Link>
       {showUpgrade && (
-        <Link
-          to={workspaceSettingsPathOrLegacy(workspace, 'plans') as string}
-          className='text-primary text-xs hover:underline'
-        >
+        <Link to='/settings/plans' className='text-primary text-xs hover:underline'>
           Upgrade
         </Link>
       )}

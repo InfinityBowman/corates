@@ -36,7 +36,7 @@ Schema lives in `packages/db/src/schema.ts` -- the canonical reference. Relevant
 
 `grantOrgMembership` on an invitation is written but not read: `acceptInvitation` always adds a missing workspace membership at the invitation's `orgRole`, which `createInvitation` always sets to `member`.
 
-`organization.slug` is the workspace URL. Rules live in `@corates/shared` (`workspaceSlugSchema`, `RESERVED_WORKSPACE_SLUGS`): lowercase letters, digits and single hyphens, 2 to 40 characters, never a top-level route name. `pickAvailableWorkspaceSlug` (`@corates/workers/workspace-slug`) picks a free one from a name, numbering on collision. Personal workspaces are created on the first session with `metadata = {"type":"personal"}`, named `<first name>'s Workspace`. Signup never asks about it; the owner can rename it later in workspace settings.
+`organization.slug` does not appear in any URL yet. It is kept unique and valid so workspace URLs can be added later without a cleanup. Rules live in `@corates/shared` (`workspaceSlugSchema`, `RESERVED_WORKSPACE_SLUGS`): lowercase letters, digits and single hyphens, 2 to 40 characters, never a top-level route name. `pickAvailableWorkspaceSlug` (`@corates/workers/workspace-slug`) picks a free one from a name, numbering on collision. Personal workspaces are created on the first session with `metadata = {"type":"personal"}`, named `<first name>'s Workspace`. Signup never asks about it; the owner can rename it later in workspace settings.
 
 ## Role Hierarchies
 
@@ -121,35 +121,33 @@ For mutations that affect billing, add `requireOrgWriteAccess` and / or `require
 Workspaces stay out of the way. Most people should never have to think about one:
 
 - **Home is `/dashboard`** and lists every project the user is on, whichever workspace holds it. Nobody has to switch workspaces to find their work.
-- **Project pages live under the project's workspace slug** (`/<slug>/projects/<id>`). The slug is cosmetic: a project id identifies its workspace, so a wrong slug is corrected.
-- **"Your workspace" outside a project is the one you own** (`useOwnedWorkspace`). New projects go there, and the plan badge and New project limits read its plan.
+- **No workspace appears in a URL.** Projects live at `/projects/<id>`; the project's workspace comes from its `orgId`.
+- **"Your workspace" is the one you own** (`useOwnedWorkspace`). New projects go there, and the plan badge, New project limits and workspace settings read it.
 - **The top-left menu shows the user's name**, with no workspace list. An owner reaches their workspace's settings from the Settings sidebar.
 
-See [Frontend Route Structure](/architecture/diagrams/05-frontend-routes) for the full table and the redirects that keep old links working.
+See [Frontend Route Structure](/architecture/diagrams/05-frontend-routes) for the full table.
 
-| Route pattern                                                              | Purpose                                            |
-| -------------------------------------------------------------------------- | -------------------------------------------------- |
-| `/dashboard`                                                               | Home: every project, invitations, local appraisals |
-| `/:workspace/projects/:projectId`                                          | Project overview                                   |
-| `/:workspace/projects/:projectId/studies/:studyId/checklists/:checklistId` | Checklist editor                                   |
-| `/:workspace/projects/:projectId/studies/:studyId/reconcile/:c1Id/:c2Id`   | Checklist reconciliation                           |
-| `/:workspace/settings/general`, `members`, `billing`, `plans`              | Workspace settings, owner only                     |
-| `/settings/account/*`                                                      | Account settings                                   |
-| `/admin/*`                                                                 | Admin-only                                         |
+| Route pattern                                                   | Purpose                                            |
+| --------------------------------------------------------------- | -------------------------------------------------- |
+| `/dashboard`                                                    | Home: every project, invitations, local appraisals |
+| `/projects/:projectId`                                          | Project overview                                   |
+| `/projects/:projectId/studies/:studyId/checklists/:checklistId` | Checklist editor                                   |
+| `/projects/:projectId/studies/:studyId/reconcile/:c1Id/:c2Id`   | Checklist reconciliation                           |
+| `/settings/workspace`, `members`, `billing`, `plans`            | Settings for the workspace the user owns           |
+| `/settings/profile`, `security`, `preferences`, `integrations`  | Account settings                                   |
+| `/admin/*`                                                      | Admin-only                                         |
 
 **Workspace settings:**
 
-- **General** edits the name and URL (`updateWorkspace`).
+- **General** edits the name (`updateWorkspace`).
 - **Members** shows:
   - seat usage;
   - the people in the workspace with their projects;
   - pending invitations, with Cancel;
   - a Remove action (`removeWorkspaceMember`).
-- **Billing and Plans** show non-owners an owner-only notice (`OwnerOnly`).
+- **Billing and Plans** manage the owned workspace's plan.
 
-`/create-workspace` exists but nothing links to it while each user has one workspace of their own.
-
-Build project and settings links with `@/lib/workspacePaths` (`projectPath`, `workspaceSettingsPath`). Inside a project, use `projectPath` and the path builders on `useProjectContext()`.
+Inside a project, build links with the path builders on `useProjectContext()`.
 
 ### Resolving orgId from a project
 
@@ -168,7 +166,7 @@ It reads the D1 project list (`getMyProjects`) through React Query, falling back
 
 ### Listing the user's workspaces
 
-Use `useWorkspaces()` from `@/hooks/useWorkspaces` (owned first), `useOwnedWorkspace()` for the one the user owns, and `useCurrentWorkspace()` for the one in the URL inside a project or workspace settings, which falls back to the owned one elsewhere. `useSubscription(orgId?)` and `useWorkspaceMembers(orgId?)` default to the current workspace; pass the project's `orgId` inside a project so seat checks use the project's workspace.
+Use `useWorkspaces()` from `@/hooks/useWorkspaces` (owned first), `useOwnedWorkspace()` for the one the user owns, `useSubscription(orgId?)` and `useWorkspaceMembers(orgId?)` default to the owned workspace; pass the project's `orgId` inside a project so seat checks use the project's workspace.
 
 ## Invitation Flow
 
@@ -183,7 +181,7 @@ Every project add is an invitation: whether the owner picks an existing user or 
 7. Server validates: token exists, not expired, not accepted. The invited email is a delivery address, not an identity check: membership binds to whichever authenticated account accepts the token, so someone invited at an institutional alias can accept from an account keyed to a different address.
 8. If the user is not yet in the workspace, the server adds them as `member`. This is the step that consumes a seat, so it is checked against `collaborators.org.max` inside the insert.
 9. Server adds `projectMembers` with `role`.
-10. Frontend opens the project at `/<slug>/projects/<id>`, using the `orgSlug` that `acceptInvitation` returns, or the dashboard when there is none.
+10. Frontend opens the project at `/projects/<id>`.
 
 ## Best Practices
 
@@ -197,7 +195,6 @@ Every project add is an invitation: whether the owner picks an existing user or 
 
 ### Frontend
 
-- **Put the workspace slug first** in every in-workspace link, via `@/lib/workspacePaths`.
 - **Use `useWorkspaces` / `useProjectOrgId`** rather than reading from Better Auth or fetching directly.
 - **Gate UI on plan entitlement** via `@corates/shared/plans` helpers (e.g., `isUnlimitedQuota`) so billed features show disabled states rather than failing mid-flow.
 

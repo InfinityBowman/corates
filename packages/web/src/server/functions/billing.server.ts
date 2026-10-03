@@ -120,12 +120,8 @@ async function requireBillingOrg(
   return membership.context;
 }
 
-// Stripe sends the user back to the workspace that was billed, not whichever
-// one they last had open.
-function billingPageUrl(orgSlug: string | null, query = '') {
-  const base = env.APP_URL || 'https://corates.org';
-  const path = orgSlug ? `/${orgSlug}/settings/billing` : '/settings/billing';
-  return `${base}${path}${query}`;
+function billingPageUrl(query = '') {
+  return `${env.APP_URL || 'https://corates.org'}/settings/billing${query}`;
 }
 
 // --- Checkout ---
@@ -145,7 +141,7 @@ export async function createCheckout(
   tier: string,
   interval: 'monthly' | 'yearly',
 ) {
-  const { orgSlug } = await requireBillingOrg(db, session, orgId, 'checkout', 'owner');
+  await requireBillingOrg(db, session, orgId, 'checkout', 'owner');
 
   if (!(CHECKOUT_ELIGIBLE_TIERS as readonly string[]).includes(tier)) {
     warn('billing.checkout_rejected', {
@@ -196,7 +192,6 @@ export async function createCheckout(
       // is rejected inside once the live subscription has been read.
       return changeSubscriptionPrice(db, {
         orgId,
-        orgSlug,
         userId: session.user.id,
         tier,
         interval,
@@ -217,9 +212,9 @@ export async function createCheckout(
         plan: tier,
         annual: interval === 'yearly',
         referenceId: orgId,
-        successUrl: billingPageUrl(orgSlug, '?success=true'),
-        cancelUrl: billingPageUrl(orgSlug, '?canceled=true'),
-        returnUrl: billingPageUrl(orgSlug, '?success=true'),
+        successUrl: billingPageUrl('?success=true'),
+        cancelUrl: billingPageUrl('?canceled=true'),
+        returnUrl: billingPageUrl('?success=true'),
       },
     });
   } catch (err) {
@@ -239,7 +234,6 @@ async function changeSubscriptionPrice(
   db: Database,
   args: {
     orgId: OrgId;
-    orgSlug: string | null;
     userId: string;
     tier: string;
     interval: 'monthly' | 'yearly';
@@ -247,7 +241,7 @@ async function changeSubscriptionPrice(
     stripeSubscriptionId: string;
   },
 ) {
-  const { orgId, orgSlug, userId, tier, interval, stripeCustomerId, stripeSubscriptionId } = args;
+  const { orgId, userId, tier, interval, stripeCustomerId, stripeSubscriptionId } = args;
   const lookupKey = getPriceLookupKey(tier as PlanId, interval);
 
   info('billing.price_change_initiated', { orgId, userId, plan: tier, interval });
@@ -296,7 +290,7 @@ async function changeSubscriptionPrice(
   }
 
   info('billing.price_changed', { orgId, userId, plan: tier, interval, stripeSubscriptionId });
-  return { url: billingPageUrl(orgSlug, '?success=true') };
+  return { url: billingPageUrl('?success=true') };
 }
 
 // --- Invoices ---
@@ -393,7 +387,7 @@ export async function createPortalSession(
   request: Request,
   orgId: OrgId,
 ) {
-  const { orgSlug } = await requireBillingOrg(db, session, orgId, 'portal', 'owner');
+  await requireBillingOrg(db, session, orgId, 'portal', 'owner');
 
   const auth = createAuth(env);
   const billingApi = auth.api as unknown as PortalApi;
@@ -403,7 +397,7 @@ export async function createPortalSession(
       headers: request.headers,
       body: {
         referenceId: orgId as string,
-        returnUrl: billingPageUrl(orgSlug),
+        returnUrl: billingPageUrl(),
       },
     });
   } catch (err) {

@@ -5,8 +5,7 @@ import { CheckCircleIcon, XCircleIcon, CreditCardIcon, TrendingUpIcon } from 'lu
 import { Alert, AlertAction, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useSubscription } from '@/hooks/useSubscription';
-import { useCurrentWorkspace } from '@/hooks/useWorkspaces';
-import { workspaceSettingsPathOrLegacy } from '@/lib/workspacePaths';
+import { useOwnedWorkspace } from '@/hooks/useWorkspaces';
 import { redirectToPortal } from '@/api/billing';
 import { queryKeys } from '@/lib/queryKeys';
 import { getUsage, syncAfterSuccess } from '@/server/functions/billing.functions';
@@ -42,7 +41,7 @@ function UsageSkeleton() {
 
 export function BillingSettings() {
   const { subscription, isLoading: loading, refetch, quotas } = useSubscription();
-  const { workspace } = useCurrentWorkspace();
+  const { workspace } = useOwnedWorkspace();
   const orgId = workspace?.id;
   const [portalLoading, setPortalLoading] = useState(false);
 
@@ -102,9 +101,7 @@ export function BillingSettings() {
       description='Your plan, what it covers, and past invoices.'
       action={
         <Button variant='outline' asChild>
-          <Link to={workspaceSettingsPathOrLegacy(workspace, 'plans') as string}>
-            Compare plans
-          </Link>
+          <Link to='/settings/plans'>Compare plans</Link>
         </Button>
       }
     >

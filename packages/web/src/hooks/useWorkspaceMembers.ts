@@ -7,10 +7,10 @@ import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
 import { QUERY_STABLE } from '@/lib/queryPresets';
 import { getWorkspaceMembers } from '@/server/functions/workspaces.functions';
-import { useCurrentWorkspace } from '@/hooks/useWorkspaces';
+import { useOwnedWorkspace } from '@/hooks/useWorkspaces';
 
 export function useWorkspaceMembers(orgId?: string | null) {
-  const { workspace } = useCurrentWorkspace();
+  const { workspace } = useOwnedWorkspace();
   const resolvedOrgId = orgId === undefined ? workspace?.id : orgId;
 
   const query = useQuery({

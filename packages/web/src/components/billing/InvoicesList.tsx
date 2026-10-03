@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { formatDate } from '@/lib/formatDate';
 import { queryKeys } from '@/lib/queryKeys';
 import { getInvoices } from '@/server/functions/billing.functions';
-import { useCurrentWorkspace } from '@/hooks/useWorkspaces';
+import { useOwnedWorkspace } from '@/hooks/useWorkspaces';
 import type { Invoice, InvoicesResponse } from '@/server/functions/billing.server';
 import { SettingsSection, SettingsRow } from '@/components/settings/primitives';
 
@@ -42,7 +42,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export function InvoicesList() {
-  const { workspace } = useCurrentWorkspace();
+  const { workspace } = useOwnedWorkspace();
   const orgId = workspace?.id;
   const { data, isFetching } = useQuery({
     queryKey: queryKeys.billing.invoices(orgId ?? null),

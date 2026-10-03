@@ -8,8 +8,6 @@ import { useNavigate } from '@tanstack/react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FolderIcon, TriangleAlertIcon } from 'lucide-react';
 import { useMyProjectsList } from '@/hooks/useMyProjectsList';
-import { useWorkspaces } from '@/hooks/useWorkspaces';
-import { projectPath } from '@/lib/workspacePaths';
 import { showToast } from '@/lib/toast';
 import { CreateProjectModal } from '@/components/project/CreateProjectModal';
 import { queryKeys } from '@/lib/queryKeys';
@@ -45,11 +43,7 @@ export function ProjectsSection({ createModalOpen, setCreateModalOpen }: Project
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  const { projects: allProjects } = useMyProjectsList();
-  // Home lists every project the user is on, whichever workspace holds it.
-  const { workspaces } = useWorkspaces();
-  const slugById = new Map<string, string>(workspaces.map(w => [w.id, w.slug]));
-  const projects = allProjects.filter(p => slugById.has(p.orgId));
+  const { projects } = useMyProjectsList();
   const { data: invitations } = useQuery({
     queryKey: queryKeys.invitations.pendingForMe,
     queryFn: () => listMyPendingInvitations(),
@@ -115,10 +109,7 @@ export function ProjectsSection({ createModalOpen, setCreateModalOpen }: Project
             <ProjectRow
               key={project.id}
               project={project}
-              href={projectPath(slugById.get(project.orgId)!, project.id)}
-              onOpen={id =>
-                navigate({ to: projectPath(slugById.get(project.orgId)!, id) as string })
-              }
+              onOpen={id => navigate({ to: `/projects/${id}` as string })}
               onDelete={setPendingDeleteId}
             />
           ))
