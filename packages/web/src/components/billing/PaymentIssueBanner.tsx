@@ -22,6 +22,7 @@ export function PaymentIssueBanner() {
   if (!hasIssue || !workspace) return null;
 
   async function handleUpdatePayment() {
+    if (!workspace) return;
     setLoading(true);
     try {
       await redirectToPortal(workspace.id);

@@ -17,6 +17,7 @@ import {
   type AdminScenario,
   type SessionCookie,
 } from './helpers';
+import { WORKSPACE_HOME_URL } from './shared-steps';
 
 let scenario: AdminScenario;
 
@@ -140,6 +141,6 @@ test('Users directory, user detail (loader pilot), dashboard, and access control
   await context.clearCookies();
   await loginAndGoto(page, context, scenario.regularCookies, '/admin');
 
-  // Admin layout redirects non-admins to /dashboard
-  await expect(page).toHaveURL(/\/dashboard/, { timeout: 15_000 });
+  // Admin layout sends non-admins to /dashboard, which forwards to their workspace
+  await expect(page).toHaveURL(WORKSPACE_HOME_URL, { timeout: 15_000 });
 });

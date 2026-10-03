@@ -1,6 +1,6 @@
 # Frontend Route Structure
 
-Application routing under TanStack Router (file-based). Routes are **project-centric** -- there is no `orgSlug` in URLs. Files live under `packages/web/src/routes/`.
+Application routing under TanStack Router (file-based). Everything inside a workspace lives under the **workspace slug** as the first path segment (`/<slug>/...`), the Linear URL model. Files live under `packages/web/src/routes/`.
 
 ```mermaid
 flowchart TD
@@ -13,23 +13,28 @@ flowchart TD
     end
 
     subgraph App["_app layout"]
-        dashboard["/dashboard"]
+        dashboard["/dashboard<br/>(signed out: local appraisals;<br/>signed in: redirect to workspace)"]
         localcheck["/checklist/:checklistId<br/>(local-only)"]
 
         subgraph Protected["_app/_protected (auth required)"]
-            settings["/settings/*"]
+            account["/settings/account/*"]
             admin["/admin/*"]
             createorg["/orgs/new"]
-            projectview["/projects/:projectId"]
-            checklistview["/projects/:projectId/studies/:studyId/checklists/:checklistId"]
-            reconcile["/projects/:projectId/studies/:studyId/reconcile/:c1/:c2"]
+            subgraph Workspace["/:workspace layout"]
+                home["/:workspace"]
+                projectview["/:workspace/projects/:projectId"]
+                checklistview[".../studies/:studyId/checklists/:checklistId"]
+                reconcile[".../studies/:studyId/reconcile/:c1/:c2"]
+                wsettings["/:workspace/settings/*"]
+            end
         end
     end
 
     signin --> dashboard
     signup --> completeprofile
     completeprofile --> dashboard
-    dashboard --> projectview
+    dashboard --> home
+    home --> projectview
     projectview --> checklistview
     checklistview --> reconcile
 ```
@@ -38,11 +43,12 @@ flowchart TD
 
 TanStack file-based conventions: an underscore prefix (`_app`, `_auth`) denotes a layout that wraps its children without contributing a path segment.
 
-| Layout            | File                         | Purpose                                              |
-| ----------------- | ---------------------------- | ---------------------------------------------------- |
-| `_auth`           | `routes/_auth.tsx`           | Public flows; redirects to `/dashboard` if logged in |
-| `_app`            | `routes/_app.tsx`            | Top-level app chrome                                 |
-| `_app/_protected` | `routes/_app/_protected.tsx` | Auth guard via `beforeLoad` + `selectIsLoggedIn`     |
+| Layout                       | File                                    | Purpose                                                                          |
+| ---------------------------- | --------------------------------------- | -------------------------------------------------------------------------------- |
+| `_auth`                      | `routes/_auth.tsx`                      | Public flows; redirects to `/dashboard` if logged in                             |
+| `_app`                       | `routes/_app.tsx`                       | Top-level app chrome                                                             |
+| `_app/_protected`            | `routes/_app/_protected.tsx`            | Auth guard via `beforeLoad` + `selectIsLoggedIn`                                 |
+| `_app/_protected/$workspace` | `routes/_app/_protected/$workspace.tsx` | Resolves the slug against the user's workspaces; "Workspace not found" otherwise |
 
 ## Public routes (`_auth`)
 
@@ -56,15 +62,16 @@ TanStack file-based conventions: an underscore prefix (`_app`, `_auth`) denotes 
 
 ## Authenticated routes (`_app/_protected`)
 
-| Route                                                           | Purpose                                     |
-| --------------------------------------------------------------- | ------------------------------------------- |
-| `/dashboard`                                                    | Project list                                |
-| `/orgs/new`                                                     | Create a new organization                   |
-| `/projects/:projectId`                                          | Project overview (studies, members)         |
-| `/projects/:projectId/studies/:studyId/checklists/:checklistId` | Checklist assessment                        |
-| `/projects/:projectId/studies/:studyId/reconcile/:c1Id/:c2Id`   | Reconcile two reviewers' checklists         |
-| `/settings/*`                                                   | Profile, billing, plans, notifications, 2FA |
-| `/admin/*`                                                      | Admin-only dashboards and tools             |
+| Route                                                                      | Purpose                                        |
+| -------------------------------------------------------------------------- | ---------------------------------------------- |
+| `/:workspace`                                                              | Workspace home: its projects, your invitations |
+| `/:workspace/projects/:projectId`                                          | Project overview (studies, members)            |
+| `/:workspace/projects/:projectId/studies/:studyId/checklists/:checklistId` | Checklist assessment                           |
+| `/:workspace/projects/:projectId/studies/:studyId/reconcile/:c1Id/:c2Id`   | Reconcile two reviewers' checklists            |
+| `/:workspace/settings/billing`, `/:workspace/settings/plans`               | Workspace billing (owner only in the sidebar)  |
+| `/settings/account/profile`, `security`, `preferences`, `integrations`     | Account settings, per person, outside any slug |
+| `/orgs/new`                                                                | Create a new workspace                         |
+| `/admin/*`                                                                 | Admin-only dashboards and tools                |
 
 ## Local-only routes
 
@@ -74,8 +81,10 @@ TanStack file-based conventions: an underscore prefix (`_app`, `_auth`) denotes 
 
 ## URL contract
 
-- **Project IDs, not slugs.** The URL contains `projectId`, not an org slug. The project's `orgId` is resolved from the store / query cache via `useProjectOrgId(projectId)`.
-- **orgId does not appear in frontend URLs.** It only shows up in backend API paths (`/api/orgs/:orgId/...`).
+- **The slug comes first.** In-workspace routes are `/<slug>/...`. Slugs follow `workspaceSlugSchema` and never equal a top-level route (`RESERVED_WORKSPACE_SLUGS`, enforced by a test over the route files), because static routes outrank `/$workspace`.
+- **The slug in a project URL is cosmetic.** A project id identifies its workspace, so the project route replaces a wrong slug with the project's own. Old links therefore keep working after a slug change, and `WorkspaceNotFound` forwards `/<unknown>/projects/...` the same way.
+- **Old URLs redirect.** `/projects/*` and the signed-in `/dashboard` go to the same page in the default workspace (last used, else owned, else first; `pickDefaultWorkspace`). `/settings/profile|security|preferences|integrations` go to `/settings/account/...`, and `/settings/billing|plans` to the default workspace's settings, keeping the query string so in-flight Stripe returns still land.
+- **The current workspace is the URL.** `useCurrentWorkspace()` reads the `workspace` param; outside a workspace URL (account settings) it falls back to the default.
 - **Admin routes use explicit orgId/projectId/userId in the URL** for admin-only navigation, but those are not part of the public contract.
 
-See the [Organizations Guide](/guides/organizations#frontend-routing) for the reasoning and the hooks (`useWorkspaces`, `useProjectOrgId`) used to resolve context.
+See the [Organizations Guide](/guides/organizations#frontend-routing) for the hooks (`useWorkspaces`, `useCurrentWorkspace`, `useProjectOrgId`) used to resolve context.

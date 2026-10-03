@@ -505,6 +505,17 @@ export async function getAuthCode(
  */
 export async function submitEmailCodeSignIn(page: Page, email: string) {
   const emailInput = page.locator('#email-code-email');
+  // Server-rendered pages show the form before React owns it; typing earlier
+  // races hydration, which resets the field (the invite page then doubled the
+  // pre-filled address). React tags the node it hydrates with a fiber key.
+  await expect
+    .poll(
+      () => emailInput.evaluate(el => Object.keys(el).some(k => k.startsWith('__reactFiber'))),
+      {
+        timeout: 15_000,
+      },
+    )
+    .toBe(true);
   await emailInput.click();
   // The invite page seeds this field, so clear before typing
   await emailInput.fill('');

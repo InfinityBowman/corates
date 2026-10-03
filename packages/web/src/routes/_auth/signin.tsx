@@ -23,8 +23,11 @@ import { EmailCodeForm } from '@/components/auth/EmailCodeForm';
 import { TwoFactorVerify } from '@/components/auth/TwoFactorVerify';
 import { LastLoginHint } from '@/components/auth/LastLoginHint';
 
-const signinSearch = (search: Record<string, unknown>): { error?: string } => ({
+const signinSearch = (
+  search: Record<string, unknown>,
+): { error?: string; invitation?: string } => ({
   error: typeof search.error === 'string' ? search.error : undefined,
+  invitation: typeof search.invitation === 'string' ? search.invitation : undefined,
 });
 
 // Social providers run with disableImplicitSignUp, so an unknown identity on

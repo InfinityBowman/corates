@@ -32,7 +32,7 @@ export const Route = createFileRoute('/_auth')({
     if (isLoggedIn) {
       // Signed-in users never reach signup, so capture pricing-page plan params here.
       const hasPlan = capturePlanParams(new URLSearchParams(location.searchStr));
-      throw redirect({ to: hasPlan ? '/settings/plans' : '/dashboard' });
+      throw redirect({ to: hasPlan ? ('/settings/plans' as string) : '/dashboard' });
     }
   },
   component: AuthLayout,

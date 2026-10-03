@@ -20,6 +20,12 @@ vi.mock('@tanstack/react-router', async importOriginal => ({
     <a className={className}>{children}</a>
   ),
 }));
+vi.mock('@/hooks/useWorkspaces', () => ({
+  useCurrentWorkspace: () => ({
+    workspace: { id: 'org-1', name: 'Lab', slug: 'lab', role: 'owner' },
+    isLoading: false,
+  }),
+}));
 
 const alice = {
   id: 'u-alice',

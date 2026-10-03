@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { useWorkspaceMembers } from '@/hooks/useWorkspaceMembers';
+import { useCurrentWorkspace } from '@/hooks/useWorkspaces';
+import { workspaceSettingsPathOrLegacy } from '@/lib/workspacePaths';
 import { SettingsSection, SettingsRow } from '@/components/settings/primitives';
 
 function getDaysRemaining(endTimestamp: number | undefined) {
@@ -65,6 +67,7 @@ export function SubscriptionCard({ subscription, onManage, manageLoading }: Subs
   const periodEndDate = useMemo(() => formatDate(sub.currentPeriodEnd), [sub.currentPeriodEnd]);
 
   const { members } = useWorkspaceMembers();
+  const { workspace } = useCurrentWorkspace();
   const memberCount = members.length;
 
   const alerts = (
@@ -101,7 +104,7 @@ export function SubscriptionCard({ subscription, onManage, manageLoading }: Subs
               keep your projects and data.
             </AlertDescription>
             <Link
-              to='/settings/plans'
+              to={workspaceSettingsPathOrLegacy(workspace, 'plans') as string}
               className='text-warning-foreground mt-2 inline-flex items-center gap-1 text-sm font-medium hover:underline'
             >
               See upgrade options
@@ -136,7 +139,7 @@ export function SubscriptionCard({ subscription, onManage, manageLoading }: Subs
       >
         {isFree ?
           <Button asChild>
-            <Link to='/settings/plans'>
+            <Link to={workspaceSettingsPathOrLegacy(workspace, 'plans') as string}>
               <ZapIcon className='size-4' />
               Upgrade
             </Link>

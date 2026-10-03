@@ -161,7 +161,7 @@ export async function handlePendingPlanRedirect(
         BILLING_MESSAGES.ALREADY_ON_PLAN.title,
         BILLING_MESSAGES.ALREADY_ON_PLAN.message,
       );
-      if (navigate) navigate({ to: '/settings/billing', replace: true });
+      if (navigate) navigate({ to: '/settings/billing' as string, replace: true });
       return { handled: true, error: null };
     }
 

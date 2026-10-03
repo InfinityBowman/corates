@@ -13,6 +13,9 @@ Disallow: /dashboard
 Disallow: /settings
 Disallow: /orgs/
 Disallow: /projects/
+# Workspace pages live under the workspace slug: /<slug>/projects/..., /<slug>/settings/...
+Disallow: /*/projects/
+Disallow: /*/settings/
 
 # Token-bearing or transactional pages. Never useful as search results.
 Disallow: /invite/

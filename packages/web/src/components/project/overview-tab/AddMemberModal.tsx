@@ -30,6 +30,8 @@ import { clientLogger } from '@/lib/clientLogger';
 import { queryClient } from '@/lib/queryClient';
 import { queryKeys } from '@/lib/queryKeys';
 import { cn } from '@/lib/utils';
+import { useCurrentWorkspace } from '@/hooks/useWorkspaces';
+import { workspaceSettingsPathOrLegacy } from '@/lib/workspacePaths';
 
 interface AddMemberModalProps {
   isOpen: boolean;
@@ -73,6 +75,7 @@ export function AddMemberModal({
   orgId,
   quotaInfo,
 }: AddMemberModalProps) {
+  const { workspace } = useCurrentWorkspace();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<UserSearchResult[]>([]);
   const [searching, setSearching] = useState(false);
@@ -278,7 +281,10 @@ export function AddMemberModal({
                   <AlertDescription>
                     It has {quotaInfo?.used} of {quotaInfo?.max} people, including you. You can
                     still add someone already in it or resend a pending invitation.{' '}
-                    <Link to='/settings/plans' className='font-medium underline'>
+                    <Link
+                      to={workspaceSettingsPathOrLegacy(workspace, 'plans') as string}
+                      className='font-medium underline'
+                    >
                       Upgrade your plan
                     </Link>{' '}
                     to invite someone new.

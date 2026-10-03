@@ -24,6 +24,7 @@ export function InvitationRow({ invitation }: InvitationRowProps) {
   function refresh() {
     queryClient.invalidateQueries({ queryKey: queryKeys.invitations.pendingForMe });
     queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
+    queryClient.invalidateQueries({ queryKey: queryKeys.workspaces.list });
   }
 
   async function handleAccept() {

@@ -1,5 +1,5 @@
 /**
- * Project checklist route - /projects/:projectId/studies/:studyId/checklists/:checklistId
+ * Project checklist route - /:workspace/projects/:projectId/studies/:studyId/checklists/:checklistId
  * Renders the checklist editor within the project context (Yjs-backed)
  */
 
@@ -7,7 +7,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { ChecklistYjsWrapper } from '@/components/checklist/ChecklistYjsWrapper';
 
 export const Route = createFileRoute(
-  '/_app/_protected/projects/$projectId/studies/$studyId/checklists/$checklistId',
+  '/_app/_protected/$workspace/projects/$projectId/studies/$studyId/checklists/$checklistId',
 )({
   component: ProjectChecklistPage,
 });

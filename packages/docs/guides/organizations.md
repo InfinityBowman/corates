@@ -118,19 +118,20 @@ For mutations that affect billing, add `requireOrgWriteAccess` and / or `require
 
 ## Frontend routing
 
-Frontend routes are **project-centric**, not org-slug-centric. There is no `:orgSlug` in URLs; projects know their org via the store and query cache.
+Everything inside a workspace lives under its slug, the first path segment (the Linear model). Account settings, which belong to the person, stay outside it. See [Frontend Route Structure](/architecture/diagrams/05-frontend-routes) for the full table, the redirects that keep old URLs working, and why a wrong slug on a project link is corrected rather than rejected.
 
-| Route pattern                                                   | Purpose                  |
-| --------------------------------------------------------------- | ------------------------ |
-| `/dashboard`                                                    | Project list (user's)    |
-| `/orgs/new`                                                     | Create a new org         |
-| `/projects/:projectId`                                          | Project overview         |
-| `/projects/:projectId/studies/:studyId/checklists/:checklistId` | Checklist editor         |
-| `/projects/:projectId/studies/:studyId/reconcile/:c1Id/:c2Id`   | Checklist reconciliation |
-| `/settings/*`                                                   | User settings / billing  |
-| `/admin/*`                                                      | Admin-only               |
+| Route pattern                                                              | Purpose                   |
+| -------------------------------------------------------------------------- | ------------------------- |
+| `/:workspace`                                                              | Workspace home            |
+| `/:workspace/projects/:projectId`                                          | Project overview          |
+| `/:workspace/projects/:projectId/studies/:studyId/checklists/:checklistId` | Checklist editor          |
+| `/:workspace/projects/:projectId/studies/:studyId/reconcile/:c1Id/:c2Id`   | Checklist reconciliation  |
+| `/:workspace/settings/*`                                                   | Workspace settings, owner |
+| `/settings/account/*`                                                      | Account settings          |
+| `/orgs/new`                                                                | Create a workspace        |
+| `/admin/*`                                                                 | Admin-only                |
 
-Route files live under `packages/web/src/routes/_app/_protected/` (authenticated layout).
+Build in-workspace links with `@/lib/workspacePaths` (`workspaceHomePath`, `projectPath`, `workspaceSettingsPath`); inside a project, use `projectPath` and the path builders on `useProjectContext()`.
 
 ### Resolving orgId from a project
 
@@ -145,11 +146,11 @@ function ProjectHeader({ projectId }: { projectId: string }) {
 }
 ```
 
-It resolves in this order: Yjs-synced project meta (`useProjectStore`), then the TanStack Query project-list cache. Returns `null` if neither is populated yet.
+It reads the D1 project list (`getMyProjects`) through React Query, falling back to the orgId cached in Dexie on a cold refresh. Returns `null` if neither is populated yet.
 
 ### Listing the user's workspaces
 
-Use `useWorkspaces()` from `@/hooks/useWorkspaces` (owned first), and `useCurrentWorkspace()` for the one in use. `useSubscription(orgId?)` and `useWorkspaceMembers(orgId?)` default to the current workspace; pass the project's `orgId` inside a project so seat checks use the project's workspace.
+Use `useWorkspaces()` from `@/hooks/useWorkspaces` (owned first), and `useCurrentWorkspace()` for the one in the URL (or the default outside a workspace URL). `useSubscription(orgId?)` and `useWorkspaceMembers(orgId?)` default to the current workspace; pass the project's `orgId` inside a project so seat checks use the project's workspace.
 
 ## Invitation Flow
 
@@ -164,7 +165,7 @@ Every project add is an invitation: whether the owner picks an existing user or 
 7. Server validates: token exists, not expired, not accepted. The invited email is a delivery address, not an identity check: membership binds to whichever authenticated account accepts the token, so someone invited at an institutional alias can accept from an account keyed to a different address.
 8. If the user is not yet in the workspace, the server adds them as `member`. This is the step that consumes a seat, so it is checked against `collaborators.org.max` inside the insert.
 9. Server adds `projectMembers` with `role`.
-10. Frontend redirects to the dashboard.
+10. Frontend opens the project at `/<slug>/projects/<id>`, using the `orgSlug` that `acceptInvitation` returns, or the dashboard when there is none.
 
 ## Best Practices
 
@@ -178,7 +179,7 @@ Every project add is an invitation: whether the owner picks an existing user or 
 
 ### Frontend
 
-- **Don't route with org slugs** -- the URL contract is project-centric.
+- **Put the workspace slug first** in every in-workspace link, via `@/lib/workspacePaths`.
 - **Use `useWorkspaces` / `useProjectOrgId`** rather than reading from Better Auth or fetching directly.
 - **Gate UI on plan entitlement** via `@corates/shared/plans` helpers (e.g., `isUnlimitedQuota`) so billed features show disabled states rather than failing mid-flow.
 
