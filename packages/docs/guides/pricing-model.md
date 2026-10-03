@@ -48,11 +48,20 @@ The collaborator quota counts everyone in the workspace, owner included, so
 Free means 3 people in total. Every check uses that count: inviting, accepting,
 the members panel and plan-change validation.
 
-Support can change a single workspace's quotas without a plan or grant by
-setting `organization.metadata` to JSON such as
-`{"quotaOverrides": {"collaborators.org.max": 4}}`. `resolveOrgAccess` in
-`packages/workers/src/lib/billingResolver.ts` applies it on top of whatever the
-plan or grant gives.
+Support can change a single workspace's quotas without a plan or grant by adding
+a `quotaOverrides` key to `organization.metadata`. The column already holds other
+keys (personal workspaces carry `{"type":"personal"}`), so merge rather than
+overwrite:
+
+```sql
+UPDATE organization
+SET metadata = json_set(coalesce(metadata, '{}'), '$.quotaOverrides',
+                        json('{"collaborators.org.max":4}'))
+WHERE id = '<orgId>';
+```
+
+`resolveOrgAccess` in `packages/workers/src/lib/billingResolver.ts` applies it on
+top of whatever the plan or grant gives.
 
 The Free project is per user, not per organization. The projects a user created
 count toward one limit, so creating extra orgs does not add free projects.
