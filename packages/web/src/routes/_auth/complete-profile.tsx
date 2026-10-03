@@ -7,6 +7,9 @@ import { handleError } from '@/lib/error-utils';
 import { getPendingInvitationToken, clearPendingInvitationToken } from '@/lib/pendingInvitation';
 import { acceptInvitation } from '@/server/functions/invitations.functions';
 import { showToast } from '@/lib/toast';
+import { queryClient } from '@/lib/queryClient';
+import { queryKeys } from '@/lib/queryKeys';
+import { projectPath } from '@/lib/workspacePaths';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -86,7 +89,7 @@ function navigateAfterProfile(navigate: ReturnType<typeof useNavigate>) {
     navigate({ to: '/invite/$token', params: { token: invitationToken }, replace: true });
     return;
   }
-  navigate({ to: hasPendingPlan() ? '/settings/plans' : '/dashboard', replace: true });
+  navigate({ to: hasPendingPlan() ? ('/settings/plans' as string) : '/dashboard', replace: true });
 }
 
 export const Route = createFileRoute('/_auth/complete-profile')({
@@ -110,7 +113,7 @@ export const Route = createFileRoute('/_auth/complete-profile')({
         throw redirect({ to: '/invite/$token', params: { token: invitationToken } });
       }
       throw redirect({
-        to: hasPendingPlan() ? '/settings/plans' : '/dashboard',
+        to: hasPendingPlan() ? ('/settings/plans' as string) : '/dashboard',
       });
     }
   },
@@ -285,7 +288,13 @@ function CompleteProfilePage() {
               'Invitation Accepted',
               `You've been added to "${result.projectName}"`,
             );
-            navigate({ to: '/dashboard', replace: true });
+            await queryClient.invalidateQueries({ queryKey: queryKeys.workspaces.list });
+            navigate({
+              to: (result.orgSlug ?
+                projectPath(result.orgSlug, result.projectId)
+              : '/dashboard') as string,
+              replace: true,
+            });
             return;
           }
         } catch (inviteErr) {
@@ -308,7 +317,7 @@ function CompleteProfilePage() {
             BILLING_MESSAGES.CHECKOUT_ERROR.title,
             BILLING_MESSAGES.CHECKOUT_ERROR.message,
           );
-          navigate({ to: '/settings/plans', replace: true });
+          navigate({ to: '/settings/plans' as string, replace: true });
         }
         return;
       }

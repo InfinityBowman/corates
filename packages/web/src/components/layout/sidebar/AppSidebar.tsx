@@ -21,6 +21,8 @@ import { applyLocalMutation } from '@/project/localWrites';
 import { LOCAL_PROJECT_ID } from '@/project/localProject';
 import { db } from '@/primitives/db';
 import { useMyProjectsList } from '@/hooks/useMyProjectsList';
+import { useCurrentWorkspace } from '@/hooks/useWorkspaces';
+import { workspaceHomePath } from '@/lib/workspacePaths';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { APP_NAME } from '@/config/app';
 import { Badge } from '@/components/ui/badge';
@@ -88,7 +90,12 @@ export function AppSidebar({ onClose, closeLabel, closeIcon }: AppSidebarProps) 
   const isLoggedIn = useAuthStore(selectIsLoggedIn);
   const openFeedback = useFeedbackStore(s => s.open);
   const isOnline = useOnlineStatus();
-  const { projects, isLoading: isProjectsLoading } = useMyProjectsList({ enabled: isLoggedIn });
+  const { projects: allProjects, isLoading: isProjectsLoading } = useMyProjectsList({
+    enabled: isLoggedIn,
+  });
+  const { workspace } = useCurrentWorkspace();
+  const projects = workspace ? allProjects.filter(p => p.orgId === workspace.id) : [];
+  const homePath = workspace ? workspaceHomePath(workspace.slug) : '/dashboard';
 
   const localStudies = useAllStudies(LOCAL_PROJECT_ID);
   const checklists = localStudies
@@ -108,7 +115,7 @@ export function AppSidebar({ onClose, closeLabel, closeIcon }: AppSidebarProps) 
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
-  const isHome = pathname === '/' || pathname === '/dashboard';
+  const isHome = pathname === '/' || pathname === '/dashboard' || pathname === homePath;
 
   async function confirmDeleteChecklist() {
     if (!pendingDeleteId) return;
@@ -146,7 +153,7 @@ export function AppSidebar({ onClose, closeLabel, closeIcon }: AppSidebarProps) 
 
       <div className='flex-1 overflow-x-hidden overflow-y-auto px-2 pb-4'>
         <div className='mb-4 flex flex-col gap-0.5'>
-          <Link to='/dashboard' className={navRowClass(isHome)}>
+          <Link to={homePath as string} className={navRowClass(isHome)}>
             <HomeIcon className='size-4 shrink-0' />
             <span className='truncate'>Home</span>
           </Link>
@@ -158,12 +165,18 @@ export function AppSidebar({ onClose, closeLabel, closeIcon }: AppSidebarProps) 
             <GroupHeader
               label='Projects'
               addLabel='New project'
-              onAdd={() => setCreateModalOpen(true)}
+              // Only the workspace owner creates projects in it.
+              onAdd={workspace?.role === 'owner' ? () => setCreateModalOpen(true) : undefined}
             />
             <div className='flex flex-col gap-0.5'>
               {projects.length > 0 ?
                 projects.map(project => (
-                  <ProjectRow key={project.id} project={project} currentPath={pathname} />
+                  <ProjectRow
+                    key={project.id}
+                    project={project}
+                    workspaceSlug={workspace!.slug}
+                    currentPath={pathname}
+                  />
                 ))
               : !isProjectsLoading ?
                 <span className='text-muted-foreground/70 px-2.5 py-1.5 text-sm'>None yet</span>

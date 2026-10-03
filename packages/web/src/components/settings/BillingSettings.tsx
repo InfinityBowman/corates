@@ -6,6 +6,7 @@ import { Alert, AlertAction, AlertTitle, AlertDescription } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useCurrentWorkspace } from '@/hooks/useWorkspaces';
+import { workspaceSettingsPathOrLegacy } from '@/lib/workspacePaths';
 import { redirectToPortal } from '@/api/billing';
 import { queryKeys } from '@/lib/queryKeys';
 import { getUsage, syncAfterSuccess } from '@/server/functions/billing.functions';
@@ -101,7 +102,9 @@ export function BillingSettings() {
       description='Your plan, what it covers, and past invoices.'
       action={
         <Button variant='outline' asChild>
-          <Link to='/settings/plans'>Compare plans</Link>
+          <Link to={workspaceSettingsPathOrLegacy(workspace, 'plans') as string}>
+            Compare plans
+          </Link>
         </Button>
       }
     >

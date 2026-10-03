@@ -21,7 +21,7 @@ import {
   cleanupScenario,
   type DualReviewerScenario,
 } from './helpers';
-import { createProject } from './shared-steps';
+import { createProject, WORKSPACE_HOME_URL } from './shared-steps';
 
 const TEST_PREFIX = `auth-e2e-${Date.now()}`;
 
@@ -72,8 +72,8 @@ test.describe('Auth flows', () => {
       await page.getByText('Researcher').click();
       await page.getByRole('button', { name: /Finish Setup/i }).click();
 
-      // Should arrive at dashboard
-      await expect(page).toHaveURL(/\/dashboard/, { timeout: 15_000 });
+      // Should arrive at the workspace home
+      await expect(page).toHaveURL(WORKSPACE_HOME_URL, { timeout: 15_000 });
     });
 
     test('fresh session can deep-link to a project with WebSocket auth', async ({ browser }) => {
@@ -121,7 +121,7 @@ test.describe('Auth flows', () => {
         await p.getByText('Researcher').click();
         await p.getByRole('button', { name: /Finish Setup/i }).click();
 
-        await expect(p).toHaveURL(/\/dashboard/, { timeout: 15_000 });
+        await expect(p).toHaveURL(WORKSPACE_HOME_URL, { timeout: 15_000 });
 
         // Get the new user's ID from the session API
         const sessionData = await p.evaluate(async () => {
@@ -187,8 +187,8 @@ test.describe('Auth flows', () => {
 
       await page.getByRole('button', { name: /^Sign In$/i }).click();
 
-      // Should redirect to dashboard
-      await expect(page).toHaveURL(/\/dashboard/, { timeout: 15_000 });
+      // Should land on the workspace home
+      await expect(page).toHaveURL(WORKSPACE_HOME_URL, { timeout: 15_000 });
     });
 
     test('reset password and sign in with new password', async ({ page, context }) => {
@@ -247,8 +247,8 @@ test.describe('Auth flows', () => {
 
       await page.getByRole('button', { name: /^Sign In$/i }).click();
 
-      // Should redirect to dashboard
-      await expect(page).toHaveURL(/\/dashboard/, { timeout: 15_000 });
+      // Should land on the workspace home
+      await expect(page).toHaveURL(WORKSPACE_HOME_URL, { timeout: 15_000 });
     });
   });
 

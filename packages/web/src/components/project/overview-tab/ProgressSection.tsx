@@ -19,7 +19,7 @@ interface ProgressSectionProps {
 const TILE_CLASS = 'border-border flex flex-col gap-0.5 rounded-lg border px-3.5 py-3';
 
 export function ProgressSection({ counts, total }: ProgressSectionProps) {
-  const { projectId, setAddStudiesSheetOpen } = useProjectContext();
+  const { projectPath, setAddStudiesSheetOpen } = useProjectContext();
   const empty = total === 0;
   const stages = empty ? STAGES : STAGES.filter(stage => counts[stage.key] > 0);
   const filled = total - counts.unassigned;
@@ -84,7 +84,7 @@ export function ProgressSection({ counts, total }: ProgressSectionProps) {
               </div>
             : <Link
                 key={stage.key}
-                to={`/projects/${projectId}?tab=${stage.tab}` as string}
+                to={`${projectPath}?tab=${stage.tab}` as string}
                 className={cn(
                   TILE_CLASS,
                   'group hover:bg-muted/50 focus-visible:ring-primary transition-colors focus-visible:ring-2 focus-visible:outline-none',

@@ -12,11 +12,12 @@ import { formatRelativeTime, getAccentColors } from './utils';
 
 interface ProjectRowProps {
   project: Project;
+  href: string;
   onOpen: (id: string) => void;
   onDelete?: (id: string) => void;
 }
 
-export function ProjectRow({ project, onOpen, onDelete }: ProjectRowProps) {
+export function ProjectRow({ project, href, onOpen, onDelete }: ProjectRowProps) {
   const isOwner = project.role === 'owner';
 
   function handleRowClick(e: React.MouseEvent) {
@@ -30,10 +31,7 @@ export function ProjectRow({ project, onOpen, onDelete }: ProjectRowProps) {
         className={`size-2 shrink-0 rounded-[3px] ${getAccentColors(project.id).fill}`}
         aria-hidden='true'
       />
-      <Link
-        to={`/projects/${project.id}` as string}
-        className='text-foreground min-w-0 flex-1 truncate font-medium'
-      >
+      <Link to={href as string} className='text-foreground min-w-0 flex-1 truncate font-medium'>
         {project.name}
       </Link>
       <Badge variant='outline' className='shrink-0'>

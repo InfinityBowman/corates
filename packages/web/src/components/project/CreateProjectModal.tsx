@@ -2,8 +2,8 @@
  * CreateProjectModal - Composer-style dialog for creating a new project.
  *
  * Collects a project name, then lands the owner on the Overview tab where
- * first-run setup lives. The project always belongs to the user's own
- * workspace, since only workspace owners can create projects.
+ * first-run setup lives. The project goes in the current workspace, which the
+ * user must own, since only workspace owners create projects.
  */
 
 import { useState, useEffect } from 'react';
@@ -111,8 +111,8 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
       onOpenChange(false);
 
       navigate({
-        to: '/projects/$projectId',
-        params: { projectId: newProject.id },
+        to: '/$workspace/projects/$projectId',
+        params: { workspace: resolvedOrg.slug, projectId: newProject.id },
       });
     } catch (error: unknown) {
       const domainError = getDomainError(error);

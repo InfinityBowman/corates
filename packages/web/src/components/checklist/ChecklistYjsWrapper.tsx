@@ -59,7 +59,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
   const navigate = useNavigate();
   const location = useLocation();
   const user = useAuthStore(selectUser);
-  const { orgId } = useProjectContext();
+  const { orgId, projectPath } = useProjectContext();
 
   const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
   const [pdfData, setPdfData] = useState<ArrayBuffer | null>(null);
@@ -325,7 +325,7 @@ export function ChecklistYjsWrapper({ projectId, studyId, checklistId }: Checkli
 
   const getBackPath = () => {
     const tab = getBackTab();
-    return `/projects/${projectId}?tab=${tab}`;
+    return `${projectPath}?tab=${tab}`;
   };
 
   const headerContent = (

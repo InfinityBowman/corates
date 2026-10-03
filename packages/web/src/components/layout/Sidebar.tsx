@@ -33,8 +33,11 @@ export function Sidebar({
 }: SidebarProps) {
   const { pathname } = useLocation();
   const [isResizing, setIsResizing] = useState(false);
-  const isSettings = pathname.startsWith('/settings');
-  const isAdmin = pathname.startsWith('/admin');
+  // Whole segments only: a workspace slug such as admin-team or settings-lab
+  // must not switch the sidebar.
+  const isSettings =
+    /^\/settings(\/|$)/.test(pathname) || /^\/[^/]+\/settings(\/|$)/.test(pathname);
+  const isAdmin = /^\/admin(\/|$)/.test(pathname);
 
   // The desktop panel stays in the DOM so its width can animate, but the body
   // unmounts once the slide finishes to drop its queries while hidden.

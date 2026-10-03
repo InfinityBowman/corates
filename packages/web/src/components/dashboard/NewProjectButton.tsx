@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { useCurrentWorkspace } from '@/hooks/useWorkspaces';
 import { getRestrictionCopy } from './ContactPrompt';
 
 interface NewProjectButtonProps {
@@ -34,6 +35,10 @@ export function useProjectCreateRestriction() {
 export function NewProjectButton({ onClick, variant = 'default' }: NewProjectButtonProps) {
   const isOnline = useOnlineStatus();
   const { restrictionType, projectCount, quotaLimit } = useProjectCreateRestriction();
+  const { workspace } = useCurrentWorkspace();
+
+  // Only the workspace owner creates projects in it.
+  if (workspace && workspace.role !== 'owner') return null;
 
   const button = (
     <Button
