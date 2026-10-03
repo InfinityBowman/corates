@@ -90,9 +90,18 @@ function InvitePage() {
       showToast.success('Invitation accepted', `You now have access to "${result.projectName}"`);
       navigate({ to: '/dashboard', replace: true });
     } catch (err) {
-      if (getDomainError(err)?.code === 'PROJECT_MEMBER_ALREADY_EXISTS') {
+      const domainError = getDomainError(err);
+      if (domainError?.code === 'PROJECT_MEMBER_ALREADY_EXISTS') {
         showToast.success('Already a member', 'You already have access to this project.');
         navigate({ to: '/dashboard', replace: true });
+        return;
+      }
+      const details = domainError?.details as Record<string, unknown> | undefined;
+      if (details?.reason === 'quota_exceeded') {
+        setError(
+          `${invitation?.inviterName ?? 'The owner'}'s workspace is full on its current plan. Ask them to remove someone from the workspace or upgrade, then try again.`,
+        );
+        setAccepting(false);
         return;
       }
       setError(getUserFriendlyMessage(normalizeError(err)));

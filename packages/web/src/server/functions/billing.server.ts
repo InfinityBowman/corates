@@ -89,6 +89,7 @@ export async function fetchSubscription(db: Database, session: Session) {
     interval,
     accessMode: orgBilling.accessMode,
     source: orgBilling.source,
+    quotas: orgBilling.quotas,
     projectCount,
   };
 }

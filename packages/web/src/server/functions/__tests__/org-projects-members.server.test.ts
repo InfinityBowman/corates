@@ -317,13 +317,14 @@ describe('addProjectMember', () => {
     vi.mocked(resolveOrgAccess).mockResolvedValue({
       accessMode: 'write',
       source: 'free',
-      quotas: { 'projects.max': 10, 'collaborators.org.max': 2 },
+      quotas: { 'projects.max': 10, 'collaborators.org.max': 3 },
       entitlements: { 'project.create': true },
     } as never);
 
     await buildProjectInvitation({ orgId: org.id, projectId: project.id, invitedBy: owner.id });
 
-    // One member plus one pending invitation fills a quota of two
+    // The owner takes a seat too, as acceptInvitation counts it: owner, one
+    // member and one pending invitation fill a quota of three
     await expect(
       addProjectMember(mockSession(), createDb(env.DB), org.id, project.id, {
         email: 'third@example.com',

@@ -433,7 +433,8 @@ describe('getOrgResourceUsage', () => {
     const usage = await getOrgResourceUsage(db, orgId);
 
     expect(usage.projects).toBe(0);
-    expect(usage.collaborators).toBe(0);
+    // The owner takes a seat
+    expect(usage.collaborators).toBe(1);
   });
 
   it('should count projects correctly', async () => {
@@ -464,7 +465,7 @@ describe('getOrgResourceUsage', () => {
     expect(usage.projects).toBe(2);
   });
 
-  it('should count collaborators correctly (excluding owner)', async () => {
+  it('should count every workspace member, owner included', async () => {
     const { nowSec, orgId } = await createTestOrg('org-1' as OrgId, 'owner-1' as UserId);
     const db = createDb(env.DB);
 
@@ -503,8 +504,51 @@ describe('getOrgResourceUsage', () => {
 
     const usage = await getOrgResourceUsage(db, orgId);
 
-    // Should count member and admin, but not owner
-    expect(usage.collaborators).toBe(2);
+    expect(usage.collaborators).toBe(3);
+  });
+});
+
+describe('quota overrides', () => {
+  async function createOrgWithMetadata(metadata: string) {
+    const nowSec = Math.floor(Date.now() / 1000);
+    await seedOrganization({
+      id: 'org-1',
+      name: 'Test Org',
+      slug: 'test-org',
+      metadata,
+      createdAt: nowSec,
+    });
+    return createDb(env.DB);
+  }
+
+  it('applies quotaOverrides from organization metadata on top of the plan', async () => {
+    const db = await createOrgWithMetadata(
+      JSON.stringify({ quotaOverrides: { 'collaborators.org.max': 4 } }),
+    );
+
+    const billing = await resolveOrgAccess(db, 'org-1' as OrgId);
+
+    expect(billing.source).toBe('free');
+    expect(billing.quotas['collaborators.org.max']).toBe(4);
+    expect(billing.quotas['projects.max']).toBe(1);
+  });
+
+  it('ignores metadata that is not valid JSON', async () => {
+    const db = await createOrgWithMetadata('{not json');
+
+    const billing = await resolveOrgAccess(db, 'org-1' as OrgId);
+
+    expect(billing.quotas['collaborators.org.max']).toBe(3);
+  });
+
+  it('ignores overrides with non-numeric values', async () => {
+    const db = await createOrgWithMetadata(
+      JSON.stringify({ quotaOverrides: { 'collaborators.org.max': 'lots' } }),
+    );
+
+    const billing = await resolveOrgAccess(db, 'org-1' as OrgId);
+
+    expect(billing.quotas['collaborators.org.max']).toBe(3);
   });
 });
 
@@ -569,7 +613,7 @@ describe('validatePlanChange', () => {
     const { nowSec, orgId } = await createTestOrg('org-1' as OrgId, 'owner-1' as UserId);
     const db = createDb(env.DB);
 
-    // Add 4 members (exceeds free limit of 3 collaborators)
+    // Owner plus 4 members exceeds Free's 3 people
     for (let i = 1; i <= 4; i++) {
       await seedUser({
         id: `member-${i}`,
@@ -594,7 +638,7 @@ describe('validatePlanChange', () => {
     expect(result.violations.some(v => v.quotaKey === 'collaborators.org.max')).toBe(true);
 
     const collabViolation = result.violations.find(v => v.quotaKey === 'collaborators.org.max')!;
-    expect(collabViolation.used).toBe(4);
+    expect(collabViolation.used).toBe(5);
     expect(collabViolation.limit).toBe(3);
   });
 

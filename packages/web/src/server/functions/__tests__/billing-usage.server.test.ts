@@ -58,6 +58,7 @@ describe('fetchUsage', () => {
     });
     const result = await fetchUsage(createDb(env.DB), session);
     expect(result.projects).toBe(3);
-    expect(result.collaborators).toBe(2);
+    // Owner, member and admin all take a seat
+    expect(result.collaborators).toBe(3);
   });
 });

@@ -16,7 +16,7 @@ const free = getPlan('free');
 const FAQ_ITEMS: FAQItemData[] = [
   {
     question: 'What does the Free plan include?',
-    answer: `Appraising a single study in your browser is always free and needs no account. With a free account you also get one shared project with up to ${free.quotas['collaborators.org.max']} collaborators and as many studies as you need. Completed appraisals stay readable and exportable if you never upgrade.`,
+    answer: `Appraising a single study in your browser is always free and needs no account. With a free account you also get one shared project for up to ${free.quotas['collaborators.org.max']} people, including you, and as many studies as you need. Completed appraisals stay readable and exportable if you never upgrade.`,
   },
   {
     question: 'Do collaborators need their own subscription?',

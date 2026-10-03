@@ -207,6 +207,16 @@ describe('entitlements', () => {
       });
       expect(quotas['projects.max']).toBe(1);
     });
+
+    it('prefers the quotas the server resolved, which include workspace overrides', () => {
+      const quotas = getEffectiveQuotas({
+        status: 'inactive',
+        tier: 'free',
+        currentPeriodEnd: null,
+        quotas: { 'projects.max': 1, 'collaborators.org.max': 4 },
+      });
+      expect(quotas['collaborators.org.max']).toBe(4);
+    });
   });
 
   describe('hasEntitlement', () => {

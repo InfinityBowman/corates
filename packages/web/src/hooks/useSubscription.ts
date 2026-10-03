@@ -14,6 +14,7 @@ import {
 } from '@/lib/entitlements';
 import { useAuthStore, selectIsLoggedIn } from '@/stores/authStore';
 import { getSubscription } from '@/server/functions/billing.functions';
+import { getPlan, DEFAULT_PLAN } from '@corates/shared/plans';
 
 export type Subscription = Awaited<ReturnType<typeof getSubscription>>;
 
@@ -27,6 +28,7 @@ const DEFAULT_SUBSCRIPTION: Subscription = {
   interval: null,
   accessMode: 'free',
   source: 'free',
+  quotas: getPlan(DEFAULT_PLAN).quotas,
   projectCount: 0,
 };
 
