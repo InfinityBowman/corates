@@ -736,15 +736,28 @@ export function createAuth(env: Env, ctx?: ExecutionContext) {
             const memberId = crypto.randomUUID();
             const now = new Date();
             const slug = await pickAvailableWorkspaceSlug(db, userName, newSession.user.email);
+            const insertOrg = (orgSlug: string) =>
+              db.insert(schema.organization).values({
+                id: orgId,
+                name: `${userName}'s Workspace`,
+                slug: orgSlug,
+                metadata: JSON.stringify({ type: 'personal' }),
+                createdAt: now,
+              });
 
-            // Insert org and membership
-            await db.insert(schema.organization).values({
-              id: orgId,
-              name: `${userName}'s Workspace`,
-              slug,
-              metadata: JSON.stringify({ type: 'personal' }),
-              createdAt: now,
-            });
+            try {
+              await insertOrg(slug);
+            } catch (err) {
+              // Two same-named signups can pick the same free slug at once; the
+              // loser takes a suffixed one rather than ending up with no workspace.
+              if (
+                !(err instanceof Error) ||
+                !/UNIQUE constraint failed: organization\.slug/.test(err.message)
+              ) {
+                throw err;
+              }
+              await insertOrg(`${slug.slice(0, 31)}-${orgId.slice(0, 8)}`);
+            }
 
             await db.insert(schema.member).values({
               id: memberId,

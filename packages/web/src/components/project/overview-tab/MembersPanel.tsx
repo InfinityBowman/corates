@@ -66,7 +66,7 @@ export function MembersPanel({ members, progressFor }: MembersPanelProps) {
   const navigate = useNavigate();
   const { projectId, orgId, isOwner, openAssignSheet } = useProjectContext();
   // Seats belong to the project's workspace, not whichever one is current.
-  const { hasQuota, quotas } = useSubscription(orgId);
+  const { quotas } = useSubscription(orgId);
   const { seats } = useWorkspaceMembers(orgId);
 
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
@@ -77,8 +77,6 @@ export function MembersPanel({ members, progressFor }: MembersPanelProps) {
   } | null>(null);
 
   const workspaceMemberCount = seats?.used ?? 0;
-  const canAddMember =
-    isOwner && hasQuota('collaborators.org.max', { used: workspaceMemberCount, requested: 1 });
   const ownerCount = members.filter(m => m.role === 'owner').length;
 
   async function confirmRemove() {
@@ -122,8 +120,7 @@ export function MembersPanel({ members, progressFor }: MembersPanelProps) {
           )}
           {!isOwner ?
             <DisabledInviteButton reason='Only the project owner can invite members.' />
-          : canAddMember ?
-            <Button
+          : <Button
               variant='ghost'
               size='xs'
               className='text-primary hover:text-primary'
@@ -133,7 +130,6 @@ export function MembersPanel({ members, progressFor }: MembersPanelProps) {
               <PlusIcon className='size-3.5' />
               Invite
             </Button>
-          : <DisabledInviteButton reason='Collaborator limit reached. Upgrade your plan to add more team members.' />
           }
         </div>
       </div>

@@ -140,7 +140,7 @@ export function AddMemberModal({
   // Typing a full email and pressing Send should work without picking the row.
   const pending: Target | null =
     target ?? (emailQuery && !emailHasAccount ? { kind: 'email', email: emailQuery } : null);
-  const canSubmit = !!pending && !adding && !isAtQuotaLimit;
+  const canSubmit = !!pending && !adding;
 
   const choose = (row: Target) => {
     setTarget(row);
@@ -230,7 +230,14 @@ export function AddMemberModal({
       queryClient.invalidateQueries({ queryKey: queryKeys.workspaces.members(orgId) });
       handleClose();
     } catch (err: unknown) {
-      const { handleError } = await import('@/lib/error-utils');
+      const { getDomainError, handleError } = await import('@/lib/error-utils');
+      const details = getDomainError(err)?.details as Record<string, unknown> | undefined;
+      if (details?.reason === 'quota_exceeded') {
+        setError(
+          'Your workspace is full, so this person would need a new seat. Upgrade your plan to add them.',
+        );
+        return;
+      }
       await handleError(err, { setError, showToast: false });
     } finally {
       setAdding(false);
@@ -267,13 +274,14 @@ export function AddMemberModal({
               <Alert variant='warning'>
                 <TriangleAlertIcon />
                 <div>
-                  <AlertTitle>Collaborator limit reached</AlertTitle>
+                  <AlertTitle>Your workspace is full</AlertTitle>
                   <AlertDescription>
-                    Your workspace has {quotaInfo?.used} of {quotaInfo?.max} people, including you.{' '}
+                    It has {quotaInfo?.used} of {quotaInfo?.max} people, including you. You can
+                    still add someone already in it or resend a pending invitation.{' '}
                     <Link to='/settings/plans' className='font-medium underline'>
                       Upgrade your plan
                     </Link>{' '}
-                    to add more team members.
+                    to invite someone new.
                   </AlertDescription>
                 </div>
               </Alert>
@@ -321,7 +329,6 @@ export function AddMemberModal({
                   }}
                   onKeyDown={handleKeyDown}
                   placeholder={target ? '' : 'Name or email'}
-                  disabled={!!isAtQuotaLimit}
                   className='placeholder:text-muted-foreground h-6 min-w-24 flex-1 bg-transparent text-sm outline-none disabled:cursor-not-allowed'
                 />
                 {searching && <Spinner size='sm' className='size-3.5' />}
