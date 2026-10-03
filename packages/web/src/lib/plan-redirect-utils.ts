@@ -6,6 +6,9 @@
 
 import { CHECKOUT_ELIGIBLE_TIERS } from '@corates/shared/plans';
 import { redirectToCheckout } from '@/api/billing';
+import { queryClient } from '@/lib/queryClient';
+import { queryKeys } from '@/lib/queryKeys';
+import { getMyWorkspaces } from '@/server/functions/workspaces.functions';
 import { showToast } from '@/lib/toast';
 
 type BillingInterval = 'monthly' | 'yearly';
@@ -139,7 +142,14 @@ export async function handlePendingPlanRedirect(
   }
 
   try {
-    await redirectToCheckout(pendingPlan, pendingInterval);
+    // Fresh from signup there is no workspace in view, so the plan goes on the one they own.
+    const workspaces = await queryClient.fetchQuery({
+      queryKey: queryKeys.workspaces.list,
+      queryFn: () => getMyWorkspaces(),
+    });
+    const owned = workspaces.find(w => w.role === 'owner');
+    if (!owned) throw new Error('No workspace to subscribe');
+    await redirectToCheckout(owned.id, pendingPlan, pendingInterval);
     clearPendingPlan();
     return { handled: true, error: null };
   } catch (err) {

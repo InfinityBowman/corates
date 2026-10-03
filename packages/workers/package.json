@@ -40,7 +40,8 @@
     "./policies/projects": "./src/policies/projects.ts",
     "./policies": "./src/policies/index.ts",
     "./notify": "./src/lib/notify.ts",
-    "./logger": "./src/lib/logger.ts"
+    "./logger": "./src/lib/logger.ts",
+    "./workspace-slug": "./src/lib/workspaceSlug.ts"
   },
   "scripts": {
     "test": "pnpm db:generate:test && vitest run",

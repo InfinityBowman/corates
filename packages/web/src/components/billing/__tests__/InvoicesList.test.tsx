@@ -6,6 +6,12 @@ import { InvoicesList } from '../InvoicesList';
 
 const { getInvoices } = vi.hoisted(() => ({ getInvoices: vi.fn() }));
 vi.mock('@/server/functions/billing.functions', () => ({ getInvoices }));
+vi.mock('@/hooks/useWorkspaces', () => ({
+  useCurrentWorkspace: () => ({
+    workspace: { id: 'org-1', name: 'Lab', slug: 'lab', role: 'owner' },
+    isLoading: false,
+  }),
+}));
 
 function renderList() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });

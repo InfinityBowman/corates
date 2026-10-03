@@ -15,9 +15,17 @@ type HandlerArgs = {
   context?: { cloudflareCtx?: ExecutionContext };
 };
 
+// Workspace changes go through our own server functions, which apply slug
+// rules, seat counts, and sync-session cleanup the plugin endpoints skip.
+const BLOCKED_PREFIX = '/api/auth/organization/';
+
 export const handle = async ({ request, context }: HandlerArgs) => {
   const url = new URL(request.url);
   const path = url.pathname;
+
+  if (path.startsWith(BLOCKED_PREFIX)) {
+    return Response.json({ error: 'Not found' }, { status: 404 });
+  }
 
   try {
     const auth = createAuth(env, context?.cloudflareCtx);

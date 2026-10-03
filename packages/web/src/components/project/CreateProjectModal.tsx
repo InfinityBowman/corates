@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { showToast } from '@/lib/toast';
-import { useOrgs } from '@/hooks/useOrgs';
+import { useCurrentWorkspace } from '@/hooks/useWorkspaces';
 import { queryKeys } from '@/lib/queryKeys';
 import { handleError, isErrorCode, getDomainError } from '@/lib/error-utils';
 import { AUTH_ERRORS } from '@corates/shared';
@@ -65,8 +65,9 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
   const [selectedTools, setSelectedTools] = useState<Set<ChecklistType>>(() => new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { orgs } = useOrgs();
-  const resolvedOrg = orgs[0];
+  const { workspace } = useCurrentWorkspace();
+  // Only the owner creates projects in a workspace.
+  const resolvedOrg = workspace?.role === 'owner' ? workspace : null;
 
   useEffect(() => {
     if (!open) {
@@ -106,7 +107,7 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
       // The Free cap counts server-side now, so the count has to refetch or the
       // button stays enabled until the subscription query goes stale.
-      queryClient.invalidateQueries({ queryKey: queryKeys.subscription.current });
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscription.all });
       onOpenChange(false);
 
       navigate({

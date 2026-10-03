@@ -359,24 +359,9 @@ CoRATES uses the Better Auth organization plugin for multi-tenant workspace supp
 ### Organization Features
 
 - **Multi-org support** - Users can belong to multiple organizations
-- **Role-based access** - Org roles: `owner > admin > member`
-- **Active organization** - Session tracks user's current active org
-- **Org invitations** - Better Auth handles org-level invitations
+- **Role-based access** - Org roles: `owner > admin > member`; only `owner` grants anything at the workspace level today
 
-### Frontend Organization Client
-
-```js
-import { authClient } from '@api/auth-client.js';
-
-// List user's organizations
-const { data: orgs } = await authClient.organization.list();
-
-// Create organization
-await authClient.organization.create({ name: 'My Lab', slug: 'my-lab' });
-
-// Set active organization
-await authClient.organization.setActive({ organizationId: orgId });
-```
+The plugin supplies the tables. Its HTTP endpoints (`/api/auth/organization/*`) are closed, and the client plugin is not installed: the app lists, creates and edits workspaces through the server functions in `workspaces.functions.ts`, which take `orgId` explicitly. `session.activeOrganizationId` is not used.
 
 See the [Organizations Guide](/guides/organizations) for complete organization patterns.
 
@@ -401,28 +386,15 @@ Project invitations use a **combined flow** that ensures org membership before g
 4. **Invitation Acceptance**: The acceptance endpoint:
    - Validates the invitation token
    - Checks expiration and acceptance status
-   - Verifies email match (case-insensitive, trimmed)
-   - **Ensures org membership** (adds with `orgRole` if not already a member)
+   - Logs, but does not reject, an account email that differs from the invited address
+   - **Ensures org membership** (adds as `member` if not already a member, checked against the seat quota)
    - Adds user to project as a member with specified `role` (membership is a D1 fact, read by the sync engine at authorize time)
    - Refresh-disconnects the project's sync sessions so connected clients refetch the members query
    - Sends notification via UserSession Durable Object
 
-### Email Matching Security
+### Email Matching
 
-For security, the authenticated user's email must match the invitation email. The comparison is:
-
-- Case-insensitive
-- Trimmed (whitespace removed)
-- Normalized before comparison
-
-```js
-const normalizedUserEmail = (currentUser.email || '').trim().toLowerCase();
-const normalizedInvitationEmail = (invitation.email || '').trim().toLowerCase();
-
-if (normalizedUserEmail !== normalizedInvitationEmail) {
-  // Email mismatch - reject invitation
-}
-```
+The invited address is where the link is delivered, not an identity check. Membership binds to whichever signed-in account accepts the token, so someone invited at an institutional alias can accept from an account keyed to a different address. A mismatch is logged (`invitation.accepted_with_different_email`) for support.
 
 ### Invitation Endpoints
 

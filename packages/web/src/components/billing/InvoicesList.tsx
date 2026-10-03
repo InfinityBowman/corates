@@ -8,12 +8,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { formatDate } from '@/lib/formatDate';
 import { queryKeys } from '@/lib/queryKeys';
 import { getInvoices } from '@/server/functions/billing.functions';
+import { useCurrentWorkspace } from '@/hooks/useWorkspaces';
 import type { Invoice, InvoicesResponse } from '@/server/functions/billing.server';
 import { SettingsSection, SettingsRow } from '@/components/settings/primitives';
 
-async function fetchInvoices(): Promise<InvoicesResponse> {
+async function fetchInvoices(orgId: string): Promise<InvoicesResponse> {
   try {
-    return await getInvoices();
+    return await getInvoices({ data: { orgId } });
   } catch (err) {
     console.warn('Failed to fetch invoices:', (err as Error).message);
     return { invoices: [] };
@@ -41,9 +42,12 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export function InvoicesList() {
+  const { workspace } = useCurrentWorkspace();
+  const orgId = workspace?.id;
   const { data, isFetching } = useQuery({
-    queryKey: queryKeys.billing.invoices,
-    queryFn: fetchInvoices,
+    queryKey: queryKeys.billing.invoices(orgId ?? null),
+    queryFn: () => fetchInvoices(orgId!),
+    enabled: !!orgId,
     staleTime: 1000 * 60 * 2,
     gcTime: 1000 * 60 * 30,
     retry: 1,

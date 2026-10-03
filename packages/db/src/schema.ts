@@ -359,8 +359,7 @@ export const stripeEventLedger = sqliteTable('stripe_event_ledger', {
 });
 
 // Project invitations table (for inviting users to projects)
-// Projects are always invite-only: accepting grants project membership only by default.
-// Optional: grantOrgMembership can be set to true by org admins/owners for governance/billing.
+// Projects are always invite-only. Accepting always adds a missing workspace membership at orgRole, which is always 'member'; grantOrgMembership is not read.
 export const projectInvitations = sqliteTable(
   'project_invitations',
   {
@@ -376,8 +375,8 @@ export const projectInvitations = sqliteTable(
       .references(() => projects.id, { onDelete: 'cascade' }),
     email: text('email').notNull(),
     role: text('role').default('member'), // project role
-    orgRole: text('orgRole').default('member'), // org role if grantOrgMembership is true
-    grantOrgMembership: integer('grantOrgMembership', { mode: 'boolean' }).default(false).notNull(), // if true, accepting invite also grants org membership
+    orgRole: text('orgRole').default('member'), // workspace role granted on accept
+    grantOrgMembership: integer('grantOrgMembership', { mode: 'boolean' }).default(false).notNull(), // not read; accepting always grants workspace membership
     token: text('token').notNull().unique(),
     invitedBy: text('invitedBy')
       .notNull()

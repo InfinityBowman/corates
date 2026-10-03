@@ -28,7 +28,7 @@ import { createProject } from '@/server/functions/org-projects.functions';
 import { importState } from '@/server/functions/dev-tools.functions';
 import { searchUsers } from '@/server/functions/users.functions';
 import { collectSnapshotUserIds, remapSnapshotUserIds } from '@/dev/snapshot';
-import { useOrgs } from '@/hooks/useOrgs';
+import { useWorkspaces } from '@/hooks/useWorkspaces';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { queryKeys } from '@/lib/queryKeys';
@@ -99,7 +99,7 @@ function templateUserLabel(id: string): string {
 export function DevImportProject() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { orgs, isLoading: orgsLoading } = useOrgs();
+  const { workspaces: orgs, isLoading: orgsLoading } = useWorkspaces();
   const currentUser = useAuthStore(selectUser);
 
   const [mode, setMode] = useState<CreationMode>('template');

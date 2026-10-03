@@ -5,7 +5,7 @@ import { CheckCircleIcon, XCircleIcon, CreditCardIcon, TrendingUpIcon } from 'lu
 import { Alert, AlertAction, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useSubscription } from '@/hooks/useSubscription';
-import { useMembers } from '@/hooks/useMembers';
+import { useCurrentWorkspace } from '@/hooks/useWorkspaces';
 import { redirectToPortal } from '@/api/billing';
 import { queryKeys } from '@/lib/queryKeys';
 import { getUsage, syncAfterSuccess } from '@/server/functions/billing.functions';
@@ -41,12 +41,14 @@ function UsageSkeleton() {
 
 export function BillingSettings() {
   const { subscription, isLoading: loading, refetch, quotas } = useSubscription();
-  useMembers();
+  const { workspace } = useCurrentWorkspace();
+  const orgId = workspace?.id;
   const [portalLoading, setPortalLoading] = useState(false);
 
   const usageQuery = useQuery({
-    queryKey: queryKeys.billing.usage,
-    queryFn: () => getUsage(),
+    queryKey: queryKeys.billing.usage(orgId),
+    queryFn: () => getUsage({ data: { orgId: orgId! } }),
+    enabled: !!orgId,
     staleTime: 1000 * 60 * 2,
     retry: 1,
   });
@@ -80,15 +82,16 @@ export function BillingSettings() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleManageSubscription = useCallback(async () => {
+    if (!orgId) return;
     setPortalLoading(true);
     try {
-      await redirectToPortal();
+      await redirectToPortal(orgId);
     } catch (error) {
       const { handleError } = await import('@/lib/error-utils');
       await handleError(error, { toastTitle: 'Portal Error' });
       setPortalLoading(false);
     }
-  }, []);
+  }, [orgId]);
 
   const usage = usageQuery.data ?? { projects: 0, collaborators: 0 };
 

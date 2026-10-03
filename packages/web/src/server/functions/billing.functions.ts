@@ -1,10 +1,10 @@
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
+import type { OrgId } from '@corates/shared/ids';
 import { authMiddleware } from '@/server/middleware/auth';
 import {
   fetchUsage,
   fetchSubscription,
-  fetchMembers,
   fetchPlanValidation,
   createCheckout,
   fetchInvoices,
@@ -12,47 +12,53 @@ import {
   syncAfterCheckout,
 } from './billing.server';
 
+const orgInput = z.object({ orgId: z.string() });
+
 export const getUsage = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .handler(async ({ context: { db, session } }) => fetchUsage(db, session));
+  .validator(orgInput)
+  .handler(async ({ data, context: { db, session } }) =>
+    fetchUsage(db, session, data.orgId as OrgId),
+  );
 
 export const getSubscription = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .handler(async ({ context: { db, session } }) => fetchSubscription(db, session));
-
-export const getMembers = createServerFn({ method: 'GET' })
-  .middleware([authMiddleware])
-  .handler(async ({ context: { db, session, request } }) =>
-    fetchMembers(db, session, request.headers),
+  .validator(orgInput)
+  .handler(async ({ data, context: { db, session } }) =>
+    fetchSubscription(db, session, data.orgId as OrgId),
   );
 
 export const checkPlanChange = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .validator(z.object({ targetPlan: z.string() }))
+  .validator(orgInput.extend({ targetPlan: z.string() }))
   .handler(async ({ data, context: { db, session } }) =>
-    fetchPlanValidation(db, session, data.targetPlan),
+    fetchPlanValidation(db, session, data.orgId as OrgId, data.targetPlan),
   );
 
 export const checkoutSubscription = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
   .validator(
-    z.object({
+    orgInput.extend({
       tier: z.string().min(1),
       interval: z.enum(['monthly', 'yearly']),
     }),
   )
   .handler(async ({ data, context: { db, session, request } }) =>
-    createCheckout(db, session, request, data.tier, data.interval),
+    createCheckout(db, session, request, data.orgId as OrgId, data.tier, data.interval),
   );
 
 export const getInvoices = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .handler(async ({ context: { db, session } }) => fetchInvoices(db, session));
+  .validator(orgInput)
+  .handler(async ({ data, context: { db, session } }) =>
+    fetchInvoices(db, session, data.orgId as OrgId),
+  );
 
 export const openBillingPortal = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .handler(async ({ context: { db, session, request } }) =>
-    createPortalSession(db, session, request),
+  .validator(orgInput)
+  .handler(async ({ data, context: { db, session, request } }) =>
+    createPortalSession(db, session, request, data.orgId as OrgId),
   );
 
 export const syncAfterSuccess = createServerFn({ method: 'POST' })

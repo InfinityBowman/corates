@@ -12,7 +12,7 @@ import {
   useProjectMeta,
   useProjectOutcomes,
 } from '@/project/project-data';
-import { useMembers } from '@/hooks/useMembers';
+import { useWorkspaceMembers } from '@/hooks/useWorkspaceMembers';
 import { useSubscription } from '@/hooks/useSubscription';
 import { queryKeys } from '@/lib/queryKeys';
 import { getInvitations, updateProjectSetupStep } from '@/server/functions/org-projects.functions';
@@ -43,8 +43,8 @@ export function useProjectSetup() {
   const studies = useAllStudies(projectId);
   const outcomes = useProjectOutcomes(projectId);
   const members = useProjectMembers(projectId);
-  const { quotas } = useSubscription();
-  const { members: orgMembers } = useMembers();
+  const { quotas } = useSubscription(orgId);
+  const { seats } = useWorkspaceMembers(orgId);
   const { data: invitations = [] } = useQuery({
     queryKey: queryKeys.projects.invitations(projectId),
     queryFn: async () =>
@@ -55,7 +55,7 @@ export function useProjectSetup() {
   const [isDismissing, setIsDismissing] = useState(false);
 
   const collaboratorQuotaInfo = {
-    used: orgMembers.length,
+    used: seats?.used ?? 0,
     max: quotas['collaborators.org.max'] ?? 0,
   };
 

@@ -7,7 +7,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import { useMembers } from '@/hooks/useMembers';
+import { useWorkspaceMembers } from '@/hooks/useWorkspaceMembers';
 import { SettingsSection, SettingsRow } from '@/components/settings/primitives';
 
 function getDaysRemaining(endTimestamp: number | undefined) {
@@ -64,7 +64,8 @@ export function SubscriptionCard({ subscription, onManage, manageLoading }: Subs
   );
   const periodEndDate = useMemo(() => formatDate(sub.currentPeriodEnd), [sub.currentPeriodEnd]);
 
-  const { memberCount } = useMembers();
+  const { members } = useWorkspaceMembers();
+  const memberCount = members.length;
 
   const alerts = (
     <>

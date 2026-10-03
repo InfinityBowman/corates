@@ -41,7 +41,7 @@ packages/
 ```tsx
 import { useAuthStore } from '@/stores/authStore';
 import { Button } from '@/components/ui/button';
-import { useOrgs } from '@/hooks/useOrgs';
+import { useWorkspaces } from '@/hooks/useWorkspaces';
 ```
 
 There are no per-feature aliases (`@auth-ui`, `@project-ui`, etc.) -- those were removed in the React migration. Everything goes through `@/*`.

@@ -26,7 +26,7 @@ import {
 import { cn } from '@/lib/utils';
 import { API_BASE } from '@/config/api';
 import { useSubscription } from '@/hooks/useSubscription';
-import { useMembers } from '@/hooks/useMembers';
+import { useWorkspaceMembers } from '@/hooks/useWorkspaceMembers';
 import { useProjectContext, type ProjectMember } from '../ProjectContext';
 import { AddMemberModal } from './AddMemberModal';
 import { PendingInvitations } from './PendingInvitations';
@@ -65,8 +65,9 @@ export function MembersPanel({ members, progressFor }: MembersPanelProps) {
   const user = useAuthStore(selectUser);
   const navigate = useNavigate();
   const { projectId, orgId, isOwner, openAssignSheet } = useProjectContext();
-  const { hasQuota, quotas } = useSubscription();
-  const { members: orgMembers } = useMembers();
+  // Seats belong to the project's workspace, not whichever one is current.
+  const { hasQuota, quotas } = useSubscription(orgId);
+  const { seats } = useWorkspaceMembers(orgId);
 
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
   const [pendingRemove, setPendingRemove] = useState<{
@@ -75,7 +76,7 @@ export function MembersPanel({ members, progressFor }: MembersPanelProps) {
     isSelf: boolean;
   } | null>(null);
 
-  const workspaceMemberCount = orgMembers.length;
+  const workspaceMemberCount = seats?.used ?? 0;
   const canAddMember =
     isOwner && hasQuota('collaborators.org.max', { used: workspaceMemberCount, requested: 1 });
   const ownerCount = members.filter(m => m.role === 'owner').length;

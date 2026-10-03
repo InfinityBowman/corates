@@ -1,6 +1,6 @@
 # Organizations Guide
 
-This guide covers the organization (workspace) model in CoRATES: how orgs, projects, members, and invitations fit together, and the actual route and guard patterns used in the codebase today.
+This guide covers the organization model in CoRATES: how orgs, projects, members, and invitations fit together, and the server functions and guards used in the codebase today. The UI always calls an organization a **workspace**; code and tables keep `org`/`organization`.
 
 ## Overview
 
@@ -9,9 +9,9 @@ CoRATES is multi-tenant:
 - **Organizations** are the top-level container. Billing attaches here.
 - **Projects** belong to exactly one organization.
 - **Users** can belong to multiple organizations with different roles.
-- **Invitations** grant project membership, and optionally org membership in the same flow.
+- **Invitations** grant project membership, and accepting one always adds the user to the project's workspace.
 
-Project membership is independent of org membership by default -- a user can be a member of a project without being in its org. This is deliberate: outside reviewers/collaborators often don't need org-level access.
+Every project member is a workspace member. The project access guard requires workspace membership, and the collaborator quota counts workspace members, so a project member outside the workspace cannot exist. Removing someone from a project leaves them in the workspace (still holding a seat); removing them from the workspace takes them off every project in it.
 
 ## Data Model
 
@@ -34,17 +34,21 @@ Schema lives in `packages/db/src/schema.ts` -- the canonical reference. Relevant
 - `projectMembers` -- `projectId` (FK), `userId` (FK), `role` (`owner | member`), `joinedAt`.
 - `projectInvitations` -- `orgId`, `projectId`, `email`, `role`, `orgRole`, `grantOrgMembership`, `token` (unique), `expiresAt`, `acceptedAt`, `emailSentAt`, `emailStatus`. Unique on (`projectId`, `email`).
 
-The `grantOrgMembership` flag on an invitation says "also add this user to the org at `orgRole` when they accept." Defaults to `false`; only org admins/owners can set it to `true`.
+`grantOrgMembership` on an invitation is written but not read: `acceptInvitation` always adds a missing workspace membership at the invitation's `orgRole`, which `createInvitation` always sets to `member`.
+
+`organization.slug` is the workspace URL. Rules live in `@corates/shared` (`workspaceSlugSchema`, `RESERVED_WORKSPACE_SLUGS`): lowercase letters, digits and single hyphens, 2 to 40 characters, never a top-level route name. `pickAvailableWorkspaceSlug` (`@corates/workers/workspace-slug`) picks a free one from a name, numbering on collision. Personal workspaces are created on the first session with `metadata = {"type":"personal"}`.
 
 ## Role Hierarchies
 
 ### Organization
 
-| Role     | What it grants                                              |
-| -------- | ----------------------------------------------------------- |
-| `owner`  | Full control: delete org, manage billing, any member action |
-| `admin`  | Manage members (except owners), update org settings         |
-| `member` | View org, access assigned projects, create projects         |
+| Role     | What it grants                                                                |
+| -------- | ----------------------------------------------------------------------------- |
+| `owner`  | Workspace settings (name, URL), members, billing, and creating projects       |
+| `admin`  | Nothing beyond `member` yet; kept in the schema for later                     |
+| `member` | Access to the workspace projects they were invited to; cannot create projects |
+
+Only the owner creates projects, because projects bill to the owner's plan.
 
 Hierarchy: `owner > admin > member`. Use `hasOrgRole(actual, minRole)` from `@corates/workers/policies`.
 
@@ -57,91 +61,55 @@ Hierarchy: `owner > admin > member`. Use `hasOrgRole(actual, minRole)` from `@co
 
 Hierarchy: `owner > member`. Use `hasProjectRole(actual, minRole)` from `@corates/workers/policies`.
 
-## API Routes
+## Server functions
 
-All org-scoped API routes follow `/api/orgs/:orgId/...`. The backend always uses `orgId`; slugs are not routed.
+The app talks to the server through TanStack Start server functions (`packages/web/src/server/functions/*.functions.ts`), each taking `orgId` explicitly. Nothing reads the session's `activeOrganizationId`.
 
-### Organization routes (`/api/orgs/*`)
+| Function                                                        | File                        | Auth                                  |
+| --------------------------------------------------------------- | --------------------------- | ------------------------------------- |
+| `getMyWorkspaces`                                               | `workspaces.functions.ts`   | Authenticated                         |
+| `checkSlug`                                                     | `workspaces.functions.ts`   | Authenticated                         |
+| `createWorkspace`                                               | `workspaces.functions.ts`   | Authenticated                         |
+| `updateWorkspace` (name, slug)                                  | `workspaces.functions.ts`   | Workspace owner                       |
+| `getWorkspaceMembers` (members, invites, seats)                 | `workspaces.functions.ts`   | Workspace member                      |
+| `removeWorkspaceMember`                                         | `workspaces.functions.ts`   | Workspace owner                       |
+| `createProject`                                                 | `org-projects.functions.ts` | Workspace owner + entitlement + quota |
+| `updateProject`, `deleteProject`                                | `org-projects.functions.ts` | Project member / owner                |
+| `addMemberToProject`, `removeMember`                            | `org-projects.functions.ts` | Project owner                         |
+| `getInvitations`, `cancelInvitation`                            | `org-projects.functions.ts` | Project member / owner                |
+| `getSubscription`, `getUsage`, `getInvoices`, `checkPlanChange` | `billing.functions.ts`      | Workspace member                      |
+| `checkoutSubscription`, `openBillingPortal`                     | `billing.functions.ts`      | Workspace owner                       |
 
-| Method | Endpoint                      | Auth          |
-| ------ | ----------------------------- | ------------- |
-| GET    | `/api/orgs`                   | Authenticated |
-| POST   | `/api/orgs`                   | Authenticated |
-| GET    | `/api/orgs/:orgId`            | Org member    |
-| PUT    | `/api/orgs/:orgId`            | Org admin     |
-| DELETE | `/api/orgs/:orgId`            | Org owner     |
-| POST   | `/api/orgs/:orgId/set-active` | Org member    |
+`removeWorkspaceMember` runs the project `removeMember` command for each of the person's projects in the workspace (which kicks their sync sessions and notifies them), cancels their pending invitations there, and then deletes the `member` row. It refuses to remove the owner, and refuses while the person is the only owner of a project.
 
-### Org member routes (`/api/orgs/:orgId/members`)
-
-Member mutations are delegated to Better Auth's `organization` plugin (`createAuth(env).api.addMember`, etc.).
-
-### Project routes (`/api/orgs/:orgId/projects/*`)
-
-| Method | Endpoint                               | Auth                                        |
-| ------ | -------------------------------------- | ------------------------------------------- |
-| GET    | `/api/orgs/:orgId/projects`            | Org member                                  |
-| POST   | `/api/orgs/:orgId/projects`            | Org member + entitlement (`project.create`) |
-| GET    | `/api/orgs/:orgId/projects/:projectId` | Project member                              |
-| PUT    | `/api/orgs/:orgId/projects/:projectId` | Project member                              |
-| DELETE | `/api/orgs/:orgId/projects/:projectId` | Project owner                               |
-
-### Project member + invitation routes
-
-| Method | Endpoint                                                         | Auth           |
-| ------ | ---------------------------------------------------------------- | -------------- |
-| GET    | `/api/orgs/:orgId/projects/:projectId/members`                   | Project member |
-| POST   | `/api/orgs/:orgId/projects/:projectId/members`                   | Project owner  |
-| DELETE | `/api/orgs/:orgId/projects/:projectId/members/:userId`           | Project owner  |
-| GET    | `/api/orgs/:orgId/projects/:projectId/invitations`               | Project member |
-| POST   | `/api/orgs/:orgId/projects/:projectId/invitations`               | Project owner  |
-| DELETE | `/api/orgs/:orgId/projects/:projectId/invitations/:invitationId` | Project owner  |
-| POST   | `/api/invitations/accept`                                        | Authenticated  |
+The only org-scoped REST routes are the PDF routes under `/api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs`. Better Auth's own `/api/auth/organization/*` endpoints are closed (404) in `routes/api/auth/$.ts`, because they skip slug rules, seat counts and sync-session cleanup.
 
 ## Server guards
 
-Route handlers gate themselves with **guard functions** that return a tagged `{ ok, context | response }` union rather than throwing. Each guard lives in `packages/web/src/server/guards/`.
+Server functions gate themselves with **guard functions** that return a tagged `{ ok, context | error }` union rather than throwing. Each guard lives in `packages/web/src/server/guards/`.
 
-| Guard                   | Signature                                    | Purpose                                       |
-| ----------------------- | -------------------------------------------- | --------------------------------------------- |
-| `requireOrgMembership`  | `(request, env, orgId, minRole?)`            | Ensure caller is an org member, optional role |
-| `requireProjectAccess`  | `(request, env, orgId, projectId, minRole?)` | Ensure caller is a project member + role      |
-| `requireOrgWriteAccess` | `(request, env, orgId)`                      | Billing-aware write gate                      |
-| `requireEntitlement`    | `(...)`                                      | Plan/feature entitlement check                |
-| `requireQuota`          | `(...)`                                      | Quota bookkeeping                             |
-| `requireAdmin`          | `(request, env)`                             | Admin-only routes                             |
-| `requireTrustedOrigin`  | `(request)`                                  | CSRF / origin check                           |
+| Guard                   | Signature                                     | Purpose                                       |
+| ----------------------- | --------------------------------------------- | --------------------------------------------- |
+| `requireOrgMembership`  | `(session, db, orgId, minRole?)`              | Ensure caller is an org member, optional role |
+| `requireProjectAccess`  | `(session, db, orgId, projectId, minRole?)`   | Ensure caller is a project member + role      |
+| `requireOrgWriteAccess` | `(method, db, orgId)`                         | Billing-aware write gate                      |
+| `requireEntitlement`    | `(db, orgId, entitlement)`                    | Plan/feature entitlement check                |
+| `requireQuota`          | `(db, orgId, quotaKey, getUsage, requested?)` | Quota check against the resolved plan         |
 
-All guards return:
-
-```ts
-type GuardResult<T> = { ok: true; context: T } | { ok: false; response: Response };
-```
+On failure, `result.error` is a `DomainErrorException`; throw it.
 
 ### Canonical usage
 
 ```ts
-import { createFileRoute } from '@tanstack/react-router';
-import { env } from 'cloudflare:workers';
-import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
-import { requireProjectAccess } from '@/server/guards/requireProjectAccess';
+export async function addProjectMember(session: Session, db: Database, orgId: OrgId, projectId: ProjectId) {
+  const orgMembership = await requireOrgMembership(session, db, orgId);
+  if (!orgMembership.ok) throw orgMembership.error;
 
-type HandlerArgs = { request: Request; params: { orgId: string; projectId: string } };
-
-export const handleGet = async ({ request, params }: HandlerArgs) => {
-  const orgMembership = await requireOrgMembership(request, env, params.orgId);
-  if (!orgMembership.ok) return orgMembership.response;
-
-  const access = await requireProjectAccess(request, env, params.orgId, params.projectId);
-  if (!access.ok) return access.response;
+  const access = await requireProjectAccess(session, db, orgId, projectId, 'owner');
+  if (!access.ok) throw access.error;
 
   // access.context: { userId, userEmail, orgId, projectId, projectName, projectRole }
-  // ... handler work ...
-};
-
-export const Route = createFileRoute('/api/orgs/$orgId/projects/$projectId/members')({
-  server: { handlers: { GET: handleGet } },
-});
+}
 ```
 
 Order matters: run `requireOrgMembership` before `requireProjectAccess` so that a user without org membership gets the org-scoped error rather than a project-not-found error.
@@ -179,15 +147,9 @@ function ProjectHeader({ projectId }: { projectId: string }) {
 
 It resolves in this order: Yjs-synced project meta (`useProjectStore`), then the TanStack Query project-list cache. Returns `null` if neither is populated yet.
 
-### Listing the user's orgs
+### Listing the user's workspaces
 
-Use `useOrgs()` from `@/hooks/useOrgs`:
-
-```ts
-const { orgs, isLoading, refetch } = useOrgs();
-```
-
-Backed by Better Auth's `authClient.organization.list()` plus auth-aware `enabled` gating.
+Use `useWorkspaces()` from `@/hooks/useWorkspaces` (owned first), and `useCurrentWorkspace()` for the one in use. `useSubscription(orgId?)` and `useWorkspaceMembers(orgId?)` default to the current workspace; pass the project's `orgId` inside a project so seat checks use the project's workspace.
 
 ## Invitation Flow
 
@@ -200,27 +162,24 @@ Every project add is an invitation: whether the owner picks an existing user or 
 5. Invitee opens the link, lands on `/invite/$token`, and signs up or signs in if needed.
 6. Frontend calls `acceptInvitation` with the token.
 7. Server validates: token exists, not expired, not accepted. The invited email is a delivery address, not an identity check: membership binds to whichever authenticated account accepts the token, so someone invited at an institutional alias can accept from an account keyed to a different address.
-8. If `grantOrgMembership === true`, the server adds org membership with `orgRole` (if the user isn't already a member).
+8. If the user is not yet in the workspace, the server adds them as `member`. This is the step that consumes a seat, so it is checked against `collaborators.org.max` inside the insert.
 9. Server adds `projectMembers` with `role`.
 10. Frontend redirects to the dashboard.
-
-## Active Organization
-
-Better Auth tracks an `activeOrganizationId` on the session. The `POST /api/orgs/:orgId/set-active` endpoint updates it. The frontend does not currently use this as the primary source of truth for the "current org" -- project routes derive org from the project itself via `useProjectOrgId`. `activeOrganizationId` is still useful for billing and for some Better Auth plugin behaviors (subscriptions).
 
 ## Best Practices
 
 ### Backend
 
 - **Use the guard functions**, not ad-hoc session + membership checks.
-- **Check `result.ok` and return `result.response` on failure** -- the guards package up domain errors and status codes for you.
+- **Check `result.ok` and throw `result.error` on failure** -- the guards package up domain errors and status codes for you.
+- **Take `orgId` as input** -- never derive the workspace from the session.
 - **Order guards outside-in**: auth → org → project → entitlement → quota → handler.
 - **Rate limit before the guards** for routes that deserve it; see Rate limiting in the API development guide for the pattern.
 
 ### Frontend
 
 - **Don't route with org slugs** -- the URL contract is project-centric.
-- **Use `useOrgs` / `useProjectOrgId`** rather than reading from Better Auth or fetching directly.
+- **Use `useWorkspaces` / `useProjectOrgId`** rather than reading from Better Auth or fetching directly.
 - **Gate UI on plan entitlement** via `@corates/shared/plans` helpers (e.g., `isUnlimitedQuota`) so billed features show disabled states rather than failing mid-flow.
 
 ## Related Guides

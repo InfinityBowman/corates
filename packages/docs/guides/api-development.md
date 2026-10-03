@@ -118,22 +118,16 @@ Policy checks live in `@corates/workers/policies`. The real policy functions are
 
 Each throws a domain error when denied; route handlers catch and return them as JSON.
 
-Policy call shapes vary -- check each before using. `requireOrgOwner` is _not_ a DB lookup; it validates a role you already resolved (usually via `resolveOrgIdWithRole` from `@/server/billing-context`). `requireProjectEdit` does its own DB lookup.
+Policy call shapes vary -- check each before using. `requireOrgOwner` is _not_ a DB lookup; it validates a role you already resolved. For workspace-level checks in server functions, prefer the `requireOrgMembership(session, db, orgId, minRole?)` guard, which looks the role up. `requireProjectEdit` does its own DB lookup.
 
 ```ts
-import { requireOrgOwner } from '@corates/workers/policies';
 import { requireProjectEdit } from '@corates/workers/policies/projects';
-import { resolveOrgIdWithRole } from '@/server/billing-context';
+import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
 import { isDomainError } from '@corates/shared';
 
-// Billing-style: resolve role first, then validate
-const { orgId, role } = await resolveOrgIdWithRole({ db, session: session.session, userId: session.user.id });
-try {
-  requireOrgOwner({ orgId, role });
-} catch (err) {
-  if (isDomainError(err)) return Response.json(err, { status: err.statusCode });
-  throw err;
-}
+// Workspace-style: the guard resolves the caller's role in the given workspace
+const membership = await requireOrgMembership(session, db, orgId, 'owner');
+if (!membership.ok) throw membership.error;
 
 // Project-style: positional args, policy does its own lookup
 try {

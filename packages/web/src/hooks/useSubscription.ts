@@ -14,6 +14,7 @@ import {
 } from '@/lib/entitlements';
 import { useAuthStore, selectIsLoggedIn } from '@/stores/authStore';
 import { getSubscription } from '@/server/functions/billing.functions';
+import { useCurrentWorkspace } from '@/hooks/useWorkspaces';
 import { getPlan, DEFAULT_PLAN } from '@corates/shared/plans';
 
 export type Subscription = Awaited<ReturnType<typeof getSubscription>>;
@@ -32,14 +33,18 @@ const DEFAULT_SUBSCRIPTION: Subscription = {
   projectCount: 0,
 };
 
-export function useSubscription() {
+/** A workspace's subscription; defaults to the current workspace. */
+export function useSubscription(orgId?: string | null) {
   const isLoggedIn = useAuthStore(selectIsLoggedIn);
   const queryClient = useQueryClient();
+  const { workspace } = useCurrentWorkspace();
+  const resolvedOrgId = orgId === undefined ? workspace?.id : orgId;
+  const queryKey = queryKeys.subscription.byOrg(resolvedOrgId);
 
   const query = useQuery({
-    queryKey: queryKeys.subscription.current,
-    queryFn: () => getSubscription(),
-    enabled: isLoggedIn,
+    queryKey,
+    queryFn: () => getSubscription({ data: { orgId: resolvedOrgId! } }),
+    enabled: isLoggedIn && !!resolvedOrgId,
     ...QUERY_FRESH,
   });
 
@@ -71,13 +76,13 @@ export function useSubscription() {
     subscriptionFetchFailed,
 
     refetch: async () => {
-      return queryClient.resetQueries({ queryKey: queryKeys.subscription.current });
+      return queryClient.resetQueries({ queryKey });
     },
     mutate: (data: Subscription) => {
-      queryClient.setQueryData(queryKeys.subscription.current, data);
+      queryClient.setQueryData(queryKey, data);
     },
     clearCache: () => {
-      queryClient.removeQueries({ queryKey: queryKeys.subscription.current });
+      queryClient.removeQueries({ queryKey });
     },
 
     tier,

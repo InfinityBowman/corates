@@ -63,6 +63,7 @@ export function PendingInvitations({
         `${invitation.email} can no longer use that invite.`,
       );
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.invitations(projectId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.workspaces.members(orgId) });
     } catch (err: unknown) {
       const { handleError } = await import('@/lib/error-utils');
       await handleError(err);

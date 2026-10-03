@@ -49,7 +49,7 @@ describe('createCheckout', () => {
       activeOrganizationId: org.id,
     });
     try {
-      await createCheckout(createDb(env.DB), session, dummyRequest, 'free', 'monthly');
+      await createCheckout(createDb(env.DB), session, dummyRequest, org.id, 'free', 'monthly');
       expect.unreachable('should have thrown');
     } catch (err) {
       const res = err as DomainErrorException;
@@ -83,7 +83,7 @@ describe('createCheckout', () => {
       activeOrganizationId: org.id,
     });
     try {
-      await createCheckout(createDb(env.DB), session, dummyRequest, 'team', 'monthly');
+      await createCheckout(createDb(env.DB), session, dummyRequest, org.id, 'team', 'monthly');
       expect.unreachable('should have thrown');
     } catch (err) {
       const res = err as DomainErrorException;
@@ -104,7 +104,14 @@ describe('createCheckout', () => {
     });
     upgradeSubscriptionMock.mockResolvedValueOnce({ url: 'https://checkout.stripe/test' });
 
-    const result = await createCheckout(createDb(env.DB), session, dummyRequest, 'team', 'monthly');
+    const result = await createCheckout(
+      createDb(env.DB),
+      session,
+      dummyRequest,
+      org.id,
+      'team',
+      'monthly',
+    );
     expect((result as { url: string }).url).toBe('https://checkout.stripe/test');
 
     const callArg = upgradeSubscriptionMock.mock.calls[0][0] as {
@@ -126,7 +133,7 @@ describe('createCheckout', () => {
     upgradeSubscriptionMock.mockRejectedValueOnce(new Error('Stripe API error'));
 
     await expect(
-      createCheckout(createDb(env.DB), session, dummyRequest, 'team', 'monthly'),
+      createCheckout(createDb(env.DB), session, dummyRequest, org.id, 'team', 'monthly'),
     ).rejects.toThrow('Stripe API error');
   });
 });
@@ -178,7 +185,7 @@ describe('createCheckout for an existing Stripe subscriber', () => {
       name: owner.name,
       activeOrganizationId: org.id,
     });
-    const result = await createCheckout(db, session, dummyRequest, 'lab', 'yearly');
+    const result = await createCheckout(db, session, dummyRequest, org.id, 'lab', 'yearly');
 
     expect((result as { url: string }).url).toContain('/settings/billing?success=true');
     expect(stripePricesListMock).toHaveBeenCalledWith({
@@ -225,7 +232,7 @@ describe('createCheckout for an existing Stripe subscriber', () => {
       name: owner.name,
       activeOrganizationId: org.id,
     });
-    const result = await createCheckout(db, session, dummyRequest, 'team', 'yearly');
+    const result = await createCheckout(db, session, dummyRequest, org.id, 'team', 'yearly');
 
     expect((result as { url: string }).url).toContain('/settings/billing?success=true');
     expect(stripeUpdateMock).toHaveBeenCalledWith('sub_123', {
@@ -259,7 +266,7 @@ describe('createCheckout for an existing Stripe subscriber', () => {
       activeOrganizationId: org.id,
     });
     try {
-      await createCheckout(db, session, dummyRequest, 'team', 'monthly');
+      await createCheckout(db, session, dummyRequest, org.id, 'team', 'monthly');
       expect.unreachable('should have thrown');
     } catch (err) {
       const res = err as DomainErrorException;

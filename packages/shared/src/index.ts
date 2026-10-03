@@ -11,3 +11,4 @@ export * from './assert-never.js';
 export * from './ids.js';
 export * from './project-setup.js';
 export * from './user-preferences.js';
+export * from './workspace-slug.js';

@@ -54,25 +54,11 @@ Each handler composes checks explicitly -- there is no single middleware pipelin
 
 ### Authentication (`/auth/*`)
 
-Handled by BetterAuth. Includes signin, signup, session management, and organization plugin.
+Handled by BetterAuth. Includes signin, signup and session management. The organization plugin's `/api/auth/organization/*` endpoints are closed (404).
 
-### Organizations (`/api/orgs/*`)
+### Workspaces (organizations)
 
-Organization management (requires auth):
-
-- `GET /api/orgs` - List user's organizations
-- `POST /api/orgs` - Create new organization
-- `GET /api/orgs/:orgId` - Get org details (requires org membership)
-- `PUT /api/orgs/:orgId` - Update org (requires org admin)
-- `DELETE /api/orgs/:orgId` - Delete org (requires org owner)
-- `POST /api/orgs/:orgId/set-active` - Set active org
-
-### Organization Members (`/api/orgs/:orgId/members`)
-
-- `GET /api/orgs/:orgId/members` - List org members
-- `POST /api/orgs/:orgId/members` - Add member (requires org admin)
-- `PUT /api/orgs/:orgId/members/:memberId` - Update role (requires org admin)
-- `DELETE /api/orgs/:orgId/members/:memberId` - Remove member (requires org admin or self)
+There are no workspace REST routes. Listing, creating and editing workspaces, the member list and member removal go through server functions in `packages/web/src/server/functions/workspaces.functions.ts`; see the [Organizations Guide](/guides/organizations#server-functions).
 
 ### Projects (`/api/orgs/:orgId/projects/*`)
 

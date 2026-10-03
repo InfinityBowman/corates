@@ -78,4 +78,4 @@ TanStack file-based conventions: an underscore prefix (`_app`, `_auth`) denotes 
 - **orgId does not appear in frontend URLs.** It only shows up in backend API paths (`/api/orgs/:orgId/...`).
 - **Admin routes use explicit orgId/projectId/userId in the URL** for admin-only navigation, but those are not part of the public contract.
 
-See the [Organizations Guide](/guides/organizations#frontend-routing) for the reasoning and the hooks (`useOrgs`, `useProjectOrgId`) used to resolve context.
+See the [Organizations Guide](/guides/organizations#frontend-routing) for the reasoning and the hooks (`useWorkspaces`, `useProjectOrgId`) used to resolve context.

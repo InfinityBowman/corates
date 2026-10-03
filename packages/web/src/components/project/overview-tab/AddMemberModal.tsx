@@ -226,6 +226,8 @@ export function AddMemberModal({
       // The invitations list is a D1 fact read through React Query. Nothing
       // pushes it to this client, so refetch after the write.
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.invitations(projectId) });
+      // A pending invitation holds a workspace seat.
+      queryClient.invalidateQueries({ queryKey: queryKeys.workspaces.members(orgId) });
       handleClose();
     } catch (err: unknown) {
       const { handleError } = await import('@/lib/error-utils');

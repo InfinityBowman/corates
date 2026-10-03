@@ -48,6 +48,8 @@ function isDowngrade(fromTier: string, toTier: string) {
 type BillingInterval = 'monthly' | 'yearly';
 
 interface PricingTableProps {
+  /** The workspace a checkout or portal visit applies to; unused in marketing mode. */
+  orgId?: string;
   currentTier?: string;
   currentInterval?: BillingInterval | null;
   mode?: 'marketing' | 'authenticated';
@@ -57,6 +59,7 @@ interface PricingTableProps {
 const catalog = getBillingPlanCatalog();
 
 export function PricingTable({
+  orgId,
   currentTier: currentTierProp,
   currentInterval = null,
   mode = 'authenticated',
@@ -84,15 +87,16 @@ export function PricingTable({
   };
 
   const proceedWithPlanChange = async (plan: BillingCatalogPlan) => {
+    if (!orgId) return;
     setLoadingTier(plan.tier);
     try {
-      const validation = await checkPlanChange({ data: { targetPlan: plan.tier } });
+      const validation = await checkPlanChange({ data: { orgId, targetPlan: plan.tier } });
       if (!validation.valid) {
         setValidationError(validation as PlanValidationResult);
         setLoadingTier(null);
         return;
       }
-      await redirectToCheckout(plan.tier, billingInterval);
+      await redirectToCheckout(orgId, plan.tier, billingInterval);
     } catch (error) {
       const { handleError } = await import('@/lib/error-utils');
       await handleError(error, { toastTitle: 'Checkout Error' });
@@ -103,9 +107,10 @@ export function PricingTable({
   const handleAction = async (plan: BillingCatalogPlan) => {
     if (plan.tier === currentTier && !offersIntervalSwitch(plan)) return;
     if (plan.cta === 'free') {
+      if (!orgId) return;
       setLoadingTier(plan.tier);
       try {
-        await redirectToPortal();
+        await redirectToPortal(orgId);
       } catch (error) {
         const { handleError } = await import('@/lib/error-utils');
         await handleError(error, { toastTitle: 'Billing Portal Error' });

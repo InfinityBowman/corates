@@ -45,7 +45,7 @@ describe('fetchSubscription', () => {
       name: owner.name,
       activeOrganizationId: org.id,
     });
-    const result = await fetchSubscription(createDb(env.DB), session);
+    const result = await fetchSubscription(createDb(env.DB), session, org.id);
     expect(result.tier).toBe('free');
     expect(result.status).toBe('inactive');
     expect(result.stripeSubscriptionId).toBeNull();
@@ -70,7 +70,7 @@ describe('fetchSubscription', () => {
       name: owner.name,
       activeOrganizationId: org.id,
     });
-    const result = await fetchSubscription(createDb(env.DB), session);
+    const result = await fetchSubscription(createDb(env.DB), session, org.id);
     expect(result.source).toBe('free');
     expect(result.projectCount).toBe(0);
   });
@@ -109,7 +109,7 @@ describe('fetchSubscription', () => {
       name: owner.name,
       activeOrganizationId: org.id,
     });
-    const result = await fetchSubscription(createDb(env.DB), session);
+    const result = await fetchSubscription(createDb(env.DB), session, org.id);
     expect(result.tier).toBe('team');
     expect(result.status).toBe('active');
     expect(result.stripeSubscriptionId).toBe('sub-1');
@@ -143,7 +143,7 @@ describe('fetchSubscription', () => {
       name: owner.name,
       activeOrganizationId: org.id,
     });
-    const result = await fetchSubscription(createDb(env.DB), session);
+    const result = await fetchSubscription(createDb(env.DB), session, org.id);
     expect(result.interval).toBe('yearly');
   });
 
@@ -155,7 +155,7 @@ describe('fetchSubscription', () => {
       name: owner.name,
       activeOrganizationId: org.id,
     });
-    const result = await fetchSubscription(createDb(env.DB), session);
+    const result = await fetchSubscription(createDb(env.DB), session, org.id);
     expect(result.interval).toBeNull();
   });
 });

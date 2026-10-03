@@ -144,7 +144,7 @@ export const projectInvitations = sqliteTable(
       .references(() => projects.id, { onDelete: 'cascade' }),
     email: text('email').notNull(),
     role: text('role').default('member'), // project role to assign
-    orgRole: text('orgRole').default('member'), // org role if grantOrgMembership is true
+    orgRole: text('orgRole').default('member'), // workspace role granted on accept
     grantOrgMembership: integer('grantOrgMembership', { mode: 'boolean' }).default(false).notNull(),
     token: text('token').notNull().unique(),
     invitedBy: text('invitedBy')
@@ -165,7 +165,7 @@ export const projectInvitations = sqliteTable(
 
 One row per project and address: re-inviting the same email updates the existing row (role, expiry, token if it had been accepted) rather than adding another. `emailStatus` becomes `undeliverable` when Postmark rejects the address for good (suppressed or malformed) or the queue exhausts its retries; the pending-invitations list shows that to the inviter.
 
-**Note:** Projects are always invite-only. By default, accepting an invitation grants project membership only. The `grantOrgMembership` field can be set to `true` by org admins/owners to also grant organization membership (for governance/billing purposes).
+**Note:** Projects are always invite-only. Accepting an invitation always adds the user to the project's workspace (as `member`) if they are not in it yet. `grantOrgMembership` is written but not read, and `orgRole` is always `member`.
 
 #### Subscriptions (Better Auth Stripe Plugin)
 

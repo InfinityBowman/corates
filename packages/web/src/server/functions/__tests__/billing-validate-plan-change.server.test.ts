@@ -40,7 +40,7 @@ describe('fetchPlanValidation', () => {
       name: owner.name,
       activeOrganizationId: org.id,
     });
-    const result = await fetchPlanValidation(createDb(env.DB), session, 'team');
+    const result = await fetchPlanValidation(createDb(env.DB), session, org.id, 'team');
     expect(result.valid).toBe(true);
     expect(result.violations).toHaveLength(0);
     expect(result.targetPlan.id).toBe('team');
@@ -69,7 +69,7 @@ describe('fetchPlanValidation', () => {
       name: owner.name,
       activeOrganizationId: org.id,
     });
-    const result = await fetchPlanValidation(createDb(env.DB), session, 'team');
+    const result = await fetchPlanValidation(createDb(env.DB), session, org.id, 'team');
     expect(result.valid).toBe(false);
     expect(result.violations.length).toBeGreaterThan(0);
     expect(result.violations[0].quotaKey).toBe('projects.max');

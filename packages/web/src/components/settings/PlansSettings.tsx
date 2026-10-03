@@ -8,6 +8,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useCurrentWorkspace } from '@/hooks/useWorkspaces';
 import { showToast } from '@/lib/toast';
 import { PricingTable } from '@/components/billing/PricingTable';
 import { PlanFAQ } from '@/components/billing/PlanFAQ';
@@ -21,6 +22,7 @@ import {
 
 export function PlansSettings() {
   const { subscription, isLoading } = useSubscription();
+  const { workspace } = useCurrentWorkspace();
   const tier = subscription?.tier;
   const navigate = useNavigate();
 
@@ -108,7 +110,11 @@ export function PlansSettings() {
           </p>
         </div>
 
-        <PricingTable currentTier={tier} currentInterval={subscription.interval} />
+        <PricingTable
+          orgId={workspace?.id}
+          currentTier={tier}
+          currentInterval={subscription.interval}
+        />
 
         <PlanFAQ />
 

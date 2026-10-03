@@ -8,7 +8,7 @@ Custom React hooks in CoRATES live in `packages/web/src/hooks/`. They wrap serve
 
 Write a hook when:
 
-- Multiple components need the same fetch + derived state (`useOrgs`, `useProjectData`, `useSubscription`).
+- Multiple components need the same fetch + derived state (`useWorkspaces`, `useProjectData`, `useSubscription`).
 - You're wrapping TanStack Query with auth- or route-dependent `enabled` logic that would be ugly inline.
 - You're subscribing to a non-React external source and exposing it as React state (`useYText`, `useOnlineStatus`, `useReconciliationPresence`).
 - You're coordinating effects with cleanup that multiple callsites would otherwise duplicate.
@@ -24,35 +24,28 @@ Skip a hook and keep logic in the component when:
 Most hooks in the repo follow this pattern: wrap TanStack Query, gate `enabled` on auth readiness, normalize the return shape.
 
 ```ts
-// hooks/useOrgs.ts
+// hooks/useWorkspaces.ts
 import { useQuery } from '@tanstack/react-query';
-import { authClient, authFetch } from '@/api/auth-client';
 import { useAuthStore, selectIsLoggedIn, selectIsAuthLoading } from '@/stores/authStore';
 import { queryKeys } from '@/lib/queryKeys';
+import { QUERY_STABLE } from '@/lib/queryPresets';
+import { getMyWorkspaces } from '@/server/functions/workspaces.functions';
 
-async function fetchOrgs() {
-  const data = await authFetch(authClient.organization.list());
-  return data || [];
-}
-
-export function useOrgs() {
+export function useWorkspaces() {
   const isLoggedIn = useAuthStore(selectIsLoggedIn);
   const isAuthLoading = useAuthStore(selectIsAuthLoading);
 
-  const orgsQuery = useQuery({
-    queryKey: queryKeys.orgs.list,
-    queryFn: fetchOrgs,
+  const query = useQuery({
+    queryKey: queryKeys.workspaces.list,
+    queryFn: () => getMyWorkspaces(),
     enabled: isLoggedIn && !isAuthLoading,
-    staleTime: 1000 * 60 * 5,
-    gcTime: 1000 * 60 * 10,
+    ...QUERY_STABLE,
   });
 
   return {
-    orgs: orgsQuery.data ?? [],
-    isLoading: isAuthLoading || orgsQuery.isLoading,
-    isError: orgsQuery.isError,
-    error: orgsQuery.error,
-    refetch: orgsQuery.refetch,
+    workspaces: query.data ?? [],
+    isLoading: isAuthLoading || query.isLoading,
+    error: query.error,
   };
 }
 ```
@@ -61,7 +54,7 @@ Rules this example demonstrates:
 
 - **`enabled` is gated on auth state.** Queries that need a session should not fire until `isLoggedIn && !isAuthLoading`.
 - **`queryKey` comes from `@/lib/queryKeys`.** Do not inline string keys; centralize them so invalidation is unambiguous.
-- **The returned object reshapes the query.** Callers don't see `data` -- they see `orgs`. This keeps domain vocabulary in the hook, not in every consumer.
+- **The returned object reshapes the query.** Callers don't see `data` -- they see `workspaces`. This keeps domain vocabulary in the hook, not in every consumer.
 - **`isLoading` merges auth loading and query loading.** The consumer should not have to reason about auth separately.
 
 ## Mutation hooks
@@ -71,15 +64,14 @@ Mutation hooks follow the same pattern with `useMutation` and `queryClient.inval
 ```ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
+import { createWorkspace } from '@/server/functions/workspaces.functions';
 
-export function useCreateOrg() {
+export function useCreateWorkspace() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { name: string }) => {
-      return authFetch(authClient.organization.create(input));
-    },
+    mutationFn: (input: { name: string; slug: string }) => createWorkspace({ data: input }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.orgs.list });
+      queryClient.invalidateQueries({ queryKey: queryKeys.workspaces.list });
     },
   });
 }
@@ -110,9 +102,9 @@ export function useOnlineStatus() {
 
 ## File and naming conventions
 
-- File name matches the hook: `useOrgs.ts` exports `useOrgs`.
+- File name matches the hook: `useWorkspaces.ts` exports `useWorkspaces`.
 - One primary hook per file. Secondary helpers (fetchers, selectors) stay colocated in the same file unless they're reused elsewhere.
-- Name hooks after the domain noun, not the implementation (`useOrgs`, not `useOrgsQuery`).
+- Name hooks after the domain noun, not the implementation (`useWorkspaces`, not `useWorkspacesQuery`).
 - Hooks that return queries should expose `isLoading`, `isError`, `error`, `refetch` in addition to the domain data -- matches what the rest of the codebase expects.
 
 ## What doesn't belong in a hook
