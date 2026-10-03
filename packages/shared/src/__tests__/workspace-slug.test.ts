@@ -13,11 +13,11 @@ describe('slugifyWorkspaceName', () => {
   });
 
   it('strips accents rather than dropping the letter', () => {
-    expect(slugifyWorkspaceName('José Müller')).toBe('jose-muller');
+    expect(slugifyWorkspaceName('Jos\u00e9 M\u00fcller')).toBe('jose-muller');
   });
 
   it('returns empty for names with no Latin letters or digits', () => {
-    expect(slugifyWorkspaceName('雅茹')).toBe('');
+    expect(slugifyWorkspaceName('\u96c5\u8339')).toBe('');
   });
 
   it('caps the length without leaving a trailing hyphen', () => {
