@@ -1,7 +1,7 @@
 /**
  * SettingsSidebar - replaces the app sidebar on settings routes: a way back to
- * the app, then the Account sections (/settings/account/..., per person) and,
- * for its owner, the current workspace's sections (/<slug>/settings/...).
+ * the app, then the Account sections (per person) and, for the user's own
+ * workspace, the Workspace sections.
  */
 
 import { Link, useLocation } from '@tanstack/react-router';
@@ -19,8 +19,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { useCurrentWorkspace } from '@/hooks/useWorkspaces';
-import { workspaceSettingsPath } from '@/lib/workspacePaths';
+import { useOwnedWorkspace } from '@/hooks/useWorkspaces';
 import { NAV_GROUP_LABEL, navRowClass } from '../navStyles';
 
 interface NavItem {
@@ -32,25 +31,23 @@ interface NavItem {
 const ACCOUNT_GROUP: { label: string; items: NavItem[] } = {
   label: 'Account',
   items: [
-    { label: 'Profile', icon: UserIcon, path: '/settings/account/profile' },
-    { label: 'Security', icon: ShieldIcon, path: '/settings/account/security' },
-    { label: 'Preferences', icon: BellIcon, path: '/settings/account/preferences' },
+    { label: 'Profile', icon: UserIcon, path: '/settings/profile' },
+    { label: 'Security', icon: ShieldIcon, path: '/settings/security' },
+    { label: 'Preferences', icon: BellIcon, path: '/settings/preferences' },
     // Google Drive is connected per person, not per workspace.
-    { label: 'Integrations', icon: PlugIcon, path: '/settings/account/integrations' },
+    { label: 'Integrations', icon: PlugIcon, path: '/settings/integrations' },
   ],
 };
 
-function workspaceGroup(slug: string): { label: string; items: NavItem[] } {
-  return {
-    label: 'Workspace',
-    items: [
-      { label: 'General', icon: SettingsIcon, path: workspaceSettingsPath(slug, 'general') },
-      { label: 'Members', icon: UsersIcon, path: workspaceSettingsPath(slug, 'members') },
-      { label: 'Billing', icon: CreditCardIcon, path: workspaceSettingsPath(slug, 'billing') },
-      { label: 'Plans', icon: SparklesIcon, path: workspaceSettingsPath(slug, 'plans') },
-    ],
-  };
-}
+const WORKSPACE_GROUP: { label: string; items: NavItem[] } = {
+  label: 'Workspace',
+  items: [
+    { label: 'General', icon: SettingsIcon, path: '/settings/workspace' },
+    { label: 'Members', icon: UsersIcon, path: '/settings/members' },
+    { label: 'Billing', icon: CreditCardIcon, path: '/settings/billing' },
+    { label: 'Plans', icon: SparklesIcon, path: '/settings/plans' },
+  ],
+};
 
 interface SettingsSidebarProps {
   onClose: () => void;
@@ -60,10 +57,8 @@ interface SettingsSidebarProps {
 
 export function SettingsSidebar({ onClose, closeLabel, closeIcon }: SettingsSidebarProps) {
   const { pathname } = useLocation();
-  const { workspace } = useCurrentWorkspace();
-  // Workspace settings are owner-only for now.
-  const groups =
-    workspace?.role === 'owner' ? [ACCOUNT_GROUP, workspaceGroup(workspace.slug)] : [ACCOUNT_GROUP];
+  const { workspace } = useOwnedWorkspace();
+  const groups = workspace ? [ACCOUNT_GROUP, WORKSPACE_GROUP] : [ACCOUNT_GROUP];
 
   return (
     <nav aria-label='Settings' className='flex h-full flex-col'>

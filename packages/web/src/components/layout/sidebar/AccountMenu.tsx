@@ -83,7 +83,7 @@ export function AccountMenu() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link to='/settings/account/profile'>Profile</Link>
+          <Link to='/settings/profile'>Profile</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link to='/settings'>Settings</Link>

@@ -7,9 +7,6 @@ import { handleError } from '@/lib/error-utils';
 import { getPendingInvitationToken, clearPendingInvitationToken } from '@/lib/pendingInvitation';
 import { acceptInvitation } from '@/server/functions/invitations.functions';
 import { showToast } from '@/lib/toast';
-import { queryClient } from '@/lib/queryClient';
-import { queryKeys } from '@/lib/queryKeys';
-import { projectPath } from '@/lib/workspacePaths';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -288,13 +285,7 @@ function CompleteProfilePage() {
               'Invitation Accepted',
               `You've been added to "${result.projectName}"`,
             );
-            await queryClient.invalidateQueries({ queryKey: queryKeys.workspaces.list });
-            navigate({
-              to: (result.orgSlug ?
-                projectPath(result.orgSlug, result.projectId)
-              : '/dashboard') as string,
-              replace: true,
-            });
+            navigate({ to: `/projects/${result.projectId}` as string, replace: true });
             return;
           }
         } catch (inviteErr) {

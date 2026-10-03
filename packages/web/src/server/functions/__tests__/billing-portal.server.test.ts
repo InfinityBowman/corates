@@ -100,7 +100,7 @@ describe('createPortalSession', () => {
       body: { referenceId: string; returnUrl: string };
     };
     expect(callArg.body.referenceId).toBe(org.id);
-    expect(callArg.body.returnUrl).toContain(`/${org.slug}/settings/billing`);
+    expect(callArg.body.returnUrl).toContain('/settings/billing');
   });
 
   it('propagates error when createBillingPortal throws', async () => {

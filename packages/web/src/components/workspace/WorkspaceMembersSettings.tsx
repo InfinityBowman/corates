@@ -26,14 +26,12 @@ import {
 } from '@/components/ui/alert-dialog';
 import { SettingsPage, SettingsSection, SettingsRow } from '@/components/settings/primitives';
 import { useAuthStore, selectUser } from '@/stores/authStore';
-import { useCurrentWorkspace, type Workspace } from '@/hooks/useWorkspaces';
+import { useOwnedWorkspace, type Workspace } from '@/hooks/useWorkspaces';
 import { useWorkspaceMembers } from '@/hooks/useWorkspaceMembers';
 import { queryKeys } from '@/lib/queryKeys';
 import { showToast } from '@/lib/toast';
-import { workspaceSettingsPath } from '@/lib/workspacePaths';
 import { removeWorkspaceMember } from '@/server/functions/workspaces.functions';
 import { cancelInvitation } from '@/server/functions/org-projects.functions';
-import { OwnerOnlyNotice } from './OwnerOnlyNotice';
 
 type Member = ReturnType<typeof useWorkspaceMembers>['members'][number];
 type PendingInvitation = ReturnType<typeof useWorkspaceMembers>['pendingInvitations'][number];
@@ -61,9 +59,8 @@ function projectList(projects: { name: string }[]) {
 }
 
 export function WorkspaceMembersSettings() {
-  const { workspace } = useCurrentWorkspace();
+  const { workspace } = useOwnedWorkspace();
   if (!workspace) return null;
-  if (workspace.role !== 'owner') return <OwnerOnlyNotice title='Members' />;
   return <MembersPage key={workspace.id} workspace={workspace} />;
 }
 
@@ -162,7 +159,7 @@ function MembersPage({ workspace }: { workspace: Workspace }) {
         >
           {full && (
             <Button size='sm' asChild>
-              <Link to={workspaceSettingsPath(workspace.slug, 'plans') as string}>Upgrade</Link>
+              <Link to='/settings/plans'>Upgrade</Link>
             </Button>
           )}
         </SettingsRow>

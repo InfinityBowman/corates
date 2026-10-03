@@ -14,7 +14,7 @@ import {
 } from '@/lib/entitlements';
 import { useAuthStore, selectIsLoggedIn } from '@/stores/authStore';
 import { getSubscription } from '@/server/functions/billing.functions';
-import { useCurrentWorkspace } from '@/hooks/useWorkspaces';
+import { useOwnedWorkspace } from '@/hooks/useWorkspaces';
 import { getPlan, DEFAULT_PLAN } from '@corates/shared/plans';
 
 export type Subscription = Awaited<ReturnType<typeof getSubscription>>;
@@ -37,7 +37,7 @@ const DEFAULT_SUBSCRIPTION: Subscription = {
 export function useSubscription(orgId?: string | null) {
   const isLoggedIn = useAuthStore(selectIsLoggedIn);
   const queryClient = useQueryClient();
-  const { workspace } = useCurrentWorkspace();
+  const { workspace } = useOwnedWorkspace();
   const resolvedOrgId = orgId === undefined ? workspace?.id : orgId;
   const queryKey = queryKeys.subscription.byOrg(resolvedOrgId);
 

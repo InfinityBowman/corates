@@ -7,11 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { useSubscription } from '@/hooks/useSubscription';
 import { redirectToPortal } from '@/api/billing';
-import { useCurrentWorkspace } from '@/hooks/useWorkspaces';
+import { useOwnedWorkspace } from '@/hooks/useWorkspaces';
 
 export function PaymentIssueBanner() {
   const { status } = useSubscription();
-  const { workspace } = useCurrentWorkspace();
+  const { workspace } = useOwnedWorkspace();
   const [loading, setLoading] = useState(false);
 
   const isPastDue = status === 'past_due';
@@ -60,20 +60,17 @@ export function PaymentIssueBanner() {
               </AlertDescription>
             )}
           </div>
-          {/* Only the owner can open the billing portal; members just see the warning. */}
-          {workspace.role === 'owner' ?
-            <Button
-              variant='destructive'
-              className='shrink-0'
-              onClick={handleUpdatePayment}
-              disabled={loading}
-            >
-              {loading ?
-                <Spinner size='sm' variant='white' data-icon='inline-start' />
-              : <CreditCardIcon data-icon='inline-start' />}
-              {loading ? 'Opening...' : 'Update payment method'}
-            </Button>
-          : <p className='shrink-0 text-xs'>Ask the workspace owner to update payment.</p>}
+          <Button
+            variant='destructive'
+            className='shrink-0'
+            onClick={handleUpdatePayment}
+            disabled={loading}
+          >
+            {loading ?
+              <Spinner size='sm' variant='white' data-icon='inline-start' />
+            : <CreditCardIcon data-icon='inline-start' />}
+            {loading ? 'Opening...' : 'Update payment method'}
+          </Button>
         </div>
       </Alert>
     </div>

@@ -5,7 +5,6 @@
  */
 
 import { createContext, useContext, useMemo, useCallback, useState } from 'react';
-import { useParams } from '@tanstack/react-router';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { useProjectOrgId } from '@/hooks/useProjectOrgId';
 import { useProjectMembers } from '@/project/project-data';
@@ -32,8 +31,6 @@ interface ProjectContextValue {
   isOwner: boolean;
   getAssigneeName: (userId: string | null) => string;
   getMember: (userId: string | null) => ProjectMember | null;
-  /** /<workspace>/projects/<id>, the base every in-project link builds on. */
-  projectPath: string;
   getChecklistPath: (studyId: string, checklistId: string, tab?: string) => string;
   getReconcilePath: (studyId: string, checklist1Id: string, checklist2Id: string) => string;
   addStudiesSheetOpen: boolean;
@@ -81,18 +78,16 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
   const [studySheetId, setStudySheetId] = useState<string | null>(null);
   const closeStudySheet = useCallback(() => setStudySheetId(null), []);
 
-  // The project route keeps the URL slug equal to the project's workspace.
-  const { workspace: slug } = useParams({ strict: false }) as { workspace?: string };
-  const projectPath = `/${slug}/projects/${projectId}`;
+  // Stable path helpers that only depend on projectId
   const getChecklistPath = useCallback(
     (studyId: string, checklistId: string, tab = 'overview') =>
-      `${projectPath}/studies/${studyId}/checklists/${checklistId}?tab=${tab}`,
-    [projectPath],
+      `/projects/${projectId}/studies/${studyId}/checklists/${checklistId}?tab=${tab}`,
+    [projectId],
   );
   const getReconcilePath = useCallback(
     (studyId: string, checklist1Id: string, checklist2Id: string) =>
-      `${projectPath}/studies/${studyId}/reconcile/${checklist1Id}/${checklist2Id}`,
-    [projectPath],
+      `/projects/${projectId}/studies/${studyId}/reconcile/${checklist1Id}/${checklist2Id}`,
+    [projectId],
   );
 
   // Member-dependent helpers
@@ -120,7 +115,6 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
       isOwner,
       getAssigneeName,
       getMember,
-      projectPath,
       getChecklistPath,
       getReconcilePath,
       addStudiesSheetOpen,
@@ -142,7 +136,6 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
       isOwner,
       getAssigneeName,
       getMember,
-      projectPath,
       getChecklistPath,
       getReconcilePath,
       addStudiesSheetOpen,

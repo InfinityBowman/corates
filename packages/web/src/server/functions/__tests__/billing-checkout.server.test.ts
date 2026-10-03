@@ -125,18 +125,11 @@ describe('createCheckout', () => {
       };
     };
     expect(callArg.body.plan).toBe('team');
-    // Stripe returns the user to the workspace that was billed
-    expect(callArg.body.successUrl).toMatch(
-      new RegExp(`/${org.slug}/settings/billing\\?success=true$`),
-    );
-    expect(callArg.body.cancelUrl).toMatch(
-      new RegExp(`/${org.slug}/settings/billing\\?canceled=true$`),
-    );
-    expect(callArg.body.returnUrl).toMatch(
-      new RegExp(`/${org.slug}/settings/billing\\?success=true$`),
-    );
     expect(callArg.body.annual).toBe(false);
     expect(callArg.body.referenceId).toBe(org.id);
+    expect(callArg.body.successUrl).toMatch(/\/settings\/billing\?success=true$/);
+    expect(callArg.body.cancelUrl).toMatch(/\/settings\/billing\?canceled=true$/);
+    expect(callArg.body.returnUrl).toMatch(/\/settings\/billing\?success=true$/);
   });
 
   it('propagates error when upgradeSubscription throws', async () => {
@@ -204,7 +197,7 @@ describe('createCheckout for an existing Stripe subscriber', () => {
     });
     const result = await createCheckout(db, session, dummyRequest, org.id, 'lab', 'yearly');
 
-    expect((result as { url: string }).url).toContain(`/${org.slug}/settings/billing?success=true`);
+    expect((result as { url: string }).url).toContain('/settings/billing?success=true');
     expect(stripePricesListMock).toHaveBeenCalledWith({
       lookup_keys: ['lab_yearly'],
       active: true,

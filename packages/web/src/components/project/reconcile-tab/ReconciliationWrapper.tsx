@@ -67,7 +67,7 @@ export function ReconciliationWrapper({
   checklist2Id,
 }: ReconciliationWrapperProps) {
   const navigate = useNavigate();
-  const { orgId, projectPath } = useProjectContext();
+  const { orgId } = useProjectContext();
   const user = useAuthStore(selectUser);
   const canReconcileChecklists = useCanReconcileChecklists();
 
@@ -208,8 +208,8 @@ export function ReconciliationWrapper({
       'Access Denied',
       'Only the assigned reviewers or a project owner can reconcile these checklists.',
     );
-    navigate({ to: `${projectPath}?tab=reconcile` as string, replace: true });
-  }, [accessDenied, navigate, projectPath]);
+    navigate({ to: `/projects/${projectId}?tab=reconcile` as string, replace: true });
+  }, [accessDenied, navigate, projectId]);
 
   // Get reviewer name from userId
   const getReviewerName = useCallback(
@@ -455,8 +455,8 @@ export function ReconciliationWrapper({
       'Reconciliation Cancelled',
       "This appraisal was sent back to the reviewers' To-Do lists.",
     );
-    navigate({ to: `${projectPath}?tab=todo` as string, replace: true });
-  }, [currentStudy, connectionState.phase, checklist1Meta, checklist2Meta, navigate, projectPath]);
+    navigate({ to: `/projects/${projectId}?tab=todo` as string, replace: true });
+  }, [currentStudy, connectionState.phase, checklist1Meta, checklist2Meta, navigate, projectId]);
 
   // Get reconciled checklist metadata
   const reconciledChecklistMeta = useMemo(() => {
@@ -506,7 +506,7 @@ export function ReconciliationWrapper({
   ]);
 
   // Build project path
-  const getProjectPath = useCallback(() => projectPath, [projectPath]);
+  const getProjectPath = useCallback(() => `/projects/${projectId}`, [projectId]);
 
   const writers = useAnswerWriters(projectId, studyId, reconciledChecklistId ?? '');
 

@@ -7,7 +7,7 @@ import { InvoicesList } from '../InvoicesList';
 const { getInvoices } = vi.hoisted(() => ({ getInvoices: vi.fn() }));
 vi.mock('@/server/functions/billing.functions', () => ({ getInvoices }));
 vi.mock('@/hooks/useWorkspaces', () => ({
-  useCurrentWorkspace: () => ({
+  useOwnedWorkspace: () => ({
     workspace: { id: 'org-1', name: 'Lab', slug: 'lab', role: 'owner' },
     isLoading: false,
   }),

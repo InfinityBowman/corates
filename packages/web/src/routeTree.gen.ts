@@ -41,9 +41,7 @@ import { Route as ResourcesRob2VsRobinsIRouteImport } from './routes/resources/r
 import { Route as ResourcesRobinsIRouteImport } from './routes/resources/robins-i'
 import { Route as ResourcesRobinsIV1VsV2RouteImport } from './routes/resources/robins-i-v1-vs-v2'
 import { Route as SecurityDisclosureRouteImport } from './routes/security_.disclosure'
-import { Route as AppProtectedWorkspaceRouteImport } from './routes/_app/_protected/$workspace'
 import { Route as AppProtectedAdminRouteImport } from './routes/_app/_protected/admin'
-import { Route as AppProtectedCreateWorkspaceRouteImport } from './routes/_app/_protected/create-workspace'
 import { Route as AppProtectedSettingsRouteImport } from './routes/_app/_protected/settings'
 import { Route as AppChecklistIndexRouteImport } from './routes/_app/checklist.index'
 import { Route as AppChecklistChecklistIdRouteImport } from './routes/_app/checklist.$checklistId'
@@ -62,23 +60,22 @@ import { Route as ApiTestSessionRouteImport } from './routes/api/test/session'
 import { Route as ApiTestUpdateSubscriptionRouteImport } from './routes/api/test/update-subscription'
 import { Route as ApiTestVerifyEmailRouteImport } from './routes/api/test/verify-email'
 import { Route as ApiUsersAvatarRouteImport } from './routes/api/users/avatar'
-import { Route as AppProtectedWorkspaceIndexRouteImport } from './routes/_app/_protected/$workspace/index'
-import { Route as AppProtectedWorkspaceSettingsRouteImport } from './routes/_app/_protected/$workspace/settings'
 import { Route as AppProtectedAdminIndexRouteImport } from './routes/_app/_protected/admin/index'
 import { Route as AppProtectedAdminAnnouncementsRouteImport } from './routes/_app/_protected/admin/announcements'
 import { Route as AppProtectedAdminDatabaseRouteImport } from './routes/_app/_protected/admin/database'
 import { Route as AppProtectedAdminStorageRouteImport } from './routes/_app/_protected/admin/storage'
-import { Route as AppProtectedProjectsSplatRouteImport } from './routes/_app/_protected/projects.$'
+import { Route as AppProtectedProjectsProjectIdRouteImport } from './routes/_app/_protected/projects.$projectId'
 import { Route as AppProtectedSettingsIndexRouteImport } from './routes/_app/_protected/settings/index'
-import { Route as AppProtectedSettingsSplatRouteImport } from './routes/_app/_protected/settings/$'
+import { Route as AppProtectedSettingsBillingRouteImport } from './routes/_app/_protected/settings/billing'
+import { Route as AppProtectedSettingsIntegrationsRouteImport } from './routes/_app/_protected/settings/integrations'
+import { Route as AppProtectedSettingsMembersRouteImport } from './routes/_app/_protected/settings/members'
+import { Route as AppProtectedSettingsPlansRouteImport } from './routes/_app/_protected/settings/plans'
+import { Route as AppProtectedSettingsPreferencesRouteImport } from './routes/_app/_protected/settings/preferences'
+import { Route as AppProtectedSettingsProfileRouteImport } from './routes/_app/_protected/settings/profile'
+import { Route as AppProtectedSettingsSecurityRouteImport } from './routes/_app/_protected/settings/security'
+import { Route as AppProtectedSettingsWorkspaceRouteImport } from './routes/_app/_protected/settings/workspace'
 import { Route as ApiAuthStripeWebhookRouteImport } from './routes/api/auth/stripe/webhook'
 import { Route as ApiUsersAvatarUserIdRouteImport } from './routes/api/users/avatar/$userId'
-import { Route as AppProtectedWorkspaceProjectsProjectIdRouteImport } from './routes/_app/_protected/$workspace/projects.$projectId'
-import { Route as AppProtectedWorkspaceSettingsIndexRouteImport } from './routes/_app/_protected/$workspace/settings/index'
-import { Route as AppProtectedWorkspaceSettingsBillingRouteImport } from './routes/_app/_protected/$workspace/settings/billing'
-import { Route as AppProtectedWorkspaceSettingsGeneralRouteImport } from './routes/_app/_protected/$workspace/settings/general'
-import { Route as AppProtectedWorkspaceSettingsMembersRouteImport } from './routes/_app/_protected/$workspace/settings/members'
-import { Route as AppProtectedWorkspaceSettingsPlansRouteImport } from './routes/_app/_protected/$workspace/settings/plans'
 import { Route as AppProtectedAdminBillingLedgerRouteImport } from './routes/_app/_protected/admin/billing.ledger'
 import { Route as AppProtectedAdminBillingStripeToolsRouteImport } from './routes/_app/_protected/admin/billing.stripe-tools'
 import { Route as AppProtectedAdminBillingStuckStatesRouteImport } from './routes/_app/_protected/admin/billing.stuck-states'
@@ -88,14 +85,10 @@ import { Route as AppProtectedAdminProjectsIndexRouteImport } from './routes/_ap
 import { Route as AppProtectedAdminProjectsProjectIdRouteImport } from './routes/_app/_protected/admin/projects.$projectId'
 import { Route as AppProtectedAdminUsersIndexRouteImport } from './routes/_app/_protected/admin/users.index'
 import { Route as AppProtectedAdminUsersUserIdRouteImport } from './routes/_app/_protected/admin/users.$userId'
-import { Route as AppProtectedSettingsAccountIntegrationsRouteImport } from './routes/_app/_protected/settings/account/integrations'
-import { Route as AppProtectedSettingsAccountPreferencesRouteImport } from './routes/_app/_protected/settings/account/preferences'
-import { Route as AppProtectedSettingsAccountProfileRouteImport } from './routes/_app/_protected/settings/account/profile'
-import { Route as AppProtectedSettingsAccountSecurityRouteImport } from './routes/_app/_protected/settings/account/security'
+import { Route as AppProtectedProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRouteImport } from './routes/_app/_protected/projects.$projectId/studies.$studyId.checklists.$checklistId'
 import { Route as ApiOrgsOrgIdProjectsProjectIdStudiesStudyIdPdfsRouteImport } from './routes/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs'
-import { Route as AppProtectedWorkspaceProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRouteImport } from './routes/_app/_protected/$workspace/projects.$projectId/studies.$studyId.checklists.$checklistId'
+import { Route as AppProtectedProjectsProjectIdStudiesStudyIdReconcileChecklist1IdChecklist2IdRouteImport } from './routes/_app/_protected/projects.$projectId/studies.$studyId.reconcile.$checklist1Id.$checklist2Id'
 import { Route as ApiOrgsOrgIdProjectsProjectIdStudiesStudyIdPdfsFileNameRouteImport } from './routes/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs/$fileName'
-import { Route as AppProtectedWorkspaceProjectsProjectIdStudiesStudyIdReconcileChecklist1IdChecklist2IdRouteImport } from './routes/_app/_protected/$workspace/projects.$projectId/studies.$studyId.reconcile.$checklist1Id.$checklist2Id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -254,22 +247,11 @@ const SecurityDisclosureRoute = SecurityDisclosureRouteImport.update({
   path: '/security/disclosure',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppProtectedWorkspaceRoute = AppProtectedWorkspaceRouteImport.update({
-  id: '/$workspace',
-  path: '/$workspace',
-  getParentRoute: () => AppProtectedRoute,
-} as any)
 const AppProtectedAdminRoute = AppProtectedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => AppProtectedRoute,
 } as any)
-const AppProtectedCreateWorkspaceRoute =
-  AppProtectedCreateWorkspaceRouteImport.update({
-    id: '/create-workspace',
-    path: '/create-workspace',
-    getParentRoute: () => AppProtectedRoute,
-  } as any)
 const AppProtectedSettingsRoute = AppProtectedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -362,18 +344,6 @@ const ApiUsersAvatarRoute = ApiUsersAvatarRouteImport.update({
   path: '/api/users/avatar',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppProtectedWorkspaceIndexRoute =
-  AppProtectedWorkspaceIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AppProtectedWorkspaceRoute,
-  } as any)
-const AppProtectedWorkspaceSettingsRoute =
-  AppProtectedWorkspaceSettingsRouteImport.update({
-    id: '/settings',
-    path: '/settings',
-    getParentRoute: () => AppProtectedWorkspaceRoute,
-  } as any)
 const AppProtectedAdminIndexRoute = AppProtectedAdminIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -397,10 +367,10 @@ const AppProtectedAdminStorageRoute =
     path: '/storage',
     getParentRoute: () => AppProtectedAdminRoute,
   } as any)
-const AppProtectedProjectsSplatRoute =
-  AppProtectedProjectsSplatRouteImport.update({
-    id: '/projects/$',
-    path: '/projects/$',
+const AppProtectedProjectsProjectIdRoute =
+  AppProtectedProjectsProjectIdRouteImport.update({
+    id: '/projects/$projectId',
+    path: '/projects/$projectId',
     getParentRoute: () => AppProtectedRoute,
   } as any)
 const AppProtectedSettingsIndexRoute =
@@ -409,10 +379,52 @@ const AppProtectedSettingsIndexRoute =
     path: '/',
     getParentRoute: () => AppProtectedSettingsRoute,
   } as any)
-const AppProtectedSettingsSplatRoute =
-  AppProtectedSettingsSplatRouteImport.update({
-    id: '/$',
-    path: '/$',
+const AppProtectedSettingsBillingRoute =
+  AppProtectedSettingsBillingRouteImport.update({
+    id: '/billing',
+    path: '/billing',
+    getParentRoute: () => AppProtectedSettingsRoute,
+  } as any)
+const AppProtectedSettingsIntegrationsRoute =
+  AppProtectedSettingsIntegrationsRouteImport.update({
+    id: '/integrations',
+    path: '/integrations',
+    getParentRoute: () => AppProtectedSettingsRoute,
+  } as any)
+const AppProtectedSettingsMembersRoute =
+  AppProtectedSettingsMembersRouteImport.update({
+    id: '/members',
+    path: '/members',
+    getParentRoute: () => AppProtectedSettingsRoute,
+  } as any)
+const AppProtectedSettingsPlansRoute =
+  AppProtectedSettingsPlansRouteImport.update({
+    id: '/plans',
+    path: '/plans',
+    getParentRoute: () => AppProtectedSettingsRoute,
+  } as any)
+const AppProtectedSettingsPreferencesRoute =
+  AppProtectedSettingsPreferencesRouteImport.update({
+    id: '/preferences',
+    path: '/preferences',
+    getParentRoute: () => AppProtectedSettingsRoute,
+  } as any)
+const AppProtectedSettingsProfileRoute =
+  AppProtectedSettingsProfileRouteImport.update({
+    id: '/profile',
+    path: '/profile',
+    getParentRoute: () => AppProtectedSettingsRoute,
+  } as any)
+const AppProtectedSettingsSecurityRoute =
+  AppProtectedSettingsSecurityRouteImport.update({
+    id: '/security',
+    path: '/security',
+    getParentRoute: () => AppProtectedSettingsRoute,
+  } as any)
+const AppProtectedSettingsWorkspaceRoute =
+  AppProtectedSettingsWorkspaceRouteImport.update({
+    id: '/workspace',
+    path: '/workspace',
     getParentRoute: () => AppProtectedSettingsRoute,
   } as any)
 const ApiAuthStripeWebhookRoute = ApiAuthStripeWebhookRouteImport.update({
@@ -425,42 +437,6 @@ const ApiUsersAvatarUserIdRoute = ApiUsersAvatarUserIdRouteImport.update({
   path: '/$userId',
   getParentRoute: () => ApiUsersAvatarRoute,
 } as any)
-const AppProtectedWorkspaceProjectsProjectIdRoute =
-  AppProtectedWorkspaceProjectsProjectIdRouteImport.update({
-    id: '/projects/$projectId',
-    path: '/projects/$projectId',
-    getParentRoute: () => AppProtectedWorkspaceRoute,
-  } as any)
-const AppProtectedWorkspaceSettingsIndexRoute =
-  AppProtectedWorkspaceSettingsIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AppProtectedWorkspaceSettingsRoute,
-  } as any)
-const AppProtectedWorkspaceSettingsBillingRoute =
-  AppProtectedWorkspaceSettingsBillingRouteImport.update({
-    id: '/billing',
-    path: '/billing',
-    getParentRoute: () => AppProtectedWorkspaceSettingsRoute,
-  } as any)
-const AppProtectedWorkspaceSettingsGeneralRoute =
-  AppProtectedWorkspaceSettingsGeneralRouteImport.update({
-    id: '/general',
-    path: '/general',
-    getParentRoute: () => AppProtectedWorkspaceSettingsRoute,
-  } as any)
-const AppProtectedWorkspaceSettingsMembersRoute =
-  AppProtectedWorkspaceSettingsMembersRouteImport.update({
-    id: '/members',
-    path: '/members',
-    getParentRoute: () => AppProtectedWorkspaceSettingsRoute,
-  } as any)
-const AppProtectedWorkspaceSettingsPlansRoute =
-  AppProtectedWorkspaceSettingsPlansRouteImport.update({
-    id: '/plans',
-    path: '/plans',
-    getParentRoute: () => AppProtectedWorkspaceSettingsRoute,
-  } as any)
 const AppProtectedAdminBillingLedgerRoute =
   AppProtectedAdminBillingLedgerRouteImport.update({
     id: '/billing/ledger',
@@ -515,42 +491,26 @@ const AppProtectedAdminUsersUserIdRoute =
     path: '/users/$userId',
     getParentRoute: () => AppProtectedAdminRoute,
   } as any)
-const AppProtectedSettingsAccountIntegrationsRoute =
-  AppProtectedSettingsAccountIntegrationsRouteImport.update({
-    id: '/account/integrations',
-    path: '/account/integrations',
-    getParentRoute: () => AppProtectedSettingsRoute,
-  } as any)
-const AppProtectedSettingsAccountPreferencesRoute =
-  AppProtectedSettingsAccountPreferencesRouteImport.update({
-    id: '/account/preferences',
-    path: '/account/preferences',
-    getParentRoute: () => AppProtectedSettingsRoute,
-  } as any)
-const AppProtectedSettingsAccountProfileRoute =
-  AppProtectedSettingsAccountProfileRouteImport.update({
-    id: '/account/profile',
-    path: '/account/profile',
-    getParentRoute: () => AppProtectedSettingsRoute,
-  } as any)
-const AppProtectedSettingsAccountSecurityRoute =
-  AppProtectedSettingsAccountSecurityRouteImport.update({
-    id: '/account/security',
-    path: '/account/security',
-    getParentRoute: () => AppProtectedSettingsRoute,
-  } as any)
+const AppProtectedProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRoute =
+  AppProtectedProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRouteImport.update(
+    {
+      id: '/studies/$studyId/checklists/$checklistId',
+      path: '/studies/$studyId/checklists/$checklistId',
+      getParentRoute: () => AppProtectedProjectsProjectIdRoute,
+    } as any,
+  )
 const ApiOrgsOrgIdProjectsProjectIdStudiesStudyIdPdfsRoute =
   ApiOrgsOrgIdProjectsProjectIdStudiesStudyIdPdfsRouteImport.update({
     id: '/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs',
     path: '/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs',
     getParentRoute: () => rootRouteImport,
   } as any)
-const AppProtectedWorkspaceProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRoute =
-  AppProtectedWorkspaceProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRouteImport.update(
+const AppProtectedProjectsProjectIdStudiesStudyIdReconcileChecklist1IdChecklist2IdRoute =
+  AppProtectedProjectsProjectIdStudiesStudyIdReconcileChecklist1IdChecklist2IdRouteImport.update(
     {
-      id: '/studies/$studyId/checklists/$checklistId',
-      path: '/studies/$studyId/checklists/$checklistId',
-      getParentRoute: () => AppProtectedWorkspaceProjectsProjectIdRoute,
+      id: '/studies/$studyId/reconcile/$checklist1Id/$checklist2Id',
+      path: '/studies/$studyId/reconcile/$checklist1Id/$checklist2Id',
+      getParentRoute: () => AppProtectedProjectsProjectIdRoute,
     } as any,
   )
 const ApiOrgsOrgIdProjectsProjectIdStudiesStudyIdPdfsFileNameRoute =
@@ -559,14 +519,6 @@ const ApiOrgsOrgIdProjectsProjectIdStudiesStudyIdPdfsFileNameRoute =
     path: '/$fileName',
     getParentRoute: () => ApiOrgsOrgIdProjectsProjectIdStudiesStudyIdPdfsRoute,
   } as any)
-const AppProtectedWorkspaceProjectsProjectIdStudiesStudyIdReconcileChecklist1IdChecklist2IdRoute =
-  AppProtectedWorkspaceProjectsProjectIdStudiesStudyIdReconcileChecklist1IdChecklist2IdRouteImport.update(
-    {
-      id: '/studies/$studyId/reconcile/$checklist1Id/$checklist2Id',
-      path: '/studies/$studyId/reconcile/$checklist1Id/$checklist2Id',
-      getParentRoute: () => AppProtectedWorkspaceProjectsProjectIdRoute,
-    } as any,
-  )
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -598,9 +550,7 @@ export interface FileRoutesByFullPath {
   '/resources/robins-i-v1-vs-v2': typeof ResourcesRobinsIV1VsV2Route
   '/security/disclosure': typeof SecurityDisclosureRoute
   '/resources/': typeof ResourcesIndexRoute
-  '/$workspace': typeof AppProtectedWorkspaceRouteWithChildren
   '/admin': typeof AppProtectedAdminRouteWithChildren
-  '/create-workspace': typeof AppProtectedCreateWorkspaceRoute
   '/settings': typeof AppProtectedSettingsRouteWithChildren
   '/checklist/$checklistId': typeof AppChecklistChecklistIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -619,40 +569,35 @@ export interface FileRoutesByFullPath {
   '/api/test/verify-email': typeof ApiTestVerifyEmailRoute
   '/api/users/avatar': typeof ApiUsersAvatarRouteWithChildren
   '/checklist/': typeof AppChecklistIndexRoute
-  '/$workspace/settings': typeof AppProtectedWorkspaceSettingsRouteWithChildren
   '/admin/announcements': typeof AppProtectedAdminAnnouncementsRoute
   '/admin/database': typeof AppProtectedAdminDatabaseRoute
   '/admin/storage': typeof AppProtectedAdminStorageRoute
-  '/projects/$': typeof AppProtectedProjectsSplatRoute
-  '/settings/$': typeof AppProtectedSettingsSplatRoute
+  '/projects/$projectId': typeof AppProtectedProjectsProjectIdRouteWithChildren
+  '/settings/billing': typeof AppProtectedSettingsBillingRoute
+  '/settings/integrations': typeof AppProtectedSettingsIntegrationsRoute
+  '/settings/members': typeof AppProtectedSettingsMembersRoute
+  '/settings/plans': typeof AppProtectedSettingsPlansRoute
+  '/settings/preferences': typeof AppProtectedSettingsPreferencesRoute
+  '/settings/profile': typeof AppProtectedSettingsProfileRoute
+  '/settings/security': typeof AppProtectedSettingsSecurityRoute
+  '/settings/workspace': typeof AppProtectedSettingsWorkspaceRoute
   '/api/auth/stripe/webhook': typeof ApiAuthStripeWebhookRoute
   '/api/users/avatar/$userId': typeof ApiUsersAvatarUserIdRoute
-  '/$workspace/': typeof AppProtectedWorkspaceIndexRoute
   '/admin/': typeof AppProtectedAdminIndexRoute
   '/settings/': typeof AppProtectedSettingsIndexRoute
-  '/$workspace/projects/$projectId': typeof AppProtectedWorkspaceProjectsProjectIdRouteWithChildren
-  '/$workspace/settings/billing': typeof AppProtectedWorkspaceSettingsBillingRoute
-  '/$workspace/settings/general': typeof AppProtectedWorkspaceSettingsGeneralRoute
-  '/$workspace/settings/members': typeof AppProtectedWorkspaceSettingsMembersRoute
-  '/$workspace/settings/plans': typeof AppProtectedWorkspaceSettingsPlansRoute
   '/admin/billing/ledger': typeof AppProtectedAdminBillingLedgerRoute
   '/admin/billing/stripe-tools': typeof AppProtectedAdminBillingStripeToolsRoute
   '/admin/billing/stuck-states': typeof AppProtectedAdminBillingStuckStatesRoute
   '/admin/orgs/$orgId': typeof AppProtectedAdminOrgsOrgIdRoute
   '/admin/projects/$projectId': typeof AppProtectedAdminProjectsProjectIdRoute
   '/admin/users/$userId': typeof AppProtectedAdminUsersUserIdRoute
-  '/settings/account/integrations': typeof AppProtectedSettingsAccountIntegrationsRoute
-  '/settings/account/preferences': typeof AppProtectedSettingsAccountPreferencesRoute
-  '/settings/account/profile': typeof AppProtectedSettingsAccountProfileRoute
-  '/settings/account/security': typeof AppProtectedSettingsAccountSecurityRoute
-  '/$workspace/settings/': typeof AppProtectedWorkspaceSettingsIndexRoute
   '/admin/orgs/': typeof AppProtectedAdminOrgsIndexRoute
   '/admin/projects/': typeof AppProtectedAdminProjectsIndexRoute
   '/admin/users/': typeof AppProtectedAdminUsersIndexRoute
+  '/projects/$projectId/studies/$studyId/checklists/$checklistId': typeof AppProtectedProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRoute
   '/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs': typeof ApiOrgsOrgIdProjectsProjectIdStudiesStudyIdPdfsRouteWithChildren
-  '/$workspace/projects/$projectId/studies/$studyId/checklists/$checklistId': typeof AppProtectedWorkspaceProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRoute
+  '/projects/$projectId/studies/$studyId/reconcile/$checklist1Id/$checklist2Id': typeof AppProtectedProjectsProjectIdStudiesStudyIdReconcileChecklist1IdChecklist2IdRoute
   '/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs/$fileName': typeof ApiOrgsOrgIdProjectsProjectIdStudiesStudyIdPdfsFileNameRoute
-  '/$workspace/projects/$projectId/studies/$studyId/reconcile/$checklist1Id/$checklist2Id': typeof AppProtectedWorkspaceProjectsProjectIdStudiesStudyIdReconcileChecklist1IdChecklist2IdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -683,7 +628,6 @@ export interface FileRoutesByTo {
   '/resources/robins-i-v1-vs-v2': typeof ResourcesRobinsIV1VsV2Route
   '/security/disclosure': typeof SecurityDisclosureRoute
   '/resources': typeof ResourcesIndexRoute
-  '/create-workspace': typeof AppProtectedCreateWorkspaceRoute
   '/checklist/$checklistId': typeof AppChecklistChecklistIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
@@ -704,36 +648,32 @@ export interface FileRoutesByTo {
   '/admin/announcements': typeof AppProtectedAdminAnnouncementsRoute
   '/admin/database': typeof AppProtectedAdminDatabaseRoute
   '/admin/storage': typeof AppProtectedAdminStorageRoute
-  '/projects/$': typeof AppProtectedProjectsSplatRoute
-  '/settings/$': typeof AppProtectedSettingsSplatRoute
+  '/projects/$projectId': typeof AppProtectedProjectsProjectIdRouteWithChildren
+  '/settings/billing': typeof AppProtectedSettingsBillingRoute
+  '/settings/integrations': typeof AppProtectedSettingsIntegrationsRoute
+  '/settings/members': typeof AppProtectedSettingsMembersRoute
+  '/settings/plans': typeof AppProtectedSettingsPlansRoute
+  '/settings/preferences': typeof AppProtectedSettingsPreferencesRoute
+  '/settings/profile': typeof AppProtectedSettingsProfileRoute
+  '/settings/security': typeof AppProtectedSettingsSecurityRoute
+  '/settings/workspace': typeof AppProtectedSettingsWorkspaceRoute
   '/api/auth/stripe/webhook': typeof ApiAuthStripeWebhookRoute
   '/api/users/avatar/$userId': typeof ApiUsersAvatarUserIdRoute
-  '/$workspace': typeof AppProtectedWorkspaceIndexRoute
   '/admin': typeof AppProtectedAdminIndexRoute
   '/settings': typeof AppProtectedSettingsIndexRoute
-  '/$workspace/projects/$projectId': typeof AppProtectedWorkspaceProjectsProjectIdRouteWithChildren
-  '/$workspace/settings/billing': typeof AppProtectedWorkspaceSettingsBillingRoute
-  '/$workspace/settings/general': typeof AppProtectedWorkspaceSettingsGeneralRoute
-  '/$workspace/settings/members': typeof AppProtectedWorkspaceSettingsMembersRoute
-  '/$workspace/settings/plans': typeof AppProtectedWorkspaceSettingsPlansRoute
   '/admin/billing/ledger': typeof AppProtectedAdminBillingLedgerRoute
   '/admin/billing/stripe-tools': typeof AppProtectedAdminBillingStripeToolsRoute
   '/admin/billing/stuck-states': typeof AppProtectedAdminBillingStuckStatesRoute
   '/admin/orgs/$orgId': typeof AppProtectedAdminOrgsOrgIdRoute
   '/admin/projects/$projectId': typeof AppProtectedAdminProjectsProjectIdRoute
   '/admin/users/$userId': typeof AppProtectedAdminUsersUserIdRoute
-  '/settings/account/integrations': typeof AppProtectedSettingsAccountIntegrationsRoute
-  '/settings/account/preferences': typeof AppProtectedSettingsAccountPreferencesRoute
-  '/settings/account/profile': typeof AppProtectedSettingsAccountProfileRoute
-  '/settings/account/security': typeof AppProtectedSettingsAccountSecurityRoute
-  '/$workspace/settings': typeof AppProtectedWorkspaceSettingsIndexRoute
   '/admin/orgs': typeof AppProtectedAdminOrgsIndexRoute
   '/admin/projects': typeof AppProtectedAdminProjectsIndexRoute
   '/admin/users': typeof AppProtectedAdminUsersIndexRoute
+  '/projects/$projectId/studies/$studyId/checklists/$checklistId': typeof AppProtectedProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRoute
   '/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs': typeof ApiOrgsOrgIdProjectsProjectIdStudiesStudyIdPdfsRouteWithChildren
-  '/$workspace/projects/$projectId/studies/$studyId/checklists/$checklistId': typeof AppProtectedWorkspaceProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRoute
+  '/projects/$projectId/studies/$studyId/reconcile/$checklist1Id/$checklist2Id': typeof AppProtectedProjectsProjectIdStudiesStudyIdReconcileChecklist1IdChecklist2IdRoute
   '/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs/$fileName': typeof ApiOrgsOrgIdProjectsProjectIdStudiesStudyIdPdfsFileNameRoute
-  '/$workspace/projects/$projectId/studies/$studyId/reconcile/$checklist1Id/$checklist2Id': typeof AppProtectedWorkspaceProjectsProjectIdStudiesStudyIdReconcileChecklist1IdChecklist2IdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -769,9 +709,7 @@ export interface FileRoutesById {
   '/resources/robins-i-v1-vs-v2': typeof ResourcesRobinsIV1VsV2Route
   '/security_/disclosure': typeof SecurityDisclosureRoute
   '/resources/': typeof ResourcesIndexRoute
-  '/_app/_protected/$workspace': typeof AppProtectedWorkspaceRouteWithChildren
   '/_app/_protected/admin': typeof AppProtectedAdminRouteWithChildren
-  '/_app/_protected/create-workspace': typeof AppProtectedCreateWorkspaceRoute
   '/_app/_protected/settings': typeof AppProtectedSettingsRouteWithChildren
   '/_app/checklist/$checklistId': typeof AppChecklistChecklistIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -790,40 +728,35 @@ export interface FileRoutesById {
   '/api/test/verify-email': typeof ApiTestVerifyEmailRoute
   '/api/users/avatar': typeof ApiUsersAvatarRouteWithChildren
   '/_app/checklist/': typeof AppChecklistIndexRoute
-  '/_app/_protected/$workspace/settings': typeof AppProtectedWorkspaceSettingsRouteWithChildren
   '/_app/_protected/admin/announcements': typeof AppProtectedAdminAnnouncementsRoute
   '/_app/_protected/admin/database': typeof AppProtectedAdminDatabaseRoute
   '/_app/_protected/admin/storage': typeof AppProtectedAdminStorageRoute
-  '/_app/_protected/projects/$': typeof AppProtectedProjectsSplatRoute
-  '/_app/_protected/settings/$': typeof AppProtectedSettingsSplatRoute
+  '/_app/_protected/projects/$projectId': typeof AppProtectedProjectsProjectIdRouteWithChildren
+  '/_app/_protected/settings/billing': typeof AppProtectedSettingsBillingRoute
+  '/_app/_protected/settings/integrations': typeof AppProtectedSettingsIntegrationsRoute
+  '/_app/_protected/settings/members': typeof AppProtectedSettingsMembersRoute
+  '/_app/_protected/settings/plans': typeof AppProtectedSettingsPlansRoute
+  '/_app/_protected/settings/preferences': typeof AppProtectedSettingsPreferencesRoute
+  '/_app/_protected/settings/profile': typeof AppProtectedSettingsProfileRoute
+  '/_app/_protected/settings/security': typeof AppProtectedSettingsSecurityRoute
+  '/_app/_protected/settings/workspace': typeof AppProtectedSettingsWorkspaceRoute
   '/api/auth/stripe/webhook': typeof ApiAuthStripeWebhookRoute
   '/api/users/avatar/$userId': typeof ApiUsersAvatarUserIdRoute
-  '/_app/_protected/$workspace/': typeof AppProtectedWorkspaceIndexRoute
   '/_app/_protected/admin/': typeof AppProtectedAdminIndexRoute
   '/_app/_protected/settings/': typeof AppProtectedSettingsIndexRoute
-  '/_app/_protected/$workspace/projects/$projectId': typeof AppProtectedWorkspaceProjectsProjectIdRouteWithChildren
-  '/_app/_protected/$workspace/settings/billing': typeof AppProtectedWorkspaceSettingsBillingRoute
-  '/_app/_protected/$workspace/settings/general': typeof AppProtectedWorkspaceSettingsGeneralRoute
-  '/_app/_protected/$workspace/settings/members': typeof AppProtectedWorkspaceSettingsMembersRoute
-  '/_app/_protected/$workspace/settings/plans': typeof AppProtectedWorkspaceSettingsPlansRoute
   '/_app/_protected/admin/billing/ledger': typeof AppProtectedAdminBillingLedgerRoute
   '/_app/_protected/admin/billing/stripe-tools': typeof AppProtectedAdminBillingStripeToolsRoute
   '/_app/_protected/admin/billing/stuck-states': typeof AppProtectedAdminBillingStuckStatesRoute
   '/_app/_protected/admin/orgs/$orgId': typeof AppProtectedAdminOrgsOrgIdRoute
   '/_app/_protected/admin/projects/$projectId': typeof AppProtectedAdminProjectsProjectIdRoute
   '/_app/_protected/admin/users/$userId': typeof AppProtectedAdminUsersUserIdRoute
-  '/_app/_protected/settings/account/integrations': typeof AppProtectedSettingsAccountIntegrationsRoute
-  '/_app/_protected/settings/account/preferences': typeof AppProtectedSettingsAccountPreferencesRoute
-  '/_app/_protected/settings/account/profile': typeof AppProtectedSettingsAccountProfileRoute
-  '/_app/_protected/settings/account/security': typeof AppProtectedSettingsAccountSecurityRoute
-  '/_app/_protected/$workspace/settings/': typeof AppProtectedWorkspaceSettingsIndexRoute
   '/_app/_protected/admin/orgs/': typeof AppProtectedAdminOrgsIndexRoute
   '/_app/_protected/admin/projects/': typeof AppProtectedAdminProjectsIndexRoute
   '/_app/_protected/admin/users/': typeof AppProtectedAdminUsersIndexRoute
+  '/_app/_protected/projects/$projectId/studies/$studyId/checklists/$checklistId': typeof AppProtectedProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRoute
   '/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs': typeof ApiOrgsOrgIdProjectsProjectIdStudiesStudyIdPdfsRouteWithChildren
-  '/_app/_protected/$workspace/projects/$projectId/studies/$studyId/checklists/$checklistId': typeof AppProtectedWorkspaceProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRoute
+  '/_app/_protected/projects/$projectId/studies/$studyId/reconcile/$checklist1Id/$checklist2Id': typeof AppProtectedProjectsProjectIdStudiesStudyIdReconcileChecklist1IdChecklist2IdRoute
   '/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs/$fileName': typeof ApiOrgsOrgIdProjectsProjectIdStudiesStudyIdPdfsFileNameRoute
-  '/_app/_protected/$workspace/projects/$projectId/studies/$studyId/reconcile/$checklist1Id/$checklist2Id': typeof AppProtectedWorkspaceProjectsProjectIdStudiesStudyIdReconcileChecklist1IdChecklist2IdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -857,9 +790,7 @@ export interface FileRouteTypes {
     | '/resources/robins-i-v1-vs-v2'
     | '/security/disclosure'
     | '/resources/'
-    | '/$workspace'
     | '/admin'
-    | '/create-workspace'
     | '/settings'
     | '/checklist/$checklistId'
     | '/api/auth/$'
@@ -878,40 +809,35 @@ export interface FileRouteTypes {
     | '/api/test/verify-email'
     | '/api/users/avatar'
     | '/checklist/'
-    | '/$workspace/settings'
     | '/admin/announcements'
     | '/admin/database'
     | '/admin/storage'
-    | '/projects/$'
-    | '/settings/$'
+    | '/projects/$projectId'
+    | '/settings/billing'
+    | '/settings/integrations'
+    | '/settings/members'
+    | '/settings/plans'
+    | '/settings/preferences'
+    | '/settings/profile'
+    | '/settings/security'
+    | '/settings/workspace'
     | '/api/auth/stripe/webhook'
     | '/api/users/avatar/$userId'
-    | '/$workspace/'
     | '/admin/'
     | '/settings/'
-    | '/$workspace/projects/$projectId'
-    | '/$workspace/settings/billing'
-    | '/$workspace/settings/general'
-    | '/$workspace/settings/members'
-    | '/$workspace/settings/plans'
     | '/admin/billing/ledger'
     | '/admin/billing/stripe-tools'
     | '/admin/billing/stuck-states'
     | '/admin/orgs/$orgId'
     | '/admin/projects/$projectId'
     | '/admin/users/$userId'
-    | '/settings/account/integrations'
-    | '/settings/account/preferences'
-    | '/settings/account/profile'
-    | '/settings/account/security'
-    | '/$workspace/settings/'
     | '/admin/orgs/'
     | '/admin/projects/'
     | '/admin/users/'
+    | '/projects/$projectId/studies/$studyId/checklists/$checklistId'
     | '/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs'
-    | '/$workspace/projects/$projectId/studies/$studyId/checklists/$checklistId'
+    | '/projects/$projectId/studies/$studyId/reconcile/$checklist1Id/$checklist2Id'
     | '/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs/$fileName'
-    | '/$workspace/projects/$projectId/studies/$studyId/reconcile/$checklist1Id/$checklist2Id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -942,7 +868,6 @@ export interface FileRouteTypes {
     | '/resources/robins-i-v1-vs-v2'
     | '/security/disclosure'
     | '/resources'
-    | '/create-workspace'
     | '/checklist/$checklistId'
     | '/api/auth/$'
     | '/api/auth/session'
@@ -963,36 +888,32 @@ export interface FileRouteTypes {
     | '/admin/announcements'
     | '/admin/database'
     | '/admin/storage'
-    | '/projects/$'
-    | '/settings/$'
+    | '/projects/$projectId'
+    | '/settings/billing'
+    | '/settings/integrations'
+    | '/settings/members'
+    | '/settings/plans'
+    | '/settings/preferences'
+    | '/settings/profile'
+    | '/settings/security'
+    | '/settings/workspace'
     | '/api/auth/stripe/webhook'
     | '/api/users/avatar/$userId'
-    | '/$workspace'
     | '/admin'
     | '/settings'
-    | '/$workspace/projects/$projectId'
-    | '/$workspace/settings/billing'
-    | '/$workspace/settings/general'
-    | '/$workspace/settings/members'
-    | '/$workspace/settings/plans'
     | '/admin/billing/ledger'
     | '/admin/billing/stripe-tools'
     | '/admin/billing/stuck-states'
     | '/admin/orgs/$orgId'
     | '/admin/projects/$projectId'
     | '/admin/users/$userId'
-    | '/settings/account/integrations'
-    | '/settings/account/preferences'
-    | '/settings/account/profile'
-    | '/settings/account/security'
-    | '/$workspace/settings'
     | '/admin/orgs'
     | '/admin/projects'
     | '/admin/users'
+    | '/projects/$projectId/studies/$studyId/checklists/$checklistId'
     | '/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs'
-    | '/$workspace/projects/$projectId/studies/$studyId/checklists/$checklistId'
+    | '/projects/$projectId/studies/$studyId/reconcile/$checklist1Id/$checklist2Id'
     | '/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs/$fileName'
-    | '/$workspace/projects/$projectId/studies/$studyId/reconcile/$checklist1Id/$checklist2Id'
   id:
     | '__root__'
     | '/'
@@ -1027,9 +948,7 @@ export interface FileRouteTypes {
     | '/resources/robins-i-v1-vs-v2'
     | '/security_/disclosure'
     | '/resources/'
-    | '/_app/_protected/$workspace'
     | '/_app/_protected/admin'
-    | '/_app/_protected/create-workspace'
     | '/_app/_protected/settings'
     | '/_app/checklist/$checklistId'
     | '/api/auth/$'
@@ -1048,40 +967,35 @@ export interface FileRouteTypes {
     | '/api/test/verify-email'
     | '/api/users/avatar'
     | '/_app/checklist/'
-    | '/_app/_protected/$workspace/settings'
     | '/_app/_protected/admin/announcements'
     | '/_app/_protected/admin/database'
     | '/_app/_protected/admin/storage'
-    | '/_app/_protected/projects/$'
-    | '/_app/_protected/settings/$'
+    | '/_app/_protected/projects/$projectId'
+    | '/_app/_protected/settings/billing'
+    | '/_app/_protected/settings/integrations'
+    | '/_app/_protected/settings/members'
+    | '/_app/_protected/settings/plans'
+    | '/_app/_protected/settings/preferences'
+    | '/_app/_protected/settings/profile'
+    | '/_app/_protected/settings/security'
+    | '/_app/_protected/settings/workspace'
     | '/api/auth/stripe/webhook'
     | '/api/users/avatar/$userId'
-    | '/_app/_protected/$workspace/'
     | '/_app/_protected/admin/'
     | '/_app/_protected/settings/'
-    | '/_app/_protected/$workspace/projects/$projectId'
-    | '/_app/_protected/$workspace/settings/billing'
-    | '/_app/_protected/$workspace/settings/general'
-    | '/_app/_protected/$workspace/settings/members'
-    | '/_app/_protected/$workspace/settings/plans'
     | '/_app/_protected/admin/billing/ledger'
     | '/_app/_protected/admin/billing/stripe-tools'
     | '/_app/_protected/admin/billing/stuck-states'
     | '/_app/_protected/admin/orgs/$orgId'
     | '/_app/_protected/admin/projects/$projectId'
     | '/_app/_protected/admin/users/$userId'
-    | '/_app/_protected/settings/account/integrations'
-    | '/_app/_protected/settings/account/preferences'
-    | '/_app/_protected/settings/account/profile'
-    | '/_app/_protected/settings/account/security'
-    | '/_app/_protected/$workspace/settings/'
     | '/_app/_protected/admin/orgs/'
     | '/_app/_protected/admin/projects/'
     | '/_app/_protected/admin/users/'
+    | '/_app/_protected/projects/$projectId/studies/$studyId/checklists/$checklistId'
     | '/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs'
-    | '/_app/_protected/$workspace/projects/$projectId/studies/$studyId/checklists/$checklistId'
+    | '/_app/_protected/projects/$projectId/studies/$studyId/reconcile/$checklist1Id/$checklist2Id'
     | '/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs/$fileName'
-    | '/_app/_protected/$workspace/projects/$projectId/studies/$studyId/reconcile/$checklist1Id/$checklist2Id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1354,25 +1268,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SecurityDisclosureRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app/_protected/$workspace': {
-      id: '/_app/_protected/$workspace'
-      path: '/$workspace'
-      fullPath: '/$workspace'
-      preLoaderRoute: typeof AppProtectedWorkspaceRouteImport
-      parentRoute: typeof AppProtectedRoute
-    }
     '/_app/_protected/admin': {
       id: '/_app/_protected/admin'
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AppProtectedAdminRouteImport
-      parentRoute: typeof AppProtectedRoute
-    }
-    '/_app/_protected/create-workspace': {
-      id: '/_app/_protected/create-workspace'
-      path: '/create-workspace'
-      fullPath: '/create-workspace'
-      preLoaderRoute: typeof AppProtectedCreateWorkspaceRouteImport
       parentRoute: typeof AppProtectedRoute
     }
     '/_app/_protected/settings': {
@@ -1501,20 +1401,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiUsersAvatarRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app/_protected/$workspace/': {
-      id: '/_app/_protected/$workspace/'
-      path: '/'
-      fullPath: '/$workspace/'
-      preLoaderRoute: typeof AppProtectedWorkspaceIndexRouteImport
-      parentRoute: typeof AppProtectedWorkspaceRoute
-    }
-    '/_app/_protected/$workspace/settings': {
-      id: '/_app/_protected/$workspace/settings'
-      path: '/settings'
-      fullPath: '/$workspace/settings'
-      preLoaderRoute: typeof AppProtectedWorkspaceSettingsRouteImport
-      parentRoute: typeof AppProtectedWorkspaceRoute
-    }
     '/_app/_protected/admin/': {
       id: '/_app/_protected/admin/'
       path: '/'
@@ -1543,11 +1429,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProtectedAdminStorageRouteImport
       parentRoute: typeof AppProtectedAdminRoute
     }
-    '/_app/_protected/projects/$': {
-      id: '/_app/_protected/projects/$'
-      path: '/projects/$'
-      fullPath: '/projects/$'
-      preLoaderRoute: typeof AppProtectedProjectsSplatRouteImport
+    '/_app/_protected/projects/$projectId': {
+      id: '/_app/_protected/projects/$projectId'
+      path: '/projects/$projectId'
+      fullPath: '/projects/$projectId'
+      preLoaderRoute: typeof AppProtectedProjectsProjectIdRouteImport
       parentRoute: typeof AppProtectedRoute
     }
     '/_app/_protected/settings/': {
@@ -1557,11 +1443,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProtectedSettingsIndexRouteImport
       parentRoute: typeof AppProtectedSettingsRoute
     }
-    '/_app/_protected/settings/$': {
-      id: '/_app/_protected/settings/$'
-      path: '/$'
-      fullPath: '/settings/$'
-      preLoaderRoute: typeof AppProtectedSettingsSplatRouteImport
+    '/_app/_protected/settings/billing': {
+      id: '/_app/_protected/settings/billing'
+      path: '/billing'
+      fullPath: '/settings/billing'
+      preLoaderRoute: typeof AppProtectedSettingsBillingRouteImport
+      parentRoute: typeof AppProtectedSettingsRoute
+    }
+    '/_app/_protected/settings/integrations': {
+      id: '/_app/_protected/settings/integrations'
+      path: '/integrations'
+      fullPath: '/settings/integrations'
+      preLoaderRoute: typeof AppProtectedSettingsIntegrationsRouteImport
+      parentRoute: typeof AppProtectedSettingsRoute
+    }
+    '/_app/_protected/settings/members': {
+      id: '/_app/_protected/settings/members'
+      path: '/members'
+      fullPath: '/settings/members'
+      preLoaderRoute: typeof AppProtectedSettingsMembersRouteImport
+      parentRoute: typeof AppProtectedSettingsRoute
+    }
+    '/_app/_protected/settings/plans': {
+      id: '/_app/_protected/settings/plans'
+      path: '/plans'
+      fullPath: '/settings/plans'
+      preLoaderRoute: typeof AppProtectedSettingsPlansRouteImport
+      parentRoute: typeof AppProtectedSettingsRoute
+    }
+    '/_app/_protected/settings/preferences': {
+      id: '/_app/_protected/settings/preferences'
+      path: '/preferences'
+      fullPath: '/settings/preferences'
+      preLoaderRoute: typeof AppProtectedSettingsPreferencesRouteImport
+      parentRoute: typeof AppProtectedSettingsRoute
+    }
+    '/_app/_protected/settings/profile': {
+      id: '/_app/_protected/settings/profile'
+      path: '/profile'
+      fullPath: '/settings/profile'
+      preLoaderRoute: typeof AppProtectedSettingsProfileRouteImport
+      parentRoute: typeof AppProtectedSettingsRoute
+    }
+    '/_app/_protected/settings/security': {
+      id: '/_app/_protected/settings/security'
+      path: '/security'
+      fullPath: '/settings/security'
+      preLoaderRoute: typeof AppProtectedSettingsSecurityRouteImport
+      parentRoute: typeof AppProtectedSettingsRoute
+    }
+    '/_app/_protected/settings/workspace': {
+      id: '/_app/_protected/settings/workspace'
+      path: '/workspace'
+      fullPath: '/settings/workspace'
+      preLoaderRoute: typeof AppProtectedSettingsWorkspaceRouteImport
       parentRoute: typeof AppProtectedSettingsRoute
     }
     '/api/auth/stripe/webhook': {
@@ -1577,48 +1512,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/users/avatar/$userId'
       preLoaderRoute: typeof ApiUsersAvatarUserIdRouteImport
       parentRoute: typeof ApiUsersAvatarRoute
-    }
-    '/_app/_protected/$workspace/projects/$projectId': {
-      id: '/_app/_protected/$workspace/projects/$projectId'
-      path: '/projects/$projectId'
-      fullPath: '/$workspace/projects/$projectId'
-      preLoaderRoute: typeof AppProtectedWorkspaceProjectsProjectIdRouteImport
-      parentRoute: typeof AppProtectedWorkspaceRoute
-    }
-    '/_app/_protected/$workspace/settings/': {
-      id: '/_app/_protected/$workspace/settings/'
-      path: '/'
-      fullPath: '/$workspace/settings/'
-      preLoaderRoute: typeof AppProtectedWorkspaceSettingsIndexRouteImport
-      parentRoute: typeof AppProtectedWorkspaceSettingsRoute
-    }
-    '/_app/_protected/$workspace/settings/billing': {
-      id: '/_app/_protected/$workspace/settings/billing'
-      path: '/billing'
-      fullPath: '/$workspace/settings/billing'
-      preLoaderRoute: typeof AppProtectedWorkspaceSettingsBillingRouteImport
-      parentRoute: typeof AppProtectedWorkspaceSettingsRoute
-    }
-    '/_app/_protected/$workspace/settings/general': {
-      id: '/_app/_protected/$workspace/settings/general'
-      path: '/general'
-      fullPath: '/$workspace/settings/general'
-      preLoaderRoute: typeof AppProtectedWorkspaceSettingsGeneralRouteImport
-      parentRoute: typeof AppProtectedWorkspaceSettingsRoute
-    }
-    '/_app/_protected/$workspace/settings/members': {
-      id: '/_app/_protected/$workspace/settings/members'
-      path: '/members'
-      fullPath: '/$workspace/settings/members'
-      preLoaderRoute: typeof AppProtectedWorkspaceSettingsMembersRouteImport
-      parentRoute: typeof AppProtectedWorkspaceSettingsRoute
-    }
-    '/_app/_protected/$workspace/settings/plans': {
-      id: '/_app/_protected/$workspace/settings/plans'
-      path: '/plans'
-      fullPath: '/$workspace/settings/plans'
-      preLoaderRoute: typeof AppProtectedWorkspaceSettingsPlansRouteImport
-      parentRoute: typeof AppProtectedWorkspaceSettingsRoute
     }
     '/_app/_protected/admin/billing/ledger': {
       id: '/_app/_protected/admin/billing/ledger'
@@ -1683,33 +1576,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProtectedAdminUsersUserIdRouteImport
       parentRoute: typeof AppProtectedAdminRoute
     }
-    '/_app/_protected/settings/account/integrations': {
-      id: '/_app/_protected/settings/account/integrations'
-      path: '/account/integrations'
-      fullPath: '/settings/account/integrations'
-      preLoaderRoute: typeof AppProtectedSettingsAccountIntegrationsRouteImport
-      parentRoute: typeof AppProtectedSettingsRoute
-    }
-    '/_app/_protected/settings/account/preferences': {
-      id: '/_app/_protected/settings/account/preferences'
-      path: '/account/preferences'
-      fullPath: '/settings/account/preferences'
-      preLoaderRoute: typeof AppProtectedSettingsAccountPreferencesRouteImport
-      parentRoute: typeof AppProtectedSettingsRoute
-    }
-    '/_app/_protected/settings/account/profile': {
-      id: '/_app/_protected/settings/account/profile'
-      path: '/account/profile'
-      fullPath: '/settings/account/profile'
-      preLoaderRoute: typeof AppProtectedSettingsAccountProfileRouteImport
-      parentRoute: typeof AppProtectedSettingsRoute
-    }
-    '/_app/_protected/settings/account/security': {
-      id: '/_app/_protected/settings/account/security'
-      path: '/account/security'
-      fullPath: '/settings/account/security'
-      preLoaderRoute: typeof AppProtectedSettingsAccountSecurityRouteImport
-      parentRoute: typeof AppProtectedSettingsRoute
+    '/_app/_protected/projects/$projectId/studies/$studyId/checklists/$checklistId': {
+      id: '/_app/_protected/projects/$projectId/studies/$studyId/checklists/$checklistId'
+      path: '/studies/$studyId/checklists/$checklistId'
+      fullPath: '/projects/$projectId/studies/$studyId/checklists/$checklistId'
+      preLoaderRoute: typeof AppProtectedProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRouteImport
+      parentRoute: typeof AppProtectedProjectsProjectIdRoute
     }
     '/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs': {
       id: '/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs'
@@ -1718,12 +1590,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiOrgsOrgIdProjectsProjectIdStudiesStudyIdPdfsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app/_protected/$workspace/projects/$projectId/studies/$studyId/checklists/$checklistId': {
-      id: '/_app/_protected/$workspace/projects/$projectId/studies/$studyId/checklists/$checklistId'
-      path: '/studies/$studyId/checklists/$checklistId'
-      fullPath: '/$workspace/projects/$projectId/studies/$studyId/checklists/$checklistId'
-      preLoaderRoute: typeof AppProtectedWorkspaceProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRouteImport
-      parentRoute: typeof AppProtectedWorkspaceProjectsProjectIdRoute
+    '/_app/_protected/projects/$projectId/studies/$studyId/reconcile/$checklist1Id/$checklist2Id': {
+      id: '/_app/_protected/projects/$projectId/studies/$studyId/reconcile/$checklist1Id/$checklist2Id'
+      path: '/studies/$studyId/reconcile/$checklist1Id/$checklist2Id'
+      fullPath: '/projects/$projectId/studies/$studyId/reconcile/$checklist1Id/$checklist2Id'
+      preLoaderRoute: typeof AppProtectedProjectsProjectIdStudiesStudyIdReconcileChecklist1IdChecklist2IdRouteImport
+      parentRoute: typeof AppProtectedProjectsProjectIdRoute
     }
     '/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs/$fileName': {
       id: '/api/orgs/$orgId/projects/$projectId/studies/$studyId/pdfs/$fileName'
@@ -1732,79 +1604,8 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiOrgsOrgIdProjectsProjectIdStudiesStudyIdPdfsFileNameRouteImport
       parentRoute: typeof ApiOrgsOrgIdProjectsProjectIdStudiesStudyIdPdfsRoute
     }
-    '/_app/_protected/$workspace/projects/$projectId/studies/$studyId/reconcile/$checklist1Id/$checklist2Id': {
-      id: '/_app/_protected/$workspace/projects/$projectId/studies/$studyId/reconcile/$checklist1Id/$checklist2Id'
-      path: '/studies/$studyId/reconcile/$checklist1Id/$checklist2Id'
-      fullPath: '/$workspace/projects/$projectId/studies/$studyId/reconcile/$checklist1Id/$checklist2Id'
-      preLoaderRoute: typeof AppProtectedWorkspaceProjectsProjectIdStudiesStudyIdReconcileChecklist1IdChecklist2IdRouteImport
-      parentRoute: typeof AppProtectedWorkspaceProjectsProjectIdRoute
-    }
   }
 }
-
-interface AppProtectedWorkspaceSettingsRouteChildren {
-  AppProtectedWorkspaceSettingsBillingRoute: typeof AppProtectedWorkspaceSettingsBillingRoute
-  AppProtectedWorkspaceSettingsGeneralRoute: typeof AppProtectedWorkspaceSettingsGeneralRoute
-  AppProtectedWorkspaceSettingsMembersRoute: typeof AppProtectedWorkspaceSettingsMembersRoute
-  AppProtectedWorkspaceSettingsPlansRoute: typeof AppProtectedWorkspaceSettingsPlansRoute
-  AppProtectedWorkspaceSettingsIndexRoute: typeof AppProtectedWorkspaceSettingsIndexRoute
-}
-
-const AppProtectedWorkspaceSettingsRouteChildren: AppProtectedWorkspaceSettingsRouteChildren =
-  {
-    AppProtectedWorkspaceSettingsBillingRoute:
-      AppProtectedWorkspaceSettingsBillingRoute,
-    AppProtectedWorkspaceSettingsGeneralRoute:
-      AppProtectedWorkspaceSettingsGeneralRoute,
-    AppProtectedWorkspaceSettingsMembersRoute:
-      AppProtectedWorkspaceSettingsMembersRoute,
-    AppProtectedWorkspaceSettingsPlansRoute:
-      AppProtectedWorkspaceSettingsPlansRoute,
-    AppProtectedWorkspaceSettingsIndexRoute:
-      AppProtectedWorkspaceSettingsIndexRoute,
-  }
-
-const AppProtectedWorkspaceSettingsRouteWithChildren =
-  AppProtectedWorkspaceSettingsRoute._addFileChildren(
-    AppProtectedWorkspaceSettingsRouteChildren,
-  )
-
-interface AppProtectedWorkspaceProjectsProjectIdRouteChildren {
-  AppProtectedWorkspaceProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRoute: typeof AppProtectedWorkspaceProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRoute
-  AppProtectedWorkspaceProjectsProjectIdStudiesStudyIdReconcileChecklist1IdChecklist2IdRoute: typeof AppProtectedWorkspaceProjectsProjectIdStudiesStudyIdReconcileChecklist1IdChecklist2IdRoute
-}
-
-const AppProtectedWorkspaceProjectsProjectIdRouteChildren: AppProtectedWorkspaceProjectsProjectIdRouteChildren =
-  {
-    AppProtectedWorkspaceProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRoute:
-      AppProtectedWorkspaceProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRoute,
-    AppProtectedWorkspaceProjectsProjectIdStudiesStudyIdReconcileChecklist1IdChecklist2IdRoute:
-      AppProtectedWorkspaceProjectsProjectIdStudiesStudyIdReconcileChecklist1IdChecklist2IdRoute,
-  }
-
-const AppProtectedWorkspaceProjectsProjectIdRouteWithChildren =
-  AppProtectedWorkspaceProjectsProjectIdRoute._addFileChildren(
-    AppProtectedWorkspaceProjectsProjectIdRouteChildren,
-  )
-
-interface AppProtectedWorkspaceRouteChildren {
-  AppProtectedWorkspaceSettingsRoute: typeof AppProtectedWorkspaceSettingsRouteWithChildren
-  AppProtectedWorkspaceIndexRoute: typeof AppProtectedWorkspaceIndexRoute
-  AppProtectedWorkspaceProjectsProjectIdRoute: typeof AppProtectedWorkspaceProjectsProjectIdRouteWithChildren
-}
-
-const AppProtectedWorkspaceRouteChildren: AppProtectedWorkspaceRouteChildren = {
-  AppProtectedWorkspaceSettingsRoute:
-    AppProtectedWorkspaceSettingsRouteWithChildren,
-  AppProtectedWorkspaceIndexRoute: AppProtectedWorkspaceIndexRoute,
-  AppProtectedWorkspaceProjectsProjectIdRoute:
-    AppProtectedWorkspaceProjectsProjectIdRouteWithChildren,
-}
-
-const AppProtectedWorkspaceRouteWithChildren =
-  AppProtectedWorkspaceRoute._addFileChildren(
-    AppProtectedWorkspaceRouteChildren,
-  )
 
 interface AppProtectedAdminRouteChildren {
   AppProtectedAdminAnnouncementsRoute: typeof AppProtectedAdminAnnouncementsRoute
@@ -1845,44 +1646,61 @@ const AppProtectedAdminRouteWithChildren =
   AppProtectedAdminRoute._addFileChildren(AppProtectedAdminRouteChildren)
 
 interface AppProtectedSettingsRouteChildren {
-  AppProtectedSettingsSplatRoute: typeof AppProtectedSettingsSplatRoute
+  AppProtectedSettingsBillingRoute: typeof AppProtectedSettingsBillingRoute
+  AppProtectedSettingsIntegrationsRoute: typeof AppProtectedSettingsIntegrationsRoute
+  AppProtectedSettingsMembersRoute: typeof AppProtectedSettingsMembersRoute
+  AppProtectedSettingsPlansRoute: typeof AppProtectedSettingsPlansRoute
+  AppProtectedSettingsPreferencesRoute: typeof AppProtectedSettingsPreferencesRoute
+  AppProtectedSettingsProfileRoute: typeof AppProtectedSettingsProfileRoute
+  AppProtectedSettingsSecurityRoute: typeof AppProtectedSettingsSecurityRoute
+  AppProtectedSettingsWorkspaceRoute: typeof AppProtectedSettingsWorkspaceRoute
   AppProtectedSettingsIndexRoute: typeof AppProtectedSettingsIndexRoute
-  AppProtectedSettingsAccountIntegrationsRoute: typeof AppProtectedSettingsAccountIntegrationsRoute
-  AppProtectedSettingsAccountPreferencesRoute: typeof AppProtectedSettingsAccountPreferencesRoute
-  AppProtectedSettingsAccountProfileRoute: typeof AppProtectedSettingsAccountProfileRoute
-  AppProtectedSettingsAccountSecurityRoute: typeof AppProtectedSettingsAccountSecurityRoute
 }
 
 const AppProtectedSettingsRouteChildren: AppProtectedSettingsRouteChildren = {
-  AppProtectedSettingsSplatRoute: AppProtectedSettingsSplatRoute,
+  AppProtectedSettingsBillingRoute: AppProtectedSettingsBillingRoute,
+  AppProtectedSettingsIntegrationsRoute: AppProtectedSettingsIntegrationsRoute,
+  AppProtectedSettingsMembersRoute: AppProtectedSettingsMembersRoute,
+  AppProtectedSettingsPlansRoute: AppProtectedSettingsPlansRoute,
+  AppProtectedSettingsPreferencesRoute: AppProtectedSettingsPreferencesRoute,
+  AppProtectedSettingsProfileRoute: AppProtectedSettingsProfileRoute,
+  AppProtectedSettingsSecurityRoute: AppProtectedSettingsSecurityRoute,
+  AppProtectedSettingsWorkspaceRoute: AppProtectedSettingsWorkspaceRoute,
   AppProtectedSettingsIndexRoute: AppProtectedSettingsIndexRoute,
-  AppProtectedSettingsAccountIntegrationsRoute:
-    AppProtectedSettingsAccountIntegrationsRoute,
-  AppProtectedSettingsAccountPreferencesRoute:
-    AppProtectedSettingsAccountPreferencesRoute,
-  AppProtectedSettingsAccountProfileRoute:
-    AppProtectedSettingsAccountProfileRoute,
-  AppProtectedSettingsAccountSecurityRoute:
-    AppProtectedSettingsAccountSecurityRoute,
 }
 
 const AppProtectedSettingsRouteWithChildren =
   AppProtectedSettingsRoute._addFileChildren(AppProtectedSettingsRouteChildren)
 
+interface AppProtectedProjectsProjectIdRouteChildren {
+  AppProtectedProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRoute: typeof AppProtectedProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRoute
+  AppProtectedProjectsProjectIdStudiesStudyIdReconcileChecklist1IdChecklist2IdRoute: typeof AppProtectedProjectsProjectIdStudiesStudyIdReconcileChecklist1IdChecklist2IdRoute
+}
+
+const AppProtectedProjectsProjectIdRouteChildren: AppProtectedProjectsProjectIdRouteChildren =
+  {
+    AppProtectedProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRoute:
+      AppProtectedProjectsProjectIdStudiesStudyIdChecklistsChecklistIdRoute,
+    AppProtectedProjectsProjectIdStudiesStudyIdReconcileChecklist1IdChecklist2IdRoute:
+      AppProtectedProjectsProjectIdStudiesStudyIdReconcileChecklist1IdChecklist2IdRoute,
+  }
+
+const AppProtectedProjectsProjectIdRouteWithChildren =
+  AppProtectedProjectsProjectIdRoute._addFileChildren(
+    AppProtectedProjectsProjectIdRouteChildren,
+  )
+
 interface AppProtectedRouteChildren {
-  AppProtectedWorkspaceRoute: typeof AppProtectedWorkspaceRouteWithChildren
   AppProtectedAdminRoute: typeof AppProtectedAdminRouteWithChildren
-  AppProtectedCreateWorkspaceRoute: typeof AppProtectedCreateWorkspaceRoute
   AppProtectedSettingsRoute: typeof AppProtectedSettingsRouteWithChildren
-  AppProtectedProjectsSplatRoute: typeof AppProtectedProjectsSplatRoute
+  AppProtectedProjectsProjectIdRoute: typeof AppProtectedProjectsProjectIdRouteWithChildren
 }
 
 const AppProtectedRouteChildren: AppProtectedRouteChildren = {
-  AppProtectedWorkspaceRoute: AppProtectedWorkspaceRouteWithChildren,
   AppProtectedAdminRoute: AppProtectedAdminRouteWithChildren,
-  AppProtectedCreateWorkspaceRoute: AppProtectedCreateWorkspaceRoute,
   AppProtectedSettingsRoute: AppProtectedSettingsRouteWithChildren,
-  AppProtectedProjectsSplatRoute: AppProtectedProjectsSplatRoute,
+  AppProtectedProjectsProjectIdRoute:
+    AppProtectedProjectsProjectIdRouteWithChildren,
 }
 
 const AppProtectedRouteWithChildren = AppProtectedRoute._addFileChildren(

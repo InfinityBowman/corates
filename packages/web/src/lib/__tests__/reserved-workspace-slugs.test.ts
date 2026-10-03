@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { RESERVED_WORKSPACE_SLUGS, workspaceSlugSchema } from '@corates/shared';
 
-// Static routes outrank /$workspace, so a workspace whose slug matched a
+// Slugs are meant to become the first URL segment, where a slug matching a
 // top-level route would be unreachable.
 const routeFiles = Object.keys(import.meta.glob('../../routes/**/*.{ts,tsx}'));
 

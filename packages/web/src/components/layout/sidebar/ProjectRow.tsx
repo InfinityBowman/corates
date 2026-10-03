@@ -5,18 +5,16 @@
 import { Link } from '@tanstack/react-router';
 import type { Project } from '@/hooks/useMyProjectsList';
 import { getAccentColors } from '@/components/dashboard/utils';
-import { projectPath as buildProjectPath } from '@/lib/workspacePaths';
 import { navRowClass } from '../navStyles';
 import { MarqueeLabel } from './MarqueeLabel';
 
 interface ProjectRowProps {
   project: Pick<Project, 'id' | 'name'>;
-  workspaceSlug: string;
   currentPath: string;
 }
 
-export function ProjectRow({ project, workspaceSlug, currentPath }: ProjectRowProps) {
-  const projectPath = buildProjectPath(workspaceSlug, project.id);
+export function ProjectRow({ project, currentPath }: ProjectRowProps) {
+  const projectPath = `/projects/${project.id}`;
   const isActive = currentPath === projectPath || currentPath.startsWith(`${projectPath}/`);
 
   return (

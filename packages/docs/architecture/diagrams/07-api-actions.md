@@ -53,13 +53,13 @@ flowchart TB
         FreeCap -->|No| FreeCapError[AUTH_FORBIDDEN<br/>403<br/>free_project_cap]
         FreeCap -->|Yes| CreateDB[Insert into D1<br/>projects + projectMembers owner]
         CreateDB -->|DB Error| DBError[SYSTEM_DB_ERROR<br/>500]
-        CreateDB -->|Success| CreateSuccess[Return project<br/>client opens /slug/projects/id]
+        CreateDB -->|Success| CreateSuccess[Return project<br/>client opens /projects/id]
     end
 
     subgraph ReadFlow["List Projects"]
         ReadStart[getMyProjects] --> QueryDB[Query D1<br/>projects joined to the user's projectMembers]
         QueryDB -->|DB Error| ReadDBError[SYSTEM_DB_ERROR<br/>500]
-        QueryDB -->|Success| ReadSuccess[Projects across all workspaces<br/>client filters to the current one]
+        QueryDB -->|Success| ReadSuccess[Projects across all workspaces]
     end
 
     subgraph UpdateFlow["Update Project"]

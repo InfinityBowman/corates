@@ -1,5 +1,5 @@
 /**
- * Reconciliation route - /:workspace/projects/:projectId/studies/:studyId/reconcile/:checklist1Id/:checklist2Id
+ * Reconciliation route - /projects/:projectId/studies/:studyId/reconcile/:checklist1Id/:checklist2Id
  * Renders the reconciliation workflow within the project context (Yjs-backed)
  */
 
@@ -7,7 +7,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { ReconciliationWrapper } from '@/components/project/reconcile-tab/ReconciliationWrapper';
 
 export const Route = createFileRoute(
-  '/_app/_protected/$workspace/projects/$projectId/studies/$studyId/reconcile/$checklist1Id/$checklist2Id',
+  '/_app/_protected/projects/$projectId/studies/$studyId/reconcile/$checklist1Id/$checklist2Id',
 )({
   component: ReconciliationPage,
 });
