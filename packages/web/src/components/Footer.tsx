@@ -93,6 +93,11 @@ export default function Footer() {
                   Contact
                 </Link>
               </li>
+              <li>
+                <Link to='/cite' className='text-gray-500 transition-colors hover:text-gray-700'>
+                  How to Cite
+                </Link>
+              </li>
             </ul>
           </div>
 
