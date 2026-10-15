@@ -8,6 +8,8 @@ This project is CoRATES (Collaborative Research Appraisal Tool for Evidence Synt
 
 When making breaking changes inform the user so we can decide if migration/bridge code is necessary or not.
 
+Text Jacob will copy (emails, messages) goes in a plain fenced code block, never `>` blockquotes.
+
 **Source of Truth Policy**: If code conflicts with documentation, inform the user and either fix the code or update the documentation - never leave them out of sync.
 
 ## 1. Think Before Coding
@@ -20,6 +22,8 @@ Before implementing:
 - If multiple interpretations exist, present them - don't pick silently.
 - If a simpler approach exists, say so. Push back when warranted.
 - If something is unclear, stop. Name what's confusing. Ask.
+- Verify what you can yourself (code, GitHub, logs, prod data); never ask Jacob to check. Read the code in full before recommending for or against a change, not from surface resemblance.
+- GitHub issue bodies are rough drafts: follow the title, check the body's claims against the code, and decide the design yourself.
 
 ## 2. Simplicity First
 
@@ -71,6 +75,8 @@ For multi-step tasks, state a brief plan:
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
+Push through multi-pass work, migrations and large refactors without check-in questions. Stop only when Jacob says so, a blocker needs his judgement, or scope would materially change. An end-of-pass summary is fine; a permission question is not.
+
 ## Build Commands
 
 NEVER START ANY DEV SERVERS
@@ -92,6 +98,10 @@ pnpm typecheck        # TypeScript check
 pnpm run deploy       # pnpm deploy is reserved so use 'run', always ask user before running a deploy command
 ```
 
+- Never deploy staging locally: `deploy:staging` ships a production-configured bundle (Vite stays in production mode). Use `gh workflow run deploy-staging.yml --ref <branch>` (`-f run_e2e=true` chains e2e). Merging to main deploys staging, runs e2e against it, then deploys production; push with `[skip ci]` when it must not.
+- E2E stays post-merge on main against staging. Never propose PR-blocking e2e; make failures cheap to diagnose instead.
+- `@corates/shared` and `@corates/db` resolve from `dist/`: after editing them, or in a fresh worktree, run `pnpm --filter @corates/shared --filter @corates/db build` before trusting typecheck or tests.
+
 ## Critical Rules
 
 ### Coding Standards
@@ -110,9 +120,24 @@ pnpm run deploy       # pnpm deploy is reserved so use 'run', always ask user be
 - Group related components
 - CLoudflare recommend .env over .dev.vars
 
+### Hazards
+
+- Server functions signal errors by throwing (`throwDomainError` or a guard's `result.error`), never by returning or throwing a `Response`, which reaches the client as data. `src/start.ts` must keep its serialization adapter and CSRF middleware. See `packages/docs/guides/api-development.md`.
+- Never build `LIKE '%<user input>%'`: some D1 nodes reject long patterns, so it fails only from some origins. Use `containsInsensitive()` from `@/server/lib/sqlSearch`.
+- A sync schema version bump is one-way: once project DOs migrate, rolling back the deploy leaves them unable to open. Fix forward.
+- After bumping react or `@types/react`, run `pnpm -r up --depth 99 react react-dom @types/react` then `pnpm dedupe`; `grep -cE "^  drizzle-orm@[0-9.]+\(" pnpm-lock.yaml` must print 1. Never regenerate the lockfile.
+- `STRIPE_AI_AGENT_KEY` (live restricted key) in `packages/web/.env` is intentional, for Claude's live Stripe reads. Never flag or move it.
+
+### Product Copy
+
+- App UI calls RoB 2, ROBINS-I, AMSTAR 2 a "tool", consistently. A study "has appraisals" or "No appraisals", never "planned"/"plan"; say "selected", not "ticked". Statuses: Waiting for reviewers, Not started, In progress, Reconciling, Complete.
+- Marketing and `/resources` may mix "tool" and "instrument" freely; don't flag it.
+- Public guides and marketing never hedge ("not currently", "CoRATES does not", limitation notes). Report gaps between copy and product in chat or the PR body instead.
+- Blinded dual review is shipped: `getTodoChecklists` and the overview only list the user's own checklists. Grepping "blind" finds only marketing; don't conclude it is missing.
+
 ### Static Assets and Edge Configuration
 
-Two files in `packages/web/public/` are consumed by Cloudflare Workers Static Assets at deploy time. They follow the Cloudflare Pages convention and are easy to miss because they are not TypeScript. See `docs/guides/seo.md` for more.
+Two files in `packages/web/public/` are consumed by Cloudflare Workers Static Assets at deploy time. They follow the Cloudflare Pages convention and are easy to miss because they are not TypeScript. See `packages/docs/guides/SEO.md` for more.
 
 ### Libraries (MUST USE)
 
@@ -134,8 +159,7 @@ Comments should not repeat what the code is saying. Instead, reserve comments fo
 retries += 1;
 
 // Good - explains why
-// Some APIs occasionally return 500s on valid requests. We retry up to 3 times
-// before surfacing an error.
+// Some APIs return 500s on valid requests, so retry up to 3 times.
 retries += 1;
 ```
 
@@ -145,7 +169,7 @@ retries += 1;
 - To clarify intent when the code could be misread or misunderstood
 - To provide context from external systems, specs, or requirements
 - To document assumptions, edge cases, or limitations
-- Comments should be short and to the point
+- One short line stating the why where possible; no multi-line narrative or bug history
 
 **When Not to Comment:**
 
@@ -159,7 +183,7 @@ retries += 1;
 
 - **Import stores directly** - Use Zustand stores from `@/stores/` instead of prop-drilling shared state
 - Shared state lives in Zustand stores under `packages/web/src/stores/`
-- Avoid `useMemo` or `useCallback` when not necessary
+- Don't add `useMemo` or `useCallback` in new code; fix performance structurally (split components) instead
 - Prefer newer React primitives where possible, we are always on the latest version
 - Use `useEffectEvent` for stable event handler references inside effects
 - Use `useLayoutEffect` for DOM measurements before paint
@@ -174,6 +198,8 @@ retries += 1;
 
 - **External library docs**: Prefer reading source from cloned upstream repos in the `reference/` directory over ad-hoc web fetches. If a library isn't there yet and you need its source, clone it in with `git clone --depth 20 https://github.com/owner/repo.git reference/repo`. This works better than MCP-style doc fetchers for deep questions.
 - **TanStack documentation**: Use the TanStack CLI: `npx @tanstack/cli search-docs "<query>" --library <router|start|query> --framework react --json`
+- **cf-sync engine**: `@cf-sync/*` is Jacob's own; read its source at `../cf-sync-engine`. Its release recipe is in that repo's CLAUDE.md under Releasing; Jacob runs publishes.
+- **Production data** (D1, Loki, Sentry, Stripe, R2, sync admin): use the `prod-data` skill.
 
 ## Anti-Patterns (Never Do These)
 
