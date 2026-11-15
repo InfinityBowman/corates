@@ -45,7 +45,7 @@ CoRATES is a web application designed to streamline the entire quality and risk-
 - **ORM**: Drizzle ORM with automatic migration generation (drizzle-kit)
 - **Storage**: Cloudflare R2 (S3-compatible object storage for PDFs)
 - **Auth**: Better Auth with org, admin, and Stripe integration for payments
-- **Email**: Postmark for transactional emails
+- **Email**: Cloudflare Email Sending for transactional emails, Postmark as fallback
 - **Error Monitoring**: Sentry (`@sentry/react` on the frontend, `@sentry/cloudflare` on Workers)
 - **Validation**: Zod (for schema-heavy routes), ad-hoc type checks elsewhere
 - **Testing**: Vitest with `@cloudflare/vitest-pool-workers` for server tests (real D1 + bindings)

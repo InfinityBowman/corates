@@ -9,6 +9,7 @@ declare namespace Cloudflare {
     PDF_BUCKET: R2Bucket;
     BACKUP_BUCKET: R2Bucket;
     DB: D1Database;
+    EMAIL: SendEmail;
     EMAIL_QUEUE: Queue;
     ENVIRONMENT: 'production';
     AUTH_BASE_URL: 'https://corates.org';
@@ -32,6 +33,7 @@ declare namespace Cloudflare {
     PDF_BUCKET: R2Bucket;
     BACKUP_BUCKET: R2Bucket;
     DB: D1Database;
+    EMAIL: SendEmail;
     EMAIL_QUEUE: Queue;
     ENVIRONMENT: 'production' | 'development';
     AUTH_BASE_URL: 'https://corates.org' | 'http://localhost:8787';

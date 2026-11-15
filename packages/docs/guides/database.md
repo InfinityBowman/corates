@@ -163,7 +163,7 @@ export const projectInvitations = sqliteTable(
 );
 ```
 
-One row per project and address: re-inviting the same email updates the existing row (role, expiry, token if it had been accepted) rather than adding another. `emailStatus` becomes `undeliverable` when Postmark rejects the address for good (suppressed or malformed) or the queue exhausts its retries; the pending-invitations list shows that to the inviter.
+One row per project and address: re-inviting the same email updates the existing row (role, expiry, token if it had been accepted) rather than adding another. `emailStatus` becomes `undeliverable` when the email provider rejects the address for good (suppressed or malformed) or the queue exhausts its retries; the pending-invitations list shows that to the inviter.
 
 **Note:** Projects are always invite-only. Accepting an invitation always adds the user to the project's workspace (as `member`) if they are not in it yet. `grantOrgMembership` is written but not read, and `orgRole` is always `member`.
 

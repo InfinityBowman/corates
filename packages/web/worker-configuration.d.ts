@@ -4,6 +4,7 @@ interface __BaseEnv_Env {
   PDF_BUCKET: R2Bucket;
   BACKUP_BUCKET: R2Bucket;
   DB: D1Database;
+  EMAIL: SendEmail;
   EMAIL_QUEUE: Queue;
   CF_VERSION_METADATA: WorkerVersionMetadata;
   ASSETS: Fetcher;
@@ -47,6 +48,7 @@ declare namespace Cloudflare {
     PDF_BUCKET: R2Bucket;
     BACKUP_BUCKET: R2Bucket;
     DB: D1Database;
+    EMAIL: SendEmail;
     EMAIL_QUEUE: Queue;
     CF_VERSION_METADATA: WorkerVersionMetadata;
     ASSETS: Fetcher;
@@ -84,6 +86,7 @@ declare namespace Cloudflare {
     PDF_BUCKET: R2Bucket;
     BACKUP_BUCKET: R2Bucket;
     DB: D1Database;
+    EMAIL: SendEmail;
     EMAIL_QUEUE: Queue;
     CF_VERSION_METADATA: WorkerVersionMetadata;
     ASSETS: Fetcher;

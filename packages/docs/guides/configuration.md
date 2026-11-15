@@ -62,7 +62,7 @@ Environment variables are defined in `.env` NOT `.dev.vars`
 
 - `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` - Google OAuth
 - `ORCID_CLIENT_ID` / `ORCID_CLIENT_SECRET` - ORCID OAuth
-- `POSTMARK_API_KEY` - Email service
+- `POSTMARK_SERVER_TOKEN` - Postmark fallback for email (Cloudflare Email Sending is the `EMAIL` binding)
 - `STRIPE_SECRET_KEY` - Stripe API secret key (shared for all Stripe operations)
 - `STRIPE_WEBHOOK_SECRET_AUTH` - Stripe webhook signing secret for Better Auth subscription webhooks (`/api/auth/stripe/webhook`)
 - `R2_BUCKET` - R2 storage binding for PDFs

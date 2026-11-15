@@ -26,7 +26,7 @@ This setup provides comprehensive user authentication using Better Auth with mul
 
 ### Backend Configuration
 
-Better Auth is configured in `packages/workers/src/auth/config.ts` and exposed via `createAuth(env)`. Route handlers import it from `@corates/workers/auth-config`. It wires up Drizzle + D1, the Postmark email service, and the social providers conditionally based on which credentials are present in the environment.
+Better Auth is configured in `packages/workers/src/auth/config.ts` and exposed via `createAuth(env)`. Route handlers import it from `@corates/workers/auth-config`. It wires up Drizzle + D1, the email service (Cloudflare Email Sending with Postmark as fallback), and the social providers conditionally based on which credentials are present in the environment.
 
 ### Authentication Methods
 
@@ -493,13 +493,15 @@ The authentication system uses these tables (managed by Better Auth with Drizzle
 | `COOKIE_DOMAIN` | Domain for cookies (e.g., `.corates.org` for cross-subdomain)  |
 | `ENVIRONMENT`   | `development` or `production`                                  |
 
-### Optional - Email (Postmark)
+### Optional - Email
 
-| Variable                | Description                             |
-| ----------------------- | --------------------------------------- |
-| `POSTMARK_SERVER_TOKEN` | Server token for Postmark email service |
-| `EMAIL_FROM`            | From address for auth emails            |
-| `SEND_EMAILS_IN_DEV`    | Set to `'true'` to enable emails in dev |
+Mail goes out through the `EMAIL` send_email binding (Cloudflare Email Sending, `corates.org` onboarded with a `cf-bounce` return path). When that send fails, `packages/workers/src/auth/email.ts` retries it through Postmark, except for a recipient Cloudflare has suppressed. The `email.sent` log carries `provider`.
+
+| Variable                | Description                                       |
+| ----------------------- | ------------------------------------------------- |
+| `POSTMARK_SERVER_TOKEN` | Server token for the Postmark fallback            |
+| `EMAIL_FROM`            | From address for auth emails, on a sending domain |
+| `SEND_EMAILS_IN_DEV`    | Set to `'true'` to enable emails in dev           |
 
 ### Optional - Google OAuth
 

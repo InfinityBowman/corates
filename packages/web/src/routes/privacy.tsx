@@ -35,7 +35,7 @@ function PrivacyPage() {
       <main className='flex-1 py-12'>
         <div className='mx-auto max-w-3xl px-6'>
           <h1 className='mb-2 text-4xl font-bold text-gray-900'>Privacy Policy</h1>
-          <p className='mb-8 text-gray-500'>Effective date: January 7, 2026</p>
+          <p className='mb-8 text-gray-500'>Effective date: November 15, 2026</p>
 
           <div className='flex flex-col gap-6 leading-relaxed text-gray-700'>
             <p>
@@ -345,7 +345,9 @@ function PrivacyPage() {
                 <ul className='mt-1 ml-6 list-outside list-disc text-gray-600'>
                   <li>Hosting, technology and communication providers (Cloudflare, Inc.)</li>
                   <li>Payment processors (Stripe, Inc.)</li>
-                  <li>Email service providers (Postmark / ActiveCampaign, LLC)</li>
+                  <li>
+                    Email service providers (Cloudflare, Inc.; Postmark / ActiveCampaign, LLC)
+                  </li>
                   <li>Security and fraud prevention consultants</li>
                   <li>Error monitoring providers (Sentry)</li>
                   <li>Support and customer service vendors</li>
@@ -475,34 +477,38 @@ function PrivacyPage() {
             </ul>
 
             <h3 className='pt-4 text-lg font-medium text-gray-900'>
-              Email Communications (Postmark)
+              Email Communications (Cloudflare and Postmark)
             </h3>
 
             <p>
-              We use Postmark (operated by ActiveCampaign, LLC) to send transactional emails,
-              including account verification, password resets, project invitations, and other
-              Service-related notifications.
+              We send transactional emails, including account verification, password resets, project
+              invitations, and other Service-related notifications, through Cloudflare Email
+              Service. If Cloudflare cannot send a message, we send it through Postmark (operated by
+              ActiveCampaign, LLC) instead.
             </p>
 
             <ul className='ml-6 flex list-outside list-disc flex-col gap-2 text-gray-600'>
               <li>
-                <strong>Data shared with Postmark.</strong> When we send you an email, we share your
-                email address and name with Postmark. The email content may include information
-                relevant to the notification (such as project names or invitation details).
+                <strong>Data shared with email providers.</strong> When we send you an email, we
+                share your email address and name with the provider that sends it. The email content
+                may include information relevant to the notification (such as project names or
+                invitation details).
               </li>
               <li>
-                <strong>Data Postmark collects.</strong> Postmark may collect metadata about email
-                delivery, such as whether an email was opened or bounced, to help us ensure reliable
-                email delivery.
+                <strong>Data email providers collect.</strong> Cloudflare and Postmark may collect
+                metadata about email delivery, such as whether an email was delivered or bounced, to
+                help us ensure reliable email delivery.
               </li>
               <li>
-                <strong>Data retention.</strong> Postmark retains email logs and metadata in
-                accordance with their data retention policies. For more information, see Postmark's
-                Privacy Policy (https://postmarkapp.com/privacy-policy).
+                <strong>Data retention.</strong> Each provider retains email logs and metadata in
+                accordance with its data retention policies. For more information, see Cloudflare's
+                Privacy Policy (https://www.cloudflare.com/privacypolicy/) and Postmark's Privacy
+                Policy (https://postmarkapp.com/privacy-policy).
               </li>
               <li>
-                <strong>International transfers.</strong> Postmark may process email data in the
-                United States. ActiveCampaign participates in the EU-U.S. Data Privacy Framework.
+                <strong>International transfers.</strong> Cloudflare and Postmark may process email
+                data in the United States. Cloudflare and ActiveCampaign participate in the EU-U.S.
+                Data Privacy Framework.
               </li>
             </ul>
 
