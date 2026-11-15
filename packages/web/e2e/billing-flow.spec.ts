@@ -12,7 +12,7 @@
  *   - Stripe test mode keys configured in .env (run pnpm stripe:setup)
  */
 
-import { test, expect, type Page } from './test';
+import { test, expect, type Frame, type Page } from './test';
 import { submitEmailCodeSignIn } from './helpers';
 import { BASE_URL } from './constants';
 
@@ -52,31 +52,42 @@ async function signUpViaUI(page: Page) {
   }
 }
 
-async function fillStripeCheckout(page: Page) {
-  await page.waitForURL(/checkout\.stripe\.com/, { timeout: 30_000 });
-
-  // Expand the Card payment method accordion
-  await page.locator('#payment-method-accordion-item-title-card').click({ force: true });
-  await page.waitForTimeout(1_000);
-
-  // Uncheck "Save my information" to dismiss the phone number field
-  const saveCheckbox = page.locator('text=Save my information for faster checkout');
-  if (await saveCheckbox.isVisible({ timeout: 3_000 }).catch(() => false)) {
-    await saveCheckbox.click();
+// Checkout now renders its payment form in an iframe, so the form is found by
+// scanning frames rather than assuming it lives in the top-level page.
+async function findCheckoutForm(page: Page): Promise<Frame> {
+  const deadline = Date.now() + 30_000;
+  while (Date.now() < deadline) {
+    for (const frame of page.frames()) {
+      if (await frame.getByRole('group', { name: 'Payment method' }).count()) return frame;
+    }
     await page.waitForTimeout(500);
   }
+  throw new Error('Stripe Checkout payment form did not appear');
+}
 
-  // Wait for card fields to appear
-  const cardInput = page.getByPlaceholder('1234 1234 1234 1234');
+async function fillStripeCheckout(page: Page) {
+  await page.waitForURL(/checkout\.stripe\.com/, { timeout: 30_000 });
+  const form = await findCheckoutForm(page);
+
+  await form.getByRole('button', { name: 'Card', exact: true }).click();
+
+  const cardInput = form.getByRole('textbox', { name: 'Card number' });
   await cardInput.waitFor({ timeout: 10_000 });
 
   await cardInput.fill(STRIPE_TEST_CARD);
-  await page.getByPlaceholder('MM / YY').fill(STRIPE_TEST_EXPIRY);
-  await page.getByPlaceholder('CVC').fill(STRIPE_TEST_CVC);
-  await page.getByPlaceholder('Full name on card').fill(STRIPE_TEST_CARDHOLDER);
-  await page.getByPlaceholder('ZIP').fill(STRIPE_TEST_ZIP);
+  await form.getByRole('textbox', { name: 'Expiration (MM/YY)' }).fill(STRIPE_TEST_EXPIRY);
+  await form.getByRole('textbox', { name: 'Security code' }).fill(STRIPE_TEST_CVC);
+  await form.getByRole('textbox', { name: 'Name on card' }).fill(STRIPE_TEST_CARDHOLDER);
+  await form.getByRole('textbox', { name: 'ZIP code' }).fill(STRIPE_TEST_ZIP);
 
-  await page.getByRole('button', { name: /Subscribe/i }).click();
+  // Link's "Save my information" starts checked and then requires a phone
+  // number before Subscribe will submit.
+  const saveInfo = form.getByRole('checkbox', { name: /Save my information/i });
+  if ((await saveInfo.count()) > 0 && (await saveInfo.isChecked())) {
+    await saveInfo.uncheck();
+  }
+
+  await form.getByRole('button', { name: /Subscribe/i }).click();
 
   await page.waitForURL(url => url.origin === new URL(BASE_URL).origin, {
     timeout: 60_000,
