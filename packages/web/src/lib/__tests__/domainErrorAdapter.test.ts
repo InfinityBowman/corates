@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { fromCrossJSON, toCrossJSONAsync } from 'seroval';
-import { defaultSerovalPlugins, makeSerovalPlugin } from '@tanstack/router-core';
+import { makeSerovalPlugin } from '@tanstack/router-core';
+import { defaultSerovalPlugins } from '@tanstack/router-core/ssr/client';
 import {
   DomainErrorException,
   isDomainError,
