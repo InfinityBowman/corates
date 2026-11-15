@@ -57,7 +57,7 @@
     "@cf-sync/yjs": "^0.2.1",
     "@corates/db": "workspace:*",
     "@corates/shared": "workspace:*",
-    "@sentry/cloudflare": "^10.78.0",
+    "@sentry/cloudflare": "^11.12.0",
     "better-auth": "^1.7.20",
     "drizzle-orm": "^0.45.4",
     "postmark": "^5.1.1",

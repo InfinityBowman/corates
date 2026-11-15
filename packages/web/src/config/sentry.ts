@@ -31,6 +31,8 @@ export function initSentry(): void {
   Sentry.init({
     dsn: SENTRY_DSN,
     environment: import.meta.env.MODE,
+    // Sentry v11 infers user IPs by default; v10 did not without sendDefaultPii.
+    dataCollection: { userInfo: false },
     beforeSend(event) {
       clientLogger.error('client.crash', crashLogData(event));
       return event;

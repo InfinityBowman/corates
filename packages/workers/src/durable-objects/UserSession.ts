@@ -211,6 +211,12 @@ export const UserSession = instrumentDurableObjectWithSentry(
     environment: env.ENVIRONMENT,
     enabled: !!env.SENTRY_DSN,
     tracesSampleRate: env.ENVIRONMENT === 'production' ? 0.1 : 1.0,
+    // Sentry v11 collects these by default; keep this DO at the v10 (no sendDefaultPii) baseline.
+    dataCollection: {
+      userInfo: false,
+      cookies: false,
+      httpHeaders: { deny: ['forwarded', '-ip', 'remote-', 'via', '-user'] },
+    },
   }),
   UserSessionBase,
 );

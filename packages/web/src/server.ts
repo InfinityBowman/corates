@@ -158,6 +158,5 @@ export default Sentry.withSentry((env: SentryEnv) => {
     environment: env.ENVIRONMENT,
     enabled: !!env.SENTRY_DSN,
     tracesSampleRate: env.ENVIRONMENT === 'production' ? 0.1 : 1.0,
-    sendDefaultPii: true,
   };
 }, workerHandler);
