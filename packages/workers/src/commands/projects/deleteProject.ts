@@ -4,14 +4,13 @@
  * @throws DomainError DB_ERROR on database error
  */
 
-import { captureError, info } from '../../lib/logger';
+import { info } from '../../lib/logger';
 import { createDb } from '@corates/db/client';
 import { projects, projectMembers } from '@corates/db/schema';
 import { eq } from 'drizzle-orm';
 import { createDomainError, SYSTEM_ERRORS } from '@corates/shared';
 import { teardownProjectSync } from '../../sync/admin';
 import { snapshotBeforeDelete } from '../backups';
-import { cleanupProjectStorage } from '../lib/storage';
 import { notifyUsers } from '../lib/notifications';
 import { createNotification } from '../notifications';
 import { displayName } from '../lib/displayName';
@@ -52,19 +51,10 @@ export async function deleteProject(
     .where(eq(projectMembers.projectId, projectId))
     .all();
 
-  // The 30-day undo. Before the PDF cleanup too: the envelope's mediaFiles
-  // rows are how a restore finds the noncurrent PDF versions.
+  // Deleted projects are kept forever: this final copy holds the content and
+  // the mediaFiles rows, and the PDFs stay in R2 under projects/<id>/, so a
+  // restore brings back everything.
   await snapshotBeforeDelete(env, db, projectId);
-
-  // Clean up all PDFs from R2 storage
-  try {
-    await cleanupProjectStorage(env, projectId);
-  } catch (err) {
-    captureError(err, {
-      tags: { component: 'project', action: 'delete-r2-cleanup' },
-      extra: { projectId },
-    });
-  }
 
   try {
     await db.delete(projects).where(eq(projects.id, projectId));

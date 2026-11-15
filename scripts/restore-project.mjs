@@ -55,7 +55,8 @@ function usage() {
   pnpm restore:project -- --env <staging|production> --project <id> (--date YYYY-MM-DD | --key <object key> | --file <local .json.gz>) [--pre-restore] [--dry-run] [--yes]
 
   --date         Daily snapshot: snapshots/<project>/<date>.json.gz
-  --key          Any object key in the backups bucket (deleted/... for a deleted project)
+  --key          Any object key in the backups bucket (deleted/... for a deleted project,
+                 deleted-accounts/... for one removed with its owner's account)
   --file         A local envelope instead of fetching one
   --pre-restore  Export the current sync state to <prefix>/<now>-pre-restore.json.gz first
   --dry-run      Fetch and inspect, write nothing

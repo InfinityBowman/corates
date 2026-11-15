@@ -1,6 +1,6 @@
 import { env } from 'cloudflare:workers';
 import type { Database } from '@corates/db/client';
-import { mediaFiles } from '@corates/db/schema';
+import { mediaFiles, projects } from '@corates/db/schema';
 import { throwDomainError, AUTH_ERRORS } from '@corates/shared';
 import { isAdminUser } from '@corates/workers/auth-admin';
 import type { Session } from '@/server/middleware/auth';
@@ -12,6 +12,19 @@ function assertAdmin(session: Session) {
 }
 
 const R2_KEY_PATTERN = /^projects\/[^/]+\/studies\/[^/]+\/.+$/;
+
+// A PDF is orphaned when its project still exists but no mediaFiles row
+// tracks it. PDFs of deleted projects are kept on purpose (the project's
+// deletion snapshot holds their mediaFiles rows), so they never count.
+async function loadOrphanCheck(db: Database) {
+  const [trackedKeys, projectRows] = await Promise.all([
+    db.select({ bucketKey: mediaFiles.bucketKey }).from(mediaFiles),
+    db.select({ id: projects.id }).from(projects),
+  ]);
+  const trackedKeysSet = new Set(trackedKeys.map(row => row.bucketKey));
+  const projectIds = new Set(projectRows.map(row => row.id));
+  return (key: string, projectId: string) => projectIds.has(projectId) && !trackedKeysSet.has(key);
+}
 
 function parseKey(key: string): { projectId: string; studyId: string; fileName: string } | null {
   const match = key.match(/^projects\/([^/]+)\/studies\/([^/]+)\/(.+)$/);
@@ -115,12 +128,10 @@ export async function listAdminStorageDocuments(
   skipCount = Math.min(skipCount, matchingObjects.length);
   const paginatedObjects = matchingObjects.slice(skipCount, skipCount + limit);
 
-  const trackedKeys = await db.select({ bucketKey: mediaFiles.bucketKey }).from(mediaFiles);
-  const trackedKeysSet = new Set(trackedKeys.map(row => row.bucketKey));
-
+  const isOrphaned = await loadOrphanCheck(db);
   const documentsWithOrphanStatus = paginatedObjects.map(doc => ({
     ...doc,
-    orphaned: !trackedKeysSet.has(doc.key),
+    orphaned: isOrphaned(doc.key, doc.projectId),
   }));
 
   const response: {
@@ -156,8 +167,7 @@ const SUMMARY_SCAN_CAP = 50000;
 export async function getAdminStorageSummary(session: Session, db: Database) {
   assertAdmin(session);
 
-  const trackedKeys = await db.select({ bucketKey: mediaFiles.bucketKey }).from(mediaFiles);
-  const trackedKeysSet = new Set(trackedKeys.map(row => row.bucketKey));
+  const isOrphaned = await loadOrphanCheck(db);
 
   let objectCount = 0;
   let totalBytes = 0;
@@ -179,10 +189,11 @@ export async function getAdminStorageSummary(session: Session, db: Database) {
 
       // The bucket also holds avatars, which mediaFiles never tracks. Only
       // study documents can be orphaned, so only they are classified.
-      if (!parseKey(obj.key)) continue;
+      const parsed = parseKey(obj.key);
+      if (!parsed) continue;
       documentCount += 1;
       documentBytes += obj.size;
-      if (!trackedKeysSet.has(obj.key)) {
+      if (isOrphaned(obj.key, parsed.projectId)) {
         orphanedCount += 1;
         orphanedBytes += obj.size;
       }

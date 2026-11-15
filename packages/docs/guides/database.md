@@ -967,22 +967,25 @@ Project content (studies, checklists, answers, annotations, outcomes, reconcilia
 ### What runs
 
 - **Cron `0 5 * * *`** (every environment, dispatched on the expression in `packages/web/src/server.ts`) runs `backupProjects` from `packages/workers/src/commands/backups/`. It reads the project, member and media file rows fleet-wide from D1, then for each project calls the sync DO `export()` and puts one gzipped object. Every project every day, changed or not: no latest pointer, no skip logic. A failing project is logged and skipped so it cannot hide the rest of the fleet.
-- **`snapshotBeforeDelete`** runs at the top of `deleteProject` and for each sole-owned project in account deletion, before the PDF cleanup and the D1 delete. `teardownProjectSync` then wipes the sync DO and purges that project's daily snapshots. Every deletion is therefore a 30-day undo.
-- **Bucket binding** `BACKUP_BUCKET`: `corates-backups` (dev and tests), `corates-backups-staging`, `corates-backups-prod`. Snapshots never share the PDF bucket: the admin storage page treats any object outside `mediaFiles` as an orphan, and project deletion bulk-deletes by prefix.
+- **`snapshotBeforeDelete`** runs at the top of `deleteProject` and for each sole-owned project in account deletion, before the D1 delete. `teardownProjectSync` then wipes the sync DO and purges that project's daily snapshots.
+  - **Project deletion** keeps everything forever: the snapshot goes under `deleted/`, which has no expiry, and the PDFs stay in the media bucket under `projects/<id>/`. A deleted project can always be restored with its PDFs.
+  - **Account deletion** still erases the user's sole-owned projects, as the privacy policy and Terms 5.3 promise. It deletes their PDFs, and files the snapshot under `deleted-accounts/`, which expires after 30 days.
+- **Bucket binding** `BACKUP_BUCKET`: `corates-backups` (dev and tests), `corates-backups-staging`, `corates-backups-prod`. Snapshots never share the PDF bucket: the admin storage page treats any untracked object in a live project as an orphan, and account deletion bulk-deletes a project's PDFs by prefix. PDFs of deleted projects have no `mediaFiles` row, but they are never counted as orphans.
 
 ### Layout and retention
 
-| Prefix                                       | Written by             | Expires after |
-| -------------------------------------------- | ---------------------- | ------------- |
-| `snapshots/<projectId>/<YYYY-MM-DD>.json.gz` | daily sweep            | 60 days       |
-| `deleted/<projectId>/<ISO datetime>.json.gz` | `snapshotBeforeDelete` | 30 days       |
+| Prefix                                                | Written by                               | Expires after |
+| ----------------------------------------------------- | ---------------------------------------- | ------------- |
+| `snapshots/<projectId>/<YYYY-MM-DD>.json.gz`          | daily sweep                              | 60 days       |
+| `deleted/<projectId>/<ISO datetime>.json.gz`          | `snapshotBeforeDelete`, project deletion | never         |
+| `deleted-accounts/<projectId>/<ISO datetime>.json.gz` | `snapshotBeforeDelete`, account deletion | 30 days       |
 
-The rules were applied to all three buckets on 2026-09-16 and are listed with `wrangler r2 bucket lifecycle list <bucket>`. To recreate them on a new bucket:
+The rules are listed with `wrangler r2 bucket lifecycle list <bucket>`. On 2026-11-15 the `deleted-30d` rule was removed so project deletions are kept forever, and `deleted-accounts-30d` was added. To recreate the rules on a new bucket:
 
 ```bash
 cd packages/web
 npx wrangler r2 bucket lifecycle add <bucket> snapshots-60d snapshots/ --expire-days 60
-npx wrangler r2 bucket lifecycle add <bucket> deleted-30d deleted/ --expire-days 30
+npx wrangler r2 bucket lifecycle add <bucket> deleted-accounts-30d deleted-accounts/ --expire-days 30
 ```
 
 ### Envelope
@@ -1023,7 +1026,11 @@ Rehearsed on staging on 2026-09-16: a project with one PDF study was deleted fro
 
 **One project with damaged content.** Pick the last good day from `snapshots/<id>/`, dry-run, then restore with `--pre-restore`. D1 rows are untouched (the inserts are `INSERT OR IGNORE`).
 
-**A project deleted by mistake, within 30 days.** Use `--key deleted/<id>/<datetime>.json.gz`. The script re-inserts the project, its members and its media file rows, then imports the sync snapshot. The organization and the creating user must still exist; for an account deletion, restore the user first or edit `createdBy` in a local copy of the envelope and pass it with `--file`. PDFs were deleted from the media bucket, which has object versioning on: restore each `bucketKey` in the envelope's `mediaFiles` from its noncurrent version in the Cloudflare dashboard.
+**A deleted project.** Use `--key deleted/<id>/<datetime>.json.gz`, at any time. The script re-inserts the project, its members and its media file rows, then imports the sync snapshot. The PDFs were never removed, so the restored rows point at files that are still there. The organization and the creating user must still exist.
+
+**A project removed with its owner's account, within 30 days.** Use `--key deleted-accounts/<id>/<datetime>.json.gz`. Restore the user first, or edit `createdBy` in a local copy of the envelope and pass it with `--file`. Account deletion removes the PDFs, and the media bucket has object versioning on, so restore each `bucketKey` in the envelope's `mediaFiles` from its noncurrent version in the Cloudflare dashboard.
+
+Projects deleted before 2026-11-15 had their PDFs removed too. Their `deleted/` snapshots no longer expire, but their PDFs have to be restored from the noncurrent versions in the same way.
 
 **Fleet restore after a bad migration.** For each project, `reset` then import from the last good day. Loop the script over the project ids from D1 with `--key snapshots/<id>/<date>.json.gz`. Take D1 back with Time Travel first if the migration touched D1 too.
 

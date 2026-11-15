@@ -134,15 +134,17 @@ describe('listAdminStorageDocuments', () => {
     });
 
     await putR2(`projects/${projectId1}/studies/s1/file1.pdf`, 'a'.repeat(100));
+    await putR2(`projects/${projectId1}/studies/s1/untracked.pdf`, 'c'.repeat(50));
     await putR2(`projects/${projectId2}/studies/s1/file2.pdf`, 'b'.repeat(200));
 
     const result = await listAdminStorageDocuments(mockAdminSession(), createDb(env.DB), {
       limit: 10,
     });
-    const doc1 = result.documents.find(d => d.projectId === projectId1);
-    const doc2 = result.documents.find(d => d.projectId === projectId2);
-    expect(doc1?.orphaned).toBe(false);
-    expect(doc2?.orphaned).toBe(true);
+    const byName = (name: string) => result.documents.find(d => d.fileName === name);
+    expect(byName('file1.pdf')?.orphaned).toBe(false);
+    expect(byName('untracked.pdf')?.orphaned).toBe(true);
+    // projectId2 has no project row: a deleted project, whose PDFs are kept.
+    expect(byName('file2.pdf')?.orphaned).toBe(false);
   });
 });
 
