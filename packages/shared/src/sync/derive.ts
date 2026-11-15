@@ -26,6 +26,7 @@ import {
   getActiveDomainKeys as getRobinsIActiveDomainKeys,
   getDomainQuestions as getRobinsIDomainQuestions,
   scoreRobinsDomain,
+  shouldStopAssessment,
 } from '../checklists/robins-i/index.js';
 import type { DomainAnswers as RobinsIDomainAnswers } from '../checklists/robins-i/index.js';
 import type { ChecklistType } from './schema.js';
@@ -236,9 +237,17 @@ export function robinsIJudgementsFromRows(flat: AnswerRowMap): DomainJudgements 
     judgements[domainKey] = scoreRobinsDomain(domainKey, answers).judgement ?? null;
   }
 
+  // A Yes/Probably Yes on B2 or B3 ends the assessment as Critical before any
+  // domain is answered.
+  const stopped = shouldStopAssessment({
+    b2: { answer: flat['sectionB.b2'] },
+    b3: { answer: flat['sectionB.b3'] },
+  } as Parameters<typeof shouldStopAssessment>[0]);
+
   const values = Object.values(judgements);
   let overall: string;
-  if (values.some(j => j === null)) overall = 'Incomplete';
+  if (stopped) overall = 'Critical';
+  else if (values.some(j => j === null)) overall = 'Incomplete';
   else if (values.includes('Critical')) overall = 'Critical';
   else if (values.includes('Serious')) overall = 'Serious';
   else if (values.includes('Moderate')) overall = 'Moderate';
