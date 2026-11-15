@@ -208,7 +208,7 @@ export function ProfileForm() {
               alt={(user?.name as string) || 'Profile'}
               referrerPolicy='no-referrer'
             />
-            <AvatarFallback className='from-primary to-primary/75 text-primary-foreground bg-gradient-to-br text-xl font-semibold'>
+            <AvatarFallback className='from-primary to-primary/75 text-primary-foreground bg-linear-to-br text-xl font-semibold'>
               {initials}
             </AvatarFallback>
           </Avatar>
