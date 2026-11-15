@@ -20,7 +20,7 @@ import { queryKeys } from '@/lib/queryKeys';
 import { getWsBaseUrl } from '@/config/api';
 import { showToast } from '@/lib/toast';
 import { clientLogger } from '@/lib/clientLogger';
-import { PROJECT_SUPERSEDED_ERROR, SESSION_EXPIRED_ERROR } from '@/constants/errors';
+import { fatalReasonMessage } from './fatalReasons';
 import { db, deleteProjectData, trackSyncCache } from '@/primitives/db.js';
 import { loadLegacyLocalRows } from './localProject';
 import { migrateLocalRows } from './localMigrations';
@@ -134,17 +134,6 @@ interface ConnectionEntry {
   _cleanupHandlers: (() => void)[];
 }
 
-/** Close-reason slugs the worker's authorize hook / admin kicks emit, mapped to
- * the user-facing messages the gate matches to pick its redirect. */
-const FATAL_REASON_MESSAGES: Record<string, string> = {
-  'project-deleted': 'This project has been deleted',
-  'membership-revoked': 'You have been removed from this project',
-  'not-a-member': 'You are not a member of this project',
-  'project-not-found': 'This project has been deleted',
-  'auth-required': SESSION_EXPIRED_ERROR,
-  superseded: PROJECT_SUPERSEDED_ERROR,
-};
-
 /**
  * The only reasons that justify deleting this project's local data. They all
  * mean the same thing: the user no longer holds the project, so cached rows
@@ -164,9 +153,6 @@ const ACCESS_REVOKED_REASONS = new Set([
   'not-a-member',
   'project-not-found',
 ]);
-
-const GENERIC_FATAL_MESSAGE =
-  'Unable to connect to project. It may have been deleted or you may not have access.';
 
 class ConnectionPool {
   private registry = new Map<string, ConnectionEntry>();
@@ -521,7 +507,7 @@ class ConnectionPool {
       return;
     }
 
-    const message = (reason && FATAL_REASON_MESSAGES[reason]) || GENERIC_FATAL_MESSAGE;
+    const message = fatalReasonMessage(reason);
     clientLogger.info('client.sync.fatal', { projectId, code: String(code), reason });
     useProjectStore.getState().setConnectionState(projectId, 'error', message);
     if (reason && ACCESS_REVOKED_REASONS.has(reason)) {
