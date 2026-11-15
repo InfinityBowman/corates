@@ -15,6 +15,12 @@ minimumReleaseAgeExclude:
 overrides:
   better-sqlite3: ^13.0.2
 
+# vitepress-plugin-mermaid (last released 2024) caps mermaid at 11, but it only
+# calls initialize/render/registerExternalDiagrams, which mermaid 12 keeps.
+peerDependencyRules:
+  allowedVersions:
+    vitepress-plugin-mermaid>mermaid: '12'
+
 allowBuilds:
   '@parcel/watcher': true
   '@prisma/engines': true
