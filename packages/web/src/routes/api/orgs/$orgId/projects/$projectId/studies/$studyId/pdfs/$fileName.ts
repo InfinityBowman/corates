@@ -78,10 +78,14 @@ export const handleGet = async ({ params, context: { db, session } }: HandlerArg
       });
     }
 
+    // Header values must be ASCII or the Workers runtime throws, so the plain
+    // filename gets a lossy fallback and filename* carries the real name.
+    const asciiFileName = fileName.replace(/[^\x20-\x7e]|["\\]/g, '_');
+
     return new Response(object.body, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `inline; filename="${fileName}"; filename*=UTF-8''${encodeURIComponent(
+        'Content-Disposition': `inline; filename="${asciiFileName}"; filename*=UTF-8''${encodeURIComponent(
           fileName,
         )}`,
         'Cache-Control': 'private, max-age=3600',
