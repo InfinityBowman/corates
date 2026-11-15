@@ -948,7 +948,7 @@ This creates a named restore point you can easily reference later.
 
 ### Limitations
 
-- **R2 files are not covered by Time Travel:** the media bucket has object versioning enabled in the Cloudflare dashboard, so a deleted or overwritten PDF is restored from its prior version there, not from D1.
+- **R2 files are not covered by Time Travel:** R2 has no object versioning, so a PDF deleted or overwritten in the media bucket cannot be recovered. Project deletion keeps the PDFs for this reason; removing a PDF from a study or deleting an account is final for that file.
 - **Durable Objects are not covered:** Sync-engine row state in ProjectSyncDO Durable Objects has no Time Travel. Project content is covered by the daily [project backups](#project-backups) instead.
 - **Restore is database-wide:** You cannot restore individual tables or rows; the entire database is restored.
 - **Workers must be compatible:** After restoring to an older schema, ensure your deployed workers are compatible.
@@ -1028,9 +1028,9 @@ Rehearsed on staging on 2026-09-16: a project with one PDF study was deleted fro
 
 **A deleted project.** Use `--key deleted/<id>/<datetime>.json.gz`, at any time. The script re-inserts the project, its members and its media file rows, then imports the sync snapshot. The PDFs were never removed, so the restored rows point at files that are still there. The organization and the creating user must still exist.
 
-**A project removed with its owner's account, within 30 days.** Use `--key deleted-accounts/<id>/<datetime>.json.gz`. Restore the user first, or edit `createdBy` in a local copy of the envelope and pass it with `--file`. Account deletion removes the PDFs, and the media bucket has object versioning on, so restore each `bucketKey` in the envelope's `mediaFiles` from its noncurrent version in the Cloudflare dashboard.
+**A project removed with its owner's account, within 30 days.** Use `--key deleted-accounts/<id>/<datetime>.json.gz`. Restore the user first, or edit `createdBy` in a local copy of the envelope and pass it with `--file`. Account deletion removes the PDFs and R2 keeps no prior versions, so the restored studies come back without them; drop the envelope's `mediaFiles` rows (in the local copy passed with `--file`) so the project does not list files that no longer exist, and the owner can upload the PDFs again.
 
-Projects deleted before 2026-11-15 had their PDFs removed too. Their `deleted/` snapshots no longer expire, but their PDFs have to be restored from the noncurrent versions in the same way.
+Projects deleted before 2026-11-15 had their PDFs removed too. Their `deleted/` snapshots no longer expire, but their PDFs are gone, so restore them the same way, without the `mediaFiles` rows.
 
 **Fleet restore after a bad migration.** For each project, `reset` then import from the last good day. Loop the script over the project ids from D1 with `--key snapshots/<id>/<date>.json.gz`. Take D1 back with Time Travel first if the migration touched D1 too.
 

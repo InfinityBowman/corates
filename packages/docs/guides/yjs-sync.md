@@ -87,4 +87,4 @@ replay.
 - `packages/docs/plans/sync-engine-cutover.md` - the completed one-time
   migration runbook, kept as a historical record
 - [State Management Guide](/guides/state-management) - store patterns
-- [Architecture Diagrams](/architecture/diagrams) - visual architecture
+- [Sync flow diagram](/architecture/diagrams/03-sync-flow) - visual architecture
