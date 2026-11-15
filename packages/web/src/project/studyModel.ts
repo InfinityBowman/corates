@@ -132,7 +132,13 @@ export interface StudyModelStore {
 }
 
 function createStudyModelStore(collections: ProjectCollections): StudyModelStore {
-  const sources = [
+  // A union of differently-typed collections has no callable subscribeChanges.
+  const sources: {
+    subscribeChanges: (
+      callback: () => void,
+      options: { includeInitialState: boolean },
+    ) => { unsubscribe: () => void };
+  }[] = [
     collections.studies,
     collections.checklists,
     collections.appraisals,
