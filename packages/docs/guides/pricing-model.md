@@ -1,7 +1,7 @@
 # CoRATES pricing model
 
 Status: current
-Last updated: 2026-09-06
+Last updated: 2026-11-15
 
 Source of truth for the tiers, prices, and quotas shown in the app. Code that
 must match this document: `packages/shared/src/plans/` (plans, pricing,
@@ -13,19 +13,19 @@ CoRATES is an affordable, accessible alternative to premium systematic review
 tools. Individuals appraise for free, small teams pay a flat annual price with no
 per-seat billing, and consultancies and institutions are quoted by contact.
 
-Annual is the default billing interval and is priced so the per-month figure
-shown on the card is a whole number. Monthly is twelve months for the price of
-ten; the UI states that as the percentage saved (17%) rather than a dollar
-amount.
+Annual is the default billing interval. The card shows its per-month
+equivalent, to the cent when it is not a whole number of dollars. Monthly is
+twelve months for the price of ten; the UI states that as the percentage saved
+(17%) rather than a dollar amount.
 
 ## Tiers
 
-| Tier       | Price                   | Projects  | Collaborators | Notes                                          |
-| ---------- | ----------------------- | --------- | ------------- | ---------------------------------------------- |
-| Free       | $0                      | 1         | 3             | Unlimited studies. Solo appraisals unlimited.  |
-| Team       | $300/year or $30/month  | 3         | Unlimited     | Most popular. Shown as $25/month annually.     |
-| Lab        | $900/year or $90/month  | 10        | Unlimited     | Priority support. Shown as $75/month annually. |
-| Enterprise | Contact us, annual only | Unlimited | Unlimited     | Provisioned by hand in the admin UI.           |
+| Tier       | Price                   | Projects  | Collaborators | Notes                                             |
+| ---------- | ----------------------- | --------- | ------------- | ------------------------------------------------- |
+| Free       | $0                      | 1         | 3             | Unlimited studies. Solo appraisals unlimited.     |
+| Team       | $80/year or $8/month    | 3         | Unlimited     | Most popular. Shown as $6.67/month annually.      |
+| Lab        | $250/year or $25/month  | 10        | Unlimited     | Priority support. Shown as $20.83/month annually. |
+| Enterprise | Contact us, annual only | Unlimited | Unlimited     | Provisioned by hand in the admin UI.              |
 
 Enterprise covers two shapes, quoted rather than sold self-serve. The card and
 FAQ show no number, only "Annual billing only"; these are internal quoting

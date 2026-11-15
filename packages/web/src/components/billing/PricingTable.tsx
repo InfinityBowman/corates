@@ -189,15 +189,15 @@ export function PricingTable({
         </>
       );
     }
+    const perMonth =
+      billingInterval === 'monthly' ? plan.price.monthly : (plan.price.yearly ?? 0) / 12;
     return (
       <>
         <div className='flex items-baseline gap-1'>
           <FlipNumber
-            value={
-              billingInterval === 'monthly' ? plan.price.monthly : (plan.price.yearly ?? 0) / 12
-            }
+            value={perMonth}
             prefix='$'
-            decimals={0}
+            decimals={Number.isInteger(perMonth) ? 0 : 2}
             className='text-foreground text-4xl font-bold'
           />
           <span className='text-muted-foreground'>/month</span>

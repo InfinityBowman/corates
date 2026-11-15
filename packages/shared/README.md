@@ -270,8 +270,8 @@ Pricing is defined separately in [src/plans/pricing.ts](src/plans/pricing.ts):
 ```typescript
 export const PLAN_PRICING = {
   team: {
-    monthly: 30, // USD per month
-    yearly: 300, // USD per year
+    monthly: 8, // USD per month
+    yearly: 80, // USD per year
   },
   // ...
 };
