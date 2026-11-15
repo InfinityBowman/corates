@@ -40,7 +40,8 @@ describe('installTranslationGuard', () => {
     const incoming = document.createTextNode('Prof.');
     expect(span.insertBefore(incoming, text)).toBe(incoming);
     expect(incoming.parentNode).toBeNull();
-    expect(warn).toHaveBeenCalledTimes(1);
+    // The removeChild case above already used up the once-per-page-load log.
+    expect(warn).not.toHaveBeenCalled();
   });
 
   it('still removes and inserts real children', () => {

@@ -15,7 +15,7 @@ This package provides shared contracts and utilities between `@corates/workers` 
 
 - **Language:** TypeScript 5.9+
 - **Build Tool:** tsc (TypeScript compiler)
-- **Testing:** Vitest 4.0+
+- **Testing:** Vitest 5.0+
 - **Type Safety:** Strict mode enabled
 
 ## Key Exports
