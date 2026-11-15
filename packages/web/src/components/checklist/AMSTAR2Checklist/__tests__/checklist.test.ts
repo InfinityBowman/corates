@@ -78,7 +78,8 @@ describe('createChecklist', () => {
       const customChecklist = createChecklist({
         id: 'test-2',
         name: 'Test',
-        createdAt: new Date('2025-06-15T10:00:00Z').getTime(),
+        // Local time: createdAt is kept as the local calendar date
+        createdAt: new Date(2025, 5, 15, 10).getTime(),
       });
       expect(customChecklist.createdAt).toBe('2025-06-15');
     });

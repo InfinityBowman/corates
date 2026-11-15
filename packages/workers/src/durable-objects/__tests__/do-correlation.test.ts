@@ -14,6 +14,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { env } from 'cloudflare:workers';
 import { runWithLogger, getRequestId } from '../../lib/logger';
+// Durable Object stubs import the worker entry on first use; loading it here
+// keeps that module graph out of the timed tests and hooks.
+import '../../test-worker';
 
 const seen: Array<{ header: string | null; scopedRequestId: string | undefined }> = [];
 

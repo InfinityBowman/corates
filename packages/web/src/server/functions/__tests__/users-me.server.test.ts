@@ -11,6 +11,9 @@ import {
 } from '@/__tests__/server/factories';
 import { deleteAccount } from '@/server/functions/users.server';
 import { syncApp } from '@corates/shared/sync';
+// Durable Object stubs import the worker entry on first use; loading it here
+// keeps that module graph out of the timed tests and hooks.
+import '@/__tests__/server/test-worker';
 
 let currentUser = { id: 'user-1', email: 'user1@example.com' };
 

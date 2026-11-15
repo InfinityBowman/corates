@@ -9,6 +9,9 @@ import { env } from 'cloudflare:workers';
 import { verifyAuth } from '../../auth/config.js';
 import type { UserSession } from '../UserSession.js';
 import { STATIC_ORIGINS } from '../../config/origins';
+// Durable Object stubs import the worker entry on first use; loading it here
+// keeps that module graph out of the timed tests and hooks.
+import '../../test-worker';
 
 const TRUSTED_ORIGIN = STATIC_ORIGINS[0];
 

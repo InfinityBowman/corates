@@ -31,6 +31,9 @@ import {
   revokeAdminSession,
   impersonateAdminUser,
 } from '@/server/functions/admin-users.server';
+// Durable Object stubs import the worker entry on first use; loading it here
+// keeps that module graph out of the timed tests and hooks.
+import '@/__tests__/server/test-worker';
 
 const { mockAuthHandler } = vi.hoisted(() => ({
   mockAuthHandler: vi.fn(async () => new Response(JSON.stringify({ ok: true }), { status: 200 })),

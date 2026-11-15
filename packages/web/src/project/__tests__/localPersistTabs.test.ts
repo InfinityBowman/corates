@@ -10,14 +10,36 @@ import 'fake-indexeddb/auto';
 
 const LOCAL = 'local-practice';
 
+type ProjectStore = typeof import('@/stores/projectStore').useProjectStore;
+
+// The local rows load in the background and report the outcome as the
+// connection phase, so wait for that rather than polling on a deadline.
+function localRowsSettled(store: ProjectStore): Promise<string> {
+  const settled = () => {
+    const phase = store.getState().connections[LOCAL]?.phase;
+    return phase === 'synced' || phase === 'error' ? phase : null;
+  };
+  return new Promise(resolve => {
+    const now = settled();
+    if (now) return resolve(now);
+    const unsubscribe = store.subscribe(() => {
+      const phase = settled();
+      if (!phase) return;
+      unsubscribe();
+      resolve(phase);
+    });
+  });
+}
+
 async function openTab() {
   vi.resetModules();
   const { connectionPool } = await import('../ConnectionPool');
   const { applyLocalMutation } = await import('../localWrites');
   const { db } = await import('@/primitives/db');
+  const { useProjectStore } = await import('@/stores/projectStore');
   const entry = connectionPool.acquire(LOCAL)!;
   connectionPool.initializeConnection(LOCAL, entry, { isLocal: true, cancelled: () => false });
-  await vi.waitFor(() => expect(connectionPool.getCollections(LOCAL)).toBeTruthy());
+  expect(await localRowsSettled(useProjectStore)).toBe('synced');
   const collections = connectionPool.getCollections(LOCAL)!;
   return {
     db,

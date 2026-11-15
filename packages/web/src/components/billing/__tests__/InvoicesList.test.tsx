@@ -22,6 +22,9 @@ function renderList() {
   );
 }
 
+// Local noon on 2026-06-14, so the displayed local date is the same in every timezone
+const JUNE_14_2026 = new Date(2026, 5, 14, 12).getTime() / 1000;
+
 describe('InvoicesList', () => {
   it('renders Stripe unix-second timestamps as the invoice date', async () => {
     getInvoices.mockResolvedValue({
@@ -32,9 +35,9 @@ describe('InvoicesList', () => {
           amount: 8,
           currency: 'usd',
           status: 'paid',
-          created: 1781438400, // 2026-06-14T12:00:00Z
-          periodStart: 1781438400,
-          periodEnd: 1784030400,
+          created: JUNE_14_2026,
+          periodStart: JUNE_14_2026,
+          periodEnd: JUNE_14_2026 + 30 * 86400,
           pdfUrl: null,
           hostedUrl: null,
         },

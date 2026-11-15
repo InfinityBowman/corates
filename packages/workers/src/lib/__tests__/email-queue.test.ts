@@ -6,7 +6,8 @@
  */
 
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import type { EmailPayload } from '@corates/shared/email';
+import { queueEmail, type EmailPayload } from '@corates/shared/email';
+import { handleEmailDeadLetter, handleEmailQueue } from '../../queue.js';
 
 vi.mock('postmark', () => ({
   Client: class {
@@ -16,7 +17,7 @@ vi.mock('postmark', () => ({
   },
 }));
 
-const mockSendEmail = vi.fn();
+const mockSendEmail = vi.hoisted(() => vi.fn());
 vi.mock('../../auth/email.js', () => ({
   createEmailService: () => ({
     sendEmail: mockSendEmail,
@@ -86,7 +87,7 @@ function makePayload(index: number): EmailPayload {
 }
 
 describe('Email Queue Consumer', () => {
-  let workerHandler: { queue: (batch: any, env: any) => Promise<void> };
+  const workerHandler = { queue: handleEmailQueue as (batch: any, env: any) => Promise<void> };
   const testEnv = {
     ENVIRONMENT: 'test',
     POSTMARK_SERVER_TOKEN: 'test-token',
@@ -94,12 +95,9 @@ describe('Email Queue Consumer', () => {
     DB: createMockDb(),
   } as never;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks();
     mockSendEmail.mockResolvedValue({ success: true, id: 'mock-id' });
-
-    const mod = await import('../../queue.js');
-    workerHandler = { queue: mod.handleEmailQueue };
   });
 
   it('should process 100 emails and ack all of them', async () => {
@@ -250,7 +248,6 @@ describe('Email Queue Consumer', () => {
 
 describe('Email Queue Producer', () => {
   it('should reject payloads missing required fields', async () => {
-    const { queueEmail } = await import('@corates/shared/email');
     const mockEnv = { EMAIL_QUEUE: { send: vi.fn() } } as any;
 
     await expect(
@@ -267,7 +264,6 @@ describe('Email Queue Producer', () => {
   it('should queue emails and process them all through the consumer', async () => {
     mockSendEmail.mockClear();
     mockSendEmail.mockResolvedValue({ success: true, id: 'mock-id' });
-    const { queueEmail } = await import('@corates/shared/email');
 
     const queued: EmailPayload[] = [];
     const mockSend = vi.fn(async (payload: EmailPayload) => {
@@ -280,8 +276,7 @@ describe('Email Queue Producer', () => {
     );
     expect(queued).toHaveLength(50);
 
-    const mod = await import('../../queue.js');
-    const workerHandler = { queue: mod.handleEmailQueue };
+    const workerHandler = { queue: handleEmailQueue as (batch: any, env: any) => Promise<void> };
     const consumerEnv = {
       ENVIRONMENT: 'test',
       POSTMARK_SERVER_TOKEN: 'test-token',
@@ -309,7 +304,6 @@ describe('Dead-letter consumer', () => {
       logged.push(JSON.parse(line as string));
     });
 
-    const { handleEmailDeadLetter } = await import('../../queue.js');
     const db = createMockDb();
     const messages = [
       createMockMessage({ ...makePayload(0), invitationId: 'inv-dead' }),

@@ -49,6 +49,9 @@ function signInWithPassword(ip: string) {
 
 describe('auth rate limiting', () => {
   beforeEach(async () => {
+    // A window reopens once the gap between two requests exceeds it, so a slow
+    // run could reset one mid-test; only the test moves the clock.
+    vi.useFakeTimers({ toFake: ['Date'] });
     await resetTestDatabase();
   });
 
@@ -111,7 +114,6 @@ describe('auth rate limiting', () => {
     await statuses('203.0.113.10', OTP_RULE.max);
     expect((await sendOtp('203.0.113.10')).status).toBe(429);
 
-    vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(Date.now() + (OTP_RULE.window + 1) * 1000);
     expect((await sendOtp('203.0.113.10')).status).toBe(200);
   });

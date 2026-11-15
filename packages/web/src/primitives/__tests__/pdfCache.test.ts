@@ -148,27 +148,36 @@ describe('pdfCache', () => {
       });
     }
 
+    // Opening a PDF records its recency without awaiting the write, so hand
+    // that write's promise back instead of polling for its effect.
+    async function open(fileName: string) {
+      const update = vi.spyOn(db.pdfs, 'update');
+      try {
+        const data = await getCachedPdf('project-1', 'study-1', fileName);
+        await update.mock.results[0]?.value;
+        return data;
+      } finally {
+        update.mockRestore();
+      }
+    }
+
     it('updates recency when a cached PDF is opened', async () => {
       await seed('opened.pdf', 8, 1000);
 
-      expect(await getCachedPdf('project-1', 'study-1', 'opened.pdf')).not.toBeNull();
+      expect(await open('opened.pdf')).not.toBeNull();
 
-      await vi.waitFor(async () => {
-        const row = await db.pdfs.get('project-1:study-1:opened.pdf');
-        expect(row!.lastAccessedAt).toBeGreaterThan(1000);
-      });
+      const row = await db.pdfs.get('project-1:study-1:opened.pdf');
+      expect(row!.lastAccessedAt).toBeGreaterThan(1000);
     });
 
     it('leaves the download time alone when a PDF is opened', async () => {
       await seed('opened.pdf', 8, 1000);
 
-      await getCachedPdf('project-1', 'study-1', 'opened.pdf');
+      await open('opened.pdf');
 
-      await vi.waitFor(async () => {
-        const row = await db.pdfs.get('project-1:study-1:opened.pdf');
-        expect(row!.lastAccessedAt).toBeGreaterThan(1000);
-        expect(row!.cachedAt).toBe(1000);
-      });
+      const row = await db.pdfs.get('project-1:study-1:opened.pdf');
+      expect(row!.lastAccessedAt).toBeGreaterThan(1000);
+      expect(row!.cachedAt).toBe(1000);
     });
 
     it('evicts the least recently opened entry, not the oldest download', async () => {
@@ -189,11 +198,9 @@ describe('pdfCache', () => {
       await seed('b.pdf', 100 * MB, 3000, 2000);
 
       // Opening the older entry makes the other one the eviction candidate.
-      await getCachedPdf('project-1', 'study-1', 'a.pdf');
-      await vi.waitFor(async () => {
-        const row = await db.pdfs.get('project-1:study-1:a.pdf');
-        expect(row!.lastAccessedAt).toBeGreaterThan(3000);
-      });
+      await open('a.pdf');
+      const row = await db.pdfs.get('project-1:study-1:a.pdf');
+      expect(row!.lastAccessedAt).toBeGreaterThan(3000);
 
       await cachePdf('project-1', 'study-2', 'incoming.pdf', new ArrayBuffer(1000));
 
