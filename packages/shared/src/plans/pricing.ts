@@ -12,9 +12,8 @@ export interface PlanPricing {
 
 /**
  * Pricing configuration for all plans
- * Prices are in USD. Annual is the base price and is chosen so it divides to a
- * whole number of dollars per month; monthly is 12 months for the cost of 10,
- * which the UI shows as the percentage saved.
+ * Prices are in USD. Annual is the base price; monthly is 12 months for the
+ * cost of 10, which the UI shows as the percentage saved.
  * yearly prices are annual total (not per month)
  * Enterprise is quoted per customer and has no self-serve price.
  */
@@ -24,12 +23,12 @@ export const PLAN_PRICING: Record<PlanId, PlanPricing> = {
     yearly: 0,
   },
   team: {
-    monthly: 30,
-    yearly: 300,
+    monthly: 8,
+    yearly: 80,
   },
   lab: {
-    monthly: 90,
-    yearly: 900,
+    monthly: 25,
+    yearly: 250,
   },
   enterprise: {
     monthly: null,

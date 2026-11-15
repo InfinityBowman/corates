@@ -22,14 +22,14 @@ For each product, configure:
 
 - Name: `CoRATES Team`
 - Description: `For small teams running a few reviews. Up to 3 projects, unlimited collaborators.`
-- Prices: $30/month, $300/year
+- Prices: $8/month, $80/year
 - Image: Your logo or a plan-specific icon
 
 **Lab**
 
 - Name: `CoRATES Lab`
 - Description: `For active labs and review groups. Up to 10 projects, unlimited collaborators.`
-- Prices: $90/month, $900/year
+- Prices: $25/month, $250/year
 
 Enterprise has no Stripe product. Admins create the subscription row from the org page in the admin UI.
 
