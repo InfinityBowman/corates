@@ -65,7 +65,7 @@ It uses:
 - **Durable Objects**:
   - **ProjectSyncDO**: One per project, holds the authoritative sync-engine rows for real-time collaboration and content storage
   - **UserSession**: One per user, manages WebSocket connections for real-time notifications (e.g., project invites)
-- **Cloudflare Queue**: Async email delivery with retries and dead letter queue, consumed by Postmark
+- **Cloudflare Queue**: Async email delivery with retries and dead letter queue, sent through Cloudflare Email Sending with Postmark as fallback
 
 ### Storage
 

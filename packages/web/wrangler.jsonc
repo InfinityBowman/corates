@@ -61,6 +61,10 @@
     }
   ],
 
+  // Cloudflare Email Sending; corates.org is onboarded with a cf-bounce return path.
+  // Postmark is the fallback in packages/workers/src/auth/email.ts.
+  "send_email": [{ "name": "EMAIL" }],
+
   "queues": {
     "producers": [
       {
@@ -154,6 +158,8 @@
           "bucket_name": "corates-backups-prod"
         }
       ],
+      "send_email": [{ "name": "EMAIL" }],
+
       "queues": {
         "producers": [
           {
@@ -239,6 +245,8 @@
           "bucket_name": "corates-backups-staging"
         }
       ],
+      "send_email": [{ "name": "EMAIL" }],
+
       "queues": {
         "producers": [
           {

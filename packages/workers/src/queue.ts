@@ -67,6 +67,7 @@ export async function handleEmailQueue(batch: MessageBatch<unknown>, env: Env): 
               to: msg.body.to,
               subject: msg.body.subject,
               attempt: msg.attempts,
+              provider: result.provider,
             });
             msg.ack();
           } else {
