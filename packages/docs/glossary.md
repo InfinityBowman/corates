@@ -394,7 +394,6 @@ For more details on any concept, see:
 - **Backend:** [packages/workers/README.md](../workers/README.md)
 - **Shared:** [packages/shared/README.md](../shared/README.md)
 - **Guides:** [guides/](guides/)
-- **Audits:** [audits/](audits/)
 
 ---
 

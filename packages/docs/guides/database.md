@@ -1028,7 +1028,7 @@ Rehearsed on staging on 2026-09-16: a project with one PDF study was deleted fro
 
 **A deleted project.** Use `--key deleted/<id>/<datetime>.json.gz`, at any time. The script re-inserts the project, its members and its media file rows, then imports the sync snapshot. The PDFs were never removed, so the restored rows point at files that are still there. The organization and the creating user must still exist.
 
-**A project removed with its owner's account, within 30 days.** Use `--key deleted-accounts/<id>/<datetime>.json.gz`. Restore the user first, or edit `createdBy` in a local copy of the envelope and pass it with `--file`. Account deletion removes the PDFs and R2 keeps no prior versions, so the restored studies come back without them; drop the envelope's `mediaFiles` rows (in the local copy passed with `--file`) so the project does not list files that no longer exist, and the owner can upload the PDFs again.
+**A project removed with its owner's account, within 30 days.** Use `--key deleted-accounts/<id>/<datetime>.json.gz`. Restore the user first, or in a local copy of the envelope passed with `--file`, point both `createdBy` and the deleted user's `members` row at a live user; the member rows are re-inserted too and fail the foreign key otherwise. Account deletion removes the PDFs and R2 keeps no prior versions, so the restored studies come back without them; drop the envelope's `mediaFiles` rows (in the local copy passed with `--file`) so the project does not list files that no longer exist, and the owner can upload the PDFs again.
 
 Projects deleted before 2026-11-15 had their PDFs removed too. Their `deleted/` snapshots no longer expire, but their PDFs are gone, so restore them the same way, without the `mediaFiles` rows.
 
