@@ -42,7 +42,7 @@ Practical guides for common development tasks and patterns.
 
 - [Error Handling](/guides/error-handling) - How to handle errors consistently across the application
 - [Style Guide](/guides/style-guide) - UI/UX guidelines and design system
-- [Pricing Model (Proposal)](/plans/pricing-model) - Proposed pricing model and billing scopes
+- [Pricing Model](/guides/pricing-model) - Tiers, prices, and quotas
 
 ## Getting Started
 

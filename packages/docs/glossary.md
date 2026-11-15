@@ -95,7 +95,7 @@ Cloudflare's distributed computing primitive providing:
 - WebSocket support for real-time connections
 - Used for ProjectSyncDO (sync engine, one per project) and UserSession (per-user notifications)
 
-**Related:** [durable-objects.mdc](../../.cursor/rules/durable-objects.mdc)
+**Related:** [Yjs Sync guide](guides/yjs-sync.md)
 
 ### IndexedDB
 
@@ -205,7 +205,7 @@ Centralized error system from `@corates/shared`:
 - Consistent error structure with `code`, `message`, `statusCode`, `details`
 - Normalization for transport errors vs. business logic errors
 
-**Related:** [@corates/shared/errors](../shared/src/errors/), [error-handling.mdc](../../.cursor/rules/error-handling.mdc)
+**Related:** [@corates/shared/errors](../shared/src/errors/), [Error Handling guide](guides/error-handling.md)
 
 ### Route Guards
 
@@ -253,8 +253,6 @@ Design pattern prioritizing local data and offline functionality:
 - Sync to server when online
 - Conflict resolution via last-writer-wins rows (Yjs CRDTs for reconciliation notes)
 - Works offline with cached data
-
-**Related:** [Offline/Local-First Audit](audits/offline-local-first-audit-2026-01.md)
 
 ### Headless Components
 
@@ -394,12 +392,8 @@ Logic that determines effective plan from multiple sources:
 For more details on any concept, see:
 
 - **Backend:** [packages/workers/README.md](../workers/README.md)
-- **Frontend:** [packages/web/README.md](../web/README.md)
 - **Shared:** [packages/shared/README.md](../shared/README.md)
-- **UI Components:** [packages/ui/README.md](../ui/README.md)
-- **Cursor Rules:** [.cursor/rules/](../../.cursor/rules/)
 - **Guides:** [guides/](guides/)
-- **Audits:** [audits/](audits/)
 
 ---
 
