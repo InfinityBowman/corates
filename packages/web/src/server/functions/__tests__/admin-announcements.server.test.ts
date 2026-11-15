@@ -7,6 +7,9 @@ import { resetTestDatabase } from '@/__tests__/server/helpers';
 import { buildUser, resetCounter } from '@/__tests__/server/factories';
 import type { Session } from '@/server/middleware/auth';
 import { sendAnnouncement } from '@/server/functions/admin-announcements.server';
+// Durable Object stubs import the worker entry on first use; loading it here
+// keeps that module graph out of the timed tests and hooks.
+import '@/__tests__/server/test-worker';
 
 function sessionFor(user: { id: string; email: string; role?: string | null }): Session {
   return {

@@ -26,19 +26,14 @@
     ]
   },
 
+  // Producer only. Tests drive handleEmailQueue with synthetic batches; a
+  // consumer here would make the runtime deliver enqueued mail to the test
+  // worker in the background, on its own batch timer and retry schedule.
   "queues": {
     "producers": [
       {
         "queue": "corates-emails",
         "binding": "EMAIL_QUEUE"
-      }
-    ],
-    "consumers": [
-      {
-        "queue": "corates-emails",
-        "max_batch_size": 10,
-        "max_retries": 3,
-        "dead_letter_queue": "corates-emails-dlq"
       }
     ]
   },

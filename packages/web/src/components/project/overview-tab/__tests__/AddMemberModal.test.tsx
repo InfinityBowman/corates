@@ -1,7 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import '@testing-library/jest-dom/vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { AddMemberModal } from '../AddMemberModal';
+// The modal imports this lazily on its error path; loading it here keeps that
+// module fetch out of the timed findBy* below.
+import '@/lib/error-utils';
 
 const { searchUsers, addMemberToProject } = vi.hoisted(() => ({
   searchUsers: vi.fn(),
@@ -40,6 +43,12 @@ function searchBox() {
   return screen.getByRole('combobox', { name: 'Search by name or email' });
 }
 
+// The search waits for the input to settle; run that debounce on the fake clock.
+async function search(value: string) {
+  fireEvent.change(searchBox(), { target: { value } });
+  await act(() => vi.runOnlyPendingTimersAsync());
+}
+
 function chipClearButton() {
   return screen.queryByRole('button', { name: 'Clear the selected person' });
 }
@@ -50,6 +59,8 @@ function sendButton() {
 
 describe('AddMemberModal', () => {
   beforeEach(() => {
+    // Only the debounce's timer; React schedules renders outside act() itself
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     searchUsers.mockReset();
     addMemberToProject.mockReset();
     searchUsers.mockImplementation(async ({ data }: { data: { q: string } }) =>
@@ -59,19 +70,23 @@ describe('AddMemberModal', () => {
     );
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('turns a picked person into a chip and lets a new search replace it', async () => {
     renderModal();
 
-    fireEvent.change(searchBox(), { target: { value: 'ali' } });
-    fireEvent.click(await screen.findByRole('option', { name: /Alice Example/ }));
+    await search('ali');
+    fireEvent.click(screen.getByRole('option', { name: /Alice Example/ }));
 
     expect(screen.queryByRole('listbox')).toBeNull();
     expect(chipClearButton()).toBeTruthy();
     expect(screen.getByText('Alice Example')).toBeTruthy();
     expect(searchBox()).toHaveValue('');
 
-    fireEvent.change(searchBox(), { target: { value: 'bob' } });
-    fireEvent.click(await screen.findByRole('option', { name: /Bob Example/ }));
+    await search('bob');
+    fireEvent.click(screen.getByRole('option', { name: /Bob Example/ }));
 
     expect(screen.getByText('Bob Example')).toBeTruthy();
     expect(screen.queryByText('Alice Example')).toBeNull();
@@ -80,24 +95,25 @@ describe('AddMemberModal', () => {
   it('does not search again after a pick clears the input', async () => {
     renderModal();
 
-    fireEvent.change(searchBox(), { target: { value: 'ali' } });
-    fireEvent.click(await screen.findByRole('option', { name: /Alice Example/ }));
+    await search('ali');
+    fireEvent.click(screen.getByRole('option', { name: /Alice Example/ }));
 
-    await new Promise(r => setTimeout(r, 400));
+    // Clearing the input starts its own debounce; let it run out.
+    await act(() => vi.runOnlyPendingTimersAsync());
     expect(searchUsers).toHaveBeenCalledTimes(1);
   });
 
   it('removes the chip from its clear button and from Backspace', async () => {
     renderModal();
 
-    fireEvent.change(searchBox(), { target: { value: 'ali' } });
-    fireEvent.click(await screen.findByRole('option', { name: /Alice Example/ }));
+    await search('ali');
+    fireEvent.click(screen.getByRole('option', { name: /Alice Example/ }));
     fireEvent.click(chipClearButton()!);
     expect(chipClearButton()).toBeNull();
     expect(sendButton()).toBeDisabled();
 
-    fireEvent.change(searchBox(), { target: { value: 'ali' } });
-    fireEvent.click(await screen.findByRole('option', { name: /Alice Example/ }));
+    await search('ali');
+    fireEvent.click(screen.getByRole('option', { name: /Alice Example/ }));
     fireEvent.keyDown(searchBox(), { key: 'Backspace' });
     expect(chipClearButton()).toBeNull();
   });
@@ -106,14 +122,14 @@ describe('AddMemberModal', () => {
     addMemberToProject.mockResolvedValue({ invitation: true, email: 'new@example.org' });
     renderModal();
 
-    fireEvent.change(searchBox(), { target: { value: 'new@example.org' } });
+    await search('new@example.org');
 
-    const row = await screen.findByTestId('invite-email-option');
+    const row = screen.getByTestId('invite-email-option');
     expect(row).toHaveTextContent('new@example.org');
     expect(sendButton()).toBeEnabled();
 
     fireEvent.click(sendButton());
-    await waitFor(() => expect(addMemberToProject).toHaveBeenCalledTimes(1));
+    expect(addMemberToProject).toHaveBeenCalledTimes(1);
     expect(addMemberToProject.mock.calls[0][0].data).toMatchObject({
       email: 'new@example.org',
       role: 'member',
@@ -142,8 +158,10 @@ describe('AddMemberModal', () => {
     expect(screen.getByText('Your workspace is full')).toBeInTheDocument();
     expect(searchBox()).toBeEnabled();
 
-    fireEvent.change(searchBox(), { target: { value: 'new@example.org' } });
-    await screen.findByTestId('invite-email-option');
+    await search('new@example.org');
+    screen.getByTestId('invite-email-option');
+    // The refusal arrives through promises, and findBy* settles on a real timer
+    vi.useRealTimers();
     fireEvent.click(sendButton());
 
     expect(await screen.findByText(/this person would need a new seat/)).toBeInTheDocument();
@@ -153,30 +171,30 @@ describe('AddMemberModal', () => {
     addMemberToProject.mockResolvedValue({ invitation: true, email: 'new@example.org' });
     renderModal();
 
-    fireEvent.change(searchBox(), { target: { value: '\u2060new@example.org' } });
+    await search('\u2060new@example.org');
 
-    const row = await screen.findByTestId('invite-email-option');
+    const row = screen.getByTestId('invite-email-option');
     expect(row).toHaveTextContent('new@example.org');
 
     fireEvent.click(sendButton());
-    await waitFor(() => expect(addMemberToProject).toHaveBeenCalledTimes(1));
+    expect(addMemberToProject).toHaveBeenCalledTimes(1);
     expect(addMemberToProject.mock.calls[0][0].data).toMatchObject({ email: 'new@example.org' });
   });
 
   it('does not offer an email row when the address already has an account', async () => {
     renderModal();
 
-    fireEvent.change(searchBox(), { target: { value: 'alice@example.org' } });
+    await search('alice@example.org');
 
-    await screen.findByRole('option', { name: /Alice Example/ });
+    screen.getByRole('option', { name: /Alice Example/ });
     expect(screen.queryByTestId('invite-email-option')).toBeNull();
   });
 
   it('selects the highlighted row with Enter', async () => {
     renderModal();
 
-    fireEvent.change(searchBox(), { target: { value: 'example' } });
-    await screen.findByRole('option', { name: /Alice Example/ });
+    await search('example');
+    screen.getByRole('option', { name: /Alice Example/ });
 
     fireEvent.keyDown(searchBox(), { key: 'ArrowDown' });
     fireEvent.keyDown(searchBox(), { key: 'Enter' });

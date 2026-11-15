@@ -203,7 +203,7 @@ The test worker (`src/__tests__/server/test-worker.ts`) also mounts the full Sta
 
 ### Database isolation
 
-Server tests share the test D1. Each test file that mutates data should reset the DB in `beforeEach` via the shared helpers, or scope its assertions to unique IDs. Do not rely on cross-file ordering.
+The Workers pool starts one workerd per test file, so D1, R2 and Durable Object storage are per file, but the tests within a file share them. Each test file that mutates data should reset the DB in `beforeEach` via the shared helpers, or scope its assertions to unique IDs.
 
 ### Mocking external services
 
@@ -253,6 +253,17 @@ it('handles async operations', async () => {
   expect(result).toBeDefined();
 });
 ```
+
+### Timing and load
+
+Test files run in parallel, so a result must not depend on machine speed, on what else is running, or on the local timezone.
+
+- Import what a test exercises at the top of the file. A dynamic `await import()` inside a test or hook loads its module graph on the test's 10s clock, and in a full parallel run that load alone can exceed it.
+- A Workers-pool test file that reaches a Durable Object, directly or through a command that notifies users or touches project sync, imports the test worker entry at the top (`import '@/__tests__/server/test-worker'` in web, `import '../../test-worker'` in workers). Otherwise the pool imports it on the first stub call, inside the test.
+- Wait for the event rather than a deadline: await the promise, subscribe to the store, listen for the socket message. No sleeps, short `waitFor` timeouts, or timers that reject.
+- Put debounces and anything compared against `Date.now()` on fake timers and advance them explicitly. Fake only what the code uses (`toFake: ['setTimeout', 'clearTimeout']`, or `['Date']`): React schedules renders through `setImmediate`, and `findBy*` settles on a real `setTimeout(0)`.
+- Build a timestamp whose local calendar date is asserted from local parts (`new Date(2026, 5, 14, 12)`), not from a UTC string.
+- The test wrangler configs declare queue producers only; consumer tests call the handler with a synthetic batch.
 
 ### Errors
 

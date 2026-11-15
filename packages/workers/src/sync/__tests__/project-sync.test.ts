@@ -32,6 +32,9 @@ import {
   seedProjectMember,
 } from '../../__tests__/helpers';
 import { syncApp } from '@corates/shared/sync';
+// Durable Object stubs import the worker entry on first use; loading it here
+// keeps that module graph out of the timed tests and hooks.
+import '../../test-worker';
 
 vi.mock('../../auth/config', () => {
   const mockVerifyAuth = vi.fn(async () => ({
@@ -207,24 +210,12 @@ async function fieldClient(projectId: string, clientId: string) {
   const nextJson = () => {
     const queued = json.shift();
     if (queued) return Promise.resolve(queued);
-    return new Promise<{ type: string }>((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error('timed out waiting for JSON')), 2000);
-      jsonWaiters.push(msg => {
-        clearTimeout(timer);
-        resolve(msg);
-      });
-    });
+    return new Promise<{ type: string }>(resolve => jsonWaiters.push(resolve));
   };
   const nextFrame = () => {
     const queued = frames.shift();
     if (queued) return Promise.resolve(queued);
-    return new Promise<FieldFrame>((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error('timed out waiting for field frame')), 2000);
-      frameWaiters.push(frame => {
-        clearTimeout(timer);
-        resolve(frame);
-      });
-    });
+    return new Promise<FieldFrame>(resolve => frameWaiters.push(resolve));
   };
 
   socket.send(
