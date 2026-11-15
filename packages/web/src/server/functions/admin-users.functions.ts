@@ -1,5 +1,5 @@
 import { createServerFn } from '@tanstack/react-start';
-import { getResponse } from '@tanstack/react-start/server';
+import { appendResponseHeader } from '@tanstack/react-start/server';
 import { z } from 'zod';
 import { authMiddleware } from '@/server/middleware/auth';
 import {
@@ -17,10 +17,7 @@ import {
 async function forwardAuthResponse(authResponse: Response) {
   const setCookies = authResponse.headers.getSetCookie?.() ?? [];
   if (setCookies.length > 0) {
-    const response = getResponse();
-    for (const cookie of setCookies) {
-      response.headers.append('set-cookie', cookie);
-    }
+    appendResponseHeader('set-cookie', setCookies);
   }
   if (!authResponse.ok) {
     throw authResponse;
