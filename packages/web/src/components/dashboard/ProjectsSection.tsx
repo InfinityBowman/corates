@@ -11,6 +11,7 @@ import { useMyProjectsList } from '@/hooks/useMyProjectsList';
 import { showToast } from '@/lib/toast';
 import { CreateProjectModal } from '@/components/project/CreateProjectModal';
 import { queryKeys } from '@/lib/queryKeys';
+import { clearProjectCache } from '@/primitives/pdfCache.js';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -67,6 +68,7 @@ export function ProjectsSection({ createModalOpen, setCreateModalOpen }: Project
     try {
       const { deleteProject } = await import('@/server/functions/org-projects.functions');
       await deleteProject({ data: { orgId: project.orgId, projectId: pendingDeleteId } });
+      await clearProjectCache(pendingDeleteId);
 
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.subscription.all });
