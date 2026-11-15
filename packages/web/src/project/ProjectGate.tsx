@@ -13,12 +13,14 @@ import { useEffect, useLayoutEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import { useProjectOrgId } from '@/hooks/useProjectOrgId';
-import { ACCESS_DENIED_ERRORS, RECOVERABLE_FATAL_ERRORS } from '@/constants/errors';
+import { RECOVERABLE_FATAL_ERRORS } from '@/constants/errors';
 import { showToast } from '@/lib/toast';
 import { connectionPool } from './ConnectionPool';
+import { projectUnavailableCopy } from './fatalReasons';
 import { SyncedProjectContext } from './project-data';
 
 import { ProjectProvider } from '@/components/project/ProjectContext';
+import { ProjectUnavailable } from '@/components/project/ProjectUnavailable';
 
 interface ProjectGateProps {
   projectId: string;
@@ -67,17 +69,14 @@ export function ProjectGate({ projectId, fallback, children }: ProjectGateProps)
     };
   }, [projectId, orgId]);
 
-  // Fatal-error redirect. Both kinds leave the project unrenderable and send
-  // the user back to the dashboard (an expired session bounces on from there
-  // to sign-in), but only one of them is their access being taken away --
-  // saying "Access Denied" for a dropped socket reads as an account problem.
+  // A connection fault sends the user back to the dashboard (an expired
+  // session bounces on from there to sign-in). Losing the project itself is
+  // shown in place instead, so a bookmark or restored tab explains why it
+  // will not open rather than flashing a toast and leaving.
   useEffect(() => {
     const error = connectionState.error;
     if (!error) return;
-    if (ACCESS_DENIED_ERRORS.includes(error)) {
-      showToast.error('Access Denied', error);
-      navigate({ to: '/dashboard', replace: true });
-    } else if (RECOVERABLE_FATAL_ERRORS.includes(error)) {
+    if (RECOVERABLE_FATAL_ERRORS.includes(error)) {
       showToast.info('Disconnected', error);
       navigate({ to: '/dashboard', replace: true });
     }
@@ -92,9 +91,9 @@ export function ProjectGate({ projectId, fallback, children }: ProjectGateProps)
     return <>{fallback || null}</>;
   }
 
-  // Error state handled by redirect above
   if (connectionState.error) {
-    return null;
+    const unavailable = projectUnavailableCopy(connectionState.error);
+    return unavailable ? <ProjectUnavailable {...unavailable} /> : null;
   }
 
   return (

@@ -6,15 +6,21 @@
 
 import { PROJECT_ERRORS } from '@corates/shared';
 
+export const PROJECT_DELETED_ERROR = 'This project has been deleted';
+export const PROJECT_GONE_ERROR = 'This project no longer exists';
+export const PROJECT_REMOVED_ERROR = 'You have been removed from this project';
+export const PROJECT_UNREACHABLE_ERROR =
+  'Unable to connect to project. It may have been deleted or you may not have access.';
+
 /**
  * Error messages that indicate access to a project has been denied.
- * Used to detect when a user should be redirected away from a project view.
+ * The project page shows these in place of the project (see fatalReasons).
  */
 export const ACCESS_DENIED_ERRORS: string[] = [
-  'This project has been deleted',
-  'You have been removed from this project',
-  'You are not a member of this project',
-  'Unable to connect to project. It may have been deleted or you may not have access.',
+  PROJECT_DELETED_ERROR,
+  PROJECT_GONE_ERROR,
+  PROJECT_REMOVED_ERROR,
+  PROJECT_UNREACHABLE_ERROR,
   PROJECT_ERRORS.NOT_FOUND.defaultMessage,
   PROJECT_ERRORS.ACCESS_DENIED.defaultMessage,
 ];
