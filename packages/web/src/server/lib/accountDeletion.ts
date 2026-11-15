@@ -71,11 +71,12 @@ export async function deleteUserAccount(
   // reconnect attempts re-run authorize against D1 and fail permanently.
   await Promise.all(memberships.map(({ projectId }) => kickSyncUser(env, projectId, userId)));
 
-  // Same order as deleteProject: final snapshot, PDFs, then the authoritative
-  // D1 delete, then the sync DO wipe so a failed delete leaves the project
-  // intact.
+  // Final snapshot, PDFs, then the authoritative D1 delete, then the sync DO
+  // wipe so a failed delete leaves the project intact. Unlike deleteProject,
+  // account deletion removes the PDFs and files a snapshot that expires,
+  // because the user asked for their submissions to be erased.
   for (const projectId of soleProjects) {
-    await snapshotBeforeDelete(env, db, projectId);
+    await snapshotBeforeDelete(env, db, projectId, { reason: 'account' });
     try {
       await cleanupProjectStorage(env, projectId);
     } catch (err) {

@@ -16,7 +16,7 @@ import {
   seedUser,
 } from '../../../__tests__/helpers';
 import { projectSync, teardownProjectSync } from '../../../sync/admin';
-import { deletedKey, snapshotKey } from '../../../lib/backup-storage';
+import { accountDeletedKey, deletedKey, snapshotKey } from '../../../lib/backup-storage';
 import { deleteProject } from '../../projects/deleteProject';
 import { backupProjects } from '../backupProjects';
 import { decodeEnvelope } from '../envelope';
@@ -166,7 +166,7 @@ describe('snapshotBeforeDelete and teardownProjectSync', () => {
     await backupProjects(env, db, NOW);
     expect(await keysUnder(`snapshots/${FULL}/`)).toHaveLength(1);
 
-    const key = await snapshotBeforeDelete(env, db, FULL, NOW);
+    const key = await snapshotBeforeDelete(env, db, FULL, { now: NOW });
     expect(key).toBe(deletedKey(FULL, NOW));
     await teardownProjectSync(env, FULL);
 
@@ -178,7 +178,18 @@ describe('snapshotBeforeDelete and teardownProjectSync', () => {
   });
 
   it('returns null for an unknown project without writing', async () => {
-    expect(await snapshotBeforeDelete(env, createDb(env.DB), 'no-such-project', NOW)).toBeNull();
+    expect(
+      await snapshotBeforeDelete(env, createDb(env.DB), 'no-such-project', { now: NOW }),
+    ).toBeNull();
+    expect(await keysUnder('deleted/')).toEqual([]);
+  });
+
+  it('files an account deletion under the expiring prefix', async () => {
+    const key = await snapshotBeforeDelete(env, createDb(env.DB), FULL, {
+      reason: 'account',
+      now: NOW,
+    });
+    expect(key).toBe(accountDeletedKey(FULL, NOW));
     expect(await keysUnder('deleted/')).toEqual([]);
   });
 
@@ -192,5 +203,15 @@ describe('snapshotBeforeDelete and teardownProjectSync', () => {
     expect(envelope.members).toHaveLength(1);
     expect(envelope.mediaFiles).toHaveLength(1);
     expect((envelope.workspace.rows as unknown[]).length).toBe(2);
+  });
+
+  it('deleteProject keeps the project PDFs', async () => {
+    const pdfKey = `projects/${FULL}/paper.pdf`;
+    await env.PDF_BUCKET.put(pdfKey, '%PDF-1.4');
+
+    await deleteProject(env, { id: USER }, { projectId: FULL });
+
+    expect(await env.PDF_BUCKET.get(pdfKey)).not.toBeNull();
+    await env.PDF_BUCKET.delete(pdfKey);
   });
 });

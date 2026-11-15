@@ -87,7 +87,7 @@ export async function refreshOrgSyncSessions(env: Env, db: Database, orgId: stri
 /**
  * Project deletion: close every session permanently, then wipe the sync DO
  * storage and its daily backups. Best-effort — D1 deletion is the
- * authoritative act. Callers take the final `deleted/` snapshot
+ * authoritative act. Callers take the final deletion snapshot
  * (snapshotBeforeDelete) before the D1 delete, because that envelope needs
  * rows the cascade removes.
  */

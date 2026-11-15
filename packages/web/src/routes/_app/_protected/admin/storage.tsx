@@ -163,7 +163,7 @@ function StorageManagementPage() {
   return (
     <AdminPage
       title='Storage'
-      description='PDFs in R2. Files marked orphaned exist in R2 but are not tracked in the mediaFiles table, usually from a failed cleanup, and are safe to delete.'
+      description='PDFs in R2. Files marked orphaned belong to a live project but are not tracked in the mediaFiles table, usually from a failed upload cleanup, and are safe to delete. PDFs of deleted projects are kept on purpose and never count as orphaned.'
     >
       <AdminStatRow>
         <AdminStat
