@@ -296,6 +296,37 @@ describe('GET /api/orgs/:orgId/projects/:projectId/studies/:studyId/pdfs/:fileNa
     expect(body.byteLength).toBe(5);
   });
 
+  it('downloads a PDF whose name has characters outside Latin-1', async () => {
+    const { project, org, owner } = await buildProject();
+    currentUser = { id: owner.id, email: owner.email };
+
+    // From a production 500: a non-breaking hyphen (U+2011) in an uploaded name.
+    const fileName = 'diet in acne (grades 1‑3) 研究.pdf';
+    const key = `projects/${project.id}/studies/study-1/${fileName}`;
+    await env.PDF_BUCKET.put(key, PDF_MAGIC, {
+      httpMetadata: { contentType: 'application/pdf' },
+    });
+
+    const res = await downloadHandler({
+      request: req(
+        `/api/orgs/${org.id}/projects/${project.id}/studies/study-1/pdfs/${encodeURIComponent(fileName)}`,
+        'GET',
+      ),
+      params: {
+        orgId: org.id,
+        projectId: project.id,
+        studyId: asStudyId('study-1'),
+        fileName,
+      },
+      context: { db: createDb(env.DB), session: mockSession() },
+    });
+
+    expect(res.status).toBe(200);
+    const disposition = res.headers.get('Content-Disposition');
+    expect(disposition).toContain('filename="diet in acne (grades 1_3) __.pdf"');
+    expect(disposition).toContain(`filename*=UTF-8''${encodeURIComponent(fileName)}`);
+  });
+
   it('returns 404 when PDF not found', async () => {
     const { project, org, owner } = await buildProject();
     currentUser = { id: owner.id, email: owner.email };
