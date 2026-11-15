@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import 'fake-indexeddb/auto';
 import { db } from '../db.js';
 import {
@@ -215,6 +215,126 @@ describe('pdfCache', () => {
       await cachePdf('project-1', 'study-2', 'incoming.pdf', new ArrayBuffer(1000));
 
       expect(await getCacheSize()).toBeLessThanOrEqual(200 * MB);
+    });
+  });
+
+  describe('device storage limit', () => {
+    const MB = 1024 * 1024;
+
+    async function seed(fileName: string, size: number, lastAccessedAt: number) {
+      await db.pdfs.put({
+        id: `project-1:study-1:${fileName}`,
+        projectId: 'project-1',
+        studyId: 'study-1',
+        fileName,
+        data: new ArrayBuffer(8),
+        size,
+        cachedAt: 1000,
+        lastAccessedAt,
+      });
+    }
+
+    function stubStorage(storage: unknown) {
+      Object.defineProperty(navigator, 'storage', { value: storage, configurable: true });
+    }
+
+    function stubEstimate(quota: number, usage: number) {
+      stubStorage({ estimate: () => Promise.resolve({ quota, usage }) });
+    }
+
+    afterEach(() => {
+      delete (navigator as { storage?: unknown }).storage;
+      vi.restoreAllMocks();
+    });
+
+    it('shrinks the limit when the browser reports little free space', async () => {
+      // 10 MB free plus 8 MB already cached gives a 9 MB limit.
+      stubEstimate(100 * MB, 90 * MB);
+      await seed('oldest.pdf', 4 * MB, 2000);
+      await seed('recent.pdf', 4 * MB, 3000);
+
+      const result = await cachePdf(
+        'project-1',
+        'study-2',
+        'incoming.pdf',
+        new ArrayBuffer(2 * MB),
+      );
+
+      expect(result).toBe(true);
+      expect(await getCachedPdf('project-1', 'study-1', 'oldest.pdf')).toBeNull();
+      expect(await getCachedPdf('project-1', 'study-1', 'recent.pdf')).not.toBeNull();
+      expect(await getCachedPdf('project-1', 'study-2', 'incoming.pdf')).not.toBeNull();
+    });
+
+    it('skips a file that would not fit even in an empty cache, evicting nothing', async () => {
+      stubEstimate(100 * MB, 98 * MB);
+      await seed('kept.pdf', 8, 2000);
+
+      const result = await cachePdf(
+        'project-1',
+        'study-2',
+        'incoming.pdf',
+        new ArrayBuffer(2 * MB),
+      );
+
+      expect(result).toBe(false);
+      expect(await getCachedPdf('project-1', 'study-1', 'kept.pdf')).not.toBeNull();
+      expect(await getCachedPdf('project-1', 'study-2', 'incoming.pdf')).toBeNull();
+    });
+
+    it.each([
+      ['missing', {}],
+      ['throwing', { estimate: () => Promise.reject(new Error('unsupported')) }],
+    ])('falls back to the fixed limit when the estimate is %s', async (_label, storage) => {
+      stubStorage(storage);
+      await seed('a.pdf', 100 * MB, 2000);
+      await seed('b.pdf', 100 * MB, 3000);
+
+      const result = await cachePdf('project-1', 'study-2', 'incoming.pdf', new ArrayBuffer(1000));
+
+      expect(result).toBe(true);
+      expect(await getCachedPdf('project-1', 'study-1', 'a.pdf')).toBeNull();
+      expect(await getCachedPdf('project-1', 'study-1', 'b.pdf')).not.toBeNull();
+      expect(await getCachedPdf('project-1', 'study-2', 'incoming.pdf')).not.toBeNull();
+    });
+
+    it('evicts the oldest entry and retries once when the write hits the quota', async () => {
+      await seed('oldest.pdf', 1 * MB, 2000);
+      await seed('recent.pdf', 1 * MB, 3000);
+      const put = vi
+        .spyOn(db.pdfs, 'put')
+        .mockRejectedValueOnce(new DOMException('full', 'QuotaExceededError'));
+
+      const result = await cachePdf('project-1', 'study-2', 'incoming.pdf', new ArrayBuffer(1000));
+
+      expect(result).toBe(true);
+      expect(put).toHaveBeenCalledTimes(2);
+      expect(await getCachedPdf('project-1', 'study-1', 'oldest.pdf')).toBeNull();
+      expect(await getCachedPdf('project-1', 'study-1', 'recent.pdf')).not.toBeNull();
+      expect(await getCachedPdf('project-1', 'study-2', 'incoming.pdf')).not.toBeNull();
+    });
+
+    it('gives up quietly when the retry also hits the quota', async () => {
+      await seed('oldest.pdf', 1 * MB, 2000);
+      const put = vi
+        .spyOn(db.pdfs, 'put')
+        .mockRejectedValue(new DOMException('full', 'QuotaExceededError'));
+
+      const result = await cachePdf('project-1', 'study-2', 'incoming.pdf', new ArrayBuffer(1000));
+
+      expect(result).toBe(false);
+      expect(put).toHaveBeenCalledTimes(2);
+    });
+
+    it('does not retry a write that failed for another reason', async () => {
+      await seed('oldest.pdf', 1 * MB, 2000);
+      const put = vi.spyOn(db.pdfs, 'put').mockRejectedValue(new Error('disk on fire'));
+
+      const result = await cachePdf('project-1', 'study-2', 'incoming.pdf', new ArrayBuffer(1000));
+
+      expect(result).toBe(false);
+      expect(put).toHaveBeenCalledTimes(1);
+      expect(await getCachedPdf('project-1', 'study-1', 'oldest.pdf')).not.toBeNull();
     });
   });
 });
