@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as CiteRouteImport } from './routes/cite'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as HealthRouteImport } from './routes/health'
 import { Route as HealthzRouteImport } from './routes/healthz'
@@ -106,6 +107,11 @@ const AuthRoute = AuthRouteImport.update({
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CiteRoute = CiteRouteImport.update({
+  id: '/cite',
+  path: '/cite',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContactRoute = ContactRouteImport.update({
@@ -523,6 +529,7 @@ const ApiOrgsOrgIdProjectsProjectIdStudiesStudyIdPdfsFileNameRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/cite': typeof CiteRoute
   '/contact': typeof ContactRoute
   '/health': typeof HealthRoute
   '/healthz': typeof HealthzRoute
@@ -602,6 +609,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/cite': typeof CiteRoute
   '/contact': typeof ContactRoute
   '/health': typeof HealthRoute
   '/healthz': typeof HealthzRoute
@@ -681,6 +689,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/_auth': typeof AuthRouteWithChildren
   '/about': typeof AboutRoute
+  '/cite': typeof CiteRoute
   '/contact': typeof ContactRoute
   '/health': typeof HealthRoute
   '/healthz': typeof HealthzRoute
@@ -763,6 +772,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about'
+    | '/cite'
     | '/contact'
     | '/health'
     | '/healthz'
@@ -842,6 +852,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
+    | '/cite'
     | '/contact'
     | '/health'
     | '/healthz'
@@ -920,6 +931,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/_auth'
     | '/about'
+    | '/cite'
     | '/contact'
     | '/health'
     | '/healthz'
@@ -1003,6 +1015,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRouteWithChildren
   AboutRoute: typeof AboutRoute
+  CiteRoute: typeof CiteRoute
   ContactRoute: typeof ContactRoute
   HealthRoute: typeof HealthRoute
   HealthzRoute: typeof HealthzRoute
@@ -1070,6 +1083,13 @@ declare module '@tanstack/react-router' {
       path: '/about'
       fullPath: '/about'
       preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cite': {
+      id: '/cite'
+      path: '/cite'
+      fullPath: '/cite'
+      preLoaderRoute: typeof CiteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contact': {
@@ -1785,6 +1805,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRouteWithChildren,
   AboutRoute: AboutRoute,
+  CiteRoute: CiteRoute,
   ContactRoute: ContactRoute,
   HealthRoute: HealthRoute,
   HealthzRoute: HealthzRoute,

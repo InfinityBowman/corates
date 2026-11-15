@@ -1,3 +1,5 @@
+import { Link } from '@tanstack/react-router';
+
 export default function WhoDevelopedCoRATES() {
   return (
     <section className='mx-auto max-w-5xl px-6 py-20'>
@@ -108,6 +110,14 @@ export default function WhoDevelopedCoRATES() {
           </div>
         </div>
       </div>
+
+      <p className='mt-12 text-center text-gray-600'>
+        Using CoRATES in a review?{' '}
+        <Link to='/cite' className='font-medium text-blue-600 hover:text-blue-700 hover:underline'>
+          See how to cite it
+        </Link>
+        .
+      </p>
     </section>
   );
 }
