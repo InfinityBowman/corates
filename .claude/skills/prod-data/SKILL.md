@@ -38,4 +38,6 @@ curl -H "Authorization: Bearer $TOKEN" "https://sentry.io/api/0/projects/corates
 
 **R2**: bucket `corates-pdfs-prod`; avatars at `avatars/<userId>/<ts>.<ext>`, PDFs at the pdf row's `key`. `npx wrangler r2 object get "corates-pdfs-prod/<key>" --remote --file <out>`. There is no `r2 object list`.
 
-**Sync admin**: `https://corates.org/api/sync-admin/<projectId>/<stats|export|import|reset>` with `Authorization: Bearer $SYNC_ADMIN_TOKEN` from `packages/web/.env.production`. `export` returns every row (`rows[].tbl`). Any call on an unknown project id creates an empty DO, so use real ids only.
+**Sync admin**: `https://corates.org/api/sync-admin/<projectId>/<stats|export|import|reset|mutate>` with `Authorization: Bearer $SYNC_ADMIN_TOKEN` from `packages/web/.env.production`. `export` returns every row (`rows[].tbl`). Any call on an unknown project id creates an empty DO, so use real ids only.
+
+To fix rows in a live project, POST `mutate` with `{"name": "<mutator>", "args": {...}, "dryRun": true}`, using a mutator from `packages/shared/src/sync/mutators.ts` (e.g. `appraisal.delete` with `{"cells": [...], "now": <ms>}`). It runs as an owner through the app's own validation, so it can only produce states the app can. The dry run returns every row it would change as before/after and rolls back; show Jacob that diff, then resend without `dryRun`. Live tabs update immediately and Loki logs it as `sync.mutation` with userId `admin`. Never use export/edit/import for a targeted fix: import replaces the whole project and loses edits made since the export.
