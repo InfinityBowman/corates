@@ -7,8 +7,10 @@ export {
 } from './project-sync';
 export {
   projectSync,
+  claimInvitedReviewer,
   kickSyncUser,
   refreshOrgSyncSessions,
   refreshSyncSessions,
+  releaseInvitedReviewer,
   teardownProjectSync,
 } from './admin';

@@ -50,7 +50,8 @@ import type { ExistingStudy } from '@/hooks/useAddStudies/existing';
 import { queryKeys } from '@/lib/queryKeys';
 import { getMyProjects } from '@/server/functions/users.functions';
 import type { UserProject } from '@/server/functions/users.server';
-import { getProjectMembers } from '@/server/functions/org-projects.functions';
+import { getInvitations, getProjectMembers } from '@/server/functions/org-projects.functions';
+import { invitedReviewerId } from '@corates/shared/sync';
 import { QUERY_STABLE } from '@/lib/queryPresets';
 import { getCachedProjectOrgId, rememberProjectOrgId } from '@/primitives/db.js';
 import { showToast } from '@/lib/toast';
@@ -568,4 +569,50 @@ export function useProjectMembers(projectId: string): MemberEntry[] {
       image: member.image ?? null,
     }));
   }, [data]);
+}
+
+type ProjectInvitationRow = Awaited<ReturnType<typeof getInvitations>>[number];
+
+function toInvitedReviewers(
+  invitations: ProjectInvitationRow[],
+  includeExpired: boolean,
+): MemberEntry[] {
+  const now = Date.now();
+  return invitations
+    .filter(invitation => includeExpired || new Date(invitation.expiresAt).getTime() > now)
+    .map(invitation => ({
+      userId: invitedReviewerId(invitation.id),
+      role: invitation.role ?? 'member',
+      joinedAt: 0,
+      name: `${invitation.email} (invited)`,
+      email: invitation.email,
+      givenName: '',
+      familyName: '',
+      image: null,
+    }));
+}
+
+// Module-level so TanStack Query keeps the selected array stable between renders.
+const selectLiveInvitees = (rows: ProjectInvitationRow[]) => toInvitedReviewers(rows, false);
+const selectAllInvitees = (rows: ProjectInvitationRow[]) => toInvitedReviewers(rows, true);
+const NO_INVITEES: MemberEntry[] = [];
+
+/**
+ * People invited to the project who have not joined yet, in MemberEntry shape
+ * under their invited-reviewer id, so they can hold reviewer slots and be
+ * named wherever a slot or assignee is shown. Expired invitations are left out
+ * unless asked for: they can no longer be accepted, but may still hold slots.
+ */
+export function useInvitedReviewers(
+  projectId: string,
+  { includeExpired = false }: { includeExpired?: boolean } = {},
+): MemberEntry[] {
+  const orgId = useProjectOrgId(projectId);
+  const { data } = useQuery({
+    queryKey: queryKeys.projects.invitations(projectId),
+    queryFn: () => getInvitations({ data: { orgId: orgId!, projectId } }),
+    enabled: Boolean(orgId && projectId && !projectId.startsWith('local-')),
+    select: includeExpired ? selectAllInvitees : selectLiveInvitees,
+  });
+  return data ?? NO_INVITEES;
 }

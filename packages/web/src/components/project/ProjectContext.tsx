@@ -7,7 +7,7 @@
 import { createContext, useContext, useMemo, useCallback, useState } from 'react';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { useProjectOrgId } from '@/hooks/useProjectOrgId';
-import { useProjectMembers } from '@/project/project-data';
+import { useInvitedReviewers, useProjectMembers } from '@/project/project-data';
 
 export interface ProjectMember {
   userId: string;
@@ -59,6 +59,8 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
   const user = useAuthStore(selectUser);
   const orgId = useProjectOrgId(projectId);
   const members = useProjectMembers(projectId) as ProjectMember[];
+  // Reviewer slots can hold people invited but not yet joined, so names resolve against both.
+  const invited = useInvitedReviewers(projectId, { includeExpired: true }) as ProjectMember[];
 
   const userRole = useMemo(() => {
     if (!user) return null;
@@ -94,17 +96,20 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
   const getAssigneeName = useCallback(
     (userId: string | null) => {
       if (!userId) return 'Unassigned';
-      const member = members.find(m => m.userId === userId);
+      const member =
+        members.find(m => m.userId === userId) ?? invited.find(m => m.userId === userId);
       return member?.name || member?.email || 'Unknown';
     },
-    [members],
+    [members, invited],
   );
   const getMember = useCallback(
     (userId: string | null): ProjectMember | null => {
       if (!userId) return null;
-      return members.find(m => m.userId === userId) || null;
+      return (
+        members.find(m => m.userId === userId) ?? invited.find(m => m.userId === userId) ?? null
+      );
     },
-    [members],
+    [members, invited],
   );
 
   const value = useMemo<ProjectContextValue>(

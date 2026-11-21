@@ -1,5 +1,6 @@
 import { captureError, info } from '@corates/workers/logger';
 import { env } from 'cloudflare:workers';
+import { releaseInvitedReviewer } from '@corates/workers/sync';
 import type { Database } from '@corates/db/client';
 import {
   member,
@@ -257,7 +258,7 @@ export async function removeWorkspaceMember(
       });
     }
 
-    await db
+    const dropped = await db
       .delete(projectInvitations)
       .where(
         and(
@@ -265,7 +266,11 @@ export async function removeWorkspaceMember(
           eq(projectInvitations.email, target.email.toLowerCase()),
           isNull(projectInvitations.acceptedAt),
         ),
-      );
+      )
+      .returning({ id: projectInvitations.id, projectId: projectInvitations.projectId });
+    for (const invitation of dropped) {
+      await releaseInvitedReviewer(env, invitation.projectId, invitation.id);
+    }
 
     await db
       .delete(member)

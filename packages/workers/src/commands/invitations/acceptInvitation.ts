@@ -28,7 +28,7 @@ import {
 import { eq, and } from 'drizzle-orm';
 import { createDomainError, PROJECT_ERRORS, AUTH_ERRORS, VALIDATION_ERRORS } from '@corates/shared';
 import { insertWithQuotaCheck, type InsertRollbackMeta } from '../../lib/quotaTransaction';
-import { refreshSyncSessions } from '../../sync/admin';
+import { claimInvitedReviewer, refreshSyncSessions } from '../../sync/admin';
 import { createNotification } from '../notifications';
 import type { Env } from '../../types';
 
@@ -129,6 +129,7 @@ export async function acceptInvitation(
       .update(projectInvitations)
       .set({ acceptedAt: new Date() })
       .where(eq(projectInvitations.id, invitation.id));
+    await claimInvitedReviewer(env, invitation.projectId, invitation.id, actor.id);
 
     const project = await db
       .select({ name: projects.name })
@@ -212,6 +213,7 @@ export async function acceptInvitation(
     await db.batch(batchOps as unknown as Parameters<typeof db.batch>[0]);
   }
 
+  await claimInvitedReviewer(env, invitation.projectId, invitation.id, actor.id);
   // Poke live sessions so other clients refetch the members list.
   await refreshSyncSessions(env, invitation.projectId);
 

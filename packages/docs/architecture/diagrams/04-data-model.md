@@ -128,6 +128,8 @@ Research project container belonging to an organization. Basic metadata (id, nam
 
 A systematic review or research paper being assessed. Stored entirely in the project sync Durable Object (sync-engine rows). Can have an associated PDF stored in R2.
 
+Its two reviewer slots hold user ids, or `invite:<projectInvitationId>` for someone invited who has not joined yet. Accepting the invitation swaps in the new member's id on their slots and checklists (`reviewer.claimInvitation`); cancelling it empties them (`reviewer.releaseInvitation`).
+
 ### Appraisal
 
 The plan: one row per (study, instrument, outcome) cell that the project intends to appraise. A planned cell nobody owns yet has no checklist rows; reviewer checklists materialize when a study's reviewer slot is filled. Stored in the project sync Durable Object.

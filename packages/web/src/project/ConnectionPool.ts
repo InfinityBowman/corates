@@ -89,7 +89,7 @@ function rejectionMessage(code: string, mutationName: string): string {
     case 'NotFound':
       return 'That item no longer exists — it may have been deleted by someone else.';
     case 'DuplicateChecklist':
-      return 'A checklist for this outcome and reviewer already exists.';
+      return 'That reviewer already has this checklist.';
     case 'OutcomeInUse':
       return 'This outcome is assigned to existing checklists and cannot be deleted.';
     case 'ReconciliationInProgress':

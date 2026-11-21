@@ -21,6 +21,8 @@ import {
 } from '@/server/functions/invitations.server';
 import type { Session } from '@/server/middleware/auth';
 import { DomainErrorException } from '@corates/shared';
+import { invitedReviewerId } from '@corates/shared/sync';
+import { projectSync } from '@corates/workers/sync';
 
 let currentUser: { id: string; email: string } = { id: 'user-1', email: 'user1@example.com' };
 
@@ -200,6 +202,43 @@ describe('handleAcceptInvitation', () => {
       .where(eq(projectInvitations.id, (await db.select().from(projectInvitations).get())!.id))
       .get();
     expect(dbInvitation!.acceptedAt).not.toBeNull();
+  });
+
+  it('hands reviewer slots assigned before joining to the accepting account', async () => {
+    const { project, org, owner } = await buildProject();
+    const invitee = await buildUser({ email: 'invitee@example.com' });
+    const invitation = await buildProjectInvitation({
+      orgId: org.id,
+      projectId: project.id,
+      email: invitee.email,
+      token: 'claim-token',
+      invitedBy: owner.id,
+      status: 'pending',
+    });
+    const sync = projectSync(env, project.id);
+    const now = Date.now();
+    await sync.mutate('study.create', { id: 's1', name: 'Study', description: '', now });
+    await sync.mutate('appraisal.create', {
+      cells: [{ studyId: 's1', type: 'AMSTAR2', outcomeId: null }],
+      now,
+    });
+    await sync.mutate('study.assignReviewers', {
+      id: 's1',
+      reviewer1: owner.id,
+      reviewer2: invitedReviewerId(invitation.id),
+      now,
+    });
+
+    currentUser = { id: invitee.id, email: invitee.email };
+    await handleAcceptInvitation(mockSession(), { token: 'claim-token' });
+
+    const { rows } = (await sync.export()) as {
+      rows: Array<{ tbl: string; data: Record<string, unknown> }>;
+    };
+    const study = rows.find(r => r.tbl === 'studies')!.data;
+    expect(study.reviewer2).toBe(invitee.id);
+    const assignees = rows.filter(r => r.tbl === 'checklists').map(r => r.data.assignedTo);
+    expect(assignees.sort()).toEqual([owner.id, invitee.id].sort());
   });
 
   it('throws for invalid token', async () => {
@@ -430,6 +469,32 @@ describe('declineInvitation', () => {
       .where(eq(projectInvitations.id, invitation.id))
       .get();
     expect(row).toBeUndefined();
+  });
+
+  it('empties the reviewer slots a declined invitation held', async () => {
+    const { project, org, owner } = await buildProject();
+    const invitation = await buildProjectInvitation({
+      orgId: org.id,
+      projectId: project.id,
+      invitedBy: owner.id,
+      email: 'invitee@example.com',
+    });
+    const sync = projectSync(env, project.id);
+    const now = Date.now();
+    await sync.mutate('study.create', { id: 's1', name: 'Study', description: '', now });
+    await sync.mutate('study.assignReviewers', {
+      id: 's1',
+      reviewer2: invitedReviewerId(invitation.id),
+      now,
+    });
+    currentUser = { id: 'invitee-user', email: 'invitee@example.com' };
+
+    await declineInvitation(createDb(env.DB), mockSession(), { invitationId: invitation.id });
+
+    const { rows } = (await sync.export()) as {
+      rows: Array<{ tbl: string; data: Record<string, unknown> }>;
+    };
+    expect(rows.find(r => r.tbl === 'studies')!.data.reviewer2).toBeUndefined();
   });
 
   it('rejects an invitation addressed to someone else without revealing it', async () => {
