@@ -50,7 +50,13 @@ export {
   type ChecklistAnswerInput,
   type JsonValue,
 } from './answer-rows.js';
-export { answerRowId, appraisalRowId, reconciliationRowId } from './ids.js';
+export {
+  answerRowId,
+  appraisalRowId,
+  invitationIdOf,
+  invitedReviewerId,
+  reconciliationRowId,
+} from './ids.js';
 export {
   carryOverSections,
   isCarryOverKey,

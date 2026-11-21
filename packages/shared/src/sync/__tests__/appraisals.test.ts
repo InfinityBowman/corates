@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createTestEngine } from '@cf-sync/server/testing';
 import { syncApp } from '../app.js';
 import { defaultAnswerRows } from '../answer-rows.js';
-import { answerRowId } from '../ids.js';
+import { answerRowId, invitedReviewerId } from '../ids.js';
 import type { ChecklistAnswerInput } from '../answer-rows.js';
 
 const ROB2_ANSWER: ChecklistAnswerInput = {
@@ -157,6 +157,25 @@ describe('checklist.create with the plan', () => {
     });
     expect(again.error?.code).toBe('DuplicateChecklist');
     expect(engine.list('appraisals')).toHaveLength(1);
+  });
+
+  it('refuses a second checklist for a reviewer who already holds the AMSTAR 2 cell', () => {
+    const engine = newEngine();
+    seedStudy(engine, 's1', { reviewer1: 'alice' });
+    engine.mutate('appraisal.create', {
+      cells: [{ studyId: 's1', type: 'AMSTAR2', outcomeId: null }],
+      now: NOW,
+    });
+    const again = engine.mutate('checklist.create', {
+      id: 'chk-dup',
+      studyId: 's1',
+      type: 'AMSTAR2',
+      assignedTo: 'alice',
+      outcomeId: null,
+      now: LATER,
+    });
+    expect(again.error?.code).toBe('DuplicateChecklist');
+    expect(checklistsOf(engine, 's1')).toHaveLength(1);
   });
 });
 
@@ -408,6 +427,76 @@ describe('study.assignReviewers', () => {
     expect(carols.map(c => c.outcomeId).sort()).toEqual(['o1', 'o2']);
   });
 
+  it('a second reviewer joining sends a finalized single review to reconciliation', () => {
+    const engine = plannedStudy({ reviewer1: 'alice' });
+    const aliceO1 = heldChecklistId(engine, 's1', 'alice', 'o1');
+    const aliceO2 = heldChecklistId(engine, 's1', 'alice', 'o2');
+    engine.mutate('checklist.update', {
+      checklistId: aliceO1,
+      updates: { status: 'finalized' },
+      now: NOW,
+    });
+    const result = engine.mutate('study.assignReviewers', {
+      id: 's1',
+      reviewer2: 'bob',
+      now: LATER,
+    });
+    expect(result.error).toBeUndefined();
+    expect(engine.get('checklists', aliceO1)).toMatchObject({
+      status: 'reviewer-completed',
+      updatedAt: LATER,
+    });
+    expect(engine.get('checklists', aliceO2)?.status).toBe('pending');
+    const bobs = checklistsOf(engine, 's1').filter(c => c.assignedTo === 'bob');
+    expect(bobs.map(c => c.status)).toEqual(['pending', 'pending']);
+  });
+
+  it('the second reviewer leaving finalizes the remaining completed review', () => {
+    const engine = plannedStudy({ reviewer1: 'alice', reviewer2: 'bob' });
+    const aliceO1 = heldChecklistId(engine, 's1', 'alice', 'o1');
+    engine.mutate('checklist.update', {
+      checklistId: aliceO1,
+      updates: { status: 'reviewer-completed' },
+      now: NOW,
+    });
+    const result = engine.mutate('study.assignReviewers', {
+      id: 's1',
+      reviewer2: null,
+      now: LATER,
+    });
+    expect(result.error).toBeUndefined();
+    expect(engine.get('checklists', aliceO1)?.status).toBe('finalized');
+  });
+
+  it('leaves a completed review alone once its reconciliation has begun', () => {
+    const engine = plannedStudy({ reviewer1: 'alice', reviewer2: 'bob' });
+    const aliceO1 = heldChecklistId(engine, 's1', 'alice', 'o1');
+    const bobO1 = heldChecklistId(engine, 's1', 'bob', 'o1');
+    for (const checklistId of [aliceO1, bobO1]) {
+      engine.mutate('checklist.update', {
+        checklistId,
+        updates: { status: 'reviewer-completed' },
+        now: NOW,
+      });
+    }
+    engine.mutate('checklist.create', {
+      id: 'chk-c',
+      studyId: 's1',
+      type: 'ROB2',
+      kind: 'consensus',
+      assignedTo: null,
+      outcomeId: 'o1',
+      now: NOW,
+    });
+    const result = engine.mutate('study.assignReviewers', {
+      id: 's1',
+      reviewer2: null,
+      now: LATER,
+    });
+    expect(result.error).toBeUndefined();
+    expect(engine.get('checklists', aliceO1)?.status).toBe('reviewer-completed');
+  });
+
   it('clearing a slot drops pending checklists and keeps the plan', () => {
     const engine = plannedStudy({ reviewer1: 'alice', reviewer2: 'bob' });
     const result = engine.mutate('study.assignReviewers', {
@@ -444,6 +533,92 @@ describe('study.assignReviewers', () => {
       now: LATER,
     });
     expect(result.error?.code).toBe('DuplicateReviewer');
+  });
+});
+
+describe('invited reviewers', () => {
+  const INVITED = invitedReviewerId('inv-1');
+
+  function invitedStudy(slots: { reviewer1?: string; reviewer2?: string }) {
+    const engine = newEngine();
+    seedStudy(engine, 's1');
+    seedOutcome(engine, 'o1');
+    seedOutcome(engine, 'o2');
+    engine.mutate('appraisal.create', {
+      cells: [
+        { studyId: 's1', type: 'ROB2', outcomeId: 'o1' },
+        { studyId: 's1', type: 'ROB2', outcomeId: 'o2' },
+      ],
+      now: NOW,
+    });
+    expect(
+      engine.mutate('study.assignReviewers', { id: 's1', ...slots, now: NOW }).error,
+    ).toBeUndefined();
+    return engine;
+  }
+
+  it('an invitee holds a slot and checklists before joining', () => {
+    const engine = invitedStudy({ reviewer1: 'alice', reviewer2: INVITED });
+    expect(checklistsOf(engine, 's1').filter(c => c.assignedTo === INVITED)).toHaveLength(2);
+  });
+
+  it('accepting hands the slot and the same checklists to the new account', () => {
+    const engine = invitedStudy({ reviewer1: 'alice', reviewer2: INVITED });
+    const invitedO1 = heldChecklistId(engine, 's1', INVITED, 'o1');
+    engine.mutate('checklist.updateAnswer', {
+      checklistId: invitedO1,
+      input: ROB2_ANSWER,
+      now: NOW,
+    });
+    const result = engine.mutate('reviewer.claimInvitation', {
+      invitationId: 'inv-1',
+      userId: 'rachel',
+      now: LATER,
+    });
+    expect(result.error).toBeUndefined();
+    expect(engine.get('studies', 's1')).toMatchObject({ reviewer1: 'alice', reviewer2: 'rachel' });
+    expect(engine.get('checklists', invitedO1)).toMatchObject({
+      assignedTo: 'rachel',
+      status: 'in-progress',
+    });
+    expect(checklistsOf(engine, 's1').filter(c => c.assignedTo === 'rachel')).toHaveLength(2);
+    expect(checklistsOf(engine, 's1').filter(c => c.assignedTo === INVITED)).toHaveLength(0);
+  });
+
+  it('accepting as someone already in the other slot just empties the invited slot', () => {
+    const engine = invitedStudy({ reviewer1: 'rachel', reviewer2: INVITED });
+    const result = engine.mutate('reviewer.claimInvitation', {
+      invitationId: 'inv-1',
+      userId: 'rachel',
+      now: LATER,
+    });
+    expect(result.error).toBeUndefined();
+    expect(engine.get('studies', 's1')?.reviewer2).toBeUndefined();
+    expect(checklistsOf(engine, 's1').map(c => c.assignedTo)).toEqual(['rachel', 'rachel']);
+  });
+
+  it('cancelling the invitation empties its slot and keeps the plan', () => {
+    const engine = invitedStudy({ reviewer1: 'alice', reviewer2: INVITED });
+    const result = engine.mutate('reviewer.releaseInvitation', {
+      invitationId: 'inv-1',
+      now: LATER,
+    });
+    expect(result.error).toBeUndefined();
+    expect(engine.get('studies', 's1')?.reviewer2).toBeUndefined();
+    expect(checklistsOf(engine, 's1').filter(c => c.assignedTo === INVITED)).toHaveLength(0);
+    expect(engine.list('appraisals')).toHaveLength(2);
+  });
+
+  it('claiming an invitation that holds no slot changes nothing', () => {
+    const engine = invitedStudy({ reviewer1: 'alice' });
+    const before = engine.list('checklists');
+    const result = engine.mutate('reviewer.claimInvitation', {
+      invitationId: 'inv-1',
+      userId: 'rachel',
+      now: LATER,
+    });
+    expect(result.error).toBeUndefined();
+    expect(engine.list('checklists')).toEqual(before);
   });
 });
 

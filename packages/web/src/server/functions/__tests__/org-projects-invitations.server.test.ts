@@ -12,6 +12,8 @@ import {
 } from '@/__tests__/server/factories';
 import type { Session } from '@/server/middleware/auth';
 import { DomainErrorException } from '@corates/shared';
+import { invitedReviewerId } from '@corates/shared/sync';
+import { projectSync } from '@corates/workers/sync';
 import {
   listProjectInvitations,
   cancelProjectInvitation,
@@ -112,6 +114,42 @@ describe('cancelProjectInvitation', () => {
       const body = res.toDomainError() as { code: string };
       expect(body.code).toMatch(/FIELD_INVALID_FORMAT/);
     }
+  });
+
+  it('empties the reviewer slots the cancelled invitation held', async () => {
+    const { project, org, owner } = await buildProject();
+    currentUser = { id: owner.id, email: owner.email };
+    const invitation = await buildProjectInvitation({
+      orgId: org.id,
+      projectId: project.id,
+      email: 'invitee@example.com',
+      invitedBy: owner.id,
+      status: 'pending',
+    });
+    const sync = projectSync(env, project.id);
+    const now = Date.now();
+    await sync.mutate('study.create', { id: 's1', name: 'Study', description: '', now });
+    await sync.mutate('study.assignReviewers', {
+      id: 's1',
+      reviewer1: owner.id,
+      reviewer2: invitedReviewerId(invitation.id),
+      now,
+    });
+
+    await cancelProjectInvitation(
+      mockSession(),
+      createDb(env.DB),
+      org.id,
+      project.id,
+      invitation.id,
+    );
+
+    const { rows } = (await sync.export()) as {
+      rows: Array<{ tbl: string; data: Record<string, unknown> }>;
+    };
+    const study = rows.find(r => r.tbl === 'studies')!.data;
+    expect(study.reviewer1).toBe(owner.id);
+    expect(study.reviewer2).toBeUndefined();
   });
 
   it('returns error when canceling accepted invitation', async () => {

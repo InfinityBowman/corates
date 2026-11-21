@@ -30,6 +30,16 @@ export declare function kickSyncUser(
 export declare function refreshSyncSessions(env: unknown, projectId: string): Promise<void>;
 
 /**
+ * Empty a cancelled invitation's reviewer slots in the project.
+ * Best-effort: failures are logged, never thrown.
+ */
+export declare function releaseInvitedReviewer(
+  env: unknown,
+  projectId: string,
+  invitationId: string,
+): Promise<void>;
+
+/**
  * Project deletion: close every session permanently, then wipe the sync DO
  * storage. Best-effort: failures are logged, never thrown.
  */
@@ -37,7 +47,7 @@ export declare function teardownProjectSync(env: unknown, projectId: string): Pr
 
 /**
  * Typed admin surface over one project's sync DO for same-worker callers
- * (stats/export/import/reset/disconnect). Only what web consumes is declared.
+ * (stats/export/import/reset/disconnect/mutate). Only what web consumes is declared.
  */
 export declare function projectSync(
   env: unknown,
@@ -52,6 +62,11 @@ export declare function projectSync(
     mode?: 'kick' | 'refresh';
     reason?: string;
   }): Promise<{ disconnected: number }>;
+  mutate(
+    name: string,
+    args?: unknown,
+    opts?: { dryRun?: boolean },
+  ): Promise<{ dryRun: boolean; version: number | null; changes: unknown[] }>;
 };
 
 /**

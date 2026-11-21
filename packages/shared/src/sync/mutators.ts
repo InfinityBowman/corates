@@ -29,7 +29,7 @@ import {
   type JsonValue,
 } from './answer-rows.js';
 import { carryOverSections, planAnswerCopy } from './copy-answers.js';
-import { answerRowId, appraisalRowId, reconciliationRowId } from './ids.js';
+import { answerRowId, appraisalRowId, invitedReviewerId, reconciliationRowId } from './ids.js';
 import {
   pdfCitationMetadataSchema,
   pdfTagSchema,
@@ -39,6 +39,7 @@ import {
   type ChecklistRow,
   type ChecklistType,
   type StudyMetadata,
+  type StudyRow,
 } from './schema.js';
 
 export const authContextSchema = z.object({
@@ -297,6 +298,112 @@ function materializeForReviewer(
   }
 }
 
+type InProgressPolicy = 'handOver' | 'discard';
+
+/**
+ * Fill, swap, or clear a study's reviewer slots, keeping checklists in step.
+ *
+ * A joining reviewer gets a checklist for every planned cell. A leaving
+ * reviewer's pending checklists move to whoever takes their place (or go
+ * away when the slot is cleared); in-progress ones need the caller to say
+ * `handOver` or `discard`; completed and finalized ones are history and
+ * stay put, since reconciliation pairs on them.
+ *
+ * A remaining reviewer's completed checklist takes the status the new
+ * review mode gives completion: a second reviewer joining turns a
+ * finalized single review into one awaiting reconciliation, and the
+ * second reviewer leaving finalizes it, unless reconciliation has begun.
+ */
+function setReviewerSlots(
+  tx: Tx,
+  ctx: { nextId: () => string },
+  study: StudyRow,
+  after: [string | null, string | null],
+  onInProgress: InProgressPolicy | undefined,
+  now: number,
+): void {
+  const id = study.id;
+  const before = [study.reviewer1 ?? null, study.reviewer2 ?? null];
+  if (after[0] && after[0] === after[1]) {
+    throw new AppError('DuplicateReviewer', 'The same person cannot fill both reviewer slots');
+  }
+  const leavers = before.filter((u): u is string => !!u && !after.includes(u));
+  const joiners = after.filter((u): u is string => !!u && !before.includes(u));
+
+  const held = heldCellIndex(tx);
+  // Decide every move before writing, so a refusal leaves nothing half-applied.
+  const moves: Array<{ checklist: ChecklistRow; to: string | null }> = [];
+  leavers.forEach((leaver, i) => {
+    const successor = joiners[i] ?? null;
+    const where = { studyId: id, kind: 'reviewer' as const, assignedTo: leaver };
+    for (const row of tx.list('checklists', { where })) {
+      const checklist = row.data;
+      const successorHolds =
+        successor !== null &&
+        held.has(`${cellKey(id, checklist.type, checklist.outcomeId)}|${successor}`);
+      const to = successor && !successorHolds ? successor : null;
+
+      if (checklist.status === CHECKLIST_STATUS.PENDING) {
+        moves.push({ checklist, to });
+      } else if (checklist.status === CHECKLIST_STATUS.IN_PROGRESS) {
+        if (onInProgress === 'handOver' && to) moves.push({ checklist, to });
+        else if (onInProgress === 'discard') moves.push({ checklist, to: null });
+        else {
+          throw new AppError(
+            'InProgressChecklists',
+            'This reviewer has appraisals in progress. Say whether to hand them over or discard them.',
+          );
+        }
+      }
+    }
+  });
+
+  for (const { checklist, to } of moves) {
+    if (to) {
+      tx.put('checklists', checklist.id, { ...checklist, assignedTo: to, updatedAt: now });
+      held.add(`${cellKey(id, checklist.type, checklist.outcomeId)}|${to}`);
+    } else {
+      discardChecklist(tx, checklist.id);
+    }
+  }
+  for (const joiner of joiners) materializeForReviewer(tx, ctx, id, joiner, held, now);
+
+  const completedStatus =
+    after[0] && after[1] ? CHECKLIST_STATUS.REVIEWER_COMPLETED : CHECKLIST_STATUS.FINALIZED;
+  const reconcilingCells = new Set(
+    tx
+      .list('checklists', { where: { studyId: id, kind: 'consensus' } })
+      .map(row => cellKey(id, row.data.type, row.data.outcomeId)),
+  );
+  for (const holder of after) {
+    if (!holder) continue;
+    const where = { studyId: id, kind: 'reviewer' as const, assignedTo: holder };
+    for (const row of tx.list('checklists', { where })) {
+      const checklist = row.data;
+      const completed =
+        checklist.status === CHECKLIST_STATUS.FINALIZED ||
+        checklist.status === CHECKLIST_STATUS.REVIEWER_COMPLETED;
+      if (!completed || checklist.status === completedStatus) continue;
+      if (reconcilingCells.has(cellKey(id, checklist.type, checklist.outcomeId))) continue;
+      tx.put('checklists', checklist.id, {
+        ...checklist,
+        status: completedStatus,
+        updatedAt: now,
+      });
+    }
+  }
+
+  const merged = { ...study };
+  for (const [slot, holder] of [
+    ['reviewer1', after[0]],
+    ['reviewer2', after[1]],
+  ] as const) {
+    if (holder) merged[slot] = holder;
+    else delete merged[slot];
+  }
+  tx.put('studies', id, { ...merged, updatedAt: now });
+}
+
 function hasAnswers(
   tx: Tx,
   checklist: { id: string; type: ChecklistType; status: string },
@@ -366,15 +473,7 @@ export const syncMutators = defineMutators(
       },
     },
 
-    /**
-     * Fill, swap, or clear a study's reviewer slots, keeping checklists in step.
-     *
-     * A joining reviewer gets a checklist for every planned cell. A leaving
-     * reviewer's pending checklists move to whoever takes their place (or go
-     * away when the slot is cleared); in-progress ones need the caller to say
-     * `handOver` or `discard`; completed and finalized ones are history and
-     * stay put, since reconciliation pairs on them.
-     */
+    /** See `setReviewerSlots`. */
     'study.assignReviewers': {
       args: z.object({
         id: z.string(),
@@ -388,67 +487,59 @@ export const syncMutators = defineMutators(
         const study = tx.get('studies', id);
         if (!study) throw new AppError('NotFound', `Study ${id} does not exist`);
 
-        const before = [study.reviewer1 ?? null, study.reviewer2 ?? null];
-        const after = [
-          reviewer1 === undefined ? before[0] : reviewer1,
-          reviewer2 === undefined ? before[1] : reviewer2,
-        ];
-        if (after[0] && after[0] === after[1]) {
-          throw new AppError(
-            'DuplicateReviewer',
-            'The same person cannot fill both reviewer slots',
-          );
+        setReviewerSlots(
+          tx,
+          ctx,
+          study,
+          [
+            reviewer1 === undefined ? (study.reviewer1 ?? null) : reviewer1,
+            reviewer2 === undefined ? (study.reviewer2 ?? null) : reviewer2,
+          ],
+          onInProgress,
+          now,
+        );
+      },
+    },
+
+    /**
+     * Hands an invitee's reviewer slots and checklists to the account that
+     * accepted the invitation. The accept flow runs it through admin mutate.
+     */
+    'reviewer.claimInvitation': {
+      args: z.object({ invitationId: z.string(), userId: z.string(), now: timestamp }),
+      apply: (tx, { invitationId, userId, now }, ctx) => {
+        assertWritable(ctx);
+        const invited = invitedReviewerId(invitationId);
+        for (const { data: study } of tx.list('studies')) {
+          const slots = [study.reviewer1 ?? null, study.reviewer2 ?? null] as const;
+          if (!slots.includes(invited)) continue;
+          // Already in the other slot under their account: the invited slot just empties.
+          const alreadyReviewer = slots.includes(userId);
+          const replacement = alreadyReviewer ? null : userId;
+          const after = slots.map(s => (s === invited ? replacement : s)) as [
+            string | null,
+            string | null,
+          ];
+          setReviewerSlots(tx, ctx, study, after, alreadyReviewer ? 'discard' : 'handOver', now);
         }
-        const leavers = before.filter((u): u is string => !!u && !after.includes(u));
-        const joiners = after.filter((u): u is string => !!u && !before.includes(u));
+      },
+    },
 
-        const held = heldCellIndex(tx);
-        // Decide every move before writing, so a refusal leaves nothing half-applied.
-        const moves: Array<{ checklist: ChecklistRow; to: string | null }> = [];
-        leavers.forEach((leaver, i) => {
-          const successor = joiners[i] ?? null;
-          const where = { studyId: id, kind: 'reviewer' as const, assignedTo: leaver };
-          for (const row of tx.list('checklists', { where })) {
-            const checklist = row.data;
-            const successorHolds =
-              successor !== null &&
-              held.has(`${cellKey(id, checklist.type, checklist.outcomeId)}|${successor}`);
-            const to = successor && !successorHolds ? successor : null;
-
-            if (checklist.status === CHECKLIST_STATUS.PENDING) {
-              moves.push({ checklist, to });
-            } else if (checklist.status === CHECKLIST_STATUS.IN_PROGRESS) {
-              if (onInProgress === 'handOver' && to) moves.push({ checklist, to });
-              else if (onInProgress === 'discard') moves.push({ checklist, to: null });
-              else {
-                throw new AppError(
-                  'InProgressChecklists',
-                  'This reviewer has appraisals in progress. Say whether to hand them over or discard them.',
-                );
-              }
-            }
-          }
-        });
-
-        for (const { checklist, to } of moves) {
-          if (to) {
-            tx.put('checklists', checklist.id, { ...checklist, assignedTo: to, updatedAt: now });
-            held.add(`${cellKey(id, checklist.type, checklist.outcomeId)}|${to}`);
-          } else {
-            discardChecklist(tx, checklist.id);
-          }
+    /** Empties a cancelled invitation's reviewer slots and drops its checklists. */
+    'reviewer.releaseInvitation': {
+      args: z.object({ invitationId: z.string(), now: timestamp }),
+      apply: (tx, { invitationId, now }, ctx) => {
+        assertWritable(ctx);
+        const invited = invitedReviewerId(invitationId);
+        for (const { data: study } of tx.list('studies')) {
+          const slots = [study.reviewer1 ?? null, study.reviewer2 ?? null] as const;
+          if (!slots.includes(invited)) continue;
+          const after = slots.map(s => (s === invited ? null : s)) as [
+            string | null,
+            string | null,
+          ];
+          setReviewerSlots(tx, ctx, study, after, 'discard', now);
         }
-        for (const joiner of joiners) materializeForReviewer(tx, ctx, id, joiner, held, now);
-
-        const merged = { ...study };
-        for (const [slot, holder] of [
-          ['reviewer1', after[0]],
-          ['reviewer2', after[1]],
-        ] as const) {
-          if (holder) merged[slot] = holder;
-          else delete merged[slot];
-        }
-        tx.put('studies', id, { ...merged, updatedAt: now });
       },
     },
 
@@ -499,18 +590,15 @@ export const syncMutators = defineMutators(
         const study = tx.get('studies', studyId);
         if (!study) throw new AppError('NotFound', `Study ${studyId} does not exist`);
 
-        if (requiresOutcome(type) && outcomeId) {
-          const where = { studyId, type, outcomeId, kind, assignedTo };
-          if (tx.list('checklists', { where }).length > 0) {
-            throw new AppError(
-              'DuplicateChecklist',
-              `A ${type} checklist for this outcome and reviewer already exists`,
-            );
-          }
+        const cell = { studyId, type, outcomeId };
+        if (checklistsInCell(tx, cell).some(c => c.kind === kind && c.assignedTo === assignedTo)) {
+          throw new AppError(
+            'DuplicateChecklist',
+            `A ${type} checklist for this cell and reviewer already exists`,
+          );
         }
 
         const held = heldCellIndex(tx);
-        const cell = { studyId, type, outcomeId };
         ensureAppraisal(tx, cell, now);
         createChecklistRow(tx, { id, ...cell, kind, assignedTo }, now);
         if (kind === 'reviewer') {

@@ -23,6 +23,7 @@ import {
   useAnswerWriters,
   useReconciliationProgress,
   useStudy,
+  useInvitedReviewers,
   useProjectMembers,
 } from '@/project/project-data';
 import { serializeAnswerRows, textFieldKey, type ChecklistAnswerInput } from '@corates/shared/sync';
@@ -96,6 +97,7 @@ export function ReconciliationWrapper({
   const connectionState = useProjectStore(s => selectConnectionPhase(s, projectId));
   const currentStudy = useStudy(projectId, studyId);
   const members = useProjectMembers(projectId);
+  const invited = useInvitedReviewers(projectId, { includeExpired: true });
 
   // Watch for access-denied errors and redirect
   useEffect(() => {
@@ -215,10 +217,11 @@ export function ReconciliationWrapper({
   const getReviewerName = useCallback(
     (userId: string | null) => {
       if (!userId) return 'Unassigned';
-      const member = members.find(m => m.userId === userId);
+      const member =
+        members.find(m => m.userId === userId) ?? invited.find(m => m.userId === userId);
       return member?.name || member?.email || 'Unknown';
     },
-    [members],
+    [members, invited],
   );
 
   // Extract outcomeId and type from checklist1 metadata

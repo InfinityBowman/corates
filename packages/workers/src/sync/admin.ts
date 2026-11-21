@@ -104,3 +104,47 @@ export async function teardownProjectSync(env: Env, projectId: string): Promise<
     });
   }
 }
+
+/**
+ * Hand an accepted invitation's reviewer slots to the new member, so work the
+ * owner assigned before they joined is waiting in their To-Do. Best-effort,
+ * like the session refresh: the owner can still reassign by hand.
+ */
+export async function claimInvitedReviewer(
+  env: Env,
+  projectId: string,
+  invitationId: string,
+  userId: string,
+): Promise<void> {
+  try {
+    await projectSync(env, projectId).mutate('reviewer.claimInvitation', {
+      invitationId,
+      userId,
+      now: Date.now(),
+    });
+  } catch (err) {
+    captureError(err, {
+      tags: { component: 'project-sync', action: 'claim-invited-reviewer' },
+      extra: { projectId, invitationId, userId },
+    });
+  }
+}
+
+/** Empty a cancelled invitation's reviewer slots. Best-effort, like the claim. */
+export async function releaseInvitedReviewer(
+  env: Env,
+  projectId: string,
+  invitationId: string,
+): Promise<void> {
+  try {
+    await projectSync(env, projectId).mutate('reviewer.releaseInvitation', {
+      invitationId,
+      now: Date.now(),
+    });
+  } catch (err) {
+    captureError(err, {
+      tags: { component: 'project-sync', action: 'release-invited-reviewer' },
+      extra: { projectId, invitationId },
+    });
+  }
+}

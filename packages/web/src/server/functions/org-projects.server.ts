@@ -24,6 +24,7 @@ import {
 } from '@corates/workers/commands/projects';
 import { removeMember as removeMemberCmd } from '@corates/workers/commands/members';
 import { createInvitation } from '@corates/workers/commands/invitations';
+import { releaseInvitedReviewer } from '@corates/workers/sync';
 import { requireMemberRemoval } from '@corates/workers/policies';
 import { checkFreeProjectCap } from '@corates/workers/free-project-cap';
 import { requireOrgMembership } from '@/server/guards/requireOrgMembership';
@@ -489,6 +490,7 @@ export async function cancelProjectInvitation(
     }
 
     await db.delete(projectInvitations).where(eq(projectInvitations.id, invitationId));
+    await releaseInvitedReviewer(env, projectId, invitationId);
 
     info('invitation.cancelled', { orgId, projectId, invitationId });
 

@@ -12,7 +12,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { ReviewerAssignment } from './ReviewerAssignment';
-import { useAllStudies, useProjectMembers } from '@/project/project-data';
+import { useAllStudies, useInvitedReviewers, useProjectMembers } from '@/project/project-data';
 import { useAuthStore, selectUser } from '@/stores/authStore';
 import { project } from '@/project';
 import { useProjectContext } from '../ProjectContext';
@@ -27,6 +27,8 @@ export function AssignReviewersSheet({ open, onOpenChange }: AssignReviewersShee
   const user = useAuthStore(selectUser);
   const studies = useAllStudies(projectId);
   const members = useProjectMembers(projectId);
+  // Invitees can be assigned before they join; accepting hands them the slot.
+  const invited = useInvitedReviewers(projectId);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -47,7 +49,7 @@ export function AssignReviewersSheet({ open, onOpenChange }: AssignReviewersShee
         <ReviewerAssignment
           scope={assignSheetScope}
           studies={studies}
-          members={members}
+          members={[...members, ...invited]}
           currentUserId={user?.id ?? null}
           onSave={(studyId, slots, onInProgress) =>
             project.study.assignReviewers(studyId, slots, onInProgress)

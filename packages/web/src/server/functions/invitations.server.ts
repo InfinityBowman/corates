@@ -1,5 +1,6 @@
 import { captureError } from '@corates/workers/logger';
 import { env } from 'cloudflare:workers';
+import { releaseInvitedReviewer } from '@corates/workers/sync';
 import {
   acceptInvitation,
   getInvitationByToken,
@@ -146,7 +147,11 @@ export async function declineInvitation(
   { invitationId }: { invitationId: string },
 ): Promise<{ success: true }> {
   const invitation = await db
-    .select({ email: projectInvitations.email, acceptedAt: projectInvitations.acceptedAt })
+    .select({
+      email: projectInvitations.email,
+      acceptedAt: projectInvitations.acceptedAt,
+      projectId: projectInvitations.projectId,
+    })
     .from(projectInvitations)
     .where(eq(projectInvitations.id, invitationId))
     .get();
@@ -166,5 +171,6 @@ export async function declineInvitation(
   }
 
   await db.delete(projectInvitations).where(eq(projectInvitations.id, invitationId));
+  await releaseInvitedReviewer(env, invitation.projectId, invitationId);
   return { success: true };
 }
