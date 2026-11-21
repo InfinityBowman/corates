@@ -143,6 +143,37 @@ mutation and checklist per 60 second window, emitted when the window closes with
 holding how many it stands for. Sum `count` rather than counting lines. The 60 seconds were
 chosen before any production measurement; adjust if the `Mutations committed` panel says so.
 
+### Server function failures
+
+A server function hands a thrown error back to the client as data, so its request logs a 200
+under a hashed `/_serverFn/...` route. The global function middleware in `start.ts`
+(`server/middleware/serverFnLog.ts`) adds `serverFn` (the function's variable name, or its id
+for calls made during SSR) to every log the function writes, and on failure emits
+`serverfn.failed` with `code`, `status` and `details` for a domain error under 500. Anything
+else goes through `captureError`. Redirects and not-found are control flow and log nothing.
+
+### Durable Object connection failures
+
+Cloudflare platform errors on a Durable Object hand-off ("Network connection lost", "this
+Durable Object instance is no longer active", storage resets) reach Loki as non-JSON exception
+lines with `exception_type` / `exception_message` in structured metadata, and carry neither a
+`requestId` nor the project. `server.ts` therefore logs `do.connect_failed` with
+`durableObject` (`ProjectSyncDO` or `UserSession`), `projectId` or `sessionId`, `durationMs`,
+and either `error` or a 5xx `status`. Join on `requestId` to the `sync.authorize_ok` line for
+the user. The exceptions themselves are found with
+`{deployment_environment_name="production"} | exception_type!=""`; a `| json` stage drops them.
+
+On the browser side, `client.sync.slow` fires once when a project has not synced 30 seconds
+after it started connecting or dropped (with `online` and `hidden` so offline laptops and
+background tabs can be filtered out), and `client.sync.recovered` reports the full `waitedMs`
+when it syncs again.
+
+### Adding studies
+
+Every add-studies batch emits one `client.studies.added` with `count`, `failed`, `sources`
+(studies per `importSource`: `pdf`, `google-drive`, `reference-file`, `identifier-lookup`, ...),
+`withPdf`, `manualPdf` (a publisher PDF the person must download) and `driveFailed`.
+
 ## Levels
 
 - `info` - a thing happened that you would want to see when reconstructing a request
@@ -223,6 +254,9 @@ Grafana lives at `grafana.jacobmaynard.dev` with one dashboard, `CoRATES Logs`.
 {service_name="corates-workers-prod"} | json | message="client.crash"        # browser crashes
 {service_name="corates-workers-prod"} | json | message="client.checklist.created"   # usage events
 {service_name="corates-workers-prod"} | json | message="sync.mutation" | projectId="..."   # work inside one project
+{service_name="corates-workers-prod"} | json | message="serverfn.failed"     # rejected server function calls
+{service_name="corates-workers-prod"} | json | message="do.connect_failed"   # failed sync/session connections
+{deployment_environment_name="production"} | exception_type!=""             # uncaught runtime exceptions
 ```
 
 ```logql

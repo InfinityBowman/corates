@@ -78,6 +78,7 @@ import { extractPdfTitle, extractPdfDoi } from '@/lib/pdfUtils.js';
 import { fetchFromDOI } from '@/lib/referenceLookup.js';
 import { importFromDrive } from '@/server/functions/google-drive.functions';
 import { uploadPdf, fetchPdfViaProxy } from '@/api/pdf-api';
+import { clientLogger } from '@/lib/clientLogger';
 
 describe('studyActions.addBatch', () => {
   beforeEach(() => {
@@ -108,6 +109,25 @@ describe('studyActions.addBatch', () => {
     expect(mockStudyCreate).toHaveBeenCalledWith(
       expect.objectContaining({ name: 'LocalFile', description: '' }),
     );
+  });
+
+  it('logs one summary of what the batch added', async () => {
+    const info = vi.spyOn(clientLogger, 'info').mockImplementation(() => {});
+    await studyActions.addBatch([
+      { title: 'A', importSource: 'reference-file' },
+      { title: 'B', importSource: 'reference-file' },
+      { title: 'C', doi: '10.1234/c', importSource: 'identifier-lookup' },
+    ]);
+
+    expect(info).toHaveBeenCalledWith('client.studies.added', {
+      projectId: 'proj-1',
+      count: 3,
+      failed: 0,
+      sources: { 'reference-file': 2, 'identifier-lookup': 1 },
+      withPdf: 0,
+      manualPdf: 0,
+      driveFailed: 0,
+    });
   });
 
   it('falls back to Untitled Study when no filename is available', async () => {
