@@ -18,10 +18,10 @@ import { bestEffort } from '@/lib/errorLogger.js';
 import { importFromDrive } from '@/server/functions/google-drive.functions';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Spinner } from '@/components/ui/spinner';
 import { getChecklistCount } from '@corates/shared/checklists';
 
 import { ProjectHeader, type ProjectTabDef } from './ProjectHeader';
+import { ProjectSyncingScreen } from './ProjectSyncingScreen';
 import { ProjectSheets } from './ProjectSheets';
 import { PdfPreviewPanel } from './PdfPreviewPanel';
 import { SectionErrorBoundary } from './SectionErrorBoundary';
@@ -41,19 +41,27 @@ const TAB_PANEL = 'w-full max-w-7xl px-6 py-6';
 
 export function ProjectView({ projectId }: ProjectViewProps) {
   return (
-    <ProjectGate projectId={projectId} fallback={<ProjectLoadingFallback />}>
+    <ProjectGate projectId={projectId} fallback={<ProjectLoadingFallback projectId={projectId} />}>
       <ProjectViewInner projectId={projectId} />
     </ProjectGate>
   );
 }
 
-function ProjectLoadingFallback() {
+function ProjectLoadingFallback({ projectId }: ProjectViewProps) {
+  // The projects list query usually resolves well before the workspace does, so
+  // the real name can land in the header while the rest is still syncing.
+  const meta = useProjectMeta(projectId);
+
   return (
     <div className='bg-background min-h-full'>
       {/* Header skeleton mirrors the real sticky project header */}
       <header className='border-border bg-card sticky top-0 z-20 border-b'>
         <div className='flex h-11 items-center gap-3 px-6'>
-          <Skeleton className='h-5 w-48' />
+          {meta.name ?
+            <span className='text-foreground max-w-80 truncate text-sm font-semibold'>
+              {meta.name}
+            </span>
+          : <Skeleton className='h-5 w-48' />}
           <div className='bg-border h-5 w-px' />
           {Array.from({ length: 5 }).map((_, i) => (
             <Skeleton key={i} className='h-6 w-20 rounded-md' />
@@ -62,34 +70,7 @@ function ProjectLoadingFallback() {
         </div>
       </header>
 
-      {/* Content skeleton with a quiet sync indicator */}
-      <div className='mx-auto max-w-7xl px-6 py-6'>
-        <div
-          className='text-muted-foreground mb-6 flex items-center gap-2.5 text-sm'
-          role='status'
-          aria-live='polite'
-        >
-          <Spinner size='sm' variant='default' />
-          <span>Loading your project...</span>
-        </div>
-        <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div
-              key={i}
-              className='border-border bg-card space-y-3 rounded-lg border p-4'
-              style={{ animationDelay: `${i * 80}ms` }}
-            >
-              <Skeleton className='h-5 w-3/4' />
-              <Skeleton className='h-4 w-full' />
-              <Skeleton className='h-4 w-5/6' />
-              <div className='flex gap-2 pt-1'>
-                <Skeleton className='h-6 w-16 rounded-full' />
-                <Skeleton className='h-6 w-20 rounded-full' />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      <ProjectSyncingScreen />
     </div>
   );
 }
