@@ -24,6 +24,7 @@ export interface SitemapEntry {
 const STATIC_PAGES: SitemapEntry[] = [
   { path: '/', lastmod: '2026-09-01', changefreq: 'weekly', priority: '1.0' },
   { path: '/about', lastmod: '2026-09-01', changefreq: 'monthly', priority: '0.8' },
+  { path: '/cite', lastmod: '2026-09-29', changefreq: 'yearly', priority: '0.5' },
   { path: '/contact', lastmod: '2026-09-01', changefreq: 'monthly', priority: '0.6' },
   { path: '/pricing', lastmod: '2026-09-01', changefreq: 'weekly', priority: '0.9' },
   { path: '/privacy', lastmod: '2026-09-01', changefreq: 'yearly', priority: '0.3' },
