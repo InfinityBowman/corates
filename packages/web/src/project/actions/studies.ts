@@ -260,9 +260,12 @@ function showBatchResultToast(
 
   if (driveFailedCount > 0) {
     const fileWord = driveFailedCount === 1 ? 'file' : 'files';
+    const pdfWord = manualPdfCount === 1 ? 'PDF requires' : 'PDFs require';
+    const manualNote =
+      manualPdfCount > 0 ? ` ${manualPdfCount} ${pdfWord} manual download from the publisher.` : '';
     showToast.warning(
       'Studies Added',
-      `Added ${successCount} ${studyWord}. ${driveFailedCount} Google Drive ${fileWord} could not be imported as a PDF; add the PDF from the study.`,
+      `Added ${successCount} ${studyWord}. ${driveFailedCount} Google Drive ${fileWord} could not be imported as a PDF; add the PDF from the study.${manualNote}`,
     );
   } else if (manualPdfCount > 0) {
     const pdfWord = manualPdfCount === 1 ? 'PDF requires' : 'PDFs require';

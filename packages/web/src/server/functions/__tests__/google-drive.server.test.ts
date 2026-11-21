@@ -10,7 +10,7 @@ import {
   importFromDrive,
 } from '@/server/functions/google-drive.server';
 import type { Session } from '@/server/middleware/auth';
-import { DomainErrorException } from '@corates/shared';
+import { DomainErrorException, isValidPdfFilename } from '@corates/shared';
 
 // A real 50MB body is too heavy for the test isolate; shrink the limit instead
 vi.mock('@corates/shared', async importOriginal => {
@@ -376,6 +376,39 @@ describe('importFromDrive', () => {
     expect(result.file.fileName).toBe('Sadlo - Hofmann-Lee et al. 2021.pdf');
     const stored = await env.PDF_BUCKET.head(result.file.key);
     expect(stored).not.toBeNull();
+  });
+
+  it('keeps a collision-suffixed name within the filename limit', async () => {
+    const { project, owner } = await buildProject();
+    await seedGoogleAccount(owner.id);
+    currentUser = { id: owner.id, email: owner.email };
+
+    const pdfData = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d]);
+    const longName = 'a'.repeat(196) + '.pdf';
+    for (let i = 0; i < 2; i++) {
+      mockFetch
+        .mockResolvedValueOnce(
+          new Response(
+            JSON.stringify({
+              id: 'file-123',
+              name: longName,
+              mimeType: 'application/pdf',
+              size: '5',
+            }),
+            { headers: { 'Content-Type': 'application/json' } },
+          ),
+        )
+        .mockResolvedValueOnce(new Response(pdfData.buffer as ArrayBuffer));
+    }
+
+    const db = createDb(env.DB);
+    const args = { fileId: 'file-123', projectId: project.id, studyId: 'study-1' };
+    const first = await importFromDrive(db, mockSession(), args);
+    const second = await importFromDrive(db, mockSession(), args);
+
+    expect(first.file.fileName).toBe(longName);
+    expect(second.file.fileName).toBe('a'.repeat(192) + ' (1).pdf');
+    expect(isValidPdfFilename(second.file.fileName)).toBe(true);
   });
 
   it('rejects a download larger than the limit when Drive omits size', async () => {
