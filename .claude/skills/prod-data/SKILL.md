@@ -24,7 +24,7 @@ ssh jacob@homelab "curl -s -G http://$LOKI_IP:3100/loki/api/v1/query_range \
   --data-urlencode start=<ns> --data-urlencode end=<ns> --data-urlencode limit=500"
 ```
 
-If ssh times out, use Grafana's proxy: `https://grafana.jacobmaynard.dev/api/datasources/proxy/uid/P8E80F9AEF21F6940/loki/api/v1/query_range` with `-u admin:$GRAFANA_ADMIN_PASSWORD` from `infra/observability/.env`. Use curl, not Python urllib (Cloudflare returns 403). A userId or cfRay pulls a whole session timeline. Fields and example queries: `packages/docs/guides/observability.md`, `infra/observability/README.md`.
+If ssh times out, use Grafana's proxy: `https://grafana.jacobmaynard.dev/api/datasources/proxy/uid/P8E80F9AEF21F6940/loki/api/v1/query_range` with `-u admin:$GRAFANA_ADMIN_PASSWORD` from `infra/observability/.env`. Use curl, not Python urllib (Cloudflare returns 403). A userId or cfRay pulls a whole session timeline. Uncaught runtime exceptions (mostly Durable Object platform errors) are not JSON and a `| json` stage drops them: query `{deployment_environment_name="production"} | exception_type!=""`. Fields and example queries: `packages/docs/guides/observability.md`, `infra/observability/README.md`.
 
 **Sentry**: token in `~/.sentryclirc`; org `corates`, project `corates-web`.
 

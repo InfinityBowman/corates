@@ -7,6 +7,7 @@ import { cachePdf, clearStudyCache } from '@/primitives/pdfCache.js';
 import { bestEffort } from '@/lib/errorLogger.js';
 import { captureException } from '@/config/sentry';
 import { showToast } from '@/lib/toast';
+import { clientLogger } from '@/lib/clientLogger';
 import { importFromDrive } from '@/server/functions/google-drive.functions';
 import { extractPdfDoi, extractPdfTitle } from '@/lib/pdfUtils.js';
 import { fetchFromDOI } from '@/lib/referenceLookup.js';
@@ -387,6 +388,9 @@ export const studyActions = {
     let successCount = 0;
     let manualPdfCount = 0;
     let driveFailedCount = 0;
+    let withPdfCount = 0;
+    let failedCount = 0;
+    const sources: Record<string, number> = {};
     const studyIds: string[] = [];
 
     try {
@@ -472,16 +476,29 @@ export const studyActions = {
           if (!pdfAttached && study.googleDriveFileId) {
             driveFailedCount++;
           }
+          if (pdfAttached) withPdfCount++;
+          const source = (study.importSource as string) || 'unknown';
+          sources[source] = (sources[source] ?? 0) + 1;
 
           successCount++;
           studyIds.push(studyId);
         } catch (err) {
+          failedCount++;
           console.error('Error adding study:', err);
           captureException(err, { component: 'studyActions', action: 'addBatch.study' });
         }
       }
 
       showBatchResultToast(successCount, manualPdfCount, driveFailedCount);
+      clientLogger.info('client.studies.added', {
+        projectId,
+        count: successCount,
+        failed: failedCount,
+        sources,
+        withPdf: withPdfCount,
+        manualPdf: manualPdfCount,
+        driveFailed: driveFailedCount,
+      });
       return { successCount, manualPdfCount, studyIds };
     } catch (err) {
       console.error('Error adding studies:', err);

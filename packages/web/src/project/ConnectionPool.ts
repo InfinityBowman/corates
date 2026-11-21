@@ -20,6 +20,7 @@ import { queryKeys } from '@/lib/queryKeys';
 import { getWsBaseUrl } from '@/config/api';
 import { showToast } from '@/lib/toast';
 import { clientLogger } from '@/lib/clientLogger';
+import { createSyncSlowLog } from './syncSlowLog';
 import { fatalReasonMessage } from './fatalReasons';
 import { db, deleteProjectData, trackSyncCache } from '@/primitives/db.js';
 import { loadLegacyLocalRows } from './localProject';
@@ -227,8 +228,12 @@ class ConnectionPool {
     // membership changes, so every 'synced' refetches members and the
     // invitations they were accepted from. No first-synced gate — the
     // refresh can race the initial connection.
+    const syncSlowLog = createSyncSlowLog(projectId);
+    entry._cleanupHandlers.push(syncSlowLog.dispose);
     const applyStatus = (status: string) => {
       if (cancelled()) return;
+      if (status === 'fatal') syncSlowLog.dispose();
+      else syncSlowLog.update(status === 'synced');
       const current = useProjectStore.getState().connections[projectId];
       if (current?.phase === 'error') return; // fatal reason wins until cleanup
       let phase: ConnectionPhase;

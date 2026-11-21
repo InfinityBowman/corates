@@ -7,6 +7,7 @@ import { runWithLogger, warn } from '@corates/workers/logger';
 import { createDb } from '@corates/db/client';
 import { handleSyncFetch } from '@corates/workers/sync';
 import { withRequestCompletionLog } from '@/server/requestCompletion';
+import { withDoConnectLog } from '@/server/doConnectLog';
 import { withAcceptNegotiation } from '@/server/ssrAccept';
 
 // Re-export DOs so wrangler DO bindings in wrangler.jsonc resolve against this
@@ -18,6 +19,7 @@ const startFetch = createStartHandler(defaultStreamHandler);
 // `/api/sessions/<sessionId>(/<...>)?` — UserSession DO for per-user
 // notification fan-out. WebSocket upgrades only.
 const SESSION_PATH = /^\/api\/sessions\/([^/]+)(?:\/.*)?$/;
+const SYNC_PATH = /^\/api\/sync\/([^/]+)$/;
 
 interface DOEnv {
   USER_SESSION: {
@@ -79,12 +81,20 @@ const workerHandler = {
             // durable-objects/__tests__/do-correlation).
             const headers = new Headers(request.headers);
             headers.set('x-request-id', requestId);
-            return stub.fetch(new Request(request, { headers }));
+            return withDoConnectLog({ durableObject: 'UserSession', sessionId }, () =>
+              stub.fetch(new Request(request, { headers })),
+            );
           }
 
           // Sync-engine routes (`/api/sync/<projectId>` upgrades and
           // `/api/sync-admin/...`): resolves null for anything else.
-          const syncResponse = await handleSyncFetch(request, env);
+          const projectId = url.pathname.match(SYNC_PATH)?.[1];
+          const syncResponse =
+            projectId ?
+              await withDoConnectLog({ durableObject: 'ProjectSyncDO', projectId }, () =>
+                handleSyncFetch(request, env),
+              )
+            : await handleSyncFetch(request, env);
           if (syncResponse) return syncResponse;
 
           // Forward the Worker's ExecutionContext through TanStack Start so file
