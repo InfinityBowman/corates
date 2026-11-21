@@ -347,6 +347,37 @@ describe('importFromDrive', () => {
     }
   });
 
+  it('imports a file renamed in Drive without its .pdf extension', async () => {
+    const { project, owner } = await buildProject();
+    await seedGoogleAccount(owner.id);
+    currentUser = { id: owner.id, email: owner.email };
+
+    const pdfData = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d]);
+    mockFetch
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            id: 'file-123',
+            name: 'Sadlo - Hofmann/Lee et al. 2021',
+            mimeType: 'application/pdf',
+            size: '5',
+          }),
+          { headers: { 'Content-Type': 'application/json' } },
+        ),
+      )
+      .mockResolvedValueOnce(new Response(pdfData.buffer as ArrayBuffer));
+
+    const result = await importFromDrive(createDb(env.DB), mockSession(), {
+      fileId: 'file-123',
+      projectId: project.id,
+      studyId: 'study-1',
+    });
+
+    expect(result.file.fileName).toBe('Sadlo - Hofmann-Lee et al. 2021.pdf');
+    const stored = await env.PDF_BUCKET.head(result.file.key);
+    expect(stored).not.toBeNull();
+  });
+
   it('rejects a download larger than the limit when Drive omits size', async () => {
     const { project, owner } = await buildProject();
     await seedGoogleAccount(owner.id);

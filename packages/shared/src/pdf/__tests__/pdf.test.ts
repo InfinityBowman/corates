@@ -5,6 +5,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   isValidPdfFilename,
+  toSafePdfFilename,
   isPdfSignature,
   formatFileSize,
   validatePdfStructure,
@@ -35,6 +36,37 @@ describe('isValidPdfFilename', () => {
     ['a'.repeat(201) + '.pdf', 'exceeds max length'],
   ])('rejects invalid filename: %s', (name, _label) => {
     expect(isValidPdfFilename(name)).toBe(false);
+  });
+});
+
+describe('toSafePdfFilename', () => {
+  it.each([
+    ['Smith 2020.pdf', 'Smith 2020.pdf'],
+    ['Sadlo - Hofmann et al. 2021', 'Sadlo - Hofmann et al. 2021.pdf'],
+    ['Report.PDF', 'Report.pdf'],
+    ['TCb/TAC "trial" results', 'TCb-TAC -trial- results.pdf'],
+    ['back\\slash.pdf', 'back-slash.pdf'],
+    ['et al..pdf', 'et al.pdf'],
+    ['../../etc/passwd', '.-.-etc-passwd.pdf'],
+    ['tab\there', 'tabhere.pdf'],
+    ['grades 1‑3', 'grades 1‑3.pdf'],
+    ['', 'document.pdf'],
+    [null, 'document.pdf'],
+    ['.pdf', 'document.pdf'],
+    ['  ...  ', 'document.pdf'],
+  ])('cleans %j to %j', (input, expected) => {
+    expect(toSafePdfFilename(input)).toBe(expected);
+  });
+
+  it.each([
+    'a'.repeat(300),
+    'a'.repeat(195) + '. b',
+    'a'.repeat(195) + '\u{1F600}',
+    '\u{1F600}'.repeat(150),
+    'x/'.repeat(120),
+  ])('always returns a valid filename for long or odd input', input => {
+    const out = toSafePdfFilename(input);
+    expect(isValidPdfFilename(out)).toBe(true);
   });
 });
 

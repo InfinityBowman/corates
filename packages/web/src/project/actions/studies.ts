@@ -250,11 +250,21 @@ async function uploadAndAttachPdf(
   }
 }
 
-function showBatchResultToast(successCount: number, manualPdfCount: number): void {
+function showBatchResultToast(
+  successCount: number,
+  manualPdfCount: number,
+  driveFailedCount: number,
+): void {
   if (successCount === 0) return;
   const studyWord = successCount === 1 ? 'study' : 'studies';
 
-  if (manualPdfCount > 0) {
+  if (driveFailedCount > 0) {
+    const fileWord = driveFailedCount === 1 ? 'file' : 'files';
+    showToast.warning(
+      'Studies Added',
+      `Added ${successCount} ${studyWord}. ${driveFailedCount} Google Drive ${fileWord} could not be imported as a PDF; add the PDF from the study.`,
+    );
+  } else if (manualPdfCount > 0) {
     const pdfWord = manualPdfCount === 1 ? 'PDF requires' : 'PDFs require';
     showToast.info(
       'Studies Added',
@@ -373,6 +383,7 @@ export const studyActions = {
 
     let successCount = 0;
     let manualPdfCount = 0;
+    let driveFailedCount = 0;
     const studyIds: string[] = [];
 
     try {
@@ -455,6 +466,9 @@ export const studyActions = {
           if (!pdfAttached && study.pdfUrl) {
             manualPdfCount++;
           }
+          if (!pdfAttached && study.googleDriveFileId) {
+            driveFailedCount++;
+          }
 
           successCount++;
           studyIds.push(studyId);
@@ -464,7 +478,7 @@ export const studyActions = {
         }
       }
 
-      showBatchResultToast(successCount, manualPdfCount);
+      showBatchResultToast(successCount, manualPdfCount, driveFailedCount);
       return { successCount, manualPdfCount, studyIds };
     } catch (err) {
       console.error('Error adding studies:', err);

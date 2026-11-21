@@ -8,7 +8,7 @@ import {
   throwDomainError,
   DomainErrorException,
   isDomainError,
-  isValidPdfFilename,
+  toSafePdfFilename,
   isPdfSignature,
   PDF_MAGIC_BYTES,
   PDF_LIMITS,
@@ -236,15 +236,7 @@ export async function importFromDrive(
       });
     }
 
-    const originalFileName = fileMeta.name;
-
-    if (!isValidPdfFilename(originalFileName)) {
-      throwDomainError(FILE_ERRORS.INVALID_TYPE, {
-        fileName: originalFileName,
-        source: 'google-drive',
-        reason: 'File name must end with .pdf and contain no special characters',
-      });
-    }
+    const originalFileName = toSafePdfFilename(fileMeta.name);
 
     const uniqueFileName = await generateUniqueFileName(originalFileName, projectId, studyId, db);
     const r2Key = `projects/${projectId}/studies/${studyId}/${uniqueFileName}`;
