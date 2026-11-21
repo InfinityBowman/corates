@@ -189,8 +189,8 @@ importers:
         specifier: ^5.40.0
         version: 5.40.0(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@cf-sync/client':
-        specifier: ^0.4.0
-        version: 0.4.0(@tanstack/db@1.0.0-rc.1.5(typescript@7.0.2))(@tanstack/react-db@1.0.0-rc.1.5(react@19.3.1)(typescript@7.0.2))(react@19.3.1)(zod@4.6.7)
+        specifier: ^0.4.1
+        version: 0.4.1(@tanstack/db@1.0.0-rc.1.5(typescript@7.0.2))(@tanstack/react-db@1.0.0-rc.1.5(react@19.3.1)(typescript@7.0.2))(react@19.3.1)(zod@4.6.7)
       '@cf-sync/yjs':
         specifier: ^0.2.1
         version: 0.2.1(@cf-sync/server@0.3.1(zod@4.6.7))(react@19.3.1)(yjs@13.6.33)(zod@4.6.7)
@@ -862,8 +862,8 @@ packages:
   '@braintree/sanitize-url@7.1.2':
     resolution: {integrity: sha512-jigsZK+sMF/cuiB7sERuo9V7N9jx+dhmHHnQyDSVdpZwVutaBu7WvNYqMDLSgFgfB30n452TP3vjDAvFC973mA==}
 
-  '@cf-sync/client@0.4.0':
-    resolution: {integrity: sha512-SvbwcslApHyzYkYSsyj2WICgRE2HPCwZV1/sW/x+eKHI1RUic4soaHiaqZoRHKHV1Of3HwEhOCqJKFdPIIfgGw==}
+  '@cf-sync/client@0.4.1':
+    resolution: {integrity: sha512-hqGAY/oNofRTmXD6FBCanhX3shd49qjDg34MVe9+Qp06pL4Fe0BdmD1etn2MX4OQVcnm7HRCn6oFNeKyX0bLWA==}
     peerDependencies:
       '@tanstack/db': ^1.0.0-rc.1
       '@tanstack/react-db': ^1.0.0-rc.1
@@ -7778,7 +7778,7 @@ snapshots:
 
   '@braintree/sanitize-url@7.1.2': {}
 
-  '@cf-sync/client@0.4.0(@tanstack/db@1.0.0-rc.1.5(typescript@7.0.2))(@tanstack/react-db@1.0.0-rc.1.5(react@19.3.1)(typescript@7.0.2))(react@19.3.1)(zod@4.6.7)':
+  '@cf-sync/client@0.4.1(@tanstack/db@1.0.0-rc.1.5(typescript@7.0.2))(@tanstack/react-db@1.0.0-rc.1.5(react@19.3.1)(typescript@7.0.2))(react@19.3.1)(zod@4.6.7)':
     dependencies:
       '@cf-sync/protocol': 0.2.1(zod@4.6.7)
       '@tanstack/db': 1.0.0-rc.1.5(typescript@7.0.2)
