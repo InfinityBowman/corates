@@ -1,6 +1,6 @@
 import type { Database } from '@corates/db/client';
 import { resolveOrgAccess } from '@corates/workers/billing-resolver';
-import { isUnlimitedQuota } from '@corates/shared/plans';
+import { isUnlimitedQuota, type QuotaKey } from '@corates/shared/plans';
 import {
   createDomainError,
   DomainErrorException,
@@ -16,7 +16,7 @@ export type QuotaGuardResult =
 export async function requireQuota(
   db: Database,
   orgId: OrgId,
-  quotaKey: string,
+  quotaKey: QuotaKey,
   getUsage: () => Promise<number>,
   requested: number = 1,
 ): Promise<QuotaGuardResult> {
@@ -45,7 +45,7 @@ export async function requireQuota(
   }
 
   const used = await getUsage();
-  const limit = (orgBilling.quotas as unknown as Record<string, number>)[quotaKey];
+  const limit = orgBilling.quotas[quotaKey];
   if (!isUnlimitedQuota(limit) && used + requested > limit) {
     return {
       ok: false,

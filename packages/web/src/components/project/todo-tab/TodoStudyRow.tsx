@@ -242,8 +242,8 @@ export function TodoStudyRow({
                       setDeleteChecklistId(checklist.id);
                     }}
                     className='text-muted-foreground hover:text-red-600'
-                    title='Delete checklist'
-                    aria-label='Delete checklist'
+                    title='Remove appraisal'
+                    aria-label='Remove appraisal'
                   >
                     <Trash2Icon className='size-4' />
                   </Button>
@@ -286,8 +286,8 @@ export function TodoStudyRow({
                   size='icon-sm'
                   onClick={() => setDeleteChecklistId(checklist.id)}
                   className='text-muted-foreground hover:text-red-600'
-                  title='Delete checklist'
-                  aria-label='Delete checklist'
+                  title='Remove appraisal'
+                  aria-label='Remove appraisal'
                 >
                   <Trash2Icon className='size-4' />
                 </Button>
@@ -339,17 +339,18 @@ export function TodoStudyRow({
           <AlertDialogHeader>
             <AlertDialogIcon variant='danger' />
             <div>
-              <AlertDialogTitle>Delete this checklist?</AlertDialogTitle>
+              <AlertDialogTitle>Remove this appraisal?</AlertDialogTitle>
               <AlertDialogDescription>
-                Your answers and notes on this checklist are deleted for good. The study and its
-                PDFs stay in the project. This cannot be undone.
+                The appraisal is removed from the study for every reviewer, and your answers and
+                notes on it are deleted for good. The study and its PDFs stay in the project. This
+                cannot be undone.
               </AlertDialogDescription>
             </div>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction variant='destructive' onClick={handleConfirmDelete}>
-              Delete checklist
+              Remove appraisal
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

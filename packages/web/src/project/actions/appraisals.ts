@@ -43,13 +43,18 @@ export const appraisalActions = {
   /**
    * Whether any checklist in the cell holds recorded answers. Mirrors the
    * `appraisal.delete` guard so the UI can confirm before sending `force`.
+   * `exceptAssignee` leaves out that reviewer's own checklist.
    */
-  hasAnswers(cell: AppraisalCellRef): boolean {
+  hasAnswers(cell: AppraisalCellRef, exceptAssignee?: string): boolean {
     const projectId = connectionPool.getActiveProjectId();
     const collections = projectId ? connectionPool.getCollections(projectId) : null;
     if (!collections) throw new Error('No active project connection');
     const checklists = collections.checklists.toArray.filter(
-      c => c.studyId === cell.studyId && c.type === cell.type && c.outcomeId === cell.outcomeId,
+      c =>
+        c.studyId === cell.studyId &&
+        c.type === cell.type &&
+        c.outcomeId === cell.outcomeId &&
+        c.assignedTo !== exceptAssignee,
     );
     return checklists.some(checklist =>
       hasRecordedAnswers(

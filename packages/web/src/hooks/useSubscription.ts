@@ -15,7 +15,7 @@ import {
 import { useAuthStore, selectIsLoggedIn } from '@/stores/authStore';
 import { getSubscription } from '@/server/functions/billing.functions';
 import { useOwnedWorkspace } from '@/hooks/useWorkspaces';
-import { getPlan, DEFAULT_PLAN } from '@corates/shared/plans';
+import { getPlan, DEFAULT_PLAN, type QuotaKey } from '@corates/shared/plans';
 
 export type Subscription = Awaited<ReturnType<typeof getSubscription>>;
 
@@ -92,7 +92,7 @@ export function useSubscription(orgId?: string | null) {
     entitlements,
     quotas,
     hasEntitlement: (entitlement: string) => checkEntitlement(subscription, entitlement),
-    hasQuota: (quotaKey: string, opts: { used: number; requested?: number }) =>
+    hasQuota: (quotaKey: QuotaKey, opts: { used: number; requested?: number }) =>
       checkQuota(subscription, quotaKey, opts),
     willCancel,
     periodEndDate,

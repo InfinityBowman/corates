@@ -30,11 +30,7 @@ import { useWorkspaceMembers } from '@/hooks/useWorkspaceMembers';
 import { useProjectContext, type ProjectMember } from '../ProjectContext';
 import { AddMemberModal } from './AddMemberModal';
 import { PendingInvitations } from './PendingInvitations';
-
-interface MemberProgress {
-  completed: number;
-  total: number;
-}
+import type { MemberProgress } from './memberProgress';
 
 interface MembersPanelProps {
   members: ProjectMember[];
@@ -169,7 +165,7 @@ export function MembersPanel({ members, progressFor }: MembersPanelProps) {
                 </div>
                 {progress.total > 0 && (
                   <div className='text-muted-foreground text-xs tabular-nums'>
-                    {progress.completed} of {progress.total} studies done
+                    {progress.completed} of {progress.total} appraisals done
                   </div>
                 )}
               </div>

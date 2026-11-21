@@ -12,7 +12,6 @@ import { useProjectStore, selectConnectionPhase } from '@/stores/projectStore';
 import { project } from '@/project';
 import { useProjectContext, type ProjectMember } from '../ProjectContext';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
-import { CHECKLIST_STATUS } from '@corates/shared/checklists';
 import { calculateProjectReliability } from '@corates/shared/checklists/reliability';
 import { ChartSection } from './ChartSection';
 import { ResultsTables } from './ResultsTables';
@@ -21,6 +20,7 @@ import { ReliabilitySection } from './ReliabilitySection';
 import { MembersPanel } from './MembersPanel';
 import { OutcomesPanel } from './OutcomesPanel';
 import { countStages } from './studyStage';
+import { countMemberProgress } from './memberProgress';
 import { ProjectSetupPanel } from '../setup/ProjectSetupPanel';
 import { ProjectSetupCard } from '../setup/ProjectSetupCard';
 
@@ -69,26 +69,7 @@ export function OverviewTab() {
 
   const stageCounts = useMemo(() => countStages(studies), [studies]);
 
-  const progressByUser = useMemo(() => {
-    const map = new Map<string, { completed: number; total: number }>();
-    for (const study of studies) {
-      for (const userId of [study.reviewer1, study.reviewer2]) {
-        if (!userId) continue;
-        const entry = map.get(userId) ?? { completed: 0, total: 0 };
-        entry.total += 1;
-        const done = (study.checklists || [])
-          .filter(c => c.assignedTo === userId)
-          .some(
-            c =>
-              c.status === CHECKLIST_STATUS.FINALIZED ||
-              c.status === CHECKLIST_STATUS.REVIEWER_COMPLETED,
-          );
-        if (done) entry.completed += 1;
-        map.set(userId, entry);
-      }
-    }
-    return map;
-  }, [studies]);
+  const progressByUser = useMemo(() => countMemberProgress(studies), [studies]);
 
   // Reliability only applies to studies two different people appraise, so the
   // section stays hidden entirely on a single-reviewer project.

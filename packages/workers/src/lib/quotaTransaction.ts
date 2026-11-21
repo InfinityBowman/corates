@@ -1,7 +1,7 @@
 import { captureError, warn } from './logger';
 import { count, eq } from 'drizzle-orm';
 import { resolveOrgAccess } from './billingResolver';
-import { isUnlimitedQuota } from '@corates/shared/plans';
+import { isUnlimitedQuota, type QuotaKey } from '@corates/shared/plans';
 import { createDomainError, AUTH_ERRORS, SYSTEM_ERRORS } from '@corates/shared';
 import type { OrgId } from '@corates/shared/ids';
 import type { Database } from '@corates/db/client';
@@ -20,7 +20,7 @@ export interface InsertRollbackMeta {
 
 interface InsertWithQuotaOptions {
   orgId: OrgId;
-  quotaKey: string;
+  quotaKey: QuotaKey;
   countTable: SQLiteTable;
   countColumn: SQLiteColumn;
   insertStatements: unknown[];
