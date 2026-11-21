@@ -16,7 +16,6 @@ import { useProjectContext } from './ProjectContext';
 export function ProjectSheets() {
   const {
     projectId,
-    isOwner,
     addStudiesSheetOpen,
     setAddStudiesSheetOpen,
     assignSheetOpen,
@@ -31,7 +30,7 @@ export function ProjectSheets() {
 
   // addBatch shows its own result toast; this one hands off just the new studies.
   function handleAdded(studyIds: string[]) {
-    if (!isOwner || members.length < 2 || studyIds.length === 0) return;
+    if (members.length < 2 || studyIds.length === 0) return;
     const count = studyIds.length;
     const label = `${count} new ${count === 1 ? 'study' : 'studies'}`;
     toast('Assign reviewers?', {
@@ -51,7 +50,7 @@ export function ProjectSheets() {
         onOpenChange={setAddStudiesSheetOpen}
         onAdded={handleAdded}
       />
-      {isOwner && <AssignReviewersSheet open={assignSheetOpen} onOpenChange={setAssignSheetOpen} />}
+      <AssignReviewersSheet open={assignSheetOpen} onOpenChange={setAssignSheetOpen} />
       <OutcomesSheet open={outcomesSheetOpen} onOpenChange={setOutcomesSheetOpen} />
       <StudySheet studyId={studySheetId} onClose={closeStudySheet} />
       <LazyExportDialog />

@@ -20,8 +20,7 @@ import { useProjectContext } from '../ProjectContext';
 import { saveFormState } from '@/lib/formStatePersistence.js';
 
 export function AllStudiesTab() {
-  const { projectId, getMember, isOwner, openAssignSheet, setAddStudiesSheetOpen } =
-    useProjectContext();
+  const { projectId, getMember, openAssignSheet, setAddStudiesSheetOpen } = useProjectContext();
 
   const existingStudies = useExistingStudies(projectId);
   const addStudies = useAddStudies({ existingStudies });
@@ -87,22 +86,20 @@ export function AllStudiesTab() {
           <span className='text-muted-foreground text-sm'>
             {studies.length} {studies.length === 1 ? 'study' : 'studies'}
           </span>
-          {isOwner && (
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={() => openAssignSheet()}
-              data-testid='assign-reviewers-button'
-            >
-              <UsersIcon className='size-4' />
-              Assign reviewers
-              {unassignedCount > 0 && (
-                <Badge variant='info' className='min-w-5 px-1.5 tabular-nums'>
-                  {unassignedCount}
-                </Badge>
-              )}
-            </Button>
-          )}
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={() => openAssignSheet()}
+            data-testid='assign-reviewers-button'
+          >
+            <UsersIcon className='size-4' />
+            Assign reviewers
+            {unassignedCount > 0 && (
+              <Badge variant='info' className='min-w-5 px-1.5 tabular-nums'>
+                {unassignedCount}
+              </Badge>
+            )}
+          </Button>
         </div>
       )}
 

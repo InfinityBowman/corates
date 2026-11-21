@@ -55,7 +55,7 @@ export function StudyCardHeader({
   onExportPdf,
   getMember,
 }: StudyCardHeaderProps) {
-  const { projectId, isOwner, openStudySheet } = useProjectContext();
+  const { projectId, openStudySheet } = useProjectContext();
   const openExportDialog = useExportDialogStore(s => s.open);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const hasChecklists = study.checklists.length > 0;
@@ -162,25 +162,10 @@ export function StudyCardHeader({
             <MoreVerticalIcon className='size-4' />
           </DropdownMenuTrigger>
           <DropdownMenuContent align='end'>
-            {isOwner ?
-              <DropdownMenuItem onClick={() => onAssignReviewers?.()}>
-                <UsersIcon className='mr-2 size-4' />
-                Assign reviewers
-              </DropdownMenuItem>
-            : <DropdownMenuItem disabled className='data-disabled:pointer-events-auto'>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className='flex w-full cursor-not-allowed items-center'>
-                      <UsersIcon className='mr-2 size-4' />
-                      Assign reviewers
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent side='left'>
-                    Only the project owner can assign reviewers.
-                  </TooltipContent>
-                </Tooltip>
-              </DropdownMenuItem>
-            }
+            <DropdownMenuItem onClick={() => onAssignReviewers?.()}>
+              <UsersIcon className='mr-2 size-4' />
+              Assign reviewers
+            </DropdownMenuItem>
             {hasChecklists && (onExportCsv || onExportPdf) && (
               <>
                 <DropdownMenuSeparator />
