@@ -198,7 +198,7 @@ retries += 1;
 
 - **External library docs**: Prefer reading source from cloned upstream repos in the `reference/` directory over ad-hoc web fetches. If a library isn't there yet and you need its source, clone it in with `git clone --depth 20 https://github.com/owner/repo.git reference/repo`. This works better than MCP-style doc fetchers for deep questions.
 - **TanStack documentation**: Use the TanStack CLI: `npx @tanstack/cli search-docs "<query>" --library <router|start|query> --framework react --json`
-- **cf-sync engine**: `@cf-sync/*` is Jacob's own; read its source at `../cf-sync-engine`. Its release recipe is in that repo's CLAUDE.md under Releasing; Jacob runs publishes.
+- **cf-sync engine**: `@cf-sync/*` is Jacob's own; read its source at `../cf-sync-engine`. Releasing is in that repo's CLAUDE.md: bump the package version and merge to main, and CI publishes it to npm (allow a few minutes before the tarball downloads).
 - **Production data** (D1, Loki, Sentry, Stripe, R2, sync admin): use the `prod-data` skill.
 
 ## Anti-Patterns (Never Do These)
