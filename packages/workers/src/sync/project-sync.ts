@@ -17,7 +17,7 @@ import {
   createWorkspaceDO,
 } from '@cf-sync/server';
 import { yjsFields } from '@cf-sync/yjs/server';
-import { syncApp } from '@corates/shared/sync';
+import { syncApp, type SyncAuthContext } from '@corates/shared/sync';
 import { createDb } from '@corates/db/client';
 import { verifyAuth } from '../auth/config';
 import { captureError, warn, info } from '../lib/logger';
@@ -31,6 +31,9 @@ const logMutation = createMutationLogger(line => info('sync.mutation', line));
 
 export class ProjectSyncDO extends createWorkspaceDO({
   app: syncApp,
+  // Operator fixes through the admin `mutate` op pass the same write gate as
+  // a project owner; the token is already the authority for export/import/reset.
+  adminAuth: { role: 'owner', writeAllowed: true } satisfies SyncAuthContext,
   // Reconciliation consolidated notes live here as Yjs fields, field id =
   // the `answers` row id of the reconciled checklist's text key. Same write
   // gate as the mutator plane: the authorize stamp's writeAllowed.
