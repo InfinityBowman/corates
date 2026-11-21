@@ -61,7 +61,9 @@ export function shouldShowInTab(
   switch (tab) {
     case 'todo': {
       if (!userId) return false;
-      // Must be assigned to user
+      // Checklist assignments can exist independently of the study's reviewer slots.
+      // Keep that work visible, including older or individually reassigned checklists.
+      if (getTodoChecklists(study, userId).length > 0) return true;
       if (study.reviewer1 !== userId && study.reviewer2 !== userId) return false;
       const checklists = study.checklists || [];
       const userChecklists = checklists.filter(c => c.assignedTo === userId);

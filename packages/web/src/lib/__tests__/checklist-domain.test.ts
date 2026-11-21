@@ -155,6 +155,38 @@ describe('checklist-domain', () => {
         expect(shouldShowInTab(study, 'todo', userId)).toBe(false);
       });
 
+      it.each([CHECKLIST_STATUS.PENDING, CHECKLIST_STATUS.IN_PROGRESS])(
+        'shows directly assigned %s work without a matching reviewer slot',
+        status => {
+          const assigned = createChecklist({ assignedTo: userId, status });
+          const study = createStudy({
+            reviewer1: 'other-user',
+            reviewer2: null,
+            checklists: [assigned, createChecklist({ id: 'other', assignedTo: 'other-user' })],
+          });
+
+          expect(shouldShowInTab(study, 'todo', userId)).toBe(true);
+          expect(getStudiesForTab([study], 'todo', userId)).toEqual([
+            { ...study, checklists: [assigned], _needsChecklist: false },
+          ]);
+          expect(getChecklistCount([study], 'todo', userId)).toBe(1);
+        },
+      );
+
+      it.each([CHECKLIST_STATUS.REVIEWER_COMPLETED, CHECKLIST_STATUS.FINALIZED])(
+        'hides directly assigned %s work without a matching reviewer slot',
+        status => {
+          const study = createStudy({
+            reviewer1: null,
+            reviewer2: null,
+            checklists: [createChecklist({ assignedTo: userId, status })],
+          });
+
+          expect(getStudiesForTab([study], 'todo', userId)).toEqual([]);
+          expect(getChecklistCount([study], 'todo', userId)).toBe(0);
+        },
+      );
+
       it('hides study when user is not a reviewer', () => {
         const study = createStudy({
           reviewer1: 'other-user',
