@@ -114,8 +114,8 @@ export function ToDoTab() {
               Nothing assigned to you yet
             </h3>
             <p className='text-muted-foreground mx-auto max-w-md'>
-              Studies where you are a reviewer show up here. The project owner assigns reviewers
-              from All studies.
+              Studies where you are a reviewer show up here. Anyone on the project can assign
+              reviewers from All studies.
             </p>
           </div>
         )

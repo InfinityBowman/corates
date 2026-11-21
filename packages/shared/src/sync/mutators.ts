@@ -72,6 +72,9 @@ interface WriteGateContext {
  * Enforced only on the authoritative run so an offline queue never rejects
  * locally; the server's rejection rolls the optimistic effect back. Fails
  * closed if the stamp is somehow missing.
+ *
+ * Role is deliberately not checked: project membership (authorize) is the
+ * security boundary, and owner-only actions are gated in the UI.
  */
 function assertWritable(ctx: WriteGateContext): void {
   if (!ctx.authoritative) return;

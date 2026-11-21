@@ -122,6 +122,7 @@ pnpm run deploy       # pnpm deploy is reserved so use 'run', always ask user be
 
 ### Hazards
 
+- Security model: the project is the boundary. Server checks keep people out of orgs and projects they don't belong to (sign-in, membership, billing), and those stay. Inside a project, role permissions (owner vs member: who can assign reviewers, edit, delete) are UI only, to keep the app simpler and faster. Never propose, add or flag server-side role checks for them, and never call UI-only gating a security gap. Suggest moving logic to the server only when it makes the code simpler or faster.
 - Server functions signal errors by throwing (`throwDomainError` or a guard's `result.error`), never by returning or throwing a `Response`, which reaches the client as data. `src/start.ts` must keep its serialization adapter and CSRF middleware. See `packages/docs/guides/api-development.md`.
 - Never build `LIKE '%<user input>%'`: some D1 nodes reject long patterns, so it fails only from some origins. Use `containsInsensitive()` from `@/server/lib/sqlSearch`.
 - A sync schema version bump is one-way: once project DOs migrate, rolling back the deploy leaves them unable to open. Fix forward.
