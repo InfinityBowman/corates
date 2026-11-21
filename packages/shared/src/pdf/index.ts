@@ -53,6 +53,26 @@ export function isValidPdfFilename(fileName: string | null | undefined): boolean
 }
 
 /**
+ * Turn any name into one that passes isValidPdfFilename. Drive files are often
+ * renamed without their extension or carry slashes, so imports clean the name
+ * instead of rejecting the file.
+ */
+export function toSafePdfFilename(name: string | null | undefined): string {
+  const ext = '.pdf';
+  const base = (name ?? '')
+    .replace(/\p{C}/gu, '')
+    .replace(/["\\/]/g, '-')
+    .replace(/\.{2,}/g, '.')
+    .trim()
+    .replace(/\.pdf$/i, '')
+    .slice(0, PDF_LIMITS.MAX_FILENAME_LENGTH - ext.length)
+    // The cut can split a surrogate pair, and a trailing dot would form ".." with the extension
+    .replace(/[\uD800-\uDBFF]$/, '')
+    .replace(/[\s.]+$/, '');
+  return (base || 'document') + ext;
+}
+
+/**
  * Check if bytes match PDF magic signature (%PDF-)
  *
  * @param bytes - First 5+ bytes of file as Uint8Array or number array
