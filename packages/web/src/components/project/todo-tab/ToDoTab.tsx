@@ -12,6 +12,7 @@ import { useAuthStore, selectUser } from '@/stores/authStore';
 import { useProjectContext } from '../ProjectContext';
 import { getStudiesForTab } from '@corates/shared/checklists';
 import { project } from '@/project';
+import { showToast } from '@/lib/toast';
 
 export function ToDoTab() {
   const { projectId, getChecklistPath } = useProjectContext();
@@ -55,6 +56,25 @@ export function ToDoTab() {
     [],
   );
 
+  // Deleting from To-Do undoes the appraisal for every reviewer, as adding one
+  // plans it for every reviewer; one reviewer dropping out would leave a cell
+  // that can never be reconciled.
+  const removeAppraisal = (studyId: string, checklistId: string) => {
+    const checklist = studies
+      .find(s => s.id === studyId)
+      ?.checklists.find(c => c.id === checklistId);
+    if (!checklist || !currentUserId) return;
+    const cell = { studyId, type: checklist.type, outcomeId: checklist.outcomeId };
+    if (project.appraisal.hasAnswers(cell, currentUserId)) {
+      showToast.error(
+        'Someone else has started this appraisal',
+        'Ask the project lead to remove it from the study.',
+      );
+      return;
+    }
+    project.appraisal.delete([cell], true);
+  };
+
   const openChecklist = useCallback(
     (studyId: string, checklistId: string) => {
       navigate({ to: getChecklistPath(studyId, checklistId, 'todo') as string });
@@ -81,7 +101,7 @@ export function ToDoTab() {
               handleCreateChecklist(study.id, type, assigneeId, outcomeId)
             }
             onOpenChecklist={checklistId => openChecklist(study.id, checklistId)}
-            onDeleteChecklist={checklistId => project.checklist.delete(study.id, checklistId)}
+            onDeleteChecklist={checklistId => removeAppraisal(study.id, checklistId)}
             onViewPdf={pdf => project.pdf.view(study.id, pdf)}
             onDownloadPdf={pdf => project.pdf.download(study.id, pdf)}
             creatingChecklist={false}

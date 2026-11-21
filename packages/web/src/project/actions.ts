@@ -108,11 +108,6 @@ export const project = {
       });
     },
 
-    delete(_studyId: string, checklistId: string): void {
-      const client = requireClient();
-      void client.mutate.checklist.delete({ checklistId, now: Date.now() });
-    },
-
     /**
      * A checklist-data getter that buckets the answers table on first use.
      * Reliability reads hundreds of checklists at once; scanning every answer

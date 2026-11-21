@@ -137,7 +137,7 @@ export function BillingSettings() {
 
       {loading ?
         <UsageSkeleton />
-      : <UsageCard quotas={quotas as Record<string, number> | null} usage={usage} />}
+      : <UsageCard quotas={quotas} usage={usage} />}
 
       <InvoicesList />
 

@@ -10,6 +10,7 @@ import {
   getGrantPlan,
   type Entitlements,
   type Quotas,
+  type QuotaKey,
   type Plan,
 } from '@corates/shared/plans';
 import { type Subscription } from '@/hooks/useSubscription';
@@ -65,7 +66,7 @@ export function hasEntitlement(subscription: Subscription | null, entitlement: s
 
 export function hasQuota(
   subscription: Subscription | null,
-  quotaKey: string,
+  quotaKey: QuotaKey,
   { used, requested = 1 }: { used: number; requested?: number },
 ): boolean {
   const quotas = getEffectiveQuotas(subscription);

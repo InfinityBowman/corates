@@ -3,6 +3,7 @@
 import { UsersIcon, FolderIcon, TrendingUpIcon } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { SettingsSection } from '@/components/settings/primitives';
+import type { Quotas } from '@corates/shared/plans';
 
 interface UsageMetricProps {
   label: string;
@@ -39,7 +40,7 @@ function UsageMetric({ label, icon, used, max }: UsageMetricProps) {
 }
 
 interface UsageCardProps {
-  quotas: Record<string, number> | null;
+  quotas: Quotas | null;
   usage: { projects?: number; collaborators?: number } | null;
 }
 

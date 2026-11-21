@@ -33,8 +33,6 @@ export interface Entitlements {
 export interface Quotas {
   'projects.max': number;
   'collaborators.org.max': number;
-  // Index signature for dynamic quota key access
-  [key: string]: number;
 }
 
 /**
