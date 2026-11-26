@@ -37,9 +37,10 @@ services:
       GF_SERVER_ROOT_URL: https://grafana.jacobmaynard.dev
       GF_USERS_ALLOW_SIGN_UP: 'false'
       # Sync so the plugin exists before datasource provisioning runs (GF_INSTALL_PLUGINS is deprecated and installs after startup)
-      GF_PLUGINS_PREINSTALL_SYNC: grafana-clickhouse-datasource
-      # Read by the datasource provisioning file, not by Grafana itself
+      GF_PLUGINS_PREINSTALL_SYNC: grafana-clickhouse-datasource,yesoreyeram-infinity-datasource
+      # Read by the datasource provisioning files, not by Grafana itself
       CLICKHOUSE_GRAFANA_PASSWORD: ${CLICKHOUSE_GRAFANA_PASSWORD}
+      BACKUP_STATUS_TOKEN: ${BACKUP_STATUS_TOKEN}
       # Postmark SMTP: token is both user and password, From must be a verified signature
       GF_SMTP_ENABLED: 'true'
       GF_SMTP_HOST: smtp.postmarkapp.com:587

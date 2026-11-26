@@ -5,6 +5,8 @@ declare namespace Cloudflare {
     AUTH_SECRET: string;
     /** Bearer token for /api/sync-admin (wrangler secret put SYNC_ADMIN_TOKEN). */
     SYNC_ADMIN_TOKEN?: string;
+    /** Bearer token Grafana sends to /api/backup-status (wrangler secret put BACKUP_STATUS_TOKEN). */
+    BACKUP_STATUS_TOKEN?: string;
     EMAIL_FROM: string;
     POSTMARK_SERVER_TOKEN: string;
     SEND_EMAILS_IN_DEV?: string;

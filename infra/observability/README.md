@@ -219,11 +219,16 @@ is failing" and "Loki is down" both read as No Data).
 
 | Rule                                      | Fires on                                                                                  |
 | ----------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Daily project backup did not run          | no `backup.completed` in 26h - a 2h grace period on the 05:00 UTC cron                    |
+| Daily project backup missing from R2      | `/api/backup-status` reports a project with no snapshot for the latest sweep              |
 | A project was skipped by the backup sweep | `backup.failed`, grouped by `stage` and `projectId` so the notification names the project |
 
-The absence rule inverts the `or vector(0)` convention: an empty result means no sweep, so it
-fires rather than staying Normal, and `noDataState` is `Alerting` for the same reason.
+The first rule reads R2, not Loki: the log export drops lines, so a rule on the
+`backup.completed` line fired on nights every snapshot was written. Grafana polls the worker's
+`/api/backup-status` through the `CoRATES API` datasource (the Infinity plugin, provisioned from
+`config/grafana/provisioning/datasources/corates-api.yaml`) with `BACKUP_STATUS_TOKEN`. The
+endpoint checks every project created before the latest 05:00 UTC sweep for that day's
+`snapshots/` key, starting 2h after the cron so the sweep can finish. `noDataState` is
+`Alerting` and a failed request is `Error`, so an unreachable endpoint still notifies.
 
 The DLQ shares the worker's `queue()` handler - `batch.queue.endsWith('-dlq')` routes to
 `handleEmailDeadLetter`, which logs and acks.

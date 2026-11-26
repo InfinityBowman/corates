@@ -40,7 +40,7 @@
   },
   "dependencies": {
     "@ark-ui/react": "^5.40.0",
-    "@cf-sync/client": "^0.4.1",
+    "@cf-sync/client": "^0.5.1",
     "@cf-sync/yjs": "^0.2.2",
     "@corates/db": "workspace:*",
     "@corates/shared": "workspace:*",

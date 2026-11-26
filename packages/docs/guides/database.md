@@ -1009,7 +1009,7 @@ One object restores one project without D1 Time Travel. The D1 rows are the Driz
 - `backup.failed` per project that could not be written, with `stage: sweep` or `stage: pre-delete`, plus a captured error.
 - `backup.deleted_snapshot` with the key written before a deletion.
 
-The Grafana rule (any `backup.failed`, or no `backup.completed` in 26 hours) is tracked on #718.
+The Grafana rules (tracked on #718) fire on any `backup.failed`, and on a project missing the latest sweep's snapshot in R2, which Grafana reads from `GET /api/backup-status` (bearer `BACKUP_STATUS_TOKEN`) because the log export can drop the `backup.completed` line.
 
 ### Restore
 
