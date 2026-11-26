@@ -12,11 +12,17 @@ export const SYNC_SLOW_MS = 30_000;
 export function createSyncSlowLog(projectId: string) {
   let unsyncedSince: number | null = null;
   let reported = false;
+  let hiddenWhileWaiting = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
+
+  function noteHidden() {
+    if (document.hidden) hiddenWhileWaiting = true;
+  }
 
   function stopTimer() {
     clearTimeout(timer);
     timer = undefined;
+    document.removeEventListener('visibilitychange', noteHidden);
   }
 
   return {
@@ -24,13 +30,18 @@ export function createSyncSlowLog(projectId: string) {
       if (!synced) {
         if (unsyncedSince !== null) return;
         unsyncedSince = Date.now();
+        hiddenWhileWaiting = document.hidden;
+        document.addEventListener('visibilitychange', noteHidden);
         timer = setTimeout(() => {
           reported = true;
+          document.removeEventListener('visibilitychange', noteHidden);
           clientLogger.warn('client.sync.slow', {
             projectId,
             waitedMs: SYNC_SLOW_MS,
             online: navigator.onLine,
-            hidden: document.hidden,
+            // Background tabs defer this timer until the person returns, when
+            // document.hidden already reads false, so remember any hidden spell.
+            hidden: hiddenWhileWaiting || document.hidden,
           });
         }, SYNC_SLOW_MS);
         return;

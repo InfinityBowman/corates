@@ -30,6 +30,7 @@ import { Route as AuthSigninRouteImport } from './routes/_auth/signin'
 import { Route as AuthSignupRouteImport } from './routes/_auth/signup'
 import { Route as AuthVerifyEmailRouteImport } from './routes/_auth/verify-email'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
+import { Route as ApiBackupStatusRouteImport } from './routes/api/backup-status'
 import { Route as ApiClientLogsRouteImport } from './routes/api/client-logs'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as ResourcesIndexRouteImport } from './routes/resources/index'
@@ -190,6 +191,11 @@ const AuthVerifyEmailRoute = AuthVerifyEmailRouteImport.update({
 const ApiSplatRoute = ApiSplatRouteImport.update({
   id: '/api/$',
   path: '/api/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBackupStatusRoute = ApiBackupStatusRouteImport.update({
+  id: '/api/backup-status',
+  path: '/api/backup-status',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiClientLogsRoute = ApiClientLogsRouteImport.update({
@@ -539,6 +545,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof AuthSignupRoute
   '/verify-email': typeof AuthVerifyEmailRoute
   '/api/$': typeof ApiSplatRoute
+  '/api/backup-status': typeof ApiBackupStatusRoute
   '/api/client-logs': typeof ApiClientLogsRoute
   '/invite/$token': typeof InviteTokenRoute
   '/resources/amstar2': typeof ResourcesAmstar2Route
@@ -617,6 +624,7 @@ export interface FileRoutesByTo {
   '/signup': typeof AuthSignupRoute
   '/verify-email': typeof AuthVerifyEmailRoute
   '/api/$': typeof ApiSplatRoute
+  '/api/backup-status': typeof ApiBackupStatusRoute
   '/api/client-logs': typeof ApiClientLogsRoute
   '/invite/$token': typeof InviteTokenRoute
   '/resources/amstar2': typeof ResourcesAmstar2Route
@@ -698,6 +706,7 @@ export interface FileRoutesById {
   '/_auth/signup': typeof AuthSignupRoute
   '/_auth/verify-email': typeof AuthVerifyEmailRoute
   '/api/$': typeof ApiSplatRoute
+  '/api/backup-status': typeof ApiBackupStatusRoute
   '/api/client-logs': typeof ApiClientLogsRoute
   '/invite/$token': typeof InviteTokenRoute
   '/resources/amstar2': typeof ResourcesAmstar2Route
@@ -779,6 +788,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/verify-email'
     | '/api/$'
+    | '/api/backup-status'
     | '/api/client-logs'
     | '/invite/$token'
     | '/resources/amstar2'
@@ -857,6 +867,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/verify-email'
     | '/api/$'
+    | '/api/backup-status'
     | '/api/client-logs'
     | '/invite/$token'
     | '/resources/amstar2'
@@ -937,6 +948,7 @@ export interface FileRouteTypes {
     | '/_auth/signup'
     | '/_auth/verify-email'
     | '/api/$'
+    | '/api/backup-status'
     | '/api/client-logs'
     | '/invite/$token'
     | '/resources/amstar2'
@@ -1012,6 +1024,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
   ApiSplatRoute: typeof ApiSplatRoute
+  ApiBackupStatusRoute: typeof ApiBackupStatusRoute
   ApiClientLogsRoute: typeof ApiClientLogsRoute
   InviteTokenRoute: typeof InviteTokenRoute
   ResourcesAmstar2Route: typeof ResourcesAmstar2Route
@@ -1189,6 +1202,13 @@ declare module '@tanstack/react-router' {
       path: '/api/$'
       fullPath: '/api/$'
       preLoaderRoute: typeof ApiSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/backup-status': {
+      id: '/api/backup-status'
+      path: '/api/backup-status'
+      fullPath: '/api/backup-status'
+      preLoaderRoute: typeof ApiBackupStatusRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/client-logs': {
@@ -1794,6 +1814,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
   ApiSplatRoute: ApiSplatRoute,
+  ApiBackupStatusRoute: ApiBackupStatusRoute,
   ApiClientLogsRoute: ApiClientLogsRoute,
   InviteTokenRoute: InviteTokenRoute,
   ResourcesAmstar2Route: ResourcesAmstar2Route,

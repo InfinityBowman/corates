@@ -1,13 +1,14 @@
 apiVersion: 1
 
-# Daily project backup sweep, prod only (staging is off the Loki export).
-# The sweep's only trace is one log line, so a cron that silently stops producing
-# nothing is indistinguishable from a healthy quiet day without these rules.
+# Daily project backup sweep, prod only.
 #
-# The 26h window gives the 05:00 UTC cron a 2h grace period, which also absorbs
-# Cloudflare re-delivering OTLP batches hours late. Note `or vector(0)` inverts
-# meaning here: on the absence rule below it makes an empty result fire rather
-# than keeping a Normal series alive, which is the safe direction for a backup.
+# Whether the sweep ran is read from R2 through /api/backup-status, not from the
+# backup.completed log line: the log export drops lines, so an absence rule on it
+# fired on nights the snapshots were all written. The endpoint checks the day
+# whose 05:00 UTC sweep has had 2h to finish.
+#
+# The skipped-project rule stays on logs because the pre-delete snapshot has no
+# daily key to check; a dropped line there can only hide an alert, never raise one.
 groups:
   - orgId: 1
     name: backups
@@ -15,40 +16,46 @@ groups:
     interval: 15m
     rules:
       - uid: corates-backup-sweep-missing
-        title: Daily project backup did not run
+        title: Daily project backup missing from R2
         condition: threshold
         for: 15m
         data:
           - refId: query
-            relativeTimeRange: { from: 93600, to: 0 }
-            datasourceUid: P8E80F9AEF21F6940
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: corates-api
             model:
               refId: query
-              queryType: instant
-              expr: >-
-                sum(count_over_time({service_name="corates-workers-prod"}
-                | json | message="backup.completed" [26h])) or vector(0)
+              type: json
+              source: url
+              parser: backend
+              format: table
+              url: https://corates.org/api/backup-status
+              url_options: { method: GET }
+              root_selector: ''
+              columns:
+                - { selector: missing, text: missing, type: number }
           - refId: threshold
-            relativeTimeRange: { from: 93600, to: 0 }
+            relativeTimeRange: { from: 600, to: 0 }
             datasourceUid: __expr__
             model:
               refId: threshold
               type: threshold
               expression: query
               conditions:
-                - evaluator: { type: lt, params: [1] }
+                - evaluator: { type: gt, params: [0] }
         noDataState: Alerting
         execErrState: Error
         labels:
           severity: critical
         annotations:
-          summary: No backup sweep has completed in 26 hours
+          summary: '{{ $values.query.Value }} project(s) have no snapshot from the latest backup sweep'
           description: >-
-            The 05:00 UTC cron either did not fire or threw before logging. Every
-            project is now more than a day stale in corates-backups-prod, and
-            R2 lifecycle still expires snapshots/ at 60 days. Sentry has the
-            exception if the sweep threw.
-            Logs: {service_name="corates-workers-prod"} | json | message="backup.completed"
+            corates-backups-prod has no snapshots/<projectId>/<date>.json.gz for
+            the latest 05:00 UTC sweep. Every project missing means the cron did
+            not fire or threw (Sentry has the exception); a few means the sweep
+            skipped them (see backup.failed). R2 lifecycle still expires
+            snapshots/ at 60 days. GET https://corates.org/api/backup-status with
+            the bearer token in .env lists them as missingProjectIds.
 
       - uid: corates-backup-project-failed
         title: A project was skipped by the backup sweep

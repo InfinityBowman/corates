@@ -54,6 +54,35 @@ describe('createSyncSlowLog', () => {
     expect(warn).toHaveBeenCalledTimes(2);
   });
 
+  it('reports hidden when the tab was in the background at any point during the wait', () => {
+    let hidden = false;
+    const hiddenSpy = vi.spyOn(document, 'hidden', 'get').mockImplementation(() => hidden);
+    try {
+      const log = createSyncSlowLog('p1');
+      log.update(false);
+      hidden = true;
+      document.dispatchEvent(new Event('visibilitychange'));
+      vi.advanceTimersByTime(SYNC_SLOW_MS / 2);
+      hidden = false;
+      document.dispatchEvent(new Event('visibilitychange'));
+      vi.advanceTimersByTime(SYNC_SLOW_MS / 2);
+      expect(warn).toHaveBeenCalledWith(
+        'client.sync.slow',
+        expect.objectContaining({ hidden: true }),
+      );
+
+      log.update(true);
+      log.update(false);
+      vi.advanceTimersByTime(SYNC_SLOW_MS);
+      expect(warn).toHaveBeenLastCalledWith(
+        'client.sync.slow',
+        expect.objectContaining({ hidden: false }),
+      );
+    } finally {
+      hiddenSpy.mockRestore();
+    }
+  });
+
   it('stops the timer on dispose', () => {
     const log = createSyncSlowLog('p1');
     log.update(false);

@@ -41,6 +41,7 @@
   "vars": {
     "ENVIRONMENT": "test",
     "SYNC_ADMIN_TOKEN": "test-sync-admin-token",
+    "BACKUP_STATUS_TOKEN": "test-backup-status-token",
     "AUTH_BASE_URL": "http://localhost:3010",
     "APP_URL": "http://localhost:3010",
     "BASEPATH": "/",

@@ -165,7 +165,8 @@ the user. The exceptions themselves are found with
 
 On the browser side, `client.sync.slow` fires once when a project has not synced 30 seconds
 after it started connecting or dropped (with `online` and `hidden` so offline laptops and
-background tabs can be filtered out), and `client.sync.recovered` reports the full `waitedMs`
+background tabs can be filtered out; `hidden` is true if the tab was in the background at any
+point during the wait), and `client.sync.recovered` reports the full `waitedMs`
 when it syncs again.
 
 ### Adding studies
